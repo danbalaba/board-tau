@@ -4,8 +4,8 @@ import ListingsGrid from "@/components/listings/ListingsGrid";
 import Categories from "@/components/navbar/Categories";
 import EmptyState from "@/components/common/EmptyState";
 
-import { getListings } from "@/services/listing";
-import { getFavorites } from "@/services/favorite";
+import { getListings } from "@/services/user/listings";
+import { getFavorites } from "@/services/user/favorites";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
