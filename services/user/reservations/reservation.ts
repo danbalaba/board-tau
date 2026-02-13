@@ -4,7 +4,7 @@ import { Listing, Reservation } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { LISTINGS_BATCH } from "@/utils/constants";
-import { getCurrentUser } from "./user";
+import { getCurrentUser } from "../user";
 import { stripe } from "@/lib/stripe";
 
 export const getReservations = async (args: Record<string, string>) => {

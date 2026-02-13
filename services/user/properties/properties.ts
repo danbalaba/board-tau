@@ -1,7 +1,7 @@
 "use server";
 import { db } from "@/lib/db";
 import { LISTINGS_BATCH } from "@/utils/constants";
-import { getCurrentUser } from "./user";
+import { getCurrentUser } from "../user";
 import { revalidatePath } from "next/cache";
 
 export const getProperties = async (args?: Record<string, string>) => {

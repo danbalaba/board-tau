@@ -18,7 +18,7 @@ import CountrySelect from "../inputs/CountrySelect";
 import ImageUpload from "../common/ImageUpload";
 
 import { categories } from "@/utils/constants";
-import { createListing } from "@/services/listing";
+import { createListing } from "@/services/user/listings";
 import countries from "@/data/countries.json";
 import { philippinesPlaces } from "@/data/philippinesPlaces";
 import type { CountrySelectValue } from "@/components/inputs/CountrySelect";

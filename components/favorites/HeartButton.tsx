@@ -8,7 +8,7 @@ import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/utils/helper";
-import { updateFavorite } from "@/services/favorite";
+import { updateFavorite } from "@/services/user/favorites";
 
 interface HeartButtonProps {
   listingId: string;

@@ -15,7 +15,7 @@ import Button from "../common/Button";
 import Modal from "./Modal";
 import SpinnerMini from "../common/Loader";
 import { registerUser } from "@/services/auth";
-import { sendOTP, verifyOTP } from "@/services/otp";
+import { sendOTP, verifyOTP } from "@/services/user/otp";
 import { validateEmail, validatePassword, validateName, validateOTP } from "@/lib/validators";
 
 const AuthModal = ({

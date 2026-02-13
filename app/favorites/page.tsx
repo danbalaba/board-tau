@@ -5,7 +5,7 @@ import ListingCard from "@/components/listings/ListingCard";
 import Heading from "@/components/common/Heading";
 
 import { getCurrentUser } from "@/services/user";
-import { getFavoriteListings } from "@/services/favorite";
+import { getFavoriteListings } from "@/services/user/favorites/favorite";
 
 const FavoritesPage = async () => {
   const user = await getCurrentUser();

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { FaExclamationTriangle, FaCheckCircle } from "react-icons/fa";
 import { useSession } from "next-auth/react";
-import { sendOTP } from "@/services/otp";
+import { sendOTP } from "@/services/user/otp";
 import toast from "react-hot-toast";
 
 const EmailVerificationNotice = () => {
