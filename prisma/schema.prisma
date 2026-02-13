@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  favoriteIds   String[]  @default([]) @db.ObjectId
+  role          String    @default("user")
+  isActive      Boolean   @default(true)
+  deletedAt     DateTime?
+  isVerifiedLandlord Boolean @default(false)
+  landlordApprovedAt DateTime?
+  landlordVerificationDocs String?
+  businessName String?
+  phoneNumber String?
+  lastLogin    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts     Account[]
+  listings     Listing[]
+  reservations Reservation[]
+  sentMessages     Message[] @relation("sentMessages")
+  receivedMessages Message[] @relation("receivedMessages")
+  reviews      Review[]
+  adminLogs    AdminActivityLog[]
+  inquiries    Inquiry[]
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Listing {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  description   String
+  imageSrc      String
+  images        ListingImage[]
+  createdAt     DateTime @default(now())
+  category      String
+  roomCount     Int
+  roomType      String?
+  bathroomCount Int
+  guestCount    Int
+  userId        String   @db.ObjectId
+  price         Int
+  country       String?
+  latlng        Float[]
+  region        String?
+  amenities     String[]
+  rating        Float?   @default(4.8)
+  reviewCount   Int      @default(0)
+  bedType       String?  @default("Single/Double bed")
+  status        String   @default("pending") // pending, active, flagged, rejected
+  approvedAt    DateTime?
+  approvedBy    String? @db.ObjectId
+
+  // Rules / Preferences
+  femaleOnly    Boolean? @default(false)
+  maleOnly      Boolean? @default(false)
+  visitorsAllowed Boolean? @default(true)
+  petsAllowed   Boolean? @default(false)
+  smokingAllowed Boolean? @default(false)
+
+  // Advanced Filters
+  security24h   Boolean? @default(false)
+  cctv          Boolean? @default(false)
+  fireSafety    Boolean? @default(false)
+  nearTransport Boolean? @default(false)
+  studyFriendly Boolean? @default(false)
+  quietEnvironment Boolean? @default(false)
+  flexibleLease Boolean? @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  reservations Reservation[]
+  reviews      Review[]
+  rooms        Room[]
+  inquiries    Inquiry[]
+}
+
+model Room {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  listingId      String   @db.ObjectId
+  name           String
+  price          Int
+  capacity       Int
+  availableSlots Int
+  images         String[]
+  roomType       String?   // solo, shared, bedspace
+  status         String?   // available, full
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  inquiries Inquiry[]
+}
+
+model Inquiry {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  listingId      String   @db.ObjectId
+  roomId         String   @db.ObjectId
+  userId         String   @db.ObjectId
+  moveInDate     String
+  stayDuration   String
+  occupantsCount Int
+  role           String
+  hasPets        Boolean
+  smokes         Boolean
+  contactMethod  String
+  message        String?
+  status         String   @default("pending") // pending, approved, rejected
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  room    Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ListingImage {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  listingId String   @db.ObjectId
+  url       String
+  caption   String?  @default("Photo")
+  order     Int      @default(0)
+    roomType  String?  @default("General")
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model Reservation {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  listingId     String   @db.ObjectId
+  startDate     DateTime
+  endDate      DateTime
+  totalPrice    Int
+  status        String   @default("pending") // pending, confirmed, cancelled
+  paymentStatus String   @default("pending") // pending, paid, refunded, failed (simulated)
+  paymentMethod String? // GCash, Maya, Card
+  paymentReference String? // Transaction ID
+  createdAt     DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  listingId      String   @db.ObjectId
+  rating         Int      // 1-5
+  comment        String?
+  cleanliness    Int?     // 1-5
+  accuracy       Int?     // 1-5
+  communication  Int?     // 1-5
+  location       Int?     // 1-5
+  value          Int?     // 1-5
+  status         String   @default("approved") // pending, approved, removed
+  createdAt      DateTime @default(now())
+  response       String?
+  respondedAt    DateTime?
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  content    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("sentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("receivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+}
+
+model AdminActivityLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  adminId    String   @db.ObjectId
+  action     String   // e.g. "user_deactivated", "listing_approved", "review_removed"
+  entityType String   // User, Listing, Review, Reservation
+  entityId   String?
+  details    String?  // JSON string for extra context
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
+}
+
+model EmailOTP {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String
+  otpHash   String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}

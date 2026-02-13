@@ -1,0 +1,272 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 17, 24, 39;
+  --background-rgb: 248, 250, 249;
+  --surface-rgb: 255, 255, 255;
+  --border-rgb: 229, 231, 235;
+}
+
+html.dark {
+  --foreground-rgb: 248, 250, 252;
+  --background-rgb: 15, 23, 42; /* slate-900 */
+  --surface-rgb: 30, 41, 59; /* slate-800 */
+  --border-rgb: 51, 65, 85; /* slate-700 */
+  --text-color: rgb(248, 250, 252);
+  --text-secondary: rgb(203, 213, 225);
+  --text-muted: rgb(148, 163, 184);
+  --text-light: rgb(100, 116, 139);
+}
+
+body {
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scroll-behavior: smooth;
+  background-color: rgb(var(--background-rgb));
+  color: rgb(var(--foreground-rgb));
+  transition: color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    background-color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+html.dark body {
+  color: var(--text-color);
+}
+
+.no-scroll {
+  position: fixed;
+  inline-size: 100%;
+}
+
+.main-container {
+  @apply w-full px-4 md:px-8 lg:px-12;
+}
+
+/* ===== GLASSMORPHISM UTILITIES ===== */
+@layer components {
+  .glass {
+    @apply backdrop-blur-glass border border-white/20 dark:border-white/10;
+    background: rgba(var(--surface-rgb), 0.72);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  .glass-dark {
+    @apply backdrop-blur-glass border border-white/10;
+    background: rgba(var(--surface-rgb), 0.72);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .glass-elevated {
+    background: rgba(var(--surface-rgb), 0.88);
+    @apply backdrop-blur-glass-xl border border-white/25 dark:border-white/15;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+
+  html.dark .glass-elevated {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* Skeleton shimmer */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(229, 231, 235, 0.4) 0%,
+      rgba(229, 231, 235, 0.8) 50%,
+      rgba(229, 231, 235, 0.4) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  html.dark .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(55, 65, 81, 0.4) 0%,
+      rgba(75, 85, 99, 0.6) 50%,
+      rgba(55, 65, 81, 0.4) 100%
+    );
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.swiper-wrapper {
+  @apply md:gap-2 gap-1 justify-between;
+}
+
+.leaflet-bottom,
+.leaflet-control,
+.leaflet-pane,
+.leaflet-top {
+  z-index: 0 !important;
+}
+
+.rdrMonth {
+  width: 100% !important;
+}
+
+.rdrCalendarWrapper {
+  width: 100% !important;
+  font-size: 16px !important;
+}
+
+::-webkit-scrollbar {
+  @apply w-2;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 dark:bg-gray-600 transition-all duration-300 rounded-pill;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500 dark:bg-gray-500;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-200 dark:bg-gray-800/50 rounded-pill;
+}
+
+::-webkit-scrollbar-corner {
+  @apply rounded-pill;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  width: 0;
+}
+
+/* ===== SOLID SEARCH BAR ===== */
+.search-bar-trigger {
+  @apply relative inline-flex w-full px-2 md:px-4 py-1.5 md:py-2
+         rounded-pill cursor-pointer
+         transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]
+         hover:scale-[1.01] active:scale-[0.99]
+         border border-gray-200 dark:border-gray-700
+         mx-auto;
+  background: rgb(var(--surface-rgb));
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.search-bar-trigger:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(47, 125, 109, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+html.dark .search-bar-trigger:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(79, 168, 154, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.search-bar-content {
+  @apply w-full flex items-center justify-between gap-2 md:gap-4;
+}
+
+.search-bar-trigger .bg-primary {
+  @apply transition-transform duration-200;
+}
+
+.search-bar-trigger:hover .bg-primary {
+  @apply scale-110;
+}
+
+/* ===== CARD HOVER (FLOATING DEPTH) ===== */
+.card-hover {
+  @apply transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)];
+}
+
+.card-hover:hover {
+  @apply shadow-hover;
+}
+
+* {
+  @apply transition-colors duration-200;
+}
+
+a {
+  @apply transition-all duration-200;
+}
+
+:focus-visible {
+  @apply outline-offset-2 outline-2 outline-primary/50;
+}
+
+button {
+  @apply transition-all duration-200;
+}
+
+button:active {
+  @apply scale-[0.98];
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  @apply ring-2 ring-primary/20 ring-offset-2 ring-offset-transparent;
+}
+
+/* ===== DARK MODE TEXT COLORS ===== */
+html.dark .text-gray-50 { @apply dark:text-gray-900; }
+html.dark .text-gray-100 { @apply dark:text-gray-800; }
+html.dark .text-gray-200 { @apply dark:text-gray-700; }
+html.dark .text-gray-300 { @apply dark:text-gray-600; }
+html.dark .text-gray-400 { @apply dark:text-gray-500; }
+html.dark .text-gray-500 { @apply dark:text-gray-400; }
+html.dark .text-gray-600 { @apply dark:text-gray-400; }
+html.dark .text-gray-700 { @apply dark:text-gray-300; }
+html.dark .text-gray-800 { @apply dark:text-gray-100; }
+html.dark .text-gray-900 { @apply dark:text-gray-50; }
+
+html.dark .text-neutral-500 { @apply dark:text-neutral-400; }
+html.dark .text-neutral-600 { @apply dark:text-neutral-400; }
+html.dark .text-neutral-700 { @apply dark:text-neutral-300; }
+html.dark .text-neutral-800 { @apply dark:text-neutral-100; }
+
+html.dark [class*="text-text-primary"] { @apply dark:text-gray-100; }
+html.dark [class*="text-text-secondary"] { @apply dark:text-gray-400; }
+
+html.dark ::placeholder { @apply dark:text-gray-500; }
+
+html.dark p { color: inherit; }
+html.dark h1, html.dark h2, html.dark h3,
+html.dark h4, html.dark h5, html.dark h6 {
+  @apply dark:text-gray-100;
+}
+html.dark small { color: inherit; }
+html.dark span { color: inherit; }
+
+html.dark a { @apply dark:text-primary; }
+html.dark a:hover { @apply dark:text-accent; }
+
+html.dark label { @apply dark:text-gray-300; }
+
+html.dark .text-helper,
+html.dark .text-error { @apply dark:text-red-400; }
+html.dark .text-success { @apply dark:text-green-400; }
+html.dark .text-warning { @apply dark:text-yellow-400; }
+html.dark .text-info { @apply dark:text-blue-400; }
+
+html.dark :disabled { @apply dark:text-gray-500; }
+
+
+
+html.dark .font-light { @apply dark:text-gray-300; }
+html.dark .font-normal { @apply dark:text-gray-200; }
+html.dark .font-semibold { @apply dark:text-gray-100; }
+html.dark .font-bold { @apply dark:text-gray-100; }
+
+html.dark .caption,
+html.dark .text-xs,
+html.dark .text-sm { @apply dark:text-gray-300; }
+
+html.dark .text-muted { @apply dark:text-gray-400; }
