@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { createReservation } from '@/services/reservation';
+import { createReservation } from '@/services/user/reservations';
 
 export async function GET(req: Request) {
   try {

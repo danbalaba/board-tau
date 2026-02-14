@@ -7,7 +7,7 @@ import ListingDetailsClient from "@/components/listings/detail/ListingDetailsCli
 import ListingReviews from "@/components/listings/detail/ListingReviews";
 
 import { getCurrentUser } from "@/services/user";
-import { getListingById } from "@/services/listing";
+import { getListingById } from "@/services/user/listings";
 import { categories } from "@/utils/constants";
 import { db } from "@/lib/db";
 

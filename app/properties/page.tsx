@@ -6,8 +6,8 @@ import ListingCard from "@/components/listings/ListingCard";
 import LoadMore from "@/components/listings/LoadMore";
 
 import { getCurrentUser } from "@/services/user";
-import { getProperties } from "@/services/properties";
-import { getFavorites } from "@/services/favorite";
+import { getProperties } from "@/services/user/properties";
+import { getFavorites } from "@/services/user/favorites";
 
 const PropertiesPage = async () => {
   const user = await getCurrentUser();

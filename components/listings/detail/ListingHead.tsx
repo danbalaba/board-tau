@@ -1,9 +1,9 @@
 import React from "react";
-import Image from "@/components/Image";
+import Image from "@/components/common/Image";
 
-import Heading from "@/components/Heading";
-import HeartButton from "@/components/HeartButton";
-import { getFavorites } from "@/services/favorite";
+import Heading from "@/components/common/Heading";
+import HeartButton from "@/components/favorites/HeartButton";
+import { getFavorites } from "@/services/user/favorites";
 
 interface ListingHeadProps {
   title: string;
