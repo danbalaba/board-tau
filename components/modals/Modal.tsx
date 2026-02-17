@@ -29,7 +29,9 @@ interface TriggerProps {
   children: ReactElement;
 }
 
-interface WindowProps extends TriggerProps {}
+interface WindowProps extends TriggerProps {
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+}
 
 interface WindowHeaderProps {
   title: string;
@@ -73,7 +75,13 @@ const Trigger: FC<TriggerProps> = ({ children, name }) => {
   return cloneElement(children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>, { onClick });
 };
 
-const Window: FC<WindowProps> = ({ children, name }) => {
+const Window: FC<WindowProps> = ({ children, name, size = 'md' }) => {
+  const sizeClasses = {
+    sm: 'md:w-[400px] lg:w-[400px]',
+    md: 'md:w-[500px] lg:w-[500px]',
+    lg: 'md:w-[800px] lg:w-[800px]',
+    xl: 'md:w-[1100px] lg:w-[1100px]'
+  };
   const { openName, close } = useContext(ModalContext);
   const isWindowOpen = openName === name;
   const { ref } = useOutsideClick({
@@ -94,16 +102,24 @@ const Window: FC<WindowProps> = ({ children, name }) => {
     if (!isClient) return;
     const body = document.body;
     const rootNode = document.documentElement;
+
     if (isWindowOpen) {
-      const scrollTop = rootNode.scrollTop;
+      // Save current scroll position
+      const scrollTop = window.pageYOffset || rootNode.scrollTop || body.scrollTop;
+      // Add class to prevent scrolling
+      body.style.overflow = 'hidden';
+      body.style.paddingRight = '17px'; // Compensate for scrollbar
       body.style.top = `-${scrollTop}px`;
-      body.classList.add("no-scroll");
+      body.classList.add("fixed", "w-full");
     } else {
+      // Restore scroll position
       const top = parseFloat(body.style.top) * -1;
-      body.classList.remove("no-scroll");
+      body.style.overflow = '';
+      body.style.paddingRight = '';
+      body.style.top = '';
+      body.classList.remove("fixed", "w-full");
       if (top) {
-        rootNode.scrollTop = top;
-        body.style.top = "";
+        window.scrollTo(0, top);
       }
     }
   }, [isClient, isWindowOpen]);
@@ -127,7 +143,7 @@ const Window: FC<WindowProps> = ({ children, name }) => {
               animate="show"
               exit="exit"
               ref={ref}
-              className="md:h-auto h-[90vh] md:max-h-[85vh] overflow-y-auto w-full md:w-[420px] md:rounded-card rounded-t-card shadow-glass border-t md:border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl"
+              className={`md:h-auto h-[90vh] md:max-h-[90vh] overflow-y-auto w-full ${sizeClasses[size]} md:rounded-card rounded-t-card shadow-glass border-t md:border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
             >
             {React.isValidElement(children) && typeof children.type === 'function'
               ? React.cloneElement(children as React.ReactElement<{ onCloseModal: () => void }>, {
@@ -145,18 +161,18 @@ const Window: FC<WindowProps> = ({ children, name }) => {
 const WindowHeader: FC<WindowHeaderProps> = ({ title }) => {
   const { close } = useContext(ModalContext);
   return (
-    <header className="flex items-center px-6 py-4 rounded-t justify-center relative border-b border-border dark:border-gray-700 bg-transparent">
+    <header className="flex items-center px-6 py-4 rounded-t justify-between relative border-b border-border dark:border-gray-700 bg-transparent">
+      <h4 className="text-[18px] font-semibold text-text-primary dark:text-gray-100">
+        {title}
+      </h4>
       <button
         type="button"
-        className="p-2 border-0 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors absolute left-4 rounded-full text-current"
+        className="p-2 border-0 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors absolute right-4 rounded-full text-current"
         onClick={close}
         aria-label="Close"
       >
         <IoMdClose size={22} className="text-current" />
       </button>
-      <h4 className="text-[18px] font-semibold text-text-primary dark:text-gray-100">
-        {title}
-      </h4>
     </header>
   );
 };

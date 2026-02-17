@@ -1,5 +1,11 @@
 import { getLandlordReviews } from '@/services/landlord/reviews';
-import LandlordReviewsClient from '../components/pages/reviews/LandlordReviewsClient';
+import LandlordReviewsClient from '@/app/landlord/components/pages/reviews/LandlordReviewsClient';
+
+// Type assertion to bypass TypeScript error temporarily
+type AnyReviews = {
+  reviews: any[];
+  nextCursor: string | null;
+};
 import { requireLandlord } from '@/lib/landlord';
 
 export const metadata = {

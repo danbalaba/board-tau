@@ -1,0 +1,1969 @@
+[
+  {
+    "title": "Will Mamardlo Apartment",
+    "description": "Affordable boarding house near TAU campus. 3mins walking distance and good for students.",
+    "price": 3000,
+    "roomType": "Bed Spacer",
+    "location": "Malacampa, Camiling, Tarlac. NEAR TAU.",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Own CR",
+      "Study Area / Quiet Room"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/611160701_4728225747403853_5679640329397575613_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=110&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEu4NsXuHCzJRUwghK_wHY_Z7nc-y3k56tnudz7LeTnq3cWILOFZ5gdfejQAmq7wETVTaAXZvJ1N9MGJ08jWXvY&_nc_ohc=I50RI4BdUIoQ7kNvwGD4vYP&_nc_oc=AdkUDoN5CP1xTnHsxw4y5Hj3GnXBxo0nej510d7GmKPua_LfSbv3ToAJlE1Q5c5oexA&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=dVepT945P8yIk30QhS_8yA&oh=00_Afvu7lRgN8dGodgAZHF5k-mLeiJDQSNemIm3pX1287DCJw&oe=6999BD1E",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/611937357_4728225914070503_3792882113480193638_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeETaCbg28kSxhshX6gef8kcQ1HX-3IF-O1DUdf7cgX47RgiVCsaGIKed9rDwu3iH6tbtjYGCPGCSnEAdsQfG7Dk&_nc_ohc=ZZmasNSkwJoQ7kNvwHzwaiX&_nc_oc=Adk9Xqekjanz5oiUCmlOCscc7V5QhrQ2XFhxPZWsZ1ML6u-ltl37NbJy2EHaPqQLy7s&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=bCuSOtz7i4HiduUzDgvq1A&oh=00_AftSj9JoJKmTu9jpYFh7ePZWKZByjYZSA4vaCMLRU5DnHA&oe=6999BA0D",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/608819570_4728225837403844_6383900114011949097_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFGg9xc5oVsnxXesTptyzxjbzg6YdKxX89vODph0rFfz65pqQcT7V_LajonOZpL7KevQHRelFCxS8ns7q2gqJcD&_nc_ohc=UAf8zqS2JikQ7kNvwEABi6K&_nc_oc=AdnlyRqN2GtnaA70K8zldDH6I47onfXenTvUU9UasE3hn28kKqEj3DkXg8Ww7Ws_eKM&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=Icd5Uz5Pxu5cJLB4fn1lXQ&oh=00_Afvs0JtYFKJjtMPJyk6ThXbKtNfCVkeK_Q_GgXR1NfZAdQ&oe=6999BB99",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/611330224_4728225850737176_269465685378196126_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=107&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeGcMRJugHk5JYXUM4F_-HoFefBxqY4n0ZJ58HGpjifRkq037rkLKkSzSb0D7dqVdKnQZescnpzz-Pj2LiJsJy3v&_nc_ohc=ssl5uoZlvBQQ7kNvwExhQkq&_nc_oc=AdnbKMiHdH2uqPlcX2zF8KIr2toGWv5yAB_QjerruMWJJeL2VNdIXcGygFIvZAOSct0&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=CNwMe39iVAPO6hVknDUYlA&oh=00_AfsBpcuB4DmtLVz-iyfgvf4HxYEQfZI4N_BDXxyT0_gVUw&oe=6999C107",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/608137981_4728225924070502_4264676961067010730_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=103&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEW9cjcagqrJa9qUyCgIf0fHRojDUT4gagdGiMNRPiBqI5alDNH00fCFPIxn2NRzuIYd_kTS5xOIdd-Hpbw_dA_&_nc_ohc=PT52RNdeywgQ7kNvwEv0ybw&_nc_oc=AdnYuuPO3pOQYL_pBmgrRj13CXCB04l5R6oOWNyy6Y0QdTU8qx5xQWUGSwfqV4ATCGE&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=K0WEZsjLPrKzdq5cbA_Kfw&oh=00_AfsiS1kpmJrkiuIIRNVscW5SQFgBUOq76i-PR_XctKgMtw&oe=69999F35",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.628870808300668,
+      "lng": 120.40644066871573
+    },
+    "rating": 4.7,
+    "reviewCount": 8,
+    "roomCount": 4,
+    "bathroomCount": 1,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Good Shepherd Subdivision",
+    "description": "Affordable boarding house near TAU campus. Walking distance and good for students.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Walking Distance to TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Curfew Enforced"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/593669254_25301992539458610_5657827129248575364_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEU3_H6aFybSIIJjjviKHzczXFzi-TW-jzNcXOL5Nb6PFB8e0xefQRvKLF9yDcveG2rNVKoKWtUzyFmk860nUrj&_nc_ohc=LnzojPcERDEQ7kNvwGHX7AL&_nc_oc=Adk8w4s99fby1aDODt_u01qXdlMedhyVJxf0LTWcyuiUEyZZpl50SyhiPZKikMkemsQ&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=5pid-HjS67tc7M_chjitdg&oh=00_Afv-PXy6qX8yfm0QjbajRqcHbB8PzLJIsgQKZ7c0IRYSEw&oe=699996FC",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/592450330_25301997372791460_985608856475178070_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=104&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFReTDZ7gOFNLkT-Ui9WHlxWDyYt8bgkwBYPJi3xuCTALgNMI1gZzTIjP3ktRmeYeiutnEcGXcxNnj4N6icoeJH&_nc_ohc=aSyN-C2n5SgQ7kNvwF1LDe-&_nc_oc=AdlU4ARYtVGJBHneEPGdY4Ttka4xDzQxRTowqqANRCkqtA9zfiOVIoh4ORdxhQdae-4&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=IthTGtVkYVK44rQ7CCtViw&oh=00_Afv4jHzex30bOc9gy4fZLv7urpahbWElaL2xAcAVmnhIbQ&oe=69999922",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/591188437_25301997589458105_7470346772449091573_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHHX4Hhjkww96rkjmPUzss1fb9cdHcUF-t9v1x0dxQX6wf21jy_AsXiViMPzQnHXXj0f31RDJpWIe-0QJvfCXmM&_nc_ohc=WSGYfvpVv8wQ7kNvwGNZ5uX&_nc_oc=AdnYmWH3xxldgvi2iU5qS1xdrUCh9kS8UPHHF23UsrBcj592_PTngYFmkL_igXy2Rrw&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=YvnH5SDShYfxCFyRVWL8Ig&oh=00_Afsf4ktABH3uCoGO3xrE1rl-e2F6hiiKnnwun_-u81xKcA&oe=6999A2DA",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/591921938_25301997592791438_2705645322619780301_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=101&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeGMdzM_8Z_TCTk5jzsz401LgZwZAPfuRGmBnBkA9-5EaWOrjy1ex4ystRR6TkVDI1PyU5nlWax8e2cK2rMIyw7R&_nc_ohc=ktFF9ZK4l-wQ7kNvwEKSjin&_nc_oc=Admaz26gHRUUV6EnvpfON7VI95tB451enbp3qu4emUSWBqWtM7F270glT3xMijRJd8E&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=XvtuaB60mNDg_AsM849wgw&oh=00_AfuDYtVoTFtmpb-xpJFtYLERklR-YwBcDBF7Rf07m7OrAw&oe=6999A657",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/591440337_25301997836124747_1776431857491175675_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEVxeHf5Ww2uihseOw7MkYvQPZx6IPsJ01A9nHog-wnTXt11EOkwLiMPHnAfgFLqFedns3c4wBuKWhSmDz8hy8l&_nc_ohc=F9rBknRwCG8Q7kNvwG40JfE&_nc_oc=Adnlhzj3SZXdDbBO8-oCVxta1Qpiz4caxQtp42VOPBJsU1KeIGv3skKZ55_q-G8my-E&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=-dIesQOIUPFjz9Eu7b08zA&oh=00_AfuAMyCzELJTPT-OpAwcrCFIBTPYwMYWbHYQWWwJLtyH_g&oe=6999C2F6",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.63802011022415,
+      "lng": 120.42199690562346
+    },
+    "rating": 4.3,
+    "reviewCount": 7,
+    "roomCount": 5,
+    "bathroomCount": 3,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "De Jesus Lourdes",
+    "description": "Are you looking for an affordable apartment or just a bed space? For as low as ₱1,000, DE JESUS APT. has got you covered!.",
+    "price": 1000,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Own CR",
+      "Water supply (24/7)",
+      "Study Area / Quiet Room"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/611711857_2077714466398169_5415296936658963134_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeGCy-4xxkQ9uT8scErUFllb9PKL0l79UfT08ovSXv1R9HboQg8x7df85bf2_jj4lRDsJBi86hDrLcSQQqCUQSXB&_nc_ohc=aWrlM1_qNHQQ7kNvwHJskXZ&_nc_oc=AdkgTqForTDT_ZGwkUf-q1rMdimUVIhonNFbviLGOLfAc9tSNNOPVv2AkEswJqHSVUE&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=nprvR2N10TZgzK7H4Qiu4Q&oh=00_AfvHigJGU7Skh3yD_FiiLCPqMwvZLFFRzzIB0bARl6_LdQ&oe=6999B616",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/611270249_2077714799731469_8156469490979985853_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFaKAulnG0yOYryfbHhfURrMEOZe9ARdjcwQ5l70BF2NzqLNvv3zYDuPoOADX5NZZEPEQZCBofzWOVqCaZ7W7cI&_nc_ohc=gOu20SwwwYgQ7kNvwH9bY2i&_nc_oc=AdnSzdHgBJk_iCqt2qIs92NCfA_bj3Gu8K214wyiEmjQi-TGtrq4Z2R6iuVCp981tCA&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=i87gmDWcMGNoIr6xwauPVA&oh=00_Afv09gsZ9-oWr4exXygsuOkhS7sdlGpz7_cJNyNnRzx5IA&oe=6999C3B0",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/612047811_2077714723064810_6643348396896977363_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEnwmWZXPUMP08ZvcCaTLoMn1LPFuPEC8ifUs8W48QLyFEeVdqcgOHV6k7J2jNIpDoK4fBPAsRo81wM23DgM1xR&_nc_ohc=dgBk0tMf80QQ7kNvwFg5FcN&_nc_oc=AdkR_MRWHbH0dxQzDr_Sw_Z0C__U7zMbYcVQqk_caHHhjzfE9OTSk5z7alGRhcwxD8c&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=sgxcW0PsLZ8STCX87LeqlA&oh=00_AfvpdKd1pdOnV26PDcZxIluvOVJucmK5Xjbir0t1DoXLJQ&oe=6999A928",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/611298003_2077714676398148_7972200282744427018_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeGdYd-gZuwqHKn0D41jAlVscYQvjACrSUpxhC-MAKtJShI0SLoaxNhLC4cVWocrNm1v8EdFTjWBWqqlWc6ZU21j&_nc_ohc=hk2S4DmeTIAQ7kNvwG-fza5&_nc_oc=AdlTMBF3Nz42o-9auVNwAWJIHfKwJLFsHLj2mXznAn4xC9S17rKB3EQ2suAEjh9pG0c&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=o-vQ0WQLjMfHEqCpU1gEVg&oh=00_AfsEbWWN8KXyTAT5FZm8DlMYswaQkB1dLdFErQcfC3rwow&oe=6999B9DB",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/609075513_2077714623064820_2328607852896938528_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeG4512Zew3gY4licS0wybrDonob5BIAjHeiehvkEgCMd8ksB-B5sVS0GhWco3TTxtR9YH_M6-RAeQ2M0_ACFH7p&_nc_ohc=Ew4lr_jCHlcQ7kNvwFYqbO1&_nc_oc=AdkeVUMWNZtZPUj_b9_KTkYyShPM44o2T3RwSuSqNHqYYQOAfG8_hcSrUslaBWixajQ&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=xkTLnNnh9d_mDtDrvdEkWA&oh=00_AfurZGh2KdF_pvSw7CKXFyadX-uax6U4ec87XLD0cSABMQ&oe=6999C0A0",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.629355344387038,
+      "lng": 120.40651676727192
+    },
+    "rating": 4.8,
+    "reviewCount": 10,
+    "roomCount": 6,
+    "bathroomCount": 3,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Budget Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Apartment",
+    "description": "Affordable boarding house near TAU campus. 5m Walking distance and good for students.",
+    "price": 4000,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Study Area / Quiet Room"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/613728679_4732538886972539_3098422511722720934_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=107&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeGI1SaegKXexHkbIlnfF7g82utu4lVg6JLa627iVWDokkgmFGfyAktxiMQO1_GfWD5dQifF1fgwdsPpx1D_Ad7r&_nc_ohc=jHcsSt81ZFIQ7kNvwFe4DMc&_nc_oc=AdlXzDkIaPMNB6sHYfq7Gy8esya_EUJrXQ0kHnrzAh-nA1R3JijMJtuVK5VGIHime04&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=EnLahe-v_PX3vxYoI15fDA&oh=00_AfuPGelQ-ylzFskopDtt-uTTbl8hkmV8-FzXbX-zTwn9EQ&oe=6999A0ED",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/600363977_4732538896972538_5306788793798601987_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=107&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHvPO08aS9_gWEHtPPXHFGAe1YYHPw3M2Z7Vhgc_DczZuGp-4-BI_VsPLZpTek0N0x3PjK9f0E1nTkEkEzLmZvS&_nc_ohc=iE8aZNHtQXkQ7kNvwFTq2-2&_nc_oc=AdmwtxaG7K10o8hJx47CF3VQ4-EEnpp-YtsqJDNMKh7tJ00q3LRiP4asVMq1fCmUv84&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=pDfbTRzYxc83rcyrHy4r6Q&oh=00_AftFMsXFTdq5NNTaGRtXvEeW-vKgB4H7kpxzmovilIzcBg&oe=6999B1A5",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/612369910_4732539000305861_6113494058056508627_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=100&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFyLfy3zMo7D0LF3UhgOStLIC57K3I6drEgLnsrcjp2sWa_oStzjvLXHcQI04vExdGjD9IWMA3V28o_9FBdD-7F&_nc_ohc=LdauhTjiF_IQ7kNvwHMK1KQ&_nc_oc=Adm-uleW7NHctcXWWDpI1jB8ET_Fv6AWq2HpnI5gys9Qqpr765E5Hg1vAl3lAWWcWFU&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=M1xmKlvlQwMsph15TEsawQ&oh=00_AfuKwN5lup9KnBcXUsdv2vnZ4slSAHcD1nbrPWPL4bxEhA&oe=6999ADD1",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/612388289_4732538846972543_8953448468701290775_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeGq-wepXMmCD_EsjXfkP-QLv4o50bZAJMS_ijnRtkAkxNiOnskMnr22f8fvAC_wTeu2kVk-hsOClk9ylJBwnNwC&_nc_ohc=9cZOpnqXj8gQ7kNvwGi-pQ5&_nc_oc=AdnS-HHSxB5nfDJ69jsbCrNsFqx18ygPf1FqG0MH0W_IQO62KUP8CVWp7R8M8H3dVFw&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=HbRusPCHyQPyWrwN9CQFuw&oh=00_Afs4d9ild4Vc3tAEkmZSVp1OhIcd9N4TX1rC5PuRjq4AjQ&oe=6999B584",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/600322005_4732538966972531_3794877430031057677_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=104&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeE8Cg14YGoaZfaJur5EVOxGHVBiVpsafiAdUGJWmxp-INizAAFfQABrLxcGtUg8KbHmRr19pQ-EtK1RCE1l4-GB&_nc_ohc=Ok7Q_qrlq_AQ7kNvwHIrmru&_nc_oc=Adm8PkFL2ytNl8kW33Fqx4ogTDoKyeLmlPQQV9eh5R7onn5KWiuCife-PKy9TUJ-xMo&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=9JGOnmQEZtt-qCvvhDKj7g&oh=00_Afsslk8YCpUYEzqOnvqxLdVeZqD122ANEL3J9D3LFvW4tw&oe=6999B559",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.62802640565613,
+      "lng": 120.41678424853629
+    },
+    "rating": 3.8,
+    "reviewCount": 2,
+    "roomCount": 5,
+    "bathroomCount": 2,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Jeck Pablo",
+    "description": "Clean and comfortable studio type available for rent ideal for students and working individuals..",
+    "price": 3000,
+    "roomType": "Solo",
+    "location": "3mins away to TAU & very closed to Gilberto O. Teodoro Memorial Hospital - Camiling District Hospital",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Curfew Enforced"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/617944716_1881717912704569_8307957788270135681_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=103&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFp3xV2Hqru87i0aRpCx--zZOlasAPU83Zk6VqwA9TzdvXrFpC-eurluP4Kv9MEC1oA1nl8dFw1VtJqsgdIf1oi&_nc_ohc=RBptm33d8jkQ7kNvwF4bzD1&_nc_oc=Adkn9TPgeK540nCP3HBbAa93hh1sNJw6dTxnKofB84sXn_abpmSdQ3WhoVVhetYhlYI&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=irDaY0T82bbA-nnhTJq78A&oh=00_Afs7c54dvFqG1qxzs4wYY66ZFxCPJF75YyE3s4kg3i-fWw&oe=6999CCCC",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/618801624_1881717926037901_8746784309245957839_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=101&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHld3Kgmgdk15WzROymrLmi04hKeuoXSgXTiEp66hdKBb9fNfJlhmDpEIsjxpSpetenfylPhXJ33fXwxyU6rhob&_nc_ohc=bYhQaEtS9LcQ7kNvwEVCciH&_nc_oc=Admutjo2hVcsG92t93NBN-TWVBx6xofkdlaCsw1MZgpNEybRKMbFt-Uuc-qMkVGXfQM&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=vlG0B6QsMa26xSZVoIxxUA&oh=00_Afse6KgXeOPeLzRB-53E93d5nXd5xU_Bt5S2Gk9mLvYV-A&oe=6999ACC5",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/618017869_1881717822704578_7511380699962697534_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHbkwu417NebfDHlC8mGzDT7MUwDrE8Ni3sxTAOsTw2Lb0lHeSBdUUaS4y20INZmI9OBC65YN39237iR6qlXWdK&_nc_ohc=wbVg52V0u3EQ7kNvwEI_5cl&_nc_oc=Adnn0NNdMQAexP3VdQO28tayPK1ea2RLXfC0HaXZhtcB85igy4IMJBa8j_DpWYYLWRc&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=IvvFFiCeLMT4-04Y4reqZw&oh=00_AfsM_90WAJI_BFMu2nAkUvCN132obXMRB0r7-Z__azHQpA&oe=6999C1F0",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/618159347_1881717602704600_647156841994920224_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeELva_1xJI1pSs0vgM6bMnA45g7BDQqqHHjmDsENCqocUp95LX01pigjTcDMfSHJeDthN5BV2BbR6TGEgO35nux&_nc_ohc=nE6loosnOy0Q7kNvwER1w7H&_nc_oc=AdnVg_WyqYLdogLxoHlScrMKbt0IBHHNOHU0WKs1qm9TdqpuLMzG8flkXDpk2vIZis8&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=W6bXn-2m1Hc1iPq5u2GN9A&oh=00_AfscM3BTNZmd-WMWioRGQ6-h9qeIsJmuA84bmSfpeaabZg&oe=6999AA2A",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/617633874_1881717886037905_7123582142930171309_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=108&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHm662CyaLW6wtSU7UNVrNuc8RypwxIfqxzxHKnDEh-rMSyb0QcakQ4gVVNi-7HE9doLYtTH9HSSYmw_CELIYiF&_nc_ohc=-i2o0oTg3doQ7kNvwEP_HCE&_nc_oc=AdleQOp4mB13fYEN97X689hZSxhAMJ_NRfM_ogFwpxJtkr38Vg7jHh4ohjd8UtQVvrQ&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=Hh_fN_8-2_5LmLegFpfIOQ&oh=00_Afsby9_W_QbJOcgfjmZ-ECO7PbAF2XuMT6tO4ZtXo8lZTw&oe=6999AD59",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.636683920036358,
+      "lng": 120.40600050529991
+    },
+    "rating": 4.1,
+    "reviewCount": 2,
+    "roomCount": 6,
+    "bathroomCount": 1,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Estrella Lacaden Facunla",
+    "description": "Affordable boarding house near TAU campus. 5mins Walking distance and good for students.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "CCTV"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/524132860_2903911906456493_1801403394287154365_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFDuM_0ilVgPqFjnxF14sxTDD41KzX_CTcMPjUrNf8JNyUfWva5frik-IJIlZ1JFfzdPdWh2QknmHsFvEKg5sQ5&_nc_ohc=zc0rRCPSfCkQ7kNvwEqwJr5&_nc_oc=AdkHv37u1BW6KtEE4MjFDitiTrYhsjrzjsNboUEjN-GMhVr_ngdGSxePd2G7t-7l5Io&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=AIFjVHuc8vjF8IQNigd8nw&oh=00_AfvgmoHoLpA035QViA_VAk45OYNvIkt8a2xPQnZDl8BQ0g&oe=6999AD9B",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/519550510_2903911179789899_5586779553951569057_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFyiQ2r75lNYOtvVN0TIMEoIYBUXoH0LFQhgFRegfQsVLFFj7SObkRceaq2N1pWAWHusD9HiCCg3NlRQq9ftmvC&_nc_ohc=XquzfshzyfYQ7kNvwFox0JV&_nc_oc=Adl-KP25aQo0AA-dUOL-pzFDBWcjJ7GlfBSud1CvWck-KGV-QGGvV8np3Qn6vifRSAc&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=vkN-UNpUswdDmOVQ13_E6w&oh=00_AfshWE-DrzAYaDeQcGGz0sKpMUMUuE4uq7BaZUe2f9TmyA&oe=6999C15A",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/522465639_2903911466456537_3773297621111862668_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFWXI2guhIvyB9BQNHrzvB8DQ6QK-I_VuENDpAr4j9W4XfG3zKsWKWC8uJvC2ViCAw_fzWjO8O5RkMuA1xonbpW&_nc_ohc=sl73ank1dxUQ7kNvwHKHX6R&_nc_oc=AdmDBi7IMJ9c4d6W471HkiNoXem8Tjo0DmGvXwprK2js8_RTuFjAbTYww5LCZ2IfRbQ&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=EcXVOD66EYK2q4H_pOUIjg&oh=00_AfuEW9ulhML1cnvpgpArQKGcdjP1t1CDVSqLt7vanugRpA&oe=6999A2DD",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/522089278_2903911389789878_7930307896074637679_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFh5xpUVeeNr8D4krri9BSES6V_cxoTBkFLpX9zGhMGQUJD7pfXHO48OMblTQxxNIZiPzKluGHAlFSSA1jgExaG&_nc_ohc=YPGmDJct4b8Q7kNvwFg--aM&_nc_oc=Adnny3G2rgpcPnTav0MpOjuWtF5Sdpcl9ffQbWPnNLF6ke4m7Y24M5y8LwOcmONw-hI&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=QaltdaBJLg_vhJe1kT1s2A&oh=00_AfsFQ2jVmBo-sT2BXU-LAPt2REWTHUf69vncsAw4RmHBcg&oe=6999B327",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/522515906_2903911773123173_4706193113742898045_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEWAVADB5WKuwq7Yaf5xpRuAdrsCvpaQ9kB2uwK-lpD2SyLaSMYdnTp1VUkk5bxAMSnknOcMht3Uts7rndTeIm6&_nc_ohc=3uKyRI94-ZMQ7kNvwHC3FuA&_nc_oc=AdmVMuzqzieyTuI3l92rtcN_8opNdW78esPCwwMsPeuPvjovfeYyWZATpZV1DA4VXUg&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=YGpBk4aCl3kfhEz3Nhy7Qw&oh=00_AftzSxhmT-r4XJ12muejia5HzuPox3xUHRcjajvZFYZU2w&oe=6999AE52",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.627501893063245,
+      "lng": 120.41941066823586
+    },
+    "rating": 3.9,
+    "reviewCount": 4,
+    "roomCount": 3,
+    "bathroomCount": 3,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": true,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "John Apt",
+    "description": "Newly built 2 storey apartment for rent Ready for occupancy starting on February 1, 2026 1st come 1st serve basis.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Purok Rural Malacampa Camiling Tarlac (4 minutes walk to TAU)",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Study Area / Quiet Room",
+      "CCTV"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/622166095_122113797465140813_7995983854937343846_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEJNPHtmrP0xnGvw0FMsUlZh6YVBw5GxRaHphUHDkbFFoaPohpB2TrJmbmDceqy-Drnz1a7tbZjUP8AYqzXTXUN&_nc_ohc=G6Sc7U6O22EQ7kNvwHbQLbx&_nc_oc=Adm1VPuR41rC_Qa37oyBmLaQs-d2WgLNtHRVGjvcmzOG3dAlnnboT9Fp5Sc8QyfJmDg&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=F1NkKkK_pvvA3p2TcmhjNA&oh=00_AfuneucdLbqQmmlqtgjWMRafWJkMD_ercc8Q8U01KXFlaQ&oe=6999B4F5",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/622387641_122113797873140813_2613661932701162416_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeE-oJLBe1f_66GKBaCitqqxJEPUEEd7Lo0kQ9QQR3sujWfisCXWiLhuMWDLURHoW8-xpWq3gjl9d63XvFeEpnJR&_nc_ohc=tPI2V1Zi1AgQ7kNvwGZWXVo&_nc_oc=AdnIUEcdDhIjolyiELMo22qLTkowYx36L6t09qKPkr1VsDrssMhO8Ckx4GfebybWhu8&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=U92Tma1bx8RLD3iQHO8kog&oh=00_Afvt7P5WWcblNo4WAzRZG1bNk_mG3mOd4SgkZnJJDdTd9w&oe=6999A343",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/621575322_122113798245140813_185264110684539114_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeG9FcI3_ZDzFcJLJJHWIMRZxABK8hmRaaXEAEryGZFppfAjWnlGok2FYDyiVM8ayis0d5XDr6Wb3lvE3gkjcwg0&_nc_ohc=A8tw3aM72TAQ7kNvwHXgRgA&_nc_oc=AdkwF65qOk1hEMo0lZyuIGWsGcSBAmXNa6-Z6-VhMWDKsyswTrhYsA2pX7Ynyu78O3g&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=cIMmRT-2fWqt9g0WSsGtKg&oh=00_AfvRugKvOOj6MrVaqfFwkM_m_j28t5WEn_AR0YwGlExFWQ&oe=6999CFA9",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/622075061_122113800669140813_1587951570936214018_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGfcPE9ihLqAXTGOs3In0Tr0UOYV5052m7RQ5hXnTnabh_Z0TI6I_07dMr6Sa6Vx-LNjhijnkpPRA_nqPOabpte&_nc_ohc=wHJjFxDCTv4Q7kNvwHM5afk&_nc_oc=AdlNiIzz5tDUdZR0OFCAMaABNWpo4kQ5To0-drI-Z7Lh5_wzNbf4u1gs9_W8M6uZ04Y&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=bLZMlSksbIL_QLhVoBdBFA&oh=00_Afss8AdYpa3Yqbkd7bJAIW6ZbjNKcPoIQtxQb3gSWvqfyw&oe=6999BD5E",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/622119901_122113797819140813_2351035002680966101_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeE7PAIrt1P532eM-GNHKT1Xxdlaw04ijozF2VrDTiKOjAbjQxTtu0-m4IM_ReMOdAPnDfd9cy46zxi_izEfHEGE&_nc_ohc=cKquihLYct4Q7kNvwHYs8jE&_nc_oc=AdkIfyziSjzqSP2crAFoEYRHaCu19YRVEw1YTVpFPOGl6BZcvz6O38WvhBc8T57lu0U&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=8n6EJb7bZHLXmP82P1eKeA&oh=00_Afuie84l5tDDVjL72r7OmLmwqOhItXNOIwMkxYyG8RuhiQ&oe=6999A4BF",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.641669044166628,
+      "lng": 120.41023632781702
+    },
+    "rating": 4.1,
+    "reviewCount": 10,
+    "roomCount": 5,
+    "bathroomCount": 1,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": true,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Boarding House",
+    "description": "Affordable boarding house near TAU campus. Walking distance and good for students.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Balcony"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/600357123_1144902157474453_5848191457262807107_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHPHUFAp8j-2h-FffWO3C3-jS3ONwj9Jg2NLc43CP0mDds-anqCUOFT5OOoPJU-GfRit4eggK-m5WsfmcMcWHnV&_nc_ohc=LtyX044AnRQQ7kNvwErh4hH&_nc_oc=AdmVwbJS6InV_fR5SYwNb4_92VtoLO3RAKFlMU18oSSdYqrU6ngHI8jqnYiO1F_5gMI&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=JCagnFOoIAVTIjKsiAYSQA&oh=00_AftreN0MJZ2ZnviM1WxsQ2sJCBdZnhhWJJVgCrhg59ncbA&oe=6999E4E4",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/600366282_1144902214141114_8668842322028849177_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEmHQRTac-k3ROF3Jko4GYVcSNW_LCZ255xI1b8sJnbnkh_YZOinnQGPXJW1BnqG_wvoVBzSRsSB8mGeTWbPXTx&_nc_ohc=i3OKs_TJaqgQ7kNvwHT2j8E&_nc_oc=Adl-mYN7pMPUDl2W5WIML1wQcuBeTXppmRJTW0wzxGxj48Qy1byUR-UtzG9GI13e4qI&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=7uOBAsuP_u_ijCSPjzqdgg&oh=00_Afsuk0felG89rguDE-w5DpPcdzI8iJ2hS11bTDNrdyW7Tg&oe=6999C358",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/600345608_1144902504141085_7280525537341078609_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeGDqPVFRcYMSFQJJeQ87vaQSrOleEhUL1hKs6V4SFQvWHmICgBUDTnOO5mns2_Sa82D9wxqto0fhk7TJdRPbeen&_nc_ohc=VWEPJlf8z58Q7kNvwGgFatW&_nc_oc=Adn3oR8QLZVi3z1xMVmwLpChCd1KvKSqd4Zg7rwMuyYhIMxAQhCWlC-J0HTgXKWV7mU&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=2FCIswMg510vHe6kVO34bA&oh=00_Afu89BwbTK5q0NCKc81nvCsGiayjU2x5nwLbKYZ_LQUC6A&oe=6999BB89",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/601840823_1144902397474429_485815022499465316_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHOSllfZhMnAAFS7aHGLdrLBaZsK6AwF9gFpmwroDAX2EzY5jN5dMAUj5c2VNO7xvJeXQLFHZetvGkXuVaayrh_&_nc_ohc=GVsQWWzduTQQ7kNvwHCLOeI&_nc_oc=Adl1kXDQmGcxf0dSJfjmu4iGdFZqBwu2krLU4-zmJhei9O86DZX0ErLqxiDWeMUcZi0&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=3qCHR9QTwell1c9dqnsvcA&oh=00_AfsmFMr0cPTOrvX9FfNbnd5WbvDew5G4xUCuVRpJMFAw4w&oe=6999E0F3",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/601835939_1144902697474399_801036754123653230_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeGjXXQMovcdoDyE_1GVII9u6TPkSPXMeInpM-RI9cx4ibxBvaXkrvzjk81W4bmFx1rC9v65LhXFOHszxd9--JHL&_nc_ohc=2_h3mslP3FUQ7kNvwGjx-Em&_nc_oc=AdlC0KN3sBTP2X8_1OdJbN6S4iEPqFVDJ94NYy_DUl9PhHdeNeqP-VyNFNSMqSCpvoA&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=qyys9LZbWHW39egIvCWWdw&oh=00_Afv7Sdfo-D_xT33vbhBc2Rm_QZBlh6cx1G36IAAKyqQTvg&oe=6999DCE4",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.631694911603203,
+      "lng": 120.41773679573784
+    },
+    "rating": 3.6,
+    "reviewCount": 4,
+    "roomCount": 3,
+    "bathroomCount": 1,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Pamela Garcia",
+    "description": "Rent out an apartment unit or room in Malacampa Camiling, Tarlac, located just 5 minutes away from Tarlac Agricultural University.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Parking"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/506806417_10234896801899771_7038190961429046593_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEe-sOmCqXHodq-EbpjIqxvYthntoqgWQBi2Ge2iqBZAHDuiFi_juKfPMbqjy1CeQg7mQQb3m2EK-04Yb0PFOlW&_nc_ohc=N5wfX7zb6TkQ7kNvwF9fbiy&_nc_oc=AdlKWCg_dK88rZ36Gu4mFCWwGtdxjT8wbHR_fSCmjb9P4YeItHteH6wReL3deJbjM-o&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=qWHoaoT3dj_WlxddvMeKZw&oh=00_AftDnnmBHe7j4WyvYn2aetsdOuc82S0X3gfXdpI_t_geFQ&oe=6999C7A0",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/506792207_10234896800179728_3272467157810938820_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeH-hWdBx78M1pE3nRB-Xa7Au6_2GkWN5dm7r_YaRY3l2VEQrbXjda47olJjbA0M9Vg8fOYq64NvlSMvzzeNULF7&_nc_ohc=rNQMWn0bUyoQ7kNvwGhJNvM&_nc_oc=AdlGCactxHm51KuaWFfYMiHf2jpYmDXGYui6NIPtEUuACIMPDePbfTp7g_UXLMQKxFU&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=f8RM53J30s3_RKT-zpOL8A&oh=00_AfvibKl3M_-bywu1cR8wR-kC_TbYCzalHGGjqKgG-jA_2w&oe=6999DA9B",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/506610626_10234896802979798_4457630318585788689_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGcWD6pwn5hn10v88uKe5hzQkTHgqlbUSVCRMeCqVtRJSxOGCJSmMR9W9lic-gPInbuJpVeXBhLSPM0hOUCM5ZJ&_nc_ohc=bynu8VTmZbgQ7kNvwF2hKm6&_nc_oc=AdlaW9wxaDtS8BZR-uC05N3vudzbmtpMekLPl-4hgdFNmdlw44j97Lw42VjD1l1Vcy8&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=h-OYdBbOHRXWtyhQkDtI2A&oh=00_AfvmYmJop0bgMj7ZLFCjWKB7lWcw3fY2D0pjF8fJdoDGGA&oe=6999E20E",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/508171003_10234896801339757_2251625341082098755_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEekNmegQ08JT3OeQXoXXHRbXbZf9tSWoRtdtl_21JahDZHQ9PRSdYFGXAUKh6BUQyOy_t0jxV9NGKGgCdWGq2t&_nc_ohc=Vm90NM5tv04Q7kNvwHi1DdT&_nc_oc=Adn-IsVnd4CI2pGR8PGsFW7YN8tkX7KRiK4RyQYf_I_rPXVYQtqnvrsrQjH2Tk5Kxwo&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=YfhrL-sark1nTiYtPPIc_g&oh=00_AfvWDxfPs75P9gAK-ItmRmUfX4mgfw0RI-AUhcTGn6-xJA&oe=6999D83D",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/506874072_10234896829060450_6032863363507709814_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHkKR93v1aM17R5ZFq2Q61Q0wf0jIOB_o_TB_SMg4H-j6fVKpGPr7CBMawAjcbPga1dQeOxdV9J-Nvg_wEnVd2S&_nc_ohc=FBOsS7y6-JoQ7kNvwF9blL5&_nc_oc=AdkUxGeDy_ylIHEsYE5baOBu9jbAIFxJyFH5xExTPFq5-SpI0lQcxNMv4Tqb2eM1qCQ&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=BQ8wLuzZLrgbJO4qrOpO2w&oh=00_Afv7b4moQ0zxTD7N_MaW4-hR5x3pXo3l_v6ZMYgSvAb9Sg&oe=6999DB87",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.634584446341913,
+      "lng": 120.4070170104473
+    },
+    "rating": 4.7,
+    "reviewCount": 3,
+    "roomCount": 4,
+    "bathroomCount": 2,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Ej Board",
+    "description": "Affordable boarding house near TAU campus. Walking distance and good for students.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Malacampa",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "CCTV"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/559547721_25591063537162177_7122565197026336385_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=103&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeG6dFxY77UiIOCSdOp_OhiSHMUTs115ofEcxROzXXmh8VYwkZPacvHDW7uzcT46MU4h6wNUrj06El7HQulQjiK_&_nc_ohc=NXwnR0iU4YEQ7kNvwFVIyow&_nc_oc=Adk_zqmhQRrqJO6jk-rzINEVum7vjMn3aqvK-Cgj5iieVhW9djN3vTbWt61xZe8OfH0&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=m320FBDPUAugRLhOdXco6g&oh=00_Afs6lim5EI_JjObEyzIfSj6yycEzAcWOH3JOX6s7L7wZOQ&oe=6999EA93",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/558889964_25591064003828797_36849962143943844_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=108&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHIvEs8oMfArYpQH8U_OwERnEZxA3wYGsycRnEDfBgazBeclEnn6Js1wR8rPs0xCyauWYMpbNzkPkRXvTPS9IJx&_nc_ohc=37KWjpXIJPgQ7kNvwFhSWp2&_nc_oc=Adl6cCQ9ijW9scRH817r5pcCJHuKA7ZV9o98SYZy8SbejdWpHEBReoAhRZiUYBcs4-c&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=qsC_yEU8o2gSAbYCpdAv5Q&oh=00_AfsS_DktRaWOpUcYANjMb0Ck2-FwwDuuFlXKwWeNSO_S2Q&oe=6999D22F",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/559012140_25591063757162155_2070989215665296180_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=110&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFqSg6qjzACD4CQSc-QV3YLlIH7-ELLGaaUgfv4QssZplGx_wp6JUm3p3xS1pMjr4FTNsyahjYE_ZvJOyROUd52&_nc_ohc=19wL11YxGacQ7kNvwFVEqV9&_nc_oc=Adm3RHAgmRM8AXGpiCOqc2yLZq4LtEbyDasCIK29XO7Z_B0S7zI_Nnc4AU4EZrJ2KiI&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=-VshGvmt1npJAhnKugDB2A&oh=00_AfvNZHP_Bd073Wok3Joj2LWaNvtyOsLwDG9aVdWB3rk9eg&oe=6999C5DC",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/558758983_25591064037162127_6961956173890805933_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHYytPeR-i1nLqHvI5UrXZsGuI1Z8DizpUa4jVnwOLOlaUt6Bb5Kb_kfqYQ6MaxlLy79uxJg92Pgzzv7ZqIh_TD&_nc_ohc=iL8YXMeeOjUQ7kNvwHZxCT_&_nc_oc=AdmN7020JY3hwfqHeQbcOH39AKre8ldm5i50fq1OFK0G47NWK7N9MZ9Y559k4VdT_Ls&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=6-wE3LlHJrnMcW7DuldWDA&oh=00_Afu8OsHFTs4GE5iiJf4lJUdaukEJC5spN40-zh1xszvZMg&oe=6999CD2C",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/558017776_25591063803828817_8802442903879920407_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=105&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHuKEXqX4KhQo-aVv60zU7TUJDp_vKi8BJQkOn-8qLwErxULlCibe3TNE_xxPIc9qme555fqr-OG8BOSLUds5HM&_nc_ohc=GFl3rO-Rgo0Q7kNvwHYCxn2&_nc_oc=AdlkrsHtVjz9sYh72kTCzOiv8s16puDe6VS-pUkDLUvR2sMAwqPT6Tl2mk7UhaSB7fU&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=5FB5KP7BkfFdA0KFdbH-Cw&oh=00_AftdM1zBs6CRhscRVsP1W2LHzN9UeZheEyQWEbwO-k-YmA&oe=6999D246",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.631202687330532,
+      "lng": 120.40760874241525
+    },
+    "rating": 4.7,
+    "reviewCount": 5,
+    "roomCount": 4,
+    "bathroomCount": 3,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": true,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Valdez Boarding House",
+    "description": "Affordable boarding house. 5mins walking distance and good for students.",
+    "price": 2000,
+    "roomType": "Solo",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Parking"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/636197260_1970575690484108_6575337414910137667_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFzBSR0QxnaWtmRi1Ja01pF_ULQ42fyX7f9QtDjZ_Jft9l3ZeYhhumvV9IEdYYLMlj4d9orQVs2A3XdYR5gwOkW&_nc_ohc=rSMVLtdbnaYQ7kNvwFswAPp&_nc_oc=AdlalM1OT0iKmigqfgUv_tqxeGznT_Z9U3mmSIDB5yLWEdSAMG8AZTq2huEbe5tXSWk&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=kYbakEm7GraSZ38uy4Mtbg&oh=00_AftfHd4lkcbQa7aGqUqWuws7DQ_xpNDtqeTp9iv4PcP4Bg&oe=6999E421",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/635129710_1970575687150775_1603916599290581705_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEbEJi6fkzd9uCxlaWCuQqRLw7OMF0_UGMvDs4wXT9QY-uOGERftJYdNeR3TLcGHjg8nMzUOGldXP0hsf9gcqMI&_nc_ohc=J0ikkr6HDZMQ7kNvwF_XUoX&_nc_oc=AdnkJdBjCV3OETG80xaK5ZStDnyVHsh8BibmGeQGtFDOPtx-Q1tkzqPKndJF_xw0uHE&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=UdGGBiXF7YS3seFQCmdQUQ&oh=00_AfvVKasqEcs3Pcgl-dGtGXRBA6WUmjG-Q8BGu8_wjRTt_A&oe=6999DFA3",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/632858770_1970575613817449_2994013801811162862_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHHcrsiWXrjoBKKfwMPz_0nwE4omEE6-PXATiiYQTr49bWzeniCiaJeHekLemZeDyQVw2vDfaChRvz86FgkuLRe&_nc_ohc=fTThrGUjLbQQ7kNvwET61oO&_nc_oc=Adm9FsIaTz1wgxH7ItCmEmkEfDLKsQQNdAox2pFkj8WycZY96TrcaMnPKapSCpwF4H8&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=lIaG5P7aqPNZwifevqKfVQ&oh=00_AfsnjPK21CxeWjwsm64hlrNhI16z68g3G5joQx3tFYAM-w&oe=6999D5A9",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/632451683_1970575740484103_7914320541770658592_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFy2orv0IyS7zvMgn82OyNbfmu_QKWXeYx-a79ApZd5jLx8nxjCX5BIv02vhsMWj6Sy2DCrbu5h1m5yfBHGiQgU&_nc_ohc=1wdzjtMKk1IQ7kNvwHhOIzV&_nc_oc=AdkDvoR5VyHqyhTjxBp6pyK5rmjWvvqC4309gaNnw567qWNIIrhb1dLI1eoYtca303U&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=LCw79WE_YA1YZhVzfqLjAA&oh=00_Afv5PKwzJx84e6FbqVY4Ev0OhARK9DveJ1UKbativb36jg&oe=6999BEE3",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/636817111_1970575737150770_4136499697482955727_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFV3lmPcjZ6p1fa1iVsbq6AimY1B02Zf3GKZjUHTZl_cfn-TGSGXjPK1zHrV-v7xAGSCKi3mnk067iSW_C7Sc25&_nc_ohc=jfunNZut9m0Q7kNvwFIU5fs&_nc_oc=AdkR1Ul_awckgxjdwrHU82Cn22X0ImLyils2yHiwKkpUiS7X5I7o9s86L3aiA1JU6UI&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=c-ef-EBUlxXTHWgu0u6qVg&oh=00_AftSTGwjhkAU1lcuI7_a0R7PKDS_CmDDO5p8f1foyAeWvQ&oe=6999D53D",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.632527605443153,
+      "lng": 120.40967535807025
+    },
+    "rating": 4.4,
+    "reviewCount": 8,
+    "roomCount": 3,
+    "bathroomCount": 2,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Clang Boarding House",
+    "description": "Affordable boarding House. Walking distance and good for students.",
+    "price": 3000,
+    "roomType": "Solo",
+    "location": "Mayantoc",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Parking",
+      "Good for Couple"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/587229714_25407545038868871_4859227444723793869_n.jpg?stp=dst-jpg_s960x960_tt6&_nc_cat=100&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeG948ux-viiJYkS4QCx8PPHFYSKBYnAdPgVhIoFicB0-O94p4N8RXrtwFur-_TfLO56dS2ClvIiwpnFxSKjIDp5&_nc_ohc=YAmt6mHmvzMQ7kNvwFOxt5c&_nc_oc=AdmbcEf5uSXW0hIhjJAojio8sdJA8HVLhblLOiE67lQjpEvAzVrp3860L0KxEr9qRPQ&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=zXWsWI6U-HGQZNJN-XtYww&oh=00_Afvu0sl9m6CCPrQE-9M2C06gILpXKj346TNSITPdDXAo5g&oe=6999C355",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/586308724_25407544945535547_6228002445396829462_n.jpg?stp=dst-jpg_s960x960_tt6&_nc_cat=103&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeGdS4UE0HZe8eUSaJiAeQWzuE0diUtKQRG4TR2JS0pBEe6WOoN1lwC61-Y7LsndZwnfPkq-RKj2h9Hv-SiwhJHD&_nc_ohc=cCr8ani70IQQ7kNvwEAfnCq&_nc_oc=AdlsZ67PD9nypr-ckaWWLY6jT7d56JrNamHjk0ykyREBPhJ5wg6kYTb2L0Xol69FP7A&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=zXWsWI6U-HGQZNJN-XtYww&oh=00_AfvV122Ep2_Vp_ORLGhue5eW3Q8h2PhyF6Vj6CrVl8N6bA&oe=6999DC8D",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/586421900_25407544958868879_4072914495630862976_n.jpg?stp=dst-jpg_s960x960_tt6&_nc_cat=101&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeGpq8R_vZxIbJ4a06Bk8LIk1VnOabUxHpXVWc5ptTEelZZ8kbIE5a75GSzmmPJriHe908DoGIIO4BcoAJJGSLNc&_nc_ohc=OMe9BBLY4zEQ7kNvwEXNM9F&_nc_oc=AdkW7dgNAMum2mGicOQ9ZcDIpOPCmw1QGsgbv-B3_06V293iSt0np44X4kiCb-ylzdg&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=zXWsWI6U-HGQZNJN-XtYww&oh=00_AfvbN-Ko8Vkkg0cnhm1FknBSTHxNf9PEyKUQJnT1qeElVQ&oe=6999CDFF",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/586030665_25407544948868880_715243407475115520_n.jpg?stp=dst-jpg_s960x960_tt6&_nc_cat=109&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFVqplbEmK5nyxUPdt1zBYaHWFt_LdnWoodYW38t2dailwgYlTCPh7ife1ID-f264BvWkGkyjacsjFyclL1ttLi&_nc_ohc=O50YZw0HSZ4Q7kNvwFBCwrN&_nc_oc=Adk-_T3Bz_Xm5oLo6br5bwMT3j4hNW63Ja9mGWF4am3VmgsSjk3c4yKW3oNHeVFISOo&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=zXWsWI6U-HGQZNJN-XtYww&oh=00_AfvtxzpKkqnsU6yJB6CMBwwGxeCMziGkTM3mMq1CUyswLA&oe=6999E1D2",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/588727122_25407544952202213_9160575798694396280_n.jpg?stp=dst-jpg_s960x960_tt6&_nc_cat=105&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeE6JhZHBsWCsjrJ3kd27hdL4CQZuti66SzgJBm62LrpLPabIo8M9Ymmp1ldCRWRZ_vQwTd-Kzp3TCO82okxamgr&_nc_ohc=cn5B_MDEtmsQ7kNvwGSnnU8&_nc_oc=Adn01CRu4z4KVVnIs5vMC-FvjXx7GNQZir2VP1UqcaMDt55yxIkRYDC1NIf_2w7sIFg&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=zXWsWI6U-HGQZNJN-XtYww&oh=00_Afu6OlBaLLBiNA2bLx9CVSQY2muXmd2BSuy9JlqHPx5fHA&oe=6999C75F",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.634826703533237,
+      "lng": 120.41039278351846
+    },
+    "rating": 4.1,
+    "reviewCount": 7,
+    "roomCount": 7,
+    "bathroomCount": 2,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Chloe Apartment",
+    "description": "Affordable boarding house. Walking distance in TAU and good for students.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Mayantoc",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Study Area / Quiet Room"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/632961221_4058201417655099_8709942476351311158_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=100&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFVmVl27b-wyo9ndOhbYHQSKlDQUlh4xiIqUNBSWHjGIhp5tu1NC4PN182O9jGmtqaNXOgIm3RTzq0OIVyOPN8Q&_nc_ohc=sArmkLTaxwAQ7kNvwHNhJpb&_nc_oc=AdlHuXIR0t6mshRfKGDO-jYsK7qau_auxK_1z2s6TPgZDNNOYmzHor8QdRu8PiX8Uk0&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=NyipN8rjM-6P2SCfZrJe5Q&oh=00_AfsdNLC25KXxj6YDIG2ZKjOB-41kjaRhvNj1x7dKYUaIzw&oe=6999DED9",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/635366921_4058201130988461_5747937075780136966_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeE9XnWYfKBGHZbLGpMJyvtH-QMReUQt8ZL5AxF5RC3xkmLoCqr4_FA5LKrtoERjP7VD3SPaaFXB7MhHqvb8BQlF&_nc_ohc=5L6DK2zJqnYQ7kNvwHsxzaV&_nc_oc=AdneOM6DqLPOcmD2JvVSVMcoM6ydmfh-OImUM2cd4DU-pfR-ZA3f2kGZROqEC-juj5M&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=x5gzvmXYiH0UH3Op3q79rg&oh=00_AfsD7uLDcM3cn9lLKBStAMP94mHgSoOaJ8dTuvaC0dxN-g&oe=6999E31C",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/633688204_4058199727655268_5626311132877500538_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=107&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEPHHL1XENnuFpO0qoZA8CK7FoBs-Ri5bDsWgGz5GLlsM_0tfAaHsp_fc6XrMGxnW3xxGCOuChSt4wV3NjKXh6D&_nc_ohc=lrmNKYPb0icQ7kNvwGFGFGs&_nc_oc=AdkK6MA1i7HhRHF-EslbJEsKBmfRXPhmNJJsXubcCfnUNqKdZpr48FccLSslB44fZSY&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=BKbZ2l3c0X7_R4ZjCVkPFQ&oh=00_AftQ-mD3V1o9qly-w_EHFLmj6vLmywTQXZjWVfVpzPJ1sw&oe=6999D406",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/634316597_4058200244321883_3739476439334890224_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEjlJHZIU2HHu3Oux-kooJx9BtmNwyCXHj0G2Y3DIJceIaUXcfDR34uWY_Bz4IW3D5HzH0JtGN5Q1QpKBGiloU3&_nc_ohc=RkncDv-uc7wQ7kNvwFzwV4h&_nc_oc=AdmWW1QqwQ2goVNvZ4MSd7n791sLH-ossRUJlus71RqBG20XqN4BOwVIRxjeNk-P3Cc&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=2CAJS55Dk6yCb0vBnSz5lg&oh=00_AftNGOLwc0GW_E1HKgqz6HsjqtATSCODNl6jmIQ5L5Ds3w&oe=6999EBC0",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/636262016_4058191490989425_8245271804907417027_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=103&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeE91Seam16PW-mgW2XlXhlVXgtwhtf6_RxeC3CG1_r9HIEsH3eRGlQY4EJy3W_ikOekSzwEOWw2uBEsXlRGTcHE&_nc_ohc=wjumg_Kn128Q7kNvwEdCfz_&_nc_oc=AdkWHGJADTAUlz06_CuMhlmjch8F6ezzCIei8JqY12JnQUdn2V1VJFVx0GMZvq8AM_k&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=pHjr3hxeJmz6KvVgLcB8FQ&oh=00_AfuEG_hkQ2-Z8-hShXPTZn4pCexhHdB7dy_vGRvFZ5Pw5g&oe=6999D3A8",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.640209011800021,
+      "lng": 120.42322844059395
+    },
+    "rating": 4.1,
+    "reviewCount": 9,
+    "roomCount": 6,
+    "bathroomCount": 1,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Art Boarding House",
+    "description": "Affordable boarding house near TAU campus. Good For Family.",
+    "price": 5000,
+    "roomType": "Solo",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/637478101_33843684308580471_1444170352683026431_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFmh9mNQ5NUNx17O0bin8syNFYoSQFWCRs0VihJAVYJG3_8T92RkCb8rqgAJ6eOvJP12_gQdOcYfbFBbQ0rTfkV&_nc_ohc=BMHxR1tMB24Q7kNvwFig0_V&_nc_oc=AdkkDDwqLsRvTZPtbxREl0TUJdTY58q2BtkoFmLorL3rhbwxuoECxNvK1NAw1uaFLTQ&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=ObOIBlXchTwmZq_WNSPzXw&oh=00_AfvNOgq0jtr1ZmRJ8r2-TMWKQWceqvNDeO9DD6-LhfrLqA&oe=6999E638",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/634213171_33843680815247487_4009949950361440482_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=103&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHE5vK8zdtLgxHByCzX8jRYVKGWb9TwPKFUoZZv1PA8oUlV3WWa2T7lYL1dxqVh5-Cp3xiDs6tJy7DjV3uSAoEZ&_nc_ohc=GK47m06rc3cQ7kNvwHKUy0F&_nc_oc=AdmB-HOVVIBbE2UfQYJfpfyb2z1h8Ilk8kMWVcEQl4uYHLajx-nej3seB-wrgoJAtEU&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=xeGWGc9hIS6S91aHFhHGqg&oh=00_AftaTTMAAaNKo9LNzp48CQDK1TwwWLGmd5jyfRXSodQDXQ&oe=6999EA31",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/635668522_33843681441914091_8194617995117574215_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=108&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeGUsZIvBzV0B4rcvcVHBVqXOUVcRdTaUME5RVxF1NpQwd5YLYHD5g7u_QcAfCztQWSI5p0gOE2Rx7rNcE733WWo&_nc_ohc=ygDZHjvurP4Q7kNvwEH13e0&_nc_oc=AdkDUSErW3X3Jh8xUALVfFSWiyk6pXTM16WETMkhJukvzUEwdaSSdSdHmWrrtvo5xQE&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=EJj3kKky3MeuzFT72jaLOA&oh=00_AfvGrjfbJKCVjQTviW8aEFdr_xkFVOKsfazHxGIxHC_NPg&oe=6999D8B8",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/634831113_33843682785247290_524313627813446423_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=109&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeGrT5kfCdrDZCJcw3Qi7TSHQyYDPYCrCiBDJgM9gKsKIJHzY7SfFL6OgvMn98gY3slixBNP5A622fh9JzM5buOT&_nc_ohc=R9ivaLMOrnwQ7kNvwFp1f6d&_nc_oc=AdmUOrvT7EhEjvgz52GEWIasePbXAN6EkLPZp_YMFI14SZx4JChsor0F69eiboHZosQ&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=J0unMMBAM6sD89OBmlOMyQ&oh=00_AfufCLtbjx4AlRDUnN9koBPIBcEvIyFSy296o48aMgspLA&oe=6999F070",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/633961496_33843682145247354_8558907690307443560_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=100&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEWedAD3ezEmXE0uB2Nj1aOYwmfk2KXNTdjCZ-TYpc1N1En0Okf40JR5YsuuOULbk7ddV8x-uke59kH17JX88G1&_nc_ohc=r-NN6qY-1DEQ7kNvwG-cFT8&_nc_oc=AdnZpuO3VjYGIoN8RfIgAcsQNn9bL4ItHGnnDTeYYFrAVRoxmPe58rGu3ku0dWpNaRI&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=zHdZ-wadryG1TuHSjMdxEg&oh=00_AfuZ7AxLLjDsWUXg9BTDlRuWgfQqT1iYUdRV6a-VcrtRbQ&oe=6999D231",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.629776836149347,
+      "lng": 120.4186443805312
+    },
+    "rating": 4.7,
+    "reviewCount": 9,
+    "roomCount": 6,
+    "bathroomCount": 1,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "JM Apt",
+    "description": "Affordable boarding house near TAU campus. Walking distance and good for students.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Air Conditioning"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/634407660_26502188506044919_1723889798620532622_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHmVrto5dC7UhKL6goL7bR-e5A6VvQv3Gd7kDpW9C_cZ1Z7vymnh1nQQyUMTEZnRz7nCUsps8YB1HpfXqWLjw3S&_nc_ohc=RHYItrXSkhMQ7kNvwF0NYfz&_nc_oc=AdmCWGlMOtPZrzBjoGcK5t3hJ-be0MeR9LMc6jm-S9kqcAETOA9GDjgogwX4CYV_2Wc&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=wWfIa4IEZvUSxVHebud_rA&oh=00_Afs40TGGPKxOWnbysb7wJtJmTcVM42YS6X9Rs55VdDvmFw&oe=6999D3CF",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/637350726_26502188682711568_3478831305384086753_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeG-S7anopWjMqas_3FckF2JqB0gZBcA3NOoHSBkFwDc0y0nYELk_ahAqww2kWkg3n8iBIQUKBWEXot70h9ZJTZS&_nc_ohc=4JmvTg6q9l0Q7kNvwGba8En&_nc_oc=AdnUdgrTBVw-hZnV5dVJ1cym1a3TnkSx9yCfosDUTc6n8lwG-Kd-bW6YYXWx2i9jdnk&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=6qAWUP6STUb1bMts4vFkew&oh=00_AfvDdrZZUlwOlVVGjBA_8yUKbJdwzWap5BmpvtzTqqhvUQ&oe=6999F604",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/634673426_26502188789378224_6776161102326305262_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeH6AMC4N-iO2HB4hWZjkYWYQXWnTeJp0d1BdadN4mnR3bAvhCa9dI7veqsNNO7nMMAmlO9DqDKwPiM5pVFqrftY&_nc_ohc=BOuSePM124MQ7kNvwFUvHH_&_nc_oc=Adn1F9vZlpa-bMJ2ANwxmfwPUH6ycbyohs9BF04bdLeY1gvykpfTvY8hsgh-rHsKY3Q&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=zP1qK-X0N2XZpjuGfp8KkQ&oh=00_AfueFAUlUTG5rF_hq9Wo1Jhab7Xybs0BQG0AUhUfNgA2Iw&oe=6999E949",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/634253661_26502188936044876_2937711297292460405_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFZtXiYB3J-psAYS39qRUdl9lYnqPtIJm32Vieo-0gmbd81cgtest_wKwT8RPbGE4H90YxOsBGRh-uZ6qoD1UgA&_nc_ohc=Vw8BdPI77CQQ7kNvwH5RwB1&_nc_oc=Adn_jI67blXncPGh0RFddQWFC0E1T7ZCtlfPfb1hrlC_upU1ejc-jkfP_0v7Nzfm8oI&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=JeF-KAUFP57ppUu1D7fUWQ&oh=00_AfuqDNwnwPyvfY1BSDiodSHSW_xfOC2Wd6ZTYav8wUSxmQ&oe=6999CF9B",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/636683367_26502188509378252_3717862776483639047_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeFq6T81__7XzD7k9pOYC-NKZMkYhh-c_8VkyRiGH5z_xVrs1jATD4p5tRScg88dF2MvlILcY1FKbsSofy_95u6U&_nc_ohc=hJ9jwVO-y3cQ7kNvwGwM3Qx&_nc_oc=AdlxAy2pVlM78k-jVMbRGI8KLyvjsgXso4h0ajm9wWkhl8ZOZxTvBXqcS4GTsdfxwJg&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=sQ0FWseS6l7LM3rQ4VsEcQ&oh=00_AfvAURaI9myvfF66KbdP1BG8GtonnSSb-pZ7WeHFK_GShQ&oe=6999F914",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.633342723849571,
+      "lng": 120.42470758304297
+    },
+    "rating": 4.7,
+    "reviewCount": 6,
+    "roomCount": 5,
+    "bathroomCount": 2,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "RC Boarding House",
+    "description": "Affordable boarding house near TAU. Walking distance and good for students.",
+    "price": 1000,
+    "roomType": "Bed Spacer",
+    "location": "Pinpinas santa ignacia",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "CCTV"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/634364256_26463634209910898_1613865629271184082_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeG6QpURBrBoiEemFbEFlu2auItacUL8UOe4i1pxQvxQ51YHo3mtMjcOZVCgVG5rL44tP0qgvlIByHIsymv5Eknt&_nc_ohc=uLDuVSKpQzAQ7kNvwFh6oFw&_nc_oc=AdkC8ZiEhVoJW5mW5Tz_UCQXKpLPLaSYrFN8ekquCKeExvGVYS_lBvKMWBm-Qh3Ettk&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=GceJYjkeOr6dDOPf8l_twA&oh=00_AfuPSY8SVMbvpL65GkHfyaIBEoyzcXRozG1TNObAFbJIgw&oe=6999EF37",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/633051549_26463634673244185_187481872105791631_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeELm0mmSQYBwd1sLb9YNydxnAC_6ITReI2cAL_ohNF4jQo4VuzeHuwU_nGkE0JCyXIyXV71vgmxy19NcDwPIyrP&_nc_ohc=iksfMd_wOzcQ7kNvwEWma42&_nc_oc=AdmMga91tTeUNX-eRgYd8Zt4UE0aOuvcB-jbd-PWQ0m_jkX8qJ8HLhZ2C11y6f5b5gY&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=2U7Z1VoSEkRxSNlXBEVvMQ&oh=00_AftBR4xMZnccS3lG7Ee7PMQGY4sty4DqvnT8PPj_mEdYgA&oe=6999F4FD",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/635599850_26463634503244202_613699211187110656_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEo3sy37QfRCY_FMQSryd_mpa4UKtssToilrhQq2yxOiGc0cw3NCcJzXpMdm_ttZL-Ponz97_B-I7yEVPq6tlxE&_nc_ohc=p1bz-87x-B0Q7kNvwHcZVv5&_nc_oc=AdmlCy_uccuwMjLIXrrF4MLkdIc3NZYMbAE8HEC_2nD5CusjzjQdkN4cHadfOHu1L2g&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=_-uyzc0IbRcDabaaH7mE1A&oh=00_AfuCkojKojOnITZkfZQG0GtRx5qiD_0Hqw44yQLDfyozsA&oe=6999DC6E",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/634884931_26463634776577508_5540501958423368308_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeENHq9ZuaLj9Aj48gzZ5HRinddirfaWxiyd12Kt9pbGLKL8dH2sdfN9UVZXrhdxyEpAa9ARdEaWxT4ARFkq8F-b&_nc_ohc=BsGwVgAjT4sQ7kNvwErCpqA&_nc_oc=Adk6MaIM_mJSYy07VZ1zP75zO7Bk-cJ9EKOGs-ELMKxnepPlZwGWFuvF0bVPmLBnZxM&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=OvuVPTVEC-w5ZTNcba4zyg&oh=00_AfsoZE83uZ9JiVYjraF-lh-DAIbxiArxzxxI9sB6DnN6Ug&oe=6999EC42",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/633353644_26463634456577540_1293351623239314243_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeExkZaxcJ5bLFdfSVBu9MFF2NIi2OWa24HY0iLY5ZrbgWLPE_1dkPPcZAxcjVAQhqy3cbbIB_lTl_eHS9SDf3Op&_nc_ohc=317sbttXIG8Q7kNvwGSfh7m&_nc_oc=AdmqxKECHOH5NBA4pV3570NFXhJXRAkviasOvFsL3rlyiKVaHxq2M3NVlDlVwtzWCrU&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=PPZGlfUeRJfcDRbo4zAOUg&oh=00_Afu1fdTyda4FL5ZQmDk77wbADW9Ta5wp4pNQPAQY2D2crQ&oe=6999D76C",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.644483941767673,
+      "lng": 120.41723473036537
+    },
+    "rating": 3.7,
+    "reviewCount": 7,
+    "roomCount": 3,
+    "bathroomCount": 1,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Budget Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": true,
+    "cctv": true,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Roland Apt",
+    "description": "Brand New 2 Storey House for Sale or for Rent, good for Family.",
+    "price": 4500,
+    "roomType": "Solo",
+    "location": "Mayantoc",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/516435458_10162948635213232_8735024740775832993_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeERvtpZRfUFDkn1amFi6TqixDpH86o3yVvEOkfzqjfJW_urQUtiH_9hflVNC2QhJKq_AWcbMH3ZaV58QGJqhQ49&_nc_ohc=mazHljp1tw8Q7kNvwFKp6Qq&_nc_oc=AdmGdZ_VuvIaORylT00G7G224Q-vXjRFScHyRnrsFoVrAMSW1zBZ0Qv7dWqa5Kd3_og&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=_RNXYXWMtEvR6E24l8sdcg&oh=00_Afs0VL0rZhWJ8Kk1FcjwhmFEOQPkklI0oJLNcRe3HSa4CA&oe=6999CE92",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/516909315_10162948822373232_8218562239780856224_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEUaHhmotEOreYfNUqbfZiy8FLsNjchmdPwUuw2NyGZ06WMxWWS5QftyipAw2dnYWzw06eGuHhkCZ4RFWQnBsjg&_nc_ohc=aSqMGTZrgQ0Q7kNvwEOhBm6&_nc_oc=AdnacnKc6YT3svPnw3nx2E_fEY6Uqcj7_Z5IQL-dFt9BIgbndLqZAupGOfjNZnj-H_Q&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=ej_-GvTiK5sbxofLtgbukQ&oh=00_AftICOfemOKuokmXWis-ijneJt1hlCROSqBQXJWy6TJMIw&oe=6999ECA4",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/515926269_10162948822413232_1211370704745288569_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHNNTCF292GW_ndqBGy2vD_uF2dCGB7dly4XZ0IYHt2XIUwcZwPfD6e3Yne6vaPKHD5W3ugA4SpClZKHdhg0ymW&_nc_ohc=R65iZ98s3LIQ7kNvwEZkUew&_nc_oc=AdnPGmppuOjUPyksbqsS1VfSCth2kzCTi4m50MmLuVnumwE1_v0oPp0ZgmJpQhSRzAo&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=EFMwiRhoASo9tcEJTtWP8w&oh=00_Afu8wfcTW0jgSG56EXduo7n8BT8yRhQy3t3KhM9o4DV6cA&oe=6999CC56",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/517021170_10162948634998232_6058714561204026267_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHL4zQjP7e9eiN4ys2waHf3FKeyvsEZsEAUp7K-wRmwQJMGHAyviunn2Sugpr1VlPQr_HLK5pn4V9xxR5mLTkfV&_nc_ohc=QfiAfv_hMMkQ7kNvwFrAWZ2&_nc_oc=AdlQhfSULIlxPYnGupCGy6vbDP98_KoGnQmvQ-0aaD7QGuWw6EZDIVNQKKuGVxBwAeg&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=8-ZeefaPl4rXSKyiwHnD6Q&oh=00_AftWWexURT2gUVR8Pd6MX0OXQ_zukwwowlK_Zg8-c0eMpg&oe=6999FD6E",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/515570382_10162948635378232_1778808795183855166_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHsKpg3tdslC1W6roAgvzVyVrj223A3gPlWuPbbcDeA-ZFKAukkYhB3O4ZGDmdELPCLKuppMd3H5xRtTJfGvsET&_nc_ohc=Q6xI6xVlvgYQ7kNvwEHlbWl&_nc_oc=Adm49JWeSPABw2mei4w_IeHUDMNoqMQ6PmL8O-w-HuTlm9H-j84O5P1faUPUPt0qzrI&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=QlBbMKpEhrEPn71pBEgjEA&oh=00_AfvzYBb3CFDlP_Hs29lzZLxtPO52MZy_Ir851vI12qY2Ag&oe=6999D322",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.641619604198151,
+      "lng": 120.41615025267397
+    },
+    "rating": 4.5,
+    "reviewCount": 5,
+    "roomCount": 4,
+    "bathroomCount": 2,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Jeremy Boarding House",
+    "description": "professional, or a couple seeking privacy, our brand-new gated units are ready for you!.",
+    "price": 5000,
+    "roomType": "Solo",
+    "location": "Camiling",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "4-min walk to Grocery"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/632870878_26212840648313901_2834390101410399001_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeHt18Ev5GGsIv3VXbf2wEOQJdF9EmlYMTkl0X0SaVgxOdsBpEdjfhHHSwMWD28HKNv4qWo8maLszh9U2AXOOZs2&_nc_ohc=1kT4rvQQWw4Q7kNvwETTiyz&_nc_oc=AdkH7_wmr66hqAkg27c6JbG4vNSN4xvmxnfHtFfGRdtvA7JZGh_L5pWv533LoDkHkOI&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=HbNFd8cGdR85gMXN87wnfg&oh=00_Afsm16QRzcvvqq0EEe7JJgUC4gNsDfhd6wZdZN1F1v021w&oe=6999CB7B",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/631318597_26212841331647166_2409122737028342265_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=110&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeGuObJqvGXMZ62Vo23AF00Vv_bmmA8DWvi_9uaYDwNa-FWCO9c2Pq3V0TEaZNkxn4qWi9Bv8HhnqjcvbBXzM_2m&_nc_ohc=oo0cGbcKba0Q7kNvwEvSMHn&_nc_oc=AdnTV5oejy8SfjiWSFyFLuANh5MyzNo5Mizn7PnHA7lUNpkdNY5QYlcN8uyddFcHsGY&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=3DunlM1ciUku2JAjkdm77A&oh=00_Aft4Ik0alewowIYmTDFDHLmkM1r3y4r7a-6aQfRqs7wO4g&oe=6999F904",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/630810166_26212842138313752_1089906382451248656_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEuCHyjtHl6zsvb-BcFaZnkFGn1KaZHoJsUafUppkegmwVdgo8p5e-E-zR6j7QOr4NzuNFWlR6NV5Cq2E3kEjcc&_nc_ohc=i4lf0GR5jmkQ7kNvwGNRACB&_nc_oc=AdkG53G0zv_L5qaX0HN8qbrffcPcLLSjHX1RfXKBtnKd35uBLUPv1lr0ZdHIO0GgKKw&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=4AUlvtMLl1WOzKsYAZg2Tg&oh=00_AfvucqPG8Zb84gKPfEP0TQeqsVyWS1kttsx7scqAdXe6zw&oe=6999D4FB",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/631062992_26212842408313725_1629408559388698646_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=109&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEgZqvZ5Uaa2dAWpUjqtP_W11Dy9WuCOq_XUPL1a4I6ryHdQtViu61lGZrP_ja_90wDKb1PI31OCAR9brdtVXwT&_nc_ohc=IiCKMicUStQQ7kNvwHp0vC8&_nc_oc=AdlyqxU7u3XSKdKjt-bfOlSCk5ll6XeuQfEgNmpETUC1QkfRSACTICHWgSvqOhXZx_M&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=DKkPRiMFY6PjIY2i0XZoWw&oh=00_AfsJzL3UOLFJYR7y3u_b00nKrQK2dg9xI0adzmmDvSRsWw&oe=6999F9C6",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/630580334_26212842004980432_8804486533570811180_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_eui2=AeEjEDVn7ragh3b01ijz_1WWHmNHswgxkdkeY0ezCDGR2bP8_EvndFRmaFCT6Y4LBreY2ZMRn1hCQcaYc4Cz7Z24&_nc_ohc=rWOpt6nZIYIQ7kNvwFP3rvp&_nc_oc=AdlQYcObkYO1UUu_ivM3Ws-i-y8R98TB9nPjwhdM7gR-2MGJVkqIUdB0Q1kdy0q5gd4&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=ig_GrCaxUZSn2NYyV5XVzA&oh=00_Afsrb2W0h9rzJH99PD9V3zgvKqVi1P4wuQKbZMUosqU3tg&oe=6999CE63",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.633767198834807,
+      "lng": 120.42094695479175
+    },
+    "rating": 4.3,
+    "reviewCount": 6,
+    "roomCount": 5,
+    "bathroomCount": 1,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Dianna Lhey Boarding House",
+    "description": "1 solo room available, 2 minutes ride away from TAU.",
+    "price": 1200,
+    "roomType": "Solo",
+    "location": "Near Malacampa Bridge",
+    "amenities": [
+      "WiFi",
+      "Curfew Enforced"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/528607831_24166282142981447_2467494223355985486_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=YCWt0s9ihmgQ7kNvwHnGSwN&_nc_oc=Admn38DIj92YmuOr5WU6h_KJEtPTE-VNwKGXcttO9NXe2Ua_rVZ-VC8ZQj0p_6Z3HPc&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=Gf2w4fvf29X2P4M_I9keDQ&oh=00_Afuz0G2B3ZHxH2zdRIwED9o4fYKZ2PjlrOedfPCEs72AlA&oe=69999AA2",
+        "roomType": "Exterior",
+        "caption": "Full Room"
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/528689113_24166282132981448_977468245875755706_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=xtKp5LoochUQ7kNvwFSS7Lz&_nc_oc=AdlyR3d4xvtX-aM57uWhKTXdgWoagLO0PCRVLuePYQiUqht1eeNp7hR4PT-SNeD5Bzo&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=eOV_PicseDqjKz8_rl9mdg&oh=00_AftA3tc-SJpnkqO3Mc7eZfpCLMSwzqEYTuS73aVDokI1Hw&oe=69999135",
+        "roomType": "Bedroom",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.638512227267546,
+      "lng": 120.4204591580591
+    },
+    "rating": 4.8,
+    "reviewCount": 8,
+    "roomCount": 3,
+    "bathroomCount": 3,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Abi GS Boarding House",
+    "description": "AVAILABLE ROOM FOR RENT.",
+    "price": 3500,
+    "roomType": "Solo",
+    "location": "Very Near TAU Gate",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Parking"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/601866017_26358899930364496_9098173658930631333_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=PP636SVec9UQ7kNvwHLgY8J&_nc_oc=AdlUy1cNKtO5p8O0o8OFf87TEdxyAdGLI3LkE3UJLyi_UHSvZNHTBaWKmLdIYSsTW2E&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=YQvNm4elERCHOr98CJnHlg&oh=00_AftBgZ-gRaRMu2U1Q9H_zSnUQ2W-Mfi3ohOrCYWNUVj8Nw&oe=6999B011",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/611783637_26358899523697870_4575750624529615121_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=pOqguPiFz2MQ7kNvwFZWl1o&_nc_oc=Adk4U5g48FVOyYmYarSHPc72klUoK_5lJkMHBj22LSOmCUV64aAeLC7mTq9nS9JBHyg&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=LS38UOZDOunTL0UADbX2bw&oh=00_AftbLut5R-2GU2I_mHwqDKpkdg_R7ra6k2hlI4pG-z_blw&oe=6999A523",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/608134362_26358900647031091_8625433055093725669_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=KeeM9THkUekQ7kNvwFM1_DF&_nc_oc=Adm31AS76QHEL1ozMw_8aOavoovAkd9pStVGc47B2p7hx7WaxEdf_bvLyrT1rZqJ-QI&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=NRxe-ZP0TSJv5JQX-LbN4Q&oh=00_AftXuXOcO-xqup7zNH7EleSgujZWv9QUGI2dDoT798JKoQ&oe=6999BECB",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/609004747_26358893553698467_5543063701219645236_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=FsX8wv_qxmsQ7kNvwFISJvx&_nc_oc=AdnQ9dQNPMBcwFKPXVwN6tDd_UrHep34ZQkFZFYZqYmQZeMHoxqc3EElLrahtr-Rkbc&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=0wH_LE7OWPAvEJHNHQB_BA&oh=00_Afs9rr3KNzBQ6kSs2ZaqPyHRTa_ebm9HdPSU0dOHVdagAQ&oe=6999A989",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/601866017_26358899930364496_9098173658930631333_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=PP636SVec9UQ7kNvwHLgY8J&_nc_oc=AdlUy1cNKtO5p8O0o8OFf87TEdxyAdGLI3LkE3UJLyi_UHSvZNHTBaWKmLdIYSsTW2E&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=YQvNm4elERCHOr98CJnHlg&oh=00_AftBgZ-gRaRMu2U1Q9H_zSnUQ2W-Mfi3ohOrCYWNUVj8Nw&oe=6999B011",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.64478884160177,
+      "lng": 120.41548272480563
+    },
+    "rating": 3.7,
+    "reviewCount": 6,
+    "roomCount": 3,
+    "bathroomCount": 2,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "FR Boarding House",
+    "description": "Affordable boarding house.",
+    "price": 1500,
+    "roomType": "Bed Spacer",
+    "location": "Brgy. Malacampa, Camiling, Tarlac",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/468591822_561755086644467_9091850972556145652_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=833d8c&_nc_ohc=AP6kqfDFUSkQ7kNvwGT1iK-&_nc_oc=Adm0-J4-gxv1SNF_VLKII1ym25UrhZxUUD-G7cnLa1Zb0cCHniUpA7qk_WZA8QCGSH4&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=L2R_C4H2lRLi90iEVFgEfQ&oh=00_AfvdrSIgM2IEGJegv64E_fRAXQ3RGrBlUwT31SQfu8bkTg&oe=6999C2A3",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/468720851_561755106644465_8493289364389317078_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=833d8c&_nc_ohc=UKQRmTgHzvMQ7kNvwEKW1n4&_nc_oc=AdnvftkVZsLkImm90SO4jo_qUVoFjaDLWfHQO26UiHKTjjrfLrww0Tyh7YXN-vPOpVE&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=DoPb2-jlFs2AQ9Jr1MQ7hA&oh=00_AftlH_QsHSWrrnXIz2Pyy7Qze-zbJc7US66jcZzfyS-QmA&oe=69999654",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/468749015_561755153311127_2646431824380913580_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=833d8c&_nc_ohc=HAbQWl8HKQ8Q7kNvwGYIS_n&_nc_oc=AdlqZOoRtkqhuVMx0fvAifH8FS0TTmaPMpqxZI3dyVzXYa2ts6AUlnzP9PO5hSeIeNc&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=JlGmxfGulqcMib8bc5tfGQ&oh=00_AfutSwpIipxsQ1i33zGzylCyKfrlzwpWt0URweT6N3B_pw&oe=6999B582",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/468750642_561755059977803_3466650837098853144_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=833d8c&_nc_ohc=5vlL_ElnzqQQ7kNvwFGN13N&_nc_oc=Adk_Qr2Vf40nndLzPfQcjYURcHLNLKQNae9EB-9jgW7az-WFmb9CTihovRvH7vhhsqs&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=5qn8BW6_1hyjNDG4ShQnpQ&oh=00_AfvCGUL221UmB8Idz30UJrrjSzB_cXkNRxa1M10CjfqSWg&oe=6999AFA3",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/468748981_561755076644468_9033774675438226716_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=833d8c&_nc_ohc=81gG_iMa6eYQ7kNvwHl_Xvi&_nc_oc=Adm7opflG78h0IJYAmMNmjMJ31lvvMsme2t5rkSrn4iI3iDLLkD32UbetAsV0tEluOE&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=Vp7EQWdX4N83n_HMG45sxw&oh=00_AfvAAFKoEQwFNVzKWLOjy31nTKrgAATFLkBMhvLvBgdIQQ&oe=6999AC85",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.64149454288977,
+      "lng": 120.42326570113308
+    },
+    "rating": 4.4,
+    "reviewCount": 8,
+    "roomCount": 4,
+    "bathroomCount": 1,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Budget Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Lactaoen Boarding House",
+    "description": "Room for rent near TAU.",
+    "price": 4500,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU Gate 2",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Curfew Enforced"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/623169596_1562501035054820_9088297222658148410_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=100&ccb=1-7&_nc_sid=833d8c&_nc_ohc=p1JDnzJCMhoQ7kNvwFCiJQR&_nc_oc=AdmSXqNiclsPMIBJ9L1FzBG7J7Uzz16EBBv7qdEruGxTVeC-tMkO2pj2_32OIZc7kVA&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=CKbZSpwxtQ_BUDMy4j4Y2w&oh=00_AfschFoBIRS7P8mWipWyC3VRo2ff8-Xioggd_k-JW9a2HA&oe=6999BD6A",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/622880545_1562502048388052_231680737711351464_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_ohc=MPBoC8u_P-QQ7kNvwHABf4Z&_nc_oc=AdmHoKWiYf18JE_txrONu_txRekQ39ND6nHyPjiw_nm_uzzsMCx4_1pvC-JXYRNwQF8&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=bvgWhHmYgr8be9HQbzM4Ww&oh=00_AfubdklOKJULR7-TDapcNJzrjPUU1l_fPBno0opWd9r6QA&oe=6999B3CB",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/622825323_1562501971721393_1657178393560912168_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_ohc=gaDouivEpAwQ7kNvwEpjjb3&_nc_oc=AdnqA5JD6MdY3AVUoSY-pYtOxbiSwrbwWGvjCCeGH05FcCoiCL6-Oxd0fxxq71kjfEY&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=1GoSV93fKYRCYJpiq4LOdw&oh=00_AftFm52I304otb3SE5BAb3xJU4tHZ3lAxZ7sr9e8bGLFEQ&oe=6999C7D6",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/622824292_1562501635054760_6475227673273120540_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_ohc=Y2PG0kwV9vUQ7kNvwHJJQOY&_nc_oc=AdmuA7lZieFlU4UMg_zhQIEY3sBDmrSyX9rwy2NyJbi2ROvxn2_62d3SQNNrd9NTHDM&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=Hhoiin_JURu9SKGIq-nOkA&oh=00_Afv1bAqOGEx-Ax18ntKiU-iFA1n2naHYXmIAFemhrFAvNw&oe=6999A102",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/622915486_1562501551721435_5659671202277784284_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=103&ccb=1-7&_nc_sid=833d8c&_nc_ohc=JbT_AEaodwgQ7kNvwEOSwk5&_nc_oc=AdkqnjFtlF_LnojXX5s6OWQCMXqZBuJglkO6ZR8Np7KKZoXgmyjJ8nxkMwdtMzzPkt4&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=6dn9S8L_WCfG66ZGUXhQ-g&oh=00_AftD5KfOopvL31IojAGZB00D9dT7KWR3b_ffnMwxSdXHvA&oe=6999B156",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.631877141639633,
+      "lng": 120.40552378085245
+    },
+    "rating": 4.3,
+    "reviewCount": 1,
+    "roomCount": 6,
+    "bathroomCount": 1,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Jeck Studio Boarding House",
+    "description": "Clean and comfortable studio type available for rent — ideal for students and working individuals.",
+    "price": 4500,
+    "roomType": "Solo",
+    "location": "3mins away to TAU & very closed to Gilberto O. Teodoro Memorial Hospital - Camiling District Hospital",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Water supply (24/7)",
+      "Curfew Enforced"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/617944716_1881717912704569_8307957788270135681_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=103&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=RBptm33d8jkQ7kNvwF4bzD1&_nc_oc=Adkn9TPgeK540nCP3HBbAa93hh1sNJw6dTxnKofB84sXn_abpmSdQ3WhoVVhetYhlYI&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=RQgVDEy3z5fouAUXEtTvBA&oh=00_AftjjNcXDYPQEXi4jVl3ZY5RdiPNmO2Ve-g-FRxGb5ZeYQ&oe=6999CCCC",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/618159347_1881717602704600_647156841994920224_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=nE6loosnOy0Q7kNvwER1w7H&_nc_oc=AdnVg_WyqYLdogLxoHlScrMKbt0IBHHNOHU0WKs1qm9TdqpuLMzG8flkXDpk2vIZis8&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=CbfEks6oUqE8sYfN5as0Nw&oh=00_Afs6drfR3T4jb_2aGDCu-tk1NEHTndPIUnjsfg8OYT_GtA&oe=6999AA2A",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/618801624_1881717926037901_8746784309245957839_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=101&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=bYhQaEtS9LcQ7kNvwEVCciH&_nc_oc=Admutjo2hVcsG92t93NBN-TWVBx6xofkdlaCsw1MZgpNEybRKMbFt-Uuc-qMkVGXfQM&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=RJTYZWKKIDs0L0KtAlYe_A&oh=00_Aftj5wJdoE4ohAXJjJI38aBF9Nw8guzg8knCOzhcFuDAZQ&oe=6999ACC5",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.626210977316234,
+      "lng": 120.41328945797099
+    },
+    "rating": 4.9,
+    "reviewCount": 7,
+    "roomCount": 4,
+    "bathroomCount": 1,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Hazeline Boarding House",
+    "description": "ARE YOU LOOKING FOR THE PERFECT BEDSPACE NEAR TARLAC AGRICULTURAL UNIVERSITY?",
+    "price": 5000,
+    "roomType": "Bed Spacer",
+    "location": "Malacampa, Camiling, Tarlac",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Own CR"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/630425862_34074403738840039_8489935260961593986_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=BIQiefAuMioQ7kNvwF-Ifei&_nc_oc=AdkSCqMF4Qe_U5hoVF1Br1R0vkHTmCVkwdc15cdQS5Ayp_N9HuUdfWxf-0MmR5QXqnc&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=tBl_gQPcvCU4V1PYruTqoQ&oh=00_AfteUkvHDv-3alHwtLmGY6xaZorzqYDD006Ewpd0zaoX5Q&oe=6999BF35",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/627194074_34074446835502396_3598521775661549851_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=Vq3j48XvpyIQ7kNvwHaO6ft&_nc_oc=AdmVuXMzd5R0XWPnZjBKUDbwg_IC4ENqGI-tV6GJoz81Nq268WsEimMQ9VlA6ny5qiE&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=twC6By4jSS4BzX25kNyAUg&oh=00_AfuNR2Vx-xCtrXVfUVzbIrSmd0M8-t5u1j2P1sJC8NT0VA&oe=6999D045",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/630167783_34074446852169061_8697099352932839420_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=xOvEvbwC-rkQ7kNvwH6kBXo&_nc_oc=AdkrBynULPJDLnxG6DVCFh3M0VoQInzB4fdNfW2mfLTkIBz-AQGs7cvrtttncW-E_q4&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=HhADAjLHwzd6Io6BOc-Cvw&oh=00_Afu_AR0UxVOKIiA_fpA7wBmRjCtDBRAi1OrSDNP7jxPGug&oe=6999BFF0",
+        "roomType": "Kitchen",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.63873652024514,
+      "lng": 120.4201603288862
+    },
+    "rating": 4.9,
+    "reviewCount": 5,
+    "roomCount": 6,
+    "bathroomCount": 3,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "LISA Boarding House",
+    "description": "Budget Boarding House .",
+    "price": 1500,
+    "roomType": "Bed Spacer",
+    "location": "Malacampa, Camiling, Tarlac",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Own CR",
+      "Curfew Enforced"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/626780387_26054397800861311_8663375848730298388_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=WEHvCmu65b4Q7kNvwGI-jpw&_nc_oc=Admrr5hDx5ygNv3d8c5xgHn3PQSEUo5LD-88zj0U4Dsk3aEY4F9Gj6vm5fGiXo9WfFA&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=fEGWAS0kv02YWDwTCFUNGQ&oh=00_AfvIMxE1zQuNYErlUlQmnEyIXe4L3mBt-kF4qRxSiXCItQ&oe=6999C885",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/627047402_26054398910861200_2821689047485088137_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=3b-KJTellC8Q7kNvwFDdHIA&_nc_oc=AdmvABcMqwvqlbIlmgMJDTUrjiXp_MYOPZjPk3MP8phnoBp1fPuZG9ukRZ00-sIHfmk&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=Uo6zCf_vH0bc6xbZMvghAA&oh=00_AfuGlr8FsyNSCG-GMkh0DH5l0vQ8s_aymsKCWfjecvt6Cw&oe=6999B23B",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/627718366_26054399420861149_186118965190310507_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=KbAbWDn5cAUQ7kNvwEzvtf2&_nc_oc=Adkr0zzlcBRIuW0paXcHIXujvtXiBlRLxXg5y4sTBvEw6hbyXyEFBnApOyGkIRgiht8&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=Paad91W8NwJgG8Gqnoru9g&oh=00_Afs1skrpgOCOaF4IpReDeWbLNpy94yfhoylWBUzn1OFTeg&oe=6999D7FE",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/627998204_26054398290861262_4061411537654125744_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=vrWuqOgwcJkQ7kNvwEyaJLC&_nc_oc=Adm-atRMUw-YJ1OcJegMg1Us497MDhg_Wk-3kdXeR2B68Z2wJ6f-WD1CWuuOdPsH1l4&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=1QsTx80gm9-BXV8EYvBTog&oh=00_Afs7RF__OTUgGGqid0ckY_PnqKMtfFV-9xykNmTJdFIpDQ&oe=6999B298",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/627998204_26054398290861262_4061411537654125744_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=vrWuqOgwcJkQ7kNvwEyaJLC&_nc_oc=Adm-atRMUw-YJ1OcJegMg1Us497MDhg_Wk-3kdXeR2B68Z2wJ6f-WD1CWuuOdPsH1l4&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=1QsTx80gm9-BXV8EYvBTog&oh=00_Afs7RF__OTUgGGqid0ckY_PnqKMtfFV-9xykNmTJdFIpDQ&oe=6999B298",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.637987159128592,
+      "lng": 120.41728449306022
+    },
+    "rating": 3.6,
+    "reviewCount": 8,
+    "roomCount": 4,
+    "bathroomCount": 2,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Budget Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Will APT",
+    "description": "Affordable Boarding House.",
+    "price": 2000,
+    "roomType": "Bed Spacer",
+    "location": "Malacampa, Camiling, Tarlac. NEAR TAU.",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Fence and Get",
+      "Curfew Enforced"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/608897186_4728225737403854_8435292418963267021_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=107&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=1RO6IjEYO2MQ7kNvwGy5yd9&_nc_oc=AdmSZFjn-z2iaVkR4bwCE8Ezyg8yNCO_jh8lsmQXm_bo5hpCPLoJPJW2QLnIDY5q528&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=aMOSvqhARo8pLcHLLVMwhQ&oh=00_AfumdTRrZxRhS_RSQuLQ3iNzoo-QVBd6ZWHYVJSUWBEFVA&oe=6999BB9A",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/612456321_4728225677403860_784743182433823573_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=109&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=8wnj5HHJ0CwQ7kNvwHuPvJU&_nc_oc=Adny5aHdSilLzOZbQNY0iv9VxObXR7VVSFVW4C_vxTagjSVJ-P-nLqwq3EcaBbcmpuY&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=82AqNALyX-b6DXy-gnOXVg&oh=00_AfuhCVu_AbU2BFNKDVz9E_S8VYPJA0RU_C_kxdeTxFCHMQ&oe=6999BC75",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/608819570_4728225837403844_6383900114011949097_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=UAf8zqS2JikQ7kNvwEABi6K&_nc_oc=AdnlyRqN2GtnaA70K8zldDH6I47onfXenTvUU9UasE3hn28kKqEj3DkXg8Ww7Ws_eKM&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=x-GDc2EiRiCZMdCjEkyeDA&oh=00_AfsRL3asEepurA3Rb5LjerO_1saXY8UweFUzaC0-I_XXIw&oe=6999BB99",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/611330224_4728225850737176_269465685378196126_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=107&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=ssl5uoZlvBQQ7kNvwExhQkq&_nc_oc=AdnbKMiHdH2uqPlcX2zF8KIr2toGWv5yAB_QjerruMWJJeL2VNdIXcGygFIvZAOSct0&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=_jaUc7cj86rojIl7SIfZ5g&oh=00_Afur5dSCEnLvQF5B00OCy7Yrb_j0nr6JrIlyrS2RS1f5OQ&oe=6999C107",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/608137981_4728225924070502_4264676961067010730_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=103&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=PT52RNdeywgQ7kNvwEv0ybw&_nc_oc=AdnYuuPO3pOQYL_pBmgrRj13CXCB04l5R6oOWNyy6Y0QdTU8qx5xQWUGSwfqV4ATCGE&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=O2_RPifnpLYfCIj_89YhYw&oh=00_AftUgkxRdkmGkcSUxGTOOwwiAx4TjvBgfjS7h6a6JM7jqA&oe=6999D775",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.635405804273814,
+      "lng": 120.4220078958505
+    },
+    "rating": 4.8,
+    "reviewCount": 4,
+    "roomCount": 7,
+    "bathroomCount": 3,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Daryl APT",
+    "description": "Boarding House near TAU.",
+    "price": 3800,
+    "roomType": "Bed Spacer",
+    "location": "Brgy. Malacampa, Camiling, Tarlac",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Own CR"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/486110536_1687212252190638_412038871611734983_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=BN-LpAexj88Q7kNvwFINX4H&_nc_oc=AdknohG0KBwkh-NbezrpDvaOK6ph7Bqs7yEDWC3My3e65N8PELw13yoopVm69HEKW60&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=lBfvGcMcZoKeUODYPFaIag&oh=00_Aft_EgSOM8ooZKNbHLd6D3ssv4E_51bQI5aCTvTgfhSStg&oe=6999EC40",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/485904994_1687212245523972_3223104540792510772_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=ZQLSajfSmlQQ7kNvwG01ptK&_nc_oc=AdlnFv2cEy8VMqt6fcKlLDnNW7LFQ6nsv3AS_jrMa7eQxevJgytwEqWKsqzefjCRsVM&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=WevLH6OVm_E8et6OVDBxRw&oh=00_AfseTPM-Pzn0wVlfTSrnsJ2kQEJeIdenmsXHvZsCIOL_cA&oe=6999CE78",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/486222795_1687212255523971_3782313466549486274_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=lJGtc9Zgq3sQ7kNvwGxLQWF&_nc_oc=Adm_ogU3YqZy5tOOg1dukuZIi-DFqrZJqhH8WUV_vE8uoD4v03FGqfaMIoCkLm6xUqM&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=91Y88_pGrdiZWS_zRE_Www&oh=00_AfvTEZ1WOO_MKS2E2JDtEORmBNH0pusTNY2jfD-uNkdfOA&oe=6999C2FB",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/485671587_1687212205523976_5058211100400127779_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=O0BCR9yljk8Q7kNvwH600Ws&_nc_oc=Adl0J_7b02q6WBd3J4i0CCqvSBeaTuo7aqbIJ5v94pu4kN9_xRDOdCXDoPQ0JhMUZZU&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=Bp2sx_hThGudZB-24t-UwQ&oh=00_AftQqHfeed9rvw-EYLXpJPM6gFISdMD_AW_B9KLyYHUJ1Q&oe=6999EE89",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.640363581972434,
+      "lng": 120.41256253487157
+    },
+    "rating": 3.7,
+    "reviewCount": 6,
+    "roomCount": 6,
+    "bathroomCount": 1,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Star of David Apartment",
+    "description": "Come and Live in your newly built and ready for you to move in as your second home... students, young professionals and even working individuals are all warmly welcomed here at Star of David Apartment.",
+    "price": 5000,
+    "roomType": "Bed Spacer",
+    "location": "Purok Rural Malacampa Camiling, Tarlac",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Free Bills",
+      "Mini Terrace"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/514397727_1258675286037800_6106398724169404132_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=3deRUouHxakQ7kNvwGO_Gkc&_nc_oc=AdkmrpOq51esfJKCXtqLdXGPkoHjOSCjZW8_dca6FU_WF7qz6VJ6KcJz3Zk8k2ks4Lo&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=H6KeHsIuXXzP1k4pvvRXlA&oh=00_AfvlVKRfzbCdOq9G2AiBEEvObQC0N8inmJJcRkFIKqWEnw&oe=6999F0B2",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/513835359_1258675202704475_5928382388535722829_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=9JfN0RRnIo4Q7kNvwGEE7RP&_nc_oc=AdlN-EKrnvo-OFPL6ic6hwUB_9-bZPuyRGRw8DLzHQFUhpz9mlpOGaKh8C_Cnpt6ZZw&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=ue2x2SxA67yHAho9SwDAzw&oh=00_AftuHFuRPsx-VcEb9Nek81OTJ0XAPcEgVAA5YeQ3SStQlQ&oe=6999D752",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/514276998_1258675249371137_8878297947051746044_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=8VVRr3AXhowQ7kNvwHa0ZxF&_nc_oc=AdkKOS-vRy8OMkXcgaERtyWiwVOgtCxGHQZlh01Xf5hHQ7k1IWyxLwXLO-KD7zqiig0&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=p9JKaxMSNVC7sQ7-GfKnvg&oh=00_AfvxDzbEYqnOXGW8K2eru_X4KuWldhcOFWlpXrzR43oTLg&oe=6999C064",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/514397727_1258675286037800_6106398724169404132_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=3deRUouHxakQ7kNvwGO_Gkc&_nc_oc=AdkmrpOq51esfJKCXtqLdXGPkoHjOSCjZW8_dca6FU_WF7qz6VJ6KcJz3Zk8k2ks4Lo&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=H6KeHsIuXXzP1k4pvvRXlA&oh=00_AfvlVKRfzbCdOq9G2AiBEEvObQC0N8inmJJcRkFIKqWEnw&oe=6999F0B2",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/513835359_1258675202704475_5928382388535722829_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=9JfN0RRnIo4Q7kNvwGEE7RP&_nc_oc=AdlN-EKrnvo-OFPL6ic6hwUB_9-bZPuyRGRw8DLzHQFUhpz9mlpOGaKh8C_Cnpt6ZZw&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=ue2x2SxA67yHAho9SwDAzw&oh=00_AftuHFuRPsx-VcEb9Nek81OTJ0XAPcEgVAA5YeQ3SStQlQ&oe=6999D752",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.62964776408453,
+      "lng": 120.41352596219173
+    },
+    "rating": 4.2,
+    "reviewCount": 7,
+    "roomCount": 3,
+    "bathroomCount": 2,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "YOJIN Apartment",
+    "description": "Affordable boarding house near TAU.",
+    "price": 6500,
+    "roomType": "Solo",
+    "location": "Near TAU Gate 2",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Air Conditioning",
+      "Kitchen Access"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/494953837_10162790769899470_4430670222356620088_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=00y94nT6DcUQ7kNvwGqTqHC&_nc_oc=Adn1S75cSANpwAAcRt3_RnxIGvjDpvAIlrhNxF_8DwSA44sjifg6q6IS7HwFdFltswE&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=v9CL2TLnEgCIT0gbUSajKw&oh=00_Afv0FvfGijuNlhRwm9X02Ha-DWFWpkF4PDWNGWAu0Y3CmQ&oe=6999E6B4",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/494953837_10162790769899470_4430670222356620088_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=00y94nT6DcUQ7kNvwGqTqHC&_nc_oc=Adn1S75cSANpwAAcRt3_RnxIGvjDpvAIlrhNxF_8DwSA44sjifg6q6IS7HwFdFltswE&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=v9CL2TLnEgCIT0gbUSajKw&oh=00_Afv0FvfGijuNlhRwm9X02Ha-DWFWpkF4PDWNGWAu0Y3CmQ&oe=6999E6B4",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/494696729_10162790769669470_6780476143834626956_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=KCV8k9K3w8cQ7kNvwHdTLU1&_nc_oc=Adnkn62yuqQW70nhCXXFQz0y0eKSTG61uCPhFgSRIlW0ixCSMIzCAnQ8qQkTnJwJ6II&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=lgQcsb-rbACZlf2-sZXuYw&oh=00_AfspyXH0TDk_O3XIIbnlxor61mA5844p6RU1YCEr4EHuLg&oe=6999D2E8",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/494762931_10162790769949470_2042881645941766795_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=gBXB6AUDdn0Q7kNvwF48RhZ&_nc_oc=AdlO-jZosCsL5Co7F8hvhUhFUo7IcP-PobIfJ9Wj5UQZeCfH0uMwtCzmZidiANaxgLo&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=1bxYu_bo7RcEc25zZC-diQ&oh=00_AfsqkCp_hSBNMf9wMEkf9aM6prrYWjLKZm-LXHJnxqKAcQ&oe=6999EDAA",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/495494037_10162790769774470_1659873054142189022_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=ncNaqWLMmhoQ7kNvwECq-t2&_nc_oc=AdnXfKZ9t0q2nFjw4ciu5XaXxi90NkEhR4yrSPwX18PmkWJjyBYoHAxcWlpbv1apIhI&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=7vDSauQnqu4UIyGj7umY6Q&oh=00_AftJeH-Fox0RsHWczXTpIZaCKYzk0tjvuQP7V0x4YqwctQ&oe=6999E3B3",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.639722617285406,
+      "lng": 120.40812971806012
+    },
+    "rating": 4.9,
+    "reviewCount": 5,
+    "roomCount": 6,
+    "bathroomCount": 3,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Abby Dorm",
+    "description": "Cheap Dorm for Students in TAU.",
+    "price": 2000,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU Gate 2",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Durabox"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/600464769_25902964322629253_3317820047982179724_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=RCXENUTpWnUQ7kNvwHSWBm1&_nc_oc=AdllmEOfPW-j0PbhsoGGTf1Jt5nwTk2vwv4UY6YzPx-de-iqo5LpDQhild_4ylicV30&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=3G3dXbuV5G3SObvk5aZ_XQ&oh=00_Afva0jo72SbhQP7pHEgTzkb3dOBj7BAI_wg2eLHzgSBxLA&oe=6999E343",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/600315195_25902962392629446_2719362461409448211_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=DCzNY_Ubeb0Q7kNvwGnIK8E&_nc_oc=Adl_GI4thfkItkhwJA4RVqXkKO9k98DL4aTWc_zy1B5_x1KUVWcIqwQjgJVCyduoqAM&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=cfABO7MnjiwpRl60sSd9Bg&oh=00_AftNsyoykYnYn0KEcqK8Jl3SrGu4CdHfIDgPiBUF9veAbg&oe=6999C4BB",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/600441934_25902962265962792_2583894352181828942_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=i5RsYzbcU00Q7kNvwETOLKm&_nc_oc=AdmXD1fUQSTbWMMZ-OdsiBkYNLF5oMF_3Zcdkf1mnaaJbw14642D9z5E_JRl5FF8pyo&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=ZatWCiboa3ebCj5ru7yZYw&oh=00_Afu_qYIJe0TtaV-qKJBgHKnR9CHh8mk-fAq97HHIlvjIfg&oe=6999D8B2",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/600368425_25902963099296042_3103575569354678178_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=wb2YnP-obQkQ7kNvwEyCcO6&_nc_oc=Adl-KzSCk7kG1XqGT2AUFcEe_Ykhvoi1pj5HvmN87PU-qR8LEhJQhn6YgafJSyPYTy0&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=B1jObhLzn5xrQNW1iZxxIQ&oh=00_AftKFNOERFVDUM75aSW2bh4SWMURKeT3UNzqKK9uy6sVNQ&oe=6999C587",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/600505329_25902962949296057_7054099647010054267_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=w_sOA3TXoQcQ7kNvwGnAjaE&_nc_oc=AdkBOm4yRbG-fwGDs2NzKbYZgVzHeqJz5FnJ5_OpeAaomFJTrwATNQlAun_cM0kZJ0M&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=Ec2qHUQYJXthzSBjEhK3mQ&oh=00_AfvJ2spAH-3-hS1wUvJatEiZWYMAMpeqdi5lC9jQcNsB1A&oe=6999EDAF",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.636002948546647,
+      "lng": 120.42161104746603
+    },
+    "rating": 4.9,
+    "reviewCount": 8,
+    "roomCount": 4,
+    "bathroomCount": 1,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "KEGG Apartment",
+    "description": "House for rent.",
+    "price": 8500,
+    "roomType": "Bed Spacer",
+    "location": "Blk 9 Lot 3 Metro Bamban Subdivision Anupul, Tarlac",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Garage"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/486118373_578811155200705_2334015492397014034_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=OxLHrA9sq_EQ7kNvwFV-VqC&_nc_oc=AdnIm3IwQXchTPCxLohxADsbb7eQAsQkxtOPDrNSaCMHNRW6FWbPmCfkjoeU9OJg3vY&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=XiV87wpD8NCKb2wpi9pncw&oh=00_AftqcL2yANXWmvnNuhkBi_xDdaD-UNeG2FmGPTCwhZlCFg&oe=6999E301",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/486186422_578809488534205_8072588970514630451_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=Vpz0T_TBYRAQ7kNvwHn6wBy&_nc_oc=Adlr1ffqKW2mYBRsy27Y7xJXp_dwrnsoLaMiD7mdaLd7_0T47KQpvc6cETnXiUceu0A&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=5ELIqXhdrjkBehWEtZS7WQ&oh=00_AfsfNHVN95NOzBRkTHaFy9tcMhv_8NBTcMUcVyGLhtVwvg&oe=6999EF85",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/485757142_578808708534283_8404854354247352883_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=c0cTK5vBo5gQ7kNvwHPA2Cz&_nc_oc=Adksme_qaOVmnjD02GTrK9QKMMX10OMfdPn4oXxh6b5xF2bCENDObsVSdp1Q1YKLnS4&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=09V3z-f5APFxfNkgxeFTKA&oh=00_AfsS3bjBmJTtwVVCpzFAbdggbhpNAmE1GOmcmJhwOOnYXg&oe=6999D5CD",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/485936008_578808315200989_3240519386065931203_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=86_y6GoF_MsQ7kNvwEMZ4bR&_nc_oc=AdndVq5GMMiqO9whPhM_ztAWHtzUndMbe47n3fJET0i5cG4wghxZqmUsjbtrRe565kI&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=SmIIk2WvKbOQ9BZs_c5BlA&oh=00_AfuMo990REs0TAvhiRjjxbgtDee0hfLKml7tUFF8cOmbTw&oe=6999F06D",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.644097334491228,
+      "lng": 120.41655617119667
+    },
+    "rating": 5,
+    "reviewCount": 8,
+    "roomCount": 6,
+    "bathroomCount": 1,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Alelie Apartment",
+    "description": "Affordable boarding house.",
+    "price": 2900,
+    "roomType": "Solo",
+    "location": "J.P. LAUREL ST. BRGY. DELA CRUZ BAMBAN TARLAC ( NEAR @ SAN ROQUE NATIONAL HIGH SCHOOL)",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area"
+    ],
+    "images": [
+      {
+        "url": "https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/509604103_3210750709074178_2320692743656754113_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=0trdvlQWTBYQ7kNvwED2Vhc&_nc_oc=Adn7ZFN9EvHpr4xdUQ52edOakzXQDXkSFHJudQKr_SlRqwmIn2PcK_LxL1aLtkmkuxg&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=hADwOVYKqFZ24Ia2SWCv5A&oh=00_Afs1G5z_1yB7UyH8c1-Rwu2TRS7C-BxP1k4TRbQSDk-vzA&oe=6999D3DF",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/509368925_3210750692407513_4384095415979286884_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=109&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=JLuHsf54uxkQ7kNvwHsdhUo&_nc_oc=Adk1GlvjavWK_q8VVYZuGjWTeIevj_8vs-Z4kSPnunBs-bwwbM3ErTwJ1hSGRVcw_Co&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=QcUE86k_4VLHBjIQqjnm2Q&oh=00_Afs66kxA7-EWZAV6MWcAyVZZeGgl9hUsmBDb_t62H_7N1g&oe=6999F096",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-5.fna.fbcdn.net/v/t39.30808-6/509442103_3210750685740847_7810697554361141251_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=a2lCDTtfmzQQ7kNvwHJvEDk&_nc_oc=AdmfZuNCBehs1Y3nT42Md0_d7SMG-2J6DBaQ9WyoUYl9o_dofFaB5BdCYmtDBmVz3_c&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&_nc_gid=OrxPzJHzF3DQ0fh2dvgYdg&oh=00_AfvYzqdWHTw70bVtGC4v0Iv1xZGMFYpdIA5CnI0YMRMY7Q&oe=6999FD3B",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/509940686_3210750515740864_992379484328825675_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=111&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=cgsyJacEZREQ7kNvwFxELPM&_nc_oc=Adl6QCYnAvY2AZtqYJJcKlCWMXuFeh1rr7DzpdKQNTVwSG2zeiaD7iZ5JEbhEndUPi8&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=fMZO0ufjVN6uEi6saYNvYw&oh=00_AfvMYCfywID2oUrCxkSyK1NgknzOMG-_N3igP0rEk-xdMg&oe=6999D470",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/509355746_3210750572407525_4079373366699960463_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=100&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=rAwornfPhEwQ7kNvwEOtJUV&_nc_oc=Adnilm7fg18t3xvbcnUZ3cAkWIIVBMrlE3V923-83jekvwZcPL8_L_qwha3UrjjfkCw&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=8zqg8mJvBT5HJadPcgfJew&oh=00_AfuAeg2JMOl8PxbAfepkLI6usCGq3TdtnQSb-X4x9ic52w&oe=6999E5BB",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.633052612565303,
+      "lng": 120.42224887689811
+    },
+    "rating": 4.9,
+    "reviewCount": 2,
+    "roomCount": 7,
+    "bathroomCount": 2,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  }
+]

@@ -6,8 +6,8 @@ import ListingCard from "@/components/listings/ListingCard";
 import LoadMore from "@/components/listings/LoadMore";
 
 import { getCurrentUser } from "@/services/user";
-import { getReservations } from "@/services/reservation";
-import { getFavorites } from "@/services/favorite";
+import { getReservations } from "@/services/user/reservations";
+import { getFavorites } from "@/services/user/favorites";
 import { db } from "@/lib/db";
 
 const ReservationPage = async () => {

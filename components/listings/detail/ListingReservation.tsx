@@ -1,7 +1,7 @@
 import React from "react";
 
-import Button from "@/components/Button";
-import SpinnerMini from "@/components/Loader";
+import Button from "@/components/common/Button";
+import SpinnerMini from "@/components/common/Loader";
 import { formatPrice } from "@/utils/helper";
 import { stayDurationOptions } from "@/utils/constants";
 

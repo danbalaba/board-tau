@@ -9,11 +9,9 @@ import Menu from "../common/Menu";
 import Modal from "../modals/Modal";
 import ConfirmDelete from "../common/ConfirmDelete";
 
-import { deleteProperty } from "@/services/user/properties";
 import { deleteReservation } from "@/services//user/reservations";
 
 const pathNameDict: { [x: string]: string } = {
-  "/properties": "Delete property",
   "/reservations": "Cancel reservation",
 };
 
@@ -23,9 +21,6 @@ interface ListingMenuProps {
 
 const ListingMenu: FC<ListingMenuProps> = ({ id }) => {
   const pathname = usePathname();
-  const { mutate: deleteListing } = useMutation({
-    mutationFn: deleteProperty,
-  });
   const { mutate: cancelReservation } = useMutation({
     mutationFn: deleteReservation,
   });
@@ -36,14 +31,7 @@ const ListingMenu: FC<ListingMenuProps> = ({ id }) => {
   const onConfirm = (onModalClose?: () => void) => {
     startTransition(() => {
       try {
-        if (pathname === "/properties") {
-          deleteListing(id, {
-            onSuccess: () => {
-              onModalClose?.();
-              toast.success("Listing successfully deleted!");
-            },
-          });
-        } else if (pathname === "/reservations") {
+        if (pathname === "/reservations") {
           cancelReservation(id, {
             onSuccess: () => {
               onModalClose?.();
