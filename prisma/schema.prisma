@@ -36,6 +36,7 @@ model User {
   reviews      Review[]
   adminLogs    AdminActivityLog[]
   inquiries    Inquiry[]
+  hostApplication HostApplication?
 }
 
 model Account {
@@ -229,4 +230,23 @@ model EmailOTP {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+model HostApplication {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String    @db.ObjectId @unique
+  status          String    @default("pending") // pending, approved, rejected
+  businessInfo    Json
+  propertyInfo    Json
+  contactInfo     Json
+  propertyConfig  Json
+  documents       Json
+  adminNotes      String?
+  approvedBy      String?   @db.ObjectId
+  rejectedBy      String?   @db.ObjectId
+  rejectedReason  String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
