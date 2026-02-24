@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaMapMarkerAlt, FaCalendar, FaUsers } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { springBounce } from "@/utils/motion";
 
@@ -63,6 +63,10 @@ const SearchManager = ({ isScrolled = false }: SearchManagerProps) => {
 
   const handleSearchClose = () => {};
 
+  useEffect(() => {
+    console.log('SearchManager component rendered');
+  }, []);
+
   return (
     <Modal>
       {!isScrolled && (
@@ -75,109 +79,106 @@ const SearchManager = ({ isScrolled = false }: SearchManagerProps) => {
               type="button"
               whileTap={{ scale: 0.98 }}
               whileHover={{
-                boxShadow: "0 16px 48px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6)",
-                y: -3,
-                scale: 1.01
+                boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+                y: -4,
+                scale: 1.02
               }}
-              className="w-full group search-bar-trigger text-left"
+              className="w-full group search-bar-trigger text-center"
               style={{ maxWidth: '100%' }}
             >
-              {/* Mobile View - Compact */}
-              <motion.div
-                className="flex md:hidden items-center justify-between w-full h-full px-2 py-1.5"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-              >
-                <span className="font-semibold text-sm text-text-primary dark:text-gray-100 truncate flex-1">
-                  {locationLabel}
-                </span>
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  whileTap={{ scale: 0.95, rotate: -5 }}
-                  className="ml-2 p-1.5 bg-primary rounded-full text-white shadow-soft shrink-0"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.08 }}
-                >
-                  <FaSearch className="text-xs" aria-hidden />
-                </motion.div>
-              </motion.div>
+              {/* Mobile View - Simple Airbnb Style */}
+              <div className="relative md:hidden">
+                {/* Simplified centering - everything directly in the button */}
+                <div className="flex items-center justify-center gap-3 w-full px-4 py-3">
+                  {/* Search text */}
+                  <span className="font-semibold text-gray-700 dark:text-gray-200 text-base">
+                    Search for boarding houses
+                  </span>
+
+                  {/* Search button */}
+                  <motion.div
+                    whileTap={{ scale: 0.95 }}
+                    className="p-3 bg-gradient-to-r from-primary to-orange-500 rounded-full text-white transition-all duration-200"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.08 }}
+                  >
+                    <FaSearch className="text-lg" aria-hidden />
+                  </motion.div>
+                </div>
+              </div>
 
               {/* Desktop View - Full Summary */}
-              <motion.div
-                className="hidden md:flex items-center justify-between w-full h-full px-4 py-2"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-              >
+               <motion.div
+                 className="hidden md:flex items-center justify-between w-full h-[88px] px-10 py-6 rounded-full"
+                 initial={{ opacity: 0, y: 10 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 transition={{ delay: 0.05 }}
+               >
                 <motion.div
                   className="flex items-center flex-1 min-w-0"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.08 }}
                 >
-                  <span className="font-semibold text-base md:text-lg text-text-primary dark:text-gray-100 truncate mr-3">
-                    {locationLabel}
-                  </span>
-                  <div className="h-6 w-px bg-border dark:bg-gray-600 shrink-0" />
+                  <div className="flex items-center mr-5 text-primary">
+                    <FaMapMarkerAlt className="text-lg" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Location</span>
+                    <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
+                      {locationLabel}
+                    </span>
+                  </div>
                 </motion.div>
 
+                <div className="h-10 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-3" />
+
                 <motion.div
-                  className="hidden lg:flex items-center flex-1 px-4 min-w-0"
+                  className="flex items-center flex-1 min-w-0"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.11 }}
                 >
-                  <span className="font-medium text-base md:text-lg text-text-secondary dark:text-gray-400 truncate">
-                    {categoryLabel}
-                  </span>
-                  <div className="h-6 w-px bg-border dark:bg-gray-600 ml-4 shrink-0" />
+                  <div className="flex items-center mr-5 text-primary">
+                    <FaCalendar className="text-lg" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Date</span>
+                    <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
+                      Flexible
+                    </span>
+                  </div>
                 </motion.div>
 
+                <div className="h-10 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-3" />
+
                 <motion.div
-                  className="hidden lg:flex items-center flex-1 px-4 min-w-0"
+                  className="flex items-center flex-1 min-w-0"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.14 }}
                 >
-                  <span className="font-medium text-base md:text-lg text-text-secondary dark:text-gray-400 truncate">
-                    {priceLabel}
-                  </span>
-                  <div className="h-6 w-px bg-border dark:bg-gray-600 ml-4 shrink-0" />
+                  <div className="flex items-center mr-5 text-primary">
+                    <FaUsers className="text-lg" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Guests</span>
+                    <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
+                      {occupantLabel}
+                    </span>
+                  </div>
                 </motion.div>
 
                 <motion.div
-                  className="hidden 2xl:flex items-center flex-1 px-4 min-w-0"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.17 }}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileTap={{ scale: 0.95, rotate: -5 }}
+                  className="p-4 bg-gradient-to-r from-primary to-orange-500 rounded-full text-white shadow-lg shrink-0 ml-8 hover:shadow-orange-500/40 transition-all duration-300"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.23 }}
                 >
-                  <span className="font-medium text-base md:text-lg text-text-secondary dark:text-gray-400 truncate">
-                    {roomTypeLabel}
-                  </span>
-                  <div className="h-6 w-px bg-border dark:bg-gray-600 ml-4 shrink-0" />
-                </motion.div>
-
-                <motion.div
-                  className="flex items-center flex-1 px-4 min-w-0"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.20 }}
-                >
-                  <span className="hidden 2xl:block font-medium text-base md:text-lg text-text-secondary dark:text-gray-400 truncate mr-4">
-                    {occupantLabel}
-                  </span>
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    whileTap={{ scale: 0.95, rotate: -5 }}
-                    className="p-4 bg-primary rounded-full text-white shadow-soft shrink-0"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.23 }}
-                  >
-                    <FaSearch className="text-base md:text-lg" aria-hidden />
-                  </motion.div>
+                  <FaSearch className="text-lg" aria-hidden />
                 </motion.div>
               </motion.div>
             </motion.button>

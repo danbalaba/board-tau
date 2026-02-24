@@ -6,37 +6,37 @@ export const springBounce = { type: "spring" as const, stiffness: 400, damping: 
 export const tweenFast = { duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] as const };
 export const tweenMedium = { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as const };
 export const tweenSlow = { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const };
-export const tweenVerySlow = { duration: 0.8, ease: [0.22, 1, 0.36, 1] }; // Apple-style easing
+export const tweenVerySlow = { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }; // Apple-style easing
 
 // Hero headline animation with micro blur and stagger
 export const headlineFadeIn = {
+  hidden: { opacity: 0, y: 30, filter: "blur(12px)" },
+  show: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
+
+export const subtitleFadeIn = {
   hidden: { opacity: 0, y: 20, filter: "blur(8px)" },
   show: {
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-    transition: { ...tweenVerySlow },
-  },
-};
-
-export const subtitleFadeIn = {
-  hidden: { opacity: 0, y: 15, filter: "blur(6px)" },
-  show: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 1, ease: [0.22, 1, 0.36, 1] as const, delay: 0.2 },
   },
 };
 
 // Search bar hero treatment
 export const searchBarEntrance = {
-  hidden: { opacity: 0, scale: 0.98, y: 10 },
+  hidden: { opacity: 0, scale: 0.95, y: 20 },
   show: {
     opacity: 1,
     scale: 1,
     y: 0,
-    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] as const, delay: 0.3 },
   },
 };
 
