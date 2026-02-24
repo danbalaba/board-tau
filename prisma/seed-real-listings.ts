@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import fs from "fs";
+import { ROOM_TYPES } from "../data/roomTypes.js";
+import { ROOM_AMENITIES } from "../data/roomAmenities.js";
 
 const prisma = new PrismaClient();
 
@@ -114,12 +116,9 @@ async function main() {
         title: listingData.title,
         description: listingData.description,
         imageSrc: listingData.images[0]?.url || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=300&fit=crop",
-        category: listingData.category,
+        category: Array.isArray(listingData.category) ? listingData.category : [listingData.category],
         roomCount: listingData.roomCount,
-        roomType: listingData.roomType,
-        bedType: listingData.bedType,
         bathroomCount: listingData.bathroomCount,
-        guestCount: listingData.guestCount,
         price: listingData.price,
         country: "Philippines",
         region: "Tarlac",
@@ -151,22 +150,79 @@ async function main() {
     const roomCount = listingData.roomCount;
     const roomsData = [];
 
+    // Normalize room type
+    const normalizedRoomType =
+      listingData.roomType.toLowerCase() === "solo"
+        ? ROOM_TYPES.SOLO
+        : ROOM_TYPES.BEDSPACE;
+
     for (let i = 1; i <= roomCount; i++) {
+      // Room price with variation
+      const price = listingData.price + (i * 300);
+
+      // Capacity and available slots
+      const capacity =
+        normalizedRoomType === "SOLO"
+          ? 1
+          : Math.floor(Math.random() * 5) + 2;
+
+      const availableSlots =
+        normalizedRoomType === "SOLO"
+          ? 1
+          : Math.floor(Math.random() * capacity) + 1;
+
+      // Bed type
+      const bedType =
+        normalizedRoomType === "SOLO"
+          ? ["Single", "Double", "Queen"][Math.floor(Math.random() * 3)]
+          : "Bunk";
+
+      // Room size
+      const size =
+        normalizedRoomType === "SOLO"
+          ? 12 + Math.random() * 13
+          : 20 + Math.random() * 20;
+
+      // Room amenities
+      let roomAmenities: string[] = [];
+      if (normalizedRoomType === ROOM_TYPES.SOLO) {
+        roomAmenities = [ROOM_AMENITIES.PRIVATE_BATHROOM];
+        if (Math.random() > 0.4) roomAmenities.push(ROOM_AMENITIES.AC);
+        if (Math.random() > 0.5) roomAmenities.push(ROOM_AMENITIES.DESK);
+        if (Math.random() > 0.6) roomAmenities.push(ROOM_AMENITIES.CLOSET);
+        if (Math.random() > 0.7) roomAmenities.push(ROOM_AMENITIES.BALCONY);
+      } else {
+        roomAmenities = [ROOM_AMENITIES.SHARED_BATHROOM];
+        if (Math.random() > 0.4) roomAmenities.push(ROOM_AMENITIES.AC);
+        if (Math.random() > 0.5) roomAmenities.push(ROOM_AMENITIES.DESK);
+        if (Math.random() > 0.6) roomAmenities.push(ROOM_AMENITIES.CLOSET);
+      }
+
       roomsData.push({
         listingId: listing.id,
-        name: `${listingData.roomType} Room ${i}`,
-        price: listingData.price,
-        capacity: listingData.roomType === "Solo" ? 1 :
-                  listingData.roomType === "Shared" ? 2 : 3,
-        availableSlots: listingData.roomType === "Solo" ? 1 :
-                        listingData.roomType === "Shared" ? 2 : 5,
-        roomType: listingData.roomType,
+        name: `${normalizedRoomType} Room ${i}`,
+        price,
+        capacity,
+        availableSlots,
+        roomType: normalizedRoomType,
+        bedType,
+        size: parseFloat(size.toFixed(1)), // Round to 1 decimal place
+        amenities: roomAmenities,
+        images: [],
         status: "available",
       });
     }
 
+    // Create rooms
     await prisma.room.createMany({
       data: roomsData,
+    });
+
+    // Update listing.price to be the lowest room price
+    const lowestRoomPrice = Math.min(...roomsData.map(room => room.price));
+    await prisma.listing.update({
+      where: { id: listing.id },
+      data: { price: lowestRoomPrice }
     });
     console.log(`✅ Added ${roomCount} rooms to listing: ${listing.title}`);
 

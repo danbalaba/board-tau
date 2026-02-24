@@ -71,6 +71,6 @@
     "typescript": "^5"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed-real-listings.ts"
+    "seed": "tsx prisma/seed-real-listings.ts"
   }
 }

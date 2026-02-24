@@ -76,7 +76,7 @@ const Footer: React.FC = () => {
 
             <div className="text-sm flex flex-col md:flex-row items-center gap-4">
               <p className="text-gray-500">
-                © 2026 BoardTAU — Capstone Project
+                © 2026 BoardTAU
               </p>
               <div className="flex space-x-6">
                 <Link

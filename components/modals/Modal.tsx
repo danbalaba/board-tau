@@ -22,11 +22,16 @@ import { fadeIn, modalSheet } from "@/utils/motion";
 
 interface ModalProps {
   children: ReactNode;
+  isOpen?: boolean;
+  onClose?: () => void;
+  title?: string;
+  width?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 interface TriggerProps {
   name: string;
   children: ReactElement;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 interface WindowProps extends TriggerProps {
@@ -47,7 +52,53 @@ const Modal: FC<ModalProps> & {
   Trigger: typeof Trigger;
   Window: typeof Window;
   WindowHeader: typeof WindowHeader;
-} = ({ children }) => {
+} = ({ children, isOpen, onClose, title, width = 'md' }) => {
+  // Simplified API for direct control (no context)
+  if (isOpen !== undefined) {
+    return (
+      <AnimatePresence>
+        {isOpen ? (
+          <motion.div
+            variants={fadeIn}
+            initial="hidden"
+            animate="show"
+            exit="hidden"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex justify-center items-end md:items-center overflow-hidden outline-none focus:outline-none bg-black/35 backdrop-blur-xl"
+          >
+            <motion.div
+              variants={modalSheet}
+              initial="hidden"
+              animate="show"
+              exit="exit"
+              className={`md:h-auto h-[90vh] md:max-h-[90vh] overflow-y-auto w-full md:w-[${width === 'sm' ? '400px' : width === 'md' ? '500px' : width === 'lg' ? '800px' : '1100px'}] md:rounded-card rounded-t-card shadow-glass border-t md:border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
+            >
+              {title && (
+                <header className="flex items-center px-6 py-4 rounded-t justify-center relative border-b border-border dark:border-gray-700 bg-transparent">
+                  <h4 className="text-[18px] font-semibold text-text-primary dark:text-gray-100">
+                    {title}
+                  </h4>
+                  <button
+                    type="button"
+                    className="p-2 border-0 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors absolute right-4 rounded-full text-current"
+                    onClick={onClose}
+                    aria-label="Close"
+                  >
+                    <IoMdClose size={22} className="text-current" />
+                  </button>
+                </header>
+              )}
+              <div className="p-6">
+                {children}
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    );
+  }
+
+  // Existing context-based API
   const [openName, setOpenName] = useState("");
 
   const close = useCallback(() => {
@@ -65,14 +116,21 @@ const Modal: FC<ModalProps> & {
   );
 };
 
-const Trigger: FC<TriggerProps> = ({ children, name }) => {
+const Trigger: FC<TriggerProps> = ({ children, name, onClick }) => {
   const { open } = useContext(ModalContext);
-  const onClick = (e: unknown) => {
-    (e as React.MouseEvent).stopPropagation();
-    (e as React.MouseEvent).preventDefault();
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    // Call custom onClick if provided
+    if (onClick) {
+      onClick(e);
+    }
+
+    // Open the modal
     open(name);
   };
-  return cloneElement(children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>, { onClick });
+  return cloneElement(children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>, { onClick: handleClick });
 };
 
 const Window: FC<WindowProps> = ({ children, name, size = 'md' }) => {
@@ -161,7 +219,7 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md' }) => {
 const WindowHeader: FC<WindowHeaderProps> = ({ title }) => {
   const { close } = useContext(ModalContext);
   return (
-    <header className="flex items-center px-6 py-4 rounded-t justify-between relative border-b border-border dark:border-gray-700 bg-transparent">
+    <header className="flex items-center px-6 py-4 rounded-t justify-center relative border-b border-border dark:border-gray-700 bg-transparent">
       <h4 className="text-[18px] font-semibold text-text-primary dark:text-gray-100">
         {title}
       </h4>

@@ -2,26 +2,13 @@ import React from 'react';
 import Input from '../inputs/Input';
 import Select from '../inputs/Select';
 import Textarea from '../inputs/Textarea';
-import Button from '../common/Button';
-import { Plus, Minus, Bed, Bath, Users, CheckCircle } from 'lucide-react';
+import { Bath, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-interface RoomType {
-  roomType: string;
-  count: string;
-  price: string;
-  bedType: string;
-  capacity: string;
-  description: string;
-}
 
 interface PropertyConfigStepProps {
   register: any;
   errors: any;
   watch: any;
-  fields: any[];
-  append: (value: RoomType) => void;
-  remove: (index: number) => void;
   control: any;
   getValues: any;
 }
@@ -30,9 +17,6 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
   register,
   errors,
   watch,
-  fields,
-  append,
-  remove,
   control,
   getValues
 }) => {
@@ -45,7 +29,7 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
         transition={{ duration: 0.5 }}
       >
         <div className="flex items-center space-x-3">
-          <Bed className="w-6 h-6 text-purple dark:text-purple" />
+          <CheckCircle className="w-6 h-6 text-purple dark:text-purple" />
           <div>
             <h3 className="font-semibold text-gray-900 dark:text-white">Property Configuration</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -62,7 +46,7 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
         transition={{ duration: 0.5, delay: 0.2 }}
       >
         <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
-          <Bed className="w-5 h-5" />
+          <CheckCircle className="w-5 h-5" />
           <span>Property Basics</span>
         </h4>
 
@@ -116,150 +100,6 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.4 }}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="font-medium text-gray-900 dark:text-white flex items-center space-x-2">
-            <Users className="w-5 h-5" />
-            <span>Room Types</span>
-          </h4>
-          <Button
-            type="button"
-            outline
-            onClick={() => append({
-              roomType: 'single',
-              count: '',
-              price: '',
-              bedType: 'single',
-              capacity: '1',
-              description: ''
-            })}
-            className="text-sm flex items-center space-x-1"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Room Type</span>
-          </Button>
-        </div>
-
-        {fields.map((field: any, index: number) => (
-          <motion.div
-            key={field.id}
-            className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 * index }}
-          >
-            <div className="flex items-start justify-between mb-3">
-              <h5 className="font-medium text-gray-900 dark:text-white">Room Type {index + 1}</h5>
-               {fields.length > 1 && (
-                <Button
-                  type="button"
-                  outline
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    remove(index);
-                  }}
-                  className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center space-x-1"
-                >
-                  <Minus className="w-4 h-4" />
-                  <span>Remove</span>
-                </Button>
-              )}
-            </div>
-
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Select
-                  label="Room Type"
-                  id={`propertyConfig.rooms[${index}].roomType`}
-                  register={register}
-                  errors={errors}
-                  options={[
-                    { value: 'single', label: 'Single Room' },
-                    { value: 'double', label: 'Double Room' },
-                    { value: 'twin', label: 'Twin Room' },
-                    { value: 'family', label: 'Family Room' },
-                    { value: 'dorm', label: 'Dorm Bed' }
-                  ]}
-                  required
-                />
-
-                <Input
-                  label="Number of Rooms"
-                  id={`propertyConfig.rooms[${index}].count`}
-                  type="number"
-                  register={register}
-                  errors={errors}
-                  watch={watch}
-                  min="1"
-                  required
-                  placeholder="5"
-                  useStaticLabel={true}
-                />
-
-                <Input
-                  label="Price per Month (PHP)"
-                  id={`propertyConfig.rooms[${index}].price`}
-                  type="number"
-                  register={register}
-                  errors={errors}
-                  watch={watch}
-                  min="1000"
-                  required
-                  placeholder="15000"
-                  useStaticLabel={true}
-                />
-
-                <Select
-                  label="Bed Type"
-                  id={`propertyConfig.rooms[${index}].bedType`}
-                  register={register}
-                  errors={errors}
-                  options={[
-                    { value: 'single', label: 'Single Bed' },
-                    { value: 'double', label: 'Double Bed' },
-                    { value: 'bunk', label: 'Bunk Bed' },
-                    { value: 'sofa', label: 'Sofa Bed' }
-                  ]}
-                  required
-                />
-
-                <Select
-                  label="Maximum Capacity"
-                  id={`propertyConfig.rooms[${index}].capacity`}
-                  register={register}
-                  errors={errors}
-                  options={[
-                    { value: '1', label: '1 person' },
-                    { value: '2', label: '2 people' },
-                    { value: '3', label: '3 people' },
-                    { value: '4', label: '4 people' },
-                    { value: '5+', label: '5+ people' }
-                  ]}
-                  required
-                />
-              </div>
-
-              <Textarea
-                label="Room Description"
-                id={`propertyConfig.rooms[${index}].description`}
-                register={register}
-                errors={errors}
-                watch={watch}
-                required
-                rows={3}
-                placeholder="Describe this room type... Include features, amenities, and special considerations."
-              />
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-
-       <motion.div
-        className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.6 }}
       >
         <h4 className="font-medium text-gray-900 dark:text-white mb-4">Rules & Preferences</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -329,7 +169,7 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
         className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.7 }}
+        transition={{ duration: 0.5, delay: 0.6 }}
       >
         <h4 className="font-medium text-gray-900 dark:text-white mb-4">Advanced Features</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -508,26 +348,13 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
-              id="amenity-study"
+              id="amenity-waterheater"
               {...register('propertyConfig.amenities', { required: false })}
-              value="Study Area / Quiet Room"
+              value="Water Heater"
               className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
             />
-            <label htmlFor="amenity-study" className="text-sm text-gray-700 dark:text-gray-300">
-              Study Area / Quiet Room
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="amenity-gated"
-              {...register('propertyConfig.amenities', { required: false })}
-              value="Gated / Secure"
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="amenity-gated" className="text-sm text-gray-700 dark:text-gray-300">
-              Gated / Secure
+            <label htmlFor="amenity-waterheater" className="text-sm text-gray-700 dark:text-gray-300">
+              Water Heater
             </label>
           </div>
 
@@ -547,31 +374,14 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
-              id="amenity-curfew"
+              id="amenity-cabletv"
               {...register('propertyConfig.amenities', { required: false })}
-              value="Curfew Enforced"
+              value="Cable TV"
               className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
             />
-            <label htmlFor="amenity-curfew" className="text-sm text-gray-700 dark:text-gray-300">
-              Curfew Enforced
+            <label htmlFor="amenity-cabletv" className="text-sm text-gray-700 dark:text-gray-300">
+              Cable TV
             </label>
-          </div>
-        </div>
-      </motion.div>
-
-      <motion.div
-        className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.8 }}
-      >
-        <div className="flex items-start space-x-3">
-          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
-          <div>
-            <h4 className="font-medium text-green-900 dark:text-green-100 mb-1">Important Tips</h4>
-            <p className="text-sm text-green-700 dark:text-green-300">
-              Clearly defining your house rules helps manage tenant expectations and reduces conflicts. Be specific about what is and isn't allowed on your property.
-            </p>
           </div>
         </div>
       </motion.div>
