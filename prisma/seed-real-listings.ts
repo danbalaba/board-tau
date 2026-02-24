@@ -71,6 +71,7 @@ async function main() {
       ...admin,
       password: hashedAdminPassword,
       role: "admin",
+      emailVerified: new Date(), // Mark admin email as verified
     },
   });
   console.log(`✅ Created admin user: ${admin.email}`);
@@ -82,6 +83,7 @@ async function main() {
       ...landlord,
       password: hashedLandlordPassword,
       role: "user",
+      emailVerified: new Date(), // Mark landlord email as verified
     },
   });
   console.log(`✅ Created landlord user: ${landlord.email}`);
@@ -95,6 +97,7 @@ async function main() {
         ...userData,
         password: hashedPassword,
         role: "user",
+        emailVerified: new Date(), // Mark review users emails as verified
       },
     });
     createdReviewUsers.push(user);
