@@ -28,21 +28,30 @@ export const validateStep = (step: number, formData: any): ValidationResult => {
       validateLocation(formData.location, errors);
       break;
 
-    case 4: // Property Config Step
-      validatePropertyConfig(formData.propertyConfig, errors);
+    case 4: // Property Config Step (only property-level fields)
+      validatePropertyBasicConfig(formData.propertyConfig, errors);
       break;
 
-    case 5: // Documents Step
+    case 5: // Room Config Step
+      validateRoomConfig(formData.propertyConfig, errors);
+      break;
+
+    case 6: // Property Images Step
+      // No validation needed for images
+      break;
+
+    case 7: // Documents Step
       validateDocuments(formData.documents, errors);
       break;
 
-    case 6: // Review Step
+    case 8: // Review Step
       // Validate all fields on review step
       validateContactInfo(formData.contactInfo, errors);
       validateBusinessInfo(formData.businessInfo, errors);
       validatePropertyInfo(formData.propertyInfo, errors);
       validateLocation(formData.location, errors);
-      validatePropertyConfig(formData.propertyConfig, errors);
+      validatePropertyBasicConfig(formData.propertyConfig, errors);
+      validateRoomConfig(formData.propertyConfig, errors);
       validateDocuments(formData.documents, errors);
       break;
   }
@@ -118,14 +127,14 @@ const validatePropertyInfo = (propertyInfo: any, errors: ValidationError[]): voi
     errors.push({ field: 'propertyInfo.description', message: 'Property description must be at least 50 characters' });
   }
 
-  if (!propertyInfo.category) {
-    errors.push({ field: 'propertyInfo.category', message: 'Please select a property category' });
+  if (!propertyInfo.category || propertyInfo.category.length === 0) {
+    errors.push({ field: 'propertyInfo.category', message: 'Please select at least one property category' });
   }
 
-  const price = Number(propertyInfo.price);
-  if (!price || price < 1000 || price > 50000) {
-    errors.push({ field: 'propertyInfo.price', message: 'Price must be between ₱1,000 and ₱50,000 per month' });
-  }
+   const price = Number(propertyInfo.price);
+   if (!price || price < 100 || price > 100000) {
+     errors.push({ field: 'propertyInfo.price', message: 'Price must be between ₱100 and ₱100,000 per month' });
+   }
 
   if (!propertyInfo.leaseTerms) {
     errors.push({ field: 'propertyInfo.leaseTerms', message: 'Please select lease terms' });
@@ -154,7 +163,7 @@ const validateLocation = (location: any, errors: ValidationError[]): void => {
   }
 };
 
-const validatePropertyConfig = (propertyConfig: any, errors: ValidationError[]): void => {
+const validatePropertyBasicConfig = (propertyConfig: any, errors: ValidationError[]): void => {
   const totalRooms = Number(propertyConfig.totalRooms);
   if (!totalRooms || totalRooms < 1 || totalRooms > 50) {
     errors.push({ field: 'propertyConfig.totalRooms', message: 'Total rooms must be between 1 and 50' });
@@ -168,7 +177,9 @@ const validatePropertyConfig = (propertyConfig: any, errors: ValidationError[]):
   if (!propertyConfig.bathroomType) {
     errors.push({ field: 'propertyConfig.bathroomType', message: 'Please select a bathroom type' });
   }
+};
 
+const validateRoomConfig = (propertyConfig: any, errors: ValidationError[]): void => {
   if (!propertyConfig.rooms || propertyConfig.rooms.length === 0) {
     errors.push({ field: 'propertyConfig.rooms', message: 'Please add at least one room type' });
   } else {
@@ -182,10 +193,10 @@ const validatePropertyConfig = (propertyConfig: any, errors: ValidationError[]):
         errors.push({ field: `propertyConfig.rooms[${index}].count`, message: `Room count must be between 1 and 20 for room ${index + 1}` });
       }
 
-      const price = Number(room.price);
-      if (!price || price < 1000 || price > 50000) {
-        errors.push({ field: `propertyConfig.rooms[${index}].price`, message: `Price must be between ₱1,000 and ₱50,000 for room ${index + 1}` });
-      }
+       const price = Number(room.price);
+       if (!price || price < 100 || price > 100000) {
+         errors.push({ field: `propertyConfig.rooms[${index}].price`, message: `Price must be between ₱100 and ₱100,000 for room ${index + 1}` });
+       }
 
       if (!room.bedType) {
         errors.push({ field: `propertyConfig.rooms[${index}].bedType`, message: `Please select a bed type for room ${index + 1}` });
@@ -194,6 +205,24 @@ const validatePropertyConfig = (propertyConfig: any, errors: ValidationError[]):
       const capacity = Number(room.capacity);
       if (!capacity || capacity < 1 || capacity > 10) {
         errors.push({ field: `propertyConfig.rooms[${index}].capacity`, message: `Capacity must be between 1 and 10 for room ${index + 1}` });
+      }
+
+      // Validate room type specific fields
+      if (room.roomType === 'solo') {
+        const size = Number(room.size);
+        if (!size || size < 1 || size > 200) {
+          errors.push({ field: `propertyConfig.rooms[${index}].size`, message: `Room size must be between 1 and 200 sq. meters for room ${index + 1}` });
+        }
+      } else if (room.roomType === 'bedspace') {
+        const availableSlots = Number(room.availableSlots);
+        if (!availableSlots || availableSlots < 0 || availableSlots > 10) {
+          errors.push({ field: `propertyConfig.rooms[${index}].availableSlots`, message: `Available slots must be between 0 and 10 for room ${index + 1}` });
+        }
+      }
+
+      // Validate room amenities
+      if (room.amenities && !Array.isArray(room.amenities)) {
+        errors.push({ field: `propertyConfig.rooms[${index}].amenities`, message: `Room amenities must be an array for room ${index + 1}` });
       }
     });
   }
