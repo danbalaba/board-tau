@@ -22,7 +22,7 @@ export interface HostApplicationData {
   propertyInfo: {
     propertyName: string;
     description: string;
-    category: string;
+    category: string[];
     roomType: string;
     price: number;
     leaseTerms: string;
@@ -46,6 +46,7 @@ export interface HostApplicationData {
       bedType: string;
       capacity: number;
       description?: string;
+      amenities: string[];
     }>;
     bathroomCount: number;
     bathroomType: string;
@@ -65,6 +66,10 @@ export interface HostApplicationData {
     studyFriendly: boolean;
     quietEnvironment: boolean;
     flexibleLease: boolean;
+  };
+  propertyImages: {
+    property: string[];
+    rooms: Record<number, string[]>;
   };
   documents: {
     governmentId: string;
@@ -166,7 +171,7 @@ export const createHostApplication = async (data: HostApplicationData) => {
     }
   }
 
-  // Create application
+   // Create application
   const application = await db.hostApplication.create({
     data: {
       userId: user.id,
@@ -174,6 +179,7 @@ export const createHostApplication = async (data: HostApplicationData) => {
       propertyInfo: data.propertyInfo,
       contactInfo: data.contactInfo,
       propertyConfig: data.propertyConfig,
+      propertyImages: data.propertyImages,
       documents: data.documents,
       status: 'pending'
     },

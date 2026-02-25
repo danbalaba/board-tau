@@ -3,8 +3,9 @@
 import React, { useState, useTransition } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { ChevronRight, ChevronLeft, FileText, Home, User, MapPin, Upload, CheckCircle, AlertCircle, Building2, Info, ArrowRight } from 'lucide-react';
+import { ChevronRight, ChevronLeft, FileText, Home, User, MapPin, Upload, CheckCircle, AlertCircle, Building2, Info, ArrowRight, Camera, Bed } from 'lucide-react';
 import { TAU_COORDINATES } from '@/utils/constants';
+import { ROOM_TYPES } from '@/data/roomTypes';
 import { validateStep } from '@/services/validation/hostApplication';
 import { toast } from 'react-hot-toast';
 
@@ -15,6 +16,8 @@ import LandlordInfoStep from '../host-application/LandlordInfoStep';
 import PropertyBasicStep from '../host-application/PropertyBasicStep';
 import LocationStep from '../host-application/LocationStep';
 import PropertyConfigStep from '../host-application/PropertyConfigStep';
+import PropertyImagesStep from '../host-application/PropertyImagesStep';
+import RoomConfigStep from '../host-application/RoomConfigStep';
 import DocumentsStep from '../host-application/DocumentsStep';
 import ReviewStep from '../host-application/ReviewStep';
 import { useRouter } from 'next/navigation';
@@ -26,8 +29,10 @@ const STEPS = {
   PROPERTY_BASIC: 2,
   LOCATION: 3,
   PROPERTY_CONFIG: 4,
-  DOCUMENTS: 5,
-  REVIEW: 6
+  ROOM_CONFIG: 5,
+  PROPERTY_IMAGES: 6,
+  DOCUMENTS: 7,
+  REVIEW: 8
 };
 
 interface RoomType {
@@ -37,6 +42,7 @@ interface RoomType {
   bedType: string;
   capacity: string;
   description: string;
+  amenities: string[];
 }
 
 interface HostApplicationFormData {
@@ -51,7 +57,7 @@ interface HostApplicationFormData {
   propertyInfo: {
     propertyName: string;
     description: string;
-    category: string;
+    category: string[];
     roomType: string;
     price: string;
     leaseTerms: string;
@@ -95,6 +101,10 @@ interface HostApplicationFormData {
     quietEnvironment: boolean;
     flexibleLease: boolean;
   };
+  propertyImages: {
+    property: string[];
+    rooms: Record<number, string[]>;
+  };
   documents: {
     governmentId: string;
     businessPermit: string;
@@ -129,23 +139,23 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
    } = useForm<HostApplicationFormData>({
      mode: 'onSubmit', // Validate only when submitting
      reValidateMode: 'onSubmit', // Revalidate only when submitting
-     defaultValues: {
-      businessInfo: {
-        businessName: '',
-        businessType: 'boarding-house',
-        businessRegistrationNumber: '',
-        taxIdentificationNumber: '',
-        businessDescription: '',
-        yearsExperience: 'less-than-1'
-      },
-      propertyInfo: {
-        propertyName: '',
-        description: '',
-        category: 'Student-Friendly',
-        roomType: 'Solo',
-        price: '',
-        leaseTerms: '1-month'
-      },
+    defaultValues: {
+       businessInfo: {
+         businessName: '',
+         businessType: 'boarding-house',
+         businessRegistrationNumber: '',
+         taxIdentificationNumber: '',
+         businessDescription: '',
+         yearsExperience: 'less-than-1'
+       },
+       propertyInfo: {
+         propertyName: '',
+         description: '',
+         category: ['Student-Friendly'],
+         roomType: ROOM_TYPES.SOLO,
+         price: '',
+         leaseTerms: '1-month'
+       },
       contactInfo: {
         fullName: '',
         phoneNumber: '',
@@ -163,45 +173,50 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
         zipCode: '',
         coordinates: TAU_COORDINATES
       },
-      propertyConfig: {
-        totalRooms: '',
-        rooms: [
-          {
-            roomType: 'single',
-            count: '',
-            price: '',
-            bedType: 'single',
-            capacity: '1',
-            description: ''
-          }
-        ],
-        bathroomCount: '',
-        bathroomType: 'shared',
-        amenities: [],
-        rules: [],
-        smokingAllowed: 'no',
-        petsAllowed: 'no',
-        visitorsAllowed: 'allowed',
-        // Rules / Preferences
-        femaleOnly: false,
-        maleOnly: false,
-        // Advanced Filters
-        security24h: false,
-        cctv: false,
-        fireSafety: false,
-        nearTransport: false,
-        studyFriendly: false,
-        quietEnvironment: false,
-        flexibleLease: false
-      },
-      documents: {
-        governmentId: '',
-        businessPermit: '',
-        landTitle: '',
-        barangayClearance: '',
-        fireSafetyCertificate: '',
-        otherDocuments: ''
-      }
+       propertyConfig: {
+         totalRooms: '',
+         rooms: [
+           {
+             roomType: ROOM_TYPES.SOLO,
+             count: '',
+             price: '',
+             bedType: 'Single',
+             capacity: '1',
+             description: '',
+             amenities: []
+           }
+         ],
+         bathroomCount: '',
+         bathroomType: 'shared',
+         amenities: [],
+         rules: [],
+         smokingAllowed: 'no',
+         petsAllowed: 'no',
+         visitorsAllowed: 'allowed',
+         // Rules / Preferences
+         femaleOnly: false,
+         maleOnly: false,
+         // Advanced Filters
+         security24h: false,
+         cctv: false,
+         fireSafety: false,
+         nearTransport: false,
+         studyFriendly: false,
+         quietEnvironment: false,
+         flexibleLease: false
+       },
+       propertyImages: {
+         property: [],
+         rooms: {}
+       },
+       documents: {
+         governmentId: '',
+         businessPermit: '',
+         landTitle: '',
+         barangayClearance: '',
+         fireSafetyCertificate: '',
+         otherDocuments: ''
+       }
     }
   });
 
@@ -239,17 +254,19 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
      // Validate current step using validation service
      const validationResult = validateStep(step, formValues);
 
-     if (!validationResult.valid) {
-       // Show toast notification
-       toast.error('Please fix the errors in the form before continuing', {
-         duration: 4000,
-         style: {
-           background: '#dc2626',
-           color: 'white',
-           fontWeight: '500',
-         },
-         icon: '⚠️',
-       });
+      if (!validationResult.valid) {
+        // Show specific field errors in toast notifications
+        validationResult.errors.slice(0, 3).forEach(error => {
+          toast.error(error.message, {
+            duration: 5000,
+            style: {
+              background: '#dc2626',
+              color: 'white',
+              fontWeight: '500',
+            },
+            icon: '⚠️',
+          });
+        });
 
        // Set validation errors
        validationResult.errors.forEach(error => {
@@ -333,13 +350,18 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
           'location.province',
           'location.zipCode'
         ];
-      case STEPS.PROPERTY_CONFIG:
-        return [
-          'propertyConfig.totalRooms',
-          'propertyConfig.bathroomCount',
-          'propertyConfig.bathroomType',
-          'propertyConfig.rooms'
-        ];
+       case STEPS.PROPERTY_CONFIG:
+         return [
+           'propertyConfig.totalRooms',
+           'propertyConfig.bathroomCount',
+           'propertyConfig.bathroomType'
+         ];
+       case STEPS.ROOM_CONFIG:
+         return [
+           'propertyConfig.rooms'
+         ];
+      case STEPS.PROPERTY_IMAGES:
+        return []; // Images are optional
       case STEPS.DOCUMENTS:
         return [
           'documents.governmentId',
@@ -465,6 +487,7 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
               quietEnvironment: data.propertyConfig.quietEnvironment,
               flexibleLease: data.propertyConfig.flexibleLease
             },
+            propertyImages: data.propertyImages,
             documents: {
               ...data.documents
             }
@@ -496,6 +519,8 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
       case STEPS.PROPERTY_BASIC: return 'Property Information';
       case STEPS.LOCATION: return 'Property Location';
       case STEPS.PROPERTY_CONFIG: return 'Property Configuration';
+      case STEPS.ROOM_CONFIG: return 'Room Configuration';
+      case STEPS.PROPERTY_IMAGES: return 'Property & Room Images';
       case STEPS.DOCUMENTS: return 'Required Documents';
       case STEPS.REVIEW: return 'Review & Submit';
       default: return 'Unknown Step';
@@ -509,6 +534,8 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
       case STEPS.PROPERTY_BASIC: return <Building2 className="w-6 h-6" />;
       case STEPS.LOCATION: return <MapPin className="w-6 h-6" />;
       case STEPS.PROPERTY_CONFIG: return <FileText className="w-6 h-6" />;
+      case STEPS.ROOM_CONFIG: return <Bed className="w-6 h-6" />;
+      case STEPS.PROPERTY_IMAGES: return <Camera className="w-6 h-6" />;
       case STEPS.DOCUMENTS: return <Upload className="w-6 h-6" />;
       case STEPS.REVIEW: return <CheckCircle className="w-6 h-6" />;
       default: return <AlertCircle className="w-6 h-6" />;
@@ -521,6 +548,8 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
     { id: STEPS.PROPERTY_BASIC, label: 'Property Basics', icon: <Building2 className="w-4 h-4" /> },
     { id: STEPS.LOCATION, label: 'Location', icon: <MapPin className="w-4 h-4" /> },
     { id: STEPS.PROPERTY_CONFIG, label: 'Configuration', icon: <FileText className="w-4 h-4" /> },
+    { id: STEPS.ROOM_CONFIG, label: 'Rooms', icon: <Bed className="w-4 h-4" /> },
+    { id: STEPS.PROPERTY_IMAGES, label: 'Images', icon: <Camera className="w-4 h-4" /> },
     { id: STEPS.DOCUMENTS, label: 'Documents', icon: <Upload className="w-4 h-4" /> },
     { id: STEPS.REVIEW, label: 'Review', icon: <CheckCircle className="w-4 h-4" /> }
   ];
@@ -607,6 +636,7 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
                 {step === STEPS.PROPERTY_BASIC && "Provide property details"}
                 {step === STEPS.LOCATION && "Where is your property located?"}
                 {step === STEPS.PROPERTY_CONFIG && "Configure your property"}
+                {step === STEPS.PROPERTY_IMAGES && "Add property and room images"}
                 {step === STEPS.DOCUMENTS && "Upload required documents"}
                 {step === STEPS.REVIEW && "Review your application"}
               </p>
@@ -680,9 +710,28 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
                   register={register}
                   errors={errors}
                   watch={watch}
+                  control={control}
+                  getValues={getValues}
+                />
+              )}
+              {step === STEPS.ROOM_CONFIG && (
+                <RoomConfigStep
+                  register={register}
+                  errors={errors}
+                  watch={watch}
                   fields={fields}
                   append={append}
                   remove={remove}
+                  control={control}
+                  getValues={getValues}
+                  setValue={setValue}
+                />
+              )}
+              {step === STEPS.PROPERTY_IMAGES && (
+                <PropertyImagesStep
+                  register={register}
+                  errors={errors}
+                  watch={watch}
                   control={control}
                   getValues={getValues}
                 />

@@ -13,13 +13,15 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   id: string;
   label: string;
   icon?: IconType;
-  register: UseFormRegister<FieldValues>;
-  errors: FieldErrors;
-  watch: UseFormWatch<FieldValues>;
+  register?: UseFormRegister<FieldValues>;
+  errors?: FieldErrors;
+  watch?: UseFormWatch<FieldValues>;
   autoFocus?: boolean;
   required?: boolean;
   useStaticLabel?: boolean;
   validationRules?: any;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -35,14 +37,18 @@ const Input: React.FC<InputProps> = ({
   required = true,
   useStaticLabel = false,
   validationRules,
+  value: externalValue,
+  onChange: externalOnChange,
   ...props
 }) => {
-  const value = watch(id);
+  const internalValue = watch && watch(id);
+  const value = externalValue !== undefined ? externalValue : internalValue;
   const [showPassword, setShowPassword] = useState(false);
   const isPasswordInput = type === "password";
 
   // Get error for nested path (e.g., 'contactInfo.fullName')
   const getError = (path: string) => {
+    if (!errors) return undefined;
     return path.split('.').reduce((obj: any, key: string) => obj && obj[key], errors);
   };
 
@@ -57,9 +63,17 @@ const Input: React.FC<InputProps> = ({
           id={id}
           type={isPasswordInput ? (showPassword ? "text" : "password") : type}
           disabled={disabled}
-          {...register(id, {
-            required: required ? "This field is required" : false,
-            ...validationRules
+          value={value || ''}
+          onChange={(e) => {
+            if (externalOnChange) {
+              externalOnChange(e);
+            }
+          }}
+          {...(register && {
+            ...register(id, {
+              required: required ? "This field is required" : false,
+              ...validationRules
+            })
           })}
           className={cn(
             `text-[15px] peer w-full px-4 py-3 font-light bg-white dark:bg-gray-800 border-[1px] rounded-input outline-none transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed focus:ring-2 focus:ring-offset-1`,
@@ -164,9 +178,17 @@ const Input: React.FC<InputProps> = ({
         id={id}
         type={isPasswordInput ? (showPassword ? "text" : "password") : type}
         disabled={disabled}
-        {...register(id, {
-          required: required ? "This field is required" : false,
-          ...validationRules
+        value={value || ''}
+        onChange={(e) => {
+          if (externalOnChange) {
+            externalOnChange(e);
+          }
+        }}
+        {...(register && {
+          ...register(id, {
+            required: required ? "This field is required" : false,
+            ...validationRules
+          })
         })}
         className={cn(
           `text-[15px] peer w-full px-4 py-3 font-light bg-white dark:bg-gray-800 border-[1px] rounded-input outline-none transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed focus:ring-2 focus:ring-offset-1`,

@@ -35,15 +35,12 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
     price,
     description,
     roomCount,
-    guestCount,
     bathroomCount,
     latlng,
     amenities,
-    roomType,
     reservations,
     rating,
     reviewCount,
-    bedType,
     rooms,
   } = listing;
 
@@ -51,7 +48,7 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
     ? images.map((img: any) => ({ url: img.url, caption: img.caption ?? undefined, order: img.order ?? 0 }))
     : [{ url: imageSrc, caption: title, order: 0 }];
 
-  const category = categories.find((cate) => cate.label === listing.category);
+  const category = categories.find((cate) => listing.category.includes(cate.value));
 
   const categoryData = category
     ? {
@@ -71,7 +68,7 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
         <ListingHeader title={title} region={region} country={country} rating={rating || 4.8} reviewCount={reviewCount || 0} />
 
         {/* Main Content Grid */}
-        <ListingDetailsClient
+         <ListingDetailsClient
           id={id}
           price={price}
           reservations={reservations}
@@ -81,12 +78,9 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
           category={categoryData}
           description={description}
           roomCount={roomCount}
-          guestCount={guestCount}
           bathroomCount={bathroomCount}
           latlng={latlng}
           amenities={amenities}
-          roomType={roomType ?? ""}
-          bedType={bedType}
           rating={rating ?? undefined}
           reviewCount={reviewCount}
           images={normalizedImages}

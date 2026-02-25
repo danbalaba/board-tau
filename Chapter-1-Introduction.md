@@ -19,7 +19,7 @@ In response to these challenges, this study proposes the development of BoardTAU
 
 ### Significance of the Study
 
-This Capstone Project will support SDG 9: Industry, Innovation, and Infrastructure by introducing BoardTAU, a modernized and interactive web-based platform that facilitates the search and discovery of boarding houses near Tarlac Agricultural University. By integrating innovative technology, the system reduces the time, effort, and uncertainty associated with traditional, manual boarding house searches.
+This Capstone Project will support SDG 9: Industry, Innovation, and Infrastructure by introducing BoardTAU, a modernized and interactive web-based platform that facilitates the search and discovery of boarding houses near Tarlac Agricultural University and within Tarlac Province. By integrating innovative technology, the system reduces the time, effort, and uncertainty associated with traditional, manual boarding house searches.
 
 The study also aligns with SDG 4: Quality Education by ensuring that students, faculty, and staff have convenient access to safe, affordable, and suitable accommodations. By providing real-time listings, advanced filtering options, and detailed property information, BoardTAU allows users to make informed accommodation decisions quickly, freeing time for academic and professional priorities.
 
@@ -68,16 +68,16 @@ Specifically, the study aims to achieve the following objectives:
 
 3. to identify and evaluate potential security weaknesses and discover vulnerabilities in the IT Solution through Vulnerability and Penetration Test (VAPT);
 
-4. to validate the functionality of the IT Solution through unit testing; and
+4. to validate the functionality of the IT Solution through unit testing of individual components and functions; and
 
-5. to verify the overall system behavior and performance through system and model testing.
+5. to verify the overall system behavior and performance through system testing of end-to-end user scenarios.
 
 
 ### Scope and Delimitations
 
 This study focuses on developing BoardTAU, a modernized and interactive web-based platform designed to facilitate the search and discovery of boarding houses near Tarlac Agricultural University. The system will provide features such as browsing and searching for available accommodations, applying filters based on price, location, amenities, and room type, viewing detailed property information, submitting inquiries or reservation requests, and providing ratings and reviews. The IT solution will be accessible via any web browser and will be responsive to mobile devices.
 
-The study will cover boarding houses located within the nearby areas of Sta. Maria, Camiling, and Macalampa, including both registered and publicly listed accommodations. Payment gateway integration will not be included; booking confirmations will simulate transactions for testing purposes. The system will not cover hotels, commercial accommodations, or properties outside the defined geographic scope.
+The study will focus on boarding houses in Tarlac Province, primarily targeting areas convenient for students and staff near Tarlac Agricultural University. Booking confirmations will simulate transactions. After landlord approval, users may secure their reservation via Stripe or in person. The system will not cover hotels, commercial accommodations, or properties outside the defined geographic scope.
 
 Evaluation and testing of the system will involve students, instructors, faculty members, staff, property owners, and IT experts to assess usability, functionality, and overall efficiency.
 
@@ -95,7 +95,6 @@ The duration of the study will be from January 2026 to December 2026, covering d
 - **Filtering System**: A feature that allows users to narrow down boarding house options by criteria such as price, location, amenities, or room type.
 - **Frontend**: The interface of the system that users interact with via a web browser.
 - **Landlord / Property Owner**: A person who lists and manages a boarding house on the platform.
-- **Messaging System**: The internal communication feature that allows users and property owners to exchange messages.
 - **MongoDB**: A NoSQL database used to store data in a flexible and scalable format.
 - **Next.js**: A React-based framework used to build modern web applications with server-side rendering and API support.
 - **NextAuth**: A library used to implement secure user authentication and session management in Next.js applications.

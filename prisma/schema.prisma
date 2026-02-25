@@ -65,20 +65,18 @@ model Listing {
   imageSrc      String
   images        ListingImage[]
   createdAt     DateTime @default(now())
-  category      String
+
+  category      String[]     // multi-category for listing
   roomCount     Int
-  roomType      String?
   bathroomCount Int
-  guestCount    Int
   userId        String   @db.ObjectId
-  price         Int
+  price         Int           // min price or base listing price
   country       String?
   latlng        Float[]
   region        String?
-  amenities     String[]
+  amenities     String[]      // building-level amenities
   rating        Float?   @default(4.8)
   reviewCount   Int      @default(0)
-  bedType       String?  @default("Single/Double bed")
   status        String   @default("pending") // pending, active, flagged, rejected
   approvedAt    DateTime?
   approvedBy    String? @db.ObjectId
@@ -112,10 +110,13 @@ model Room {
   listingId      String   @db.ObjectId
   name           String
   price          Int
-  capacity       Int
+  capacity       Int           // for bedspace rooms
   availableSlots Int
   images         String[]
-  roomType       String?   // solo, shared, bedspace
+  roomType       String?   // solo, bedspace
+  bedType        String?   // Single / Double / Queen / Bunk
+  size           Float?    // optional sq.m
+  amenities      String[]  // room-level amenities (bathroom, kitchen, AC, desk, etc.)
   status         String?   // available, full
 
   listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
@@ -136,6 +137,7 @@ model Inquiry {
   contactMethod  String
   message        String?
   status         String   @default("pending") // pending, approved, rejected
+  paymentStatus  String   @default("unpaid") // unpaid, paid
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -240,6 +242,7 @@ model HostApplication {
   propertyInfo    Json
   contactInfo     Json
   propertyConfig  Json
+  propertyImages  Json
   documents       Json
   adminNotes      String?
   approvedBy      String?   @db.ObjectId

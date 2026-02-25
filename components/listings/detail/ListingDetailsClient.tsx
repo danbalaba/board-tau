@@ -10,9 +10,9 @@ import Avatar from "@/components/common/Avatar";
 import { AiOutlineCheck } from "react-icons/ai";
 import { MdClose } from "react-icons/md";
 import ListingReviews from "./ListingReviews";
-import InquiryModal from "@/components/modals/InquiryModal";
 import Modal from "@/components/modals/Modal";
 import Button from "@/components/common/Button";
+import AvailableRoomsSection from "./AvailableRoomsSection";
 
 const Map = dynamic(() => import("@/components/common/Map"), {
   ssr: false,
@@ -40,11 +40,9 @@ interface ListingDetailsClientProps {
   category: { label: string; description?: string } | null;
   description: string;
   roomCount: number;
-  guestCount: number;
   bathroomCount: number;
   latlng: number[];
   amenities: string[];
-  roomType: string;
   bedType?: string | null;
   rating?: number;
   reviewCount?: number;
@@ -87,11 +85,9 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
   category,
   description,
   roomCount,
-  guestCount,
   bathroomCount,
   latlng,
   amenities,
-  roomType,
   bedType,
   rating = 4.8,
   reviewCount = 0,
@@ -115,28 +111,28 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
 
     startTransition(async () => {
       try {
-        const inquiryData = {
+        const reservationData = {
           ...data,
           listingId: id,
           userId: user.id,
         };
 
-        const response = await fetch("/api/inquiries", {
+        const response = await fetch("/api/reservations", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(inquiryData),
+          body: JSON.stringify(reservationData),
         });
 
         if (!response.ok) {
-          throw new Error("Failed to create inquiry");
+          throw new Error("Failed to create reservation request");
         }
 
-        toast.success("Inquiry sent! Waiting for owner approval.");
+        toast.success("Reservation request sent! Waiting for landlord approval.");
       } catch (error: any) {
-        console.error('Inquiry error:', error);
-        toast.error(error?.message || 'Failed to send inquiry');
+        console.error('Reservation request error:', error);
+        toast.error(error?.message || 'Failed to send reservation request');
       }
     });
   };
@@ -158,27 +154,33 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
           </div>
         </section>
 
-        {/* Room Details */}
-        <section className="pb-6 border-b border-border">
-          <div className="flex flex-wrap gap-6">
-            <div>
-              <p className="text-sm text-text-secondary">Guests</p>
-              <p className="text-lg font-semibold text-text-primary">{guestCount}</p>
-            </div>
-            <div>
-              <p className="text-sm text-text-secondary">Rooms</p>
-              <p className="text-lg font-semibold text-text-primary">{roomCount}</p>
-            </div>
-            <div>
-              <p className="text-sm text-text-secondary">Bathrooms</p>
-              <p className="text-lg font-semibold text-text-primary">{bathroomCount}</p>
-            </div>
-            <div>
-              <p className="text-sm text-text-secondary">Room Type</p>
-              <p className="text-lg font-semibold text-text-primary">{roomType}</p>
-            </div>
-          </div>
-        </section>
+         {/* Available Rooms Section */}
+         <AvailableRoomsSection
+           rooms={rooms}
+           listingId={id}
+           listingName={title}
+           onSubmit={handleInquiry}
+           isLoading={isLoading}
+           user={user}
+         />
+
+         {/* Room Details */}
+         <section className="pb-6 border-b border-border">
+           <div className="flex flex-wrap gap-6">
+             <div>
+               <p className="text-sm text-text-secondary">Rooms</p>
+               <p className="text-lg font-semibold text-text-primary">{roomCount}</p>
+             </div>
+             <div>
+               <p className="text-sm text-text-secondary">Bathrooms</p>
+               <p className="text-lg font-semibold text-text-primary">{bathroomCount}</p>
+             </div>
+             <div>
+               <p className="text-sm text-text-secondary">Available Rooms</p>
+               <p className="text-lg font-semibold text-text-primary">{rooms.length}</p>
+             </div>
+           </div>
+         </section>
 
         {/* Where You'll Sleep */}
         {bedroomImage && (
@@ -195,7 +197,9 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
               <div className="flex flex-col justify-center">
                 <p className="font-semibold text-text-primary text-lg">Bedroom</p>
                 <p className="text-sm text-text-secondary mt-1">{bedType || "Single/Double bed"}</p>
-                <p className="text-sm text-text-secondary">{roomType}</p>
+                <p className="text-sm text-text-secondary">
+                  {rooms.map(room => room.roomType).filter(Boolean).join(", ")}
+                </p>
               </div>
             </div>
           </section>
@@ -260,36 +264,21 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
         </section>
       </div>
 
-      {/* Inquiry Card - Right Side */}
-      <div className="lg:col-span-1">
-        <div className="sticky top-32 bg-white dark:bg-gray-800 rounded-card border border-border dark:border-gray-700 p-6 shadow-soft transition-colors duration-300">
-          <div className="mb-6">
-            <div className="flex items-baseline gap-2 mb-3">
-              <span className="text-3xl font-bold text-text-primary">₱{price.toLocaleString()}</span>
-              <span className="text-text-secondary">/ month</span>
-            </div>
-          </div>
+       {/* Inquiry Card - Right Side */}
+       <div className="lg:col-span-1">
+         <div className="sticky top-32 bg-white dark:bg-gray-800 rounded-card border border-border dark:border-gray-700 p-6 shadow-soft transition-colors duration-300">
+           <div className="mb-6">
+             <div className="flex items-baseline gap-2 mb-3">
+               <span className="text-3xl font-bold text-text-primary">₱{price.toLocaleString()}</span>
+               <span className="text-text-secondary">/ month</span>
+             </div>
+           </div>
 
-          <Modal>
-            <Modal.Trigger name="inquiry">
-              <Button
-                disabled={isLoading}
-                className="flex flex-row items-center justify-center h-[42px] w-full"
-                size="large"
-              >
-                Inquire Now
-              </Button>
-            </Modal.Trigger>
-
-            <InquiryModal
-              listingName={title}
-              rooms={rooms}
-              onSubmit={handleInquiry}
-              isLoading={isLoading}
-            />
-          </Modal>
-        </div>
-      </div>
+           <p className="text-text-secondary mb-6">
+             Choose a room from the available options below to make a reservation request.
+           </p>
+         </div>
+       </div>
 
       {/* Description Modal */}
       <AnimatePresence>

@@ -11,7 +11,6 @@ interface Property {
   price: number;
   status: string;
   roomCount: number;
-  guestCount: number;
   bathroomCount: number;
   imageSrc: string;
   createdAt: Date;
@@ -107,7 +106,7 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
                       {property.title}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {property.roomCount} rooms · {property.guestCount} guests · {property.bathroomCount} bathrooms
+                      {property.roomCount} rooms · {property.bathroomCount} bathrooms
                     </p>
                   </div>
                   <span className={`px-2 py-1 text-xs rounded-full ${statusColors[property.status]}`}>

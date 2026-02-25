@@ -1,57 +1,44 @@
-import { headers } from 'next/headers'
-import { NextResponse } from 'next/server'
-import Stripe from 'stripe'
-import { stripe } from '@/lib/stripe'
-import { createReservation } from '@/services/user/reservations'
-
+import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
+import { stripe } from '@/lib/stripe';
+import { handleStripeWebhook } from '@/services/payments/stripe';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.text()
+    const body = await req.text();
     const _headers = await headers();
     const signature = _headers.get('stripe-signature');
 
-
     if (!signature) {
-      return new Response('Invalid signature', { status: 400 })
+      return new Response('Invalid signature', { status: 400 });
     }
 
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
-    )
+    );
 
     if (event.type === 'checkout.session.completed') {
       if (!event.data.object.customer_details?.email) {
-        throw new Error('Missing user email')
+        throw new Error('Missing user email');
       }
 
-      const session = event.data.object as Stripe.Checkout.Session
+      const session = event.data.object as Stripe.Checkout.Session;
 
-      console.log('Stripe session metadata:', session.metadata)
+      console.log('Stripe session metadata:', session.metadata);
 
-      const { listingId,
-        startDate,
-        endDate,
-        totalPrice, userId} = session.metadata || {};
-
-      if (!listingId || !startDate || !endDate || !totalPrice || !userId) {
-        console.error('Invalid metadata:', { listingId, startDate, endDate, totalPrice, userId })
-        throw new Error('Invalid request metadata')
-      }
-
-      await createReservation({listingId, startDate: new Date(startDate), endDate: new Date(endDate), totalPrice: Number(totalPrice), userId})
-
+      await handleStripeWebhook(session);
     }
 
-    return NextResponse.json({ result: event, ok: true })
+    return NextResponse.json({ result: event, ok: true });
   } catch (err) {
-    console.error('Stripe webhook error:', err)
+    console.error('Stripe webhook error:', err);
 
     return NextResponse.json(
       { message: 'Something went wrong', ok: false },
       { status: 500 }
-    )
+    );
   }
 }

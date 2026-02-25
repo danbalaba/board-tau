@@ -23,6 +23,8 @@ const HeartButton: React.FC<HeartButtonProps> = ({
   const [hasFavorited, setHasFavorited] = useState(initialValue);
   const hasFavoritedRef = useRef(initialValue);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { mutate } = useMutation({
     mutationFn: updateFavorite,
     onError: () => {
@@ -48,12 +50,24 @@ const HeartButton: React.FC<HeartButtonProps> = ({
     e.stopPropagation();
     e.preventDefault();
 
-    if (status !== "authenticated") {
-      toast.error("Please sign in to favorite the listing!");
+    if (isLoading || isAnimating) {
       return;
     }
 
-    if (isAnimating) {
+    if (status !== "authenticated") {
+      setIsLoading(true);
+
+      // Clear existing timer if any
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      // Show toast only once after a delay
+      debounceTimerRef.current = setTimeout(() => {
+        toast.error("Please sign in to favorite the listing!");
+        setIsLoading(false);
+      }, 1000);
+
       return;
     }
 
@@ -71,8 +85,8 @@ const HeartButton: React.FC<HeartButtonProps> = ({
     <button
       type="button"
       onClick={handleClick}
-      disabled={isAnimating}
-      className="relative hover:opacity-80 transition cursor-pointer z-[5] disabled:cursor-not-allowed"
+      disabled={isAnimating || isLoading}
+      className="relative hover:opacity-80 transition cursor-pointer z-[5] disabled:cursor-not-allowed disabled:opacity-50"
     >
       <AiOutlineHeart
         size={28}

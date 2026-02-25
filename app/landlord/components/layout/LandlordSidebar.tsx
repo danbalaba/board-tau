@@ -30,6 +30,11 @@ const navItems = [
     icon: FaEnvelope,
   },
   {
+    href: '/landlord/reservations',
+    label: 'Reservations',
+    icon: FaCalendarCheck,
+  },
+  {
     href: '/landlord/bookings',
     label: 'Bookings',
     icon: FaCalendarCheck,

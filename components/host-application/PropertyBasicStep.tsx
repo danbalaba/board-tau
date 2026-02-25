@@ -4,6 +4,7 @@ import Textarea from '../inputs/Textarea';
 import Select from '../inputs/Select';
 import { Building2, Tag, MapPin, DollarSign } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { categories } from '@/utils/constants';
 
 interface PropertyBasicStepProps {
   register: any;
@@ -119,21 +120,30 @@ const PropertyBasicStep: React.FC<PropertyBasicStepProps> = ({ register, errors,
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Select
-              label="Property Category"
-              id="propertyInfo.category"
-              register={register}
-              errors={errors}
-              options={[
-                { value: 'Student-Friendly', label: 'Student-Friendly' },
-                { value: 'Female-Only', label: 'Female-Only' },
-                { value: 'Male-Only', label: 'Male-Only' },
-                { value: 'Budget Boarding House', label: 'Budget Boarding House' },
-                { value: 'Private Boarding House', label: 'Private Boarding House' },
-                { value: 'Family / Visitor Friendly', label: 'Family / Visitor Friendly' }
-              ]}
-              required
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Property Categories (Select all that apply)
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {categories.map((category) => (
+                  <div key={category.value} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`category-${category.value}`}
+                      {...register('propertyInfo.category', { required: false })}
+                      value={category.value}
+                      className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
+                    />
+                    <label
+                      htmlFor={`category-${category.value}`}
+                      className="text-sm text-gray-700 dark:text-gray-300"
+                    >
+                      {category.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
             <Input
               label="Monthly Price (PHP)"
               id="propertyInfo.price"
