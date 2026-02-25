@@ -10,7 +10,6 @@ const generateEmbeddingText = (listing: any): string => {
     listing.title,
     listing.description,
     ...listing.amenities,
-    listing.roomType || "",
     listing.category,
     listing.femaleOnly ? "female only" : "",
     listing.maleOnly ? "male only" : "",
@@ -33,17 +32,19 @@ export const getListings = async (query?: {
   [key: string]: string | string[] | undefined | null;
 }) => {
   try {
+    console.log("🔍 RAW PARAMS:", query);
+
     // Parse query parameters with proper type conversion
     const parsedQuery = {
       // Numbers
-      roomCount: query?.roomCount ? parseInt(query.roomCount as string) : undefined,
-      guestCount: query?.guestCount ? parseInt(query.guestCount as string) : undefined,
-      bathroomCount: query?.bathroomCount ? parseInt(query.bathroomCount as string) : undefined,
       minPrice: query?.minPrice ? parseInt(query.minPrice as string) : undefined,
       maxPrice: query?.maxPrice ? parseInt(query.maxPrice as string) : undefined,
       distance: query?.distance ? parseInt(query.distance as string) : undefined,
       originLat: query?.originLat ? parseFloat(query.originLat as string) : undefined,
       originLng: query?.originLng ? parseFloat(query.originLng as string) : undefined,
+      capacity: query?.capacity ? parseInt(query.capacity as string) : undefined,
+      availableSlots: query?.availableSlots ? parseInt(query.availableSlots as string) : undefined,
+      roomSize: query?.roomSize ? parseFloat(query.roomSize as string) : undefined,
 
       // Booleans
       femaleOnly: query?.femaleOnly === "true",
@@ -62,8 +63,10 @@ export const getListings = async (query?: {
       // Arrays
       amenities: Array.isArray(query?.amenities) ? query.amenities :
                  typeof query?.amenities === "string" ? [query.amenities] : undefined,
+      roomAmenities: Array.isArray(query?.roomAmenities) ? query.roomAmenities :
+                 typeof query?.roomAmenities === "string" ? [query.roomAmenities] : undefined,
       categories: Array.isArray(query?.categories) ? query.categories :
-                    typeof query?.categories === "string" ? [query.categories] : undefined,
+                  typeof query?.categories === "string" ? [query.categories] : undefined,
 
       // Strings
       userId: query?.userId,
@@ -73,15 +76,15 @@ export const getListings = async (query?: {
       category: query?.category,
       cursor: query?.cursor,
       roomType: query?.roomType,
+      bedType: query?.bedType,
       moveInDate: query?.moveInDate,
       stayDuration: query?.stayDuration,
     };
 
+    console.log("📋 PARSED FILTERS:", parsedQuery);
+
     const {
       userId,
-      roomCount,
-      guestCount,
-      bathroomCount,
       country,
       startDate,
       endDate,
@@ -91,7 +94,12 @@ export const getListings = async (query?: {
       minPrice,
       maxPrice,
       amenities,
+      roomAmenities,
       roomType,
+      bedType,
+      capacity,
+      availableSlots,
+      roomSize,
       distance,
       originLat,
       originLng,
@@ -113,6 +121,27 @@ export const getListings = async (query?: {
       moveInDate,
       stayDuration,
     } = parsedQuery;
+
+    // Validate inputs
+    if (minPrice != null && maxPrice != null && minPrice > maxPrice) {
+      console.log("⚠️ PRICE RANGE INVALID: minPrice > maxPrice");
+      return {
+        type: "exact",
+        message: "Minimum price cannot be greater than maximum price",
+        listings: [],
+        nextCursor: null,
+      };
+    }
+
+    if (femaleOnly && maleOnly) {
+      console.log("⚠️ CONFLICTING GENDER FILTERS: Both maleOnly and femaleOnly are true");
+      return {
+        type: "exact",
+        message: "No listings match both gender filters",
+        listings: [],
+        nextCursor: null,
+      };
+    }
 
     // Calculate availability dates if provided
     let availabilityStartDate: string | null = null;
@@ -142,78 +171,127 @@ export const getListings = async (query?: {
       availabilityEndDate = end.toISOString().split('T')[0];
     }
 
-    // Tier 1: Primary Filters (Required - must match strictly)
-    let where: any = {};
+    // Tier 1: Primary Filters (Room-level - strict)
+    const roomWhere: any = {};
+
+    if (roomType) {
+      roomWhere.roomType = roomType;
+    }
+
+    if (bedType) {
+      roomWhere.bedType = bedType;
+    }
+
+    if (capacity != null && capacity > 0) {
+      roomWhere.capacity = { gte: capacity };
+    }
+
+    if (availableSlots != null && availableSlots > 0) {
+      roomWhere.availableSlots = { gte: availableSlots };
+    }
+
+    if (roomSize != null && roomSize > 0) {
+      roomWhere.size = { gte: roomSize };
+    }
+
+    const roomPriceCond: { gte?: number; lte?: number } = {};
+    if (minPrice != null && minPrice > 0) roomPriceCond.gte = minPrice;
+    if (maxPrice != null && maxPrice > 0) roomPriceCond.lte = maxPrice;
+    if (Object.keys(roomPriceCond).length) roomWhere.price = roomPriceCond;
+
+    if (roomAmenities && Array.isArray(roomAmenities) && roomAmenities.length > 0) {
+      roomWhere.amenities = { hasEvery: roomAmenities };
+    }
+
+    // Tier 2: Listing-level Filters (secondary)
+    const listingWhere: any = {};
 
     // Public listing: only show active (approved) listings unless includeAllStatuses is set (admin)
     const includeAllStatuses = query?.includeAllStatuses === "true";
     if (!includeAllStatuses) {
-      where.status = "active";
+      listingWhere.status = "active";
     }
 
     if (userId) {
-      where.userId = userId;
-    }
-
-    // Price range (strict)
-    const priceCond: { gte?: number; lte?: number } = {};
-    if (minPrice != null && minPrice > 0) priceCond.gte = minPrice;
-    if (maxPrice != null && maxPrice > 0) priceCond.lte = maxPrice;
-    if (Object.keys(priceCond).length) where.price = priceCond;
-
-    // Guest count (strict)
-    if (guestCount != null && guestCount > 0) {
-      where.guestCount = { gte: guestCount };
-    }
-
-    // Room type (strict)
-    if (roomType) {
-      where.roomType = roomType;
-    }
-
-    // Gender restrictions (strict) - mutually exclusive
-    if (femaleOnly) {
-      where.femaleOnly = true;
-    } else if (maleOnly) {
-      where.maleOnly = true;
+      listingWhere.userId = userId;
     }
 
     if (categoriesArr && Array.isArray(categoriesArr) && categoriesArr.length > 0) {
-      where.category = { in: categoriesArr };
+      listingWhere.category = { hasSome: categoriesArr };
     } else if (category) {
-      where.category = category;
+      listingWhere.category = { hasSome: [category] };
     }
+
+    if (amenities && Array.isArray(amenities) && amenities.length > 0) {
+      listingWhere.amenities = { hasSome: amenities };
+    }
+
+    // Gender restrictions (listing-level)
+    if (femaleOnly) {
+      listingWhere.femaleOnly = true;
+    } else if (maleOnly) {
+      listingWhere.maleOnly = true;
+    }
+
+    // Other listing-level rules
+    if (visitorsAllowed) listingWhere.visitorsAllowed = true;
+    if (petsAllowed) listingWhere.petsAllowed = true;
+    if (smokingAllowed) listingWhere.smokingAllowed = true;
+    if (security24h) listingWhere.security24h = true;
+    if (cctv) listingWhere.cctv = true;
+    if (fireSafety) listingWhere.fireSafety = true;
+    if (nearTransport) listingWhere.nearTransport = true;
+    if (studyFriendly) listingWhere.studyFriendly = true;
+    if (quietEnvironment) listingWhere.quietEnvironment = true;
+    if (flexibleLease) listingWhere.flexibleLease = true;
 
     // Availability filtering (strict)
     if (availabilityStartDate && availabilityEndDate) {
-      where.NOT = {
+      listingWhere.NOT = {
         reservations: {
           some: {
             OR: [
               { endDate: { gte: new Date(availabilityStartDate) }, startDate: { lte: new Date(availabilityStartDate) } },
               { startDate: { lte: new Date(availabilityEndDate) }, endDate: { gte: new Date(availabilityEndDate) } },
+              { startDate: { gte: new Date(availabilityStartDate) }, endDate: { lte: new Date(availabilityEndDate) } },
             ],
           },
         },
       };
     }
 
-    // Get primary filter matches
+    // Query listings with rooms that match all primary filters
     const primaryQuery: any = {
-      where,
+      where: {
+        ...listingWhere,
+        rooms: {
+          some: {
+            ...roomWhere,
+          },
+        },
+      },
       take: 200,
       orderBy: { createdAt: "desc" },
       include: {
-        rooms: true,
+        rooms: {
+          where: roomWhere,
+        },
         images: true,
       },
     };
 
+    console.log("🔍 PRISMA WHERE:", primaryQuery.where);
+
     let primaryListings = await db.listing.findMany(primaryQuery);
+
+    console.log("✅ STRICTER RESULTS (Primary):", primaryListings.length);
 
     // If no primary listings found, trigger fallback immediately
     if (primaryListings.length === 0) {
-      return await getFallbackListings(parsedQuery);
+      console.log("⚠️ PRIMARY FILTER RETURNED 0 RESULTS - TRIGGERING FALLBACK");
+      const fallbackResult = await getFallbackListings(parsedQuery);
+      console.log("🔄 FALLBACK ACTIVATED - RETURNED", fallbackResult.listings.length, "RESULTS");
+      return fallbackResult;
     }
 
     const lat = originLat != null ? originLat : TAU_COORDINATES[0];
@@ -289,18 +367,20 @@ export const getListings = async (query?: {
     });
 
     // Sort by score descending, then price ascending, then distance ascending
-    const sortedListings = scoredListings.sort((a, b) => {
+    const sortedListings = scoredListings.sort((a: any, b: any) => {
       if (b.score !== a.score) {
         return b.score - a.score;
       }
-      if (a.price !== b.price) {
-        return a.price - b.price;
+      // Find the minimum room price for each listing
+      const minRoomPriceA = Math.min(...a.rooms.map((room: any) => room.price));
+      const minRoomPriceB = Math.min(...b.rooms.map((room: any) => room.price));
+      if (minRoomPriceA !== minRoomPriceB) {
+        return minRoomPriceA - minRoomPriceB;
       }
       const distA = haversineKm(lat, lng, a.latlng[0], a.latlng[1]);
       const distB = haversineKm(lat, lng, b.latlng[0], b.latlng[1]);
       return distA - distB;
     });
-
 
     // Pagination
     let paginatedListings: any[] = [];
@@ -322,6 +402,8 @@ export const getListings = async (query?: {
         nextCursor = paginatedListings[paginatedListings.length - 1].id;
       }
     }
+
+    console.log("🎉 FINAL RESULTS RETURNED:", paginatedListings.length);
 
     return {
       type: "exact",
@@ -387,15 +469,15 @@ export const createListing = async (data: { [x: string]: any }) => {
   const {
     category,
     location: { region, label: country, latlng },
-    guestCount,
-    bathroomCount,
     roomCount,
+    bathroomCount,
+    guestCount = 1,
     image: imageSrc,
     price,
     title,
     description,
     amenities,
-    roomType,
+    rooms,
     // Rules / Preferences
     femaleOnly,
     maleOnly,
@@ -423,14 +505,13 @@ export const createListing = async (data: { [x: string]: any }) => {
       category,
       roomCount,
       bathroomCount,
-      guestCount,
+
       country,
       region,
       latlng,
       price: parseInt(price, 10),
       userId: user.id,
       amenities,
-      roomType,
       // Rules / Preferences
       femaleOnly,
       maleOnly,
@@ -445,6 +526,9 @@ export const createListing = async (data: { [x: string]: any }) => {
       studyFriendly,
       quietEnvironment,
       flexibleLease,
+      rooms: {
+        create: rooms,
+      },
     },
   });
 

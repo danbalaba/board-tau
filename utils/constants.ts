@@ -2,8 +2,6 @@ import {
   MdOutlineSchool,
   MdOutlineKingBed,
   MdOutlineAttachMoney,
-  MdOutlineFemale,
-  MdOutlineMale,
   MdOutlineGroups,
 } from "react-icons/md";
 import { GiFamilyHouse } from "react-icons/gi";
@@ -11,11 +9,13 @@ import { GiFamilyHouse } from "react-icons/gi";
 /** BoardTAU Step 1 — boarding house categories (multi-select). */
 export const categories = [
   { label: "Student-Friendly", value: "Student-Friendly", icon: MdOutlineSchool, description: "Boarding houses suitable for students." },
-  { label: "Female-Only", value: "Female-Only", icon: MdOutlineFemale, description: "Exclusively for female tenants." },
-  { label: "Male-Only", value: "Male-Only", icon: MdOutlineMale, description: "Exclusively for male tenants." },
-  { label: "Budget Boarding House", value: "Budget Boarding House", icon: MdOutlineAttachMoney, description: "Affordable options." },
-  { label: "Private Boarding House", value: "Private Boarding House", icon: MdOutlineKingBed, description: "Private rooms or units." },
-  { label: "Family / Visitor Friendly", value: "Family / Visitor Friendly", icon: MdOutlineGroups, description: "Family or visitor-friendly." },
+  { label: "Budget-Friendly", value: "Budget-Friendly", icon: MdOutlineAttachMoney, description: "Affordable options for students or working individuals." },
+  { label: "Premium / Private", value: "Premium / Private", icon: MdOutlineKingBed, description: "Higher-end boarding houses or private rooms." },
+  { label: "Family-Friendly", value: "Family-Friendly", icon: MdOutlineGroups, description: "Allows visitors, pets, or accommodates small families." },
+  { label: "Pet-Friendly", value: "Pet-Friendly", icon: GiFamilyHouse, description: "Explicitly allows pets." },
+  { label: "Apartment", value: "Apartment", icon: MdOutlineKingBed, description: "Full apartment listing, not typical boarding rooms." },
+  { label: "Short-Term / Flexible Lease", value: "Short-Term / Flexible Lease", icon: MdOutlineSchool, description: "Temporary stays or short-term rentals." },
+  { label: "Quiet / Study Environment", value: "Quiet / Study Environment", icon: MdOutlineSchool, description: "Focused on study-friendly, noise-controlled environment." },
 ];
 
 export const LISTINGS_BATCH = 16;
@@ -23,18 +23,18 @@ export const LISTINGS_BATCH = 16;
 export const menuItems = [
   { label: "My favorites", path: "/favorites" },
   { label: "My reservations", path: "/reservations" },
-  { label: "My properties", path: "/properties" },
 ];
 
 /** Tarlac Agricultural University (TAU), Camiling, Tarlac — default map center & distance reference */
 export const TAU_COORDINATES = [15.63518934952113, 120.41534319307087] as [number, number];
 
 /** Room types for filter & listings (Step 6). */
+import { ROOM_TYPES, ROOM_TYPE_LABELS } from "@/data/roomTypes";
+
 export const roomTypeOptions = [
-  { value: "", label: "Any" },
-  { value: "Solo", label: "Solo" },
-  { value: "Shared", label: "Shared" },
-  { value: "Bed Spacer", label: "Bed Spacer" },
+  { value: "", label: "Choose room type" },
+  { value: ROOM_TYPES.SOLO, label: ROOM_TYPE_LABELS.SOLO },
+  { value: ROOM_TYPES.BEDSPACE, label: ROOM_TYPE_LABELS.BEDSPACE },
 ];
 
 /** Stay duration options (Step 3). */

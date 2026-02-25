@@ -49,8 +49,8 @@ export const authOptions: AuthOptions = {
 
         if (!user || !user?.password) throw new Error("Invalid credentials");
 
-        // Check if email is verified
-        if (!user.emailVerified) {
+        // Skip email verification for admin users
+        if (!user.emailVerified && user.role !== "admin") {
           throw new Error("Email not verified. Please verify your email first.");
         }
 

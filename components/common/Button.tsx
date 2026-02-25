@@ -11,6 +11,7 @@ interface ButtonProps extends HTMLMotionProps<"button"> {
   className?: string;
   children?: ReactNode;
   outline?: boolean;
+  isLoading?: boolean;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -18,6 +19,7 @@ const Button: React.FC<ButtonProps> = ({
   className,
   size = "small",
   outline = false,
+  isLoading = false,
   ...props
 }) => {
   return (
@@ -35,9 +37,16 @@ const Button: React.FC<ButtonProps> = ({
           : "bg-primary dark:bg-primary border-primary dark:border-primary text-white hover:bg-primary-hover dark:hover:bg-primary-hover shadow-soft focus:ring-accent/50",
         className
       )}
+      disabled={isLoading || props.disabled}
       {...props}
     >
-      {children}
+      {isLoading ? (
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+        </div>
+      ) : (
+        children
+      )}
     </motion.button>
   );
 };

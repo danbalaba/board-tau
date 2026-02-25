@@ -100,6 +100,15 @@ html.dark body {
   100% { background-position: 0% 50%; }
 }
 
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
+  }
+}
+
 .swiper-wrapper {
   @apply md:gap-2 gap-1 justify-between;
 }
@@ -142,11 +151,17 @@ html.dark body {
 
 .hide-scrollbar::-webkit-scrollbar {
   width: 0;
+  height: 0;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* ===== SOLID SEARCH BAR ===== */
 .search-bar-trigger {
-  @apply relative inline-flex w-full px-2 md:px-4 py-1.5 md:py-2
+  @apply relative w-full px-2 md:px-4 py-1.5 md:py-2
          rounded-pill cursor-pointer
          transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]
          hover:scale-[1.01] active:scale-[0.99]
@@ -265,8 +280,8 @@ html.dark .font-normal { @apply dark:text-gray-200; }
 html.dark .font-semibold { @apply dark:text-gray-100; }
 html.dark .font-bold { @apply dark:text-gray-100; }
 
-html.dark .caption,
-html.dark .text-xs,
-html.dark .text-sm { @apply dark:text-gray-300; }
+html.dark .caption:not(.text-primary),
+html.dark .text-xs:not(.text-primary),
+html.dark .text-sm:not(.text-primary) { @apply dark:text-gray-300; }
 
 html.dark .text-muted { @apply dark:text-gray-400; }

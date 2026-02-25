@@ -6,7 +6,7 @@ import Button from "@/components/common/Button";
 interface Props {
   open: boolean;
   title: string;
-  message: string;
+  message: string | React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: "primary" | "danger";

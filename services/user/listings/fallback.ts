@@ -28,7 +28,10 @@ const generateEmbeddingText = (listing: any): string => {
 };
 
 // Fallback search function when no primary matches found
+// Implements incremental filter relaxation with strict prioritization
 export const getFallbackListings = async (parsedQuery: any) => {
+  console.log("🔄 FALLBACK: Parsed Query Received:", parsedQuery);
+
   const {
     userId,
     roomCount,
@@ -60,9 +63,20 @@ export const getFallbackListings = async (parsedQuery: any) => {
     stayDuration,
   } = parsedQuery;
 
+  // Handle gender filter conflicts immediately
+  if (femaleOnly && maleOnly) {
+    console.log("🔄 FALLBACK: Gender filters conflict - returning no results");
+    return {
+      type: "closest",
+      message: "No listings match both gender filters",
+      listings: [],
+      nextCursor: null,
+    };
+  }
+
   let where: any = {};
 
-  // Public listing: only show active (approved) listings
+  // Public listing: only show active (approved) listings - NEVER relax this
   const includeAllStatuses = parsedQuery.includeAllStatuses;
   if (!includeAllStatuses) {
     where.status = "active";
@@ -72,19 +86,34 @@ export const getFallbackListings = async (parsedQuery: any) => {
     where.userId = userId;
   }
 
-  // Relaxed price range (±20%)
+  // PRIORITY 1: Keep strict filters (never relax these)
+  // - Gender restrictions (must match at least one if specified)
+  if (femaleOnly) {
+    where.femaleOnly = true;
+  } else if (maleOnly) {
+    where.maleOnly = true;
+  }
+
+  // - Category (keep strict to maintain relevance)
+  if (categoriesArr && Array.isArray(categoriesArr) && categoriesArr.length > 0) {
+    where.category = { in: categoriesArr };
+  } else if (category) {
+    where.category = category;
+  }
+
+  // PRIORITY 2: Relax price range moderately (±20% maximum)
   const fallbackPriceCond: { gte?: number; lte?: number } = {};
   if (minPrice != null && minPrice > 0) {
-    fallbackPriceCond.gte = Math.floor(minPrice * 0.8);
+    fallbackPriceCond.gte = Math.floor(minPrice * 0.8); // Relax 20% lower
   }
   if (maxPrice != null && maxPrice > 0) {
-    fallbackPriceCond.lte = Math.ceil(maxPrice * 1.2);
+    fallbackPriceCond.lte = Math.ceil(maxPrice * 1.2); // Relax 20% higher
   }
   if (Object.keys(fallbackPriceCond).length) {
     where.price = fallbackPriceCond;
   }
 
-  // Relaxed room count and guest count
+  // PRIORITY 3: Relax room/guest/bathroom counts (allow -1)
   if (roomCount != null && roomCount > 0) {
     where.roomCount = { gte: Math.max(1, roomCount - 1) };
   }
@@ -93,12 +122,6 @@ export const getFallbackListings = async (parsedQuery: any) => {
   }
   if (bathroomCount != null && bathroomCount > 0) {
     where.bathroomCount = { gte: Math.max(1, bathroomCount - 1) };
-  }
-
-  if (categoriesArr && Array.isArray(categoriesArr) && categoriesArr.length > 0) {
-    where.category = { in: categoriesArr };
-  } else if (category) {
-    where.category = category;
   }
 
   const fallbackQuery: any = {
@@ -111,47 +134,65 @@ export const getFallbackListings = async (parsedQuery: any) => {
     },
   };
 
+  console.log("🔄 FALLBACK: Prisma Query (with relaxed filters):", fallbackQuery);
+
   let fallbackCandidates = await db.listing.findMany(fallbackQuery);
+
+  console.log("🔄 FALLBACK: Initial Candidates Found:", fallbackCandidates.length);
 
   const lat = originLat != null ? originLat : TAU_COORDINATES[0];
   const lng = originLng != null ? originLng : TAU_COORDINATES[1];
 
-  // Relax distance filter up to 20km
+  // PRIORITY 4: Relax distance filter (max 2x original or 20km, whichever is smaller)
   const MAX_FALLBACK_DISTANCE = 20;
   fallbackCandidates = fallbackCandidates.filter((listing) => {
     if (!listing.latlng || listing.latlng.length < 2) return false;
     const [listingLat, listingLng] = listing.latlng;
     const dist = haversineKm(lat, lng, listingLat, listingLng);
-    return dist <= (distance ? Math.max(distance * 2, MAX_FALLBACK_DISTANCE) : MAX_FALLBACK_DISTANCE);
+    const maxAllowedDist = distance ? Math.min(distance * 2, MAX_FALLBACK_DISTANCE) : MAX_FALLBACK_DISTANCE;
+    return dist <= maxAllowedDist;
   });
 
-  // Calculate fallback scores
+  console.log("🔄 FALLBACK: Candidates after distance filter:", fallbackCandidates.length);
+
+  // If still no candidates, return empty results instead of all listings
+  if (fallbackCandidates.length === 0) {
+    console.log("🔄 FALLBACK: No candidates found even with relaxed filters");
+    return {
+      type: "closest",
+      message: "No listings found within relaxed search parameters",
+      listings: [],
+      nextCursor: null,
+    };
+  }
+
+  // Calculate fallback scores with strict prioritization
   const scoredFallbackListings = fallbackCandidates.map((listing) => {
     const distanceKm = haversineKm(lat, lng, listing.latlng[0], listing.latlng[1]);
     let score = 0;
 
-    // Price score (30%)
+    // 1. Price match (40% weight) - prioritize staying close to original range
     if (minPrice != null && maxPrice != null) {
       const userPriceRange = maxPrice - minPrice;
       const userPriceMid = (minPrice + maxPrice) / 2;
       const priceDiff = Math.abs(listing.price - userPriceMid);
       const priceScore = Math.max(0, 100 - (priceDiff / userPriceRange) * 100);
-      score += priceScore * 0.30;
+      score += priceScore * 0.40;
     }
 
-    // Distance score (30%)
-    const maxDist = distance ? Math.max(distance * 2, MAX_FALLBACK_DISTANCE) : MAX_FALLBACK_DISTANCE;
+    // 2. Distance match (30% weight) - prioritize closer listings
+    const maxDist = distance ? Math.min(distance * 2, MAX_FALLBACK_DISTANCE) : MAX_FALLBACK_DISTANCE;
     const distanceScore = Math.max(0, 100 - (distanceKm / maxDist) * 100);
     score += distanceScore * 0.30;
 
-    // Room type score (10%)
+    // 3. Room type match (10% weight) - check if any room matches the requested type
     let roomTypeScore = 50;
-    if (roomType && listing.roomType === roomType) {
+    if (roomType && (listing as any).rooms && Array.isArray((listing as any).rooms) && (listing as any).rooms.some((room: any) => room.roomType === roomType)) {
       roomTypeScore = 100;
     }
     score += roomTypeScore * 0.10;
 
-    // Amenities score (15%)
+    // 4. Amenities match (10% weight) - prioritize listings with requested amenities
     let amenitiesScore = 50;
     if (amenities && Array.isArray(amenities) && amenities.length > 0) {
       const amenitiesMatch = amenities.filter((amenity: string) =>
@@ -159,9 +200,9 @@ export const getFallbackListings = async (parsedQuery: any) => {
       ).length;
       amenitiesScore = (amenitiesMatch / amenities.length) * 100;
     }
-    score += amenitiesScore * 0.15;
+    score += amenitiesScore * 0.10;
 
-    // Rules/features score (15%)
+    // 5. Rules/features match (10% weight)
     let rulesFeaturesScore = 50;
     const rulesFeatures = [
       { key: "visitorsAllowed", value: visitorsAllowed },
@@ -191,7 +232,7 @@ export const getFallbackListings = async (parsedQuery: any) => {
     if (totalCount > 0) {
       rulesFeaturesScore = (matchedCount / totalCount) * 100;
     }
-    score += rulesFeaturesScore * 0.15;
+    score += rulesFeaturesScore * 0.10;
 
     const embeddingText = generateEmbeddingText(listing);
 
@@ -202,16 +243,29 @@ export const getFallbackListings = async (parsedQuery: any) => {
     };
   });
 
+  // Sort by score descending
   const sortedFallbackListings = scoredFallbackListings.sort((a: any, b: any) => b.score - a.score);
-  const paginatedFallbackListings = sortedFallbackListings.slice(0, LISTINGS_BATCH);
+
+  // Apply minimum score threshold to avoid returning irrelevant listings
+  const MIN_SCORE_THRESHOLD = 40;
+  const relevantListings = sortedFallbackListings.filter((listing: any) => listing.score >= MIN_SCORE_THRESHOLD);
+
+  console.log("🔄 FALLBACK: Relevant Listings (score ≥ 40):", relevantListings.length);
+
+  // Pagination
+  const paginatedFallbackListings = relevantListings.slice(0, LISTINGS_BATCH);
   let nextCursor = null;
-  if (sortedFallbackListings.length > LISTINGS_BATCH) {
-    nextCursor = sortedFallbackListings[LISTINGS_BATCH - 1].id;
+  if (relevantListings.length > LISTINGS_BATCH) {
+    nextCursor = relevantListings[LISTINGS_BATCH - 1].id;
   }
+
+  console.log("🔄 FALLBACK: Final Results Returned:", paginatedFallbackListings.length);
 
   return {
     type: "closest",
-    message: "No exact matches found. Showing closest listings.",
+    message: paginatedFallbackListings.length > 0
+      ? "No exact matches found. Showing closest listings within relaxed parameters."
+      : "No listings found within relaxed search parameters",
     listings: paginatedFallbackListings,
     nextCursor,
   };

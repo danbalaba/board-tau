@@ -29,6 +29,25 @@ export const validateName = (name: string): string | null => {
   return null;
 };
 
+// Phone number validation (Philippine format)
+export const validatePhoneNumber = (phone: string): string | null => {
+  if (!phone) return 'Phone number is required';
+
+  // Remove all non-digit characters
+  const cleaned = phone.replace(/[^0-9]/g, '');
+
+  // Validate length and format for Philippine mobile numbers
+  // Accepts: 09xx xxx xxxx, +63 9xx xxx xxxx, 639xx xxx xxxx, etc.
+  if (cleaned.length >= 10 && cleaned.length <= 13) {
+    // Check if it's a valid Philippine mobile number
+    if (/^(09|9|639|\+639)\d{9}$/.test(cleaned.replace(/[^0-9]/g, ''))) {
+      return null; // Valid
+    }
+  }
+
+  return 'Please enter a valid Philippine mobile number (e.g., 0917 123 4567 or +63 917 123 4567)';
+};
+
 // OTP validation
 export const validateOTP = (otp: string): string | null => {
   if (!otp) return 'OTP is required';

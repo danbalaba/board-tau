@@ -6,6 +6,7 @@ import Logo from "./Logo";
 import UserMenu from "./UserMenu";
 import { ThemeToggle } from "../layout/ThemeToggle";
 import Search from "./Search";
+import MobileSearch from "./MobileSearch";
 import { User } from "next-auth";
 import { glassFadeIn, floatIn } from "@/utils/motion";
 
@@ -38,22 +39,25 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
       }`}
     >
       <nav
-        className={`transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${
-          isScrolled ? "py-2.5 md:py-2" : "py-4 md:py-4"
+        className={`transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] flex items-center ${
+          isScrolled ? "h-[80px] md:py-5" : "h-[96px] md:py-7"
         }`}
       >
-        <div className="flex main-container flex-row items-center justify-center gap-3 md:gap-0 relative">
+        <div className="flex main-container flex-row items-center justify-between gap-3 md:gap-0 w-full">
+          {/* Desktop: Logo left */}
           <motion.div
             key={mounted ? "logo" : "logo-placeholder"}
             variants={glassFadeIn}
             initial="hidden"
             animate="show"
             transition={{ duration: 0.4 }}
-            className="flex items-center absolute left-4 md:left-8"
+            className="hidden md:flex items-center"
           >
             <Logo />
           </motion.div>
 
+          {/* Search bar - mobile: full width, desktop: absolute center */}
+          <div className="flex-1 px-4 md:absolute md:left-1/2 md:transform md:-translate-x-1/2 md:px-8">
             <motion.div
               variants={floatIn("up")}
               initial="hidden"
@@ -69,32 +73,44 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
                 delayChildren: 0.05,
                 staggerChildren: 0.03
               }}
-              className="hidden md:flex"
-              style={{ maxWidth: '672px' }} // Match max-w-3xl (672px) from hero section
+              className="flex items-center w-full"
+              style={{
+                maxWidth: isScrolled && !window.matchMedia('(max-width: 768px)').matches ? '500px' : '100%'
+              }}
             >
-              <Search compact={true} />
-            </motion.div>
+              {/* Desktop search */}
+              <div className="hidden md:block">
+                <Search compact={true} />
+              </div>
 
-           <div className="flex items-center gap-1 absolute right-4 md:right-8">
-             <motion.div
-               initial={{ opacity: 0, y: -10 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ duration: 0.6, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-               whileHover={{ scale: 1.05, opacity: 0.9 }}
-               whileTap={{ scale: 0.95 }}
-             >
-               <ThemeToggle />
-             </motion.div>
-             <motion.div
-               initial={{ opacity: 0, y: -10 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ duration: 0.6, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-               whileHover={{ scale: 1.05, opacity: 0.9 }}
-               whileTap={{ scale: 0.95 }}
-             >
-               <UserMenu user={user} />
-             </motion.div>
-           </div>
+              {/* Mobile search - full width */}
+              <div className="md:hidden w-full">
+                <MobileSearch />
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Desktop: Theme toggle + User menu right */}
+          <div className="hidden md:flex items-center gap-1">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ scale: 1.05, opacity: 0.9 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ThemeToggle />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ scale: 1.05, opacity: 0.9 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <UserMenu user={user} />
+            </motion.div>
+          </div>
         </div>
       </nav>
     </header>

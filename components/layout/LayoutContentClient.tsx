@@ -6,6 +6,8 @@ import Navbar from '@/components/navbar';
 import Footer from '@/components/layout/Footer';
 import AuthErrorHandler from '@/components/auth/AuthErrorHandler';
 import EmailVerificationNotice from '@/components/auth/EmailVerificationNotice';
+import MobileBottomBar from '@/components/layout/MobileBottomBar';
+import RightSwipePanel from '@/components/navbar/RightSwipePanel';
 import { User } from 'next-auth';
 
 interface LayoutContentClientProps {
@@ -27,10 +29,12 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
       <AuthErrorHandler />
       <Navbar user={user} />
       <EmailVerificationNotice />
-      <main className="pb-16 md:pt-28 pt-24 bg-[#F8FAF9] dark:bg-[#0f1419] transition-colors duration-300">
+      <main className="pb-24 md:pt-28 pt-24 bg-[#F8FAF9] dark:bg-[#0f1419] transition-colors duration-300">
         {children}
       </main>
       <Footer />
+      <MobileBottomBar user={user} />
+      <RightSwipePanel user={user} />
     </>
   );
 };

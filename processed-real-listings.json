@@ -1,0 +1,1969 @@
+[
+  {
+    "title": "Will Mamardlo Apartment",
+    "description": "Affordable boarding house near TAU campus. 3mins walking distance and good for students.",
+    "price": 3000,
+    "roomType": "Bed Spacer",
+    "location": "Malacampa, Camiling, Tarlac. NEAR TAU.",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Own CR",
+      "Study Area / Quiet Room"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1516259762381-22954d7d352d?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.628870808300668,
+      "lng": 120.40644066871573
+    },
+    "rating": 4.7,
+    "reviewCount": 8,
+    "roomCount": 4,
+    "bathroomCount": 1,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Good Shepherd Subdivision",
+    "description": "Affordable boarding house near TAU campus. Walking distance and good for students.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Walking Distance to TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Curfew Enforced"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.63802011022415,
+      "lng": 120.42199690562346
+    },
+    "rating": 4.3,
+    "reviewCount": 7,
+    "roomCount": 5,
+    "bathroomCount": 3,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "De Jesus Lourdes",
+    "description": "Are you looking for an affordable apartment or just a bed space? For as low as ₱1,000, DE JESUS APT. has got you covered!.",
+    "price": 1000,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Own CR",
+      "Water supply (24/7)",
+      "Study Area / Quiet Room"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.629355344387038,
+      "lng": 120.40651676727192
+    },
+    "rating": 4.8,
+    "reviewCount": 10,
+    "roomCount": 6,
+    "bathroomCount": 3,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Budget Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Apartment",
+    "description": "Affordable boarding house near TAU campus. 5m Walking distance and good for students.",
+    "price": 4000,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Study Area / Quiet Room"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.62802640565613,
+      "lng": 120.41678424853629
+    },
+    "rating": 3.8,
+    "reviewCount": 2,
+    "roomCount": 5,
+    "bathroomCount": 2,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Jeck Pablo",
+    "description": "Clean and comfortable studio type available for rent ideal for students and working individuals..",
+    "price": 3000,
+    "roomType": "Solo",
+    "location": "3mins away to TAU & very closed to Gilberto O. Teodoro Memorial Hospital - Camiling District Hospital",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Curfew Enforced"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.636683920036358,
+      "lng": 120.40600050529991
+    },
+    "rating": 4.1,
+    "reviewCount": 2,
+    "roomCount": 6,
+    "bathroomCount": 1,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Estrella Lacaden Facunla",
+    "description": "Affordable boarding house near TAU campus. 5mins Walking distance and good for students.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "CCTV"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.627501893063245,
+      "lng": 120.41941066823586
+    },
+    "rating": 3.9,
+    "reviewCount": 4,
+    "roomCount": 3,
+    "bathroomCount": 3,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": true,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "John Apt",
+    "description": "Newly built 2 storey apartment for rent Ready for occupancy starting on February 1, 2026 1st come 1st serve basis.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Purok Rural Malacampa Camiling Tarlac (4 minutes walk to TAU)",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Study Area / Quiet Room",
+      "CCTV"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1516259762381-22954d7d352d?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.641669044166628,
+      "lng": 120.41023632781702
+    },
+    "rating": 4.1,
+    "reviewCount": 10,
+    "roomCount": 5,
+    "bathroomCount": 1,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": true,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Boarding House",
+    "description": "Affordable boarding house near TAU campus. Walking distance and good for students.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Balcony"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.631694911603203,
+      "lng": 120.41773679573784
+    },
+    "rating": 3.6,
+    "reviewCount": 4,
+    "roomCount": 3,
+    "bathroomCount": 1,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Pamela Garcia",
+    "description": "Rent out an apartment unit or room in Malacampa Camiling, Tarlac, located just 5 minutes away from Tarlac Agricultural University.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Parking"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1516259762381-22954d7d352d?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.634584446341913,
+      "lng": 120.4070170104473
+    },
+    "rating": 4.7,
+    "reviewCount": 3,
+    "roomCount": 4,
+    "bathroomCount": 2,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Ej Board",
+    "description": "Affordable boarding house near TAU campus. Walking distance and good for students.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Malacampa",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "CCTV"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1516259762381-22954d7d352d?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.631202687330532,
+      "lng": 120.40760874241525
+    },
+    "rating": 4.7,
+    "reviewCount": 5,
+    "roomCount": 4,
+    "bathroomCount": 3,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": true,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Valdez Boarding House",
+    "description": "Affordable boarding house. 5mins walking distance and good for students.",
+    "price": 2000,
+    "roomType": "Solo",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Parking"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.632527605443153,
+      "lng": 120.40967535807025
+    },
+    "rating": 4.4,
+    "reviewCount": 8,
+    "roomCount": 3,
+    "bathroomCount": 2,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Clang Boarding House",
+    "description": "Affordable boarding House. Walking distance and good for students.",
+    "price": 3000,
+    "roomType": "Solo",
+    "location": "Mayantoc",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Parking",
+      "Good for Couple"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1516259762381-22954d7d352d?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.634826703533237,
+      "lng": 120.41039278351846
+    },
+    "rating": 4.1,
+    "reviewCount": 7,
+    "roomCount": 7,
+    "bathroomCount": 2,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Chloe Apartment",
+    "description": "Affordable boarding house. Walking distance in TAU and good for students.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Mayantoc",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Study Area / Quiet Room"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.640209011800021,
+      "lng": 120.42322844059395
+    },
+    "rating": 4.1,
+    "reviewCount": 9,
+    "roomCount": 6,
+    "bathroomCount": 1,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Art Boarding House",
+    "description": "Affordable boarding house near TAU campus. Good For Family.",
+    "price": 5000,
+    "roomType": "Solo",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1516259762381-22954d7d352d?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.629776836149347,
+      "lng": 120.4186443805312
+    },
+    "rating": 4.7,
+    "reviewCount": 9,
+    "roomCount": 6,
+    "bathroomCount": 1,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "JM Apt",
+    "description": "Affordable boarding house near TAU campus. Walking distance and good for students.",
+    "price": 2500,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Air Conditioning"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1516259762381-22954d7d352d?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.633342723849571,
+      "lng": 120.42470758304297
+    },
+    "rating": 4.7,
+    "reviewCount": 6,
+    "roomCount": 5,
+    "bathroomCount": 2,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "RC Boarding House",
+    "description": "Affordable boarding house near TAU. Walking distance and good for students.",
+    "price": 1000,
+    "roomType": "Bed Spacer",
+    "location": "Pinpinas santa ignacia",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "CCTV"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.644483941767673,
+      "lng": 120.41723473036537
+    },
+    "rating": 3.7,
+    "reviewCount": 7,
+    "roomCount": 3,
+    "bathroomCount": 1,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Budget Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": true,
+    "cctv": true,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Roland Apt",
+    "description": "Brand New 2 Storey House for Sale or for Rent, good for Family.",
+    "price": 4500,
+    "roomType": "Solo",
+    "location": "Mayantoc",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1516259762381-22954d7d352d?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.641619604198151,
+      "lng": 120.41615025267397
+    },
+    "rating": 4.5,
+    "reviewCount": 5,
+    "roomCount": 4,
+    "bathroomCount": 2,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Jeremy Boarding House",
+    "description": "professional, or a couple seeking privacy, our brand-new gated units are ready for you!.",
+    "price": 5000,
+    "roomType": "Solo",
+    "location": "Camiling",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "4-min walk to Grocery"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.633767198834807,
+      "lng": 120.42094695479175
+    },
+    "rating": 4.3,
+    "reviewCount": 6,
+    "roomCount": 5,
+    "bathroomCount": 1,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Dianna Lhey Boarding House",
+    "description": "1 solo room available, 2 minutes ride away from TAU.",
+    "price": 1200,
+    "roomType": "Solo",
+    "location": "Near Malacampa Bridge",
+    "amenities": [
+      "WiFi",
+      "Curfew Enforced"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Full Room"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.638512227267546,
+      "lng": 120.4204591580591
+    },
+    "rating": 4.8,
+    "reviewCount": 8,
+    "roomCount": 3,
+    "bathroomCount": 3,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Abi GS Boarding House",
+    "description": "AVAILABLE ROOM FOR RENT.",
+    "price": 3500,
+    "roomType": "Solo",
+    "location": "Very Near TAU Gate",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Parking"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.64478884160177,
+      "lng": 120.41548272480563
+    },
+    "rating": 3.7,
+    "reviewCount": 6,
+    "roomCount": 3,
+    "bathroomCount": 2,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "FR Boarding House",
+    "description": "Affordable boarding house.",
+    "price": 1500,
+    "roomType": "Bed Spacer",
+    "location": "Brgy. Malacampa, Camiling, Tarlac",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.64149454288977,
+      "lng": 120.42326570113308
+    },
+    "rating": 4.4,
+    "reviewCount": 8,
+    "roomCount": 4,
+    "bathroomCount": 1,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Budget Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Lactaoen Boarding House",
+    "description": "Room for rent near TAU.",
+    "price": 4500,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU Gate 2",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Curfew Enforced"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.631877141639633,
+      "lng": 120.40552378085245
+    },
+    "rating": 4.3,
+    "reviewCount": 1,
+    "roomCount": 6,
+    "bathroomCount": 1,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Jeck Studio Boarding House",
+    "description": "Clean and comfortable studio type available for rent — ideal for students and working individuals.",
+    "price": 4500,
+    "roomType": "Solo",
+    "location": "3mins away to TAU & very closed to Gilberto O. Teodoro Memorial Hospital - Camiling District Hospital",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Water supply (24/7)",
+      "Curfew Enforced"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1516259762381-22954d7d352d?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.626210977316234,
+      "lng": 120.41328945797099
+    },
+    "rating": 4.9,
+    "reviewCount": 7,
+    "roomCount": 4,
+    "bathroomCount": 1,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Hazeline Boarding House",
+    "description": "ARE YOU LOOKING FOR THE PERFECT BEDSPACE NEAR TARLAC AGRICULTURAL UNIVERSITY?",
+    "price": 5000,
+    "roomType": "Bed Spacer",
+    "location": "Malacampa, Camiling, Tarlac",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Own CR"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.63873652024514,
+      "lng": 120.4201603288862
+    },
+    "rating": 4.9,
+    "reviewCount": 5,
+    "roomCount": 6,
+    "bathroomCount": 3,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "LISA Boarding House",
+    "description": "Budget Boarding House .",
+    "price": 1500,
+    "roomType": "Bed Spacer",
+    "location": "Malacampa, Camiling, Tarlac",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Own CR",
+      "Curfew Enforced"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1516259762381-22954d7d352d?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.637987159128592,
+      "lng": 120.41728449306022
+    },
+    "rating": 3.6,
+    "reviewCount": 8,
+    "roomCount": 4,
+    "bathroomCount": 2,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Budget Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Will APT",
+    "description": "Affordable Boarding House.",
+    "price": 2000,
+    "roomType": "Bed Spacer",
+    "location": "Malacampa, Camiling, Tarlac. NEAR TAU.",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Fence and Get",
+      "Curfew Enforced"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1516259762381-22954d7d352d?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.635405804273814,
+      "lng": 120.4220078958505
+    },
+    "rating": 4.8,
+    "reviewCount": 4,
+    "roomCount": 7,
+    "bathroomCount": 3,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Daryl APT",
+    "description": "Boarding House near TAU.",
+    "price": 3800,
+    "roomType": "Bed Spacer",
+    "location": "Brgy. Malacampa, Camiling, Tarlac",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Own CR"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.640363581972434,
+      "lng": 120.41256253487157
+    },
+    "rating": 3.7,
+    "reviewCount": 6,
+    "roomCount": 6,
+    "bathroomCount": 1,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Star of David Apartment",
+    "description": "Come and Live in your newly built and ready for you to move in as your second home... students, young professionals and even working individuals are all warmly welcomed here at Star of David Apartment.",
+    "price": 5000,
+    "roomType": "Bed Spacer",
+    "location": "Purok Rural Malacampa Camiling, Tarlac",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Free Bills",
+      "Mini Terrace"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1516259762381-22954d7d352d?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.62964776408453,
+      "lng": 120.41352596219173
+    },
+    "rating": 4.2,
+    "reviewCount": 7,
+    "roomCount": 3,
+    "bathroomCount": 2,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "YOJIN Apartment",
+    "description": "Affordable boarding house near TAU.",
+    "price": 6500,
+    "roomType": "Solo",
+    "location": "Near TAU Gate 2",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Air Conditioning",
+      "Kitchen Access"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.639722617285406,
+      "lng": 120.40812971806012
+    },
+    "rating": 4.9,
+    "reviewCount": 5,
+    "roomCount": 6,
+    "bathroomCount": 3,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Abby Dorm",
+    "description": "Cheap Dorm for Students in TAU.",
+    "price": 2000,
+    "roomType": "Bed Spacer",
+    "location": "Near TAU Gate 2",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Durabox"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1516259762381-22954d7d352d?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522158637959-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.636002948546647,
+      "lng": 120.42161104746603
+    },
+    "rating": 4.9,
+    "reviewCount": 8,
+    "roomCount": 4,
+    "bathroomCount": 1,
+    "guestCount": 3,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "KEGG Apartment",
+    "description": "House for rent.",
+    "price": 8500,
+    "roomType": "Bed Spacer",
+    "location": "Blk 9 Lot 3 Metro Bamban Subdivision Anupul, Tarlac",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area",
+      "Garage"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.644097334491228,
+      "lng": 120.41655617119667
+    },
+    "rating": 5,
+    "reviewCount": 8,
+    "roomCount": 6,
+    "bathroomCount": 1,
+    "guestCount": 2,
+    "bedType": "Single Bed (Shared Room)",
+    "category": "Student-Friendly",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  },
+  {
+    "title": "Alelie Apartment",
+    "description": "Affordable boarding house.",
+    "price": 2900,
+    "roomType": "Solo",
+    "location": "J.P. LAUREL ST. BRGY. DELA CRUZ BAMBAN TARLAC ( NEAR @ SAN ROQUE NATIONAL HIGH SCHOOL)",
+    "amenities": [
+      "WiFi",
+      "Kitchen Access",
+      "Laundry Area"
+    ],
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Exterior",
+        "caption": "Front view"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Bedroom",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523217580768-40ac789329b7?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "CR",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Kitchen",
+        "caption": ""
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format",
+        "roomType": "Common Area",
+        "caption": ""
+      }
+    ],
+    "coords": {
+      "lat": 15.633052612565303,
+      "lng": 120.42224887689811
+    },
+    "rating": 4.9,
+    "reviewCount": 2,
+    "roomCount": 7,
+    "bathroomCount": 2,
+    "guestCount": 1,
+    "bedType": "Single Bed",
+    "category": "Private Boarding House",
+    "femaleOnly": false,
+    "maleOnly": false,
+    "visitorsAllowed": true,
+    "petsAllowed": false,
+    "smokingAllowed": false,
+    "security24h": false,
+    "cctv": false,
+    "fireSafety": false,
+    "nearTransport": true,
+    "studyFriendly": true,
+    "quietEnvironment": true,
+    "flexibleLease": true
+  }
+]

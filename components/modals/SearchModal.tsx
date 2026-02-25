@@ -16,6 +16,8 @@ import Slider from "../inputs/Slider";
 import MultiSelectGrid from "../inputs/MultiSelectGrid";
 import { categories, roomTypeOptions, stayDurationOptions } from "@/utils/constants";
 import { amenities } from "@/data/amenities";
+import { roomAmenities, bedTypeOptions } from "@/data/roomAmenities";
+import { ROOM_TYPES } from "@/data/roomTypes";
 import { colleges } from "@/data/colleges";
 import { rulesPreferences } from "@/data/rulesPreferences";
 import { advancedFilters } from "@/data/advancedFilters";
@@ -27,15 +29,16 @@ import { advancedFilters } from "@/data/advancedFilters";
 
 enum STEPS {
   COLLEGE = 0,
-  CATEGORY = 1,
-  LOCATION = 2,
-  MOVE_IN = 3,
-  AMENITIES = 4,
-  RULES = 5,
-  ROOM_DETAILS = 6,
-  BUDGET = 7,
-  ADVANCED = 8,
-  SUMMARY = 9,
+  BUDGET = 1,
+  ROOM_TYPE = 2,
+  ROOM_CONFIGURATION = 3,
+  LOCATION = 4,
+  MOVE_IN = 5,
+  CATEGORY = 6,
+  AMENITIES = 7,
+  RULES = 8,
+  ADVANCED = 9,
+  SUMMARY = 10,
 }
 
 const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
@@ -53,8 +56,11 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
       amenities: [] as string[],
       rules: [] as string[],
       roomType: "",
-      occupantsPerRoom: 1,
-      bathroomCount: 1,
+      bedType: "",
+      roomAmenities: [] as string[],
+      capacity: 1,
+      availableSlots: 1,
+      roomSize: "",
       minPrice: 0,
       maxPrice: 100000,
       advanced: [] as string[],
@@ -69,8 +75,11 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
   const amenitiesSelected = watch("amenities") ?? [];
   const rulesSelected = watch("rules") ?? [];
   const roomType = watch("roomType");
-  const occupantsPerRoom = watch("occupantsPerRoom") ?? 1;
-  const bathroomCount = watch("bathroomCount") ?? 1;
+  const bedType = watch("bedType");
+  const roomAmenitiesSelected = watch("roomAmenities") ?? [];
+  const capacity = watch("capacity") ?? 1;
+  const availableSlots = watch("availableSlots") ?? 1;
+  const roomSize = watch("roomSize");
   const minPrice = watch("minPrice") ?? 0;
   const maxPrice = watch("maxPrice") ?? 100000;
   const advancedSelected = watch("advanced") ?? [];
@@ -78,27 +87,30 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
   const collegeOption = useMemo(() => colleges.find((c) => c.value === college), [college]);
   const mapCenter = collegeOption?.latlng ?? undefined;
 
-  // Smart room type logic: auto-adjust occupants based on selected room type
+  // Smart room type logic: auto-adjust capacity based on selected room type
   useEffect(() => {
-    if (roomType === "Solo") {
-      // Solo rooms: occupants must be 1
-      if (occupantsPerRoom !== 1) {
-        setCustomValue("occupantsPerRoom", 1);
+    if (roomType === ROOM_TYPES.SOLO) {
+      // Solo rooms: capacity must be 1
+      if (capacity !== 1) {
+        setCustomValue("capacity", 1);
       }
-    } else if (roomType === "Shared" || roomType === "Bed Spacer") {
-      // Shared/Bed Spacer: occupants must be 2 or more
-      if (occupantsPerRoom < 2) {
-        setCustomValue("occupantsPerRoom", 2);
+      if (availableSlots !== 1) {
+        setCustomValue("availableSlots", 1);
+      }
+    } else if (roomType === ROOM_TYPES.BEDSPACE) {
+      // Bed Spacer: capacity must be 2 or more
+      if (capacity < 2) {
+        setCustomValue("capacity", 2);
       }
     }
-    // roomType === "" (Any): no restriction, allow any value >= 1
-  }, [roomType, occupantsPerRoom]);
+    // roomType === "" (Choose room type): no restriction, allow any value >= 1
+  }, [roomType, capacity]);
 
   const setCustomValue = (id: string, value: unknown) => {
     setValue(id, value, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
   };
 
-  const toggleMulti = (id: "categories" | "amenities" | "rules" | "advanced", value: string) => {
+  const toggleMulti = (id: "categories" | "amenities" | "rules" | "advanced" | "roomAmenities", value: string) => {
     const prev = (getValues(id) ?? []) as string[];
     const next = prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value];
     setCustomValue(id, next);
@@ -111,19 +123,22 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
     switch (step) {
       case STEPS.COLLEGE:
         return !!college;
-      case STEPS.CATEGORY:
+      case STEPS.BUDGET:
+        // Validate min price <= max price
+        return minPrice <= maxPrice;
+      case STEPS.ROOM_TYPE:
+        return !!roomType;
+      case STEPS.ROOM_CONFIGURATION:
         return true;
       case STEPS.LOCATION:
         return true;
       case STEPS.MOVE_IN:
         return true;
+      case STEPS.CATEGORY:
+        return true;
       case STEPS.AMENITIES:
         return true;
       case STEPS.RULES:
-        return true;
-      case STEPS.ROOM_DETAILS:
-        return true;
-      case STEPS.BUDGET:
         return true;
       case STEPS.ADVANCED:
         return true;
@@ -165,7 +180,7 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
       "flexible-lease": "flexibleLease",
     };
 
-    const updatedQuery: Record<string, unknown> = {
+     const updatedQuery: Record<string, unknown> = {
       ...currentQuery,
       college: data.college,
       categories: (data.categories ?? []).length ? data.categories : undefined,
@@ -174,8 +189,12 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
       stayDuration: data.stayDuration || undefined,
       amenities: (data.amenities ?? []).length ? data.amenities : undefined,
       roomType: data.roomType || undefined,
-      guestCount: data.occupantsPerRoom,
-      bathroomCount: data.bathroomCount,
+      bedType: data.bedType || undefined,
+      roomAmenities: (data.roomAmenities ?? []).length ? data.roomAmenities : undefined,
+      // Only include capacity and availableSlots if room type is not SOLO (since SOLO rooms always have fixed values)
+      capacity: data.roomType === ROOM_TYPES.SOLO ? undefined : (data.capacity || undefined),
+      availableSlots: data.roomType === ROOM_TYPES.SOLO ? undefined : (data.availableSlots || undefined),
+      roomSize: data.roomSize || undefined,
       minPrice: data.minPrice || undefined,
       maxPrice: data.maxPrice || undefined,
       // Rules as boolean params
@@ -207,6 +226,78 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
     router.push(url);
   };
 
+  const renderSoloRoomConfig = () => (
+    <div className="flex flex-col gap-6">
+      <Heading
+        title="Solo Room Configuration"
+        subtitle="Customize your solo room preferences."
+      />
+      <MultiSelectGrid
+        options={roomAmenities
+          .filter(amenity => !amenity.applicableTo || amenity.applicableTo.includes(ROOM_TYPES.SOLO))
+          .map((a) => ({ label: a.label, value: a.value, icon: a.icon }))}
+        selected={roomAmenitiesSelected}
+        onToggle={(v) => toggleMulti("roomAmenities", v)}
+      />
+      <Select
+        id="bedType"
+        label="Bed type"
+        options={bedTypeOptions.filter(option => ["Single", "Double", "Queen"].includes(option.value))}
+        value={bedType}
+        onChange={(v) => setCustomValue("bedType", v)}
+      />
+      <Input
+        id="roomSize"
+        label="Room size (sq. meters)"
+        type="number"
+        register={register}
+        errors={errors}
+        watch={watch}
+        required={false}
+        placeholder="e.g., 15"
+      />
+    </div>
+  );
+
+  const renderBedspaceConfig = () => (
+    <div className="flex flex-col gap-6">
+      <Heading
+        title="Bedspace Configuration"
+        subtitle="Customize your bedspace preferences."
+      />
+      <MultiSelectGrid
+        options={roomAmenities
+          .filter(amenity => !amenity.applicableTo || amenity.applicableTo.includes(ROOM_TYPES.BEDSPACE))
+          .map((a) => ({ label: a.label, value: a.value, icon: a.icon }))}
+        selected={roomAmenitiesSelected}
+        onToggle={(v) => toggleMulti("roomAmenities", v)}
+      />
+      <Select
+        id="bedType"
+        label="Bed type"
+        options={bedTypeOptions.filter(option => ["Single", "Bunk"].includes(option.value))}
+        value={bedType}
+        onChange={(v) => setCustomValue("bedType", v)}
+      />
+      <Counter
+        title="Room capacity"
+        subtitle="Maximum number of people per room"
+        watch={watch}
+        onChange={setCustomValue}
+        name="capacity"
+        minValue={2}
+      />
+      <Counter
+        title="Available slots"
+        subtitle="Number of available beds"
+        watch={watch}
+        onChange={setCustomValue}
+        name="availableSlots"
+        minValue={1}
+      />
+    </div>
+  );
+
   const renderStep = () => {
     switch (step) {
       case STEPS.COLLEGE:
@@ -229,20 +320,71 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
           </div>
         );
 
-      case STEPS.CATEGORY:
+      case STEPS.BUDGET:
         return (
           <div className="flex flex-col gap-6">
             <Heading
-              title="What type of boarding house are you looking for?"
-              subtitle="Select all that apply."
+              title="What is your monthly budget range?"
+              subtitle="Price in Philippine Peso (₱)."
             />
-            <MultiSelectGrid
-              options={categories.map((c) => ({ label: c.label, value: c.value, icon: c.icon }))}
-              selected={categoriesSelected}
-              onToggle={(v) => toggleMulti("categories", v)}
+            <Input
+              id="minPrice"
+              label="Minimum (₱)"
+              type="number"
+              register={register}
+              errors={errors}
+              watch={watch}
+              required={false}
+            />
+            <Input
+              id="maxPrice"
+              label="Maximum (₱)"
+              type="number"
+              register={register}
+              errors={errors}
+              watch={watch}
+              required={false}
+            />
+            {minPrice > maxPrice && (
+              <div className="text-red-500 text-sm">
+                Minimum price cannot be greater than maximum price
+              </div>
+            )}
+          </div>
+        );
+
+      case STEPS.ROOM_TYPE:
+        return (
+          <div className="flex flex-col gap-6">
+            <Heading
+              title="Select Room Type"
+              subtitle="Choose between solo room or bedspace."
+            />
+            <Select
+              id="roomType"
+              label="Room type"
+              options={roomTypeOptions.filter(option => option.value !== "")}
+              value={roomType}
+              onChange={(v) => setCustomValue("roomType", v)}
             />
           </div>
         );
+
+      case STEPS.ROOM_CONFIGURATION:
+        if (roomType === ROOM_TYPES.SOLO) {
+          return renderSoloRoomConfig();
+        } else if (roomType === ROOM_TYPES.BEDSPACE) {
+          return renderBedspaceConfig();
+        } else {
+          return (
+            <div className="flex flex-col gap-6">
+              <Heading
+                title="Select Room Type First"
+                subtitle="Please go back and select a room type to configure."
+              />
+            </div>
+          );
+        }
 
       case STEPS.LOCATION:
         return (
@@ -300,11 +442,26 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
           </div>
         );
 
+      case STEPS.CATEGORY:
+        return (
+          <div className="flex flex-col gap-6">
+            <Heading
+              title="Listing Categories"
+              subtitle="Select all that apply."
+            />
+            <MultiSelectGrid
+              options={categories.map((c) => ({ label: c.label, value: c.value, icon: c.icon }))}
+              selected={categoriesSelected}
+              onToggle={(v) => toggleMulti("categories", v)}
+            />
+          </div>
+        );
+
       case STEPS.AMENITIES:
         return (
           <div className="flex flex-col gap-6">
             <Heading
-              title="Which amenities are essential to you?"
+              title="Listing Amenities"
               subtitle="Select all that apply."
             />
             <MultiSelectGrid
@@ -319,7 +476,7 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
         return (
           <div className="flex flex-col gap-6">
             <Heading
-              title="Do you have specific rules or preferences?"
+              title="Rules / Preferences"
               subtitle="Select all that apply."
             />
             <MultiSelectGrid
@@ -330,74 +487,12 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
           </div>
         );
 
-      case STEPS.ROOM_DETAILS:
-        return (
-          <div className="flex flex-col gap-6">
-            <Heading
-              title="What room setup do you prefer?"
-              subtitle="Room type, occupants, and bathrooms."
-            />
-            <Select
-              id="roomType"
-              label="Room type"
-              options={roomTypeOptions}
-              value={roomType}
-              onChange={(v) => setCustomValue("roomType", v)}
-            />
-            <Counter
-              title="Occupants per room"
-              subtitle="Number of people per room"
-              watch={watch}
-              onChange={setCustomValue}
-              name="occupantsPerRoom"
-              disabled={roomType === "Solo"}
-              minValue={roomType === "Shared" || roomType === "Bed Spacer" ? 2 : 1}
-            />
-            <hr />
-            <Counter
-              title="Bathrooms"
-              subtitle="Minimum number of bathrooms"
-              watch={watch}
-              onChange={setCustomValue}
-              name="bathroomCount"
-            />
-          </div>
-        );
-
-      case STEPS.BUDGET:
-        return (
-          <div className="flex flex-col gap-6">
-            <Heading
-              title="What is your monthly budget range?"
-              subtitle="Price in Philippine Peso (₱)."
-            />
-            <Input
-              id="minPrice"
-              label="Minimum (₱)"
-              type="number"
-              register={register}
-              errors={errors}
-              watch={watch}
-              required={false}
-            />
-            <Input
-              id="maxPrice"
-              label="Maximum (₱)"
-              type="number"
-              register={register}
-              errors={errors}
-              watch={watch}
-              required={false}
-            />
-          </div>
-        );
-
       case STEPS.ADVANCED:
         return (
           <div className="flex flex-col gap-6">
             <Heading
-              title="Additional features or safety options?"
-              subtitle="Select all that apply."
+              title="Advanced Features (Scoring Only)"
+              subtitle="These features affect search ranking but don't filter results."
             />
             <MultiSelectGrid
               options={advancedFilters.map((a) => ({ label: a.label, value: a.value, icon: a.icon }))}
@@ -425,17 +520,19 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
             <Heading title="Summary of your filters" subtitle="Review or go back to edit." />
             <div className="space-y-2 text-sm">
               <p><span className="font-semibold">College:</span> {coLabel}</p>
-              <p><span className="font-semibold">Categories:</span> {catLabels}</p>
+              <p><span className="font-semibold">Budget:</span> ₱{minPrice} – ₱{maxPrice} / month</p>
+              <p><span className="font-semibold">Room:</span> {roomLabel} {bedType ? `· ${bedType}` : ""} {capacity > 1 ? `· ${capacity} occupants` : ""} {availableSlots > 1 ? `· ${availableSlots} slots` : ""} {roomSize ? `· ${roomSize} sq.m` : ""}</p>
               <p><span className="font-semibold">Distance:</span> ≤ {distance} km from campus</p>
               {(moveInMonth || stayDuration) && (
                 <p><span className="font-semibold">Move-in / Duration:</span> {moveInMonth || "—"} {stayDuration ? ` · ${stayDurationOptions.find((d) => d.value === stayDuration)?.label ?? stayDuration}` : ""}</p>
+              )}
+              {(categoriesSelected as string[]).length > 0 && (
+                <p><span className="font-semibold">Categories:</span> {catLabels}</p>
               )}
               {(amenitiesSelected as string[]).length > 0 && (
                 <p><span className="font-semibold">Amenities:</span> {(amenitiesSelected as string[]).join(", ")}</p>
               )}
               <p><span className="font-semibold">Rules:</span> {ruleLabels}</p>
-              <p><span className="font-semibold">Room:</span> {roomLabel} · {occupantsPerRoom} occupant(s) · {bathroomCount} bathroom(s)</p>
-              <p><span className="font-semibold">Budget:</span> ₱{minPrice} – ₱{maxPrice} / month</p>
               <p><span className="font-semibold">Advanced:</span> {advLabels}</p>
             </div>
           </div>

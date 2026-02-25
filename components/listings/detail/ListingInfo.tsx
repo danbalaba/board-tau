@@ -3,7 +3,7 @@
 import React from "react";
 import dynamic from "next/dynamic";
 
-import Avatar from "@/components/Avatar";
+import Avatar from "@/components/common/Avatar";
 import { AiOutlineCheck } from "react-icons/ai";
 
 interface ListingInfoProps {
@@ -21,7 +21,7 @@ interface ListingInfoProps {
   roomType: string;
 }
 
-const Map = dynamic(() => import("@/components/Map"), {
+const Map = dynamic(() => import("@/components/common/Map"), {
   ssr: false,
 });
 

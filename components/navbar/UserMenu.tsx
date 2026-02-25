@@ -8,7 +8,7 @@ import { User } from "next-auth";
 import Avatar from "../common/Avatar";
 import MenuItem from "./MenuItem";
 import Menu from "@/components/common/Menu";
-import RentModal from "../modals/RentModal";
+import HostApplicationModal from "../modals/HostApplicationModal";
 import Modal from "../modals/Modal";
 import AuthModal from "../modals/AuthModal";
 import { menuItems } from "@/utils/constants";
@@ -28,14 +28,25 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
     <div className="relative">
       <div className="flex flex-row items-center gap-3">
         <Modal>
-          <Modal.Trigger name={user ? "share" : "Login"}>
-            <button
-              type="button"
-              className="hidden md:block text-sm font-bold py-3 px-4 rounded-full hover:bg-neutral-100 transition cursor-pointer text-[#585858]"
-            >
-              Share your home
-            </button>
-          </Modal.Trigger>
+          {user ? (
+            <Modal.Trigger name="host-application">
+              <button
+                type="button"
+                className="hidden md:block text-sm font-bold py-3 px-4 rounded-full hover:bg-neutral-100 transition cursor-pointer text-[#585858]"
+              >
+                Become a Host
+              </button>
+            </Modal.Trigger>
+          ) : (
+            <Modal.Trigger name="Login">
+              <button
+                type="button"
+                className="hidden md:block text-sm font-bold py-3 px-4 rounded-full hover:bg-neutral-100 transition cursor-pointer text-[#585858]"
+              >
+                Become a Host
+              </button>
+            </Modal.Trigger>
+          )}
           <Menu>
             <Menu.Toggle id="user-menu">
               <button
@@ -59,8 +70,8 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
                     />
                   ))}
 
-                  <Modal.Trigger name="share">
-                    <MenuItem label="Share your home" />
+                  <Modal.Trigger name="host-application">
+                    <MenuItem label="Become a Host" />
                   </Modal.Trigger>
                   {(user as { role?: string })?.role === "admin" && (
                     <MenuItem label="Admin" onClick={() => redirect("/admin")} />
@@ -81,14 +92,14 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
               )}
             </Menu.List>
           </Menu>
-          <Modal.Window name="Login">
+          <Modal.Window name="Login" size="sm">
             <AuthModal name="Login" />
           </Modal.Window>
-          <Modal.Window name="Sign up">
+          <Modal.Window name="Sign up" size="sm">
             <AuthModal name="Sign up" />
           </Modal.Window>
-          <Modal.Window name="share">
-            <RentModal />
+          <Modal.Window name="host-application" size="xl">
+            <HostApplicationModal />
           </Modal.Window>
         </Modal>
       </div>

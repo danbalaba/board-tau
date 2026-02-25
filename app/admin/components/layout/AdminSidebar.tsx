@@ -6,6 +6,7 @@ import Link from 'next/link';
 import {
   FaHome,
   FaUser,
+  FaFileAlt,
   FaHotel,
   FaBook,
   FaStar,
@@ -51,6 +52,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isCollapsed, onToggleCollap
   const navItems = [
     { label: 'Dashboard', icon: FaHome, href: '/admin' },
     { label: 'Users', icon: FaUser, href: '/admin/users' },
+    { label: 'Host Applications', icon: FaFileAlt, href: '/admin/applications' },
     { label: 'Listings', icon: FaHotel, href: '/admin/listings' },
     { label: 'Reservations', icon: FaBook, href: '/admin/reservations' },
     { label: 'Inquiries', icon: FaQuestion, href: '/admin/inquiries' },
