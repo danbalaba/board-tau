@@ -8,6 +8,7 @@ import Input from "@/components/inputs/Input";
 import Textarea from "@/components/inputs/Textarea";
 import toast from "react-hot-toast";
 import { CheckCircle, XCircle } from "lucide-react";
+import { validateName, validatePhoneNumber, sanitizeInput } from "@/lib/validators";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -30,7 +31,16 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const onSubmit = async (data: UserProfile) => {
     setIsLoading(true);
     try {
-      await onUpdate(data);
+      // Sanitize all inputs to prevent XSS and malicious content
+      const sanitizedData = {
+        ...data,
+        name: sanitizeInput(data.name || ""),
+        phoneNumber: sanitizeInput(data.phoneNumber || ""),
+        bio: sanitizeInput(data.bio || ""),
+        businessName: data.businessName ? sanitizeInput(data.businessName) : null,
+      };
+
+      await onUpdate(sanitizedData);
       toast.success("Profile updated successfully");
       onClose();
     } catch (error) {
@@ -72,7 +82,13 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 register={register as any}
                 errors={errors as any}
                 watch={() => "" as any}
-                {...register("name", { required: "Full name is required" })}
+              {...register("name", {
+                  required: "Full name is required",
+                  validate: (value) => {
+                    const nameError = validateName(value || "");
+                    return nameError ? nameError : true;
+                  }
+                })}
                 placeholder="Your Full Name"
                 useStaticLabel={true}
               />
@@ -106,13 +122,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 watch={() => "" as any}
                 {...register("phoneNumber", {
                   required: "Phone number is required",
-                  pattern: {
-                    value: /^[+]?[\d\s-]+$/,
-                    message: "Please enter a valid phone number"
-                  },
-                  minLength: {
-                    value: 6,
-                    message: "Phone number must be at least 6 digits"
+                  validate: (value) => {
+                    const phoneError = validatePhoneNumber(value || "");
+                    return phoneError ? phoneError : true;
                   }
                 })}
                 placeholder="+65 1234 5678"
