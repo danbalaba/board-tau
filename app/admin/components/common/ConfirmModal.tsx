@@ -9,7 +9,7 @@ interface Props {
   message: string | React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
-  variant?: "primary" | "danger";
+  variant?: "primary" | "secondary" | "danger";
   onConfirm: () => void;
   onCancel: () => void;
   loading?: boolean;
@@ -21,7 +21,7 @@ export default function ConfirmModal({
   message,
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
-  variant = "primary",
+  variant = "primary" as const,
   onConfirm,
   onCancel,
   loading = false,
@@ -76,6 +76,7 @@ export default function ConfirmModal({
             {...confirmButtonProps}
             onClick={onConfirm}
             disabled={loading}
+            variant={variant as "primary" | "secondary" | "danger"}
           >
             {loading ? "Processing..." : confirmLabel}
           </Button>

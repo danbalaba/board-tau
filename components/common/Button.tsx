@@ -12,6 +12,7 @@ interface ButtonProps extends HTMLMotionProps<"button"> {
   children?: ReactNode;
   outline?: boolean;
   isLoading?: boolean;
+  variant?: "primary" | "secondary" | "danger";
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -20,6 +21,7 @@ const Button: React.FC<ButtonProps> = ({
   size = "small",
   outline = false,
   isLoading = false,
+  variant = "primary",
   ...props
 }) => {
   return (
@@ -34,6 +36,8 @@ const Button: React.FC<ButtonProps> = ({
           : "text-[16px] font-semibold border-2 py-4 px-5",
         outline
           ? "bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-border dark:border-gray-600 text-text-primary dark:text-gray-100 hover:bg-gray-50/90 dark:hover:bg-gray-700/90 focus:ring-primary/50"
+          : variant === "danger"
+          ? "bg-red-500 dark:bg-red-600 border-red-500 dark:border-red-600 text-white hover:bg-red-600 dark:hover:bg-red-700 focus:ring-red-500/50"
           : "bg-primary dark:bg-primary border-primary dark:border-primary text-white hover:bg-primary-hover dark:hover:bg-primary-hover shadow-soft focus:ring-accent/50",
         className
       )}
