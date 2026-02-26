@@ -115,46 +115,18 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
               </Modal>
 
               {/* Profile */}
-              <div className="relative">
-                <Menu>
-                  <Menu.Toggle id="profile-menu">
-                    <button
-                      type="button"
-                      className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <div className="relative">
-                        <Avatar src={user?.image} />
-                      </div>
-                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                        Profile
-                      </span>
-                    </button>
-                  </Menu.Toggle>
-
-                  <Menu.List className="shadow-[0_0_36px_4px_rgba(0,0,0,0.075)] rounded-xl bg-white dark:bg-gray-800 text-sm bottom-auto top-full -translate-y-2">
-                    {/* Menu items would go here */}
-                    <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
-                      {user?.name}
-                    </div>
-                    <hr className="my-1" />
-                    <Menu.Button onClick={() => redirect("/profile")}>
-                      My Profile
-                    </Menu.Button>
-                    <Menu.Button onClick={() => redirect("/settings")}>
-                      Settings
-                    </Menu.Button>
-                    {user?.role === "admin" && (
-                      <Menu.Button onClick={() => redirect("/admin")}>
-                        Admin Dashboard
-                      </Menu.Button>
-                    )}
-                    <hr className="my-1" />
-                    <Menu.Button onClick={() => redirect("/api/auth/signout")}>
-                      Log out
-                    </Menu.Button>
-                  </Menu.List>
-                </Menu>
-              </div>
+              <button
+                type="button"
+                onClick={() => redirect("/profile")}
+                className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <div className="relative">
+                  <Avatar src={user?.image} />
+                </div>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Profile
+                </span>
+              </button>
             </>
           )}
         </div>

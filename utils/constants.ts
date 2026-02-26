@@ -23,6 +23,7 @@ export const LISTINGS_BATCH = 16;
 export const menuItems = [
   { label: "My favorites", path: "/favorites" },
   { label: "My reservations", path: "/reservations" },
+  { label: "My profile", path: "/profile" },
 ];
 
 /** Tarlac Agricultural University (TAU), Camiling, Tarlac — default map center & distance reference */

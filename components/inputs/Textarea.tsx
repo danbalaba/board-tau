@@ -7,12 +7,12 @@ import {
 } from "react-hook-form";
 import { cn } from "@/utils/helper";
 
-interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+interface TextareaProps<T extends FieldValues = FieldValues> extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   id: string;
   label: string;
-  register: UseFormRegister<FieldValues>;
-  errors: FieldErrors;
-  watch: UseFormWatch<FieldValues>;
+  register: UseFormRegister<T>;
+  errors: FieldErrors<T>;
+  watch: UseFormWatch<T>;
   autoFocus?: boolean;
   required?: boolean;
   rows?: number;
