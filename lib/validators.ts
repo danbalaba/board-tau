@@ -40,7 +40,7 @@ export const validatePhoneNumber = (phone: string): string | null => {
   // Accepts: 09xx xxx xxxx, +63 9xx xxx xxxx, 639xx xxx xxxx, etc.
   if (cleaned.length >= 10 && cleaned.length <= 13) {
     // Check if it's a valid Philippine mobile number
-    if (/^(09|9|639|\+639)\d{9}$/.test(cleaned.replace(/[^0-9]/g, ''))) {
+    if (/^(09|9|639)\d{9}$/.test(cleaned)) {
       return null; // Valid
     }
   }

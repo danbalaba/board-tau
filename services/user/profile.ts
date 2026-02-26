@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { sanitizeInput } from "@/lib/validators";
 
 export interface UserProfile {
   id: string;
@@ -17,6 +18,7 @@ export interface UserProfile {
   bio: string | null;
 }
 
+// Server-side function to get user profile
 export async function getUserProfile(): Promise<UserProfile> {
   const session = await getServerSession(authOptions);
 
@@ -51,6 +53,7 @@ export async function getUserProfile(): Promise<UserProfile> {
   return user as UserProfile;
 }
 
+// Server-side function to update user profile
 export async function updateUserProfile(data: Partial<UserProfile>): Promise<UserProfile> {
   const session = await getServerSession(authOptions);
 
@@ -58,11 +61,26 @@ export async function updateUserProfile(data: Partial<UserProfile>): Promise<Use
     throw new Error("User not authenticated");
   }
 
+  // Only allow updating specific fields to prevent security issues
+  const allowedFields: Partial<UserProfile> = {};
+  if (data.name !== undefined) {
+    allowedFields.name = data.name ? sanitizeInput(data.name) : null;
+  }
+  if (data.phoneNumber !== undefined) {
+    allowedFields.phoneNumber = data.phoneNumber ? sanitizeInput(data.phoneNumber) : null;
+  }
+  if (data.bio !== undefined) {
+    allowedFields.bio = data.bio ? sanitizeInput(data.bio) : null;
+  }
+  if (data.businessName !== undefined) {
+    allowedFields.businessName = data.businessName ? sanitizeInput(data.businessName) : null;
+  }
+
   const updatedUser = await db.user.update({
     where: {
       email: session.user.email,
     },
-    data,
+    data: allowedFields,
     select: {
       id: true,
       name: true,
@@ -80,4 +98,22 @@ export async function updateUserProfile(data: Partial<UserProfile>): Promise<Use
   });
 
   return updatedUser as UserProfile;
+}
+
+// Client-side function to update user profile
+export async function updateUserProfileClient(data: Partial<UserProfile>): Promise<UserProfile> {
+  const response = await fetch('/api/user/profile', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to update profile');
+  }
+
+  return await response.json();
 }

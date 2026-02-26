@@ -5,7 +5,7 @@
 import React, { useState } from "react";
 import { User, Mail, Phone, Building, Edit2, LogOut } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { UserProfile, updateUserProfile } from "@/services/user/profile";
+import { UserProfile, updateUserProfileClient } from "@/services/user/profile";
 import Button from "@/components/common/Button";
 import Input from "@/components/inputs/Input";
 import Avatar from "@/components/common/Avatar";
@@ -150,7 +150,10 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Account</h3>
 
             <div className="space-y-3">
-              <button className="w-full flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+              <button
+                className="w-full flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                onClick={() => setIsEditModalOpen(true)}
+              >
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
                     <User className="w-4 h-4 text-gray-600 dark:text-gray-400" />
@@ -206,9 +209,7 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
         onClose={() => setIsEditModalOpen(false)}
         profile={profile}
         onUpdate={async (data) => {
-          // TODO: Implement profile update API call
-          await updateUserProfile(data);
-          toast.success("Profile updated successfully");
+          await updateUserProfileClient(data);
         }}
       />
     </div>
