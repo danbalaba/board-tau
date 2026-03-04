@@ -44,7 +44,7 @@ export async function POST(request: Request) {
         smokes,
         contactMethod,
         message,
-        status: "pending",
+        status: "PENDING",
       },
     });
 

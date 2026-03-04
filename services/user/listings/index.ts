@@ -9,20 +9,29 @@ const generateEmbeddingText = (listing: any): string => {
   const parts = [
     listing.title,
     listing.description,
-    ...listing.amenities,
-    listing.category,
-    listing.femaleOnly ? "female only" : "",
-    listing.maleOnly ? "male only" : "",
-    listing.visitorsAllowed ? "visitors allowed" : "",
-    listing.petsAllowed ? "pets allowed" : "",
-    listing.smokingAllowed ? "smoking allowed" : "",
-    listing.security24h ? "24/7 security" : "",
-    listing.cctv ? "CCTV" : "",
-    listing.fireSafety ? "fire safety" : "",
-    listing.nearTransport ? "near public transport" : "",
-    listing.studyFriendly ? "study friendly" : "",
-    listing.quietEnvironment ? "quiet environment" : "",
-    listing.flexibleLease ? "flexible lease" : "",
+    // Amenities (from ListingAmenity)
+    listing.amenities?.wifi ? "wifi" : "",
+    listing.amenities?.parking ? "parking" : "",
+    listing.amenities?.pool ? "pool" : "",
+    listing.amenities?.gym ? "gym" : "",
+    listing.amenities?.airConditioning ? "air conditioning" : "",
+    listing.amenities?.laundry ? "laundry" : "",
+    // Categories
+    ...(listing.categories || []).map((lc: any) => lc.category?.name || ""),
+    // Rules (from ListingRule)
+    listing.rules?.femaleOnly ? "female only" : "",
+    listing.rules?.maleOnly ? "male only" : "",
+    listing.rules?.visitorsAllowed ? "visitors allowed" : "",
+    listing.rules?.petsAllowed ? "pets allowed" : "",
+    listing.rules?.smokingAllowed ? "smoking allowed" : "",
+    // Features (from ListingFeature)
+    listing.features?.security24h ? "24/7 security" : "",
+    listing.features?.cctv ? "CCTV" : "",
+    listing.features?.fireSafety ? "fire safety" : "",
+    listing.features?.nearTransport ? "near public transport" : "",
+    listing.features?.studyFriendly ? "study friendly" : "",
+    listing.features?.quietEnvironment ? "quiet environment" : "",
+    listing.features?.flexibleLease ? "flexible lease" : "",
   ];
 
   return parts.filter(Boolean).join(" ").toLowerCase();
@@ -261,7 +270,7 @@ export const getListings = async (query?: {
     }
 
     // Query listings with rooms that match all primary filters
-    const primaryQuery: any = {
+     const primaryQuery: any = {
       where: {
         ...listingWhere,
         rooms: {
@@ -277,6 +286,14 @@ export const getListings = async (query?: {
           where: roomWhere,
         },
         images: true,
+        amenities: true,
+        rules: true,
+        features: true,
+        categories: {
+          include: {
+            category: true,
+          },
+        },
       },
     };
 
@@ -297,18 +314,17 @@ export const getListings = async (query?: {
     const lat = originLat != null ? originLat : TAU_COORDINATES[0];
     const lng = originLng != null ? originLng : TAU_COORDINATES[1];
 
-    // Apply distance filter (strict)
+     // Apply distance filter (strict)
     if (distance != null && distance >= 0) {
       primaryListings = primaryListings.filter((listing) => {
-        if (!listing.latlng || listing.latlng.length < 2) return false;
-        const [listingLat, listingLng] = listing.latlng;
-        return haversineKm(lat, lng, listingLat, listingLng) <= distance;
+        if ((listing as any).latitude == null || (listing as any).longitude == null) return false;
+        return haversineKm(lat, lng, (listing as any).latitude, (listing as any).longitude) <= distance;
       });
     }
 
     // Calculate scores for all primary listings (including secondary filter scoring)
     const scoredListings = primaryListings.map((listing) => {
-      const distanceKm = haversineKm(lat, lng, listing.latlng[0], listing.latlng[1]);
+      const distanceKm = haversineKm(lat, lng, (listing as any).latitude || 0, (listing as any).longitude || 0);
 
       // Calculate secondary filter scores
       let score = 100; // Base score for meeting primary filters
@@ -318,9 +334,26 @@ export const getListings = async (query?: {
       // Amenities match (secondary filter)
       if (amenities && Array.isArray(amenities) && amenities.length > 0) {
         secondaryTotal += amenities.length;
-        const amenitiesMatch = amenities.filter((amenity: string) =>
-          listing.amenities.includes(amenity)
-        ).length;
+        const amenitiesMatch = amenities.filter((amenity: string) => {
+          const amenityKey = amenity.toLowerCase().replace(/\s+/g, '');
+          switch(amenityKey) {
+            case 'wifi':
+              return (listing as any).amenities?.wifi;
+            case 'parking':
+              return (listing as any).amenities?.parking;
+            case 'pool':
+              return (listing as any).amenities?.pool;
+            case 'gym':
+              return (listing as any).amenities?.gym;
+            case 'airconditioning':
+            case 'airconditioner':
+              return (listing as any).amenities?.airConditioning;
+            case 'laundry':
+              return (listing as any).amenities?.laundry;
+            default:
+              return false;
+          }
+        }).length;
         secondaryScore += amenitiesMatch;
       }
 
@@ -377,8 +410,8 @@ export const getListings = async (query?: {
       if (minRoomPriceA !== minRoomPriceB) {
         return minRoomPriceA - minRoomPriceB;
       }
-      const distA = haversineKm(lat, lng, a.latlng[0], a.latlng[1]);
-      const distB = haversineKm(lat, lng, b.latlng[0], b.latlng[1]);
+      const distA = haversineKm(lat, lng, a.latitude, a.longitude);
+      const distB = haversineKm(lat, lng, b.latitude, b.longitude);
       return distA - distB;
     });
 
@@ -459,6 +492,14 @@ export const getListingById = async (id: string) => {
         },
       },
       rooms: true,
+      amenities: true,
+      rules: true,
+      features: true,
+      categories: {
+        include: {
+          category: true,
+        },
+      },
     },
   });
 
@@ -502,30 +543,49 @@ export const createListing = async (data: { [x: string]: any }) => {
       title,
       description,
       imageSrc,
-      category,
       roomCount,
       bathroomCount,
 
       country,
       region,
-      latlng,
+      latitude: latlng[0],
+      longitude: latlng[1],
+      location: {
+        type: "Point",
+        coordinates: [latlng[0], latlng[1]],
+      },
       price: parseInt(price, 10),
       userId: user.id,
-      amenities,
-      // Rules / Preferences
-      femaleOnly,
-      maleOnly,
-      visitorsAllowed,
-      petsAllowed,
-      smokingAllowed,
-      // Advanced Filters
-      security24h,
-      cctv,
-      fireSafety,
-      nearTransport,
-      studyFriendly,
-      quietEnvironment,
-      flexibleLease,
+      amenities: {
+        create: {
+          wifi: amenities.includes("WiFi"),
+          parking: amenities.includes("Parking"),
+          pool: amenities.includes("Pool"),
+          gym: amenities.includes("Gym"),
+          airConditioning: amenities.includes("Air conditioning"),
+          laundry: amenities.includes("Laundry area"),
+        },
+      } as any,
+      rules: {
+        create: {
+          femaleOnly,
+          maleOnly,
+          visitorsAllowed,
+          petsAllowed,
+          smokingAllowed,
+        },
+      } as any,
+      features: {
+        create: {
+          security24h,
+          cctv,
+          fireSafety,
+          nearTransport,
+          studyFriendly,
+          quietEnvironment,
+          flexibleLease,
+        },
+      } as any,
       rooms: {
         create: rooms,
       },

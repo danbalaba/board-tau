@@ -32,6 +32,7 @@ const AuthModal = ({
   const [isOAuthLoading, setIsOAuthLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [otpAttemptLimitReached, setOtpAttemptLimitReached] = useState(false);
+  const [lockoutCountdown, setLockoutCountdown] = useState(0);
   const {
     register,
     handleSubmit,
@@ -78,27 +79,40 @@ const AuthModal = ({
       try {
         if (isOTPModal) {
           // Verify OTP
-          try {
-            // Client-side validation for OTP
-            const otpError = validateOTP(otp);
-            if (otpError) {
-              setError("otp", { message: otpError });
-              return;
-            }
+            try {
+              // Client-side validation for OTP
+              const otpError = validateOTP(otp);
+              if (otpError) {
+                setError("otp", { message: otpError });
+                return;
+              }
 
-            await verifyOTP(userEmail, otp);
-            toast.success("Email verified successfully!");
-            setIsOTPModal(false);
-            setTitle("Login");
-            setOtpAttemptLimitReached(false);
-            reset();
-          } catch (error: any) {
-            // Check if OTP attempt limit was reached
-            if (error.message.includes("OTP attempt limit reached")) {
-              setOtpAttemptLimitReached(true);
+              await verifyOTP(userEmail, otp);
+              toast.success("Email verified successfully!");
+              setIsOTPModal(false);
+              setTitle("Login");
+              setOtpAttemptLimitReached(false);
+              setLockoutCountdown(0);
+              reset();
+            } catch (error: any) {
+              // Check if OTP attempt limit was reached and extract countdown
+              const countdownMatch = error.message.match(/Please try again in (\d+) second\(s\)/);
+              if (countdownMatch) {
+                const countdownSeconds = parseInt(countdownMatch[1]);
+                setLockoutCountdown(countdownSeconds);
+                setOtpAttemptLimitReached(true);
+                toast.error(error.message, {
+                  duration: countdownSeconds * 1000,
+                });
+              } else if (error.message.includes("attempt(s) remaining")) {
+                // Show remaining attempts with shorter duration
+                toast.error(error.message, {
+                  duration: 3000,
+                });
+              } else {
+                toast.error(error.message);
+              }
             }
-            toast.error(error.message);
-          }
         } else if (isLoginModal) {
           // Client-side validation for login
           const emailError = validateEmail(email);
@@ -188,17 +202,30 @@ const AuthModal = ({
   };
 
   const resendOTP = async () => {
-    // Set cooldown timer (60 seconds)
-    setResendCooldown(60);
+    // Calculate progressive cooldown based on attempt count
+    // We'll use a default of 30 seconds initially, backend will enforce actual limits
+    setResendCooldown(30);
 
     startTransition(async () => {
       try {
         await sendOTP(userEmail);
-        toast.success("New OTP sent to your email!");
+        toast.success("New OTP sent to your email!", {
+          duration: 4000,
+        });
         setOtpAttemptLimitReached(false); // Reset attempt limit state
       } catch (error: any) {
-        toast.error(error.message);
-        setResendCooldown(0); // Clear cooldown if there's an error
+        // Parse error message to extract cooldown time
+        const cooldownMatch = error.message.match(/Please wait (\d+) seconds/);
+        if (cooldownMatch) {
+          const cooldownSeconds = parseInt(cooldownMatch[1]);
+          setResendCooldown(cooldownSeconds);
+          toast.error(error.message, {
+            duration: cooldownSeconds * 1000, // Show toast for duration of cooldown
+          });
+        } else {
+          toast.error(error.message);
+          setResendCooldown(0); // Clear cooldown if there's an error
+        }
       }
     });
   };
@@ -213,6 +240,23 @@ const AuthModal = ({
     }
     return () => clearInterval(interval);
   }, [resendCooldown]);
+
+  // Lockout countdown timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (lockoutCountdown > 0) {
+      interval = setInterval(() => {
+        setLockoutCountdown((prev) => {
+          if (prev <= 1) {
+            setOtpAttemptLimitReached(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [lockoutCountdown]);
 
   return (
     <div className="h-full w-full">
@@ -234,35 +278,42 @@ const AuthModal = ({
             <div className="text-center mb-4">
               <p className="text-sm text-gray-600">{userEmail}</p>
             </div>
-            <OtpInput
-              id="otp"
-              label="Verification Code"
-              disabled={isLoading}
-              register={register}
-              errors={errors}
-              watch={watch}
-              required
-              length={6}
-            />
-            <Button
-              type="submit"
-              className="flex items-center justify-center h-[42px]"
-              disabled={isLoading || !watch("otp") || watch("otp").length !== 6 || otpAttemptLimitReached}
-            >
-              {isLoading ? <SpinnerMini className="w-5 h-5" /> : "Verify Email"}
-            </Button>
-            <div className="text-center mt-4">
-                <button
-                  type="button"
-                  onClick={resendOTP}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
-                  disabled={isLoading || resendCooldown > 0}
-                >
-                  {resendCooldown > 0
-                    ? `Resend OTP in ${resendCooldown}s`
-                    : "Didn't receive code? Resend"}
-                </button>
-            </div>
+              <OtpInput
+                id="otp"
+                label="Verification Code"
+                disabled={isLoading || otpAttemptLimitReached}
+                register={register}
+                errors={errors}
+                watch={watch}
+                required
+                length={6}
+              />
+              {lockoutCountdown > 0 && (
+                <div className="text-center text-red-500 font-medium my-4">
+                  Please try again in {lockoutCountdown} seconds
+                </div>
+              )}
+              <Button
+                type="submit"
+                className="flex items-center justify-center h-[42px]"
+                disabled={isLoading || !watch("otp") || watch("otp").length !== 6 || otpAttemptLimitReached}
+              >
+                {isLoading ? <SpinnerMini className="w-5 h-5" /> : "Verify Email"}
+              </Button>
+              <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={resendOTP}
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
+                    disabled={isLoading || resendCooldown > 0 || otpAttemptLimitReached}
+                  >
+                    {resendCooldown > 0
+                      ? `Resend OTP in ${resendCooldown}s`
+                      : otpAttemptLimitReached
+                      ? `Resend OTP in ${lockoutCountdown}s`
+                      : "Didn't receive code? Resend"}
+                  </button>
+              </div>
           </>
         ) : (
           <>

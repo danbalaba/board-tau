@@ -29,7 +29,7 @@ export const createInquiry = async (data: any) => {
         smokes,
         contactMethod,
         message,
-        status: "pending",
+        status: "PENDING",
       },
     });
 
@@ -108,7 +108,7 @@ export const getInquiriesByListing = async (listingId: string) => {
   }
 };
 
-export const updateInquiryStatus = async (id: string, status: "pending" | "approved" | "rejected") => {
+export const updateInquiryStatus = async (id: string, status: "PENDING" | "APPROVED" | "REJECTED") => {
   try {
     const inquiry = await db.inquiry.update({
       where: {

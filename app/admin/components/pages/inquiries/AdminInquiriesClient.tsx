@@ -5,17 +5,17 @@ import DataTable from '@/app/admin/components/common/DataTable';
 
 interface Inquiry {
   id: string;
-  user: { id: string; name: string | null; email: string };
-  listing: { id: string; title: string; user: { id: string; name: string | null } };
-  room: { id: string; name: string; roomType: string | null };
-  moveInDate: string;
-  stayDuration: string;
+  user?: { id: string; name: string | null; email: string };
+  listing?: { id: string; title: string; user: { id: string; name: string | null } };
+  room?: { id: string; name: string; roomType: string | null };
+  moveInDate: Date;
+  stayDuration: number;
   occupantsCount: number;
   status: string;
 }
 
 interface AdminInquiriesClientProps {
-  inquiries: Inquiry[];
+  inquiries: any[];
 }
 
 const AdminInquiriesClient: React.FC<AdminInquiriesClientProps> = ({ inquiries }) => {
@@ -63,16 +63,16 @@ const AdminInquiriesClient: React.FC<AdminInquiriesClientProps> = ({ inquiries }
       key: 'moveInDate',
       title: 'Move-in Date',
       sortable: true,
-      render: (date: string) => (
-        <span className="text-gray-800 dark:text-white">{date}</span>
+      render: (date: Date) => (
+        <span className="text-gray-800 dark:text-white">{new Date(date).toLocaleDateString()}</span>
       ),
     },
     {
       key: 'stayDuration',
       title: 'Stay Duration',
       sortable: true,
-      render: (duration: string) => (
-        <span className="text-gray-800 dark:text-white">{duration}</span>
+      render: (duration: number) => (
+        <span className="text-gray-800 dark:text-white">{duration} days</span>
       ),
     },
     {

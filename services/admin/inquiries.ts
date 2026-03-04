@@ -16,7 +16,10 @@ export async function getAdminInquiries(args: {
 }) {
   await requireAdmin();
 
-  const where: { status?: string; user?: { deletedAt: null }; listing?: { user?: { deletedAt: null } } } = {};
+  const where: any = {
+    user: { deletedAt: null }, // Only include inquiries with active users
+    listing: { user: { deletedAt: null } }, // Only include inquiries with active landlords
+  };
   if (args.status) where.status = args.status;
   where.user = { deletedAt: null }; // Only include inquiries with active users
   where.listing = { user: { deletedAt: null } }; // Only include inquiries with active landlords

@@ -36,19 +36,31 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
     description,
     roomCount,
     bathroomCount,
-    latlng,
-    amenities,
+    latitude,
+    longitude,
+    amenities: listingAmenities,
     reservations,
     rating,
     reviewCount,
     rooms,
   } = listing;
 
+  // Convert new amenities object to string array for backward compatibility
+  const amenities = [];
+  if (listingAmenities?.wifi) amenities.push("WiFi");
+  if (listingAmenities?.parking) amenities.push("Parking");
+  if (listingAmenities?.pool) amenities.push("Pool");
+  if (listingAmenities?.gym) amenities.push("Gym");
+  if (listingAmenities?.airConditioning) amenities.push("Air conditioning");
+  if (listingAmenities?.laundry) amenities.push("Laundry area");
+
   const normalizedImages = (images && images.length > 0)
     ? images.map((img: any) => ({ url: img.url, caption: img.caption ?? undefined, order: img.order ?? 0 }))
     : [{ url: imageSrc, caption: title, order: 0 }];
 
-  const category = categories.find((cate) => listing.category.includes(cate.value));
+  const category = categories.find((cate) =>
+    listing.categories?.some((lc: any) => lc.category?.name === cate.value)
+  );
 
   const categoryData = category
     ? {
@@ -68,25 +80,25 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
         <ListingHeader title={title} region={region} country={country} rating={rating || 4.8} reviewCount={reviewCount || 0} />
 
         {/* Main Content Grid */}
-         <ListingDetailsClient
-          id={id}
-          price={price}
-          reservations={reservations}
-          user={currentUser}
-          title={title}
-          owner={owner}
-          category={categoryData}
-          description={description}
-          roomCount={roomCount}
-          bathroomCount={bathroomCount}
-          latlng={latlng}
-          amenities={amenities}
-          rating={rating ?? undefined}
-          reviewCount={reviewCount}
-          images={normalizedImages}
-          reviews={listing.reviews}
-          rooms={rooms}
-        />
+          <ListingDetailsClient
+           id={id}
+           price={price}
+           reservations={reservations}
+           user={currentUser}
+           title={title}
+           owner={owner}
+           category={categoryData}
+           description={description}
+           roomCount={roomCount}
+           bathroomCount={bathroomCount}
+           latlng={[listing.latitude || 0, listing.longitude || 0]}
+           amenities={amenities}
+           rating={rating ?? undefined}
+           reviewCount={reviewCount}
+           images={normalizedImages}
+           reviews={listing.reviews}
+           rooms={rooms}
+         />
       </div>
     </div>
   );

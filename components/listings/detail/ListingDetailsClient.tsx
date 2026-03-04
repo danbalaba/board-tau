@@ -42,7 +42,14 @@ interface ListingDetailsClientProps {
   roomCount: number;
   bathroomCount: number;
   latlng: number[];
-  amenities: string[];
+  amenities: string[] | {
+    wifi?: boolean;
+    parking?: boolean;
+    pool?: boolean;
+    gym?: boolean;
+    airConditioning?: boolean;
+    laundry?: boolean;
+  } | null;
   bedType?: string | null;
   rating?: number;
   reviewCount?: number;
@@ -95,6 +102,22 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
   reviews = [],
   rooms,
 }) => {
+  // Convert amenities to string array for consistent rendering
+  const amenitiesArray = (() => {
+    if (Array.isArray(amenities)) {
+      return amenities;
+    } else if (amenities && typeof amenities === 'object') {
+      const result = [];
+      if (amenities.wifi) result.push("WiFi");
+      if (amenities.parking) result.push("Parking");
+      if (amenities.pool) result.push("Pool");
+      if (amenities.gym) result.push("Gym");
+      if (amenities.airConditioning) result.push("Air conditioning");
+      if (amenities.laundry) result.push("Laundry area");
+      return result;
+    }
+    return [];
+  })();
   const [isLoading, startTransition] = useTransition();
   const router = useRouter();
 
@@ -230,19 +253,19 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
         <section className="pb-6 border-b border-border">
           <h2 className="text-2xl font-bold text-text-primary mb-4">What this place offers</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {amenities.slice(0, 7).map((amenity) => (
+            {amenitiesArray.slice(0, 7).map((amenity) => (
               <div key={amenity} className="flex items-center gap-3">
                 <AiOutlineCheck size={20} className="text-primary flex-shrink-0" />
                 <span className="text-text-secondary text-sm">{amenity}</span>
               </div>
             ))}
           </div>
-          {amenities.length > 7 && (
-            <button
-              onClick={() => setShowAmenitiesModal(true)}
-              className="mt-6 text-primary hover:underline font-medium text-sm"
-            >
-              Show all {amenities.length} amenities
+            {amenitiesArray.length > 7 && (
+              <button
+                onClick={() => setShowAmenitiesModal(true)}
+                className="mt-6 text-primary hover:underline font-medium text-sm"
+              >
+                Show all {amenitiesArray.length} amenities
             </button>
           )}
         </section>
@@ -345,7 +368,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                {amenities.map((amenity) => (
+                {amenitiesArray.map((amenity) => (
                   <div key={amenity} className="flex items-center gap-3">
                     <AiOutlineCheck size={20} className="text-primary" />
                     <span className="text-text-primary">
