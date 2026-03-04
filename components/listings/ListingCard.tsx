@@ -74,7 +74,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
               {data?.region}, {data?.country}
             </span>
             <span className="font-normal text-text-secondary dark:text-gray-400 text-sm line-clamp-1">
-              {reservationDate || data.category}
+              {reservationDate || "—"}
             </span>
             <div className="flex flex-row items-baseline gap-1 mt-1.5">
               <span className="font-bold text-primary dark:text-accent text-[15px]">

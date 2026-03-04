@@ -105,7 +105,7 @@ export const getInquiryDetails = async (inquiryId: string) => {
 
 export const respondToInquiry = async (
   inquiryId: string,
-  status: "approved" | "rejected",
+  status: "APPROVED" | "REJECTED",
   message?: string
 ) => {
   const landlord = await requireLandlord();

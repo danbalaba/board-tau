@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     // Get total revenue
     const reservations = await db.reservation.findMany({
       where: {
-        status: "completed"
+        status: "CONFIRMED"
       },
       select: {
         totalPrice: true
@@ -81,10 +81,13 @@ export async function GET(request: NextRequest) {
     });
 
     // Get property type distribution
-    const propertyTypes = await db.listing.groupBy({
-      by: ["category"],
-      _count: {
-        id: true
+    const propertyTypes = await db.category.findMany({
+      include: {
+        _count: {
+          select: {
+            listingCategories: true
+          }
+        }
       }
     });
 

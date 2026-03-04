@@ -1,8 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import fs from "fs";
-import { ROOM_TYPES } from "../data/roomTypes.js";
-import { ROOM_AMENITIES } from "../data/roomAmenities.js";
+import { ROOM_TYPES } from "../data/roomTypes";
+import { ROOM_AMENITIES } from "../data/roomAmenities";
 
 const prisma = new PrismaClient();
 
@@ -57,7 +57,15 @@ async function main() {
 
   // Clean existing data (optional but recommended for fresh seed)
   await prisma.listingImage.deleteMany();
+  await prisma.roomImage.deleteMany();
+  await prisma.roomAmenity.deleteMany();
+  await prisma.roomAmenityType.deleteMany();
   await prisma.room.deleteMany();
+  await prisma.listingCategory.deleteMany();
+  await prisma.category.deleteMany();
+  await prisma.listingFeature.deleteMany();
+  await prisma.listingRule.deleteMany();
+  await prisma.listingAmenity.deleteMany();
   await prisma.review.deleteMany();
   await prisma.reservation.deleteMany();
   await prisma.inquiry.deleteMany();
@@ -106,6 +114,41 @@ async function main() {
     console.log(`✅ Created review user: ${userData.email}`);
   }
 
+  // Create categories
+  const categories = [
+    { name: "Dormitory", label: "Dormitory", icon: "🏢", description: "Student dormitories" },
+    { name: "Bedspace", label: "Bedspace", icon: "🛏️", description: "Shared bedspace accommodations" },
+    { name: "Apartment", label: "Apartment", icon: "🏠", description: "Private apartment units" },
+    { name: "Condominium", label: "Condominium", icon: "🏘️", description: "Condominium units" },
+    { name: "BoardingHouse", label: "Boarding House", icon: "🏚️", description: "Traditional boarding houses" },
+  ];
+  const createdCategories: any[] = [];
+  for (const categoryData of categories) {
+    const category = await prisma.category.create({
+      data: categoryData,
+    });
+    createdCategories.push(category);
+  }
+  console.log(`✅ Created ${categories.length} categories`);
+
+  // Create room amenity types
+  const roomAmenityTypes = [
+    { name: "private_bathroom", icon: "🚿", description: "Private bathroom" },
+    { name: "shared_bathroom", icon: "🛁", description: "Shared bathroom" },
+    { name: "ac", icon: "❄️", description: "Air conditioning" },
+    { name: "desk", icon: "📚", description: "Study desk" },
+    { name: "closet", icon: "🚪", description: "Closet/storage" },
+    { name: "balcony", icon: "🌅", description: "Balcony" },
+  ];
+  const createdRoomAmenityTypes = [];
+  for (const amenityTypeData of roomAmenityTypes) {
+    const amenityType = await prisma.roomAmenityType.create({
+      data: amenityTypeData,
+    });
+    createdRoomAmenityTypes.push(amenityType);
+  }
+  console.log(`✅ Created ${roomAmenityTypes.length} room amenity types`);
+
   // Create real listings
   for (const listingData of realListings) {
     console.log(`\nCreating listing: ${listingData.title}`);
@@ -116,32 +159,64 @@ async function main() {
         title: listingData.title,
         description: listingData.description,
         imageSrc: listingData.images[0]?.url || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=300&fit=crop",
-        category: Array.isArray(listingData.category) ? listingData.category : [listingData.category],
         roomCount: listingData.roomCount,
         bathroomCount: listingData.bathroomCount,
         price: listingData.price,
         country: "Philippines",
         region: "Tarlac",
-        latlng: [listingData.coords.lat, listingData.coords.lng],
-        amenities: listingData.amenities,
+        latitude: listingData.coords.lat,
+        longitude: listingData.coords.lng,
+        location: {
+          type: "Point",
+          coordinates: [listingData.coords.lng, listingData.coords.lat],
+        },
         rating: listingData.rating,
         reviewCount: listingData.reviewCount,
         userId: landlordUser.id,
         status: "active",
         approvedAt: new Date(),
         approvedBy: adminUser.id,
-        femaleOnly: listingData.femaleOnly,
-        maleOnly: listingData.maleOnly,
-        visitorsAllowed: listingData.visitorsAllowed,
-        petsAllowed: listingData.petsAllowed,
-        smokingAllowed: listingData.smokingAllowed,
-        security24h: listingData.security24h,
-        cctv: listingData.cctv,
-        fireSafety: listingData.fireSafety,
-        nearTransport: listingData.nearTransport,
-        studyFriendly: listingData.studyFriendly,
-        quietEnvironment: listingData.quietEnvironment,
-        flexibleLease: listingData.flexibleLease,
+        amenities: {
+          create: {
+            wifi: listingData.amenities.includes("WiFi"),
+            parking: listingData.amenities.includes("Parking"),
+            pool: listingData.amenities.includes("Pool"),
+            gym: listingData.amenities.includes("Gym"),
+            airConditioning: listingData.amenities.includes("Air Conditioning"),
+            laundry: listingData.amenities.includes("Laundry"),
+          },
+        },
+        rules: {
+          create: {
+            femaleOnly: listingData.femaleOnly,
+            maleOnly: listingData.maleOnly,
+            visitorsAllowed: listingData.visitorsAllowed,
+            petsAllowed: listingData.petsAllowed,
+            smokingAllowed: listingData.smokingAllowed,
+          },
+        },
+        features: {
+          create: {
+            security24h: listingData.security24h,
+            cctv: listingData.cctv,
+            fireSafety: listingData.fireSafety,
+            nearTransport: listingData.nearTransport,
+            studyFriendly: listingData.studyFriendly,
+            quietEnvironment: listingData.quietEnvironment,
+            flexibleLease: listingData.flexibleLease,
+          },
+        },
+        categories: {
+          create: (Array.isArray(listingData.category) ? listingData.category : [listingData.category]).map((categoryName: string) => {
+            const category = createdCategories.find(cat =>
+              cat.name.toLowerCase() === categoryName.toLowerCase()
+            );
+            if (category) {
+              return { categoryId: category.id };
+            }
+            return null;
+          }).filter(Boolean),
+        },
       },
     });
     console.log(`✅ Created listing: ${listing.title}`);
@@ -174,8 +249,8 @@ async function main() {
       // Bed type
       const bedType =
         normalizedRoomType === "SOLO"
-          ? ["Single", "Double", "Queen"][Math.floor(Math.random() * 3)]
-          : "Bunk";
+          ? ["SINGLE", "DOUBLE", "QUEEN"][Math.floor(Math.random() * 3)] as any
+          : "BUNK";
 
       // Room size
       const size =
@@ -184,47 +259,52 @@ async function main() {
           : 20 + Math.random() * 20;
 
       // Room amenities
-      let roomAmenities: string[] = [];
+      let roomAmenities = [];
       if (normalizedRoomType === ROOM_TYPES.SOLO) {
-        roomAmenities = [ROOM_AMENITIES.PRIVATE_BATHROOM];
-        if (Math.random() > 0.4) roomAmenities.push(ROOM_AMENITIES.AC);
-        if (Math.random() > 0.5) roomAmenities.push(ROOM_AMENITIES.DESK);
-        if (Math.random() > 0.6) roomAmenities.push(ROOM_AMENITIES.CLOSET);
-        if (Math.random() > 0.7) roomAmenities.push(ROOM_AMENITIES.BALCONY);
+        roomAmenities = [createdRoomAmenityTypes.find(t => t.name === "private_bathroom")];
+        if (Math.random() > 0.4) roomAmenities.push(createdRoomAmenityTypes.find(t => t.name === "ac"));
+        if (Math.random() > 0.5) roomAmenities.push(createdRoomAmenityTypes.find(t => t.name === "desk"));
+        if (Math.random() > 0.6) roomAmenities.push(createdRoomAmenityTypes.find(t => t.name === "closet"));
+        if (Math.random() > 0.7) roomAmenities.push(createdRoomAmenityTypes.find(t => t.name === "balcony"));
       } else {
-        roomAmenities = [ROOM_AMENITIES.SHARED_BATHROOM];
-        if (Math.random() > 0.4) roomAmenities.push(ROOM_AMENITIES.AC);
-        if (Math.random() > 0.5) roomAmenities.push(ROOM_AMENITIES.DESK);
-        if (Math.random() > 0.6) roomAmenities.push(ROOM_AMENITIES.CLOSET);
+        roomAmenities = [createdRoomAmenityTypes.find(t => t.name === "shared_bathroom")];
+        if (Math.random() > 0.4) roomAmenities.push(createdRoomAmenityTypes.find(t => t.name === "ac"));
+        if (Math.random() > 0.5) roomAmenities.push(createdRoomAmenityTypes.find(t => t.name === "desk"));
+        if (Math.random() > 0.6) roomAmenities.push(createdRoomAmenityTypes.find(t => t.name === "closet"));
       }
+      roomAmenities = roomAmenities.filter(Boolean);
 
-      roomsData.push({
-        listingId: listing.id,
-        name: `${normalizedRoomType} Room ${i}`,
-        price,
-        capacity,
-        availableSlots,
-        roomType: normalizedRoomType,
-        bedType,
-        size: parseFloat(size.toFixed(1)), // Round to 1 decimal place
-        amenities: roomAmenities,
-        images: [],
-        status: "available",
+      const room = await prisma.room.create({
+        data: {
+          listingId: listing.id,
+          name: `${normalizedRoomType} Room ${i}`,
+          price,
+          capacity,
+          availableSlots,
+          roomType: normalizedRoomType,
+          bedType,
+          size: parseFloat(size.toFixed(1)), // Round to 1 decimal place
+          status: "AVAILABLE",
+          amenities: {
+            create: roomAmenities.filter(Boolean).map(amenityType => ({
+              amenityTypeId: amenityType!.id,
+            })),
+          },
+        },
       });
     }
-
-    // Create rooms
-    await prisma.room.createMany({
-      data: roomsData,
-    });
+    console.log(`✅ Added ${roomCount} rooms to listing: ${listing.title}`);
 
     // Update listing.price to be the lowest room price
-    const lowestRoomPrice = Math.min(...roomsData.map(room => room.price));
+    const rooms = await prisma.room.findMany({
+      where: { listingId: listing.id },
+      select: { price: true },
+    });
+    const lowestRoomPrice = Math.min(...rooms.map(room => room.price));
     await prisma.listing.update({
       where: { id: listing.id },
-      data: { price: lowestRoomPrice }
+      data: { price: lowestRoomPrice },
     });
-    console.log(`✅ Added ${roomCount} rooms to listing: ${listing.title}`);
 
     // Create listing images
     if (listingData.images && listingData.images.length > 0) {
@@ -237,11 +317,11 @@ async function main() {
         url: img.url,
         caption: img.caption || img.roomType,
         roomType: img.roomType,
-        order: index
+        order: index,
       })).filter((img: { url: string }) => img.url && img.url.startsWith('https://'));
 
       await prisma.listingImage.createMany({
-        data: imagesData
+        data: imagesData,
       });
       console.log(`✅ Added ${imagesData.length} images to listing: ${listing.title}`);
     }

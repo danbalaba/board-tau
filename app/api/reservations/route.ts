@@ -44,8 +44,8 @@ export async function POST(request: Request) {
         smokes,
         contactMethod,
         message,
-        status: "pending",
-        paymentStatus: "unpaid",
+        status: "PENDING",
+        paymentStatus: "UNPAID",
       },
     });
 
@@ -73,7 +73,7 @@ export async function PUT(request: Request) {
 
     const { status } = await request.json();
 
-    if (!status || !["pending", "approved", "rejected"].includes(status)) {
+    if (!status || !["PENDING", "APPROVED", "REJECTED"].includes(status)) {
       return NextResponse.json({ error: "Valid status (pending/approved/rejected) is required" }, { status: 400 });
     }
 

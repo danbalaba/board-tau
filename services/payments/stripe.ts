@@ -23,7 +23,7 @@ export const createStripeCheckoutSession = async (inquiryId: string) => {
   }
 
   // Check if the inquiry is approved and unpaid
-  if (inquiry.status !== "approved" || (inquiry as any).paymentStatus === "paid") {
+  if (inquiry.status !== "APPROVED" || (inquiry as any).paymentStatus === "PAID") {
     throw new Error("Reservation request is not approved or already paid");
   }
 
@@ -34,7 +34,7 @@ export const createStripeCheckoutSession = async (inquiryId: string) => {
 
   // Calculate total price based on stay duration and room price
   const monthlyPrice = inquiry.room?.price || inquiry.listing.price;
-  const durationMonths = getDurationMonths(inquiry.stayDuration);
+  const durationMonths = getDurationMonths(parseInt(inquiry.stayDuration as any));
   const totalPrice = monthlyPrice * durationMonths;
 
   // Create Stripe product
@@ -72,12 +72,12 @@ export const createStripeCheckoutSession = async (inquiryId: string) => {
   return { url: stripeSession.url };
 };
 
-const getDurationMonths = (duration: string): number => {
-  const durationMap: Record<string, number> = {
-    '1': 1,
-    '3': 3,
-    '6': 6,
-    '12': 12,
+const getDurationMonths = (duration: number): number => {
+  const durationMap: Record<number, number> = {
+    1: 1,
+    3: 3,
+    6: 6,
+    12: 12,
   };
 
   return durationMap[duration] || 1;
@@ -94,8 +94,8 @@ export const handleStripeWebhook = async (session: any) => {
   await db.inquiry.update({
     where: { id: inquiryId },
     data: {
-      paymentStatus: "paid",
-      status: "confirmed",
+      paymentStatus: "PAID",
+      status: "APPROVED",
     },
   });
 
@@ -103,7 +103,7 @@ export const handleStripeWebhook = async (session: any) => {
   const room = await db.room.findUnique({ where: { id: roomId } });
   if (room) {
     const newAvailableSlots = room.availableSlots - 1;
-    const newStatus = newAvailableSlots <= 0 ? "full" : "available";
+    const newStatus = newAvailableSlots <= 0 ? "FULL" : "AVAILABLE";
 
     await db.room.update({
       where: { id: roomId },
@@ -119,11 +119,13 @@ export const handleStripeWebhook = async (session: any) => {
     data: {
       userId,
       listingId,
+      roomId, // Add roomId
       startDate: new Date(),
       endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 1 month default
+      durationInDays: 30,
       totalPrice: Number(totalPrice),
-      status: "confirmed",
-      paymentStatus: "paid",
+      status: "CONFIRMED",
+      paymentStatus: "PAID",
     },
   });
 

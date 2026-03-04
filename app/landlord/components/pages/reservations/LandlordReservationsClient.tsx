@@ -23,8 +23,8 @@ interface ReservationRequest {
   };
   status: string;
   paymentStatus?: string;
-  moveInDate: string;
-  stayDuration: string;
+  moveInDate: Date;
+  stayDuration: number;
   createdAt: Date;
 }
 
@@ -164,8 +164,8 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
                       </p>
                     )}
                     <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      <span>Move-in: {reservation.moveInDate}</span>
-                      <span>Duration: {reservation.stayDuration}</span>
+                      <span>Move-in: {new Date(reservation.moveInDate).toLocaleDateString()}</span>
+                      <span>Duration: {reservation.stayDuration} days</span>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Received {new Date(reservation.createdAt).toLocaleDateString()}

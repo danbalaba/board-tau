@@ -131,6 +131,14 @@ export const getFallbackListings = async (parsedQuery: any) => {
     include: {
       rooms: true,
       images: true,
+      amenities: true,
+      rules: true,
+      features: true,
+      categories: {
+        include: {
+          category: true,
+        },
+      },
     },
   };
 
@@ -146,9 +154,8 @@ export const getFallbackListings = async (parsedQuery: any) => {
   // PRIORITY 4: Relax distance filter (max 2x original or 20km, whichever is smaller)
   const MAX_FALLBACK_DISTANCE = 20;
   fallbackCandidates = fallbackCandidates.filter((listing) => {
-    if (!listing.latlng || listing.latlng.length < 2) return false;
-    const [listingLat, listingLng] = listing.latlng;
-    const dist = haversineKm(lat, lng, listingLat, listingLng);
+    if ((listing as any).latitude == null || (listing as any).longitude == null) return false;
+    const dist = haversineKm(lat, lng, (listing as any).latitude, (listing as any).longitude);
     const maxAllowedDist = distance ? Math.min(distance * 2, MAX_FALLBACK_DISTANCE) : MAX_FALLBACK_DISTANCE;
     return dist <= maxAllowedDist;
   });
@@ -168,7 +175,7 @@ export const getFallbackListings = async (parsedQuery: any) => {
 
   // Calculate fallback scores with strict prioritization
   const scoredFallbackListings = fallbackCandidates.map((listing) => {
-    const distanceKm = haversineKm(lat, lng, listing.latlng[0], listing.latlng[1]);
+    const distanceKm = haversineKm(lat, lng, (listing as any).latitude || 0, (listing as any).longitude || 0);
     let score = 0;
 
     // 1. Price match (40% weight) - prioritize staying close to original range
@@ -195,9 +202,26 @@ export const getFallbackListings = async (parsedQuery: any) => {
     // 4. Amenities match (10% weight) - prioritize listings with requested amenities
     let amenitiesScore = 50;
     if (amenities && Array.isArray(amenities) && amenities.length > 0) {
-      const amenitiesMatch = amenities.filter((amenity: string) =>
-        listing.amenities.includes(amenity)
-      ).length;
+      const amenitiesMatch = amenities.filter((amenity: string) => {
+        const amenityKey = amenity.toLowerCase().replace(/\s+/g, '');
+        switch(amenityKey) {
+          case 'wifi':
+            return (listing as any).amenities?.wifi;
+          case 'parking':
+            return (listing as any).amenities?.parking;
+          case 'pool':
+            return (listing as any).amenities?.pool;
+          case 'gym':
+            return (listing as any).amenities?.gym;
+          case 'airconditioning':
+          case 'airconditioner':
+            return (listing as any).amenities?.airConditioning;
+          case 'laundry':
+            return (listing as any).amenities?.laundry;
+          default:
+            return false;
+        }
+      }).length;
       amenitiesScore = (amenitiesMatch / amenities.length) * 100;
     }
     score += amenitiesScore * 0.10;

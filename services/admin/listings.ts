@@ -25,9 +25,14 @@ export async function getAdminListings(args: {
     take: ADMIN_PAGE_SIZE + 1,
     ...(args.cursor ? { cursor: { id: args.cursor }, skip: 1 } : {}),
     orderBy: { createdAt: "desc" },
-    include: {
+     include: {
       user: { select: { id: true, name: true, email: true } },
       images: { orderBy: { order: "asc" }, take: 3 },
+      categories: {
+        include: {
+          category: true,
+        },
+      },
     },
   });
 

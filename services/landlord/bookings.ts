@@ -94,7 +94,7 @@ export const getBookingDetails = async (bookingId: string) => {
 
 export const updateBookingStatus = async (
   bookingId: string,
-  status: "pending" | "confirmed" | "cancelled"
+  status: "PENDING" | "CONFIRMED" | "CANCELLED"
 ) => {
   const landlord = await requireLandlord();
 

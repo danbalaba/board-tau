@@ -72,29 +72,35 @@ export const getReservations = async (args: Record<string, string>) => {
 
 export const createReservation = async ({
   listingId,
+  roomId,
   startDate,
   endDate,
   totalPrice,
   userId
 }: {
   listingId: string;
+  roomId?: string;
   startDate: Date | undefined;
   endDate: Date | undefined;
   totalPrice: number;
   userId: string
 }) => {
   try {
-    console.log('Creating reservation with data:', { listingId, startDate, endDate, totalPrice, userId })
+    console.log('Creating reservation with data:', { listingId, roomId, startDate, endDate, totalPrice, userId })
 
     if (!listingId || !startDate || !endDate || !totalPrice)
       throw new Error("Invalid data");
+
+    const durationInDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
     const reservation = await db.reservation.create({
       data: {
         userId,
         listingId,
+        roomId: roomId || '',
         startDate,
         endDate,
+        durationInDays,
         totalPrice,
       },
     });

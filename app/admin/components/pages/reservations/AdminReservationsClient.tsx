@@ -13,8 +13,8 @@ type ReservationRow = {
   status: string;
   paymentStatus: string;
   createdAt: Date;
-  user: { id: string; name: string | null; email: string | null };
-  listing: {
+  user?: { id: string; name: string | null; email: string | null };
+  listing?: {
     id: string;
     title: string;
     user: { id: string; name: string | null; email: string | null };
@@ -22,7 +22,7 @@ type ReservationRow = {
 };
 
 interface Props {
-  initialReservations: ReservationRow[];
+  initialReservations: any[];
   nextCursor: string | null;
   initialStatus?: string;
   initialPaymentStatus?: string;

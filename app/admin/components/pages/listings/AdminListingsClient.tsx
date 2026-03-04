@@ -15,7 +15,7 @@ type ListingRow = {
   title: string;
   description: string;
   imageSrc: string;
-  category: string[];
+  categories?: { category: { name: string } }[];
   price: number;
   status: string;
   userId: string;
@@ -158,7 +158,7 @@ export default function AdminListingsClient({
                         {listing.user.email || "—"}
                       </div>
                     </td>
-                     <td className="p-4">{listing.category.join(", ")}</td>
+                      <td className="p-4">{listing.categories?.map(lc => lc.category?.name).filter(Boolean).join(", ") || "—"}</td>
                     <td className="p-4">₱{listing.price.toLocaleString()}</td>
                     <td className="p-4">
                       <span
