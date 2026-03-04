@@ -3,16 +3,16 @@ import { AuthOptions } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import GitHubProvider from "next-auth/providers/github";
+import FacebookProvider from "next-auth/providers/facebook";
 import { db } from "./db";
 import { validateEmail, validatePassword, sanitizeInput } from "./validators";
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(db),
   providers: [
-    GitHubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID as string,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
     }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
@@ -71,8 +71,8 @@ export const authOptions: AuthOptions = {
       console.log("🔐 signIn callback - account:", account);
       console.log("🔐 signIn callback - profile:", profile);
 
-      // For Google and GitHub OAuth
-      if (user.email && (account?.provider === "google" || account?.provider === "github")) {
+      // For Google and Facebook OAuth
+      if (user.email && (account?.provider === "google" || account?.provider === "facebook")) {
         // Get existing user by email
         const existingUser = await db.user.findUnique({
           where: { email: user.email }
@@ -187,7 +187,7 @@ export const authOptions: AuthOptions = {
         };
 
         // If user is new (created via OAuth), update emailVerified in database
-        if (!(user as any).emailVerified && (account?.provider === "google" || account?.provider === "github")) {
+        if (!(user as any).emailVerified && (account?.provider === "google" || account?.provider === "facebook")) {
           try {
             await db.user.update({
               where: { id: user.id },
@@ -208,7 +208,7 @@ export const authOptions: AuthOptions = {
       }
 
       // For OAuth providers, ensure emailVerified is set in JWT
-      if (account?.provider === "google" || account?.provider === "github") {
+      if (account?.provider === "google" || account?.provider === "facebook") {
         return {
           ...token,
           emailVerified: new Date()

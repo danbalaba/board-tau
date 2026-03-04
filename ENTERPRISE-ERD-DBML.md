@@ -1,4 +1,4 @@
-// Enterprise-Grade DBML for BoardTAU with Explicit Relationship Multiplicity
+// Enterprise-Grade DBML for BoardTAU with Short Relationship Comments
 
 
 // Enums for type safety
@@ -371,39 +371,30 @@ Table host_applications {
 }
 
 
-// Relationships with explicit multiplicity
-// 1-to-many relationships
-Ref: accounts.user_id > users.user_id [delete: cascade, update: cascade] // 1 user has many accounts
-Ref: listings.user_id > users.user_id [delete: cascade, update: cascade] // 1 user has many listings
-Ref: reservations.user_id > users.user_id [delete: cascade, update: cascade] // 1 user has many reservations
-Ref: reviews.user_id > users.user_id [delete: cascade, update: cascade] // 1 user has many reviews
-Ref: messages.sender_id > users.user_id [delete: cascade, update: cascade] // 1 user has many sent messages
-Ref: messages.receiver_id > users.user_id [delete: cascade, update: cascade] // 1 user has many received messages
-Ref: admin_activity_logs.admin_id > users.user_id [delete: cascade, update: cascade] // 1 user has many admin activity logs
-Ref: inquiries.user_id > users.user_id [delete: cascade, update: cascade] // 1 user has many inquiries
-
-Ref: rooms.listing_id > listings.listing_id [delete: cascade, update: cascade] // 1 listing has many rooms
-Ref: reviews.listing_id > listings.listing_id [delete: cascade, update: cascade] // 1 listing has many reviews
-Ref: reservations.listing_id > listings.listing_id [delete: cascade, update: cascade] // 1 listing has many reservations
-Ref: inquiries.listing_id > listings.listing_id [delete: cascade, update: cascade] // 1 listing has many inquiries
-Ref: listing_images.listing_id > listings.listing_id [delete: cascade, update: cascade] // 1 listing has many images
-Ref: listing_amenities.listing_id > listings.listing_id [delete: cascade, update: cascade] // 1 listing has 1 amenities record (unique constraint)
-Ref: listing_rules.listing_id > listings.listing_id [delete: cascade, update: cascade] // 1 listing has 1 rules record (unique constraint)
-Ref: listing_features.listing_id > listings.listing_id [delete: cascade, update: cascade] // 1 listing has 1 features record (unique constraint)
-Ref: listing_categories.listing_id > listings.listing_id [delete: cascade, update: cascade] // 1 listing has many categories (through junction table)
-
-Ref: room_images.room_id > rooms.room_id [delete: cascade, update: cascade] // 1 room has many images
-Ref: room_amenities.room_id > rooms.room_id [delete: cascade, update: cascade] // 1 room has many amenities
-Ref: inquiries.room_id > rooms.room_id [delete: cascade, update: cascade] // 1 room has many inquiries
-Ref: reservations.room_id > rooms.room_id [delete: cascade, update: cascade] // 1 room has many reservations
-
-// 1-to-1 relationships (enforced by unique constraints)
-Ref: host_applications.user_id > users.user_id [delete: cascade, update: cascade] // 1 user has at most 1 host application (unique constraint on user_id)
-Ref: reservations.inquiry_id > inquiries.inquiry_id [delete: cascade, update: cascade] // 1 inquiry has at most 1 reservation (unique constraint on inquiry_id)
-
-// Many-to-many relationships (through junction table)
-Ref: listing_categories.category_id > categories.category_id [delete: cascade, update: cascade] // Categories and Listings have many-to-many relationship
-Ref: room_amenities.amenity_type_id > room_amenity_types.amenity_type_id [delete: cascade, update: cascade] // RoomAmenityTypes and Rooms have many-to-many relationship
-
-// Optional relationships
-Ref: email_otps.user_id > users.user_id [delete: set null, update: cascade] // Optional: 1 user has many email OTPs, OTP can exist without user (for new registrations)
+// Relationships with short, descriptive comments
+Ref: accounts.user_id > users.user_id // links
+Ref: listings.user_id > users.user_id // owns
+Ref: reservations.user_id > users.user_id // makes
+Ref: reviews.user_id > users.user_id // writes
+Ref: messages.sender_id > users.user_id // sends
+Ref: messages.receiver_id > users.user_id // receives
+Ref: admin_activity_logs.admin_id > users.user_id // performs
+Ref: inquiries.user_id > users.user_id // submits
+Ref: host_applications.user_id > users.user_id // applied by
+Ref: rooms.listing_id > listings.listing_id // contains
+Ref: reviews.listing_id > listings.listing_id // references
+Ref: reservations.listing_id > listings.listing_id // reserved for
+Ref: inquiries.listing_id > listings.listing_id // inquires about
+Ref: listing_images.listing_id > listings.listing_id // shown in
+Ref: inquiries.room_id > rooms.room_id // specific to
+Ref: reservations.room_id > rooms.room_id // reserved for
+Ref: reservations.inquiry_id > inquiries.inquiry_id // originated from
+Ref: listing_amenities.listing_id > listings.listing_id // has amenities
+Ref: listing_rules.listing_id > listings.listing_id // has rules
+Ref: listing_features.listing_id > listings.listing_id // has features
+Ref: listing_categories.listing_id > listings.listing_id // belongs to category
+Ref: listing_categories.category_id > categories.category_id // category reference
+Ref: room_images.room_id > rooms.room_id // has images
+Ref: room_amenities.room_id > rooms.room_id // has amenities
+Ref: room_amenities.amenity_type_id > room_amenity_types.amenity_type_id // amenity type reference
+Ref: email_otps.user_id > users.user_id // belongs to user

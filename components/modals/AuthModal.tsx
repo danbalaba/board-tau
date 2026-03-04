@@ -1,6 +1,6 @@
 "use client";
 import React, { useTransition, useState, useEffect } from "react";
-import { AiFillGithub } from "react-icons/ai";
+import { FaFacebook } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import { signIn } from "next-auth/react";
@@ -416,7 +416,7 @@ const AuthModal = ({
             onClick={async () => {
               setIsOAuthLoading(true);
               try {
-                const result = await signIn("github", {
+                const result = await signIn("facebook", {
                   callbackUrl: "/",
                   redirect: false,
                 });
@@ -424,7 +424,7 @@ const AuthModal = ({
                 if (result?.error) {
                   if (result.error.startsWith("OAuthAccountNotLinked")) {
                     const provider = result.error.split(":")[1];
-                    toast.error(`An account with this email already exists. Please log in using your ${provider === "google" ? "Google" : "GitHub"} account or use a different email.`);
+                    toast.error(`An account with this email already exists. Please log in using your ${provider === "google" ? "Google" : "Facebook"} account or use a different email.`);
                   } else {
                     toast.error("Failed to sign in. Please try again.");
                   }
@@ -442,9 +442,9 @@ const AuthModal = ({
             disabled={isOAuthLoading}
             className="flex flex-row justify-center gap-2 items-center px-3 py-2"
           >
-            <AiFillGithub className="w-6 h-6" />
+            <FaFacebook className="w-6 h-6 text-blue-600" />
             <span className="text-[14px]">
-              {isOAuthLoading ? "Signing in..." : "Continue with Github"}
+              {isOAuthLoading ? "Signing in..." : "Continue with Facebook"}
             </span>
             {isOAuthLoading && <SpinnerMini className="w-4 h-4" />}
           </Button>
