@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["jest", "node"],
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "**/*.test.tsx",
+    "**/*.test.ts",
+    "jest.setup.js"
+  ]
+}

@@ -3,6 +3,11 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
 
 export const createStripeCheckoutSession = async (inquiryId: string) => {
+  // Check if Stripe is configured
+  if (!stripe) {
+    throw new Error("Stripe not configured");
+  }
+
   const user = await getCurrentUser();
 
   if (!user) {

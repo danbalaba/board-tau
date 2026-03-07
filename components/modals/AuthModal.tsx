@@ -102,7 +102,7 @@ const AuthModal = ({
                 setLockoutCountdown(countdownSeconds);
                 setOtpAttemptLimitReached(true);
                 toast.error(error.message, {
-                  duration: countdownSeconds * 1000,
+                  duration: Math.min(countdownSeconds, 5) * 1000, // Max 5 seconds
                 });
               } else if (error.message.includes("attempt(s) remaining")) {
                 // Show remaining attempts with shorter duration

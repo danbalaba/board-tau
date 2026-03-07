@@ -66,6 +66,47 @@ BoardTAU is a comprehensive web-based platform designed to revolutionize the sea
 - Stripe account (for payments)
 - EdgeStore account (for file storage)
 
+### Testing Setup
+
+BoardTAU includes a comprehensive testing setup using:
+
+- **Jest**: JavaScript/TypeScript testing framework
+- **React Testing Library**: UI testing library for React
+- **Jest DOM**: Custom matchers for React DOM elements
+
+#### Available Scripts
+
+```bash
+# Run all tests
+npm run test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Type check
+npm run type-check
+```
+
+#### Adding New Tests
+
+Create test files with the `.test.tsx` extension:
+
+```typescript
+// components/common/ComponentName.test.tsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import ComponentName from './ComponentName';
+
+describe('ComponentName Component', () => {
+  it('renders correctly', () => {
+    render(<ComponentName />);
+    expect(screen.getByText('Expected Text')).toBeInTheDocument();
+  });
+});
+```
+
 ### Installation
 
 1. **Clone the repository**

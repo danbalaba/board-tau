@@ -2,88 +2,155 @@
 
 ## Overview
 
-This use case diagram follows your instructor's clean, structured format. It shows the interactions between three main actors: **End Users** (students, instructors, faculty, staff), **Landlords/Property Owners**, and **System Administrators** with the BoardTAU system.
+This use case diagram shows the interactions between three main actors: **End Users** (students, instructors, faculty, staff), **Landlords/Property Owners**, and **System Administrators** with the BoardTAU system. It is based on the updated diagrams and TASK-ANALYSIS.md.
 
-## Use Case Diagram
+## Use Case Diagrams
 
+### End User and Landlord Use Cases
 ```mermaid
 graph TD
-    title[BoardTAU Use Case Diagram]
+    title[BoardTAU - End User and Landlord Use Case Diagram]
 
     %% Actors
     User[End User]
     Landlord[Landlord]
-    Admin[System Admin]
-    Payment[Payment Gateway]
-    Email[Email System]
-    Storage[Image Storage]
 
     %% System Boundary
     subgraph BoardTAU System
         %% End User Use Cases
-        UC1[User Authentication]
-        UC2[Browse/Search Listings]
-        UC3[Apply Smart Filters]
-        UC4[View Property Details]
-        UC5[Submit Inquiry]
-        UC6[Process Payment]
-        UC7[Submit Review]
-        UC8[Manage Favorites]
+        UC1[Browse/Search Boarding Houses]
+        UC2[View Boarding House Details]
+        UC3[User Authentication (Register/Login)]
+        UC4[Add property to favorites]
+        UC5[Submit Review & Rating]
+        UC6[Update User Profile]
+        UC7[Initiate Inquiry Request]
+        UC8[View Inquiry Status]
+        UC9[Make Payment (Stripe)]
+        UC10[Receive Success Reservation Notification]
+        UC11[Apply Smart Filters (Budget/Amenities/Distance)]
+        UC12[Approve/Reject Inquiry Request]
+        UC13[Inquiry Notification]
+        UC14[Make Reservation]
 
         %% Landlord Use Cases
-        UC9[Manage Listings]
-        UC10[Manage Inquiries]
-        UC11[Update Availability]
-        UC12[Track Payments]
-
-        %% Admin Use Cases
-        UC13[User Management]
-        UC14[Listing Moderation]
-        UC15[Review Moderation]
-        UC16[System Configuration]
-        UC17[Generate Reports]
+        UC15[Manage Boarding House Listings]
+        UC16[Update Room Availability]
+        UC17[Manage Incoming Inquiry Requests]
+        UC18[View Landlord Dashboard]
+        UC19[Update boarding house listing room status]
+        UC20[View Payment History]
+        UC21[Generate Reports]
+        UC22[Upload Boarding House Photos]
     end
 
     %% Actor Connections
+    User --> UC1
     User --> UC2
+    User --> UC3
     User --> UC4
     User --> UC5
+    User --> UC6
     User --> UC7
     User --> UC8
 
-    Landlord --> UC9
-    Landlord --> UC10
-    Landlord --> UC11
-    Landlord --> UC12
+    Landlord --> UC15
+    Landlord --> UC16
+    Landlord --> UC17
+    Landlord --> UC18
+    Landlord --> UC19
+    Landlord --> UC20
+    Landlord --> UC21
 
-    Admin --> UC13
-    Admin --> UC14
-    Admin --> UC15
-    Admin --> UC16
-    Admin --> UC17
-
-    %% External System Connections
-    Payment --> UC6
-    Email --> UC5
-    Email --> UC6
-    Storage --> UC9
+    %% End User Flow
+    UC7 --> UC12
+    UC12 --> UC13
+    UC13 --> UC14
+    UC14 --> UC9
+    UC9 --> UC10
 
     %% Relationships
-    UC2 -.-> UC3:::extend
-    UC5 -.-> UC1:::include
-    UC6 -.-> UC1:::include
-    UC7 -.-> UC1:::include
-    UC8 -.-> UC1:::include
-    UC5 -.-> UC6:::include
-    UC9 -.-> UC11:::include
+    UC1 -.-> UC11:::extend
+    UC15 -.-> UC22:::extend
+    UC7 -.-> UC3:::include
+    UC12 -.-> UC3:::include
+    UC13 -.-> UC12:::include
+    UC14 -.-> UC13:::include
+    UC9 -.-> UC14:::include
     UC10 -.-> UC9:::include
-    UC12 -.-> UC10:::include
-    UC13 -.-> UC14:::include
-    UC14 -.-> UC15:::include
-    UC17 -.-> UC13:::include
 
     %% Styles
     classDef extend stroke-dasharray: 5,5;
+    classDef include stroke-dasharray: 5,5;
+```
+
+### System Administrator Use Cases
+```mermaid
+graph TD
+    title[BoardTAU - System Administrator Use Case Diagram]
+
+    %% Actors
+    Admin[Admin]
+
+    %% System Boundary
+    subgraph BoardTAU System
+        %% Admin Use Cases
+        UC1[Manage User Accounts]
+        UC2[Activate/Deactivate Accounts]
+        UC3[Edit/Update User Accounts]
+        UC4[Search/Filter User Accounts]
+        UC5[Manage Boarding House Listings]
+        UC6[Approve/Reject Listing]
+        UC7[Request Edits/Feedbacks]
+        UC8[Moderate Reviews/Ratings]
+        UC9[Approve/Remove Reviews/Ratings]
+        UC10[Flag Inappropriate Reviews/Ratings]
+        UC11[Generate Report]
+        UC12[Monitor Booking Activity]
+        UC13[View Booking Details]
+        UC14[Filter/Search Bookings]
+        UC15[System Configuration]
+        UC16[Monitor System Logs]
+        UC17[Manage Security Alerts]
+        UC18[View Admin Dashboard]
+    end
+
+    %% Actor Connections
+    Admin --> UC1
+    Admin --> UC5
+    Admin --> UC8
+    Admin --> UC11
+    Admin --> UC12
+    Admin --> UC15
+    Admin --> UC18
+
+    %% Subtask Relationships
+    UC1 --> UC2
+    UC1 --> UC3
+    UC1 --> UC4
+    UC5 --> UC6
+    UC5 --> UC7
+    UC8 --> UC9
+    UC8 --> UC10
+    UC12 --> UC13
+    UC13 --> UC14
+    UC15 --> UC16
+    UC16 --> UC17
+
+    %% Include Relationships
+    UC1 -.-> UC2:::include
+    UC1 -.-> UC3:::include
+    UC1 -.-> UC4:::include
+    UC5 -.-> UC6:::include
+    UC5 -.-> UC7:::include
+    UC8 -.-> UC9:::include
+    UC8 -.-> UC10:::include
+    UC12 -.-> UC13:::include
+    UC13 -.-> UC14:::include
+    UC15 -.-> UC16:::include
+    UC16 -.-> UC17:::include
+
+    %% Styles
     classDef include stroke-dasharray: 5,5;
 ```
 
@@ -94,60 +161,76 @@ graph TD
 - **Landlord/Property Owner**: Individuals who manage and rent out boarding houses on the platform
 - **System Administrator**: Personnel responsible for managing and maintaining the BoardTAU system
 
-### External Actors
-- **Payment Gateway**: Handles digital payment processing (Stripe, GCash, Maya via PayMongo)
-- **Email System**: Sends notifications, confirmations, and updates to users
-- **Image Storage**: Manages property image uploads and storage
-
 ## Use Case Descriptions
 
 ### End User Use Cases
 
 | Use Case | Description |
 |----------|-------------|
-| **User Authentication** | User registration, login, and account management. |
-| **Browse/Search Listings** | View available boarding house listings and perform basic searches. |
-| **Apply Smart Filters** | Advanced filtering options including price, amenities, distance from TAU, and specific college locations. |
-| **View Property Details** | Access detailed information about specific properties including images, amenities, and location maps. |
-| **Submit Inquiry** | Send reservation inquiries to property owners with stay details. |
-| **Process Payment** | Complete digital payments using various payment methods. |
-| **Submit Review** | Provide feedback and ratings for boarding houses after stay. |
-| **Manage Favorites** | Save and organize favorite properties for future reference. |
+| **Browse/Search Boarding Houses** | View available boarding house listings and perform basic searches. |
+| **View Boarding House Details** | Access detailed information about specific properties including images, amenities, and location maps. |
+| **User Authentication (Register/Login)** | User registration, login, and session management. |
+| **Add property to favorites** | Save properties to a favorites list for future reference. |
+| **Submit Review & Rating** | Provide feedback and ratings for boarding houses after stay. |
+| **Update User Profile** | Modify and update user profile information. |
+| **Initiate Inquiry Request** | Start the process of inquiring about a boarding house. |
+| **View Inquiry Status** | Check the status of submitted inquiries. |
+| **Make Payment (Stripe)** | Complete digital payments using Stripe. |
+| **Receive Success Reservation Notification** | Get notified when a reservation is successfully made. |
+| **Apply Smart Filters (Budget/Amenities/Distance)** | Advanced filtering options including budget, amenities, and distance from TAU. |
 
 ### Landlord Use Cases
 
 | Use Case | Description |
 |----------|-------------|
-| **Manage Listings** | Create, edit, and manage property listings including images and details. |
-| **Manage Inquiries** | Review and respond to reservation inquiries from potential tenants. |
-| **Update Availability** | Manage room availability and occupancy status. |
-| **Track Payments** | Monitor payment status and history for reservations. |
+| **Manage Boarding House Listings** | Create, edit, and manage property listings including images and details. |
+| **Update Room Availability** | Manage room availability and occupancy status. |
+| **Manage Incoming Inquiry Requests** | Review and respond to reservation inquiries from potential tenants. |
+| **View Landlord Dashboard** | Access an overview of property statistics and performance metrics. |
+| **Update boarding house listing room status** | Activate/deactivate listings and update their visibility. |
+| **View Payment History** | Monitor payment status and history for reservations. |
+| **Generate Reports** | Create reports on property performance and tenant activity. |
+| **Upload Boarding House Photos** | Add and manage property images. |
 
 ### System Administrator Use Cases
 
 | Use Case | Description |
 |----------|-------------|
-| **User Management** | Manage user accounts, roles, and permissions for all users. |
-| **Listing Moderation** | Review, approve, reject, or flag property listings for quality control. |
-| **Review Moderation** | Approve, remove, or flag user reviews to maintain platform integrity. |
-| **System Configuration** | Configure platform settings, payment integrations, and content moderation rules. |
-| **Generate Reports** | Create system reports and view analytics on platform usage and performance. |
+| **Manage User Accounts** | Create, edit, and manage user accounts and roles. |
+| **Activate/Deactivate Accounts** | Enable or disable user accounts. |
+| **Edit/Update User Accounts** | Modify user account information. |
+| **Search/Filter User Accounts** | Search and filter through user accounts. |
+| **Manage Boarding House Listings** | Review and moderate property listings. |
+| **Approve/Reject Listing** | Approve or reject property listings. |
+| **Request Edits/Feedbacks** | Request changes to property listings from landlords. |
+| **Moderate Reviews/Ratings** | Review and manage user reviews and ratings. |
+| **Approve/Remove Reviews/Ratings** | Approve or remove user reviews. |
+| **Flag Inappropriate Reviews/Ratings** | Identify and flag inappropriate reviews. |
+| **Generate Report** | Create system reports and analytics. |
+| **Monitor Booking Activity** | Track and monitor booking activity. |
+| **View Booking Details** | Access detailed booking information. |
+| **Filter/Search Bookings** | Filter and search through bookings. |
+| **System Configuration** | Configure system settings and parameters. |
+| **Monitor System Logs** | Track system logs and activity. |
+| **Manage Security Alerts** | Handle security alerts and notifications. |
+| **View Admin Dashboard** | Access an overview of system performance and activity. |
 
 ## Relationship Types
 
 ### Include Relationships («include»)
 - Require the use of another use case to complete functionality
-- Examples: `Submit Inquiry` includes `User Authentication`, `Process Payment` includes `User Authentication`
+- Examples: `Initiate Inquiry Request` includes `User Authentication`, `Approve/Reject Inquiry Request` includes `User Authentication`
 
-### Extend Relationships («extend»
+### Extend Relationships («extend»)
 - Optional functionality that extends another use case
-- Examples: `Browse/Search Listings` extends to `Apply Smart Filters`
+- Examples: `Browse/Search Boarding Houses` extends to `Apply Smart Filters`, `Manage Boarding House Listings` extends to `Upload Boarding House Photos`
 
 ## System Scope
 
-The diagram covers all functional requirements from Chapter 1, including:
+The diagrams cover all functional requirements from the task analysis, including:
 - **User interface components** for end users, landlords, and administrators
 - **Core functionality** including listing management, search, inquiry, and payment processes
 - **Quality attributes** support through moderation and system monitoring
+- **Detailed sub-tasks** for each main use case, providing a comprehensive view of system functionality
 
-This structured use case diagram follows your instructor's example and provides a clear, professional representation of the BoardTAU system's functionality.
+This structured use case diagram follows the updated requirements and provides a clear, professional representation of the BoardTAU system's functionality.
