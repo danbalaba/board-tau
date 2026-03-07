@@ -189,7 +189,7 @@ export const createPaymentSession = async ({
   // Try to create Stripe payment session
   try {
     // Check if Stripe is properly configured
-    if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.startsWith('pk_')) {
+    if (!stripe) {
       throw new Error("Stripe configuration error - using direct reservation instead");
     }
 

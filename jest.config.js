@@ -17,7 +17,14 @@ const customJestConfig = {
     'ts-jest': {
       tsconfig: 'tsconfig.jest.json'
     }
-  }
+  },
+  testMatch: [
+    '**/?(*.)+(spec|test).[tj]s?(x)'
+  ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/.next/'
+  ]
 }
 
 module.exports = createJestConfig(customJestConfig)
