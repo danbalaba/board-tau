@@ -90,12 +90,6 @@ npm run test:coverage
 npm run type-check
 ```
 
-#### Test Coverage
-
-- **Button Component**: 100% coverage
-- **Utility Functions**: 79% coverage
-- **Total**: 51% coverage
-
 #### Adding New Tests
 
 Create test files with the `.test.tsx` extension:
