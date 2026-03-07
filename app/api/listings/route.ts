@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getListings } from "@/services/user/listings";
+import { cache } from "@/lib/redis";
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,6 +29,17 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Create cache key from query parameters
+    const cacheKey = `listings:${JSON.stringify(query)}`;
+
+    // Try to get from cache first
+    const cachedData = await cache.get(cacheKey);
+    if (cachedData) {
+      console.log("Serving listings from cache");
+      return NextResponse.json(cachedData);
+    }
+
+    // Fetch from database if not in cache
     const result = await getListings(query);
 
     // Ensure response structure includes message and type correctly
@@ -38,6 +50,10 @@ export async function GET(request: NextRequest) {
       nextCursor: result.nextCursor,
     };
 
+    // Cache the response for 10 minutes
+    await cache.set(cacheKey, response, 600);
+
+    console.log("Serving listings from database");
     return NextResponse.json(response);
   } catch (error) {
     console.error("Error fetching listings:", error);

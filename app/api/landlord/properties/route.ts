@@ -6,18 +6,35 @@ import {
   deleteProperty,
   updateListingStatus,
 } from "@/services/landlord/properties";
+import { cache } from "@/lib/redis";
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const cursor = searchParams.get("cursor") || undefined;
 
+    // Create cache key
+    const cacheKey = cursor ? `landlord:properties:${cursor}` : "landlord:properties";
+
+    // Try to get from cache first
+    const cachedData = await cache.get(cacheKey);
+    if (cachedData) {
+      console.log("Serving landlord properties from cache");
+      return NextResponse.json(cachedData);
+    }
+
     const result = await getLandlordProperties({ cursor });
 
-    return NextResponse.json({
+    const response = {
       success: true,
       data: result,
-    });
+    };
+
+    // Cache the response for 15 minutes
+    await cache.set(cacheKey, response, 900);
+
+    console.log("Serving landlord properties from database");
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Error fetching properties:", error);
     return NextResponse.json(
@@ -37,6 +54,11 @@ export async function POST(request: NextRequest) {
     const result = await createProperty(data);
 
     if (result.success) {
+      // Invalidate property cache
+      await cache.del("landlord:properties");
+      // Also invalidate listings cache since properties might be listed
+      await cache.del("listings:{}");
+
       return NextResponse.json({
         success: true,
         data: result.data,
@@ -82,6 +104,11 @@ export async function PUT(request: NextRequest) {
     const result = await updateProperty(propertyId, data);
 
     if (result.success) {
+      // Invalidate property cache
+      await cache.del("landlord:properties");
+      // Also invalidate listings cache since properties might be listed
+      await cache.del("listings:{}");
+
       return NextResponse.json({
         success: true,
         data: result.data,
@@ -125,6 +152,11 @@ export async function DELETE(request: NextRequest) {
     const result = await deleteProperty(propertyId);
 
     if (result.success) {
+      // Invalidate property cache
+      await cache.del("landlord:properties");
+      // Also invalidate listings cache since properties might be listed
+      await cache.del("listings:{}");
+
       return NextResponse.json({
         success: true,
       });

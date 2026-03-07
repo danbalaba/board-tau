@@ -9,7 +9,27 @@ import { Toaster } from "./Toast";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+    },
+    mutations: {
+      onSuccess: () => {
+        // Invalidate queries on mutation success to ensure fresh data
+        queryClient.invalidateQueries({
+          queryKey: ['listings'],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['properties'],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['reservations'],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['analytics'],
+        });
+      },
     },
   },
 });
