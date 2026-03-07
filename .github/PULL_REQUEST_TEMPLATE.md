@@ -17,8 +17,17 @@ Fixes # (issue number)
 
 Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce.
 
-- [ ] Test A
-- [ ] Test B
+- [ ] Ran existing tests: `npm run test`
+- [ ] Added new tests for my changes
+- [ ] Verified tests pass: `npm run test:coverage`
+- [ ] Checked type safety: `npm run type-check`
+
+## Testing Details
+
+If you added new tests, please describe them:
+- Test file location:
+- What functionality is being tested:
+- How to run the specific tests:
 
 ## Checklist:
 
@@ -29,3 +38,4 @@ Please describe the tests that you ran to verify your changes. Provide instructi
 - [ ] My changes generate no new warnings
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] New and existing unit tests pass locally with my changes
+- [ ] My changes are properly formatted and linted

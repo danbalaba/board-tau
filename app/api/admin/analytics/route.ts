@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { cache } from "@/lib/redis";
 
 export async function GET(request: NextRequest) {
   try {
+    const cacheKey = "admin:analytics";
+
+    // Try to get from cache first
+    const cachedData = await cache.get(cacheKey);
+    if (cachedData) {
+      console.log("Serving admin analytics from cache");
+      return NextResponse.json(cachedData);
+    }
+
     // Get total revenue
     const reservations = await db.reservation.findMany({
       where: {
@@ -91,7 +101,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({
+    const response = {
       success: true,
       data: {
         stats: {
@@ -106,7 +116,13 @@ export async function GET(request: NextRequest) {
           propertyTypes
         }
       }
-    });
+    };
+
+    // Cache the response for 30 minutes
+    await cache.set(cacheKey, response, 1800);
+
+    console.log("Serving admin analytics from database");
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Error fetching admin analytics:", error);
     return NextResponse.json(
