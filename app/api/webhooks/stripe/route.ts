@@ -6,6 +6,14 @@ import { handleStripeWebhook } from '@/services/payments/stripe';
 
 export async function POST(req: Request) {
   try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      return NextResponse.json(
+        { message: 'Stripe not configured', ok: false },
+        { status: 500 }
+      );
+    }
+
     const body = await req.text();
     const _headers = await headers();
     const signature = _headers.get('stripe-signature');
