@@ -269,13 +269,13 @@ export const generateAndStoreOTP = async (email: string) => {
     throw new Error(`Please wait ${remainingSeconds} seconds before requesting a new OTP.`);
   }
 
-  // Check for existing OTP
+  // Check for existing OTP (active or expired) to preserve phase
   const existingOTP = await db.emailOTP.findFirst({
     where: {
       email: sanitizedEmail,
-      expiresAt: { gt: new Date() },
       used: false,
     },
+    orderBy: { createdAt: 'desc' },
   });
 
   // Progressive rate limiting based on phase (TESTING values)
@@ -299,24 +299,27 @@ export const generateAndStoreOTP = async (email: string) => {
 
   // Generate new OTP
   const otp = generateOTP();
-  const otpHash = await bcrypt.hash(otp, 12);
+  const saltedOTP = `${process.env.OTP_SECRET!}${otp}`;
+  const otpHash = await bcrypt.hash(saltedOTP, 12);
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
   // Create or update OTP record
   if (existingOTP) {
+    // If existing record exists (even expired), update it with new OTP
     await db.emailOTP.update({
       where: { id: existingOTP.id },
       data: {
         otpHash,
         expiresAt,
         attempts: 0, // Reset attempts for new OTP
-        lockoutPhase: 1, // Reset phase for new OTP
         lockoutUntil: null, // Clear any existing lockout
         createdAt: new Date(), // Update creation time for rate limiting
         updatedAt: new Date(),
+        // Keep existing phase to continue progressive locking
       },
     });
   } else {
+    // If no existing OTP record, create new one at phase 1
     await db.emailOTP.create({
       data: {
         email: sanitizedEmail,
@@ -324,7 +327,7 @@ export const generateAndStoreOTP = async (email: string) => {
         expiresAt,
         attempts: 0,
         used: false,
-        lockoutPhase: 1, // Ensure phase starts at 1
+        lockoutPhase: 1, // Start at phase 1 for new OTP records
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -387,7 +390,7 @@ export const verifyOTP = async (email: string, otp: string) => {
   }
 
   // Find active OTP record
-  const otpRecord = await db.emailOTP.findFirst({
+  let otpRecord = await db.emailOTP.findFirst({
     where: {
       email: sanitizedEmail,
       expiresAt: { gt: new Date() },
@@ -410,18 +413,32 @@ export const verifyOTP = async (email: string, otp: string) => {
       throw new Error(`OTP attempt limit reached. Please try again in ${remainingSeconds} second(s).`);
     }
 
-    // If lockout has expired, reset attempts for current phase
+    // If lockout has expired, reset only attempts (keep phase to continue increasing durations)
     await db.emailOTP.update({
       where: { id: otpRecord.id },
       data: {
-        attempts: 0,
+        attempts: 0, // Reset attempts for current phase
         updatedAt: new Date(),
       },
     });
+
+    // Re-fetch updated record
+    otpRecord = await db.emailOTP.findFirst({
+      where: {
+        email: sanitizedEmail,
+        expiresAt: { gt: new Date() },
+        used: false,
+      },
+    });
+
+    if (!otpRecord) {
+      throw new Error('Invalid or expired OTP');
+    }
   }
 
-  // Verify OTP
-  const isOTPValid = await bcrypt.compare(sanitizedOTP, otpRecord.otpHash);
+  // Verify OTP with OTP_SECRET
+  const saltedOTP = `${process.env.OTP_SECRET!}${sanitizedOTP}`;
+  const isOTPValid = await bcrypt.compare(saltedOTP, otpRecord.otpHash);
 
   if (!isOTPValid) {
     const newAttempts = otpRecord.attempts + 1;
@@ -432,15 +449,27 @@ export const verifyOTP = async (email: string, otp: string) => {
       newPhase = otpRecord.lockoutPhase + 1;
 
       if (newPhase >= 5) {
+        const lockoutUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
         await db.emailOTP.update({
           where: { id: otpRecord.id },
           data: {
             attempts: newAttempts,
             isPermanentlyLocked: true,
+            lockoutUntil: lockoutUntil,
             updatedAt: new Date(),
           },
         });
-        throw new Error('Your account has been temporarily locked. Please contact support@boardtau.com');
+
+        const lockoutDate = lockoutUntil.toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZoneName: 'short'
+        });
+
+        throw new Error(`Your account has been locked for security reasons. Please try again after ${lockoutDate}.`);
       }
 
       const lockoutSeconds = getPhaseLockoutDuration(newPhase);
