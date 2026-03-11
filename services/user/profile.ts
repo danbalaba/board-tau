@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sanitizeInput } from "@/lib/validators";
+import bcrypt from 'bcryptjs';
 
 export interface UserProfile {
   id: string;
@@ -116,4 +117,62 @@ export async function updateUserProfileClient(data: Partial<UserProfile>): Promi
   }
 
   return await response.json();
+}
+
+// Server-side function to change user password
+export async function changeUserPassword(currentPassword: string, newPassword: string): Promise<void> {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.email) {
+    throw new Error('User not authenticated');
+  }
+
+  const user = await db.user.findUnique({
+    where: {
+      email: session.user.email,
+    },
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  if (!user.password) {
+    throw new Error('User does not have a password (OAuth user)');
+  }
+
+  // Verify current password
+  const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+  if (!isPasswordValid) {
+    throw new Error('Current password is incorrect');
+  }
+
+  // Hash new password
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+  // Update password in database
+  await db.user.update({
+    where: {
+      email: session.user.email,
+    },
+    data: {
+      password: hashedPassword,
+    },
+  });
+}
+
+// Client-side function to change user password
+export async function changeUserPasswordClient(currentPassword: string, newPassword: string): Promise<void> {
+  const response = await fetch('/api/user/change-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to change password');
+  }
 }

@@ -91,3 +91,29 @@ export const validateSignupForm = (name: string, email: string, password: string
 
   return errors;
 };
+
+// Validate change password form fields
+export const validateChangePasswordForm = (
+  currentPassword: string,
+  newPassword: string,
+  confirmPassword: string
+): Record<string, string> => {
+  const errors: Record<string, string> = {};
+
+  if (!currentPassword) {
+    errors.currentPassword = 'Current password is required';
+  }
+
+  const newPasswordError = validatePassword(newPassword);
+  if (newPasswordError) {
+    errors.newPassword = newPasswordError;
+  }
+
+  if (!confirmPassword) {
+    errors.confirmPassword = 'Confirm password is required';
+  } else if (newPassword !== confirmPassword) {
+    errors.confirmPassword = 'New password and confirm password do not match';
+  }
+
+  return errors;
+};

@@ -13,9 +13,9 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   id: string;
   label: string;
   icon?: IconType;
-  register?: UseFormRegister<FieldValues>;
+  register?: UseFormRegister<any>;
   errors?: FieldErrors;
-  watch?: UseFormWatch<FieldValues>;
+  watch?: UseFormWatch<any>;
   autoFocus?: boolean;
   required?: boolean;
   useStaticLabel?: boolean;
