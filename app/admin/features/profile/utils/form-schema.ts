@@ -26,12 +26,14 @@ export const profileSchema = z.object({
         .min(3, { message: 'Product Name must be at least 3 characters' }),
       startdate: z
         .string()
-        .refine((value) => /^/d{4}-/d{2}-/d{2}$/.test(value), {
+        .refine((value) => /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value), {
           message: 'Start date should be in the format YYYY-MM-DD'
         }),
-      enddate: z.string().refine((value) => /^/d{4}-/d{2}-/d{2}$/.test(value), {
-        message: 'End date should be in the format YYYY-MM-DD'
-      })
+      enddate: z
+        .string()
+        .refine((value) => /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value), {
+          message: 'End date should be in the format YYYY-MM-DD'
+        })
     })
   )
 });
