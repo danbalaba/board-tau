@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { User, Mail, Phone, Building, Edit2, LogOut } from "lucide-react";
+import { User, Mail, Phone, Building, Edit2, LogOut, Lock } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { UserProfile, updateUserProfileClient } from "@/services/user/profile";
 import Button from "@/components/common/Button";
@@ -12,6 +12,7 @@ import Avatar from "@/components/common/Avatar";
 import { signOut } from "next-auth/react";
 import toast from "react-hot-toast";
 import EditProfileModal from "@/components/modals/EditProfileModal";
+import ChangePasswordModal from "@/components/modals/ChangePasswordModal";
 
 interface ProfileClientProps {
   profile: UserProfile;
@@ -21,6 +22,7 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const { register, handleSubmit, formState: { errors }, reset } = useForm<UserProfile>({
     defaultValues: profile,
   });
@@ -92,14 +94,17 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
                 </div>
               </button>
 
-              <button className="w-full flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+              <button
+                className="w-full flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                onClick={() => setIsChangePasswordModalOpen(true)}
+              >
                 <div className="flex items-center space-x-4">
                   <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                    <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <Lock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                   </div>
                   <div className="text-left">
-                    <p className="text-base font-medium text-gray-900 dark:text-white">Saved Beneficiary</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Manage your saved account</p>
+                    <p className="text-base font-medium text-gray-900 dark:text-white">Change Password</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Update your password</p>
                   </div>
                 </div>
                 <Edit2 className="w-5 h-5 text-gray-400 dark:text-gray-500" />
@@ -171,14 +176,17 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
                 </div>
               </button>
 
-              <button className="w-full flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+              <button
+                className="w-full flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                onClick={() => setIsChangePasswordModalOpen(true)}
+              >
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                    <User className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <Lock className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">Saved Beneficiary</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Manage your saved account</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Change Password</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Update your password</p>
                   </div>
                 </div>
                 <Edit2 className="w-4 h-4 text-gray-400 dark:text-gray-500" />
@@ -211,6 +219,12 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
         onUpdate={async (data) => {
           await updateUserProfileClient(data);
         }}
+      />
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordModalOpen}
+        onClose={() => setIsChangePasswordModalOpen(false)}
       />
     </div>
   );

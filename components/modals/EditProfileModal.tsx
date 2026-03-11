@@ -146,17 +146,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               />
             </div>
 
-            {/* Change Password Button */}
-            <div className="space-y-2">
-              <Button
-                type="button"
-                outline
-                className="w-full"
-                onClick={() => toast.success("Password change feature coming soon")}
-              >
-                Change Password
-              </Button>
-            </div>
+
 
             {/* Action Buttons */}
             <div className="flex space-x-3 pt-4">
