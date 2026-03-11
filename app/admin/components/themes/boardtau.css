@@ -1,0 +1,85 @@
+/* BoardTAU Green Theme - User Branding */
+/* Debug: Log when theme styles are applied */
+html[data-theme="boardtau"] {
+  --debug-theme: "boardtau";
+  --debug-color: 0.47 0.35 148;
+  /* Light mode colors */
+  --color-background: 0.98 0 0; /* #f8faf9 */
+  --color-foreground: 0.12 0 0; /* #111827 */
+  --color-card: 0.99 0 0; /* #fafafa */
+  --color-card-foreground: 0.12 0 0; /* #111827 */
+  --color-popover: 0.98 0 0; /* #f8faf9 */
+  --color-popover-foreground: 0.12 0 0; /* #111827 */
+  --color-primary: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-primary-foreground: 0.98 0 0; /* #f8faf9 */
+  --color-secondary: 0.94 0 0; /* #f3f4f6 */
+  --color-secondary-foreground: 0.12 0 0; /* #111827 */
+  --color-muted: 0.96 0 0; /* #f3f4f6 */
+  --color-muted-foreground: 0.44 0 0; /* #6b7280 */
+  --color-accent: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-accent-foreground: 0.98 0 0; /* #f8faf9 */
+  --color-destructive: 0.63 0.19 23.03; /* rgb(239 68 68) */
+  --color-destructive-foreground: 0.98 0 0; /* #f8faf9 */
+  --color-border: 0.92 0 0; /* #e5e7eb */
+  --color-input: 0.94 0 0; /* #f3f4f6 */
+  --color-ring: 0.47 0.35 148; /* #2f7d6d */
+  --color-sidebar: 0.98 0 0; /* #f8faf9 */
+  --color-sidebar-foreground: 0.12 0 0; /* #111827 */
+  --color-sidebar-primary: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-sidebar-primary-foreground: 0.98 0 0; /* #f8faf9 */
+  --color-sidebar-accent: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-sidebar-accent-foreground: 0.98 0 0; /* #f8faf9 */
+  --color-sidebar-border: 0.92 0 0; /* #e5e7eb */
+  --color-sidebar-ring: 0.47 0.35 148; /* #2f7d6d */
+
+  /* Chart colors - with green accents */
+  --color-chart-1: 0.47 0.35 148; /* Green */
+  --color-chart-2: 0.58 0.21 260.84; /* Blue */
+  --color-chart-3: 0.81 0.17 75.35; /* Orange */
+  --color-chart-4: 0.56 0 0; /* Gray */
+  --color-chart-5: 0.92 0 0; /* Light gray */
+
+  /* Border radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+}
+
+/* Dark mode for BoardTAU theme - matching user side dark mode */
+html.dark[data-theme="boardtau"] {
+  --color-background: 0.20 0 0; /* #1e293b - slate-800 (blueish dark) */
+  --color-foreground: 0.98 0 0; /* #f8fafc */
+  --color-card: 0.22 0 0; /* #334155 - slate-700 */
+  --color-card-foreground: 0.98 0 0; /* #f8fafc */
+  --color-popover: 0.22 0 0; /* #334155 - slate-700 */
+  --color-popover-foreground: 0.98 0 0; /* #f8fafc */
+  --color-primary: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-primary-foreground: 0.98 0 0; /* #f8fafc */
+  --color-secondary: 0.25 0 0; /* #475569 - slate-600 */
+  --color-secondary-foreground: 0.98 0 0; /* #f8fafc */
+  --color-muted: 0.23 0 0; /* #475569 - slate-600 */
+  --color-muted-foreground: 0.72 0 0; /* #cbd5e1 */
+  --color-accent: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-accent-foreground: 0.98 0 0; /* #f8fafc */
+  --color-destructive: 0.69 0.2 23.91; /* rgb(239 68 68) */
+  --color-destructive-foreground: 0.20 0 0; /* #1e293b */
+  --color-border: 0.26 0 0; /* #475569 - slate-600 */
+  --color-input: 0.32 0 0; /* #64748b - slate-500 */
+  --color-ring: 0.47 0.35 148; /* #2f7d6d */
+  --color-sidebar: 0.20 0 0; /* #1e293b - slate-800 */
+  --color-sidebar-foreground: 0.98 0 0; /* #f8fafc */
+  --color-sidebar-primary: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-sidebar-primary-foreground: 0.98 0 0; /* #f8fafc */
+  --color-sidebar-accent: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-sidebar-accent-foreground: 0.98 0 0; /* #f8fafc */
+  --color-sidebar-border: 0.26 0 0; /* #475569 - slate-600 */
+  --color-sidebar-ring: 0.47 0.35 148; /* #2f7d6d */
+
+  /* Chart colors for dark mode */
+  --color-chart-1: 0.47 0.35 148; /* Green */
+  --color-chart-2: 0.58 0.21 260.84; /* Blue */
+  --color-chart-3: 0.81 0.17 75.35; /* Orange */
+  --color-chart-4: 0.44 0 0; /* Dark gray */
+  --color-chart-5: 0.56 0 0; /* Medium gray */
+}

@@ -1,11 +1,10 @@
-import React from 'react';
-import AdminDashboardClient from './components/dashboard/AdminDashboardClient';
 import { requireAdmin } from '@/lib/admin';
+import { redirect } from 'next/navigation';
 
-const AdminDashboard: React.FC = async () => {
+export default async function Dashboard() {
+  // Require admin authentication
   await requireAdmin();
 
-  return <AdminDashboardClient />;
-};
-
-export default AdminDashboard;
+  // Redirect to overview page
+  redirect('/admin/overview');
+}

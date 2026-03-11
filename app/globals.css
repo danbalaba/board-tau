@@ -1,37 +1,116 @@
+/* Admin theme styles */
+@import './admin/components/themes/boardtau.css';
+@import './admin/components/themes/claude.css';
+@import './admin/components/themes/mono.css';
+@import './admin/components/themes/neobrutualism.css';
+@import './admin/components/themes/notebook.css';
+@import './admin/components/themes/supabase.css';
+@import './admin/components/themes/vercel.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Default theme colors - fallback for when no theme is selected (BoardTAU Green) */
 :root {
-  --foreground-rgb: 17, 24, 39;
-  --background-rgb: 248, 250, 249;
-  --surface-rgb: 255, 255, 255;
-  --border-rgb: 229, 231, 235;
+  --color-background: 0.98 0 0; /* #f8faf9 */
+  --color-foreground: 0.12 0 0; /* #111827 */
+  --color-card: 0.99 0 0; /* #fafafa */
+  --color-card-foreground: 0.12 0 0; /* #111827 */
+  --color-popover: 0.98 0 0; /* #f8faf9 */
+  --color-popover-foreground: 0.12 0 0; /* #111827 */
+  --color-primary: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-primary-foreground: 0.98 0 0; /* #f8faf9 */
+  --color-secondary: 0.94 0 0; /* #f3f4f6 */
+  --color-secondary-foreground: 0.12 0 0; /* #111827 */
+  --color-muted: 0.96 0 0; /* #f3f4f6 */
+  --color-muted-foreground: 0.44 0 0; /* #6b7280 */
+  --color-accent: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-accent-foreground: 0.98 0 0; /* #f8faf9 */
+  --color-destructive: 0.63 0.19 23.03; /* rgb(239 68 68) */
+  --color-destructive-foreground: 0.98 0 0; /* #f8faf9 */
+  --color-border: 0.92 0 0; /* #e5e7eb */
+  --color-input: 0.94 0 0; /* #f3f4f6 */
+  --color-ring: 0.47 0.35 148; /* #2f7d6d */
+  --color-sidebar: 0.98 0 0; /* #f8faf9 */
+  --color-sidebar-foreground: 0.12 0 0; /* #111827 */
+  --color-sidebar-primary: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-sidebar-primary-foreground: 0.98 0 0; /* #f8faf9 */
+  --color-sidebar-accent: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-sidebar-accent-foreground: 0.98 0 0; /* #f8faf9 */
+  --color-sidebar-border: 0.92 0 0; /* #e5e7eb */
+  --color-sidebar-ring: 0.47 0.35 148; /* #2f7d6d */
+
+  /* Chart colors - with green accents */
+  --color-chart-1: 0.47 0.35 148; /* Green */
+  --color-chart-2: 0.58 0.21 260.84; /* Blue */
+  --color-chart-3: 0.81 0.17 75.35; /* Orange */
+  --color-chart-4: 0.56 0 0; /* Gray */
+  --color-chart-5: 0.92 0 0; /* Light gray */
+
+  /* Border radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
 }
 
-html.dark {
-  --foreground-rgb: 248, 250, 252;
-  --background-rgb: 15, 23, 42; /* slate-900 */
-  --surface-rgb: 30, 41, 59; /* slate-800 */
-  --border-rgb: 51, 65, 85; /* slate-700 */
-  --text-color: rgb(248, 250, 252);
-  --text-secondary: rgb(203, 213, 225);
-  --text-muted: rgb(148, 163, 184);
-  --text-light: rgb(100, 116, 139);
+/* Dark mode default colors (BoardTAU Green) - matching user side dark mode */
+html.dark:not([data-theme]) {
+  --color-background: 0.20 0 0; /* #1e293b - slate-800 (blueish dark) */
+  --color-foreground: 0.98 0 0; /* #f8fafc */
+  --color-card: 0.22 0 0; /* #334155 - slate-700 */
+  --color-card-foreground: 0.98 0 0; /* #f8fafc */
+  --color-popover: 0.22 0 0; /* #334155 - slate-700 */
+  --color-popover-foreground: 0.98 0 0; /* #f8fafc */
+  --color-primary: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-primary-foreground: 0.98 0 0; /* #f8fafc */
+  --color-secondary: 0.25 0 0; /* #475569 - slate-600 */
+  --color-secondary-foreground: 0.98 0 0; /* #f8fafc */
+  --color-muted: 0.23 0 0; /* #475569 - slate-600 */
+  --color-muted-foreground: 0.72 0 0; /* #cbd5e1 */
+  --color-accent: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-accent-foreground: 0.98 0 0; /* #f8fafc */
+  --color-destructive: 0.69 0.2 23.91; /* rgb(239 68 68) */
+  --color-destructive-foreground: 0.20 0 0; /* #1e293b */
+  --color-border: 0.26 0 0; /* #475569 - slate-600 */
+  --color-input: 0.32 0 0; /* #64748b - slate-500 */
+  --color-ring: 0.47 0.35 148; /* #2f7d6d */
+  --color-sidebar: 0.20 0 0; /* #1e293b - slate-800 */
+  --color-sidebar-foreground: 0.98 0 0; /* #f8fafc */
+  --color-sidebar-primary: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-sidebar-primary-foreground: 0.98 0 0; /* #f8fafc */
+  --color-sidebar-accent: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
+  --color-sidebar-accent-foreground: 0.98 0 0; /* #f8fafc */
+  --color-sidebar-border: 0.26 0 0; /* #475569 - slate-600 */
+  --color-sidebar-ring: 0.47 0.35 148; /* #2f7d6d */
+
+  /* Chart colors for dark mode */
+  --color-chart-1: 0.47 0.35 148; /* Green */
+  --color-chart-2: 0.58 0.21 260.84; /* Blue */
+  --color-chart-3: 0.81 0.17 75.35; /* Orange */
+  --color-chart-4: 0.44 0 0; /* Dark gray */
+  --color-chart-5: 0.56 0 0; /* Medium gray */
 }
 
 body {
   overflow-x: hidden;
   overflow-y: scroll;
   scroll-behavior: smooth;
-  background-color: rgb(var(--background-rgb));
-  color: rgb(var(--foreground-rgb));
+  background-color: oklch(var(--color-background));
+  color: oklch(var(--color-foreground));
   transition: color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     background-color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-html.dark body {
-  color: var(--text-color);
+/* Apply theme fonts to body for all themes */
+[data-theme] body {
+  /* Remove Next.js font variables to allow theme variables from html to cascade */
+  --font-sans: initial;
+  --font-mono: initial;
+  --font-serif: initial;
+  /* Apply font-family - will now resolve from html's [data-theme] variables */
+  font-family: var(--font-sans);
 }
 
 .no-scroll {
@@ -63,7 +142,7 @@ html.dark body {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   }
 
-  html.dark .glass-elevated {
+  html.dark:not([data-theme]) .glass-elevated {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
@@ -79,7 +158,7 @@ html.dark body {
     animation: shimmer 1.5s ease-in-out infinite;
   }
 
-  html.dark .shimmer {
+  html.dark:not([data-theme]) .shimmer {
     background: linear-gradient(
       90deg,
       rgba(55, 65, 81, 0.4) 0%,
@@ -119,169 +198,3 @@ html.dark body {
 .leaflet-top {
   z-index: 0 !important;
 }
-
-.rdrMonth {
-  width: 100% !important;
-}
-
-.rdrCalendarWrapper {
-  width: 100% !important;
-  font-size: 16px !important;
-}
-
-::-webkit-scrollbar {
-  @apply w-2;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 dark:bg-gray-600 transition-all duration-300 rounded-pill;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500 dark:bg-gray-500;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-gray-200 dark:bg-gray-800/50 rounded-pill;
-}
-
-::-webkit-scrollbar-corner {
-  @apply rounded-pill;
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* ===== SOLID SEARCH BAR ===== */
-.search-bar-trigger {
-  @apply relative w-full px-2 md:px-4 py-1.5 md:py-2
-         rounded-pill cursor-pointer
-         transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]
-         hover:scale-[1.01] active:scale-[0.99]
-         border border-gray-200 dark:border-gray-700
-         mx-auto;
-  background: rgb(var(--surface-rgb));
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.search-bar-trigger:hover {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(47, 125, 109, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-html.dark .search-bar-trigger:hover {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(79, 168, 154, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.search-bar-content {
-  @apply w-full flex items-center justify-between gap-2 md:gap-4;
-}
-
-.search-bar-trigger .bg-primary {
-  @apply transition-transform duration-200;
-}
-
-.search-bar-trigger:hover .bg-primary {
-  @apply scale-110;
-}
-
-/* ===== CARD HOVER (FLOATING DEPTH) ===== */
-.card-hover {
-  @apply transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)];
-}
-
-.card-hover:hover {
-  @apply shadow-hover;
-}
-
-* {
-  @apply transition-colors duration-200;
-}
-
-a {
-  @apply transition-all duration-200;
-}
-
-:focus-visible {
-  @apply outline-offset-2 outline-2 outline-primary/50;
-}
-
-button {
-  @apply transition-all duration-200;
-}
-
-button:active {
-  @apply scale-[0.98];
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-  @apply ring-2 ring-primary/20 ring-offset-2 ring-offset-transparent;
-}
-
-/* ===== DARK MODE TEXT COLORS ===== */
-html.dark .text-gray-50 { @apply dark:text-gray-900; }
-html.dark .text-gray-100 { @apply dark:text-gray-800; }
-html.dark .text-gray-200 { @apply dark:text-gray-700; }
-html.dark .text-gray-300 { @apply dark:text-gray-600; }
-html.dark .text-gray-400 { @apply dark:text-gray-500; }
-html.dark .text-gray-500 { @apply dark:text-gray-400; }
-html.dark .text-gray-600 { @apply dark:text-gray-400; }
-html.dark .text-gray-700 { @apply dark:text-gray-300; }
-html.dark .text-gray-800 { @apply dark:text-gray-100; }
-html.dark .text-gray-900 { @apply dark:text-gray-50; }
-
-html.dark .text-neutral-500 { @apply dark:text-neutral-400; }
-html.dark .text-neutral-600 { @apply dark:text-neutral-400; }
-html.dark .text-neutral-700 { @apply dark:text-neutral-300; }
-html.dark .text-neutral-800 { @apply dark:text-neutral-100; }
-
-html.dark [class*="text-text-primary"] { @apply dark:text-gray-100; }
-html.dark [class*="text-text-secondary"] { @apply dark:text-gray-400; }
-
-html.dark ::placeholder { @apply dark:text-gray-500; }
-
-html.dark p { color: inherit; }
-html.dark h1, html.dark h2, html.dark h3,
-html.dark h4, html.dark h5, html.dark h6 {
-  @apply dark:text-gray-100;
-}
-html.dark small { color: inherit; }
-html.dark span { color: inherit; }
-
-html.dark a { @apply dark:text-primary; }
-html.dark a:hover { @apply dark:text-accent; }
-
-html.dark label { @apply dark:text-gray-300; }
-
-html.dark .text-helper,
-html.dark .text-error { @apply dark:text-red-400; }
-html.dark .text-success { @apply dark:text-green-400; }
-html.dark .text-warning { @apply dark:text-yellow-400; }
-html.dark .text-info { @apply dark:text-blue-400; }
-
-html.dark :disabled { @apply dark:text-gray-500; }
-
-
-
-html.dark .font-light { @apply dark:text-gray-300; }
-html.dark .font-normal { @apply dark:text-gray-200; }
-html.dark .font-semibold { @apply dark:text-gray-100; }
-html.dark .font-bold { @apply dark:text-gray-100; }
-
-html.dark .caption:not(.text-primary),
-html.dark .text-xs:not(.text-primary),
-html.dark .text-sm:not(.text-primary) { @apply dark:text-gray-300; }
-
-html.dark .text-muted { @apply dark:text-gray-400; }
