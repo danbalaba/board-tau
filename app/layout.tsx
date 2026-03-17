@@ -6,6 +6,8 @@
     import "react-loading-skeleton/dist/skeleton.css";
     import LayoutContent from "@/components/layout/LayoutContent";
     import Providers from "@/components/common/Provider";
+    import { Suspense } from "react";
+    import AuthErrorHandler from "@/components/auth/AuthErrorHandler";
 
     const inter = Inter({
     subsets: ["latin"],
@@ -57,6 +59,9 @@
             suppressHydrationWarning
         >
             <Providers>
+                <Suspense fallback={null}>
+                    <AuthErrorHandler />
+                </Suspense>
                 <LayoutContent>
                     {children}
                 </LayoutContent>
