@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'admin') {
+    if (!session || session.user?.role !== 'ADMIN') {
       return NextResponse.json(
         {
           success: false,

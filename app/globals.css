@@ -213,7 +213,45 @@ html[data-theme] body {
   }
 }
 
-.swiper-wrapper {
+@layer components {
+  /* ===== SOLID SEARCH BAR ===== */
+  .search-bar-trigger {
+    @apply relative w-full px-2 md:px-4 py-1.5 md:py-2
+           rounded-pill cursor-pointer
+           transition-all duration-300 ease-out
+           hover:scale-[1.01] active:scale-[0.99]
+           border border-gray-200 dark:border-gray-700
+           mx-auto;
+    background: rgb(var(--surface-rgb));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .search-bar-trigger:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(47, 125, 109, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  html.dark .search-bar-trigger:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(79, 168, 154, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .search-bar-content {
+    @apply w-full flex items-center justify-between gap-2 md:gap-4;
+  }
+
+  .search-bar-trigger .bg-primary {
+    @apply transition-transform duration-200;
+  }
+
+  .search-bar-trigger:hover .bg-primary {
+    @apply scale-110;
+  }
+}
+
+.swi-wrapper {
   @apply md:gap-2 gap-1 justify-between;
 }
 
