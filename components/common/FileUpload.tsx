@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Upload, X } from "lucide-react";
 import { cn } from "@/utils/helper";
 
-interface FileUploadProps {
+export interface FileUploadProps {
   id: string;
   label: string;
   onFileSelect: (file: File) => void;

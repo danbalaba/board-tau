@@ -234,7 +234,7 @@ export default function DemoForm() {
                 min: 0,
                 max: 10,
                 step: 0.5,
-                formatValue: (value) => `${value}/10`
+                formatValue: (value: number) => `${value}/10`
               }}
               showValue={true}
             />

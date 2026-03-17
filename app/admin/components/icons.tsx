@@ -36,12 +36,32 @@ import {
   IconCrown,
   IconStar,
   IconBox,
-  IconPalette
+  IconPalette,
+  IconShield,
+  IconShieldCheck,
+  IconShieldHeart,
+  IconChartBar,
+  IconChartLine,
+  IconCurrencyDollar,
+  IconReceipt,
+  IconHome,
+  IconBuilding,
+  IconCalendar,
+  IconTag,
+
+  IconServer,
+  IconDatabase,
+  IconApi,
+  IconHeartbeat,
+  IconList,
+  IconFlag,
+  IconMail,
+  IconUserCheck
 } from '@tabler/icons-react';
 
 export type Icon = React.ComponentType<IconProps>;
 
-export const Icons = {
+export const Icons: Record<string, Icon> = {
   dashboard: IconLayoutDashboard,
   logo: IconCommand,
   login: IconLogin,
@@ -79,5 +99,28 @@ export const Icons = {
   pro: IconCrown,
   exclusive: IconStar,
   account: IconUserCircle,
-  profile: IconUser
+  profile: IconUser,
+
+  // Enterprise features icons
+  users: IconUsers,
+  shield: IconShield,
+  shieldCheck: IconShieldCheck,
+  shieldAlert: IconShieldHeart,
+  chartBar: IconChartBar,
+  chartLine: IconChartLine,
+  currencyDollar: IconCurrencyDollar,
+  receipt: IconReceipt,
+  home: IconHome,
+  building: IconBuilding,
+  calendar: IconCalendar,
+  tag: IconTag,
+  monitor: IconDeviceLaptop,
+  server: IconServer,
+  database: IconDatabase,
+  api: IconApi,
+  heartbeat: IconHeartbeat,
+  list: IconList,
+  flag: IconFlag,
+  mail: IconMail,
+  userCheck: IconUserCheck
 };

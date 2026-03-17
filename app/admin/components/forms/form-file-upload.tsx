@@ -1,6 +1,7 @@
 'use client';
 
 import { FieldPath, FieldValues } from 'react-hook-form';
+import type { DropzoneProps } from 'react-dropzone';
 import {
   FormControl,
   FormDescription,
@@ -61,10 +62,10 @@ function FormFileUpload<
               onValueChange={field.onChange}
               onUpload={onUpload}
               progresses={progresses}
-              accept={acceptedTypes?.reduce(
-                (acc, type) => ({ ...acc, [type]: [] }),
+              accept={acceptedTypes ? (acceptedTypes.reduce(
+                (acc: Record<string, string[]>, type: string) => ({ ...acc, [type]: [] }),
                 {}
-              )}
+              ) as DropzoneProps['accept']) : undefined}
               maxSize={maxSize}
               maxFiles={maxFiles}
               multiple={multiple}

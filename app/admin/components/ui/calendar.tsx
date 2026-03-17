@@ -65,8 +65,16 @@ function Calendar({
         ...classNames
       }}
       components={{
-        IconLeft: LeftIcon,
-        IconRight: RightIcon
+        PreviousMonthButton: () => (
+          <button className='size-7 bg-transparent p-0 opacity-50 hover:opacity-100'>
+            <LeftIcon />
+          </button>
+        ),
+        NextMonthButton: () => (
+          <button className='size-7 bg-transparent p-0 opacity-50 hover:opacity-100'>
+            <RightIcon />
+          </button>
+        )
       }}
       {...props}
     />

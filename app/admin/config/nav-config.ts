@@ -34,7 +34,7 @@ import { NavItem } from '@/types';
  */
 export const navItems: NavItem[] = [
   {
-    title: 'Dashboard',
+    title: 'Executive Overview',
     url: '/admin/overview',
     icon: 'dashboard',
     isActive: false,
@@ -42,56 +42,263 @@ export const navItems: NavItem[] = [
     items: []
   },
   {
-    title: 'Workspaces',
-    url: '/admin/workspaces',
-    icon: 'workspace',
+    title: 'User Management',
+    url: '/admin/user-management',
+    icon: 'users',
     isActive: false,
-    items: []
-  },
-  {
-    title: 'Teams',
-    url: '/admin/workspaces/team',
-    icon: 'teams',
-    isActive: false,
-    items: [],
-    // Require organization to be active
-    access: { requireOrg: true }
-    // Alternative: require specific permission
-    // access: { requireOrg: true, permission: 'org:teams:view' }
-  },
-  {
-    title: 'Product',
-    url: '/admin/product',
-    icon: 'product',
-    shortcut: ['p', 'p'],
-    isActive: false,
-    items: []
-  },
-  {
-    title: 'Kanban',
-    url: '/admin/kanban',
-    icon: 'kanban',
-    shortcut: ['k', 'k'],
-    isActive: false,
-    items: []
-  },
-  {
-    title: 'Pro',
-    url: '#', // Placeholder as there is no direct link for the parent
-    icon: 'pro',
-    isActive: true,
+    shortcut: ['u', 'u'],
     items: [
       {
-        title: 'Exclusive',
-        url: '/admin/exclusive',
-        icon: 'exclusive',
-        shortcut: ['m', 'm']
+        title: 'User Directory',
+        url: '/admin/user-management/users',
+        icon: 'user',
+        shortcut: ['u', 'd']
+      },
+      {
+        title: 'Roles & Permissions',
+        url: '/admin/user-management/roles',
+        icon: 'shield',
+        shortcut: ['r', 'p']
+      },
+      {
+        title: 'User Analytics',
+        url: '/admin/user-management/analytics',
+        icon: 'chartBar',
+        shortcut: ['u', 'a']
       }
     ]
   },
   {
+    title: 'Content Moderation',
+    url: '/admin/moderation',
+    icon: 'shieldCheck',
+    isActive: false,
+    shortcut: ['m', 'm'],
+    items: [
+      {
+        title: 'Moderation Queue',
+        url: '/admin/moderation/queue',
+        icon: 'list',
+        shortcut: ['m', 'q']
+      },
+      {
+        title: 'Host Applications',
+        url: '/admin/moderation/hosts',
+        icon: 'userCheck',
+        shortcut: ['h', 'a']
+      },
+      {
+        title: 'Listings Review',
+        url: '/admin/moderation/listings',
+        icon: 'home',
+        shortcut: ['l', 'r']
+      },
+      {
+        title: 'Reviews & Ratings',
+        url: '/admin/moderation/reviews',
+        icon: 'star',
+        shortcut: ['r', 'r']
+      }
+    ]
+  },
+  {
+    title: 'Financial Management',
+    url: '/admin/finance',
+    icon: 'currencyDollar',
+    isActive: false,
+    shortcut: ['f', 'f'],
+    items: [
+      {
+        title: 'Revenue Dashboard',
+        url: '/admin/finance/revenue',
+        icon: 'chartLine',
+        shortcut: ['r', 'd']
+      },
+      {
+        title: 'Transactions',
+        url: '/admin/finance/transactions',
+        icon: 'creditCard',
+        shortcut: ['t', 't']
+      },
+      {
+        title: 'Commissions & Fees',
+        url: '/admin/finance/fees',
+        icon: 'receipt',
+        shortcut: ['c', 'f']
+      },
+      {
+        title: 'Tax Compliance',
+        url: '/admin/finance/taxes',
+        icon: 'fileText',
+        shortcut: ['t', 'c']
+      },
+      {
+        title: 'Financial Reports',
+        url: '/admin/finance/reports',
+        icon: 'chartBar',
+        shortcut: ['f', 'r']
+      }
+    ]
+  },
+  {
+    title: 'Property Management',
+    url: '/admin/properties',
+    icon: 'home',
+    isActive: false,
+    shortcut: ['p', 'p'],
+    items: [
+      {
+        title: 'Property Directory',
+        url: '/admin/properties/directory',
+        icon: 'building',
+        shortcut: ['p', 'd']
+      },
+      {
+        title: 'Performance Metrics',
+        url: '/admin/properties/performance',
+        icon: 'chartBar',
+        shortcut: ['p', 'm']
+      },
+      {
+        title: 'Occupancy Tracking',
+        url: '/admin/properties/occupancy',
+        icon: 'users',
+        shortcut: ['o', 't']
+      },
+      {
+        title: 'Pricing Optimization',
+        url: '/admin/properties/pricing',
+        icon: 'tag',
+        shortcut: ['p', 'o']
+      },
+      {
+        title: 'Booking Management',
+        url: '/admin/properties/bookings',
+        icon: 'calendar',
+        shortcut: ['b', 'm']
+      }
+    ]
+  },
+  {
+    title: 'System Monitoring',
+    url: '/admin/monitoring',
+    icon: 'monitor',
+    isActive: false,
+    shortcut: ['s', 'm'],
+    items: [
+      {
+        title: 'System Health',
+        url: '/admin/monitoring/health',
+        icon: 'heartbeat',
+        shortcut: ['s', 'h']
+      },
+      {
+        title: 'Server Metrics',
+        url: '/admin/monitoring/servers',
+        icon: 'server',
+        shortcut: ['s', 'm']
+      },
+      {
+        title: 'Database Performance',
+        url: '/admin/monitoring/database',
+        icon: 'database',
+        shortcut: ['d', 'p']
+      },
+      {
+        title: 'API Monitoring',
+        url: '/admin/monitoring/api',
+        icon: 'api',
+        shortcut: ['a', 'm']
+      },
+      {
+        title: 'Error Tracking',
+        url: '/admin/monitoring/errors',
+        icon: 'alertTriangle',
+        shortcut: ['e', 't']
+      },
+      {
+        title: 'Security Logs',
+        url: '/admin/monitoring/security',
+        icon: 'shieldAlert',
+        shortcut: ['s', 'l']
+      }
+    ]
+  },
+    {
+      title: 'Advanced Analytics',
+      url: '/admin/analytics',
+      icon: 'chartBar',
+      isActive: false,
+      shortcut: ['a', 'a'],
+      items: [
+        {
+          title: 'Analytics Dashboard',
+          url: '/admin/analytics',
+          icon: 'chartLine',
+          shortcut: ['a', 'd']
+        },
+        {
+          title: 'Reports',
+          url: '/admin/analytics/reports',
+          icon: 'fileText',
+          shortcut: ['a', 'r']
+        },
+        {
+          title: 'Custom Dashboards',
+          url: '/admin/analytics/dashboards',
+          icon: 'grid3X3',
+          shortcut: ['a', 'c']
+        },
+        {
+          title: 'Data Export',
+          url: '/admin/analytics/export',
+          icon: 'download',
+          shortcut: ['a', 'e']
+        }
+      ]
+    },
+    {
+      title: 'Platform Configuration',
+      url: '/admin/settings',
+      icon: 'settings',
+      isActive: false,
+      shortcut: ['s', 's'],
+      items: [
+        {
+          title: 'General Settings',
+          url: '/admin/settings',
+          icon: 'settings',
+          shortcut: ['g', 's']
+        },
+        {
+          title: 'Feature Flags',
+          url: '/admin/settings/features',
+          icon: 'flag',
+          shortcut: ['f', 'f']
+        },
+        {
+          title: 'Email Templates',
+          url: '/admin/settings/email-templates',
+          icon: 'mail',
+          shortcut: ['e', 't']
+        },
+        {
+          title: 'Security',
+          url: '/admin/settings/security',
+          icon: 'shield',
+          shortcut: ['s', 's']
+        },
+        {
+          title: 'Payments & Taxes',
+          url: '/admin/settings/payments',
+          icon: 'creditCard',
+          shortcut: ['p', 's']
+        }
+      ]
+    },
+  {
     title: 'Account',
-    url: '#', // Placeholder as there is no direct link for the parent
+    url: '#',
     icon: 'account',
     isActive: true,
     items: [
@@ -99,7 +306,7 @@ export const navItems: NavItem[] = [
         title: 'Profile',
         url: '/admin/profile',
         icon: 'profile',
-        shortcut: ['m', 'm']
+        shortcut: ['p', 'p']
       },
       {
         title: 'Billing',

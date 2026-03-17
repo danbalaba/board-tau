@@ -13,6 +13,27 @@ enum Role {
   LANDLORD
 }
 
+model UserRole {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String    @unique
+  description String?
+  permissions String[]  @default([])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  users       User[]
+}
+
+model Permission {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String    @unique
+  description String?
+  module      String
+  action      String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
 enum InquiryStatus {
   PENDING
   APPROVED
@@ -74,6 +95,7 @@ model User {
   password      String?
   favoriteIds   String[]  @default([]) @db.ObjectId
   role          String    @default("user")
+  roleId        String?   @db.ObjectId
   isActive      Boolean   @default(true)
   deletedAt     DateTime?
   isVerifiedLandlord Boolean @default(false)
@@ -83,6 +105,8 @@ model User {
   phoneNumber String?
   lastLogin    DateTime?
   bio          String?
+
+  roleRelation UserRole?    @relation(fields: [roleId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

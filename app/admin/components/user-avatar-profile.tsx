@@ -5,6 +5,7 @@ interface UserAvatarProfileProps {
   className?: string;
   showInfo?: boolean;
   user: {
+    id?: string;
     image?: string | null;
     name?: string | null;
     email?: string | null;

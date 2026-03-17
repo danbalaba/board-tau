@@ -2,7 +2,7 @@ import type {
   ExtendedColumnFilter,
   FilterOperator,
   FilterVariant
-} from './types/data-table';
+} from '@/app/admin/lib/types/data-table';
 import type { Column } from '@tanstack/react-table';
 
 import { dataTableConfig } from "../config/data-table";
@@ -63,8 +63,8 @@ export function getDefaultFilterOperator(filterVariant: FilterVariant) {
 }
 
 export function getValidFilters<TData>(
-  filters: ExtendedColumnFilter<TData>[]
-): ExtendedColumnFilter<TData>[] {
+  filters: ExtendedColumnFilter[]
+): ExtendedColumnFilter[] {
   return filters.filter(
     (filter) =>
       filter.operator === 'isEmpty' ||

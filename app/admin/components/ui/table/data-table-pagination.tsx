@@ -23,6 +23,37 @@ export function DataTablePagination<TData>({
   className,
   ...props
 }: DataTablePaginationProps<TData>) {
+  const currentPage = table.getState().pagination.pageIndex + 1;
+  const totalPages = table.getPageCount();
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const maxVisiblePages = 5;
+    let startPage = 1;
+    let endPage = totalPages;
+
+    if (totalPages > maxVisiblePages) {
+      const middle = Math.ceil(maxVisiblePages / 2);
+      if (currentPage <= middle) {
+        endPage = maxVisiblePages;
+      } else if (currentPage >= totalPages - middle + 1) {
+        startPage = totalPages - maxVisiblePages + 1;
+      } else {
+        startPage = currentPage - middle + 1;
+        endPage = currentPage + middle - 1;
+      }
+    }
+
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
+
   return (
     <div
       className={cn(
@@ -63,10 +94,9 @@ export function DataTablePagination<TData>({
           </Select>
         </div>
         <div className='flex items-center justify-center text-sm font-medium'>
-          Page {table.getState().pagination.pageIndex + 1} of{' '}
-          {table.getPageCount()}
+          Page {currentPage} of {totalPages}
         </div>
-        <div className='flex items-center space-x-2'>
+        <div className='flex items-center space-x-1'>
           <Button
             aria-label='Go to first page'
             variant='outline'
@@ -87,6 +117,25 @@ export function DataTablePagination<TData>({
           >
             <ChevronLeftIcon />
           </Button>
+
+          {/* Page numbers */}
+          {pageNumbers.map((pageNumber) => (
+            <Button
+              key={pageNumber}
+              variant={currentPage === pageNumber ? 'default' : 'outline'}
+              size='icon'
+              className='size-8'
+              onClick={() => table.setPageIndex(pageNumber - 1)}
+            >
+              {pageNumber}
+            </Button>
+          ))}
+
+          {/* Ellipsis if needed */}
+          {pageNumbers.length < totalPages && (
+            <span className='px-2 text-sm text-muted-foreground'>...</span>
+          )}
+
           <Button
             aria-label='Go to next page'
             variant='outline'
