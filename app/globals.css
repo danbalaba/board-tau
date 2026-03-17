@@ -11,8 +11,27 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Default theme colors - fallback for when no theme is selected (BoardTAU Green) */
+/* User/Landlord side - Original color variables */
 :root {
+  --foreground-rgb: 17, 24, 39;
+  --background-rgb: 248, 250, 249;
+  --surface-rgb: 255, 255, 255;
+  --border-rgb: 229, 231, 235;
+}
+
+html.dark {
+  --foreground-rgb: 248, 250, 252;
+  --background-rgb: 15, 23, 42; /* slate-900 */
+  --surface-rgb: 30, 41, 59; /* slate-800 */
+  --border-rgb: 51, 65, 85; /* slate-700 */
+  --text-color: rgb(248, 250, 252);
+  --text-secondary: rgb(203, 213, 225);
+  --text-muted: rgb(148, 163, 184);
+  --text-light: rgb(100, 116, 139);
+}
+
+/* Admin theme styles - Only apply when data-theme attribute is present */
+html[data-theme] {
   --color-background: 0.98 0 0; /* #f8faf9 */
   --color-foreground: 0.12 0 0; /* #111827 */
   --color-card: 0.99 0 0; /* #fafafa */
@@ -55,8 +74,8 @@
   --radius-xl: 0.75rem;
 }
 
-/* Dark mode default colors (BoardTAU Green) - matching user side dark mode */
-html.dark:not([data-theme]) {
+/* Admin dark mode default colors */
+html[data-theme].dark {
   --color-background: 0.20 0 0; /* #1e293b - slate-800 (blueish dark) */
   --color-foreground: 0.98 0 0; /* #f8fafc */
   --color-card: 0.22 0 0; /* #334155 - slate-700 */
@@ -97,10 +116,16 @@ body {
   overflow-x: hidden;
   overflow-y: scroll;
   scroll-behavior: smooth;
-  background-color: oklch(var(--color-background));
-  color: oklch(var(--color-foreground));
+  background-color: rgb(var(--background-rgb));
+  color: rgb(var(--foreground-rgb));
   transition: color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     background-color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Admin theme body styles - Only apply when data-theme attribute is present */
+html[data-theme] body {
+  background-color: oklch(var(--color-background));
+  color: oklch(var(--color-foreground));
 }
 
 /* Apply theme fonts to body for all themes */
@@ -188,7 +213,45 @@ body {
   }
 }
 
-.swiper-wrapper {
+@layer components {
+  /* ===== SOLID SEARCH BAR ===== */
+  .search-bar-trigger {
+    @apply relative w-full px-2 md:px-4 py-1.5 md:py-2
+           rounded-pill cursor-pointer
+           transition-all duration-300 ease-out
+           hover:scale-[1.01] active:scale-[0.99]
+           border border-gray-200 dark:border-gray-700
+           mx-auto;
+    background: rgb(var(--surface-rgb));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .search-bar-trigger:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(47, 125, 109, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  html.dark .search-bar-trigger:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(79, 168, 154, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .search-bar-content {
+    @apply w-full flex items-center justify-between gap-2 md:gap-4;
+  }
+
+  .search-bar-trigger .bg-primary {
+    @apply transition-transform duration-200;
+  }
+
+  .search-bar-trigger:hover .bg-primary {
+    @apply scale-110;
+  }
+}
+
+.swi-wrapper {
   @apply md:gap-2 gap-1 justify-between;
 }
 

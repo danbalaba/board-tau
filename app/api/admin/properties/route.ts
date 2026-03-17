@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'admin') {
+    if (!session || session.user?.role !== 'ADMIN') {
       return NextResponse.json(
         ApiResponseFormatter.error('Unauthorized', 'You must be an admin to access this resource'),
         { status: 401 }
