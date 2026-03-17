@@ -1,92 +1,111 @@
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { ApiResponseFormatter } from '@/lib/api-response';
+import { PrismaErrorHandler } from '@/lib/prisma-error-handler';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
-    const search = searchParams.get("search") || "";
-    const role = searchParams.get("role") || "";
-    const status = searchParams.get("status") || "";
+    // Check authentication
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.role !== 'admin') {
+      return NextResponse.json(
+        ApiResponseFormatter.error('Unauthorized', 'You must be an admin to access this resource'),
+        { status: 401 }
+      );
+    }
 
-    const offset = (page - 1) * limit;
+    // Parse query parameters
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const perPage = parseInt(searchParams.get('perPage') || '10');
+    const search = searchParams.get('search') || '';
+    const role = searchParams.get('role') || '';
+    const status = searchParams.get('status') || '';
 
-    // Build where clause
+    // Build query conditions
     const where: any = {};
-    if (search) {
+
+    // Handle search parameters
+    const nameSearch = searchParams.get('name') || '';
+    const emailSearch = searchParams.get('email') || '';
+
+    if (nameSearch || emailSearch) {
+      const orConditions: any[] = [];
+      if (nameSearch) {
+        orConditions.push({ name: { contains: nameSearch, mode: 'insensitive' } });
+      }
+      if (emailSearch) {
+        orConditions.push({ email: { contains: emailSearch, mode: 'insensitive' } });
+      }
+      where.OR = orConditions;
+    } else if (search) {
+      // Fallback to single search parameter for backward compatibility
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
       ];
     }
+
     if (role) {
       where.role = role;
     }
-    if (status) {
-      where.status = status;
+    if (status === 'active') {
+      where.isActive = true;
+      where.deletedAt = null;
+    } else if (status === 'inactive') {
+      where.isActive = false;
+    } else if (status === 'suspended') {
+      where.deletedAt = { not: null };
     }
 
-    // Fetch users with pagination
-    const users = await db.user.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: offset,
-      take: limit,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        emailVerified: true,
-        isVerifiedLandlord: true,
-        phoneNumber: true,
-        businessName: true,
-        image: true,
-      },
-    });
+    // Calculate pagination
+    const skip = (page - 1) * perPage;
 
-    // Get total count for pagination
-    const totalUsers = await db.user.count({ where });
+    // Fetch users with count
+    const [users, total] = await Promise.all([
+      db.user.findMany({
+        where,
+        skip,
+        take: perPage,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          listings: { select: { id: true } },
+          reservations: { select: { id: true } },
+        },
+      }),
+      db.user.count({ where }),
+    ]);
 
     // Transform user data
-    const transformedUsers = users.map((user) => ({
+    const transformedUsers = users.map(user => ({
       id: user.id,
-      name: user.name || "Unknown",
-      email: user.email || "",
-      role: user.role || "User",
-      status: user.isActive ? "Active" : "Inactive",
-      lastLogin: "Never", // Last login tracking coming soon
-      created: user.createdAt.toISOString().split('T')[0],
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.deletedAt ? 'suspended' : user.isActive ? 'active' : 'inactive',
+      joinedAt: user.createdAt,
+      lastLogin: user.lastLogin,
       emailVerified: !!user.emailVerified,
-      isVerifiedLandlord: user.isVerifiedLandlord,
-      phoneNumber: user.phoneNumber || "N/A",
-      businessName: user.businessName || "N/A",
-      image: user.image || null,
+      listingsCount: user.listings.length,
+      bookingsCount: user.reservations.length,
+      totalSpent: 0, // Will be calculated from reservations in future
     }));
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        users: transformedUsers,
-        pagination: {
-          current: page,
-          total: totalUsers,
-          perPage: limit,
-          totalPages: Math.ceil(totalUsers / limit),
-        },
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching users:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to fetch users",
-      },
-      { status: 500 }
+      ApiResponseFormatter.success(transformedUsers, 'Users fetched successfully', {
+        total,
+        page,
+        perPage,
+        totalPages: Math.ceil(total / perPage),
+      })
+    );
+  } catch (error) {
+    const errorResponse = PrismaErrorHandler.handle(error);
+    return NextResponse.json(
+      ApiResponseFormatter.error(errorResponse.message, 'Failed to fetch users', errorResponse.details),
+      { status: errorResponse.status }
     );
   }
 }

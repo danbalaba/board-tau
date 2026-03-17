@@ -5,6 +5,7 @@ import { EdgeStoreProvider } from "@/lib/edgestore";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "./Toast";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,23 +45,25 @@ const Providers = ({ children }: PropsWithChildren) => {
   }, []);
 
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="light"
-      enableSystem
-      storageKey="theme-preference"
-      disableTransitionOnChange={false}
-      themes={['light', 'dark']}
-    >
-      <QueryClientProvider client={queryClient}>
-        <SessionProvider>
-          <EdgeStoreProvider>
-            <Toaster />
-            {children}
-          </EdgeStoreProvider>
-        </SessionProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <NuqsAdapter>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="light"
+        enableSystem
+        storageKey="theme-preference"
+        disableTransitionOnChange={false}
+        themes={['light', 'dark']}
+      >
+        <QueryClientProvider client={queryClient}>
+          <SessionProvider>
+            <EdgeStoreProvider>
+              <Toaster />
+              {children}
+            </EdgeStoreProvider>
+          </SessionProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </NuqsAdapter>
   );
 };
 

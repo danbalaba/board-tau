@@ -1,6 +1,6 @@
     import type { Metadata } from "next";
-    import { Inter } from "next/font/google";
     import { GoogleAnalytics } from "@next/third-parties/google";
+    import { fontVariables } from "./admin/components/themes/font.config";
 
     import "./globals.css";
     import "react-loading-skeleton/dist/skeleton.css";
@@ -8,11 +8,6 @@
     import Providers from "@/components/common/Provider";
     import { Suspense } from "react";
     import AuthErrorHandler from "@/components/auth/AuthErrorHandler";
-
-    const inter = Inter({
-    subsets: ["latin"],
-    variable: "--font-inter"
-    });
 
     export const metadata: Metadata = {
     metadataBase: new URL(
@@ -55,7 +50,7 @@
             {/* Theme handling is done by next-themes */}
         </head>
         <body
-            className={`${inter.variable} ${inter.className} font-sans antialiased`}
+            className={`${fontVariables} font-sans antialiased`}
             suppressHydrationWarning
         >
             <Providers>
