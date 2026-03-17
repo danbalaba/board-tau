@@ -9,40 +9,50 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // BoardTAU Green Theme - used by default
-        primary: 'oklch(var(--color-primary) / <alpha-value>)',
-        'primary-foreground': 'oklch(var(--color-primary-foreground) / <alpha-value>)',
-        secondary: 'oklch(var(--color-secondary) / <alpha-value>)',
-        'secondary-foreground': 'oklch(var(--color-secondary-foreground) / <alpha-value>)',
-        accent: 'oklch(var(--color-accent) / <alpha-value>)',
-        'accent-foreground': 'oklch(var(--color-accent-foreground) / <alpha-value>)',
-        background: 'oklch(var(--color-background) / <alpha-value>)',
-        foreground: 'oklch(var(--color-foreground) / <alpha-value>)',
-        card: 'oklch(var(--color-card) / <alpha-value>)',
-        'card-foreground': 'oklch(var(--color-card-foreground) / <alpha-value>)',
-        popover: 'oklch(var(--color-popover) / <alpha-value>)',
-        'popover-foreground': 'oklch(var(--color-popover-foreground) / <alpha-value>)',
-        muted: 'oklch(var(--color-muted) / <alpha-value>)',
-        'muted-foreground': 'oklch(var(--color-muted-foreground) / <alpha-value>)',
-        destructive: 'oklch(var(--color-destructive) / <alpha-value>)',
-        'destructive-foreground': 'oklch(var(--color-destructive-foreground) / <alpha-value>)',
-        border: 'oklch(var(--color-border) / <alpha-value>)',
-        input: 'oklch(var(--color-input) / <alpha-value>)',
-        ring: 'oklch(var(--color-ring) / <alpha-value>)',
-        sidebar: 'oklch(var(--color-sidebar) / <alpha-value>)',
-        'sidebar-foreground': 'oklch(var(--color-sidebar-foreground) / <alpha-value>)',
-        'sidebar-primary': 'oklch(var(--color-sidebar-primary) / <alpha-value>)',
-        'sidebar-primary-foreground': 'oklch(var(--color-sidebar-primary-foreground) / <alpha-value>)',
-        'sidebar-accent': 'oklch(var(--color-sidebar-accent) / <alpha-value>)',
-        'sidebar-accent-foreground': 'oklch(var(--color-sidebar-accent-foreground) / <alpha-value>)',
-        'sidebar-border': 'oklch(var(--color-sidebar-border) / <alpha-value>)',
-        'sidebar-ring': 'oklch(var(--color-sidebar-ring) / <alpha-value>)',
+        // BoardTAU Green Theme - used by default (RGB for user/landlord side)
+        primary: {
+          DEFAULT: 'rgb(47, 125, 109)', // #2f7d6d
+          foreground: 'rgb(248, 250, 249)',
+        },
+        secondary: {
+          DEFAULT: 'rgb(243, 244, 246)',
+          foreground: 'rgb(17, 24, 39)',
+        },
+        accent: {
+          DEFAULT: 'rgb(47, 125, 109)', // #2f7d6d
+          foreground: 'rgb(248, 250, 249)',
+        },
+        background: 'rgb(var(--background-rgb))',
+        foreground: 'rgb(var(--foreground-rgb))',
+        card: 'rgb(var(--surface-rgb))',
+        'card-foreground': 'rgb(var(--foreground-rgb))',
+        popover: 'rgb(var(--surface-rgb))',
+        'popover-foreground': 'rgb(var(--foreground-rgb))',
+        muted: {
+          DEFAULT: 'rgb(243, 244, 246)',
+          foreground: 'rgb(107, 114, 128)',
+        },
+        destructive: {
+          DEFAULT: 'rgb(239, 68, 68)',
+          foreground: 'rgb(248, 250, 249)',
+        },
+        border: 'rgb(var(--border-rgb))',
+        input: 'rgb(var(--border-rgb))',
+        ring: 'rgb(47, 125, 109)', // #2f7d6d
+        sidebar: 'rgb(var(--surface-rgb))',
+        'sidebar-foreground': 'rgb(var(--foreground-rgb))',
+        'sidebar-primary': 'rgb(47, 125, 109)', // #2f7d6d
+        'sidebar-primary-foreground': 'rgb(248, 250, 249)',
+        'sidebar-accent': 'rgb(47, 125, 109)', // #2f7d6d
+        'sidebar-accent-foreground': 'rgb(248, 250, 249)',
+        'sidebar-border': 'rgb(var(--border-rgb))',
+        'sidebar-ring': 'rgb(47, 125, 109)', // #2f7d6d
         chart: {
-          1: 'oklch(var(--color-chart-1) / <alpha-value>)',
-          2: 'oklch(var(--color-chart-2) / <alpha-value>)',
-          3: 'oklch(var(--color-chart-3) / <alpha-value>)',
-          4: 'oklch(var(--color-chart-4) / <alpha-value>)',
-          5: 'oklch(var(--color-chart-5) / <alpha-value>)',
+          1: 'rgb(47, 125, 109)', // Green
+          2: 'rgb(59, 130, 246)', // Blue
+          3: 'rgb(249, 115, 22)', // Orange
+          4: 'rgb(107, 114, 128)', // Gray
+          5: 'rgb(229, 231, 235)', // Light gray
         },
       },
       fontFamily: {
