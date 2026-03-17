@@ -36,7 +36,7 @@ export async function requireLandlord(): Promise<LandlordUser> {
     },
   });
 
-  if (!userFromDb || userFromDb.role !== "landlord" || !userFromDb.isVerifiedLandlord) {
+  if (!userFromDb || userFromDb.role !== "LANDLORD" || !userFromDb.isVerifiedLandlord) {
     redirect("/");
   }
 

@@ -22,17 +22,17 @@ const defaultIcon = new L.Icon({
 interface MapProps {
   center?: number[];
   onLocationSelect?: (lat: number, lng: number) => void;
-  onDoubleClick?: (lat: number, lng: number) => void;
+  onClick?: (lat: number, lng: number) => void;
 }
 
-const Map: React.FC<MapProps> = ({ center, onLocationSelect, onDoubleClick }) => {
+const Map: React.FC<MapProps> = ({ center, onLocationSelect, onClick }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const isMapInitialized = useRef(false);
 
   useEffect(() => {
-    if (!containerRef.current || isMapInitialized.current) return;
+    if (!containerRef.current) return;
 
     try {
       const map = L.map(containerRef.current, {
@@ -44,24 +44,35 @@ const Map: React.FC<MapProps> = ({ center, onLocationSelect, onDoubleClick }) =>
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(map);
 
-      // Add click event listener for location selection
+      // Add click event listener for location selection and auto-fill
       map.on('click', (e) => {
         const { lat, lng } = e.latlng;
+        
+        // Update marker position
+        if (markerRef.current) {
+          markerRef.current.setLatLng(e.latlng);
+        } else {
+          markerRef.current = L.marker(e.latlng, { icon: defaultIcon }).addTo(map);
+        }
+        
+        // Call both callbacks
         if (onLocationSelect) {
           onLocationSelect(lat, lng);
         }
-      });
-
-      // Add double-click event listener
-      map.on('dblclick', (e) => {
-        const { lat, lng } = e.latlng;
-        if (onDoubleClick) {
-          onDoubleClick(lat, lng);
+        if (onClick) {
+          onClick(lat, lng);
         }
       });
 
+      // Initialize marker
+      if (!markerRef.current) {
+        const initialLatLng = (center && center.length === 2) ? center as L.LatLngTuple : DEFAULT_CENTER;
+        markerRef.current = L.marker(initialLatLng, { icon: defaultIcon }).addTo(map);
+      }
+
       mapRef.current = map;
       isMapInitialized.current = true;
+
     } catch (error) {
       console.error('Error initializing map:', error);
     }
@@ -78,8 +89,9 @@ const Map: React.FC<MapProps> = ({ center, onLocationSelect, onDoubleClick }) =>
         markerRef.current = null;
       }
     };
-  }, [onLocationSelect, onDoubleClick]);
+  }, []);
 
+  // Update marker when center prop changes
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !isMapInitialized.current || !map.getContainer()) return;
@@ -88,42 +100,17 @@ const Map: React.FC<MapProps> = ({ center, onLocationSelect, onDoubleClick }) =>
       const latlng = (center as L.LatLngExpression) || DEFAULT_CENTER;
       const zoom = center ? 14 : 12;
 
-      // Update map view
       map.setView(latlng, zoom);
 
-      // Update marker
       if (center && center.length >= 2) {
-        try {
-          // If marker exists, update position
-          if (markerRef.current) {
-            markerRef.current.setLatLng(latlng);
-          } else {
-            // If marker doesn't exist, create new one
-            markerRef.current = L.marker(latlng, { icon: defaultIcon }).addTo(map);
-          }
-        } catch (error) {
-          console.error('Error updating marker:', error);
-          // If there's an error, try to recreate the marker
-          if (markerRef.current) {
-            try {
-              map.removeLayer(markerRef.current);
-            } catch (removeError) {
-              console.error('Error removing marker:', removeError);
-            }
-            markerRef.current = null;
-          }
+        if (markerRef.current) {
+          markerRef.current.setLatLng(latlng);
+        } else {
           markerRef.current = L.marker(latlng, { icon: defaultIcon }).addTo(map);
         }
       }
     } catch (mapError) {
       console.error('Map error:', mapError);
-      // If map has an error, try to reset it
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-        isMapInitialized.current = false;
-        markerRef.current = null;
-      }
     }
   }, [center]);
 

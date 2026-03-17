@@ -9,27 +9,11 @@ export interface AddressInfo {
 // Simple geocoding service with local fallback
 export const geocodeAddress = async (address: string): Promise<AddressInfo | null> => {
   try {
-    // Skip external API call for now, return local fallback immediately
-    // This is for development and testing purposes when external API is not reachable
-
-    console.log('Geocoding address locally:', address);
-
-    // Local fallback for all addresses
-    return {
-      address: address,
-      city: 'Tarlac City',
-      province: 'Tarlac',
-      zipCode: '2300',
-      coordinates: [15.635189, 120.415343]
-    };
-
-    /*
-    // Uncomment this section when external API is reachable
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000); // Increased timeout to 15 seconds
 
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1`,
       {
         signal: controller.signal,
         headers: {
@@ -52,8 +36,8 @@ export const geocodeAddress = async (address: string): Promise<AddressInfo | nul
 
     const result = data[0];
 
-    // Parse address components
-    const addressParts = parseAddress(result.display_name);
+    // Parse address components - now with structured address details from API
+    const addressParts = parseAddress(result.display_name, result.address);
 
     return {
       address: result.display_name,
@@ -62,7 +46,6 @@ export const geocodeAddress = async (address: string): Promise<AddressInfo | nul
       zipCode: addressParts.zipCode || '',
       coordinates: [parseFloat(result.lat), parseFloat(result.lon)]
     };
-    */
   } catch (error) {
     console.error('Geocoding error:', error);
 
@@ -100,6 +83,7 @@ export const reverseGeocode = async (lat: number, lng: number): Promise<AddressI
       };
     }
 
+    // Try to use Nominatim API for reverse geocoding
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
 
@@ -137,9 +121,9 @@ export const reverseGeocode = async (lat: number, lng: number): Promise<AddressI
   } catch (error) {
     console.error('Reverse geocoding error:', error);
 
-    // Return mock data for testing purposes
+    // Return fallback data with more meaningful address
     return {
-      address: `Location at ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+      address: 'Unnamed Location, Tarlac City, Tarlac',
       city: 'Tarlac City',
       province: 'Tarlac',
       zipCode: '2300',
@@ -152,23 +136,65 @@ export const reverseGeocode = async (lat: number, lng: number): Promise<AddressI
 const parseAddress = (displayName: string, addressComponents?: any): { city: string; province: string; zipCode: string } => {
   // Try to extract address components from Nominatim's structured address if available
   if (addressComponents) {
+    console.log('Parsing address with components:', addressComponents); // Debug log
     const city = addressComponents.city || addressComponents.town || addressComponents.municipality || '';
-    const province = addressComponents.state || addressComponents.province || '';
-    const zipCode = addressComponents.postcode || '';
+    let province = addressComponents.province || addressComponents.county || addressComponents.state || addressComponents.region || '';
+    let zipCode = addressComponents.postcode || '';
+    
+    // Special handling for Philippine addresses
+    if (province === 'Central Luzon') {
+      // For Tarlac addresses, Nominatim returns province as Central Luzon - we need to set it to Tarlac
+      if (addressComponents.county === 'Tarlac') {
+        province = 'Tarlac';
+      }
+    } else if (province === 'Central Visayas') {
+      // For Cebu addresses, try to extract province from city or other components
+      if (city === 'Cebu City') {
+        province = 'Cebu';
+      }
+    } else if (!province || province === 'Metro Manila') {
+      // For Metro Manila addresses, province remains Metro Manila
+    }
+    
+    // Special zip code fix for Anao, Tarlac - Nominatim returns 2309 but actual is 2310
+    if (displayName.toLowerCase().includes('anao') && displayName.toLowerCase().includes('tarlac') && zipCode === '2309') {
+      zipCode = '2310';
+    }
+    
+    // Fallback to extract zip code from display name if not available from API
+    if (!zipCode) {
+      const zipMatch = displayName.match(/\b\d{4,5}\b/);
+      if (zipMatch) {
+        zipCode = zipMatch[0];
+      }
+    }
+    
     return { city, province, zipCode };
   }
 
   // Fallback to parsing display name for Tarlac area addresses
   const parts = displayName.split(',').map(part => part.trim());
 
-  // For Tarlac specific addresses
-  const city = parts.find(part =>
-    part.includes('Tarlac') || part.includes('City') || part.includes('Municipality')
+  // For Philippine addresses
+  const city = parts.find(part => 
+    part.includes('City') || part.includes('Municipality') || part.includes('Tarlac')
   )?.trim() || '';
 
-  const province = parts.find(part => part.includes('Tarlac'))?.trim() || '';
+  const province = parts.find(part => 
+    part.includes('Province') || part.includes('Tarlac') || 
+    ['Pampanga', 'Nueva Ecija', 'Zambales', 'Pangasinan'].includes(part)
+  )?.trim() || '';
 
   const zipCode = parts.find(part => /^\d{4,5}$/.test(part))?.trim() || '';
+
+  // Improve city/province extraction for common Tarlac addresses
+  if (!city && parts.some(part => part.includes('Tarlac'))) {
+    const tarlacPart = parts.find(part => part.includes('Tarlac'));
+    if (tarlacPart && tarlacPart.includes('City')) {
+      return { city: 'Tarlac City', province: 'Tarlac', zipCode };
+    }
+    return { city: 'Tarlac City', province: 'Tarlac', zipCode };
+  }
 
   return { city, province, zipCode };
 };
