@@ -21,9 +21,9 @@ const Home: FC<HomeProps> = async ({ searchParams }) => {
   const user = session?.user;
 
   // Redirect admins and landlords to their respective dashboards
-  if (user?.role === "admin") {
+  if (user?.role === "ADMIN") {
     redirect("/admin");
-  } else if (user?.role === "landlord") {
+  } else if (user?.role === "LANDLORD") {
     redirect("/landlord");
   }
 

@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const role = token.role as string | undefined;
-    if (role !== "admin") {
+    if (role !== "ADMIN") {
       const homeUrl = new URL("/", request.url);
       return NextResponse.redirect(homeUrl);
     }
@@ -41,7 +41,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const role = token.role as string | undefined;
-    if (role !== "landlord") {
+    if (role !== "LANDLORD") {
       const homeUrl = new URL("/", request.url);
       return NextResponse.redirect(homeUrl);
     }

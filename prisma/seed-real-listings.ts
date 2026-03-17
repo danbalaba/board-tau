@@ -80,7 +80,7 @@ async function main() {
     data: {
       ...admin,
       password: hashedAdminPassword,
-      role: "admin",
+      role: "ADMIN",
       emailVerified: new Date(), // Mark admin email as verified
     },
   });
@@ -92,7 +92,9 @@ async function main() {
     data: {
       ...landlord,
       password: hashedLandlordPassword,
-      role: "user",
+      role: "LANDLORD",
+      isVerifiedLandlord: true,
+      landlordApprovedAt: new Date(),
       emailVerified: new Date(), // Mark landlord email as verified
     },
   });
