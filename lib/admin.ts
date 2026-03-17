@@ -15,7 +15,7 @@ export type AdminUser = {
 export async function requireAdmin(): Promise<AdminUser> {
   const session = await getServerSession(authOptions);
   const user = session?.user;
-  if (!user?.id || (user as { role?: string }).role !== "admin") {
+  if (!user?.id || (user as { role?: string }).role !== "ADMIN") {
     redirect("/");
   }
   return user as AdminUser;

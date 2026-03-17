@@ -6,6 +6,8 @@
     import "react-loading-skeleton/dist/skeleton.css";
     import LayoutContent from "@/components/layout/LayoutContent";
     import Providers from "@/components/common/Provider";
+    import { Suspense } from "react";
+    import AuthErrorHandler from "@/components/auth/AuthErrorHandler";
 
     export const metadata: Metadata = {
     metadataBase: new URL(
@@ -52,6 +54,9 @@
             suppressHydrationWarning
         >
             <Providers>
+                <Suspense fallback={null}>
+                    <AuthErrorHandler />
+                </Suspense>
                 <LayoutContent>
                     {children}
                 </LayoutContent>

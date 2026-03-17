@@ -31,51 +31,63 @@ const LocationStep: React.FC<LocationStepProps> = ({
   onAddressAutoFill
 }) => {
   const [isSearching, setIsSearching] = useState(false);
+  const [isManualMode, setIsManualMode] = useState(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Handle map double-click for reverse geocoding
-  const handleMapDoubleClick = async (lat: number, lng: number) => {
-    setIsSearching(true);
-    try {
-      // Show immediate feedback with coordinates while fetching address
-      if (onAddressAutoFill) {
-        onAddressAutoFill({
-          address: `Locating... (${lat.toFixed(6)}, ${lng.toFixed(6)})`,
-          city: '',
-          province: '',
-          zipCode: ''
-        });
-      }
+  // Handle map click for reverse geocoding
+  const handleMapClick = async (lat: number, lng: number) => {
+    // First, update the map center with the new location
+    onLocationSelect(lat, lng);
+    
+    // Only auto-fill address fields if not in manual mode
+    if (!isManualMode) {
+      setIsSearching(true);
+      try {
+        // Show immediate feedback with coordinates while fetching address
+        if (onAddressAutoFill) {
+          onAddressAutoFill({
+            address: `Locating... (${lat.toFixed(6)}, ${lng.toFixed(6)})`,
+            city: '',
+            province: '',
+            zipCode: ''
+          });
+        }
 
-      const addressInfo = await reverseGeocode(lat, lng);
+        const addressInfo = await reverseGeocode(lat, lng);
 
-      if (addressInfo && onAddressAutoFill) {
-        onAddressAutoFill({
-          address: addressInfo.address,
-          city: addressInfo.city,
-          province: addressInfo.province,
-          zipCode: addressInfo.zipCode
-        });
+        if (addressInfo && onAddressAutoFill) {
+          onAddressAutoFill({
+            address: addressInfo.address,
+            city: addressInfo.city,
+            province: addressInfo.province,
+            zipCode: addressInfo.zipCode
+          });
+        }
+      } catch (error) {
+        console.error('Reverse geocoding error:', error);
+        // Fallback to simple address with coordinates
+        if (onAddressAutoFill) {
+          onAddressAutoFill({
+            address: `Location at ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+            city: 'Tarlac City',
+            province: 'Tarlac',
+            zipCode: '2300'
+          });
+        }
+      } finally {
+        setIsSearching(false);
       }
-    } catch (error) {
-      console.error('Reverse geocoding error:', error);
-      // Fallback to simple address with coordinates
-      if (onAddressAutoFill) {
-        onAddressAutoFill({
-          address: `Location at ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
-          city: 'Tarlac City',
-          province: 'Tarlac',
-          zipCode: '2300'
-        });
-      }
-    } finally {
-      setIsSearching(false);
     }
   };
 
-  // Handle address input change for forward geocoding with debounce
+  // Handle address input change
   const handleAddressChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const address = e.target.value;
+
+    // If in manual mode, just update the address without geocoding
+    if (isManualMode) {
+      return;
+    }
 
     // Clear previous debounce timer
     if (debounceTimerRef.current) {
@@ -141,30 +153,91 @@ const LocationStep: React.FC<LocationStepProps> = ({
       >
         <div className="space-y-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm">
-            <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
-              <Search className="w-5 h-5" />
-              <span>Address Details</span>
-            </h4>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-medium text-gray-900 dark:text-white flex items-center space-x-2">
+                <Search className="w-5 h-5" />
+                <span>Address Details</span>
+              </h4>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isManualMode}
+                  onChange={(e) => setIsManualMode(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                />
+                <span className="text-sm text-gray-600 dark:text-gray-400">Manual Address</span>
+              </label>
+            </div>
 
             <div className="space-y-6">
               <div>
-                <Input
-                  label="Complete Address"
-                  id="location.address"
-                  type="text"
-                  register={register}
-                  errors={errors}
-                  watch={watch}
-                  required
-                  placeholder="Enter full address including street, barangay, etc."
-                  useStaticLabel={true}
-                  onChange={handleAddressChange}
-                  validationRules={{
-                    required: "Address is required",
-                    minLength: { value: 10, message: "Address must be at least 10 characters" }
-                  }}
-                />
-                {isSearching && (
+                <div className="flex space-x-2">
+                  <Input
+                    label="Complete Address"
+                    id="location.address"
+                    type="text"
+                    register={register}
+                    errors={errors}
+                    watch={watch}
+                    required
+                    placeholder="Enter full address including street, barangay, etc."
+                    useStaticLabel={true}
+                    onChange={handleAddressChange}
+                    validationRules={{
+                      required: "Address is required",
+                      minLength: { value: 10, message: "Address must be at least 10 characters" }
+                    }}
+                  />
+                  {isManualMode && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const address = watch('location.address');
+                        if (address && address.length > 5) {
+                          setIsSearching(true);
+                          try {
+                            const addressInfo = await geocodeAddress(address);
+                            if (addressInfo) {
+                              onLocationSelect(addressInfo.coordinates[0], addressInfo.coordinates[1]);
+                              if (onAddressAutoFill) {
+                                onAddressAutoFill({
+                                  address: addressInfo.address,
+                                  city: addressInfo.city,
+                                  province: addressInfo.province,
+                                  zipCode: addressInfo.zipCode
+                                });
+                              }
+                              toast.success('Location found on map!');
+                            } else {
+                              toast.error('Address not found. Please try a different address.');
+                            }
+                          } catch (error) {
+                            console.error('Geocoding error:', error);
+                            toast.error('Unable to connect to location service. Please try again later.');
+                          } finally {
+                            setIsSearching(false);
+                          }
+                        } else {
+                          toast.error('Please enter a valid address to search');
+                        }
+                      }}
+                      className="mt-8 px-4 py-2 bg-primary dark:bg-primary text-white rounded-lg hover:bg-primary-hover dark:hover:bg-primary-hover transition-colors flex items-center space-x-2"
+                    >
+                      {isSearching ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Searching...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Search className="w-4 h-4" />
+                          <span>Search</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+                {isSearching && !isManualMode && (
                   <div className="flex items-center space-x-2 mt-2 text-sm text-gray-500 dark:text-gray-400">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
                     <span>Searching address...</span>
@@ -250,14 +323,15 @@ const LocationStep: React.FC<LocationStepProps> = ({
               <Map
                 center={mapCenter}
                 onLocationSelect={onLocationSelect}
-                onDoubleClick={handleMapDoubleClick}
+                onClick={handleMapClick}
               />
             </div>
 
             <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
               <p>• Drag the marker to adjust the exact location</p>
-              <p>• Double-click on the map to auto-fill address fields</p>
-              <p>• Type address in input field to search location</p>
+              <p>• Click on the map to auto-fill address fields</p>
+              {!isManualMode && <p>• Type address in input field to search location</p>}
+              {isManualMode && <p>• In manual mode, you can edit address fields directly</p>}
             </div>
           </div>
         </div>

@@ -167,6 +167,7 @@ export const authOptions: AuthOptions = {
     },
 
     async session({ token, session }) {
+      console.log("🔐 Session callback - token role:", token.role); // Debug log
       if (token) {
         session.user.id = token.id;
         session.user.name = token.name;
@@ -180,6 +181,7 @@ export const authOptions: AuthOptions = {
 
     async jwt({ token, user, account }) {
       if (user) {
+        console.log("🔐 JWT callback - user role:", (user as any).role); // Debug log
         // For new users created via OAuth, ensure emailVerified is set
         const userWithEmailVerified = {
           ...user,

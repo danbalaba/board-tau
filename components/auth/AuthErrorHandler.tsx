@@ -23,6 +23,9 @@ const AuthErrorHandler = () => {
         errorMessage = "Invalid email or password";
       } else if (error === "OAuthCreateAccount") {
         errorMessage = "Failed to create account. Please try again.";
+      } else if (error === "OAuthCallback") {
+        // This is a generic OAuth callback error - show a user-friendly message
+        errorMessage = "Failed to complete sign in. Please try again.";
       } else if (error === "Callback") {
         // This is a generic error - don't show anything
         return;
