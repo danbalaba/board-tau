@@ -214,7 +214,7 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md' }) => {
               animate="show"
               exit="exit"
               ref={ref}
-              className={`md:h-auto h-[90vh] md:max-h-[90vh] overflow-y-auto w-full ${sizeClasses[size]} md:rounded-card rounded-t-card shadow-glass border-t md:border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
+              className={`md:h-auto h-[95vh] md:max-h-[90vh] overflow-y-auto w-full ${sizeClasses[size]} md:rounded-card rounded-t-card shadow-glass border-t md:border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
             >
             {React.isValidElement(children) && typeof children.type === 'function'
               ? React.cloneElement(children as React.ReactElement<{ onCloseModal: () => void }>, {
