@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import Button from "@/components/common/Button";
 import Modal from "../../modals/Modal";
-import ReservationRequestModal from "../../modals/ReservationRequestModal";
+import InquiryModal from "../../modals/InquiryModal";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
@@ -36,17 +36,17 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
 }) => {
   const availableRooms = rooms.filter((room) => room.status === "available");
   const router = useRouter();
-  const [reservingRoomId, setReservingRoomId] = useState<string | null>(null);
+  const [inquiringRoomId, setInquiringRoomId] = useState<string | null>(null);
   const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const handleReserveClick = async (e: React.MouseEvent, roomId: string) => {
+  const handleInquireClick = async (e: React.MouseEvent, roomId: string) => {
     // Prevent multiple clicks on any room
-    if (reservingRoomId) {
+    if (inquiringRoomId) {
       e.preventDefault();
       return;
     }
 
-    setReservingRoomId(roomId);
+    setInquiringRoomId(roomId);
 
     if (!user) {
       e.preventDefault();
@@ -58,8 +58,8 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
 
       // Show toast only once after a delay
       debounceTimerRef.current = setTimeout(() => {
-        toast.error("Please log in to reserve a room.");
-        setReservingRoomId(null);
+        toast.error("Please log in to send an inquiry.");
+        setInquiringRoomId(null);
       }, 1000);
 
       return;
@@ -68,7 +68,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
     // Simulate a short delay to prevent spamming
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    setReservingRoomId(null);
+    setInquiringRoomId(null);
   };
 
   return (
@@ -146,20 +146,20 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
                   </div>
                 </div>
 
-                {/* Reserve Button */}
+                {/* Inquire Button */}
                 {user ? (
                   <Modal>
-                    <Modal.Trigger name={`reserve-${room.id}`}>
+                    <Modal.Trigger name={`inquire-${room.id}`}>
                       <Button
                         className="w-full"
-                        isLoading={reservingRoomId === room.id}
-                        onClick={(e) => handleReserveClick(e, room.id)}
+                        isLoading={inquiringRoomId === room.id}
+                        onClick={(e) => handleInquireClick(e, room.id)}
                       >
-                        Reserve
+                        Inquire
                       </Button>
                     </Modal.Trigger>
 
-                    <ReservationRequestModal
+                    <InquiryModal
                       listingName={listingName}
                       room={room}
                       onSubmit={onSubmit}
@@ -169,10 +169,10 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
                 ) : (
                   <Button
                     className="w-full"
-                    onClick={(e) => handleReserveClick(e, room.id)}
-                    isLoading={reservingRoomId === room.id}
+                    onClick={(e) => handleInquireClick(e, room.id)}
+                    isLoading={inquiringRoomId === room.id}
                   >
-                    Reserve
+                    Inquire
                   </Button>
                 )}
               </div>

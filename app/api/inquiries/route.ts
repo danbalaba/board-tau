@@ -102,9 +102,9 @@ export async function PUT(request: Request) {
     if (status === "APPROVED") {
       const moveInDate = new Date(inquiry.moveInDate);
       const endDate = new Date(moveInDate);
-      endDate.setDays(endDate.getDays() + parseInt(inquiry.stayDuration));
+      endDate.setMonth(endDate.getMonth() + inquiry.stayDuration);
 
-      const totalPrice = inquiry.room.price * (parseInt(inquiry.stayDuration) / 30); // Calculate monthly price
+      const totalPrice = inquiry.room.price * inquiry.stayDuration; // Calculate total price
 
       await db.reservation.create({
         data: {
@@ -114,8 +114,8 @@ export async function PUT(request: Request) {
           inquiryId: inquiry.id,
           startDate: moveInDate,
           endDate,
-          durationInDays: parseInt(inquiry.stayDuration),
-          totalPrice: Math.round(totalPrice),
+          durationInDays: inquiry.stayDuration * 30, // Convert months to days
+          totalPrice,
           status: "CONFIRMED",
           paymentStatus: "PENDING",
         },
