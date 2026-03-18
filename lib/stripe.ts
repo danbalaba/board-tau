@@ -4,6 +4,6 @@ import Stripe from 'stripe'
 const hasStripeConfig = process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.length > 0 && !process.env.STRIPE_SECRET_KEY.startsWith('pk_')
 
 export const stripe = hasStripeConfig ? new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2026-01-28.clover",
+  apiVersion: "2026-02-25.clover",
   typescript: true,
 }) : null
