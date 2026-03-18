@@ -7,12 +7,29 @@ import React, {
   createContext,
   useContext,
   useState,
+  useEffect,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
 import { zoomIn } from "@/utils/motion";
 import { cn } from "@/utils/helper";
-import { useKeyPress } from "@/hooks/useKeyPress";
+
+// Simple implementation of useKeyPress
+const useKeyPress = ({ key, action, enable = true }: { key: string; action: (e: KeyboardEvent) => void; enable?: boolean }) => {
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === key) action(e);
+    };
+
+    if (enable) {
+      window.addEventListener("keydown", onKeyDown);
+    } else {
+      window.removeEventListener("keydown", onKeyDown);
+    }
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [action, key, enable]);
+};
 
 const MenuContext = createContext({
   openId: "",

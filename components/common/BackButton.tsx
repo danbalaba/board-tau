@@ -1,10 +1,11 @@
 "use client";
 import React from "react";
 import { MdKeyboardBackspace } from "react-icons/md";
-import { useMoveBack } from "@/hooks/useMoveBack";
+import { useRouter } from "next/navigation";
 
 const BackButton = () => {
-  const back = useMoveBack();
+  const router = useRouter();
+  const back = () => router.back();
   return (
     <button
       type="button"
