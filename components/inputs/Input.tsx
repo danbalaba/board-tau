@@ -178,6 +178,14 @@ const Input: React.FC<InputProps> = ({
         id={id}
         type={isPasswordInput ? (showPassword ? "text" : "password") : type}
         disabled={disabled}
+        {...(!register && {
+          value: value || '',
+          onChange: (e) => {
+            if (externalOnChange) {
+              externalOnChange(e);
+            }
+          }
+        })}
         {...(register && {
           ...register(id, {
             required: required ? "This field is required" : false,

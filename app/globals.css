@@ -11,6 +11,37 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(var(--border-rgb), 0.2);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--border-rgb), 0.6);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--border-rgb), 0.8);
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: rgba(var(--border-rgb), 0.2);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(var(--border-rgb), 0.6);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--border-rgb), 0.8);
+}
+
 /* User/Landlord side - Original color variables */
 :root {
   --foreground-rgb: 17, 24, 39;
