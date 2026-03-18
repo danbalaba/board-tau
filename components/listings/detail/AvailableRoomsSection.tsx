@@ -89,7 +89,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
               {/* Room Image */}
               <div className="h-48 w-full bg-gray-200 dark:bg-gray-700 relative">
                 <img
-                  src={room.images[0] || "/images/placeholder.jpg"}
+                  src={(room.images && room.images.length > 0) ? room.images[0] : "/images/placeholder.jpg"}
                   alt={room.name}
                   className="w-full h-full object-cover"
                 />
