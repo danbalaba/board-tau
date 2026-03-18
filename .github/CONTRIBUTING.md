@@ -109,24 +109,23 @@ Our CI/CD pipeline automatically runs tests on every push and pull request. The 
 
 ## 🌿 Branching Strategy
 
-We use a feature-based branching strategy:
+We use a simple and effective branching strategy:
 
-- `main`: Production branch (protected)
-- `develop`: Development branch
+- `main`: **Production branch (protected)** - All production code lives here
 - `feature/*`: Feature branches for new functionality
-- `fix/*`: Bug fix branches
+- `fix/*`: Bug fix branches for critical issues
 
 ### Creating a Branch
 
 ```bash
 # Create a new feature branch
-git checkout develop
-git pull origin develop
+git checkout main
+git pull origin main
 git checkout -b feature/your-feature-name
 
 # Create a new bug fix branch
-git checkout develop
-git pull origin develop
+git checkout main
+git pull origin main
 git checkout -b fix/your-bug-fix
 ```
 

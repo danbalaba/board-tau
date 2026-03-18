@@ -12,7 +12,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "seed": "npx prisma db seed",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "build:check": "next build --no-lint"
   },
   "overrides": {
     "fast-xml-parser": "^5.5.6"

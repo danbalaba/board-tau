@@ -29,6 +29,12 @@ If you added new tests, please describe them:
 - What functionality is being tested:
 - How to run the specific tests:
 
+## Security & Performance
+
+- [ ] My changes don't introduce any security vulnerabilities
+- [ ] I've checked for performance implications of my changes
+- [ ] I've followed best practices for secure coding
+
 ## Checklist:
 
 - [ ] My code follows the style guidelines of this project

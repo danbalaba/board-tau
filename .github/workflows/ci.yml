@@ -1,17 +1,17 @@
-name: Enterprise CI/CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "develop", "feature/*", "hotfix/*", "release/*" ]
+    branches: [ "main", "feature/*" ]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main" ]
 
 jobs:
   setup:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20.19.0]
+        node-version: [18.20.5, 20.19.0]
     outputs:
       build-id: ${{ github.sha }}
     steps:
@@ -27,7 +27,7 @@ jobs:
     needs: setup
     strategy:
       matrix:
-        node-version: [20.19.0]
+        node-version: [18.20.5, 20.19.0]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -118,28 +118,9 @@ jobs:
           name: build-artifact
           path: .next
 
-  deploy-staging:
+  deploy:
     runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20.19.0
-          cache: 'npm'
-      - run: npm ci
-      - uses: actions/download-artifact@v4
-        with:
-          name: build-artifact
-          path: .next
-      - run: npm run start &
-      - run: sleep 5
-      - run: curl -f http://localhost:3000 || exit 1
-
-  deploy-production:
-    runs-on: ubuntu-latest
-    needs: build
+    needs: [quality, build, security, tests]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
@@ -153,12 +134,12 @@ jobs:
           name: build-artifact
           path: .next
       - run: npm run start &
-      - run: sleep 5
-      - run: curl -f http://localhost:3000 || exit 1
+      - run: sleep 8
+      - run: curl -f http://localhost:3000/api/health || exit 1
 
   slack-notification:
     runs-on: ubuntu-latest
-    needs: [deploy-staging, deploy-production]
+    needs: [deploy]
     if: always()
     steps:
       - name: Slack Notification
@@ -166,4 +147,4 @@ jobs:
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK }}
           status: ${{ job.status }}
-          message: "Deployment to ${{ github.ref_name }} completed with status: ${{ job.status }}"
+          message: "Deployment to ${{ github.ref_name }} completed with status: ${{ job.status }}. Build ID: ${{ github.sha }}"
