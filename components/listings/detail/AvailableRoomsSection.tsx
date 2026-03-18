@@ -64,11 +64,6 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
 
       return;
     }
-
-    // Simulate a short delay to prevent spamming
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    setInquiringRoomId(null);
   };
 
   return (
