@@ -8,30 +8,158 @@
 # testing
 /coverage
 /tests/__template__/*.test.*
+*.spec.ts
+*.spec.tsx
+*.test.js
+*.test.jsx
 
 # next.js
 /.next/
 /out/
+/dist/
 
 # production
 /build
+/deploy
+/release
 
 # misc
 .DS_Store
 *.pem
+*.key
+*.crt
+*.p12
+*.pfx
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
 
 # local env files
 .env*.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env
 
 # vercel
 .vercel
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+*.swp
+*.swo
+*~
+
+# IDE
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+Thumbs.db
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# next.js build output
+.next
+build
+
+# nuxt.js build / generate output
+.nuxt
+dist
+
+# vuepress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# Prisma
+.prisma/studio
+*.db
+
+# Sentry
+.sentryclirc
+
+# SEO
+/public/sitemap*.xml
+/public/robots.txt
