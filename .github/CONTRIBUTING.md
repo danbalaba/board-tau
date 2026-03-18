@@ -65,20 +65,81 @@ npm run type-check
 
 ### Adding New Tests
 
-Create test files with the `.test.tsx` extension:
+We require tests for every PR to ensure code quality and prevent regression. Test files should follow these conventions:
 
+#### **Test File Naming**
+- Component tests: `<ComponentName>.test.tsx` (same directory as component)
+- API tests: `<endpoint-name>.test.ts` (in `tests/api/` directory)
+- Utility functions: `<function-name>.test.ts` (same directory as function)
+
+#### **Component Test Example**
 ```typescript
-// components/common/ComponentName.test.tsx
+// components/common/Button.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react';
-import ComponentName from './ComponentName';
+import Button from './Button';
 
-describe('ComponentName Component', () => {
-  it('renders correctly', () => {
-    render(<ComponentName />);
-    expect(screen.getByText('Expected Text')).toBeInTheDocument();
+describe('Button Component', () => {
+  it('renders correctly with default props', () => {
+    render(<Button>Click Me</Button>);
+    expect(screen.getByRole('button', { name: /click me/i })).toBeInTheDocument();
+  });
+
+  it('handles click events', () => {
+    const mockOnClick = jest.fn();
+    render(<Button onClick={mockOnClick}>Click Me</Button>);
+    fireEvent.click(screen.getByRole('button', { name: /click me/i }));
+    expect(mockOnClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('displays loading state', () => {
+    render(<Button isLoading={true}>Click Me</Button>);
+    expect(screen.getByRole('status')).toBeInTheDocument();
   });
 });
 ```
+
+#### **API Test Example**
+```typescript
+// tests/api/auth.test.ts
+import request from 'supertest';
+import app from '@/app';
+
+describe('Authentication API', () => {
+  it('responds with 200 OK for login', async () => {
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'test@example.com', password: 'password123' })
+      .set('Content-Type', 'application/json');
+
+    expect(response.statusCode).toBe(200);
+  });
+
+  it('returns 401 for invalid credentials', async () => {
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'test@example.com', password: 'wrongpassword' })
+      .set('Content-Type', 'application/json');
+
+    expect(response.statusCode).toBe(401);
+  });
+});
+```
+
+#### **Test Templates**
+We provide test templates in `tests/__template__/` directory:
+- `component.test.tsx`: Template for React components
+- `api.test.ts`: Template for API endpoints
+
+#### **Testing Guidelines**
+- **Write meaningful tests**: Tests should describe what they're testing
+- **Test all paths**: Cover happy paths, edge cases, and error scenarios
+- **Keep tests focused**: Each test should test one thing
+- **Use descriptive names**: Test names should be readable and clear
+- **Isolate tests**: Tests should not share state or dependencies
+
+#### **Code Coverage**
+We aim for 80% test coverage. Run `npm run test:coverage` to see your coverage report.
+
 
 ### Running Tests Locally
 
@@ -164,10 +225,21 @@ Our PR template includes sections for:
 
 ### Review Process
 
-1. PRs must be reviewed by at least one team member
-2. All tests must pass
-3. Changes must follow the code style guidelines
-4. PRs should address an issue
+1. **Testing Requirements**: PRs must include tests for all changes
+2. **Approval**: PRs must be reviewed by at least one team member
+3. **CI/CD Checks**: All tests must pass
+4. **Code Style**: Changes must follow the code style guidelines
+5. **Issue Linking**: PRs should address an issue
+6. **Documentation**: Changes must include appropriate documentation updates
+
+#### **Review Checklist**
+- [ ] Are all changes tested?
+- [ ] Are tests meaningful and focused?
+- [ ] Does the PR follow the existing coding style?
+- [ ] Are there any breaking changes?
+- [ ] Is the documentation updated?
+- [ ] Are all existing tests passing?
+
 
 ## 💻 Code Style Guidelines
 

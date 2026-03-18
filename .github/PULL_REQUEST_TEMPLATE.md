@@ -21,6 +21,7 @@ Please describe the tests that you ran to verify your changes. Provide instructi
 - [ ] Added new tests for my changes
 - [ ] Verified tests pass: `npm run test:coverage`
 - [ ] Checked type safety: `npm run type-check`
+- [ ] Test file location follows standard conventions: `<component-name>.test.tsx` or `<function-name>.test.ts`
 
 ## Testing Details
 
@@ -28,6 +29,15 @@ If you added new tests, please describe them:
 - Test file location:
 - What functionality is being tested:
 - How to run the specific tests:
+- Test coverage percentage:
+
+## Test Requirements
+
+- [ ] All new components have corresponding test files
+- [ ] All new API endpoints have corresponding test files
+- [ ] Tests cover edge cases and error scenarios
+- [ ] Tests are properly isolated and don't share state
+
 
 ## Security & Performance
 
