@@ -63,6 +63,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "fast-xml-parser": "^5.5.6",
     "framer-motion": "^12.29.3",
     "input-otp": "^1.4.2",
     "ioredis": "^5.10.0",
@@ -145,5 +146,8 @@
   },
   "prisma": {
     "seed": "tsx prisma/seed-real-listings.ts"
+  },
+  "resolutions": {
+    "fast-xml-parser": "^5.5.6"
   }
 }
