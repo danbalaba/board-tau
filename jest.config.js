@@ -23,7 +23,8 @@ const customJestConfig = {
   ],
   testPathIgnorePatterns: [
     '/node_modules/',
-    '/.next/'
+    '/.next/',
+    '/tests/__template__/'
   ]
 }
 

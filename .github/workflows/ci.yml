@@ -1,17 +1,17 @@
-name: Enterprise CI/CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "develop", "feature/*", "hotfix/*", "release/*" ]
+    branches: [ "main", "feature/*" ]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main" ]
 
 jobs:
   setup:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20.19.0]
+        node-version: [18.20.5, 20.19.0]
     outputs:
       build-id: ${{ github.sha }}
     steps:
@@ -27,7 +27,7 @@ jobs:
     needs: setup
     strategy:
       matrix:
-        node-version: [20.19.0]
+        node-version: [18.20.5, 20.19.0]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -101,11 +101,28 @@ jobs:
         with:
           name: build-artifact
           path: .next
+          retention-days: 1
 
   pr-validation:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [quality, security, tests]
     if: github.event_name == 'pull_request'
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      FACEBOOK_CLIENT_ID: ${{ secrets.FACEBOOK_CLIENT_ID }}
+      FACEBOOK_CLIENT_SECRET: ${{ secrets.FACEBOOK_CLIENT_SECRET }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+      NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+      NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+      EDGE_STORE_ACCESS_KEY: ${{ secrets.EDGE_STORE_ACCESS_KEY }}
+      EDGE_STORE_SECRET_KEY: ${{ secrets.EDGE_STORE_SECRET_KEY }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+      EMAIL_USER: ${{ secrets.EMAIL_USER }}
+      EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+      OTP_SECRET: ${{ secrets.OTP_SECRET }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -113,33 +130,11 @@ jobs:
           node-version: 20.19.0
           cache: 'npm'
       - run: npm ci
-      - uses: actions/download-artifact@v4
-        with:
-          name: build-artifact
-          path: .next
+      - run: npm run build
 
-  deploy-staging:
+  deploy:
     runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20.19.0
-          cache: 'npm'
-      - run: npm ci
-      - uses: actions/download-artifact@v4
-        with:
-          name: build-artifact
-          path: .next
-      - run: npm run start &
-      - run: sleep 5
-      - run: curl -f http://localhost:3000 || exit 1
-
-  deploy-production:
-    runs-on: ubuntu-latest
-    needs: build
+    needs: [quality, build, security, tests]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
@@ -153,12 +148,12 @@ jobs:
           name: build-artifact
           path: .next
       - run: npm run start &
-      - run: sleep 5
-      - run: curl -f http://localhost:3000 || exit 1
+      - run: sleep 8
+      - run: curl -f http://localhost:3000/api/health || exit 1
 
   slack-notification:
     runs-on: ubuntu-latest
-    needs: [deploy-staging, deploy-production]
+    needs: [deploy]
     if: always()
     steps:
       - name: Slack Notification
@@ -166,4 +161,4 @@ jobs:
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK }}
           status: ${{ job.status }}
-          message: "Deployment to ${{ github.ref_name }} completed with status: ${{ job.status }}"
+          message: "Deployment to ${{ github.ref_name }} completed with status: ${{ job.status }}. Build ID: ${{ github.sha }}"
