@@ -6,6 +6,7 @@
     import "react-loading-skeleton/dist/skeleton.css";
     import LayoutContent from "@/components/layout/LayoutContent";
     import Providers from "@/components/common/Provider";
+    import AuthErrorHandler from "@/components/auth/AuthErrorHandler";
 
     const inter = Inter({
     subsets: ["latin"],
@@ -57,6 +58,7 @@
             suppressHydrationWarning
         >
             <Providers>
+                <AuthErrorHandler />
                 <LayoutContent>
                     {children}
                 </LayoutContent>
