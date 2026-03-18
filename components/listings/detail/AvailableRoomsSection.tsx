@@ -34,7 +34,8 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
   isLoading,
   user,
 }) => {
-  const availableRooms = rooms.filter((room) => room.status === "available");
+  // Show all rooms, not just available ones
+  const allRooms = rooms;
   const router = useRouter();
   const [inquiringRoomId, setInquiringRoomId] = useState<string | null>(null);
   const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -72,7 +73,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
         Available Rooms / Bedspaces
       </h2>
 
-      {availableRooms.length === 0 ? (
+      {allRooms.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-lg text-gray-500 dark:text-gray-400 mb-4">
             No rooms available for this listing
@@ -80,7 +81,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {availableRooms.map((room) => (
+          {allRooms.map((room) => (
             <div
               key={room.id}
               className="bg-white dark:bg-gray-800 rounded-card shadow-soft overflow-hidden border border-border dark:border-gray-700 transition-colors duration-300"
@@ -141,7 +142,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
                   </div>
                 </div>
 
-                {/* Inquire Button */}
+                {/* Reserve Button */}
                 {user ? (
                   <Modal>
                     <Modal.Trigger name={`inquire-${room.id}`}>
@@ -149,8 +150,9 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
                         className="w-full"
                         isLoading={inquiringRoomId === room.id}
                         onClick={(e) => handleInquireClick(e, room.id)}
+                        disabled={room.status !== "available"}
                       >
-                        Inquire
+                        {room.status === "available" ? "Reserve" : "Full"}
                       </Button>
                     </Modal.Trigger>
 
@@ -166,8 +168,9 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
                     className="w-full"
                     onClick={(e) => handleInquireClick(e, room.id)}
                     isLoading={inquiringRoomId === room.id}
+                    disabled={room.status !== "available"}
                   >
-                    Inquire
+                    {room.status === "available" ? "Reserve" : "Full"}
                   </Button>
                 )}
               </div>
