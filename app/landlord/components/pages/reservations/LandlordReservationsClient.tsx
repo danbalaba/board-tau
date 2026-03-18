@@ -54,9 +54,9 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
     ? reservations
     : reservations.filter(reservation => reservation.status === selectedStatus);
 
-  const handleRespond = async (reservationId: string, status: 'approved' | 'rejected') => {
+  const handleRespond = async (inquiryId: string, status: 'approved' | 'rejected') => {
     try {
-      const response = await fetch(`/api/reservations?id=${reservationId}`, {
+      const response = await fetch(`/api/inquiries?id=${inquiryId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -65,11 +65,11 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
       });
 
       if (response.ok) {
-        // Refresh the reservations list
+        // Refresh the inquiries list
         window.location.reload();
       }
     } catch (error) {
-      console.error('Error responding to reservation request:', error);
+      console.error('Error responding to inquiry:', error);
     }
   };
 

@@ -134,28 +134,28 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
 
     startTransition(async () => {
       try {
-        const reservationData = {
+        const inquiryData = {
           ...data,
           listingId: id,
           userId: user.id,
         };
 
-        const response = await fetch("/api/reservations", {
+        const response = await fetch("/api/inquiries", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(reservationData),
+          body: JSON.stringify(inquiryData),
         });
 
         if (!response.ok) {
-          throw new Error("Failed to create reservation request");
+          throw new Error("Failed to create inquiry");
         }
 
-        toast.success("Reservation request sent! Waiting for landlord approval.");
+        toast.success("Inquiry sent! Waiting for landlord approval.");
       } catch (error: any) {
-        console.error('Reservation request error:', error);
-        toast.error(error?.message || 'Failed to send reservation request');
+        console.error('Inquiry error:', error);
+        toast.error(error?.message || 'Failed to send inquiry');
       }
     });
   };
