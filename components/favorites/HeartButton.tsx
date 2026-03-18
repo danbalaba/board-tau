@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useCallback, useRef } from "react";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
-import { toast } from "react-hot-toast";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { useMutation } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import { useSession } from "next-auth/react";
@@ -20,6 +20,7 @@ const HeartButton: React.FC<HeartButtonProps> = ({
   hasFavorited: initialValue,
 }) => {
   const { status } = useSession();
+  const { error } = useResponsiveToast();
   const [hasFavorited, setHasFavorited] = useState(initialValue);
   const hasFavoritedRef = useRef(initialValue);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -30,7 +31,7 @@ const HeartButton: React.FC<HeartButtonProps> = ({
     onError: () => {
       hasFavoritedRef.current = !hasFavoritedRef.current;
       setHasFavorited(hasFavoritedRef.current);
-      toast.error("Failed to favorite");
+      error("Failed to favorite");
     }
   });
 
@@ -64,7 +65,10 @@ const HeartButton: React.FC<HeartButtonProps> = ({
 
       // Show toast only once after a delay
       debounceTimerRef.current = setTimeout(() => {
-        toast.error("Please sign in to favorite the listing!");
+        error({
+          title: "Please sign in",
+          description: "You need to be logged in to favorite listings"
+        });
         setIsLoading(false);
       }, 1000);
 
