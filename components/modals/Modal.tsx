@@ -17,8 +17,24 @@ import { createPortal } from "react-dom";
 
 import { useOutsideClick } from "@/hooks/useOutsideClick";
 import { useIsClient } from "@/hooks/useIsClient";
-import { useKeyPress } from "@/hooks/useKeyPress";
 import { fadeIn, modalSheet } from "@/utils/motion";
+
+// Simple implementation of useKeyPress
+const useKeyPress = ({ key, action, enable = true }: { key: string; action: (e: KeyboardEvent) => void; enable?: boolean }) => {
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === key) action(e);
+    };
+
+    if (enable) {
+      window.addEventListener("keydown", onKeyDown);
+    } else {
+      window.removeEventListener("keydown", onKeyDown);
+    }
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [action, key, enable]);
+};
 
 interface ModalProps {
   children: ReactNode;
@@ -56,10 +72,10 @@ const Modal: FC<ModalProps> & {
   // Simplified API for direct control (no context)
   if (isOpen !== undefined) {
     const isClient = useIsClient();
-    
+
     // Only render portal on client side
     if (!isClient) return null;
-    
+
     return createPortal(
       <AnimatePresence>
         {isOpen ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaHeart, FaCalendarCheck, FaHome, FaUser, FaHotel } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { User } from "next-auth";
@@ -10,7 +10,7 @@ import AuthModal from "@/components/modals/AuthModal";
 import HostApplicationModal from "@/components/modals/HostApplicationModal";
 import Menu from "@/components/common/Menu";
 import Avatar from "@/components/common/Avatar";
-import { useScrollDirection } from "@/components/hooks/useScrollDirection";
+
 
 interface MobileBottomBarProps {
   user?: (User & { id: string; role?: string });
@@ -18,14 +18,35 @@ interface MobileBottomBarProps {
 
 const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
   const router = useRouter();
-  const scrollDirection = useScrollDirection();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [scrollDirection, setScrollDirection] = useState<"up" | "down" | "">("");
+  const [lastY, setLastY] = useState(0);
+
+  // Implement scroll direction tracking
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+
+      if (currentY === 0) {
+        setScrollDirection("");
+      } else if (currentY > lastY) {
+        setScrollDirection("down");
+      } else {
+        setScrollDirection("up");
+      }
+
+      setLastY(currentY);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastY]);
+
+  const isHidden = scrollDirection === "down";
 
   const redirect = (url: string) => {
     router.push(url);
   };
-
-  const isHidden = scrollDirection === "down";
 
   return (
     <div
