@@ -5,7 +5,7 @@ import { X, Lock, Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import Input from "@/components/inputs/Input";
 import Button from "@/components/common/Button";
-import toast from "react-hot-toast";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { changeUserPasswordClient } from "@/services/user/profile";
 import { validateChangePasswordForm } from "@/lib/validators";
 
@@ -19,6 +19,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   onClose,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const { success, error } = useResponsiveToast();
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -40,11 +41,11 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     setIsLoading(true);
     try {
       await changeUserPasswordClient(data.oldPassword, data.newPassword);
-      toast.success("Password updated successfully");
+      success("Password updated successfully");
       reset();
       onClose();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to change password");
+    } catch (err: any) {
+      error(err.message || "Failed to change password");
     } finally {
       setIsLoading(false);
     }

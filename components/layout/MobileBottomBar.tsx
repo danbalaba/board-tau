@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { FaHeart, FaCalendarCheck, FaHome, FaUser } from "react-icons/fa";
+import { FaHeart, FaCalendarCheck, FaHome, FaUser, FaHotel } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { User } from "next-auth";
 
@@ -71,6 +71,18 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
             </>
           ) : (
             <>
+              {/* Home */}
+              <button
+                type="button"
+                onClick={() => redirect("/")}
+                className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <FaHome className="text-xl text-gray-600 dark:text-gray-400" />
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Home
+                </span>
+              </button>
+
               {/* Favorites */}
               <button
                 type="button"
@@ -102,7 +114,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
                     type="button"
                     className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   >
-                    <FaHome className="text-xl text-gray-600 dark:text-gray-400" />
+                    <FaHotel className="text-xl text-gray-600 dark:text-gray-400" />
                     <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                       Host
                     </span>

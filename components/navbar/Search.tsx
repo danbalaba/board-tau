@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect, useContext } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { FaSearch, FaMapMarkerAlt, FaCalendar, FaUsers } from "react-icons/fa";
+import { FaSearch, FaMapMarkerAlt, FaBed } from "react-icons/fa";
 import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
 
@@ -46,14 +46,6 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
     return `Near ${name}`;
   }, [college, distance]);
 
-  const categoryLabel = useMemo(() => {
-    if (categories?.length) {
-      if (categories.length === 1) return categories[0];
-      return `${categories.length} categories`;
-    }
-    return "Any category";
-  }, [categories]);
-
   const priceLabel = useMemo(() => {
     if (minPrice && maxPrice && +minPrice > 0 && +maxPrice > 0) {
       return `₱${minPrice}–${maxPrice} / mo`;
@@ -65,11 +57,6 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
     if (roomType) return roomType;
     return "Any room";
   }, [roomType]);
-
-  const occupantLabel = useMemo(() => {
-    if (guestCount) return `${guestCount} occupants`;
-    return "Occupants";
-  }, [guestCount]);
 
   const handleSearchClose = () => {
     setIsExpanded(false);
@@ -135,7 +122,7 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                {compact ? (
                 <>
                   <motion.div
-                    className="flex items-center flex-1 min-w-0"
+                    className="flex items-center flex-1 min-w-0 max-w-[33%]"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.08 }}
@@ -145,7 +132,7 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Location</span>
-                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                      <span className="font-semibold text-xs text-gray-900 dark:text-white truncate">
                         {locationLabel}
                       </span>
                     </div>
@@ -153,36 +140,36 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                   </motion.div>
 
                   <motion.div
-                    className="flex items-center flex-1 min-w-0"
+                    className="flex items-center flex-1 min-w-0 max-w-[33%]"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.11 }}
                   >
                     <div className="flex items-center mr-5 text-[#2F7D6D] dark:text-[#4FA89A]">
-                      <FaCalendar className="text-sm" />
+                      <FaSearch className="text-sm" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Date</span>
-                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
-                        Flexible
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Budget</span>
+                      <span className="font-semibold text-xs text-gray-900 dark:text-white truncate">
+                        {priceLabel}
                       </span>
                     </div>
                     <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-5" />
                   </motion.div>
 
                   <motion.div
-                    className="flex items-center flex-1 min-w-0"
+                    className="flex items-center flex-1 min-w-0 max-w-[33%]"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.14 }}
                   >
                     <div className="flex items-center mr-5 text-[#2F7D6D] dark:text-[#4FA89A]">
-                      <FaUsers className="text-sm" />
+                      <FaBed className="text-sm" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Guests</span>
-                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
-                        {occupantLabel}
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Room Type</span>
+                      <span className="font-semibold text-xs text-gray-900 dark:text-white truncate">
+                        {roomTypeLabel}
                       </span>
                     </div>
                   </motion.div>
@@ -190,7 +177,7 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                   <motion.div
                     whileHover={{ scale: 1.1, rotate: 5 }}
                     whileTap={{ scale: 0.95, rotate: -5 }}
-                    className="p-3 bg-gradient-to-r from-primary to-orange-500 rounded-full text-white shadow-lg shrink-0 ml-5 hover:shadow-orange-500/40 transition-all duration-300"
+                    className="p-3 bg-gradient-to-r from-primary to-orange-500 rounded-full text-white shadow-lg shrink-0 ml-3 hover:shadow-orange-500/40 transition-all duration-300"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.23 }}
@@ -226,62 +213,62 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
 
                   {/* Desktop View - Full Summary */}
                   <motion.div
-                    className="hidden md:flex items-center justify-between w-full h-[88px] px-10 py-6 rounded-full"
+                    className="hidden md:flex items-center justify-between w-full h-[88px] px-6 py-6 rounded-full"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
                   >
                     <motion.div
-                      className="flex items-center flex-1 min-w-0"
+                      className="flex items-center flex-1 min-w-0 max-w-[30%]"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.08 }}
                     >
-                      <div className="flex items-center mr-5 text-primary">
+                      <div className="flex items-center mr-3 text-primary">
                         <FaMapMarkerAlt className="text-lg" />
                       </div>
                       <div className="flex flex-col">
                         <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Location</span>
-                        <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
+                        <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
                           {locationLabel}
                         </span>
                       </div>
                     </motion.div>
 
-                    <div className="h-10 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-5" />
+                    <div className="h-10 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-3" />
 
                     <motion.div
-                      className="flex items-center flex-1 min-w-0"
+                      className="flex items-center flex-1 min-w-0 max-w-[25%]"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.11 }}
                     >
-                      <div className="flex items-center mr-5 text-primary">
-                        <FaCalendar className="text-lg" />
+                      <div className="flex items-center mr-3 text-primary">
+                        <FaSearch className="text-lg" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Date</span>
-                        <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
-                          Flexible
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Budget</span>
+                        <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                          {priceLabel}
                         </span>
                       </div>
                     </motion.div>
 
-                    <div className="h-10 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-5" />
+                    <div className="h-10 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-3" />
 
                     <motion.div
-                      className="flex items-center flex-1 min-w-0"
+                      className="flex items-center flex-1 min-w-0 max-w-[25%]"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.14 }}
                     >
-                      <div className="flex items-center mr-5 text-primary">
-                        <FaUsers className="text-lg" />
+                      <div className="flex items-center mr-3 text-primary">
+                        <FaBed className="text-lg" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Guests</span>
-                        <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
-                          {occupantLabel}
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Room Type</span>
+                        <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                          {roomTypeLabel}
                         </span>
                       </div>
                     </motion.div>
@@ -289,7 +276,7 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                     <motion.div
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       whileTap={{ scale: 0.95, rotate: -5 }}
-                      className="p-4 bg-gradient-to-r from-primary to-orange-500 rounded-full text-white shadow-lg shrink-0 ml-5 hover:shadow-orange-500/40 transition-all duration-300"
+                      className="p-4 bg-gradient-to-r from-primary to-orange-500 rounded-full text-white shadow-lg shrink-0 ml-3 hover:shadow-orange-500/40 transition-all duration-300"
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.23 }}

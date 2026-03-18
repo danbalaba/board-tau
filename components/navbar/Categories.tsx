@@ -51,19 +51,18 @@ const Categories = () => {
 
   return (
     <div className="py-10 bg-gradient-to-b from-transparent to-gray-50 dark:from-transparent dark:to-slate-900/50">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-center text-xl md:text-2xl font-semibold text-text-primary dark:text-gray-100 mb-8 px-4">
+      <div className="max-w-full mx-auto px-4 md:px-8">
+        <h2 className="text-center text-xl md:text-2xl font-semibold text-text-primary dark:text-gray-100 mb-8">
           Seamless stay & experiences
         </h2>
-        <div className="flex flex-nowrap justify-start items-center gap-3 overflow-x-auto pb-2 -mx-4 md:mx-0 md:justify-center hide-scrollbar">
-          <div className="flex gap-3 px-4 md:px-0">
+        <div className="flex flex-nowrap justify-start items-center gap-2 overflow-x-auto pb-2 -mx-4 md:mx-0 md:justify-center md:overflow-visible hide-scrollbar">
           {categories.map((item: Category, index: number) => {
             const Icon = item.icon;
             return (
               <motion.button
                 key={item.label}
                 onClick={() => handleCategoryClick(item.label)}
-                className={`px-3.5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center space-x-1.5 group flex-shrink-0 ${
+                className={`px-4 py-2.5 rounded-full text-sm md:text-sm font-medium transition-all duration-300 flex items-center space-x-1.5 group flex-shrink-0 ${
                   category === item.label
                     ? "bg-primary text-white shadow-lg shadow-primary/30"
                     : "bg-white dark:bg-slate-800 text-text-primary dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700"
@@ -91,7 +90,6 @@ const Categories = () => {
               </motion.button>
             );
           })}
-          </div>
         </div>
       </div>
     </div>
