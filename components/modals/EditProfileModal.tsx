@@ -6,7 +6,7 @@ import { UserProfile } from "@/services/user/profile";
 import Button from "@/components/common/Button";
 import Input from "@/components/inputs/Input";
 import Textarea from "@/components/inputs/Textarea";
-import toast from "react-hot-toast";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { CheckCircle, XCircle } from "lucide-react";
 import { validateName, validatePhoneNumber, sanitizeInput } from "@/lib/validators";
 
@@ -24,6 +24,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   onUpdate,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const { success, error } = useResponsiveToast();
   const { register, handleSubmit, formState: { errors }, reset } = useForm<UserProfile>({
     defaultValues: profile,
   });
@@ -41,10 +42,10 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       };
 
       await onUpdate(sanitizedData);
-      toast.success("Profile updated successfully");
+      success("Profile updated successfully");
       onClose();
-    } catch (error) {
-      toast.error("Failed to update profile");
+    } catch (err) {
+      error("Failed to update profile");
     } finally {
       setIsLoading(false);
     }

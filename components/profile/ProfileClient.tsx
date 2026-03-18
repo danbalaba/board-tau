@@ -10,7 +10,7 @@ import Button from "@/components/common/Button";
 import Input from "@/components/inputs/Input";
 import Avatar from "@/components/common/Avatar";
 import { signOut } from "next-auth/react";
-import toast from "react-hot-toast";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import EditProfileModal from "@/components/modals/EditProfileModal";
 import ChangePasswordModal from "@/components/modals/ChangePasswordModal";
 
@@ -21,6 +21,7 @@ interface ProfileClientProps {
 const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { success, error } = useResponsiveToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const { register, handleSubmit, formState: { errors }, reset } = useForm<UserProfile>({
@@ -31,10 +32,10 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
     setIsLoading(true);
     try {
       // TODO: Implement update profile API call
-      toast.success("Profile updated successfully");
+      success("Profile updated successfully");
       setIsEditing(false);
-    } catch (error) {
-      toast.error("Failed to update profile");
+    } catch (err) {
+      error("Failed to update profile");
     } finally {
       setIsLoading(false);
     }

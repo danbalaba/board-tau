@@ -3,7 +3,7 @@ import React, { FC, useTransition } from "react";
 import { BsThreeDots } from "react-icons/bs";
 import { usePathname } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 
 import Menu from "../common/Menu";
 import Modal from "../modals/Modal";
@@ -21,6 +21,7 @@ interface ListingMenuProps {
 
 const ListingMenu: FC<ListingMenuProps> = ({ id }) => {
   const pathname = usePathname();
+  const { success, error } = useResponsiveToast();
   const { mutate: cancelReservation } = useMutation({
     mutationFn: deleteReservation,
   });
@@ -35,12 +36,12 @@ const ListingMenu: FC<ListingMenuProps> = ({ id }) => {
           cancelReservation(id, {
             onSuccess: () => {
               onModalClose?.();
-              toast.success("Reservation successfully cancelled!");
+              success("Reservation successfully cancelled!");
             },
           });
         }
-      } catch (error) {
-        toast.error("Oops! Something went wrong. Please try again later.");
+      } catch (err) {
+        error("Oops! Something went wrong. Please try again later.");
         onModalClose?.()
       }
     });

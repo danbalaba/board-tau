@@ -9,6 +9,7 @@ import Search from "./Search";
 import MobileSearch from "./MobileSearch";
 import { User } from "next-auth";
 import { glassFadeIn, floatIn } from "@/utils/motion";
+import { usePathname } from "next/navigation";
 
 interface NavbarClientProps {
   user?: (User & { id: string; role?: string });
@@ -17,6 +18,8 @@ interface NavbarClientProps {
 const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+  const isHomePage = pathname === "/";
 
   useEffect(() => {
     setMounted(true);
@@ -56,39 +59,41 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
             <Logo />
           </motion.div>
 
-          {/* Search bar - mobile: full width, desktop: absolute center */}
-          <div className="flex-1 px-4 md:absolute md:left-1/2 md:transform md:-translate-x-1/2 md:px-8">
-            <motion.div
-              variants={floatIn("up")}
-              initial="hidden"
-              animate={{
-                opacity: isScrolled ? 0.98 : 0,
-                scale: isScrolled ? 1 : 0.85,
-                y: isScrolled ? 0 : 20,
-                filter: isScrolled ? "blur(0px)" : "blur(2px)"
-              }}
-              transition={{
-                duration: 0.45,
-                ease: [0.22, 1, 0.36, 1],
-                delayChildren: 0.05,
-                staggerChildren: 0.03
-              }}
-              className="flex items-center w-full"
-              style={{
-                maxWidth: isScrolled && !window.matchMedia('(max-width: 768px)').matches ? '500px' : '100%'
-              }}
-            >
-              {/* Desktop search */}
-              <div className="hidden md:block">
-                <Search compact={true} />
-              </div>
+          {/* Search bar - mobile: full width, desktop: absolute center (only on home page) */}
+          {isHomePage && (
+            <div className="flex-1 px-4 md:absolute md:left-1/2 md:transform md:-translate-x-1/2 md:px-8">
+              <motion.div
+                variants={floatIn("up")}
+                initial="hidden"
+                animate={{
+                  opacity: isScrolled ? 0.98 : 0,
+                  scale: isScrolled ? 1 : 0.85,
+                  y: isScrolled ? 0 : 20,
+                  filter: isScrolled ? "blur(0px)" : "blur(2px)"
+                }}
+                transition={{
+                  duration: 0.45,
+                  ease: [0.22, 1, 0.36, 1],
+                  delayChildren: 0.05,
+                  staggerChildren: 0.03
+                }}
+                className="flex items-center w-full"
+                style={{
+                  maxWidth: isScrolled && !window.matchMedia('(max-width: 768px)').matches ? '500px' : '100%'
+                }}
+              >
+                {/* Desktop search */}
+                <div className="hidden md:block">
+                  <Search compact={true} />
+                </div>
 
-              {/* Mobile search - full width */}
-              <div className="md:hidden w-full">
-                <MobileSearch />
-              </div>
-            </motion.div>
-          </div>
+                {/* Mobile search - full width */}
+                <div className="md:hidden w-full">
+                  <MobileSearch />
+                </div>
+              </motion.div>
+            </div>
+          )}
 
           {/* Desktop: Theme toggle + User menu right */}
           <div className="hidden md:flex items-center gap-1">
