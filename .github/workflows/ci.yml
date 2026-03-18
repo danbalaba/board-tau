@@ -101,6 +101,7 @@ jobs:
         with:
           name: build-artifact
           path: .next
+          retention-days: 1
 
   pr-validation:
     runs-on: ubuntu-latest
