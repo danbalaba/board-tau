@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { EdgeStoreProvider } from "@/lib/edgestore";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
-import { Toaster } from "./Toast";
+import { ResponsiveToastProvider } from "./ResponsiveToast";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 const queryClient = new QueryClient({
@@ -57,8 +57,9 @@ const Providers = ({ children }: PropsWithChildren) => {
         <QueryClientProvider client={queryClient}>
           <SessionProvider>
             <EdgeStoreProvider>
-              <Toaster />
-              {children}
+              <ResponsiveToastProvider>
+                {children}
+              </ResponsiveToastProvider>
             </EdgeStoreProvider>
           </SessionProvider>
         </QueryClientProvider>
