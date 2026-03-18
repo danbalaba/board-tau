@@ -49,6 +49,27 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
   const [selectedRoomIndex, setSelectedRoomIndex] = useState<number>(-1);
   const [loadingIndices, setLoadingIndices] = useState<number[]>([]);
 
+  const handleAddCustomAmenity = (roomIndex: number) => {
+    setSelectedRoomIndex(roomIndex);
+    setCustomAmenityText('');
+    setShowCustomAmenityModal(true);
+  };
+
+  const handleCustomAmenitySubmit = () => {
+    if (customAmenityText.trim() && selectedRoomIndex !== -1) {
+      const currentRooms = getValues('propertyConfig.rooms');
+      const updatedRooms = [...currentRooms];
+      const customAmenity = customAmenityText.trim().toUpperCase().replace(/\s+/g, '_');
+
+      if (!updatedRooms[selectedRoomIndex].amenities.includes(customAmenity)) {
+        updatedRooms[selectedRoomIndex].amenities.push(customAmenity);
+        setValue('propertyConfig.rooms', updatedRooms); // Update the form state
+      }
+
+      setShowCustomAmenityModal(false);
+    }
+  };
+
   // Bed type options per room type
   const getBedTypeOptions = (roomType: string) => {
     if (roomType === ROOM_TYPES.SOLO) {
@@ -84,25 +105,7 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
     }, 500);
   };
 
-  const handleAddCustomAmenity = (roomIndex: number) => {
-    setSelectedRoomIndex(roomIndex);
-    setCustomAmenityText('');
-    setShowCustomAmenityModal(true);
-  };
 
-  const handleCustomAmenitySubmit = () => {
-    if (customAmenityText.trim() && selectedRoomIndex !== -1) {
-      const currentRooms = getValues('propertyConfig.rooms');
-      const updatedRooms = [...currentRooms];
-      const customAmenity = customAmenityText.trim().toUpperCase().replace(/\s+/g, '_');
-
-      if (!updatedRooms[selectedRoomIndex].amenities.includes(customAmenity)) {
-        updatedRooms[selectedRoomIndex].amenities.push(customAmenity);
-      }
-
-      setShowCustomAmenityModal(false);
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -307,6 +310,7 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
                   <div className="mb-6">
                     <h6 className="font-medium text-gray-900 dark:text-white mb-3">Room Amenities</h6>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {/* Predefined amenities */}
                       {getApplicableAmenities(currentRoomType).map((amenity) => {
                         return (
                           <div key={amenity.value} className="flex items-center space-x-2">
@@ -322,6 +326,28 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
                               className="text-sm text-gray-700 dark:text-gray-300"
                             >
                               {amenity.label}
+                            </label>
+                          </div>
+                        );
+                      })}
+                      {/* Custom amenities */}
+                      {watch(`propertyConfig.rooms[${index}].amenities`)?.filter((amenity: string) => 
+                        !getApplicableAmenities(currentRoomType).some(predefined => predefined.value === amenity)
+                      ).map((customAmenity: string) => {
+                        return (
+                          <div key={customAmenity} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={`room-${index}-amenity-${customAmenity}`}
+                              {...register(`propertyConfig.rooms[${index}].amenities`, { required: false })}
+                              value={customAmenity}
+                              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
+                            />
+                            <label
+                              htmlFor={`room-${index}-amenity-${customAmenity}`}
+                              className="text-sm text-gray-700 dark:text-gray-300"
+                            >
+                              {customAmenity.replace(/_/g, ' ').toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                             </label>
                           </div>
                         );
@@ -383,7 +409,7 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
         isOpen={showCustomAmenityModal}
         onClose={() => setShowCustomAmenityModal(false)}
         title="Add Custom Amenity"
-        width="md"
+        width="sm"
       >
         <div className="space-y-4">
           <Input
