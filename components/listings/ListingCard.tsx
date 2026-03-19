@@ -53,7 +53,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
 
       <Link href={`/listings/${data.id}`} className="col-span-1 cursor-pointer group/card block">
         <motion.div
-          className="flex flex-col gap-2.5 w-full rounded-card overflow-hidden bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/40 dark:border-white/10 shadow-soft hover:shadow-hover dark:shadow-glass-dark transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] group-hover/card:ring-2 group-hover/card:ring-primary/20 dark:group-hover/card:ring-primary/30"
+          className="flex flex-col gap-2.5 w-full rounded-card overflow-hidden bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/40 dark:border-white/10 shadow-soft hover:shadow-hover dark:shadow-glass-dark transition-all duration-300 ease-apple group-hover/card:ring-2 group-hover/card:ring-primary/20 dark:group-hover/card:ring-primary/30"
           whileHover={{ y: -4 }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
         >

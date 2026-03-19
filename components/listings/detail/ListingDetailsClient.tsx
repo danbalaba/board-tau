@@ -128,34 +128,37 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
 
   const handleInquiry = async (data: any) => {
     if (!user) {
-      toast.error("Please log in to send an inquiry.");
+      toast.error("Please log in to make a reservation.");
       return;
     }
 
     startTransition(async () => {
       try {
-        const inquiryData = {
+        const reservationData = {
           ...data,
           listingId: id,
           userId: user.id,
         };
 
-        const response = await fetch("/api/inquiries", {
+        // Create reservation directly
+        const response = await fetch("/api/reservations/direct", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(inquiryData),
+          body: JSON.stringify(reservationData),
         });
 
         if (!response.ok) {
-          throw new Error("Failed to create inquiry");
+          const errorData = await response.json();
+          console.error("API Error Response:", errorData);
+          throw new Error(errorData.error || errorData.message || "Failed to create reservation");
         }
 
-        toast.success("Inquiry sent! Waiting for landlord approval.");
+        toast.success("Reservation created!");
       } catch (error: any) {
-        console.error('Inquiry error:', error);
-        toast.error(error?.message || 'Failed to send inquiry');
+        console.error('Reservation error:', error);
+        toast.error(error?.message || 'Failed to create reservation');
       }
     });
   };
