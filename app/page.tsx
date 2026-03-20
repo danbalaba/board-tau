@@ -3,6 +3,7 @@ import HeroSection from "@/components/home/HeroSection";
 import ListingsGrid from "@/components/listings/ListingsGrid";
 import Categories from "@/components/navbar/Categories";
 import EmptyState from "@/components/common/EmptyState";
+import LoadingAnimation from "@/components/common/LoadingAnimation";
 
 import { getListings } from "@/services/user/listings";
 import { getFavorites } from "@/services/user/favorites";
@@ -36,8 +37,26 @@ const Home: FC<HomeProps> = async ({ searchParams }) => {
       )
     : {};
 
-  const result = await getListings(resolved);
-  const favorites = await getFavorites();
+  // Show loading state while fetching data
+  // Note: In Next.js, async components will automatically show loading.tsx
+  // But we'll add a placeholder here if needed
+
+  // Wrap data fetching in try-catch for error handling
+  let result, favorites;
+  try {
+    result = await getListings(resolved);
+    favorites = await getFavorites();
+  } catch (error) {
+    console.error("Error fetching listings:", error);
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <EmptyState
+          title="Error Loading Listings"
+          subtitle="We're having trouble loading the listings. Please try again later."
+        />
+      </div>
+    );
+  }
 
   if (!result.listings || result.listings.length === 0) {
     return (
