@@ -109,42 +109,42 @@ const SearchManager = ({ isScrolled = false }: SearchManagerProps) => {
               </div>
 
               {/* Desktop View - Full Summary */}
+               <motion.div
+                 className="hidden md:flex items-center justify-between w-full h-[88px] px-10 py-6 rounded-full"
+                 initial={{ opacity: 0, y: 10 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 transition={{ delay: 0.05 }}
+               >
                 <motion.div
-                  className="hidden md:flex items-center justify-between w-full h-[88px] px-6 py-6 rounded-full"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 }}
+                  className="flex items-center flex-1 min-w-0"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.08 }}
                 >
-                 <motion.div
-                   className="flex items-center flex-1 min-w-0 max-w-[30%]"
-                   initial={{ opacity: 0, x: -20 }}
-                   animate={{ opacity: 1, x: 0 }}
-                   transition={{ delay: 0.08 }}
-                 >
-                   <div className="flex items-center mr-4 text-primary">
-                     <FaMapMarkerAlt className="text-xl" />
-                   </div>
-                   <div className="flex flex-col">
-                     <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">Location</span>
-                     <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
-                       {locationLabel}
-                     </span>
-                   </div>
-                 </motion.div>
+                  <div className="flex items-center mr-5 text-primary">
+                    <FaMapMarkerAlt className="text-lg" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Location</span>
+                    <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
+                      {locationLabel}
+                    </span>
+                  </div>
+                </motion.div>
 
-                 <div className="h-10 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-3" />
+                <div className="h-10 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-3" />
 
                  <motion.div
-                   className="flex items-center flex-1 min-w-0 max-w-[25%]"
+                   className="flex items-center flex-1 min-w-0"
                    initial={{ opacity: 0, x: -20 }}
                    animate={{ opacity: 1, x: 0 }}
                    transition={{ delay: 0.11 }}
                  >
-                   <div className="flex items-center mr-4 text-primary">
-                     <FaSearch className="text-xl" />
+                   <div className="flex items-center mr-5 text-primary">
+                     <FaSearch className="text-lg" />
                    </div>
                    <div className="flex flex-col">
-                     <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">Budget</span>
+                     <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Budget</span>
                      <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
                        {priceLabel}
                      </span>
@@ -154,32 +154,32 @@ const SearchManager = ({ isScrolled = false }: SearchManagerProps) => {
                  <div className="h-10 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-3" />
 
                  <motion.div
-                   className="flex items-center flex-1 min-w-0 max-w-[25%]"
+                   className="flex items-center flex-1 min-w-0"
                    initial={{ opacity: 0, x: -20 }}
                    animate={{ opacity: 1, x: 0 }}
                    transition={{ delay: 0.14 }}
                  >
-                   <div className="flex items-center mr-4 text-primary">
-                     <FaBed className="text-xl" />
+                   <div className="flex items-center mr-5 text-primary">
+                     <FaBed className="text-lg" />
                    </div>
                    <div className="flex flex-col">
-                     <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">Room Type</span>
+                     <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Room Type</span>
                      <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
                        {roomTypeLabel}
                      </span>
                    </div>
                  </motion.div>
 
-                 <motion.div
-                   whileHover={{ scale: 1.1, rotate: 5 }}
-                   whileTap={{ scale: 0.95, rotate: -5 }}
-                   className="p-4 bg-gradient-to-r from-primary to-orange-500 rounded-full text-white shadow-lg shrink-0 ml-3 hover:shadow-orange-500/40 transition-all duration-300"
-                   initial={{ opacity: 0, scale: 0.8 }}
-                   animate={{ opacity: 1, scale: 1 }}
-                   transition={{ delay: 0.23 }}
-                 >
-                   <FaSearch className="text-lg" aria-hidden />
-                 </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileTap={{ scale: 0.95, rotate: -5 }}
+                  className="p-4 bg-gradient-to-r from-primary to-orange-500 rounded-full text-white shadow-lg shrink-0 ml-8 hover:shadow-orange-500/40 transition-all duration-300"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.23 }}
+                >
+                  <FaSearch className="text-lg" aria-hidden />
+                </motion.div>
               </motion.div>
             </motion.button>
           </Modal.Trigger>

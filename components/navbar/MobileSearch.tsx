@@ -14,7 +14,7 @@ interface MobileSearchProps {
   layoutId?: string;
 }
 
-const MobileSearch: React.FC<MobileSearchProps> = ({ layoutId = "search-bar" }) => {
+const MobileSearch: React.FC<MobileSearchProps> = ({ layoutId = "mobile-search-bar" }) => {
   const [mounted, setMounted] = useState(false);
   const { open } = useContext(ModalContext);
 
