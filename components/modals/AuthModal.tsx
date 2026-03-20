@@ -370,7 +370,7 @@ const AuthModal = ({
       </form>
 
       {!isOTPModal && (
-        <div className="flex flex-col gap-4 mt-0 p-4 pt-0 md:gap-4 md:mt-0 md:p-6">
+        <div className="flex flex-col gap-4 mt-4 p-4 pt-0 md:gap-4 md:mt-0 md:p-6">
           <hr />
           <Button
             outline
