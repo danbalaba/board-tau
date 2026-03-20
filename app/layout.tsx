@@ -60,7 +60,9 @@ export default function RootLayout({
             <Suspense fallback={null}>
               <AuthErrorHandler />
             </Suspense>
-            <GlobalLoadingOverlay />
+            <Suspense fallback={null}>
+              <GlobalLoadingOverlay />
+            </Suspense>
             <LayoutContent>
               {children}
             </LayoutContent>
