@@ -244,6 +244,16 @@ html[data-theme] body {
   }
 }
 
+/* Classic Spin Animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 @layer components {
   /* ===== SOLID SEARCH BAR ===== */
   .search-bar-trigger {
