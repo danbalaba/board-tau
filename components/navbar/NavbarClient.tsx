@@ -32,14 +32,14 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
 
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 border-b transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${
+      className={`fixed top-0 left-0 w-full z-50 border-b transition-all duration-300 ease-apple ${
         isScrolled
           ? "bg-white/72 dark:bg-gray-900/72 backdrop-blur-xl border-gray-200/60 dark:border-white/10 shadow-[0_1px_0_rgba(255,255,255,0.5)] dark:shadow-[0_1px_0_rgba(255,255,255,0.06)]"
           : "bg-transparent border-transparent"
       }`}
     >
       <nav
-        className={`transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] flex items-center ${
+        className={`transition-all duration-300 ease-apple flex items-center ${
           isScrolled ? "h-[80px] md:py-5" : "h-[96px] md:py-7"
         }`}
       >

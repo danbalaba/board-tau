@@ -491,7 +491,11 @@ export const getListingById = async (id: string) => {
           createdAt: "desc",
         },
       },
-      rooms: true,
+      rooms: {
+        include: {
+          images: true,
+        },
+      },
       amenities: true,
       rules: true,
       features: true,

@@ -141,7 +141,8 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
           userId: user.id,
         };
 
-        const response = await fetch("/api/reservations", {
+        // Create reservation directly
+        const response = await fetch("/api/reservations/direct", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -150,7 +151,9 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
         });
 
         if (!response.ok) {
-          throw new Error("Failed to create reservation request");
+          const errorData = await response.json();
+          console.error("API Error Response:", errorData);
+          throw new Error(errorData.error || errorData.message || "Failed to create reservation");
         }
 
         success("Reservation request sent! Waiting for landlord approval.");

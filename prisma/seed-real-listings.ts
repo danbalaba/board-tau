@@ -234,8 +234,8 @@ async function main() {
         : ROOM_TYPES.BEDSPACE;
 
     for (let i = 1; i <= roomCount; i++) {
-      // Room price with variation
-      const price = listingData.price + (i * 300);
+      // Same price for all rooms
+      const price = listingData.price;
 
       // Capacity and available slots
       const capacity =
