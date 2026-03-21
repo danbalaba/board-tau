@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect, useContext } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { FaSearch, FaMapMarkerAlt, FaCalendar, FaUsers } from "react-icons/fa";
+import { FaSearch, FaMapMarkerAlt, FaBed } from "react-icons/fa";
 import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
 
@@ -152,19 +152,19 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                     <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-5" />
                   </motion.div>
 
-                  <motion.div
+                   <motion.div
                     className="flex items-center flex-1 min-w-0"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.11 }}
                   >
                     <div className="flex items-center mr-5 text-[#2F7D6D] dark:text-[#4FA89A]">
-                      <FaCalendar className="text-sm" />
+                      <FaSearch className="text-sm" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Date</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Budget</span>
                       <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
-                        Flexible
+                        {priceLabel}
                       </span>
                     </div>
                     <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-5" />
@@ -177,12 +177,12 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                     transition={{ delay: 0.14 }}
                   >
                     <div className="flex items-center mr-5 text-[#2F7D6D] dark:text-[#4FA89A]">
-                      <FaUsers className="text-sm" />
+                      <FaBed className="text-sm" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Guests</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Room Type</span>
                       <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
-                        {occupantLabel}
+                        {roomTypeLabel}
                       </span>
                     </div>
                   </motion.div>
@@ -257,12 +257,12 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                       transition={{ delay: 0.11 }}
                     >
                       <div className="flex items-center mr-5 text-primary">
-                        <FaCalendar className="text-lg" />
+                        <FaSearch className="text-lg" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Date</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Budget</span>
                         <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
-                          Flexible
+                          {priceLabel}
                         </span>
                       </div>
                     </motion.div>
@@ -276,12 +276,12 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                       transition={{ delay: 0.14 }}
                     >
                       <div className="flex items-center mr-5 text-primary">
-                        <FaUsers className="text-lg" />
+                        <FaBed className="text-lg" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Guests</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Room Type</span>
                         <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
-                          {occupantLabel}
+                          {roomTypeLabel}
                         </span>
                       </div>
                     </motion.div>

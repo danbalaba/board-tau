@@ -11,12 +11,71 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(var(--border-rgb), 0.2);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--border-rgb), 0.6);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--border-rgb), 0.8);
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: rgba(var(--border-rgb), 0.2);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(var(--border-rgb), 0.6);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--border-rgb), 0.8);
+}
+
 /* User/Landlord side - Original color variables */
 :root {
   --foreground-rgb: 17, 24, 39;
   --background-rgb: 248, 250, 249;
   --surface-rgb: 255, 255, 255;
   --border-rgb: 229, 231, 235;
+  
+  /* Chart colors - for landlord/frontend */
+  --color-chart-1: 0.47 0.35 148; /* Green */
+  --color-chart-2: 0.58 0.21 260.84; /* Blue */
+  --color-chart-3: 0.81 0.17 75.35; /* Orange */
+  --color-chart-4: 0.56 0 0; /* Gray */
+  --color-chart-5: 0.92 0 0; /* Light gray */
+  
+  /* Chart specific colors */
+  --color-revenue: oklch(0.58 0.21 260.84); /* Blue */
+  --color-bookings: oklch(0.47 0.35 148); /* Green */
+  --color-apartments: oklch(0.47 0.35 148); /* Green */
+  --color-condos: oklch(0.58 0.21 260.84); /* Blue */
+  --color-houses: oklch(0.81 0.17 75.35); /* Orange */
+  --color-studios: oklch(0.56 0 0); /* Gray */
+  --color-other: oklch(0.92 0 0); /* Light gray */
+  --color-5stars: oklch(0.47 0.35 148); /* Green */
+  --color-4stars: oklch(0.58 0.21 260.84); /* Blue */
+  --color-3stars: oklch(0.81 0.17 75.35); /* Orange */
+  --color-2stars: oklch(0.56 0 0); /* Gray */
+  --color-1star: oklch(0.92 0 0); /* Light gray */
+  --color-direct: oklch(0.47 0.35 148); /* Green */
+  --color-email: oklch(0.58 0.21 260.84); /* Blue */
+  --color-social: oklch(0.81 0.17 75.35); /* Orange */
+  --color-value: oklch(0.47 0.35 148); /* Green */
+  --color-propertyA: oklch(0.47 0.35 148); /* Green */
+  --color-propertyB: oklch(0.58 0.21 260.84); /* Blue */
+  --color-propertyC: oklch(0.81 0.17 75.35); /* Orange */
 }
 
 html.dark {
@@ -28,6 +87,34 @@ html.dark {
   --text-secondary: rgb(203, 213, 225);
   --text-muted: rgb(148, 163, 184);
   --text-light: rgb(100, 116, 139);
+  
+  /* Chart colors for dark mode - landlord/frontend */
+  --color-chart-1: 0.47 0.35 148; /* Green */
+  --color-chart-2: 0.58 0.21 260.84; /* Blue */
+  --color-chart-3: 0.81 0.17 75.35; /* Orange */
+  --color-chart-4: 0.44 0 0; /* Dark gray */
+  --color-chart-5: 0.56 0 0; /* Medium gray */
+  
+  /* Chart specific colors for dark mode */
+  --color-revenue: oklch(0.58 0.21 260.84); /* Blue */
+  --color-bookings: oklch(0.47 0.35 148); /* Green */
+  --color-apartments: oklch(0.47 0.35 148); /* Green */
+  --color-condos: oklch(0.58 0.21 260.84); /* Blue */
+  --color-houses: oklch(0.81 0.17 75.35); /* Orange */
+  --color-studios: oklch(0.44 0 0); /* Dark gray */
+  --color-other: oklch(0.56 0 0); /* Medium gray */
+  --color-5stars: oklch(0.47 0.35 148); /* Green */
+  --color-4stars: oklch(0.58 0.21 260.84); /* Blue */
+  --color-3stars: oklch(0.81 0.17 75.35); /* Orange */
+  --color-2stars: oklch(0.44 0 0); /* Dark gray */
+  --color-1star: oklch(0.56 0 0); /* Medium gray */
+  --color-direct: oklch(0.47 0.35 148); /* Green */
+  --color-email: oklch(0.58 0.21 260.84); /* Blue */
+  --color-social: oklch(0.81 0.17 75.35); /* Orange */
+  --color-value: oklch(0.47 0.35 148); /* Green */
+  --color-propertyA: oklch(0.47 0.35 148); /* Green */
+  --color-propertyB: oklch(0.58 0.21 260.84); /* Blue */
+  --color-propertyC: oklch(0.81 0.17 75.35); /* Orange */
 }
 
 /* Admin theme styles - Only apply when data-theme attribute is present */
@@ -210,6 +297,16 @@ html[data-theme] body {
   }
   50% {
     box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
+  }
+}
+
+/* Classic Spin Animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 

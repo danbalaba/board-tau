@@ -17,8 +17,24 @@ import { createPortal } from "react-dom";
 
 import { useOutsideClick } from "@/hooks/useOutsideClick";
 import { useIsClient } from "@/hooks/useIsClient";
-import { useKeyPress } from "@/hooks/useKeyPress";
 import { fadeIn, modalSheet } from "@/utils/motion";
+
+// Simple implementation of useKeyPress
+const useKeyPress = ({ key, action, enable = true }: { key: string; action: (e: KeyboardEvent) => void; enable?: boolean }) => {
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === key) action(e);
+    };
+
+    if (enable) {
+      window.addEventListener("keydown", onKeyDown);
+    } else {
+      window.removeEventListener("keydown", onKeyDown);
+    }
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [action, key, enable]);
+};
 
 interface ModalProps {
   children: ReactNode;
@@ -55,7 +71,12 @@ const Modal: FC<ModalProps> & {
 } = ({ children, isOpen, onClose, title, width = 'md' }) => {
   // Simplified API for direct control (no context)
   if (isOpen !== undefined) {
-    return (
+    const isClient = useIsClient();
+
+    // Only render portal on client side
+    if (!isClient) return null;
+
+    return createPortal(
       <AnimatePresence>
         {isOpen ? (
           <motion.div
@@ -64,14 +85,21 @@ const Modal: FC<ModalProps> & {
             animate="show"
             exit="hidden"
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex justify-center items-end md:items-center overflow-hidden outline-none focus:outline-none bg-black/35 backdrop-blur-xl"
+            className="fixed inset-0 z-[100] flex justify-center items-center overflow-hidden outline-none focus:outline-none bg-black/35 backdrop-blur-xl"
+            onClick={(e) => {
+              // Close modal when clicking outside
+              if (e.target === e.currentTarget) {
+                onClose?.();
+              }
+            }}
           >
             <motion.div
               variants={modalSheet}
               initial="hidden"
               animate="show"
               exit="exit"
-              className={`md:h-auto h-[90vh] md:max-h-[90vh] overflow-y-auto w-full md:w-[${width === 'sm' ? '400px' : width === 'md' ? '500px' : width === 'lg' ? '800px' : '1100px'}] md:rounded-card rounded-t-card shadow-glass border-t md:border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
+              className={`md:h-auto h-auto md:max-h-[90vh] overflow-y-auto w-full md:w-[${width === 'sm' ? '400px' : width === 'md' ? '500px' : width === 'lg' ? '800px' : '1100px'}] md:rounded-card rounded-card shadow-glass border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
+              onClick={(e) => e.stopPropagation()}
             >
               {title && (
                 <header className="flex items-center px-6 py-4 rounded-t justify-center relative border-b border-border dark:border-gray-700 bg-transparent">
@@ -94,7 +122,8 @@ const Modal: FC<ModalProps> & {
             </motion.div>
           </motion.div>
         ) : null}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
     );
   }
 
@@ -201,7 +230,7 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md' }) => {
               animate="show"
               exit="exit"
               ref={ref}
-              className={`md:h-auto h-[90vh] md:max-h-[90vh] overflow-y-auto w-full ${sizeClasses[size]} md:rounded-card rounded-t-card shadow-glass border-t md:border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
+              className={`md:h-auto h-[95vh] md:max-h-[90vh] overflow-y-auto w-full ${sizeClasses[size]} md:rounded-card rounded-t-card shadow-glass border-t md:border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
             >
             {React.isValidElement(children) && typeof children.type === 'function'
               ? React.cloneElement(children as React.ReactElement<{ onCloseModal: () => void }>, {

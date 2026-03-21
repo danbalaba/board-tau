@@ -43,7 +43,7 @@ const MultiSelectGrid: React.FC<MultiSelectGridProps> = ({
               isSelected ? "border-black" : "border-neutral-200"
             )}
           >
-            {Icon && <Icon size={24} className="text-neutral-600" />}
+            {Icon && <Icon size={24} className="text-neutral-600 dark:text-neutral-300" />}
             <span className="font-semibold text-sm">{item.label}</span>
           </button>
         );

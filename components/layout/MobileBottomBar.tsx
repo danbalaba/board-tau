@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { FaHeart, FaCalendarCheck, FaHome, FaUser } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { FaHeart, FaCalendarCheck, FaHome, FaUser, FaHotel } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { User } from "next-auth";
 
@@ -10,7 +10,7 @@ import AuthModal from "@/components/modals/AuthModal";
 import HostApplicationModal from "@/components/modals/HostApplicationModal";
 import Menu from "@/components/common/Menu";
 import Avatar from "@/components/common/Avatar";
-import { useScrollDirection } from "@/components/hooks/useScrollDirection";
+
 
 interface MobileBottomBarProps {
   user?: (User & { id: string; role?: string });
@@ -18,14 +18,35 @@ interface MobileBottomBarProps {
 
 const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
   const router = useRouter();
-  const scrollDirection = useScrollDirection();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [scrollDirection, setScrollDirection] = useState<"up" | "down" | "">("");
+  const [lastY, setLastY] = useState(0);
+
+  // Implement scroll direction tracking
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+
+      if (currentY === 0) {
+        setScrollDirection("");
+      } else if (currentY > lastY) {
+        setScrollDirection("down");
+      } else {
+        setScrollDirection("up");
+      }
+
+      setLastY(currentY);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastY]);
+
+  const isHidden = scrollDirection === "down";
 
   const redirect = (url: string) => {
     router.push(url);
   };
-
-  const isHidden = scrollDirection === "down";
 
   return (
     <div
@@ -71,6 +92,18 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
             </>
           ) : (
             <>
+              {/* Home */}
+              <button
+                type="button"
+                onClick={() => redirect("/")}
+                className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <FaHome className="text-xl text-gray-600 dark:text-gray-400" />
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Home
+                </span>
+              </button>
+
               {/* Favorites */}
               <button
                 type="button"
@@ -102,7 +135,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
                     type="button"
                     className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   >
-                    <FaHome className="text-xl text-gray-600 dark:text-gray-400" />
+                    <FaHotel className="text-xl text-gray-600 dark:text-gray-400" />
                     <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                       Host
                     </span>

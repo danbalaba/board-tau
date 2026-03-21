@@ -2,7 +2,7 @@
 import React, { useMemo, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { BiDollar } from "react-icons/bi";
@@ -57,6 +57,7 @@ const RentModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
   const [isLoading, startTransition] = useTransition();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const { success, error } = useResponsiveToast();
   const {
     register,
     handleSubmit,
@@ -114,7 +115,7 @@ const RentModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
       try {
         const payload = normalizeListingLocation(data);
         const newListing = await createListing(payload);
-        toast.success(`${data.title} added successfully!`);
+        success(`${data.title} added successfully!`);
         queryClient.invalidateQueries({
           queryKey: ["listings"],
         });
@@ -124,7 +125,7 @@ const RentModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
         router.refresh();
         router.push(`/listings/${newListing.id}`);
       } catch (error: any) {
-        toast.error("Failed to create listing!");
+        error("Failed to create listing!");
         console.log(error?.message)
       }
     });

@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { FaSearch, FaMapMarkerAlt, FaCalendar, FaUsers } from "react-icons/fa";
+import { FaSearch, FaMapMarkerAlt, FaBed } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { springBounce } from "@/utils/motion";
 
@@ -134,41 +134,41 @@ const SearchManager = ({ isScrolled = false }: SearchManagerProps) => {
 
                 <div className="h-10 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-3" />
 
-                <motion.div
-                  className="flex items-center flex-1 min-w-0"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.11 }}
-                >
-                  <div className="flex items-center mr-5 text-primary">
-                    <FaCalendar className="text-lg" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Date</span>
-                    <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
-                      Flexible
-                    </span>
-                  </div>
-                </motion.div>
+                 <motion.div
+                   className="flex items-center flex-1 min-w-0"
+                   initial={{ opacity: 0, x: -20 }}
+                   animate={{ opacity: 1, x: 0 }}
+                   transition={{ delay: 0.11 }}
+                 >
+                   <div className="flex items-center mr-5 text-primary">
+                     <FaSearch className="text-lg" />
+                   </div>
+                   <div className="flex flex-col">
+                     <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Budget</span>
+                     <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
+                       {priceLabel}
+                     </span>
+                   </div>
+                 </motion.div>
 
-                <div className="h-10 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-3" />
+                 <div className="h-10 w-px bg-gray-200 dark:bg-gray-700 shrink-0 mx-3" />
 
-                <motion.div
-                  className="flex items-center flex-1 min-w-0"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.14 }}
-                >
-                  <div className="flex items-center mr-5 text-primary">
-                    <FaUsers className="text-lg" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Guests</span>
-                    <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
-                      {occupantLabel}
-                    </span>
-                  </div>
-                </motion.div>
+                 <motion.div
+                   className="flex items-center flex-1 min-w-0"
+                   initial={{ opacity: 0, x: -20 }}
+                   animate={{ opacity: 1, x: 0 }}
+                   transition={{ delay: 0.14 }}
+                 >
+                   <div className="flex items-center mr-5 text-primary">
+                     <FaBed className="text-lg" />
+                   </div>
+                   <div className="flex flex-col">
+                     <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Room Type</span>
+                     <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
+                       {roomTypeLabel}
+                     </span>
+                   </div>
+                 </motion.div>
 
                 <motion.div
                   whileHover={{ scale: 1.1, rotate: 5 }}

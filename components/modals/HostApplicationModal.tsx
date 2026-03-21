@@ -18,6 +18,7 @@ import LocationStep from '../host-application/LocationStep';
 import PropertyConfigStep from '../host-application/PropertyConfigStep';
 import PropertyImagesStep from '../host-application/PropertyImagesStep';
 import RoomConfigStep from '../host-application/RoomConfigStep';
+import CustomAmenityModal from '../host-application/CustomAmenityModal';
 import DocumentsStep from '../host-application/DocumentsStep';
 import ReviewStep from '../host-application/ReviewStep';
 import { useRouter } from 'next/navigation';
@@ -314,10 +315,20 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
        return;
      }
 
-     if (step < Object.keys(STEPS).length - 1) {
-       setStep(step + 1);
-       setIsContinuing(false);
-     }
+      if (step < Object.keys(STEPS).length - 1) {
+        setStep(step + 1);
+        setIsContinuing(false);
+        // Scroll to the top of the form (scroll the modal content container)
+        setTimeout(() => {
+          const modalContent = document.querySelector('.overflow-y-auto');
+          if (modalContent) {
+            modalContent.scrollTo({
+              top: 0,
+              behavior: 'smooth'
+            });
+          }
+        }, 100); // Small delay to ensure the DOM has updated
+      }
    };
 
   const getFieldsToValidateForStep = (currentStep: number): string[] => {
@@ -555,7 +566,7 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
   ];
 
   return (
-    <div className="w-full min-h-screen md:min-h-[80vh] flex flex-col md:flex-row bg-white dark:bg-gray-900">
+    <div className="w-full h-full flex flex-col md:flex-row bg-white dark:bg-gray-900 overflow-hidden">
       {/* Sidebar Navigation */}
       <div className="hidden md:flex w-64 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-col">
         <div className="p-6">
@@ -684,7 +695,7 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-6 overflow-y-auto bg-white dark:bg-gray-900">
+        <div className="flex-1 p-6 overflow-y-auto overflow-x-hidden bg-white dark:bg-gray-900">
           {step === STEPS.WELCOME ? (
             <WelcomeStep onNext={nextStep} />
           ) : (

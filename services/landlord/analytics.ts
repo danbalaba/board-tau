@@ -247,7 +247,7 @@ export const getOccupancyReport = async (propertyId?: string) => {
     listing: {
       userId: landlord.id,
     },
-    status: "confirmed",
+    status: "CONFIRMED",
   };
 
   if (propertyId) {

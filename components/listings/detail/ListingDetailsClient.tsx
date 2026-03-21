@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useMemo, useEffect, useTransition } from "react";
 import { User } from "next-auth";
-import toast from "react-hot-toast";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
@@ -120,6 +120,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
   })();
   const [isLoading, startTransition] = useTransition();
   const router = useRouter();
+  const { success, error } = useResponsiveToast();
 
   // Modal states
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
@@ -128,7 +129,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
 
   const handleInquiry = async (data: any) => {
     if (!user) {
-      toast.error("Please log in to make a reservation.");
+      error("Please log in to send an inquiry.");
       return;
     }
 
@@ -155,10 +156,10 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
           throw new Error(errorData.error || errorData.message || "Failed to create reservation");
         }
 
-        toast.success("Reservation created!");
+        success("Reservation request sent! Waiting for landlord approval.");
       } catch (error: any) {
-        console.error('Reservation error:', error);
-        toast.error(error?.message || 'Failed to create reservation');
+        console.error('Reservation request error:', error);
+        error(error?.message || 'Failed to send reservation request');
       }
     });
   };

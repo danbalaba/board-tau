@@ -263,7 +263,7 @@ const AuthModal = ({
       <Modal.WindowHeader title={isOTPModal ? "Verify Email" : title} />
 
       <form
-        className="flex flex-col gap-5 p-6 pb-0 w-full h-full"
+        className="flex flex-col gap-5 p-4 pb-0 md:gap-5 md:p-6 w-full"
         onSubmit={handleSubmit(onSubmit)}
       >
         {isOTPModal ? (
@@ -370,7 +370,7 @@ const AuthModal = ({
       </form>
 
       {!isOTPModal && (
-        <div className="flex flex-col gap-4 mt-3 p-6 pt-0">
+        <div className="flex flex-col gap-4 mt-4 p-4 pt-0 md:gap-4 md:mt-0 md:p-6">
           <hr />
           <Button
             outline
