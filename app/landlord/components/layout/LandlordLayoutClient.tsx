@@ -3,6 +3,7 @@
 import React from 'react';
 import LandlordSidebar from './LandlordSidebar';
 import LandlordTopbar from './LandlordTopbar';
+import { SidebarProvider, SidebarInset } from '@/app/admin/components/ui/sidebar';
 
 interface LandlordLayoutClientProps {
   children: React.ReactNode;
@@ -22,16 +23,16 @@ export default function LandlordLayoutClient({
   user,
 }: LandlordLayoutClientProps) {
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+    <SidebarProvider defaultOpen={true}>
       <LandlordSidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <SidebarInset>
         <LandlordTopbar user={user} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-800">
-          <div className="container mx-auto px-4 py-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background pt-16">
+          <div className="w-full px-4 py-8">
             {children}
           </div>
         </main>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
