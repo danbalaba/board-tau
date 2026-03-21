@@ -9,20 +9,13 @@ import {
   FaMoneyBill,
   FaUsers,
 } from 'react-icons/fa';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
+import { ChartAreaInteractive } from '@/app/landlord/components/charts/AreaChart';
+import { ChartBarInteractive } from '@/app/landlord/components/charts/BarChart';
+import { ChartLineInteractive } from '@/app/landlord/components/charts/LineChart';
+import { ChartPieLabel } from '@/app/landlord/components/charts/PieChart';
+import { ChartRadarDots } from '@/app/landlord/components/charts/RadarChart';
+import { ChartRadialLabel } from '@/app/landlord/components/charts/RadialChart';
+import { ChartTooltipDefault } from '@/app/landlord/components/charts/ToolTips';
 
 interface LandlordAnalyticsClientProps {
   stats: {
@@ -123,173 +116,130 @@ export default function LandlordAnalyticsClient({
   ];
 
   const colors: Record<string, string> = {
-    blue: 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400',
-    green: 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400',
-    yellow: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-400',
-    purple: 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400',
-    orange: 'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-400',
-    red: 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400',
-    indigo: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400',
-    teal: 'bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-400',
+    blue: 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30',
+    green: 'bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg shadow-green-500/30',
+    yellow: 'bg-gradient-to-br from-yellow-500 to-yellow-600 text-white shadow-lg shadow-yellow-500/30',
+    purple: 'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30',
+    orange: 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30',
+    red: 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-500/30',
+    indigo: 'bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/30',
+    teal: 'bg-gradient-to-br from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/30',
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Analytics & Reports
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Track your property performance and revenue
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={timePeriod}
-            onChange={(e) => setTimePeriod(e.target.value as 'month' | 'quarter' | 'year')}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="month">This Month</option>
-            <option value="quarter">This Quarter</option>
-            <option value="year">This Year</option>
-          </select>
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-6 rounded-2xl border border-blue-200 dark:border-gray-700">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+              Analytics & Reports
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Track your property performance and revenue
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={timePeriod}
+              onChange={(e) => setTimePeriod(e.target.value as 'month' | 'quarter' | 'year')}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 text-sm"
+            >
+              <option value="month">This Month</option>
+              <option value="quarter">This Quarter</option>
+              <option value="year">This Year</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statsCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <div
               key={stat.label}
-              className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
+              className="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 hover:shadow-2xl"
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    {stat.label}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {stat.value}
-                  </p>
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colors[stat.color]} group-hover:scale-110 transition-transform duration-300`}>
+                  <Icon size={18} />
                 </div>
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colors[stat.color]}`}>
-                  <Icon size={20} />
-                </div>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               </div>
+              <div>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
+                  {stat.label}
+                </p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                  {stat.value}
+                </p>
+                <p className="text-xs text-green-600 dark:text-green-400 font-medium">
+                  +12.5% from last period
+                </p>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
             </div>
           );
         })}
       </div>
 
-      {/* Revenue Chart */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-          Revenue Overview
-        </h3>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="name" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" tickFormatter={(value) => `₱${value.toLocaleString()}`} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '0.5rem',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                }}
-              />
-              <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+      {/* Revenue & Bookings Overview */}
+      <div>
+        <ChartAreaInteractive />
       </div>
 
       {/* Performance Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Occupancy Rate */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-            Occupancy Rate by Property
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={occupancyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '0.5rem',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  }}
-                />
-                <Bar dataKey="occupancy" fill="#8884d8" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        {/* Monthly Bookings & Revenue */}
+        <div>
+          <ChartLineInteractive />
         </div>
 
-        {/* Property Performance */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-            Property Performance
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={propertyPerformanceData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="revenue"
-                >
-                  {propertyPerformanceData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '0.5rem',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+        {/* Property Type Distribution */}
+        <div>
+          <ChartPieLabel />
+        </div>
+
+        {/* Property Performance Metrics */}
+        <div>
+          <ChartRadarDots />
+        </div>
+
+        {/* Review Ratings */}
+        <div>
+          <ChartRadialLabel />
+        </div>
+
+        {/* Inquiry Sources */}
+        <div>
+          <ChartTooltipDefault />
+        </div>
+
+        {/* Monthly Revenue by Property */}
+        <div className="lg:col-span-2">
+          <ChartBarInteractive />
         </div>
       </div>
 
       {/* Detailed Reports */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue by Property */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-lg">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
             Revenue by Property
           </h3>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {propertyPerformanceData.map((property) => (
-              <div key={property.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full ${COLORS[propertyPerformanceData.indexOf(property) % COLORS.length]}`} />
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+              <div key={property.name} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${COLORS[propertyPerformanceData.indexOf(property) % COLORS.length]} group-hover:scale-150 transition-transform`} />
+                  <span className="text-xs font-medium text-gray-900 dark:text-white">
                     {property.name}
                   </span>
                 </div>
-                <span className="text-sm font-bold text-gray-900 dark:text-white">
+                <span className="text-xs font-bold text-gray-900 dark:text-white">
                   ₱{property.revenue.toLocaleString()}
                 </span>
               </div>
@@ -298,40 +248,40 @@ export default function LandlordAnalyticsClient({
         </div>
 
         {/* Booking Statistics */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-lg">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
             Booking Statistics
           </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                 Total Bookings
               </span>
-              <span className="text-sm font-bold text-gray-900 dark:text-white">
+              <span className="text-xs font-bold text-gray-900 dark:text-white">
                 {stats.confirmedBookings}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                 Total Revenue
               </span>
-              <span className="text-sm font-bold text-gray-900 dark:text-white">
+              <span className="text-xs font-bold text-gray-900 dark:text-white">
                 ₱{revenue.totalRevenue.toLocaleString()}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                 Average Booking Value
               </span>
-              <span className="text-sm font-bold text-gray-900 dark:text-white">
+              <span className="text-xs font-bold text-gray-900 dark:text-white">
                 ₱{revenue.averageBookingValue.toLocaleString()}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                 Occupancy Rate
               </span>
-              <span className="text-sm font-bold text-gray-900 dark:text-white">
+              <span className="text-xs font-bold text-gray-900 dark:text-white">
                 {occupancy.occupancyRate.toFixed(1)}%
               </span>
             </div>

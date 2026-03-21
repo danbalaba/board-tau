@@ -24,20 +24,12 @@ export default async function LandlordLayout({
   const landlord = await requireLandlord();
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* Theme handling is done by next-themes */}
-      </head>
-      <body
-        className={`${inter.variable} ${inter.className} font-sans antialiased`}
-        suppressHydrationWarning
-      >
-        <Providers>
-          <LandlordLayoutClient user={landlord}>
-            {children}
-          </LandlordLayoutClient>
-        </Providers>
-      </body>
-    </html>
+    <div className={`${inter.variable} ${inter.className} font-sans antialiased`}>
+      <Providers>
+        <LandlordLayoutClient user={landlord}>
+          {children}
+        </LandlordLayoutClient>
+      </Providers>
+    </div>
   );
 }
