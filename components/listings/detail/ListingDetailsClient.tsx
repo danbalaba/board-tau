@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useMemo, useEffect, useTransition } from "react";
 import { User } from "next-auth";
-import toast from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
