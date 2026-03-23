@@ -28,14 +28,16 @@ const HeartButton: React.FC<HeartButtonProps> = ({
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { mutate } = useMutation({
     mutationFn: updateFavorite,
-    onError: () => {
+    onError: (err: any) => {
       hasFavoritedRef.current = !hasFavoritedRef.current;
       setHasFavorited(hasFavoritedRef.current);
-      error("Failed to favorite");
+      console.error("Favorite mutation error:", err);
+      error(err?.message || "Failed to favorite");
     }
   });
 
   const debouncedUpdateFavorite = debounce(() => {
+    console.log("Calling updateFavorite with:", { listingId, favorite: hasFavoritedRef.current });
     mutate({
       listingId,
       favorite: hasFavoritedRef.current,
@@ -50,6 +52,8 @@ const HeartButton: React.FC<HeartButtonProps> = ({
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     e.preventDefault();
+    
+    console.log("HeartButton clicked, status:", status, "listingId:", listingId);
 
     if (isLoading || isAnimating) {
       return;
