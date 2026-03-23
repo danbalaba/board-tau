@@ -46,7 +46,7 @@ export const updateFavorite = async ({
     console.log("Current user ID:", currentUser?.id);
     console.log("Favorites:", favorites);
 
-    if (!currentUser) {
+    if (!currentUser || currentUser === null || currentUser === undefined) {
       throw new Error("Please sign in to favorite the listing!");
     }
     

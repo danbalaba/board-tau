@@ -9,18 +9,18 @@ export const getCurrentUser = async () => {
     
     if (!session?.user) {
       console.log("getCurrentUser - No user in session");
-      return null;
+      return undefined;
     }
     
     // Make sure the user has an id
     if (!session.user.id) {
       console.log("getCurrentUser - User has no id:", session.user);
-      return null;
+      return undefined;
     }
     
     return session?.user;
   } catch (error) {
     console.error("getCurrentUser - Error:", error);
-    return null;
+    return undefined;
   }
 };

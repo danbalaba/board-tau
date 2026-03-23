@@ -81,10 +81,10 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
 
         {/* Main Content Grid */}
           <ListingDetailsClient
-           id={id}
-           price={price}
-           reservations={reservations}
-           user={currentUser}
+            id={id}
+            price={price}
+            reservations={reservations}
+            user={currentUser}
            title={title}
            owner={owner}
            category={categoryData}
