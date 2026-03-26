@@ -45,7 +45,7 @@ const Input: React.FC<InputProps> = ({
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const isPasswordInput = type === "password";
-  
+
   // Get value from watch or external
   const internalValue = watch && watch(id);
   const value = externalValue !== undefined ? externalValue : internalValue;
@@ -67,15 +67,15 @@ const Input: React.FC<InputProps> = ({
         <div className="relative mt-2">
           {Icon && (
             <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 z-10 flex items-center justify-center">
-              <Icon 
-                size={18} 
+              <Icon
+                size={18}
                 className={cn(
                   error ? "text-red-500" : "text-gray-400 group-focus-within:text-primary"
-                )} 
+                )}
               />
             </div>
           )}
-          
+
           <input
             id={id}
             type={isPasswordInput ? (showPassword ? "text" : "password") : type}
@@ -137,7 +137,7 @@ const Input: React.FC<InputProps> = ({
         </div>
 
         {error && (
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="text-red-500 text-[10px] font-bold mt-1.5 ml-2 flex items-center gap-1 uppercase tracking-[0.1em]"
@@ -165,11 +165,11 @@ const Input: React.FC<InputProps> = ({
       <div className="relative">
         {Icon && (
           <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 z-10 flex items-center justify-center">
-            <Icon 
-              size={18} 
+            <Icon
+              size={18}
               className={cn(
                 error ? "text-red-500" : "text-gray-400 group-focus-within:text-primary"
-              )} 
+              )}
             />
           </div>
         )}

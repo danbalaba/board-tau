@@ -174,7 +174,7 @@ export const authOptions: AuthOptions = {
         session.user.email = token.email;
         session.user.role = token.role;
         session.user.emailVerified = token.emailVerified;
-        session.user.image = token.image; // PERSIST IMAGE IN SESSION
+        session.user.image = (token as any).image; // PERSIST IMAGE IN SESSION
       }
 
       return session;
@@ -216,7 +216,7 @@ export const authOptions: AuthOptions = {
         return {
           ...token,
           emailVerified: new Date(),
-          image: token.picture || token.image // SYNC GOOGLE IMAGE
+          image: (token as any).picture || (token as any).image // SYNC GOOGLE IMAGE
         } as any; // Type assertion to fix TypeScript error
       }
 

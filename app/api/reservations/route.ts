@@ -30,22 +30,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    const startDate = new Date(moveInDate);
+    const endDate = new Date(startDate);
+    const duration = parseInt(stayDuration);
+    endDate.setMonth(endDate.getMonth() + duration);
+
     // Create the reservation request (inquiry)
     const reservationRequest = await db.inquiry.create({
       data: {
         listingId,
         roomId,
         userId: user.id,
-        moveInDate,
-        stayDuration,
+        moveInDate: startDate,
+        checkOutDate: endDate,
+        stayDuration: duration,
         occupantsCount,
-        role,
-        hasPets,
-        smokes,
-        contactMethod,
+        role: (role.toUpperCase() as any),
         message,
-        status: "PENDING",
-        paymentStatus: "UNPAID",
+        status: "PENDING" as any,
+        paymentStatus: "UNPAID" as any,
       },
     });
 

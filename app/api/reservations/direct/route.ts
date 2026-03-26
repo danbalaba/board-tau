@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         endDate,
         durationInDays: parseInt(stayDuration) * 30, // Convert months to days
         totalPrice: room.price * parseInt(stayDuration),
-        status: "PENDING",
+        status: "PENDING_PAYMENT",
         paymentStatus: "PENDING",
       },
     });

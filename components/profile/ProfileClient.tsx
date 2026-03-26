@@ -85,7 +85,6 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
       y: 0,
       transition: {
         duration: 0.5,
-        ease: "easeOut",
         staggerChildren: 0.1
       }
     }

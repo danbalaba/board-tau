@@ -329,6 +329,7 @@ model Inquiry {
   idAttachmentUrl   String?
   paymentMethod     String?
   reservationFee    Int       @default(0)
+  stayDuration      Int       @default(1)
   status            InquiryStatus @default(PENDING)
   paymentStatus     PaymentStatus @default(UNPAID)
   isApproved        Boolean   @default(false)

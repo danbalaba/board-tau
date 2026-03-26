@@ -115,7 +115,7 @@ function buildScoringEngine(params: any) {
   // Map boolean amenities in the DB (ListingAmenity)
   if (params.amenities) {
       const amenitiesList = Array.isArray(params.amenities) ? params.amenities : [params.amenities];
-      
+
       if (amenitiesList.includes("WiFi")) {
           scoreConditions.push({ $cond: [{ $eq: ["$amenities_doc.wifi", true] }, 20, 0] });
       }
@@ -134,7 +134,7 @@ function buildScoringEngine(params: any) {
   if (params.cctv === "true") {
     scoreConditions.push({ $cond: [{ $eq: ["$features_doc.cctv", true] }, 10, 0] });
   }
-  
+
   // Rule Preferences (ListingRule)
   if (params.petsAllowed === "true") {
       scoreConditions.push({ $cond: [{ $eq: ["$rules_doc.petsAllowed", true] }, 5, 0] });
@@ -195,9 +195,9 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
     pipeline.push({ $limit: 16 });
 
     const rawResults = await prisma.listing.aggregateRaw({ pipeline });
-    
+
     // Map MongoDB IDs back to Prisma-friendly format
-    const data = (rawResults as any[]).map((doc: any) => ({
+    const data = (rawResults as unknown as any[]).map((doc: any) => ({
       ...doc,
       id: doc._id['$oid'] || doc._id.toString(),
       _id: undefined,
