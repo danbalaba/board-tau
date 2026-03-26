@@ -50,7 +50,7 @@ const Textarea: React.FC<TextareaProps> = ({
           error ? "text-red-500" : "text-gray-700 dark:text-gray-300"
         )}
       >
-        {label}
+        {label} {required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
 
       <textarea

@@ -9,6 +9,8 @@ export interface FileUploadProps {
   fileName?: string;
   required?: boolean;
   errors?: any;
+  description?: string;
+  accept?: string;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({
@@ -18,6 +20,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
   fileName,
   required = false,
   errors,
+  description,
+  accept,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -100,7 +104,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             Click to upload or drag and drop
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-500">
-            PDF, JPG, or PNG (max. 5MB)
+            {description || "PDF, JPG, or PNG (max. 5MB)"}
           </p>
         </div>
       ) : (
@@ -144,7 +148,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       <input
         id={id}
         type="file"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept={accept || ".pdf,.jpg,.jpeg,.png"}
         onChange={handleFileSelect}
         className="hidden"
       />

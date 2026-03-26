@@ -10,49 +10,83 @@ export interface ValidationResult {
   errors: ValidationError[];
 }
 
+/**
+ * Basic sanitization to prevent XSS and SQL injection patterns in frontend strings
+ */
+export const sanitizeString = (str: string): string => {
+  if (!str) return '';
+  
+  return str
+    .trim()
+    .replace(/[<>]/g, '')             // Basic XSS: remove < and >
+    .replace(/javascript:/gi, '')      // Basic XSS: remove javascript: pseudo-protocol
+    .replace(/onclick|onerror|onload/gi, '') // Basic XSS: remove event handlers
+    .replace(/SELECT\s+.*FROM|DROP\s+TABLE|DELETE\s+FROM|UNION\s+SELECT/gi, '') // Basic SQL Injection: remove common keywords
+    .slice(0, 2000);                  // Prevent massive inputs
+};
+
 export const validateStep = (step: number, formData: any): ValidationResult => {
   const errors: ValidationError[] = [];
 
+  // Clone and sanitize critical string fields
+  if (formData.propertyInfo) {
+    formData.propertyInfo.propertyName = sanitizeString(formData.propertyInfo.propertyName);
+    formData.propertyInfo.description = sanitizeString(formData.propertyInfo.description);
+  }
+  if (formData.businessInfo) {
+    formData.businessInfo.businessName = sanitizeString(formData.businessInfo.businessName);
+    formData.businessInfo.businessDescription = sanitizeString(formData.businessInfo.businessDescription);
+  }
+  if (formData.contactInfo) {
+    formData.contactInfo.fullName = sanitizeString(formData.contactInfo.fullName);
+  }
+  if (formData.propertyConfig?.rooms) {
+    formData.propertyConfig.rooms.forEach((room: any) => {
+      if (room.description) room.description = sanitizeString(room.description);
+    });
+  }
+
   switch (step) {
-    case 1: // Landlord Info Step
-      validateContactInfo(formData.contactInfo, errors);
-      validateBusinessDescription(formData.businessInfo, errors);
+    case 1: // LANDLORD_INFO
+      validateContactInfo(formData.contactInfo || {}, errors);
+      validateBusinessDescription(formData.businessInfo || {}, errors);
       break;
 
-    case 2: // Property Basic Step
-      validateBusinessInfo(formData.businessInfo, errors);
-      validatePropertyInfo(formData.propertyInfo, errors);
+    case 2: // PROPERTY_BASIC
+      validateBusinessInfo(formData.businessInfo || {}, errors);
+      validatePropertyInfo(formData.propertyInfo || {}, errors);
       break;
 
-    case 3: // Location Step
-      validateLocation(formData.location, errors);
+    case 3: // LOCATION
+      validateLocation(formData.location || {}, errors);
       break;
 
-    case 4: // Property Config Step (only property-level fields)
-      validatePropertyBasicConfig(formData.propertyConfig, errors);
+    case 4: // PROPERTY_CONFIG
+      validatePropertyBasicConfig(formData.propertyConfig || {}, errors);
       break;
 
-    case 5: // Room Config Step
-      validateRoomConfig(formData.propertyConfig, errors);
+    case 5: // ROOM_CONFIG
+      validateRoomConfig(formData.propertyConfig || {}, errors);
       break;
 
-    case 6: // Property Images Step
-      // No validation needed for images
+    case 6: // PROPERTY_IMAGES
+      validatePropertyImages(formData.propertyImages || {}, formData.propertyConfig || {}, errors);
       break;
 
-    case 7: // Documents Step
-      validateDocuments(formData.documents, errors);
+    case 7: // DOCUMENTS
+      validateDocuments(formData.documents || {}, errors);
       break;
 
-    case 8: // Review Step
+    case 8: // REVIEW
       // Validate all fields on review step
-      validateContactInfo(formData.contactInfo, errors);
-      validateBusinessInfo(formData.businessInfo, errors);
-      validatePropertyInfo(formData.propertyInfo, errors);
-      validateLocation(formData.location, errors);
-      validatePropertyBasicConfig(formData.propertyConfig, errors);
-      validateRoomConfig(formData.propertyConfig, errors);
-      validateDocuments(formData.documents, errors);
+      validateContactInfo(formData.contactInfo || {}, errors);
+      validateBusinessInfo(formData.businessInfo || {}, errors);
+      validatePropertyInfo(formData.propertyInfo || {}, errors);
+      validateLocation(formData.location || {}, errors);
+      validatePropertyBasicConfig(formData.propertyConfig || {}, errors);
+      validateRoomConfig(formData.propertyConfig || {}, errors);
+      validatePropertyImages(formData.propertyImages || {}, formData.propertyConfig || {}, errors);
+      validateDocuments(formData.documents || {}, errors);
       break;
   }
 
@@ -181,59 +215,93 @@ const validatePropertyBasicConfig = (propertyConfig: any, errors: ValidationErro
 
 const validateRoomConfig = (propertyConfig: any, errors: ValidationError[]): void => {
   if (!propertyConfig.rooms || propertyConfig.rooms.length === 0) {
-    errors.push({ field: 'propertyConfig.rooms', message: 'Please add at least one room type' });
+    errors.push({ field: 'propertyConfig.rooms', message: 'Please add at least one room configuration' });
   } else {
     propertyConfig.rooms.forEach((room: any, index: number) => {
       if (!room.roomType) {
         errors.push({ field: `propertyConfig.rooms[${index}].roomType`, message: `Room type is required for room ${index + 1}` });
       }
 
-      const count = Number(room.count);
-      if (!count || count < 1 || count > 20) {
-        errors.push({ field: `propertyConfig.rooms[${index}].count`, message: `Room count must be between 1 and 20 for room ${index + 1}` });
+      const price = Number(room.price);
+      if (!price || price < 100) {
+        errors.push({ field: `propertyConfig.rooms[${index}].price`, message: `Valid price is required for room ${index + 1}` });
       }
 
-       const price = Number(room.price);
-       if (!price || price < 100 || price > 100000) {
-         errors.push({ field: `propertyConfig.rooms[${index}].price`, message: `Price must be between ₱100 and ₱100,000 for room ${index + 1}` });
-       }
-
       if (!room.bedType) {
-        errors.push({ field: `propertyConfig.rooms[${index}].bedType`, message: `Please select a bed type for room ${index + 1}` });
+        errors.push({ field: `propertyConfig.rooms[${index}].bedType`, message: `Bed type is required for room ${index + 1}` });
       }
 
       const capacity = Number(room.capacity);
-      if (!capacity || capacity < 1 || capacity > 10) {
-        errors.push({ field: `propertyConfig.rooms[${index}].capacity`, message: `Capacity must be between 1 and 10 for room ${index + 1}` });
+      if (!capacity || capacity < 1) {
+        errors.push({ field: `propertyConfig.rooms[${index}].capacity`, message: `Capacity must be at least 1 for room ${index + 1}` });
+      }
+
+      if (!room.bathroomArrangement) {
+        errors.push({ field: `propertyConfig.rooms[${index}].bathroomArrangement`, message: `Bathroom arrangement is required for room ${index + 1}` });
+      }
+
+      if (!room.description || room.description.length < 10) {
+        errors.push({ field: `propertyConfig.rooms[${index}].description`, message: `Description for room ${index + 1} must be at least 10 characters` });
       }
 
       // Validate room type specific fields
-      if (room.roomType === 'solo') {
+      if (room.roomType === 'SOLO' || room.roomType === 'solo') {
         const size = Number(room.size);
-        if (!size || size < 1 || size > 200) {
-          errors.push({ field: `propertyConfig.rooms[${index}].size`, message: `Room size must be between 1 and 200 sq. meters for room ${index + 1}` });
+        if (!size || size < 1) {
+          errors.push({ field: `propertyConfig.rooms[${index}].size`, message: `Room size is required for room ${index + 1}` });
         }
-      } else if (room.roomType === 'bedspace') {
+      } else if (room.roomType === 'BEDSPACE' || room.roomType === 'bedspace') {
         const availableSlots = Number(room.availableSlots);
-        if (!availableSlots || availableSlots < 0 || availableSlots > 10) {
-          errors.push({ field: `propertyConfig.rooms[${index}].availableSlots`, message: `Available slots must be between 0 and 10 for room ${index + 1}` });
+        if (availableSlots === undefined || isNaN(availableSlots) || availableSlots < 0) {
+          errors.push({ field: `propertyConfig.rooms[${index}].availableSlots`, message: `Available slots is required for room ${index + 1}` });
         }
-      }
-
-      // Validate room amenities
-      if (room.amenities && !Array.isArray(room.amenities)) {
-        errors.push({ field: `propertyConfig.rooms[${index}].amenities`, message: `Room amenities must be an array for room ${index + 1}` });
       }
     });
   }
 };
 
+const validatePropertyImages = (propertyImages: any, propertyConfig: any, errors: ValidationError[]): void => {
+  // Check property images
+  const pImages = propertyImages?.property || [];
+  if (pImages.length === 0) {
+    errors.push({ field: 'propertyImages.property', message: 'Property images are required. Please upload at least 3 images.' });
+  } else if (pImages.length < 3) {
+    errors.push({ field: 'propertyImages.property', message: `At least 3 property images are required (currently: ${pImages.length}).` });
+  }
+
+  // Check room images
+  const rooms = propertyConfig?.rooms || [];
+  const rImages = propertyImages?.rooms || {};
+  let roomsMissingImages = 0;
+
+  rooms.forEach((_: any, index: number) => {
+    const images = rImages[index] || [];
+    if (images.length < 1) {
+      roomsMissingImages++;
+      errors.push({ field: `propertyImages.rooms[${index}]`, message: `Please upload at least 1 image for Room ${index + 1}` });
+    }
+  });
+
+  // Add a general error if any room images are missing, for easier toast reporting
+  if (roomsMissingImages > 0) {
+    // Only add this if it's the absolute first error to avoid duplication in toast
+    if (roomsMissingImages === rooms.length) {
+      errors.unshift({ field: 'propertyImages.rooms', message: 'Room images are required for all rooms.' });
+    }
+  }
+};
+
 const validateDocuments = (documents: any, errors: ValidationError[]): void => {
+  if (!documents) {
+    errors.push({ field: 'documents', message: 'All required documents must be uploaded' });
+    return;
+  }
+
   const requiredDocuments = ['governmentId', 'businessPermit', 'landTitle', 'barangayClearance', 'fireSafetyCertificate'];
 
   for (const doc of requiredDocuments) {
     const documentValue = documents[doc];
-    if (!documentValue || !documentValue.startsWith('http')) {
+    if (!documentValue || typeof documentValue !== 'string' || !documentValue.startsWith('http')) {
       errors.push({ field: `documents.${doc}`, message: `Please upload a valid ${doc} document` });
     }
   }

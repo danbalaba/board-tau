@@ -1,9 +1,9 @@
 import React from 'react';
 import Input from '../inputs/Input';
-import Select from '../inputs/Select';
-import Textarea from '../inputs/Textarea';
+import Checkbox from '../inputs/Checkbox';
 import { Bath, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+
 
 interface PropertyConfigStepProps {
   register: any;
@@ -66,32 +66,19 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
               useStaticLabel={true}
             />
             <Input
-              label="Number of Bathrooms"
+              label="Number of Common Bathrooms"
               id="propertyConfig.bathroomCount"
               type="number"
               register={register}
               errors={errors}
               watch={watch}
-              min="1"
+              min="0"
               required
               placeholder="2"
               icon={Bath}
               useStaticLabel={true}
             />
           </div>
-
-          <Select
-            label="Bathroom Type"
-            id="propertyConfig.bathroomType"
-            register={register}
-            errors={errors}
-            options={[
-              { value: 'shared', label: 'Shared' },
-              { value: 'private', label: 'Private' },
-              { value: 'both', label: 'Both' }
-            ]}
-            required
-          />
         </div>
       </motion.div>
 
@@ -102,66 +89,37 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
         transition={{ duration: 0.5, delay: 0.4 }}
       >
         <h4 className="font-medium text-gray-900 dark:text-white mb-4">Rules & Preferences</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="femaleOnly"
-              {...register('propertyConfig.femaleOnly', { required: false })}
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="femaleOnly" className="text-sm text-gray-700 dark:text-gray-300">
-              Female-only
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="maleOnly"
-              {...register('propertyConfig.maleOnly', { required: false })}
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="maleOnly" className="text-sm text-gray-700 dark:text-gray-300">
-              Male-only
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="visitorsAllowed"
-              {...register('propertyConfig.visitorsAllowed', { required: false })}
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="visitorsAllowed" className="text-sm text-gray-700 dark:text-gray-300">
-              Visitors allowed
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="petsAllowed"
-              {...register('propertyConfig.petsAllowed', { required: false })}
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="petsAllowed" className="text-sm text-gray-700 dark:text-gray-300">
-              Pets allowed
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="smokingAllowed"
-              {...register('propertyConfig.smokingAllowed', { required: false })}
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="smokingAllowed" className="text-sm text-gray-700 dark:text-gray-300">
-              Smoking allowed
-            </label>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-2">
+          <Checkbox
+            id="propertyConfig.femaleOnly"
+            label="Female-only"
+            register={register}
+            watch={watch}
+          />
+          <Checkbox
+            id="propertyConfig.maleOnly"
+            label="Male-only"
+            register={register}
+            watch={watch}
+          />
+          <Checkbox
+            id="propertyConfig.visitorsAllowed"
+            label="Visitors allowed"
+            register={register}
+            watch={watch}
+          />
+          <Checkbox
+            id="propertyConfig.petsAllowed"
+            label="Pets allowed"
+            register={register}
+            watch={watch}
+          />
+          <Checkbox
+            id="propertyConfig.smokingAllowed"
+            label="Smoking allowed"
+            register={register}
+            watch={watch}
+          />
         </div>
       </motion.div>
 
@@ -172,90 +130,49 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
         transition={{ duration: 0.5, delay: 0.6 }}
       >
         <h4 className="font-medium text-gray-900 dark:text-white mb-4">Advanced Features</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="security24h"
-              {...register('propertyConfig.security24h', { required: false })}
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="security24h" className="text-sm text-gray-700 dark:text-gray-300">
-              24/7 security
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="cctv"
-              {...register('propertyConfig.cctv', { required: false })}
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="cctv" className="text-sm text-gray-700 dark:text-gray-300">
-              CCTV
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="fireSafety"
-              {...register('propertyConfig.fireSafety', { required: false })}
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="fireSafety" className="text-sm text-gray-700 dark:text-gray-300">
-              Fire safety equipment
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="nearTransport"
-              {...register('propertyConfig.nearTransport', { required: false })}
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="nearTransport" className="text-sm text-gray-700 dark:text-gray-300">
-              Near public transport
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="studyFriendly"
-              {...register('propertyConfig.studyFriendly', { required: false })}
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="studyFriendly" className="text-sm text-gray-700 dark:text-gray-300">
-              Study-friendly environment
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="quietEnvironment"
-              {...register('propertyConfig.quietEnvironment', { required: false })}
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="quietEnvironment" className="text-sm text-gray-700 dark:text-gray-300">
-              Quiet / noise-controlled
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="flexibleLease"
-              {...register('propertyConfig.flexibleLease', { required: false })}
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="flexibleLease" className="text-sm text-gray-700 dark:text-gray-300">
-              Flexible lease terms
-            </label>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-2">
+          <Checkbox
+            id="propertyConfig.security24h"
+            label="24/7 security"
+            register={register}
+            watch={watch}
+          />
+          <Checkbox
+            id="propertyConfig.cctv"
+            label="CCTV"
+            register={register}
+            watch={watch}
+          />
+          <Checkbox
+            id="propertyConfig.fireSafety"
+            label="Fire safety equipment"
+            register={register}
+            watch={watch}
+          />
+          <Checkbox
+            id="propertyConfig.nearTransport"
+            label="Near public transport"
+            register={register}
+            watch={watch}
+          />
+          <Checkbox
+            id="propertyConfig.studyFriendly"
+            label="Study-friendly environment"
+            register={register}
+            watch={watch}
+          />
+          <Checkbox
+            id="propertyConfig.quietEnvironment"
+            label="Quiet / noise-controlled"
+            register={register}
+            watch={watch}
+          />
+          <Checkbox
+            id="propertyConfig.flexibleLease"
+            label="Flexible lease terms"
+            register={register}
+            watch={watch}
+          />
         </div>
       </motion.div>
 
@@ -265,124 +182,19 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.8 }}
       >
-        <h4 className="font-medium text-gray-900 dark:text-white mb-4">Amenities</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="amenity-wifi"
-              {...register('propertyConfig.amenities', { required: false })}
-              value="WiFi"
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="amenity-wifi" className="text-sm text-gray-700 dark:text-gray-300">
-              WiFi
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="amenity-owncr"
-              {...register('propertyConfig.amenities', { required: false })}
-              value="Own CR"
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="amenity-owncr" className="text-sm text-gray-700 dark:text-gray-300">
-              Own CR
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="amenity-sharedcr"
-              {...register('propertyConfig.amenities', { required: false })}
-              value="Shared CR"
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="amenity-sharedcr" className="text-sm text-gray-700 dark:text-gray-300">
-              Shared CR
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="amenity-kitchen"
-              {...register('propertyConfig.amenities', { required: false })}
-              value="Kitchen Access"
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="amenity-kitchen" className="text-sm text-gray-700 dark:text-gray-300">
-              Kitchen Access
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="amenity-laundry"
-              {...register('propertyConfig.amenities', { required: false })}
-              value="Laundry Area"
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="amenity-laundry" className="text-sm text-gray-700 dark:text-gray-300">
-              Laundry Area
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="amenity-ac"
-              {...register('propertyConfig.amenities', { required: false })}
-              value="Air Conditioning"
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="amenity-ac" className="text-sm text-gray-700 dark:text-gray-300">
-              Air Conditioning
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="amenity-waterheater"
-              {...register('propertyConfig.amenities', { required: false })}
-              value="Water Heater"
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="amenity-waterheater" className="text-sm text-gray-700 dark:text-gray-300">
-              Water Heater
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="amenity-parking"
-              {...register('propertyConfig.amenities', { required: false })}
-              value="Parking"
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="amenity-parking" className="text-sm text-gray-700 dark:text-gray-300">
-              Parking
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="amenity-cabletv"
-              {...register('propertyConfig.amenities', { required: false })}
-              value="Cable TV"
-              className="w-4 h-4 text-primary dark:text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:focus:ring-primary"
-            />
-            <label htmlFor="amenity-cabletv" className="text-sm text-gray-700 dark:text-gray-300">
-              Cable TV
-            </label>
-          </div>
+        <h4 className="font-medium text-gray-900 dark:text-white mb-4">Property Amenities</h4>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Select amenities available for the entire property (listing-level)</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-2">
+          <Checkbox id="propertyConfig.amenities" label="WiFi / Internet" value="WiFi" register={register} watch={watch} />
+          <Checkbox id="propertyConfig.amenities" label="Laundry Area / Washer" value="Laundry Area" register={register} watch={watch} />
+          <Checkbox id="propertyConfig.amenities" label="Parking / Garage" value="Parking" register={register} watch={watch} />
+          <Checkbox id="propertyConfig.amenities" label="Gated / Secure" value="Gated" register={register} watch={watch} />
+          <Checkbox id="propertyConfig.amenities" label="Kitchen / Shared Kitchen" value="Kitchen Access" register={register} watch={watch} />
+          <Checkbox id="propertyConfig.amenities" label="Study Room / Common Area" value="Study Room" register={register} watch={watch} />
+          <Checkbox id="propertyConfig.amenities" label="Elevator / Accessible" value="Elevator" register={register} watch={watch} />
+          <Checkbox id="propertyConfig.amenities" label="Furnished" value="Furnished" register={register} watch={watch} />
+          <Checkbox id="propertyConfig.amenities" label="Gym / Pool / Recreation" value="Gym" register={register} watch={watch} />
+          <Checkbox id="propertyConfig.amenities" label="Water Heater" value="Water Heater" register={register} watch={watch} />
         </div>
       </motion.div>
     </div>
@@ -390,3 +202,4 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
 };
 
 export default PropertyConfigStep;
+

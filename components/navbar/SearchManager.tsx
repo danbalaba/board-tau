@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import { springBounce } from "@/utils/motion";
 
 import Modal from "../modals/Modal";
-import { colleges } from "@/data/colleges";
+import { useSearchSummary } from "@/hooks/useSearchSummary";
 
 const SearchModal = dynamic(() => import("@/components/modals/SearchModal"), {
   ssr: false,
@@ -19,47 +19,7 @@ interface SearchManagerProps {
 }
 
 const SearchManager = ({ isScrolled = false }: SearchManagerProps) => {
-  const searchParams = useSearchParams();
-
-  const college = searchParams?.get("college");
-  const categories = searchParams?.getAll("categories");
-  const distance = searchParams?.get("distance");
-  const roomType = searchParams?.get("roomType");
-  const minPrice = searchParams?.get("minPrice");
-  const maxPrice = searchParams?.get("maxPrice");
-  const guestCount = searchParams?.get("guestCount");
-
-  const locationLabel = useMemo(() => {
-    const co = colleges.find((c) => c.value === college);
-    const name = co?.label ?? "TAU";
-    if (distance != null && distance !== "") return `Near ${name} · ≤ ${distance} km`;
-    return `Near ${name}`;
-  }, [college, distance]);
-
-  const categoryLabel = useMemo(() => {
-    if (categories?.length) {
-      if (categories.length === 1) return categories[0];
-      return `${categories.length} categories`;
-    }
-    return "Any category";
-  }, [categories]);
-
-  const priceLabel = useMemo(() => {
-    if (minPrice && maxPrice && +minPrice > 0 && +maxPrice > 0) {
-      return `₱${minPrice}–${maxPrice} / mo`;
-    }
-    return "Any price";
-  }, [minPrice, maxPrice]);
-
-  const roomTypeLabel = useMemo(() => {
-    if (roomType) return roomType;
-    return "Any room";
-  }, [roomType]);
-
-  const occupantLabel = useMemo(() => {
-    if (guestCount) return `${guestCount} occupants`;
-    return "Occupants";
-  }, [guestCount]);
+  const { locationLabel, priceLabel, roomTypeLabel } = useSearchSummary();
 
   const handleSearchClose = () => {};
 

@@ -133,35 +133,34 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
       return;
     }
 
-    startTransition(async () => {
-      try {
-        const reservationData = {
-          ...data,
-          listingId: id,
-          userId: user.id,
-        };
+    try {
+      const inquiryData = {
+        ...data,
+        listingId: id,
+        userId: user.id,
+      };
 
-        // Create reservation directly
-        const response = await fetch("/api/reservations/direct", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(reservationData),
-        });
+      // Create inquiry instead of reservation
+      const response = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(inquiryData),
+      });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("API Error Response:", errorData);
-          throw new Error(errorData.error || errorData.message || "Failed to create reservation");
-        }
-
-        success("Reservation request sent! Waiting for landlord approval.");
-      } catch (error: any) {
-        console.error('Reservation request error:', error);
-        error(error?.message || 'Failed to send reservation request');
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("API Error Response:", errorData);
+        throw new Error(errorData.error || errorData.message || "Failed to create inquiry");
       }
-    });
+
+      success("Inquiry sent! Waiting for landlord approval.");
+    } catch (err: any) {
+      console.error('Inquiry request error:', err);
+      error(err?.message || 'Failed to send inquiry');
+      throw err; // Ensure InquiryModal catches the failure!
+    }
   };
 
   const bedroomImage = images?.[0];

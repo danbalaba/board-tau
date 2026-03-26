@@ -1,4 +1,4 @@
-    import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { fontVariables } from "./admin/components/themes/font.config";
 

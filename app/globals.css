@@ -49,6 +49,10 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   --surface-rgb: 255, 255, 255;
   --border-rgb: 229, 231, 235;
   
+  --primary-color: #2f7d6d;
+  --primary-light-color: #d8e6e3;
+  --primary-dark-color: #1e5146;
+  
   /* Chart colors - for landlord/frontend */
   --color-chart-1: 0.47 0.35 148; /* Green */
   --color-chart-2: 0.58 0.21 260.84; /* Blue */

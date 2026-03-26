@@ -148,7 +148,7 @@ const GlassToast = ({ toast }: { toast: ToastType }) => {
                 ease: "linear",
               }}
               className="absolute bottom-0 left-0 h-0.5 bg-current opacity-30"
-              style={{ color: getComputedStyle(document.documentElement).getPropertyValue(variant.iconColor.split('text-')[1]) }}
+              style={{ color: typeof window !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue(variant.iconColor.split('text-')[1]) : 'inherit' }}
             />
           )}
         </motion.div>
@@ -185,7 +185,7 @@ export const Toaster = () => {
       containerStyle={{
         top: '80px', // Position below navbar
         right: '20px',
-        zIndex: 60, // Higher than modal (z-50) to appear above
+        zIndex: 9999, // Set higher than modal (z-100) to appear above
       }}
     >
       {(t) => <GlassToast toast={t} />}

@@ -1,5 +1,7 @@
+"use client";
+
 import React, { InputHTMLAttributes, useState } from "react";
-import { IconType } from "react-icons";
+import { LucideIcon, Eye, EyeOff } from "lucide-react";
 import {
   UseFormRegister,
   FieldValues,
@@ -7,12 +9,12 @@ import {
   UseFormWatch,
 } from "react-hook-form";
 import { cn } from "@/utils/helper";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { motion } from "framer-motion";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   id: string;
   label: string;
-  icon?: IconType;
+  icon?: LucideIcon;
   register?: UseFormRegister<any>;
   errors?: FieldErrors;
   watch?: UseFormWatch<any>;
@@ -41,34 +43,149 @@ const Input: React.FC<InputProps> = ({
   onChange: externalOnChange,
   ...props
 }) => {
-  const internalValue = watch && watch(id);
-  const value = externalValue !== undefined ? externalValue : internalValue;
   const [showPassword, setShowPassword] = useState(false);
   const isPasswordInput = type === "password";
 
-  // Get error for nested path (e.g., 'contactInfo.fullName')
+  // Get value from watch or external
+  const internalValue = watch && watch(id);
+  const value = externalValue !== undefined ? externalValue : internalValue;
+
+  // Get error for nested path
   const getError = (path: string) => {
     if (!errors) return undefined;
-    return path.split('.').reduce((obj: any, key: string) => obj && obj[key], errors);
+    // Replace array format rooms[0] with rooms.0 for consistent path navigation
+    const normalizedPath = path.replace(/\[(\d+)\]/g, '.$1');
+    return normalizedPath.split('.').reduce((obj: any, key: string) => obj && obj[key], errors);
   };
 
   const error = getError(id);
 
-  // Original floating label design (for login form)
+  // Floating Label Design
   if (!useStaticLabel) {
     return (
-      <div className="w-full relative">
-        {Icon && <Icon size={20} className="absolute top-[13px] left-2 text-[#666] dark:text-gray-400" />}
+      <div className="w-full relative group">
+        <div className="relative mt-2">
+          {Icon && (
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 z-10 flex items-center justify-center">
+              <Icon
+                size={18}
+                className={cn(
+                  error ? "text-red-500" : "text-gray-400 group-focus-within:text-primary"
+                )}
+              />
+            </div>
+          )}
+
+          <input
+            id={id}
+            type={isPasswordInput ? (showPassword ? "text" : "password") : type}
+            disabled={disabled}
+            value={value || ''}
+            placeholder=" " // Required for peer-placeholder-shown
+            onChange={(e) => {
+              if (externalOnChange) {
+                externalOnChange(e);
+              }
+            }}
+            {...(register && {
+              ...register(id, {
+                required: required ? "This field is required" : false,
+                ...validationRules
+              })
+            })}
+            className={cn(
+              "peer w-full px-4 py-4 text-sm font-medium bg-white dark:bg-gray-800 border-2 rounded-2xl outline-none transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed",
+              error
+                ? "border-red-500/50 focus:border-red-500 ring-red-500/10"
+                : "border-gray-100 dark:border-gray-700/50 focus:border-primary dark:focus:border-primary/60 shadow-sm",
+              Icon ? "pl-11" : "pl-4",
+              isPasswordInput ? "pr-11" : "pr-4",
+              "focus:ring-4 focus:ring-primary/5"
+            )}
+            autoFocus={autoFocus}
+            {...props}
+          />
+
+          <label
+            htmlFor={id}
+            className={cn(
+              "absolute text-sm font-bold duration-300 transform scale-75 z-10 origin-[0] px-2 rounded-md transition-all cursor-text",
+              "bg-white dark:bg-gray-800 -top-2.5", // Floating position (default)
+              Icon ? "left-9" : "left-2.5",
+              "peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-4  peer-placeholder-shown:bg-transparent", // Inside position
+              "peer-focus:scale-75 peer-focus:-translate-y-0.5 peer-focus:text-primary peer-focus:bg-white dark:peer-focus:bg-gray-800", // Float back up
+              value && "scale-75 -translate-y-0.5 bg-white dark:bg-gray-800", // Keep float if has value
+              error ? "text-red-500" : "text-gray-400"
+            )}
+          >
+            {label} {required && <span className="text-red-500 ml-0.5">*</span>}
+          </label>
+
+          {isPasswordInput && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setShowPassword(!showPassword);
+              }}
+              disabled={disabled}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors duration-200 focus:outline-none flex items-center justify-center p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          )}
+        </div>
+
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-red-500 text-[10px] font-bold mt-1.5 ml-2 flex items-center gap-1 uppercase tracking-[0.1em]"
+          >
+            {typeof error === 'string' ? error : (error as any).message || "Required"}
+          </motion.p>
+        )}
+      </div>
+    );
+  }
+
+  // Static Label Design
+  return (
+    <div className="w-full relative group">
+      <label
+        htmlFor={id}
+        className={cn(
+          "block text-xs font-black uppercase tracking-widest mb-2 ml-1 transition-all duration-200",
+          error ? "text-red-500" : "text-gray-500 dark:text-gray-400 group-focus-within:text-primary"
+        )}
+      >
+        {label} {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+
+      <div className="relative">
+        {Icon && (
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 z-10 flex items-center justify-center">
+            <Icon
+              size={18}
+              className={cn(
+                error ? "text-red-500" : "text-gray-400 group-focus-within:text-primary"
+              )}
+            />
+          </div>
+        )}
+
         <input
           id={id}
           type={isPasswordInput ? (showPassword ? "text" : "password") : type}
           disabled={disabled}
-          value={value || ''}
-          onChange={(e) => {
-            if (externalOnChange) {
-              externalOnChange(e);
+          {...(!register && {
+            value: value || '',
+            onChange: (e) => {
+              if (externalOnChange) {
+                externalOnChange(e);
+              }
             }
-          }}
+          })}
           {...(register && {
             ...register(id, {
               required: required ? "This field is required" : false,
@@ -76,16 +193,18 @@ const Input: React.FC<InputProps> = ({
             })
           })}
           className={cn(
-            `text-[15px] peer w-full px-4 py-3 font-light bg-white dark:bg-gray-800 border-[1px] rounded-input outline-none transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed focus:ring-2 focus:ring-offset-1`,
+            "peer w-full px-4 py-3.5 text-sm font-medium bg-white dark:bg-gray-800 border-2 rounded-2xl outline-none transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed",
             error
-              ? "border-red-500 focus:border-red-500 focus:ring-red-200"
-              : "border-border dark:border-gray-700 focus:border-primary focus:ring-primary/10",
+              ? "border-red-500/50 focus:border-red-500 ring-red-500/10"
+              : "border-gray-100 dark:border-gray-700/50 focus:border-primary dark:focus:border-primary/60 shadow-sm",
             Icon ? "pl-11" : "pl-4",
-            isPasswordInput ? "pr-11" : "pr-4"
+            isPasswordInput ? "pr-11" : "pr-4",
+            "focus:ring-4 focus:ring-primary/5"
           )}
           autoFocus={autoFocus}
           {...props}
         />
+
         {isPasswordInput && (
           <button
             type="button"
@@ -94,173 +213,16 @@ const Input: React.FC<InputProps> = ({
               setShowPassword(!showPassword);
             }}
             disabled={disabled}
-            className="absolute top-[13px] right-2 text-[#666] dark:text-gray-400 hover:text-[#333] dark:hover:text-gray-200 transition-colors duration-200 focus:outline-none"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors duration-200 focus:outline-none flex items-center justify-center p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50"
           >
-            {showPassword ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                className="w-5 h-5 text-[#666] dark:text-gray-400"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                />
-              </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                className="w-5 h-5 text-[#666] dark:text-gray-400"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                />
-              </svg>
-            )}
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         )}
-        <label
-          className={cn(
-            `absolute  text-[14px] duration-150  transform  top-[28px] scale-80 -translate-y-4 origin-[0] peer-placeholder-shown:scale-100  peer-placeholder-shown:translate-y-0  peer-focus:scale-80 peer-focus:-translate-y-[40px] peer-focus:bg-white dark:peer-focus:bg-gray-800 z-[20] px-1 `,
-            error ? "text-red-500" : "text-zinc-400 dark:text-gray-400",
-            value && "-translate-y-[40px] bg-white dark:bg-gray-800",
-            Icon ? "left-9" : "left-4"
-          )}
-          htmlFor={id}
-        >
-          {label}
-        </label>
-        {/* Error message */}
-        {error && (
-          <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-            {typeof error === 'string'
-              ? error
-              : (error as any).message || "Please enter a valid value"}
-          </p>
-        )}
       </div>
-    );
-  }
 
-  // New static label design (for landlord application) with animation
-  return (
-    <div className="w-full relative">
-      <label
-        htmlFor={id}
-        className={cn(
-          "block text-sm font-medium mb-2 transition-all duration-200",
-          error ? "text-red-500" : "text-gray-700 dark:text-gray-300"
-        )}
-      >
-        {label}
-      </label>
-
-      {Icon && <Icon size={20} className="absolute top-[42px] left-3 text-[#666] dark:text-gray-400" />}
-
-      <input
-        id={id}
-        type={isPasswordInput ? (showPassword ? "text" : "password") : type}
-        disabled={disabled}
-        {...(!register && {
-          value: value || '',
-          onChange: (e) => {
-            if (externalOnChange) {
-              externalOnChange(e);
-            }
-          }
-        })}
-        {...(register && {
-          ...register(id, {
-            required: required ? "This field is required" : false,
-            ...validationRules
-          })
-        })}
-        className={cn(
-          `text-[15px] peer w-full px-4 py-3 font-light bg-white dark:bg-gray-800 border-[1px] rounded-input outline-none transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed focus:ring-2 focus:ring-offset-1`,
-          error
-            ? "border-red-500 focus:border-red-500 focus:ring-red-200"
-            : "border-border dark:border-gray-700 focus:border-primary focus:ring-primary/10",
-          Icon ? "pl-11" : "pl-4",
-          isPasswordInput ? "pr-11" : "pr-4"
-        )}
-        autoFocus={autoFocus}
-        {...props}
-      />
-
-      {isPasswordInput && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            setShowPassword(!showPassword);
-          }}
-          disabled={disabled}
-          className="absolute top-[13px] right-3 text-[#666] dark:text-gray-400 hover:text-[#333] dark:hover:text-gray-200 transition-colors duration-200 focus:outline-none"
-        >
-          {showPassword ? (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              className="w-5 h-5 text-[#666] dark:text-gray-400"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-              />
-            </svg>
-          ) : (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              className="w-5 h-5 text-[#666] dark:text-gray-400"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-              />
-            </svg>
-          )}
-        </button>
-      )}
-
-      {/* Error message */}
       {error && (
-        <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-          <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-          {typeof error === 'string'
-            ? error
-            : (error as any).message || "Please enter a valid value"}
+        <p className="text-red-500 text-[10px] font-bold mt-1.5 ml-2 flex items-center gap-1 uppercase tracking-[0.1em]">
+          {typeof error === 'string' ? error : (error as any).message || "Required"}
         </p>
       )}
     </div>

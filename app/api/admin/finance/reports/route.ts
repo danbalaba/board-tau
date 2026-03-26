@@ -144,7 +144,7 @@ async function fetchOccupancyReport(startDate: Date, endDate: Date) {
     db.reservation.groupBy({
       by: ['roomId'],
       where: {
-        status: 'CONFIRMED',
+        status: 'RESERVED',
         OR: [
           { startDate: { lte: endDate }, endDate: { gte: startDate } },
           { startDate: { gte: startDate, lte: endDate } },
@@ -169,7 +169,7 @@ async function fetchAverageOccupancy(startDate: Date, endDate: Date) {
     db.reservation.groupBy({
       by: ['roomId'],
       where: {
-        status: 'CONFIRMED',
+        status: 'RESERVED',
         OR: [
           { startDate: { lte: endDate }, endDate: { gte: startDate } },
           { startDate: { gte: startDate, lte: endDate } },

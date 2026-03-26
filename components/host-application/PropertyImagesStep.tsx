@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { Upload, Image, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useResponsiveToast } from '@/components/common/ResponsiveToast';
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png'];
+const MAX_PROPERTY_IMAGES = 10;
+const MAX_ROOM_IMAGES = 5;
 
 interface PropertyImagesStepProps {
   register: any;
@@ -8,6 +14,8 @@ interface PropertyImagesStepProps {
   watch: any;
   control: any;
   getValues: any;
+  setValue: any;
+  clearErrors: any;
 }
 
 const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
@@ -15,56 +23,162 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
   errors,
   watch,
   control,
-  getValues
+  getValues,
+  setValue,
+  clearErrors
 }) => {
-  const [propertyImages, setPropertyImages] = useState<string[]>([]);
-  const [roomImages, setRoomImages] = useState<Record<number, string[]>>({});
-  const [dragOver, setDragOver] = useState(false);
+  const toast = useResponsiveToast();
+  
+  // Get initial values from form to preserve state when navigating back
+  const initialData = getValues('propertyImages') || { property: [], rooms: {} };
+  
+  const [propertyImages, setPropertyImages] = useState<string[]>(initialData.property || []);
+  const [roomImages, setRoomImages] = useState<Record<number, string[]>>(initialData.rooms || {});
+  const [dragOver, setDragOver] = useState<number | 'property' | null>(null);
 
   const rooms = watch('propertyConfig.rooms') || [];
 
+  const validateFiles = (files: File[], currentCount: number, limit: number) => {
+    const validFiles: File[] = [];
+    
+    if (currentCount >= limit) {
+      toast.error(`Maximum limit of ${limit} images reached.`, { id: 'limit-error' });
+      return [];
+    }
+
+    const totalAfterAdd = currentCount + files.length;
+    if (totalAfterAdd > limit) {
+      toast.error(`You can only add ${limit - currentCount} more images. Total limit is ${limit}.`, { id: 'count-error' });
+    }
+
+    const filesToAdd = files.slice(0, limit - currentCount);
+
+    for (const file of filesToAdd) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        toast.error(`${file.name} is an invalid file type. Only JPG, PNG, and WEBP allowed.`, { id: `type-error-${file.name}` });
+        continue;
+      }
+      
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`${file.name} exceeds the 5MB size limit.`, { id: `size-error-${file.name}` });
+        continue;
+      }
+      
+      validFiles.push(file);
+    }
+
+    return validFiles;
+  };
+
+  const syncToForm = (newPropertyImages: string[], newRoomImages: Record<number, string[]>) => {
+    setValue('propertyImages', {
+      property: newPropertyImages,
+      rooms: newRoomImages
+    }, { shouldValidate: true });
+
+    // Real-time error clearing
+    if (newPropertyImages.length >= 3) {
+      clearErrors('propertyImages.property');
+    }
+
+    // Check each room and clear specific error if requirement met
+    Object.entries(newRoomImages).forEach(([roomIdx, images]) => {
+      if (images.length >= 1) {
+        clearErrors(`propertyImages.rooms[${roomIdx}]`);
+      }
+    });
+
+    // Check if ALL room requirements are met to clear the general room error
+    const someRoomMissingImages = rooms.some((_: any, idx: number) => (newRoomImages[idx] || []).length < 1);
+    if (!someRoomMissingImages) {
+      clearErrors('propertyImages.rooms');
+    }
+  };
+
   const handlePropertyImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const newImages = files.map(file => URL.createObjectURL(file));
-    setPropertyImages(prev => [...prev, ...newImages]);
+    const validFiles = validateFiles(files, propertyImages.length, MAX_PROPERTY_IMAGES);
+    
+    if (validFiles.length > 0) {
+      const newImages = validFiles.map(file => URL.createObjectURL(file));
+      const updated = [...propertyImages, ...newImages];
+      setPropertyImages(updated);
+      syncToForm(updated, roomImages);
+      toast.success(`Successfully added ${validFiles.length} images.`);
+    }
   };
 
   const handleRoomImageUpload = (roomIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const newImages = files.map(file => URL.createObjectURL(file));
-    setRoomImages(prev => ({
-      ...prev,
-      [roomIndex]: [...(prev[roomIndex] || []), ...newImages]
-    }));
+    const currentRoomCount = (roomImages[roomIndex] || []).length;
+    const validFiles = validateFiles(files, currentRoomCount, MAX_ROOM_IMAGES);
+    
+    if (validFiles.length > 0) {
+      const newImages = validFiles.map(file => URL.createObjectURL(file));
+      const updatedRoomImages = {
+        ...roomImages,
+        [roomIndex]: [...(roomImages[roomIndex] || []), ...newImages]
+      };
+      setRoomImages(updatedRoomImages);
+      syncToForm(propertyImages, updatedRoomImages);
+      toast.success(`Successfully added ${validFiles.length} room images.`);
+    }
   };
 
   const removePropertyImage = (index: number) => {
-    setPropertyImages(prev => prev.filter((_, i) => i !== index));
+    const updated = propertyImages.filter((_, i) => i !== index);
+    setPropertyImages(updated);
+    syncToForm(updated, roomImages);
   };
 
   const removeRoomImage = (roomIndex: number, imageIndex: number) => {
-    setRoomImages(prev => ({
-      ...prev,
-      [roomIndex]: prev[roomIndex].filter((_, i) => i !== imageIndex)
-    }));
+    const updatedRoomImages = {
+      ...roomImages,
+      [roomIndex]: roomImages[roomIndex].filter((_, i) => i !== imageIndex)
+    };
+    setRoomImages(updatedRoomImages);
+    syncToForm(propertyImages, updatedRoomImages);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, id: number | 'property') => {
     e.preventDefault();
-    setDragOver(true);
+    setDragOver(id);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
-    setDragOver(false);
+    setDragOver(null);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent, id: number | 'property') => {
     e.preventDefault();
-    setDragOver(false);
+    setDragOver(null);
     const files = Array.from(e.dataTransfer.files || []);
-    const newImages = files.map(file => URL.createObjectURL(file));
-    setPropertyImages(prev => [...prev, ...newImages]);
+    
+    if (id === 'property') {
+      const validFiles = validateFiles(files, propertyImages.length, MAX_PROPERTY_IMAGES);
+      if (validFiles.length > 0) {
+        const newImages = validFiles.map(file => URL.createObjectURL(file));
+        const updated = [...propertyImages, ...newImages];
+        setPropertyImages(updated);
+        syncToForm(updated, roomImages);
+        toast.success(`Successfully uploaded ${validFiles.length} property images.`);
+      }
+    } else {
+      const roomIndex = id;
+      const currentRoomCount = (roomImages[roomIndex] || []).length;
+      const validFiles = validateFiles(files, currentRoomCount, MAX_ROOM_IMAGES);
+      if (validFiles.length > 0) {
+        const newImages = validFiles.map(file => URL.createObjectURL(file));
+        const updatedRoomImages = {
+          ...roomImages,
+          [roomIndex]: [...(roomImages[roomIndex] || []), ...newImages]
+        };
+        setRoomImages(updatedRoomImages);
+        syncToForm(propertyImages, updatedRoomImages);
+        toast.success(`Successfully uploaded ${validFiles.length} images for Room ${roomIndex + 1}.`);
+      }
+    }
   };
 
   return (
@@ -88,36 +202,37 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
 
       {/* Property Images */}
       <motion.div
-        className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm"
+        id="propertyImages.property"
+        className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm scroll-mt-24"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
         <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
           <Image className="w-5 h-5" />
-          <span>Property Images</span>
+          <span>Property Images <span className="text-red-500">*</span></span>
         </h4>
 
         <div
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-            dragOver
+            dragOver === 'property'
               ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20'
               : 'border-gray-300 dark:border-gray-600'
-          }`}
-          onDragOver={handleDragOver}
+          } ${errors?.propertyImages?.property ? 'border-red-500 bg-red-50 dark:bg-red-900/10' : ''}`}
+          onDragOver={(e) => handleDragOver(e, 'property')}
           onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          onDrop={(e) => handleDrop(e, 'property')}
         >
           <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400 mb-2">
             Drag and drop images here, or click to browse
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-500 mb-4">
-            Supported formats: JPG, PNG, WEBP (Max 5MB per image)
+            Supported formats: JPG, PNG (Max 5MB per image)
           </p>
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png"
             multiple
             onChange={handlePropertyImageUpload}
             className="hidden"
@@ -152,44 +267,48 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
             ))}
           </div>
         )}
+        {errors?.propertyImages?.property && (
+          <p className="mt-3 text-sm text-red-500 font-medium">
+            {errors.propertyImages.property.message}
+          </p>
+        )}
       </motion.div>
 
       {/* Room Images */}
       {rooms.map((room: any, roomIndex: number) => (
         <motion.div
           key={roomIndex}
-          className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm"
+          id={`propertyImages.rooms[${roomIndex}]`}
+          className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm scroll-mt-24"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.4 + roomIndex * 0.1 }}
         >
           <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
             <Image className="w-5 h-5" />
-            <span>Room {roomIndex + 1} Images</span>
+            <span>Room {roomIndex + 1} Images <span className="text-red-500">*</span></span>
           </h4>
 
           <div
-            className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center"
-            onDragOver={handleDragOver}
+            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+              dragOver === roomIndex
+                ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20'
+                : 'border-gray-300 dark:border-gray-600'
+            } ${errors?.propertyImages?.rooms?.[roomIndex] ? 'border-red-500 bg-red-50 dark:bg-red-900/10' : ''}`}
+            onDragOver={(e) => handleDragOver(e, roomIndex)}
             onDragLeave={handleDragLeave}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragOver(false);
-              const files = Array.from(e.dataTransfer.files || []);
-              const newImages = files.map(file => URL.createObjectURL(file));
-              setRoomImages(prev => ({
-                ...prev,
-                [roomIndex]: [...(prev[roomIndex] || []), ...newImages]
-              }));
-            }}
+            onDrop={(e) => handleDrop(e, roomIndex)}
           >
             <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
             <p className="text-gray-600 dark:text-gray-400 mb-2">
               Drag and drop images here, or click to browse
             </p>
+            <p className="text-xs text-gray-500 dark:text-gray-500 mb-4">
+              Supported formats: JPG, PNG (Max 5MB per image)
+            </p>
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png"
               multiple
               onChange={(e) => handleRoomImageUpload(roomIndex, e)}
               className="hidden"
@@ -223,6 +342,11 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
                 </div>
               ))}
             </div>
+          )}
+          {errors?.propertyImages?.rooms?.[roomIndex] && (
+            <p className="mt-3 text-sm text-red-500 font-medium">
+              {errors.propertyImages.rooms[roomIndex].message}
+            </p>
           )}
         </motion.div>
       ))}

@@ -15,6 +15,13 @@ export const useOutsideClick = ({
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
+      // If the target is no longer in the document, do not trigger outside click.
+      // This prevents the modal from closing if a clicked element causes itself
+      // to be removed from the DOM (e.g. Next button, Remove Image button).
+      if (!document.contains(e.target as Node)) {
+        return;
+      }
+
       if (ref.current && !ref.current.contains(e.target as Node)) {
         action(e);
       }

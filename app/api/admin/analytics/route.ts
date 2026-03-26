@@ -28,10 +28,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Get total revenue
-    const reservations = await db.reservation.findMany({
-      where: {
-        status: "CONFIRMED"
-      },
+     const reservations = await db.reservation.findMany({
+       where: {
+         status: "RESERVED"
+       },
       select: {
         totalPrice: true
       }

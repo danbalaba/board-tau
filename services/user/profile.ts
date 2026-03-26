@@ -76,6 +76,9 @@ export async function updateUserProfile(data: Partial<UserProfile>): Promise<Use
   if (data.businessName !== undefined) {
     allowedFields.businessName = data.businessName ? sanitizeInput(data.businessName) : null;
   }
+  if (data.image !== undefined) {
+    allowedFields.image = data.image; // Allow updating profile image
+  }
 
   const updatedUser = await db.user.update({
     where: {

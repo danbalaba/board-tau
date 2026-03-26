@@ -42,7 +42,7 @@ export const getLandlordDashboardStats = async () => {
         listing: {
           userId: landlord.id,
         },
-        status: "CONFIRMED",
+        status: "RESERVED",
       },
     }),
     // Review statistics
@@ -62,7 +62,7 @@ export const getLandlordDashboardStats = async () => {
         listing: {
           userId: landlord.id,
         },
-        status: "CONFIRMED",
+        status: "RESERVED",
         paymentStatus: "PAID",
         createdAt: {
           gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -112,7 +112,7 @@ export const getPropertyPerformance = async (propertyId: string) => {
     db.reservation.count({
       where: {
         listingId: propertyId,
-        status: "CONFIRMED",
+        status: "RESERVED",
       },
     }),
     db.review.aggregate({
@@ -127,7 +127,7 @@ export const getPropertyPerformance = async (propertyId: string) => {
     db.reservation.findMany({
       where: {
         listingId: propertyId,
-        status: "CONFIRMED",
+        status: "RESERVED",
         createdAt: {
           gte: new Date(new Date().getFullYear(), new Date().getMonth() - 6, 1),
         },
@@ -188,7 +188,7 @@ export const getRevenueReport = async (period: "month" | "quarter" | "year" = "m
       listing: {
         userId: landlord.id,
       },
-      status: "CONFIRMED",
+      status: "RESERVED",
       paymentStatus: "PAID",
       createdAt: {
         gte: startDate,
@@ -247,7 +247,7 @@ export const getOccupancyReport = async (propertyId?: string) => {
     listing: {
       userId: landlord.id,
     },
-    status: "CONFIRMED",
+    status: "RESERVED",
   };
 
   if (propertyId) {

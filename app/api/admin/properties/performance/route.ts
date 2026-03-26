@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
           rooms: true,
           reservations: {
             where: {
-              status: 'CONFIRMED',
+              status: 'RESERVED',
               OR: [
                 { startDate: { lte: now }, endDate: { gte: startDate } },
                 { startDate: { gte: startDate, lte: now } },
@@ -95,10 +95,10 @@ export async function GET(req: NextRequest) {
     let totalRooms = 0;
     let occupiedRooms = 0;
 
-    occupancyData.forEach(property => {
-      property.rooms.forEach(room => {
+    (occupancyData as any[]).forEach(property => {
+      (property.rooms as any[]).forEach(room => {
         totalRooms++;
-        const roomReservations = property.reservations.filter(reservation =>
+        const roomReservations = (property.reservations as any[]).filter(reservation =>
           reservation.roomId === room.id
         );
         if (roomReservations.length > 0) {

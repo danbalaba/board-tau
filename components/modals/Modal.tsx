@@ -42,6 +42,7 @@ interface ModalProps {
   onClose?: () => void;
   title?: string;
   width?: 'sm' | 'md' | 'lg' | 'xl';
+  hasFixedFooter?: boolean;
 }
 
 interface TriggerProps {
@@ -52,6 +53,7 @@ interface TriggerProps {
 
 interface WindowProps extends TriggerProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  hasFixedFooter?: boolean;
 }
 
 interface WindowHeaderProps {
@@ -68,10 +70,44 @@ const Modal: FC<ModalProps> & {
   Trigger: typeof Trigger;
   Window: typeof Window;
   WindowHeader: typeof WindowHeader;
-} = ({ children, isOpen, onClose, title, width = 'md' }) => {
+} = ({ children, isOpen, onClose, title, width = 'md', hasFixedFooter }) => {
   // Simplified API for direct control (no context)
   if (isOpen !== undefined) {
     const isClient = useIsClient();
+
+    // Handle body scroll locking for standalone Modal
+    useEffect(() => {
+      if (!isClient) return;
+      const body = document.body;
+      const rootNode = document.documentElement;
+
+      const restoreScroll = () => {
+        const top = parseFloat(body.style.top) * -1;
+        body.style.overflow = '';
+        body.style.paddingRight = '';
+        body.style.top = '';
+        body.classList.remove("fixed", "w-full");
+        if (top) {
+          window.scrollTo(0, top);
+        }
+      };
+
+      if (isOpen) {
+        const scrollTop = window.pageYOffset || rootNode.scrollTop || body.scrollTop;
+        body.style.overflow = 'hidden';
+        body.style.paddingRight = '17px';
+        body.style.top = `-${scrollTop}px`;
+        body.classList.add("fixed", "w-full");
+      } else {
+        restoreScroll();
+      }
+
+      return () => {
+        if (isOpen) {
+          restoreScroll();
+        }
+      };
+    }, [isClient, isOpen]);
 
     // Only render portal on client side
     if (!isClient) return null;
@@ -87,7 +123,8 @@ const Modal: FC<ModalProps> & {
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[100] flex justify-center items-center overflow-hidden outline-none focus:outline-none bg-black/35 backdrop-blur-xl"
             onClick={(e) => {
-              // Close modal when clicking outside
+              e.stopPropagation(); // prevent bubbling to parent modals
+              // Close modal when clicking outside the inner box
               if (e.target === e.currentTarget) {
                 onClose?.();
               }
@@ -98,7 +135,7 @@ const Modal: FC<ModalProps> & {
               initial="hidden"
               animate="show"
               exit="exit"
-              className={`md:h-auto h-auto md:max-h-[90vh] overflow-y-auto w-full md:w-[${width === 'sm' ? '400px' : width === 'md' ? '500px' : width === 'lg' ? '800px' : '1100px'}] md:rounded-card rounded-card shadow-glass border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
+              className={`md:h-auto h-auto md:max-h-[90vh] ${hasFixedFooter ? 'overflow-hidden' : 'overflow-y-auto'} w-full md:w-[${width === 'sm' ? '400px' : width === 'md' ? '500px' : width === 'lg' ? '800px' : '1100px'}] md:rounded-card rounded-card shadow-glass border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
               onClick={(e) => e.stopPropagation()}
             >
               {title && (
@@ -162,7 +199,7 @@ const Trigger: FC<TriggerProps> = ({ children, name, onClick }) => {
   return cloneElement(children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>, { onClick: handleClick });
 };
 
-const Window: FC<WindowProps> = ({ children, name, size = 'md' }) => {
+const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter }) => {
   const sizeClasses = {
     sm: 'md:w-[400px] lg:w-[400px]',
     md: 'md:w-[500px] lg:w-[500px]',
@@ -190,6 +227,17 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md' }) => {
     const body = document.body;
     const rootNode = document.documentElement;
 
+    const restoreScroll = () => {
+      const top = parseFloat(body.style.top) * -1;
+      body.style.overflow = '';
+      body.style.paddingRight = '';
+      body.style.top = '';
+      body.classList.remove("fixed", "w-full");
+      if (top) {
+        window.scrollTo(0, top);
+      }
+    };
+
     if (isWindowOpen) {
       // Save current scroll position
       const scrollTop = window.pageYOffset || rootNode.scrollTop || body.scrollTop;
@@ -199,16 +247,17 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md' }) => {
       body.style.top = `-${scrollTop}px`;
       body.classList.add("fixed", "w-full");
     } else {
-      // Restore scroll position
-      const top = parseFloat(body.style.top) * -1;
-      body.style.overflow = '';
-      body.style.paddingRight = '';
-      body.style.top = '';
-      body.classList.remove("fixed", "w-full");
-      if (top) {
-        window.scrollTo(0, top);
-      }
+      // Restore scroll position when logically closing
+      restoreScroll();
     }
+
+    // Cleanup: ALWAYS restore scroll on unmount if it was open. 
+    // This catches router.push() unmounts that completely tear down the modal tree mid-flight.
+    return () => {
+      if (isWindowOpen) {
+        restoreScroll();
+      }
+    };
   }, [isClient, isWindowOpen]);
 
   if (!isClient) return null;
@@ -230,7 +279,7 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md' }) => {
               animate="show"
               exit="exit"
               ref={ref}
-              className={`md:h-auto h-[95vh] md:max-h-[90vh] overflow-y-auto w-full ${sizeClasses[size]} md:rounded-card rounded-t-card shadow-glass border-t md:border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
+              className={`md:h-auto h-[95vh] md:max-h-[90vh] ${hasFixedFooter ? 'overflow-hidden' : 'overflow-y-auto'} w-full ${sizeClasses[size]} md:rounded-card rounded-t-card shadow-glass border-t md:border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
             >
             {React.isValidElement(children) && typeof children.type === 'function'
               ? React.cloneElement(children as React.ReactElement<{ onCloseModal: () => void }>, {

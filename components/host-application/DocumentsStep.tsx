@@ -27,6 +27,8 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({
         onFileSelect={(file: File) => onFileUpload('governmentId', file)}
         fileName={uploadedFiles.governmentId?.name}
         required
+        accept="image/jpeg,image/png"
+        description="JPG or PNG (max. 5MB)"
         errors={errors?.documents?.governmentId}
       />
 
@@ -36,6 +38,8 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({
         onFileSelect={(file: File) => onFileUpload('businessPermit', file)}
         fileName={uploadedFiles.businessPermit?.name}
         required
+        accept="image/jpeg,image/png"
+        description="JPG or PNG (max. 5MB)"
         errors={errors?.documents?.businessPermit}
       />
 
@@ -45,6 +49,8 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({
         onFileSelect={(file: File) => onFileUpload('landTitle', file)}
         fileName={uploadedFiles.landTitle?.name}
         required
+        accept="image/jpeg,image/png"
+        description="JPG or PNG (max. 5MB)"
         errors={errors?.documents?.landTitle}
       />
 
@@ -54,6 +60,8 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({
         onFileSelect={(file: File) => onFileUpload('barangayClearance', file)}
         fileName={uploadedFiles.barangayClearance?.name}
         required
+        accept="image/jpeg,image/png"
+        description="JPG or PNG (max. 5MB)"
         errors={errors?.documents?.barangayClearance}
       />
 
@@ -63,6 +71,8 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({
         onFileSelect={(file: File) => onFileUpload('fireSafetyCertificate', file)}
         fileName={uploadedFiles.fireSafetyCertificate?.name}
         required
+        accept="image/jpeg,image/png"
+        description="JPG or PNG (max. 5MB)"
         errors={errors?.documents?.fireSafetyCertificate}
       />
 
@@ -71,6 +81,8 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({
         id="otherDocuments"
         onFileSelect={(file: File) => onFileUpload('otherDocuments', file)}
         fileName={uploadedFiles.otherDocuments?.name}
+        accept="image/jpeg,image/png"
+        description="JPG or PNG (max. 5MB)"
         errors={errors?.documents?.otherDocuments}
       />
     </div>

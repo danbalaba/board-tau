@@ -1,61 +1,34 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import fs from "fs";
-import { ROOM_TYPES } from "../data/roomTypes";
-import { ROOM_AMENITIES } from "../data/roomAmenities";
 
 const prisma = new PrismaClient();
 
-// Sample user data (landlord who owns all listings)
+// LANDLORD & ADMIN USERS
 const landlord = {
   name: "TAU Property Management",
   email: "landlord@boardtau.test",
   password: "TestPassword@123",
-  image: "https://api.placeholder.com/avatar.jpg",
 };
 
 const admin = {
   name: "BoardTAU Admin",
   email: "admin@boardtau.test",
   password: "AdminPassword@123",
-  image: "https://api.placeholder.com/avatar-admin.jpg",
 };
 
-// Sample review users (students who reviewed)
-const reviewUsers = [
-  {
-    name: "Maria Santos",
-    email: "maria@student.edu",
-    password: "Password@123",
-    image: "https://api.placeholder.com/avatar1.jpg",
-  },
-  {
-    name: "Juan Cruz",
-    email: "juan@student.edu",
-    password: "Password@123",
-    image: "https://api.placeholder.com/avatar2.jpg",
-  },
-  {
-    name: "Angela Garcia",
-    email: "angela@student.edu",
-    password: "Password@123",
-    image: "https://api.placeholder.com/avatar3.jpg",
-  },
-  {
-    name: "Pedro Reyes",
-    email: "pedro@student.edu",
-    password: "Password@123",
-    image: "https://api.placeholder.com/avatar4.jpg",
-  },
-];
+const studentNames = ["Maria Santos", "Juan Cruz", "Angela Garcia", "Pedro Reyes", "Kristine Dizon", "Robert Lee"];
 
-// Load processed real listings from JSON file with images
-const realListings = JSON.parse(fs.readFileSync("processed-real-listings.json", "utf8"));
+// LOAD SOURCE DATA
+const realListingsSource = JSON.parse(fs.readFileSync("processed-real-listings.json", "utf8"));
 
 async function main() {
-  console.log("🌱 Starting to seed real listings data...");
+  console.log("🚀 STARTING THE BUG-FIXED SUPREME SEED (Final Final Evolution)...");
 
-  // Clean existing data (optional but recommended for fresh seed)
+  // 1. DELETE STALE DATA
+  await prisma.review.deleteMany();
+  await prisma.reservation.deleteMany();
+  await prisma.inquiry.deleteMany();
   await prisma.listingImage.deleteMany();
   await prisma.roomImage.deleteMany();
   await prisma.roomAmenity.deleteMany();
@@ -66,298 +39,187 @@ async function main() {
   await prisma.listingFeature.deleteMany();
   await prisma.listingRule.deleteMany();
   await prisma.listingAmenity.deleteMany();
-  await prisma.review.deleteMany();
-  await prisma.reservation.deleteMany();
-  await prisma.inquiry.deleteMany();
   await prisma.listing.deleteMany();
   await prisma.user.deleteMany();
 
-  console.log("✅ Cleared existing data");
+  console.log("✅ Database reset successfully.");
 
-  // Create admin user
-  const hashedAdminPassword = await bcrypt.hash(admin.password, 10);
-  const adminUser = await prisma.user.create({
-    data: {
-      ...admin,
-      password: hashedAdminPassword,
-      role: "ADMIN",
-      emailVerified: new Date(), // Mark admin email as verified
-    },
+  // 2. CREATE SYSTEM USERS
+  const hashedPassword = await bcrypt.hash("Password@123", 10);
+  await prisma.user.create({
+    data: { ...admin, password: hashedPassword, role: "ADMIN", emailVerified: new Date() }
   });
-  console.log(`✅ Created admin user: ${admin.email}`);
-
-  // Create landlord user
-  const hashedLandlordPassword = await bcrypt.hash(landlord.password, 10);
-  const landlordUser = await prisma.user.create({
-    data: {
-      ...landlord,
-      password: hashedLandlordPassword,
-      role: "LANDLORD",
-      isVerifiedLandlord: true,
-      landlordApprovedAt: new Date(),
-      emailVerified: new Date(), // Mark landlord email as verified
-    },
+  const landlordDoc = await prisma.user.create({
+    data: { ...landlord, password: hashedPassword, role: "LANDLORD", isVerifiedLandlord: true, emailVerified: new Date() }
   });
-  console.log(`✅ Created landlord user: ${landlord.email}`);
 
-  // Create review users
-  const createdReviewUsers = [];
-  for (const userData of reviewUsers) {
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
+  const students = [];
+  for (const name of studentNames) {
     const user = await prisma.user.create({
-      data: {
-        ...userData,
-        password: hashedPassword,
-        role: "user",
-        emailVerified: new Date(), // Mark review users emails as verified
-      },
+        data: { name, email: `${name.toLowerCase().replace(" ", ".")}@student.edu.ph`, password: hashedPassword, role: "USER", emailVerified: new Date() }
     });
-    createdReviewUsers.push(user);
-    console.log(`✅ Created review user: ${userData.email}`);
+    students.push(user);
   }
 
-  // Create categories
-  const categories = [
-    { name: "Dormitory", label: "Dormitory", icon: "🏢", description: "Student dormitories" },
-    { name: "Bedspace", label: "Bedspace", icon: "🛏️", description: "Shared bedspace accommodations" },
-    { name: "Apartment", label: "Apartment", icon: "🏠", description: "Private apartment units" },
-    { name: "Condominium", label: "Condominium", icon: "🏘️", description: "Condominium units" },
-    { name: "BoardingHouse", label: "Boarding House", icon: "🏚️", description: "Traditional boarding houses" },
+  // 3. CREATE CATEGORIES
+  const categoryTemplates = [
+    { name: "Student-Friendly", label: "Student Friendly", icon: "🎓" },
+    { name: "Budget-Friendly", label: "Budget Friendly", icon: "💰" },
+    { name: "Premium", label: "Premium / Private", icon: "⭐" },
+    { name: "Apartment", label: "Apartment", icon: "🏠" },
+    { name: "BoardingHouse", label: "Boarding House", icon: "🏚️" },
   ];
-  const createdCategories: any[] = [];
-  for (const categoryData of categories) {
-    const category = await prisma.category.create({
-      data: categoryData,
-    });
-    createdCategories.push(category);
+  const createdCats = [];
+  for (const c of categoryTemplates) {
+    const cat = await (prisma.category as any).create({ data: c });
+    createdCats.push(cat);
   }
-  console.log(`✅ Created ${categories.length} categories`);
 
-  // Create room amenity types
-  const roomAmenityTypes = [
-    { name: "private_bathroom", icon: "🚿", description: "Private bathroom" },
-    { name: "shared_bathroom", icon: "🛁", description: "Shared bathroom" },
-    { name: "ac", icon: "❄️", description: "Air conditioning" },
-    { name: "desk", icon: "📚", description: "Study desk" },
-    { name: "closet", icon: "🚪", description: "Closet/storage" },
-    { name: "balcony", icon: "🌅", description: "Balcony" },
+  const amTemplates = [
+    { name: "wifi", icon: "📶", description: "In-room WiFi" },
+    { name: "ac", icon: "❄️", description: "Air Conditioning" },
+    { name: "fan", icon: "🌀", description: "Electric Fan" },
+    { name: "desk", icon: "📚", description: "Study Table" },
+    { name: "bathroom", icon: "🚿", description: "Own Bathroom" },
+    { name: "submeter", icon: "⚡", description: "Electric Sub-meter" },
+    { name: "locker", icon: "🔐", description: "Private Locker" }
   ];
-  const createdRoomAmenityTypes = [];
-  for (const amenityTypeData of roomAmenityTypes) {
-    const amenityType = await prisma.roomAmenityType.create({
-      data: amenityTypeData,
-    });
-    createdRoomAmenityTypes.push(amenityType);
+  const roomAmTypes = [];
+  for (const t of amTemplates) {
+    const res = await prisma.roomAmenityType.create({ data: t });
+    roomAmTypes.push(res);
   }
-  console.log(`✅ Created ${roomAmenityTypes.length} room amenity types`);
 
-  // Create real listings
-  for (const listingData of realListings) {
-    console.log(`\nCreating listing: ${listingData.title}`);
+  // 4. THE SUPREME GENERATOR (50 Listings)
+  const TOTAL_TARGET = 50;
+  console.log(`📦 Generating ${TOTAL_TARGET} unique listing variations...`);
 
-    // Create listing
+  for (let i = 0; i < TOTAL_TARGET; i++) {
+    const source = realListingsSource[i % realListingsSource.length];
+    const isAnnex = i >= realListingsSource.length;
+    const housePrice = source.price + (Math.floor(Math.random() * 15) * 100);
+
+    // FIX: Unique constraint error - ensures we don't pick the same category twice for one listing
+    const randomCats = createdCats.sort(() => 0.5 - Math.random()).slice(0, 2);
+
     const listing = await prisma.listing.create({
       data: {
-        title: listingData.title,
-        description: listingData.description,
-        imageSrc: listingData.images[0]?.url || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=300&fit=crop",
-        roomCount: listingData.roomCount,
-        bathroomCount: listingData.bathroomCount,
-        price: listingData.price,
+        title: `${source.title}${isAnnex ? ` - Annex ${Math.floor(i / realListingsSource.length)}` : ""}`,
+        description: `${source.description} High-quality accommodation in Tarlac, specifically designed for university students.`,
+        imageSrc: source.images?.[0]?.url || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800",
+        roomCount: source.roomCount || 5,
+        bathroomCount: source.bathroomCount || 2,
+        price: housePrice,
         country: "Philippines",
         region: "Tarlac",
-        latitude: listingData.coords.lat,
-        longitude: listingData.coords.lng,
-        location: {
-          type: "Point",
-          coordinates: [listingData.coords.lng, listingData.coords.lat],
-        },
-        rating: listingData.rating,
-        reviewCount: listingData.reviewCount,
-        userId: landlordUser.id,
+        latitude: source.coords.lat,
+        longitude: source.coords.lng,
+        location: { type: "Point", coordinates: [source.coords.lng, source.coords.lat] },
         status: "active",
-        approvedAt: new Date(),
-        approvedBy: adminUser.id,
-        amenities: {
-          create: {
-            wifi: listingData.amenities.includes("WiFi"),
-            parking: listingData.amenities.includes("Parking"),
-            pool: listingData.amenities.includes("Pool"),
-            gym: listingData.amenities.includes("Gym"),
-            airConditioning: listingData.amenities.includes("Air Conditioning"),
-            laundry: listingData.amenities.includes("Laundry"),
-          },
+        userId: landlordDoc.id,
+        rating: 4.2 + (Math.random() * 0.8),
+        reviewCount: Math.floor(Math.random() * 30),
+        
+        amenities_tags: [
+            "WiFi", "Water Dispenser", 
+            Math.random() > 0.4 ? "No Curfew Enforced" : "Curfew Enforced",
+            "Sari-Sari Store Nearby", "Laundry Area", "Purified Water Available", 
+            "Kitchen Access", "CCTV Surveillance", "Motorcycle Parking"
+        ].sort(() => 0.5 - Math.random()).slice(0, 8),
+
+        amenities: { 
+            create: { wifi: true, parking: true, laundry: true, airConditioning: Math.random() > 0.5, pool: false, gym: false } 
         },
-        rules: {
-          create: {
-            femaleOnly: listingData.femaleOnly,
-            maleOnly: listingData.maleOnly,
-            visitorsAllowed: listingData.visitorsAllowed,
-            petsAllowed: listingData.petsAllowed,
-            smokingAllowed: listingData.smokingAllowed,
-          },
+        rules: { 
+            create: { femaleOnly: i % 5 === 0, maleOnly: i % 8 === 0, visitorsAllowed: true, petsAllowed: Math.random() > 0.5, smokingAllowed: false } 
         },
-        features: {
-          create: {
-            security24h: listingData.security24h,
-            cctv: listingData.cctv,
-            fireSafety: listingData.fireSafety,
-            nearTransport: listingData.nearTransport,
-            studyFriendly: listingData.studyFriendly,
-            quietEnvironment: listingData.quietEnvironment,
-            flexibleLease: listingData.flexibleLease,
-          },
+        features: { 
+            create: { security24h: true, cctv: true, fireSafety: true, nearTransport: true, studyFriendly: true, quietEnvironment: true } 
         },
+
+        // FIXED: Applying the deduplicated categories
         categories: {
-          create: (Array.isArray(listingData.category) ? listingData.category : [listingData.category]).map((categoryName: string) => {
-            const category = createdCategories.find(cat =>
-              cat.name.toLowerCase() === categoryName.toLowerCase()
-            );
-            if (category) {
-              return { categoryId: category.id };
-            }
-            return null;
-          }).filter(Boolean),
-        },
-      },
-    });
-    console.log(`✅ Created listing: ${listing.title}`);
-
-    // Create rooms for the listing
-    const roomCount = listingData.roomCount;
-    const roomsData = [];
-
-    // Normalize room type
-    const normalizedRoomType =
-      listingData.roomType.toLowerCase() === "solo"
-        ? ROOM_TYPES.SOLO
-        : ROOM_TYPES.BEDSPACE;
-
-    for (let i = 1; i <= roomCount; i++) {
-      // Same price for all rooms
-      const price = listingData.price;
-
-      // Capacity and available slots
-      const capacity =
-        normalizedRoomType === "SOLO"
-          ? 1
-          : Math.floor(Math.random() * 5) + 2;
-
-      const availableSlots =
-        normalizedRoomType === "SOLO"
-          ? 1
-          : Math.floor(Math.random() * capacity) + 1;
-
-      // Bed type
-      const bedType =
-        normalizedRoomType === "SOLO"
-          ? ["SINGLE", "DOUBLE", "QUEEN"][Math.floor(Math.random() * 3)] as any
-          : "BUNK";
-
-      // Room size
-      const size =
-        normalizedRoomType === "SOLO"
-          ? 12 + Math.random() * 13
-          : 20 + Math.random() * 20;
-
-      // Room amenities
-      let roomAmenities = [];
-      if (normalizedRoomType === ROOM_TYPES.SOLO) {
-        roomAmenities = [createdRoomAmenityTypes.find(t => t.name === "private_bathroom")];
-        if (Math.random() > 0.4) roomAmenities.push(createdRoomAmenityTypes.find(t => t.name === "ac"));
-        if (Math.random() > 0.5) roomAmenities.push(createdRoomAmenityTypes.find(t => t.name === "desk"));
-        if (Math.random() > 0.6) roomAmenities.push(createdRoomAmenityTypes.find(t => t.name === "closet"));
-        if (Math.random() > 0.7) roomAmenities.push(createdRoomAmenityTypes.find(t => t.name === "balcony"));
-      } else {
-        roomAmenities = [createdRoomAmenityTypes.find(t => t.name === "shared_bathroom")];
-        if (Math.random() > 0.4) roomAmenities.push(createdRoomAmenityTypes.find(t => t.name === "ac"));
-        if (Math.random() > 0.5) roomAmenities.push(createdRoomAmenityTypes.find(t => t.name === "desk"));
-        if (Math.random() > 0.6) roomAmenities.push(createdRoomAmenityTypes.find(t => t.name === "closet"));
+            create: randomCats.map(c => ({ categoryId: c.id }))
+        }
       }
-      roomAmenities = roomAmenities.filter(Boolean);
-
-      const room = await prisma.room.create({
-        data: {
-          listingId: listing.id,
-          name: `${normalizedRoomType} Room ${i}`,
-          price,
-          capacity,
-          availableSlots,
-          roomType: normalizedRoomType,
-          bedType,
-          size: parseFloat(size.toFixed(1)), // Round to 1 decimal place
-          status: "AVAILABLE",
-          amenities: {
-            create: roomAmenities.filter(Boolean).map(amenityType => ({
-              amenityTypeId: amenityType!.id,
-            })),
-          },
-        },
-      });
-    }
-    console.log(`✅ Added ${roomCount} rooms to listing: ${listing.title}`);
-
-    // Update listing.price to be the lowest room price
-    const rooms = await prisma.room.findMany({
-      where: { listingId: listing.id },
-      select: { price: true },
-    });
-    const lowestRoomPrice = Math.min(...rooms.map(room => room.price));
-    await prisma.listing.update({
-      where: { id: listing.id },
-      data: { price: lowestRoomPrice },
     });
 
-    // Create listing images
-    if (listingData.images && listingData.images.length > 0) {
-      const imagesData = (listingData.images as Array<{
-        url: string;
-        caption?: string;
-        roomType: string;
-      }>).map((img, index) => ({
-        listingId: listing.id,
-        url: img.url,
-        caption: img.caption || img.roomType,
-        roomType: img.roomType,
-        order: index,
-      })).filter((img: { url: string }) => img.url && img.url.startsWith('https://'));
-
-      await prisma.listingImage.createMany({
-        data: imagesData,
-      });
-      console.log(`✅ Added ${imagesData.length} images to listing: ${listing.title}`);
+    // 🖼️ Restore Listings Images Gallery
+    if (source.images && source.images.length > 0) {
+        await prisma.listingImage.createMany({
+            data: source.images.map((img: any, idx: number) => ({
+                listingId: listing.id,
+                url: img.url,
+                caption: img.caption || img.roomType || "Preview",
+                roomType: img.roomType || "General",
+                order: idx
+            }))
+        });
     }
 
-    // Create reviews
-    const reviewCount = listingData.reviewCount;
-    const reviewsData = [];
+    // CREATE ROOMS
+    const count = Math.floor(Math.random() * 4) + 3;
+    for (let r = 1; r <= count; r++) {
+       const isSolo = r === 1 && Math.random() > 0.4;
+       const rPrice = isSolo ? (housePrice + 1000) : housePrice;
+       
+       const room = await (prisma.room as any).create({
+           data: {
+               listingId: listing.id,
+               name: `${isSolo ? "Solo" : "Bedspace"} Room ${r}`,
+               price: rPrice,
+               capacity: isSolo ? 1 : 4,
+               availableSlots: Math.floor(Math.random() * 3) + 1,
+               status: "AVAILABLE",
+               roomType: isSolo ? "SOLO" : "BEDSPACE",
+               bedType: isSolo ? "SINGLE" : "BUNK",
+               size: 15.0,
+               reservationFee: Math.floor(rPrice * 0.15),
+               amenities: {
+                   create: roomAmTypes.sort(() => 0.5 - Math.random()).slice(0, 4).map(at => ({ amenityTypeId: at.id }))
+               }
+           }
+       });
 
-    for (let i = 0; i < reviewCount; i++) {
-      const reviewer = createdReviewUsers[i % createdReviewUsers.length];
+       // 🖼️ Create Room images from source gallary
+       const roomRelevantImages = source.images?.filter((img: any) => 
+            img.roomType?.toLowerCase() === "bedroom" || img.roomType?.toLowerCase() === "cr"
+       ).slice(0, 2);
 
-      reviewsData.push({
-        listingId: listing.id,
-        userId: reviewer.id,
-        rating: Math.floor(Math.random() * 2) + 4, // 4 or 5 stars
-        comment: "Great place to stay! Highly recommended.",
-        status: "approved",
-      });
+       if (roomRelevantImages && roomRelevantImages.length > 0) {
+           await (prisma.roomImage as any).createMany({
+               data: roomRelevantImages.map((img: any, idx: number) => ({
+                   roomId: room.id,
+                   url: img.url,
+                   caption: "Room Interior",
+                   order: idx
+               }))
+           });
+       } else if (source.images?.[0]) {
+           await (prisma.roomImage as any).create({
+               data: { roomId: room.id, url: source.images[0].url, caption: "Interior", order: 0 }
+           });
+       }
     }
 
-    await prisma.review.createMany({
-      data: reviewsData,
-    });
-    console.log(`✅ Added ${reviewCount} reviews to listing: ${listing.title}`);
+    // REVIEWS
+    const rCount = Math.floor(Math.random() * 3) + 1;
+    for (let rv = 0; rv < rCount; rv++) {
+        await prisma.review.create({
+            data: {
+                listingId: listing.id,
+                userId: students[rv % students.length].id,
+                rating: 4 + Math.floor(Math.random() * 2),
+                comment: "Excellent stay near TAU campus! Highly recommended.",
+                status: "approved"
+            }
+        });
+    }
   }
 
-  console.log("\n🎉 All real listings data seeded successfully!");
+  console.log(`\n🎉 SUPREME SEED FIXED & COMPLETE! Database is now live with 50 perfect Listings.`);
 }
 
 main()
-  .catch((e) => {
-    console.error("❌ Error seeding data:", e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .catch(e => { console.error("❌ Fatal Injection Error:", e); process.exit(1); })
+  .finally(async () => { await prisma.$disconnect(); });

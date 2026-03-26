@@ -5,7 +5,7 @@ import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { BiDollar } from "react-icons/bi";
+import { DollarSign } from "lucide-react";
 
 import Modal from "./Modal";
 import Button from "../common/Button";
@@ -235,7 +235,7 @@ const RentModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
               key="price"
               id="price"
               label="Price"
-              icon={BiDollar}
+              icon={DollarSign}
               type="number"
               disabled={isLoading}
               register={register}

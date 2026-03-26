@@ -16,20 +16,23 @@ export const createInquiry = async (data: any) => {
       message,
     } = data;
 
+    const startDate = new Date(moveInDate);
+    const endDate = new Date(startDate);
+    const durationArr = parseInt(stayDuration);
+    endDate.setMonth(endDate.getMonth() + durationArr);
+
     const inquiry = await db.inquiry.create({
       data: {
         listingId,
         roomId,
         userId,
-        moveInDate,
-        stayDuration,
+        moveInDate: startDate,
+        checkOutDate: endDate,
+        stayDuration: durationArr,
         occupantsCount,
-        role,
-        hasPets,
-        smokes,
-        contactMethod,
+        role: role.toUpperCase() as any,
         message,
-        status: "PENDING",
+        status: "PENDING" as any,
       },
     });
 

@@ -69,20 +69,23 @@ const ListingCard: React.FC<ListingCardProps> = ({
               />
             </div>
           </div>
-          <div className="px-2 pb-2.5 pt-0.5">
-            <span className="font-semibold text-[15px] text-text-primary dark:text-gray-100 line-clamp-1">
+          <div className="px-3 pb-3 pt-1">
+            <h3 className="font-bold text-[16px] text-text-primary dark:text-gray-100 line-clamp-1 mb-0.5 transition-colors group-hover/card:text-primary dark:group-hover/card:text-accent">
+              {data?.title}
+            </h3>
+            <span className="font-medium text-[14px] text-text-secondary dark:text-gray-400 line-clamp-1 flex items-center gap-1">
               {data?.region}, {data?.country}
             </span>
-            <span className="font-normal text-text-secondary dark:text-gray-400 text-sm line-clamp-1">
+            <span className="font-normal text-text-secondary dark:text-gray-500 text-xs line-clamp-1 mt-0.5 italic">
               {reservationDate || "—"}
             </span>
-            <div className="flex flex-row items-baseline gap-1 mt-1.5">
-              <span className="font-bold text-primary dark:text-accent text-[15px]">
+            <div className="flex flex-row items-baseline gap-1 mt-2">
+              <span className="font-black text-primary dark:text-accent text-[16px]">
                 ₱{formatPrice(price)}
               </span>
               {!reservation && (
-                <span className="font-normal text-text-secondary dark:text-gray-400 text-xs">
-                  / night
+                <span className="font-medium text-text-secondary dark:text-gray-400 text-[11px] uppercase tracking-wider">
+                  / month
                 </span>
               )}
             </div>
