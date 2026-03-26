@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import {
-  FaChartLine,
-  FaBuilding,
-  FaCalendarCheck,
-  FaStar,
-  FaMoneyBill,
-  FaUsers,
-} from 'react-icons/fa';
+  IconChartLine,
+  IconBuilding,
+  IconCalendarCheck,
+  IconStar,
+  IconCash,
+  IconUsers,
+} from '@tabler/icons-react';
 import { ChartAreaInteractive } from '@/app/landlord/components/charts/AreaChart';
 import { ChartBarInteractive } from '@/app/landlord/components/charts/BarChart';
 import { ChartLineInteractive } from '@/app/landlord/components/charts/LineChart';
@@ -16,6 +16,7 @@ import { ChartPieLabel } from '@/app/landlord/components/charts/PieChart';
 import { ChartRadarDots } from '@/app/landlord/components/charts/RadarChart';
 import { ChartRadialLabel } from '@/app/landlord/components/charts/RadialChart';
 import { ChartTooltipDefault } from '@/app/landlord/components/charts/ToolTips';
+import ModernSelect from '@/components/common/ModernSelect';
 
 interface LandlordAnalyticsClientProps {
   stats: {
@@ -68,49 +69,49 @@ export default function LandlordAnalyticsClient({
     {
       label: 'Total Properties',
       value: stats.totalProperties,
-      icon: FaBuilding,
+      icon: IconBuilding,
       color: 'blue',
     },
     {
       label: 'Active Listings',
       value: stats.activeListings,
-      icon: FaBuilding,
+      icon: IconBuilding,
       color: 'green',
     },
     {
       label: 'Pending Inquiries',
       value: stats.pendingInquiries,
-      icon: FaCalendarCheck,
+      icon: IconCalendarCheck,
       color: 'yellow',
     },
     {
       label: 'Confirmed Bookings',
       value: stats.confirmedBookings,
-      icon: FaCalendarCheck,
+      icon: IconCalendarCheck,
       color: 'purple',
     },
     {
       label: 'Average Rating',
       value: stats.averageRating.toFixed(1),
-      icon: FaStar,
+      icon: IconStar,
       color: 'orange',
     },
     {
       label: 'Total Reviews',
       value: stats.totalReviews,
-      icon: FaStar,
+      icon: IconStar,
       color: 'red',
     },
     {
       label: 'Monthly Revenue',
       value: `₱${stats.monthlyRevenue.toLocaleString()}`,
-      icon: FaMoneyBill,
+      icon: IconCash,
       color: 'indigo',
     },
     {
       label: 'Occupancy Rate',
       value: `${occupancy.occupancyRate.toFixed(1)}%`,
-      icon: FaUsers,
+      icon: IconUsers,
       color: 'teal',
     },
   ];
@@ -129,26 +130,33 @@ export default function LandlordAnalyticsClient({
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-6 rounded-2xl border border-blue-200 dark:border-gray-700">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-              Analytics & Reports
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Track your property performance and revenue
-            </p>
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary hover:scale-110 transition-transform duration-300">
+              <IconChartLine size={22} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-0.5 tracking-tight">
+                Analytics & Reports
+              </h1>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Track your property performance and revenue
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <select
+            <ModernSelect
+              instanceId="timePeriod"
               value={timePeriod}
-              onChange={(e) => setTimePeriod(e.target.value as 'month' | 'quarter' | 'year')}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 text-sm"
-            >
-              <option value="month">This Month</option>
-              <option value="quarter">This Quarter</option>
-              <option value="year">This Year</option>
-            </select>
+              onChange={(val: string) => setTimePeriod(val as 'month' | 'quarter' | 'year')}
+              className="w-full sm:w-auto min-w-[180px]"
+              options={[
+                { value: 'month', label: 'This Month' },
+                { value: 'quarter', label: 'This Quarter' },
+                { value: 'year', label: 'This Year' },
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -226,20 +234,20 @@ export default function LandlordAnalyticsClient({
       {/* Detailed Reports */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue by Property */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-lg">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-6">
             Revenue by Property
           </h3>
           <div className="space-y-3">
             {propertyPerformanceData.map((property) => (
-              <div key={property.name} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${COLORS[propertyPerformanceData.indexOf(property) % COLORS.length]} group-hover:scale-150 transition-transform`} />
-                  <span className="text-xs font-medium text-gray-900 dark:text-white">
+              <div key={property.name} className="group flex items-center justify-between p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-md transition-all duration-300">
+                <div className="flex items-center gap-3">
+                  <div className={`w-2.5 h-2.5 rounded-full ${COLORS[propertyPerformanceData.indexOf(property) % COLORS.length]} group-hover:scale-150 transition-transform shadow-sm`} />
+                  <span className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors">
                     {property.name}
                   </span>
                 </div>
-                <span className="text-xs font-bold text-gray-900 dark:text-white">
+                <span className="text-sm font-black text-gray-900 dark:text-white">
                   ₱{property.revenue.toLocaleString()}
                 </span>
               </div>
@@ -248,40 +256,40 @@ export default function LandlordAnalyticsClient({
         </div>
 
         {/* Booking Statistics */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-lg">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-6">
             Booking Statistics
           </h3>
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            <div className="group flex items-center justify-between p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-md transition-all duration-300">
+              <span className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 group-hover:text-primary transition-colors">
                 Total Bookings
               </span>
-              <span className="text-xs font-bold text-gray-900 dark:text-white">
+              <span className="text-lg font-black text-gray-900 dark:text-white">
                 {stats.confirmedBookings}
               </span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            <div className="group flex items-center justify-between p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-md transition-all duration-300">
+              <span className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 group-hover:text-primary transition-colors">
                 Total Revenue
               </span>
-              <span className="text-xs font-bold text-gray-900 dark:text-white">
+              <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
                 ₱{revenue.totalRevenue.toLocaleString()}
               </span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                Average Booking Value
+            <div className="group flex items-center justify-between p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-md transition-all duration-300">
+              <span className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 group-hover:text-primary transition-colors">
+                Avg Booking Value
               </span>
-              <span className="text-xs font-bold text-gray-900 dark:text-white">
+              <span className="text-lg font-black text-gray-900 dark:text-white">
                 ₱{revenue.averageBookingValue.toLocaleString()}
               </span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            <div className="group flex items-center justify-between p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-md transition-all duration-300">
+              <span className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 group-hover:text-primary transition-colors">
                 Occupancy Rate
               </span>
-              <span className="text-xs font-bold text-gray-900 dark:text-white">
+              <span className="text-lg font-black text-gray-900 dark:text-white">
                 {occupancy.occupancyRate.toFixed(1)}%
               </span>
             </div>

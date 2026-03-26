@@ -33,7 +33,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ watch, onBack }) => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-600">Emergency Contact</label>
-              <p className="text-gray-900">{watch('contactInfo.emergencyContact.name')} ({watch('contactInfo.emergencyContact.relationship')})</p>
+              <p className="text-gray-900">{watch('contactInfo.emergencyContact.name') || 'N/A'} ({watch('contactInfo.emergencyContact.relationship') || 'N/A'})</p>
             </div>
           </div>
         </div>
@@ -59,7 +59,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ watch, onBack }) => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-600">Category</label>
-              <p className="text-gray-900">{watch('propertyInfo.category')}</p>
+              <p className="text-gray-900">{(watch('propertyInfo.category') || []).join(', ') || 'None'}</p>
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-600">Description</label>
@@ -107,7 +107,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ watch, onBack }) => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-600">Bathrooms</label>
-              <p className="text-gray-900">{watch('propertyConfig.bathroomCount')} ({watch('propertyConfig.bathroomType')})</p>
+              <p className="text-gray-900">{watch('propertyConfig.bathroomCount') || 0} ({watch('propertyConfig.bathroomType') || 'Shared'})</p>
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-600">Rules & Preferences</label>
@@ -133,11 +133,11 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ watch, onBack }) => {
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-600">Amenities</label>
-              <p className="text-gray-900">{watch('propertyConfig.amenities').join(', ')}</p>
+              <p className="text-gray-900">{(watch('propertyConfig.amenities') || []).join(', ') || 'None'}</p>
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-600">House Rules</label>
-              <p className="text-gray-900">{watch('propertyConfig.rules').join(', ')}</p>
+              <p className="text-gray-900">{(watch('propertyConfig.rules') || []).join(', ') || 'None'}</p>
             </div>
           </div>
         </div>

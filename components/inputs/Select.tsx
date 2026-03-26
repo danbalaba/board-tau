@@ -1,19 +1,21 @@
 import React, { useState } from "react";
-import ReactSelect, { StylesConfig, GroupBase, components, MenuListProps } from "react-select";
+import ReactSelect, { StylesConfig, GroupBase, components } from "react-select";
 import { useTheme } from "next-themes";
-import { FieldValues, FieldErrors } from "react-hook-form";
-import { motion, AnimatePresence } from "framer-motion";
+import { FieldErrors } from "react-hook-form";
+import { motion } from "framer-motion";
 import { cn } from "@/utils/helper";
 
 interface SelectProps {
   id: string;
-  label: string;
+  label?: string;
   options: { value: string; label: string }[];
   errors?: FieldErrors;
   required?: boolean;
   disabled?: boolean;
   value?: any;
   onChange?: (value: any) => void;
+  validationRules?: any;
+  className?: string;
   placeholder?: string;
   isSearchable?: boolean;
 }
@@ -26,6 +28,7 @@ const Select: React.FC<SelectProps> = ({
   disabled,
   value,
   onChange,
+  className,
   placeholder = "Select an option...",
   isSearchable = false,
 }) => {
@@ -62,7 +65,6 @@ const Select: React.FC<SelectProps> = ({
     }),
     menu: (provided) => ({
       ...provided,
-      // CRITICAL: Changing to static when open to push parent container height
       position: isMenuOpen ? "static" : "absolute",
       backgroundColor: theme === "dark" ? "#1f2937" : "#ffffff",
       borderRadius: "12px",
@@ -95,7 +97,6 @@ const Select: React.FC<SelectProps> = ({
         ...provided,
         color: theme === "dark" ? "#f3f4f6" : "#111827",
     }),
-    // Hiding regular absolute menu list to avoid double gaps
     menuList: (provided) => ({
         ...provided,
         maxHeight: "250px",
@@ -105,18 +106,20 @@ const Select: React.FC<SelectProps> = ({
   return (
     <motion.div 
         layout="position"
-        className="relative"
+        className={cn("relative", className)}
         transition={{ duration: 0.3, ease: "easeInOut" }}
     >
-      <label
-        htmlFor={id}
-        className={cn(
-          "block text-sm font-semibold mb-2 transition-all duration-200",
-          error ? "text-red-500" : "text-zinc-600 dark:text-zinc-400"
-        )}
-      >
-        {label}
-      </label>
+      {label && (
+        <label
+          htmlFor={id}
+          className={cn(
+            "block text-sm font-semibold mb-2 transition-all duration-200",
+            error ? "text-red-500" : "text-zinc-600 dark:text-zinc-400"
+          )}
+        >
+          {label}
+        </label>
+      )}
       
       <ReactSelect
         id={id}
@@ -128,7 +131,6 @@ const Select: React.FC<SelectProps> = ({
         value={options.find((opt) => opt.value === value)}
         onChange={(val) => {
             onChange?.(val?.value);
-            // Auto-close menu on selection to revert size
             setIsMenuOpen(false);
         }}
         onMenuOpen={() => setIsMenuOpen(true)}

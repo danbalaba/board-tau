@@ -1,387 +1,497 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaBuilding, FaUpload, FaMapMarkerAlt, FaBed, FaBath, FaUsers, FaMoneyBill } from 'react-icons/fa';
+import { useForm, useFieldArray, FormProvider } from 'react-hook-form';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Building2, 
+  MapPin, 
+  Bed, 
+  Bath, 
+  Users, 
+  Image as ImageIcon, 
+  FileText, 
+  CheckCircle,
+  ChevronRight,
+  ChevronLeft,
+  Loader2,
+  Check
+} from 'lucide-react';
+import { useEdgeStore } from '@/lib/edgestore';
+import { useResponsiveToast } from '@/components/common/ResponsiveToast';
+import { cn } from '@/utils/helper';
+import Button from '@/components/common/Button';
+
+// Step Components (Ported from host-application)
+import PropertyBasicStep from '@/components/host-application/PropertyBasicStep';
+import PropertyConfigStep from '@/components/host-application/PropertyConfigStep';
+import LocationStep from '@/components/host-application/LocationStep';
+import PropertyImagesStep from '@/components/host-application/PropertyImagesStep';
+import RoomConfigStep from '@/components/host-application/RoomConfigStep';
+import DocumentsStep from '@/components/host-application/DocumentsStep';
+import ReviewStep from '@/components/host-application/ReviewStep';
+
+const STEPS = [
+  { id: 'basic', title: 'Basic Info', icon: Building2 },
+  { id: 'config', title: 'Property Config', icon: FileText },
+  { id: 'location', title: 'Location', icon: MapPin },
+  { id: 'images', title: 'Images', icon: ImageIcon },
+  { id: 'rooms', title: 'Room Setup', icon: Bed },
+  { id: 'documents', title: 'Documents', icon: FileText },
+  { id: 'review', title: 'Review', icon: CheckCircle },
+];
 
 export default function LandlordCreatePropertyClient() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    price: '',
-    roomCount: '',
-    bathroomCount: '',
-    guestCount: '',
-    location: '',
-    image: null as File | null,
-    amenities: [] as string[],
+  const { edgestore } = useEdgeStore();
+  const toast = useResponsiveToast();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([15.635189, 120.415343]);
+
+  // Document and Image upload state
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
+  const [propertyFiles, setPropertyFiles] = useState<File[]>([]);
+  const [roomFiles, setRoomFiles] = useState<Record<number, File[]>>({});
+
+  const methods = useForm({
+    defaultValues: {
+      contactInfo: {
+        fullName: '',
+        phoneNumber: '',
+        email: '',
+        emergencyContact: {
+          name: '',
+          relationship: '',
+        },
+      },
+      businessInfo: {
+        businessName: '',
+        businessType: '',
+        businessDescription: '',
+      },
+      propertyInfo: {
+        propertyName: '',
+        description: '',
+        category: [],
+        price: '',
+        leaseTerms: '',
+      },
+      propertyConfig: {
+        totalRooms: '',
+        bathroomCount: '',
+        femaleOnly: false,
+        maleOnly: false,
+        visitorsAllowed: true,
+        petsAllowed: false,
+        smokingAllowed: false,
+        security24h: false,
+        cctv: false,
+        fireSafety: false,
+        nearTransport: true,
+        studyFriendly: true,
+        quietEnvironment: false,
+        flexibleLease: true,
+        amenities: [],
+        rules: [],
+        bathroomType: 'Shared',
+        rooms: [
+          {
+            roomType: 'SOLO',
+            bathroomArrangement: 'PRIVATE_CR',
+            price: '',
+            bedType: 'Single',
+            capacity: '1',
+            size: '',
+            availableSlots: '1',
+            reservationFee: '500',
+            description: '',
+            amenities: [] as string[],
+          }
+        ],
+      },
+      location: {
+        address: '',
+        city: '',
+        province: '',
+        zipCode: '',
+        latlng: [120.415343, 15.635189], // [lng, lat] for GeoJSON
+      },
+      propertyImages: {
+        property: [] as string[],
+        rooms: {} as Record<number, string[]>,
+      },
+      documents: {
+        governmentId: '',
+        businessPermit: '',
+        landTitle: '',
+        barangayClearance: '',
+        fireSafetyCertificate: '',
+      }
+    },
+    mode: 'onChange',
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    setValue,
+    getValues,
+    clearErrors,
+    formState: { errors, isValid },
+  } = methods;
 
-  const amenitiesList = [
-    'Wifi',
-    'Air Conditioning',
-    'Parking',
-    'Kitchen',
-    'Laundry',
-    'Gym',
-    'Swimming Pool',
-    '24/7 Security',
-    'Elevator',
-  ];
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'propertyConfig.rooms',
+  });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: '',
-      }));
+  const handleNext = async () => {
+    // Validate current step before proceeding
+    const stepFields: Record<number, string[]> = {
+      0: ['businessInfo', 'propertyInfo'],
+      1: ['propertyConfig'],
+      2: ['location'],
+      3: ['propertyImages'],
+      4: ['propertyConfig.rooms'],
+      5: ['documents'],
+    };
+
+    const fieldsToValidate = stepFields[currentStep] || [];
+    const isStepValid = await methods.trigger(fieldsToValidate as any);
+
+    if (isStepValid) {
+      if (currentStep < STEPS.length - 1) {
+        setCurrentStep((prev) => prev + 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } else {
+      toast.error('Please complete all required fields correctly.');
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData((prev) => ({
-        ...prev,
-        image: e.target.files![0],
-      }));
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  const handleAmenityToggle = (amenity: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      amenities: prev.amenities.includes(amenity)
-        ? prev.amenities.filter((a) => a !== amenity)
-        : [...prev.amenities, amenity],
-    }));
+  const handleLocationSelect = (lat: number, lng: number) => {
+    setMapCenter([lat, lng]);
+    setValue('location.latlng', [lng, lat], { shouldValidate: true });
   };
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.title.trim()) {
-      newErrors.title = 'Property title is required';
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = 'Property description is required';
-    }
-
-    if (!formData.price || parseInt(formData.price) <= 0) {
-      newErrors.price = 'Valid price is required';
-    }
-
-    if (!formData.roomCount || parseInt(formData.roomCount) <= 0) {
-      newErrors.roomCount = 'Valid number of rooms is required';
-    }
-
-    if (!formData.bathroomCount || parseInt(formData.bathroomCount) <= 0) {
-      newErrors.bathroomCount = 'Valid number of bathrooms is required';
-    }
-
-    if (!formData.guestCount || parseInt(formData.guestCount) <= 0) {
-      newErrors.guestCount = 'Valid number of guests is required';
-    }
-
-    if (!formData.location.trim()) {
-      newErrors.location = 'Property location is required';
-    }
-
-    if (!formData.image) {
-      newErrors.image = 'Property image is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const handleAddressAutoFill = (address: any) => {
+    setValue('location.address', address.address, { shouldValidate: true });
+    setValue('location.city', address.city, { shouldValidate: true });
+    setValue('location.province', address.province, { shouldValidate: true });
+    setValue('location.zipCode', address.zipCode, { shouldValidate: true });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFileUpload = (type: string, file: File) => {
+    setUploadedFiles(prev => ({ ...prev, [type]: file }));
+    setValue(`documents.${type}` as any, file.name, { shouldValidate: true });
+  };
 
-    if (!validateForm()) {
-      return;
-    }
-
+  const onSubmit = async (data: any) => {
     setIsSubmitting(true);
-
+    const toastId = toast.loading('Uploading assets and creating property...');
     try {
-      // Here you would implement the API call to create the property
-      console.log('Creating property:', formData);
+      // 1. Upload Documents
+      const docUrls: Record<string, string> = {};
+      for (const [key, file] of Object.entries(uploadedFiles)) {
+        const res = await edgestore.publicFiles.upload({ file });
+        docUrls[key] = res.url;
+      }
 
-      // Mock API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // 2. Upload Property Images
+      const propertyImageUrls: string[] = [];
+      for (const file of propertyFiles) {
+        const res = await edgestore.publicFiles.upload({ file });
+        propertyImageUrls.push(res.url);
+      }
 
-      // Redirect to properties page
-      router.push('/landlord/properties');
+      // 3. Upload Room Images
+      const roomImageUrls: Record<number, string[]> = {};
+      for (const [index, files] of Object.entries(roomFiles)) {
+        const urls: string[] = [];
+        for (const file of files) {
+          const res = await edgestore.publicFiles.upload({ file });
+          urls.push(res.url);
+        }
+        roomImageUrls[parseInt(index)] = urls;
+      }
+
+      // 4. Map the complex form state to the API expected payload
+      const payload = {
+        title: data.propertyInfo.propertyName,
+        description: data.propertyInfo.description,
+        price: parseInt(data.propertyInfo.price),
+        roomCount: parseInt(data.propertyConfig.totalRooms),
+        bathroomCount: parseInt(data.propertyConfig.bathroomCount),
+        country: "Philippines",
+        region: data.location.province,
+        latlng: data.location.latlng, // [lng, lat]
+        category: data.propertyInfo.category,
+        amenities: data.propertyConfig.amenities,
+        
+        // Rules
+        femaleOnly: data.propertyConfig.femaleOnly,
+        maleOnly: data.propertyConfig.maleOnly,
+        visitorsAllowed: data.propertyConfig.visitorsAllowed,
+        petsAllowed: data.propertyConfig.petsAllowed,
+        smokingAllowed: data.propertyConfig.smokingAllowed,
+        
+        // Features
+        security24h: data.propertyConfig.security24h,
+        cctv: data.propertyConfig.cctv,
+        fireSafety: data.propertyConfig.fireSafety,
+        nearTransport: data.propertyConfig.nearTransport,
+        studyFriendly: data.propertyConfig.studyFriendly,
+        quietEnvironment: data.propertyConfig.quietEnvironment,
+        flexibleLease: data.propertyConfig.flexibleLease,
+        
+        // Images (Main property images)
+        images: propertyImageUrls,
+        
+        // Detailed Rooms
+        rooms: data.propertyConfig.rooms.map((room: any, index: number) => ({
+          name: room.roomType === 'SOLO' ? `Room ${index + 1}` : `Bedspace ${index + 1}`,
+          price: parseInt(room.price),
+          capacity: parseInt(room.capacity),
+          availableSlots: parseInt(room.availableSlots),
+          roomType: room.roomType,
+          bedType: room.bedType,
+          size: parseFloat(room.size) || 0,
+          reservationFee: parseInt(room.reservationFee),
+          description: room.description,
+          amenities: room.amenities,
+          images: roomImageUrls[index] || [],
+        })),
+
+        // Business/Contact info
+        businessInfo: data.businessInfo,
+        documents: docUrls,
+      };
+
+      const response = await fetch('/api/landlord/properties', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Property created successfully!', { id: toastId });
+        router.push('/landlord/properties');
+        router.refresh();
+      } else {
+        toast.error(result.error || 'Failed to create property', { id: toastId });
+      }
     } catch (error) {
-      console.error('Error creating property:', error);
+      console.error('Submission error:', error);
+      toast.error('An unexpected error occurred. Please try again.', { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const renderStep = () => {
+    switch (currentStep) {
+      case 0:
+        return <PropertyBasicStep register={register} errors={errors} watch={watch} control={control} />;
+      case 1:
+        return <PropertyConfigStep register={register} errors={errors} watch={watch} control={control} getValues={getValues} />;
+      case 2:
+        return (
+          <LocationStep 
+            register={register} 
+            errors={errors} 
+            watch={watch} 
+            mapCenter={mapCenter} 
+            onLocationSelect={handleLocationSelect}
+            onAddressAutoFill={handleAddressAutoFill}
+          />
+        );
+      case 3:
+        return (
+          <PropertyImagesStep 
+            register={register} 
+            errors={errors} 
+            watch={watch} 
+            control={control} 
+            getValues={getValues} 
+            setValue={setValue}
+            clearErrors={clearErrors}
+            onPropertyFilesChange={(files) => setPropertyFiles(files)}
+            onRoomFilesChange={(index, files) => setRoomFiles(prev => ({ ...prev, [index]: files }))}
+          />
+        );
+      case 4:
+        return (
+          <RoomConfigStep 
+            register={register} 
+            errors={errors} 
+            watch={watch} 
+            fields={fields}
+            append={append}
+            remove={remove}
+            control={control}
+            getValues={getValues}
+            setValue={setValue}
+          />
+        );
+      case 5:
+        return (
+          <DocumentsStep 
+            register={register} 
+            errors={errors} 
+            uploadedFiles={uploadedFiles}
+            onFileUpload={handleFileUpload}
+          />
+        );
+      case 6:
+        return <ReviewStep watch={watch} onBack={handleBack} />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Add Property
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Fill in the details to add your property to BoardTAU
-        </p>
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-1">Add New Property</h1>
+        <p className="text-gray-500 dark:text-gray-400 font-medium text-sm">Complete the steps below to list your property on BoardTAU</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Property Basic Info */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <FaBuilding size={18} />
-            Basic Information
-          </h2>
+      {/* Steper */}
+      <div className="mb-12 relative">
+        <div className="flex justify-between items-center relative z-10">
+          {STEPS.map((step, index) => {
+            const Icon = step.icon;
+            const isActive = currentStep === index;
+            const isCompleted = currentStep > index;
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Property Title
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter property title"
-              />
-              {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                <FaMapMarkerAlt className="inline mr-1" /> Location
-              </label>
-              <input
-                type="text"
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter property location"
-              />
-              {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter property description"
-            />
-            {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-          </div>
+            return (
+              <div key={step.id} className="flex flex-col items-center group cursor-pointer" onClick={() => index < currentStep && setCurrentStep(index)}>
+                <div className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 border-2",
+                  isActive 
+                    ? "bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105" 
+                    : isCompleted
+                      ? "bg-green-500 border-green-500 text-white"
+                      : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 group-hover:border-primary/40"
+                )}>
+                  {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-4 h-4" />}
+                </div>
+                <span className={cn(
+                  "mt-3 text-xs font-bold uppercase tracking-wider transition-colors duration-300 hidden md:block",
+                  isActive ? "text-primary dark:text-primary" : "text-gray-400 dark:text-gray-500"
+                )}>
+                  {step.title}
+                </span>
+              </div>
+            );
+          })}
         </div>
-
-        {/* Property Details */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <FaBed size={18} />
-            Property Details
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                <FaMoneyBill className="inline mr-1" /> Price (₱/month)
-              </label>
-              <input
-                type="number"
-                id="price"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter price"
-              />
-              {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="roomCount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                <FaBed className="inline mr-1" /> Rooms
-              </label>
-              <input
-                type="number"
-                id="roomCount"
-                name="roomCount"
-                value={formData.roomCount}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Number of rooms"
-              />
-              {errors.roomCount && <p className="text-red-500 text-sm mt-1">{errors.roomCount}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="bathroomCount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                <FaBath className="inline mr-1" /> Bathrooms
-              </label>
-              <input
-                type="number"
-                id="bathroomCount"
-                name="bathroomCount"
-                value={formData.bathroomCount}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Number of bathrooms"
-              />
-              {errors.bathroomCount && <p className="text-red-500 text-sm mt-1">{errors.bathroomCount}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="guestCount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                <FaUsers className="inline mr-1" /> Guests
-              </label>
-              <input
-                type="number"
-                id="guestCount"
-                name="guestCount"
-                value={formData.guestCount}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Max guests"
-              />
-              {errors.guestCount && <p className="text-red-500 text-sm mt-1">{errors.guestCount}</p>}
-            </div>
-          </div>
+        
+        {/* Progress Line */}
+        <div className="absolute top-6 left-0 w-full h-0.5 bg-gray-100 dark:bg-gray-800 -z-0">
+          <motion.div 
+            className="h-full bg-primary"
+            initial={{ width: '0%' }}
+            animate={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
+            transition={{ duration: 0.5 }}
+          />
         </div>
+      </div>
 
-        {/* Amenities */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Amenities
-          </h2>
+      {/* Content Form */}
+      <FormProvider {...methods}>
+        <div className="bg-transparent">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {renderStep()}
+            </motion.div>
+          </AnimatePresence>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {amenitiesList.map((amenity) => (
-              <label
-                key={amenity}
-                className="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                <input
-                  type="checkbox"
-                  checked={formData.amenities.includes(amenity)}
-                  onChange={() => handleAmenityToggle(amenity)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{amenity}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Property Image */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <FaUpload size={18} />
-            Property Image
-          </h2>
-
-          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-            {formData.image ? (
-              <div className="space-y-4">
-                <img
-                  src={URL.createObjectURL(formData.image)}
-                  alt="Property preview"
-                  className="max-h-48 mx-auto object-contain"
-                />
-                <p className="text-sm text-gray-600 dark:text-gray-400">{formData.image.name}</p>
-                <button
+          {/* Navigation Controls */}
+          <div className="mt-10 pt-8 border-t border-gray-100 dark:border-gray-800">
+            <div className="grid grid-cols-2 sm:grid-cols-3 items-center gap-4">
+              {/* Left Column: Previous Button */}
+              <div className="flex justify-start">
+                <Button
+                  outline
                   type="button"
-                  onClick={() => setFormData((prev) => ({ ...prev, image: null }))}
-                  className="text-red-600 hover:text-red-700 text-sm"
+                  onClick={handleBack}
+                  disabled={currentStep === 0 || isSubmitting}
+                  className={cn(
+                    "min-w-[140px] px-6 py-2.5 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest transition-all",
+                    currentStep === 0 && "opacity-0 pointer-events-none"
+                  )}
                 >
-                  Remove image
-                </button>
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </Button>
               </div>
-            ) : (
-              <div className="space-y-4">
-                <FaUpload size={48} className="mx-auto text-gray-400" />
-                <p className="text-gray-600 dark:text-gray-400">
-                  Click to upload or drag and drop
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  PNG, JPG, GIF up to 10MB
-                </p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                  id="image-upload"
-                />
-                <label
-                  htmlFor="image-upload"
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
-                >
-                  <FaUpload size={14} className="mr-2" />
-                  Browse Files
-                </label>
-              </div>
-            )}
-          </div>
-          {errors.image && <p className="text-red-500 text-sm mt-2">{errors.image}</p>}
-        </div>
 
-        {/* Submit Button */}
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <>
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Creating Property...
-              </>
-            ) : (
-              <>
-                Create Property
-              </>
-            )}
-          </button>
+              {/* Center Column: Step Indicator */}
+              <div className="hidden sm:flex flex-col items-center">
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 mb-0.5">Progress</span>
+                <span className="text-[11px] font-black text-primary uppercase tracking-widest">
+                  Step {currentStep + 1} of {STEPS.length}
+                </span>
+              </div>
+
+              {/* Right Column: Next/Submit Button */}
+              <div className="flex justify-end">
+                {currentStep === STEPS.length - 1 ? (
+                  <Button
+                    onClick={handleSubmit(onSubmit)}
+                    disabled={isSubmitting}
+                    className="min-w-[140px] px-8 py-2.5 text-xs font-black uppercase tracking-widest transition-all shadow-md shadow-primary/10"
+                  >
+                    {isSubmitting ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Submitting...
+                      </div>
+                    ) : (
+                      'Submit Listing'
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleNext}
+                    className="min-w-[140px] px-8 py-2.5 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest transition-all shadow-md shadow-primary/10"
+                  >
+                    Next Step
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+            
+            <p className="mt-8 text-center text-xs text-gray-400 font-medium uppercase tracking-[0.2em]">
+              Your progress is automatically saved
+            </p>
+          </div>
         </div>
-      </form>
+      </FormProvider>
     </div>
   );
 }
