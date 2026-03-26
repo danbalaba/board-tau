@@ -13,7 +13,11 @@ import Counter from "../inputs/Counter";
 import Input from "../inputs/Input";
 import Select from "../inputs/Select";
 import Slider from "../inputs/Slider";
+import Checkbox from "../inputs/Checkbox";
+import MonthPicker from "../inputs/MonthPicker";
 import MultiSelectGrid from "../inputs/MultiSelectGrid";
+import { FaMapMarkerAlt, FaBed, FaMoneyBillWave, FaListUl, FaCalendarAlt, FaShieldAlt } from "react-icons/fa";
+import { Check } from "lucide-react";
 import { categories, roomTypeOptions, stayDurationOptions } from "@/utils/constants";
 import { amenities } from "@/data/amenities";
 import { roomAmenities, bedTypeOptions } from "@/data/roomAmenities";
@@ -65,6 +69,7 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
       minPrice: "",
       maxPrice: "",
       advanced: [] as string[],
+      isUnlimitedDistance: false,
     },
   });
 
@@ -84,6 +89,7 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
   const minPrice = watch("minPrice") || "";
   const maxPrice = watch("maxPrice") || "";
   const advancedSelected = watch("advanced") ?? [];
+  const isUnlimitedDistance = watch("isUnlimitedDistance");
 
   const collegeOption = useMemo(() => colleges.find((c) => c.value === college), [college]);
   const mapCenter = collegeOption?.latlng ?? undefined;
@@ -117,8 +123,15 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
     setCustomValue(id, next);
   };
 
-  const onBack = () => setStep((s) => s - 1);
-  const onNext = () => setStep((s) => s + 1);
+  const onBack = () => {
+    if (step === STEPS.LOCATION && !roomType) setStep(STEPS.ROOM_TYPE);
+    else setStep((s) => s - 1);
+  };
+
+  const onNext = () => {
+    if (step === STEPS.ROOM_TYPE && !roomType) setStep(STEPS.LOCATION);
+    else setStep((s) => s + 1);
+  };
 
   const isStepFilled = () => {
     switch (step) {
@@ -128,7 +141,7 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
         // Validate min price <= max price
         return minPrice <= maxPrice;
       case STEPS.ROOM_TYPE:
-        return !!roomType;
+        return true; // Made this non-mandatory so users can skip to 'Any' room type
       case STEPS.ROOM_CONFIGURATION:
         return true;
       case STEPS.LOCATION:
@@ -298,7 +311,7 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
             <Select
               id="roomType"
               label="Room type"
-              options={roomTypeOptions.filter(option => option.value !== "")}
+              options={[{ value: "", label: "Any room type" }, ...roomTypeOptions.filter(option => option.value !== "")]}
               value={roomType}
               onChange={(v) => setCustomValue("roomType", v)}
             />
@@ -345,6 +358,14 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
               onChange={(v) => setCustomValue("distance", v)}
               unit="km"
             />
+            <div className="p-4 bg-primary/5 border border-primary/10 rounded-xl transition-all hover:bg-primary/10">
+              <Checkbox
+                id="isUnlimitedDistance"
+                label={`Show all listings (Ignore ${distance}km distance cap)`}
+                register={register as any}
+                watch={watch as any}
+              />
+            </div>
             <div className="h-[240px] rounded-lg overflow-hidden">
               <Map center={mapCenter} />
             </div>
@@ -358,15 +379,13 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
               title="When do you plan to move in?"
               subtitle="Optional — for availability (if implemented)."
             />
-            <div>
-              <label className="block font-semibold text-[15px] mb-1">Move-in month</label>
-              <input
-                type="month"
-                value={moveInMonth}
-                onChange={(e) => setCustomValue("moveInMonth", e.target.value)}
-                className="w-full p-3 border border-neutral-300 rounded-lg outline-none focus:border-black"
-              />
-            </div>
+            <MonthPicker
+              id="moveInMonth"
+              label="Move-in month"
+              value={moveInMonth}
+              onChange={(value) => setCustomValue("moveInMonth", value)}
+              placeholder="Select a move-in date"
+            />
             <Select
               id="stayDuration"
               label="Stay duration"
@@ -451,24 +470,99 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
         const roomLabel = roomTypeOptions.find((r) => r.value === roomType)?.label ?? "Any";
 
         return (
-          <div className="flex flex-col gap-4">
-            <Heading title="Summary of your filters" subtitle="Review or go back to edit." />
-            <div className="space-y-2 text-sm">
-              <p><span className="font-semibold">College:</span> {coLabel}</p>
-              <p><span className="font-semibold">Budget:</span> ₱{minPrice} – ₱{maxPrice} / month</p>
-              <p><span className="font-semibold">Room:</span> {roomLabel} {bedType ? `· ${bedType}` : ""} {capacity > 1 ? `· ${capacity} occupants` : ""} {availableSlots > 1 ? `· ${availableSlots} slots` : ""} {roomSize ? `· ${roomSize} sq.m` : ""}</p>
-              <p><span className="font-semibold">Distance:</span> ≤ {distance} km from campus</p>
-              {(moveInMonth || stayDuration) && (
-                <p><span className="font-semibold">Move-in / Duration:</span> {moveInMonth || "—"} {stayDuration ? ` · ${stayDurationOptions.find((d) => d.value === stayDuration)?.label ?? stayDuration}` : ""}</p>
+          <div className="flex flex-col gap-6">
+            <Heading title="Ready to search?" subtitle="Here's a summary of the boarding house you are looking for." />
+            
+            <div className="flex flex-col gap-4">
+              
+              {/* Primary Requirements Card */}
+              <div className="p-5 border border-primary/20 bg-primary/5 rounded-2xl flex flex-col gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-primary/10 rounded-full text-primary mt-1">
+                    <FaMapMarkerAlt className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-semibold text-gray-900 dark:text-gray-100 text-[15px]">Location & Proximity</h5>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mt-0.5">
+                      {isUnlimitedDistance ? "Show all boarding houses in Tarlac" : `Within ${distance} km of ${coLabel}`}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-primary/10 rounded-full text-primary mt-1">
+                    <FaMoneyBillWave className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-semibold text-gray-900 dark:text-gray-100 text-[15px]">Budget</h5>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mt-0.5">
+                      {minPrice && maxPrice ? `₱${minPrice.toLocaleString()} – ₱${maxPrice.toLocaleString()} / month` : "Any budget"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-primary/10 rounded-full text-primary mt-1">
+                    <FaBed className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-semibold text-gray-900 dark:text-gray-100 text-[15px]">Room Requirements</h5>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mt-0.5">
+                      {roomLabel} {bedType ? `(${bedType})` : ""}
+                      {capacity > 1 && ` • ${capacity} Occupants`}
+                      {availableSlots > 1 && ` • ${availableSlots} Slots`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Secondary Preferences Card */}
+              {((categoriesSelected as string[]).length > 0 || (amenitiesSelected as string[]).length > 0) && (
+              <div className="p-5 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl flex flex-col gap-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <FaListUl className="w-4 h-4 text-gray-400" />
+                  <h5 className="font-semibold text-gray-900 dark:text-gray-100 text-[15px]">Amenities & Categories</h5>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(categoriesSelected as string[]).map(v => {
+                    const label = categories.find((c) => c.value === v)?.label ?? v;
+                    return <span key={v} className="text-xs font-semibold px-2.5 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300">{label}</span>
+                  })}
+                  {(amenitiesSelected as string[]).map(v => (
+                    <span key={v} className="text-xs font-semibold px-2.5 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300">{v}</span>
+                  ))}
+                </div>
+              </div>
               )}
-              {(categoriesSelected as string[]).length > 0 && (
-                <p><span className="font-semibold">Categories:</span> {catLabels}</p>
+
+              {/* Rules & Scoring Card */}
+              {((rulesSelected as string[]).length > 0 || (advancedSelected as string[]).length > 0) && (
+              <div className="p-5 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl flex flex-col gap-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <FaShieldAlt className="w-4 h-4 text-gray-400" />
+                  <h5 className="font-semibold text-gray-900 dark:text-gray-100 text-[15px]">Rules & Highlights</h5>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                   {(rulesSelected as string[]).map(v => {
+                    const label = rulesPreferences.find((r) => r.value === v)?.label ?? v;
+                    return (
+                      <div key={v} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <Check className="w-3.5 h-3.5 text-primary" /> <span>{label}</span>
+                      </div>
+                    )
+                  })}
+                  {(advancedSelected as string[]).map(v => {
+                    const label = advancedFilters.find((a) => a.value === v)?.label ?? v;
+                    return (
+                      <div key={v} className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-500">
+                        <Check className="w-3.5 h-3.5 text-amber-500" /> <span>{label}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
               )}
-              {(amenitiesSelected as string[]).length > 0 && (
-                <p><span className="font-semibold">Amenities:</span> {(amenitiesSelected as string[]).join(", ")}</p>
-              )}
-              <p><span className="font-semibold">Rules:</span> {ruleLabels}</p>
-              <p><span className="font-semibold">Advanced:</span> {advLabels}</p>
+
             </div>
           </div>
         );
