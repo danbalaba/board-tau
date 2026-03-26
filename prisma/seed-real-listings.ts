@@ -8,13 +8,13 @@ const prisma = new PrismaClient();
 const landlord = {
   name: "TAU Property Management",
   email: "landlord@boardtau.test",
-  password: "TestPassword@123",
+  password: "Password@123",
 };
 
 const admin = {
   name: "BoardTAU Admin",
   email: "admin@boardtau.test",
-  password: "AdminPassword@123",
+  password: "Password@123",
 };
 
 const studentNames = ["Maria Santos", "Juan Cruz", "Angela Garcia", "Pedro Reyes", "Kristine Dizon", "Robert Lee"];
@@ -119,22 +119,22 @@ async function main() {
         userId: landlordDoc.id,
         rating: 4.2 + (Math.random() * 0.8),
         reviewCount: Math.floor(Math.random() * 30),
-        
+
         amenities_tags: [
-            "WiFi", "Water Dispenser", 
+            "WiFi", "Water Dispenser",
             Math.random() > 0.4 ? "No Curfew Enforced" : "Curfew Enforced",
-            "Sari-Sari Store Nearby", "Laundry Area", "Purified Water Available", 
+            "Sari-Sari Store Nearby", "Laundry Area", "Purified Water Available",
             "Kitchen Access", "CCTV Surveillance", "Motorcycle Parking"
         ].sort(() => 0.5 - Math.random()).slice(0, 8),
 
-        amenities: { 
-            create: { wifi: true, parking: true, laundry: true, airConditioning: Math.random() > 0.5, pool: false, gym: false } 
+        amenities: {
+            create: { wifi: true, parking: true, laundry: true, airConditioning: Math.random() > 0.5, pool: false, gym: false }
         },
-        rules: { 
-            create: { femaleOnly: i % 5 === 0, maleOnly: i % 8 === 0, visitorsAllowed: true, petsAllowed: Math.random() > 0.5, smokingAllowed: false } 
+        rules: {
+            create: { femaleOnly: i % 5 === 0, maleOnly: i % 8 === 0, visitorsAllowed: true, petsAllowed: Math.random() > 0.5, smokingAllowed: false }
         },
-        features: { 
-            create: { security24h: true, cctv: true, fireSafety: true, nearTransport: true, studyFriendly: true, quietEnvironment: true } 
+        features: {
+            create: { security24h: true, cctv: true, fireSafety: true, nearTransport: true, studyFriendly: true, quietEnvironment: true }
         },
 
         // FIXED: Applying the deduplicated categories
@@ -162,7 +162,7 @@ async function main() {
     for (let r = 1; r <= count; r++) {
        const isSolo = r === 1 && Math.random() > 0.4;
        const rPrice = isSolo ? (housePrice + 1000) : housePrice;
-       
+
        const room = await (prisma.room as any).create({
            data: {
                listingId: listing.id,
@@ -182,7 +182,7 @@ async function main() {
        });
 
        // 🖼️ Create Room images from source gallary
-       const roomRelevantImages = source.images?.filter((img: any) => 
+       const roomRelevantImages = source.images?.filter((img: any) =>
             img.roomType?.toLowerCase() === "bedroom" || img.roomType?.toLowerCase() === "cr"
        ).slice(0, 2);
 

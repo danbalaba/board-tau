@@ -78,13 +78,13 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
                   delayChildren: 0.05,
                   staggerChildren: 0.03
                 }}
-                className="flex items-center w-full"
+                className="flex flex-row items-center justify-center w-full mx-auto"
                 style={{
-                  maxWidth: isScrolled && mounted && typeof window !== 'undefined' && !window.matchMedia('(max-width: 768px)').matches ? '500px' : '100%'
+                  maxWidth: isScrolled && mounted && typeof window !== 'undefined' && !window.matchMedia('(max-width: 768px)').matches ? '600px' : '100%'
                 }}
               >
                 {/* Desktop search */}
-                <div className="hidden md:block">
+                <div className="hidden md:flex flex-row justify-center w-full">
                   <Search compact={true} />
                 </div>
 
