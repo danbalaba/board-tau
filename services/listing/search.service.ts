@@ -174,7 +174,9 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
         $geoNear: {
           near: { type: "Point", coordinates: [Number(params.originLng), Number(params.originLat)] },
           distanceField: "distanceToCollege",
-          maxDistance: (Number(isRelaxed ? 20 : (params.distance || 5))) * 1000,
+          maxDistance: params.isUnlimitedDistance === "true" 
+            ? 500000 // 500km effectively unlimited reach
+            : (Number(isRelaxed ? 20 : (params.distance || 5))) * 1000,
           spherical: true,
           query: { status: "active" }
         }

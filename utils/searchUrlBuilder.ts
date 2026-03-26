@@ -54,6 +54,7 @@ export function buildSearchUrl(data: FieldValues, currentSearchParams: URLSearch
     studyFriendly: (data.advanced ?? []).includes("study-friendly") ? "true" : undefined,
     quietEnvironment: (data.advanced ?? []).includes("quiet-environment") ? "true" : undefined,
     flexibleLease: (data.advanced ?? []).includes("flexible-lease") ? "true" : undefined,
+    isUnlimitedDistance: data.isUnlimitedDistance ? "true" : undefined,
   };
 
   // 4. Attach Geolocation coordinates if a specific college was chosen
