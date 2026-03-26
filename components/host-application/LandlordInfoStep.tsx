@@ -1,7 +1,8 @@
 import React from 'react';
 import Input from '../inputs/Input';
 import Textarea from '../inputs/Textarea';
-import Select from '../inputs/Select';
+import { Controller } from 'react-hook-form';
+import ReactSelect from 'react-select';
 import { User, Phone, Mail, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -9,9 +10,10 @@ interface LandlordInfoStepProps {
   register: any;
   errors: any;
   watch: any;
+  control: any;
 }
 
-const LandlordInfoStep: React.FC<LandlordInfoStepProps> = ({ register, errors, watch }) => {
+const LandlordInfoStep: React.FC<LandlordInfoStepProps> = ({ register, errors, watch, control }) => {
   return (
     <div className="space-y-6">
       <motion.div
@@ -56,7 +58,11 @@ const LandlordInfoStep: React.FC<LandlordInfoStepProps> = ({ register, errors, w
               useStaticLabel={true}
               validationRules={{
                 required: "Full name is required",
-                minLength: { value: 3, message: "Full name must be at least 3 characters" }
+                minLength: { value: 3, message: "Full name must be at least 3 characters" },
+                pattern: {
+                  value: /^[a-zA-ZñÑ\s-]+$/,
+                  message: "Name can only contain letters, spaces, and hyphens"
+                }
               }}
             />
             <Input
@@ -119,27 +125,55 @@ const LandlordInfoStep: React.FC<LandlordInfoStepProps> = ({ register, errors, w
               useStaticLabel={true}
               validationRules={{
                 required: "Emergency contact name is required",
-                minLength: { value: 3, message: "Name must be at least 3 characters" }
+                minLength: { value: 3, message: "Name must be at least 3 characters" },
+                pattern: {
+                  value: /^[a-zA-ZñÑ\s-]+$/,
+                  message: "Name can only contain letters, spaces, and hyphens"
+                }
               }}
             />
-            <Select
-              label="Relationship"
-              id="contactInfo.emergencyContact.relationship"
-              register={register}
-              errors={errors}
-              options={[
-                { value: 'spouse', label: 'Spouse' },
-                { value: 'child', label: 'Child' },
-                { value: 'parent', label: 'Parent' },
-                { value: 'sibling', label: 'Sibling' },
-                { value: 'friend', label: 'Friend' },
-                { value: 'other', label: 'Other' }
-              ]}
-              required
-              validationRules={{
-                required: "Please select a relationship"
-              }}
-            />
+            <div className="relative z-50">
+              <label className="block text-[15px] font-medium text-text-primary dark:text-gray-100 mb-2">
+                Relationship <span className="text-red-500">*</span>
+              </label>
+              <Controller
+                name="contactInfo.emergencyContact.relationship"
+                control={control}
+                rules={{ required: "Please select a relationship" }}
+                render={({ field }) => (
+                  <ReactSelect
+                    {...field}
+                    options={[
+                      { value: 'spouse', label: 'Spouse' },
+                      { value: 'child', label: 'Child' },
+                      { value: 'parent', label: 'Parent' },
+                      { value: 'sibling', label: 'Sibling' },
+                      { value: 'friend', label: 'Friend' },
+                      { value: 'other', label: 'Other' },
+                    ]}
+                    value={field.value ? { value: field.value, label: field.value.charAt(0).toUpperCase() + field.value.slice(1) } : null}
+                    onChange={(val: any) => field.onChange(val?.value)}
+                    placeholder="Select relationship..."
+                    classNames={{
+                      control: (state) => `!bg-white dark:!bg-gray-800 !border ${state.isFocused ? '!border-primary !ring-1 !ring-primary' : '!border-gray-200 dark:!border-gray-700'} !rounded-xl !p-[5px] !shadow-sm transition-all text-[15px]`,
+                      singleValue: () => `!text-text-primary dark:!text-gray-100`,
+                      menu: () => `!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-700 !shadow-xl !rounded-xl !mt-1 z-50 overflow-hidden`,
+                      menuList: () => `!p-0`,
+                      option: (state) => `!cursor-pointer ${state.isSelected ? '!bg-primary/10 !text-primary dark:!text-primary font-medium' : state.isFocused ? '!bg-gray-100 dark:!bg-gray-700 !text-text-primary dark:!text-gray-100' : '!bg-transparent dark:!bg-transparent !text-text-primary dark:!text-gray-100'} !px-3 !py-2 !text-sm transition-colors`,
+                      indicatorSeparator: () => `!bg-gray-200 dark:!bg-gray-700`,
+                      dropdownIndicator: () => `!text-gray-400 dark:!text-gray-500 hover:!text-primary`,
+                      placeholder: () => `!text-gray-400 dark:!text-gray-500 p-1`,
+                      input: () => `dark:!text-gray-100`
+                    }}
+                    menuPlacement="auto"
+                    instanceId="relationship-select"
+                  />
+                )}
+              />
+              {errors?.contactInfo?.emergencyContact?.relationship && (
+                <p className="mt-1.5 text-xs text-red-500">{errors.contactInfo.emergencyContact.relationship.message}</p>
+              )}
+            </div>
             <Input
               label="Emergency Phone Number"
               id="contactInfo.emergencyContact.phoneNumber"
@@ -181,7 +215,11 @@ const LandlordInfoStep: React.FC<LandlordInfoStepProps> = ({ register, errors, w
           placeholder="Share your experience managing properties... What types of properties have you managed before? How long have you been in the rental business?"
           validationRules={{
             required: "Please describe your experience as a landlord",
-            minLength: { value: 50, message: "Description must be at least 50 characters" }
+            minLength: { value: 50, message: "Description must be at least 50 characters" },
+            pattern: {
+              value: /^[^<>;={}\[\]\\]+$/,
+              message: "Special characters like < > ; = { } [ ] \\ are not allowed for security reasons"
+            }
           }}
         />
       </motion.div>

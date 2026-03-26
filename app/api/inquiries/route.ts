@@ -4,128 +4,93 @@ import { getCurrentUser } from "@/services/user";
 
 export async function POST(request: Request) {
   try {
+    console.log("Received inquiry request");
+
     const user = await getCurrentUser();
+    console.log("Current user:", user);
 
     if (!user) {
+      console.log("No user found - returning 401");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const data = await request.json();
+    console.log("Inquiry data:", data);
 
     const {
       listingId,
       roomId,
       moveInDate,
-      stayDuration,
+      checkOutDate,
       occupantsCount,
       role,
-      hasPets,
-      smokes,
       contactMethod,
       message,
+      profilePhotoUrl,
+      idAttachmentUrl,
+      paymentMethod,
     } = data;
 
     // Validate required fields
-    if (!listingId || !roomId || !moveInDate || !stayDuration || !role || !contactMethod) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!listingId || !roomId || !moveInDate || !checkOutDate || !role) {
+      const missingFields = [];
+      if (!listingId) missingFields.push("listingId");
+      if (!roomId) missingFields.push("roomId");
+      if (!moveInDate) missingFields.push("moveInDate");
+      if (!checkOutDate) missingFields.push("checkOutDate");
+      if (!role) missingFields.push("role");
+      console.log("Missing fields:", missingFields);
+      return NextResponse.json({ error: "Missing required fields", missingFields }, { status: 400 });
     }
 
-    // Create the inquiry
-    const inquiry = await db.inquiry.create({
+    // Get room details
+    const room = await db.room.findUnique({
+      where: { id: roomId },
+    });
+    console.log("Room details:", room);
+
+    if (!room) {
+      console.log("Room not found");
+      return NextResponse.json({ error: "Room not found" }, { status: 404 });
+    }
+
+    // Optional: Check if room has available slots before creating inquiry
+    if (room.availableSlots <= 0) {
+      console.log("Room has no available slots");
+      return NextResponse.json({ error: "Room is fully booked" }, { status: 400 });
+    }
+
+    // Create inquiry with PENDING status
+    const startDate = new Date(moveInDate);
+    const endDate = new Date(checkOutDate);
+
+    // Map role string to InquiryRole enum
+    const roleEnum = role.toUpperCase();
+
+    const inquiry = await (db.inquiry as any).create({
       data: {
+        userId: user.id,
         listingId,
         roomId,
-        userId: user.id,
-        moveInDate,
-        stayDuration,
-        occupantsCount,
-        role,
-        hasPets,
-        smokes,
-        contactMethod,
-        message,
+        moveInDate: startDate,
+        checkOutDate: endDate,
+        occupantsCount: occupantsCount || 1,
+        role: roleEnum as any,
+        message: message || "",
+        profilePhotoUrl: profilePhotoUrl || null,
+        idAttachmentUrl: idAttachmentUrl || null,
+        paymentMethod: paymentMethod || null,
+        reservationFee: (room as any).reservationFee || 0,
         status: "PENDING",
         paymentStatus: "UNPAID",
       },
     });
 
+    console.log("Inquiry created successfully:", inquiry);
     return NextResponse.json(inquiry);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating inquiry:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
-}
-
-export async function PUT(request: Request) {
-  try {
-    const user = await getCurrentUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-
-    if (!id) {
-      return NextResponse.json({ error: "Inquiry ID is required" }, { status: 400 });
-    }
-
-    const { status } = await request.json();
-
-    if (!status || !["PENDING", "APPROVED", "REJECTED"].includes(status)) {
-      return NextResponse.json({ error: "Valid status (pending/approved/rejected) is required" }, { status: 400 });
-    }
-
-    // Get the inquiry
-    const inquiry = await db.inquiry.findUnique({
-      where: { id },
-      include: { listing: true, room: true },
-    });
-
-    if (!inquiry) {
-      return NextResponse.json({ error: "Inquiry not found" }, { status: 404 });
-    }
-
-    // Check if the current user is the landlord of the listing
-    if (inquiry.listing.userId !== user.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Update the inquiry status
-    const updatedInquiry = await db.inquiry.update({
-      where: { id },
-      data: { status },
-    });
-
-    // If approved, create a reservation
-    if (status === "APPROVED") {
-      const moveInDate = new Date(inquiry.moveInDate);
-      const endDate = new Date(moveInDate);
-      endDate.setMonth(endDate.getMonth() + inquiry.stayDuration);
-
-      const totalPrice = inquiry.room.price * inquiry.stayDuration; // Calculate total price
-
-      await db.reservation.create({
-        data: {
-          userId: inquiry.userId,
-          listingId: inquiry.listingId,
-          roomId: inquiry.roomId,
-          inquiryId: inquiry.id,
-          startDate: moveInDate,
-          endDate,
-          durationInDays: inquiry.stayDuration * 30, // Convert months to days
-          totalPrice,
-          status: "CONFIRMED",
-          paymentStatus: "PENDING",
-        },
-      });
-    }
-
-    return NextResponse.json(updatedInquiry);
-  } catch (error) {
-    console.error("Error updating inquiry status:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error", message: error.message }, { status: 500 });
   }
 }
 
@@ -137,17 +102,27 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get all inquiries for the current user
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get("status");
+
+    const where: any = {
+      userId: user.id,
+    };
+
+    // Filter by status if provided
+    if (status && status !== "all") {
+      where.status = status.toUpperCase();
+    }
+
     const inquiries = await db.inquiry.findMany({
-      where: {
-        userId: user.id,
-      },
+      where,
       include: {
         listing: {
           select: {
             id: true,
             title: true,
             imageSrc: true,
+            location: true,
           },
         },
         room: {
@@ -155,6 +130,8 @@ export async function GET(request: Request) {
             id: true,
             name: true,
             price: true,
+            roomType: true,
+            images: true,
           },
         },
       },
@@ -164,8 +141,8 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json(inquiries);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error getting inquiries:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error", message: error.message }, { status: 500 });
   }
 }

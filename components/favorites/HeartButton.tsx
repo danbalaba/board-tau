@@ -1,14 +1,14 @@
 "use client";
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useTransition, useEffect } from "react";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
-import { useMutation } from "@tanstack/react-query";
-import debounce from "lodash.debounce";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/utils/helper";
 import { updateFavorite } from "@/services/user/favorites";
+import { useLoading } from "@/components/loading/LoadingContext";
 
 interface HeartButtonProps {
   listingId: string;
@@ -19,78 +19,65 @@ const HeartButton: React.FC<HeartButtonProps> = ({
   listingId,
   hasFavorited: initialValue,
 }) => {
+  const router = useRouter();
   const { status } = useSession();
   const { error } = useResponsiveToast();
+  const { startLoading, stopLoading } = useLoading();
+  const [isPending, startTransition] = useTransition();
+  
+  // Use the prop as the source of truth
   const [hasFavorited, setHasFavorited] = useState(initialValue);
-  const hasFavoritedRef = useRef(initialValue);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const { mutate } = useMutation({
-    mutationFn: updateFavorite,
-    onError: () => {
-      hasFavoritedRef.current = !hasFavoritedRef.current;
-      setHasFavorited(hasFavoritedRef.current);
-      error("Failed to favorite");
-    }
-  });
-
-  const debouncedUpdateFavorite = debounce(() => {
-    mutate({
-      listingId,
-      favorite: hasFavoritedRef.current,
-    });
-  }, 300);
-
-  const handleUpdate = useCallback(() => {
-    debouncedUpdateFavorite();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  
+  // Sync state with server prop
+  useEffect(() => {
+    setHasFavorited(initialValue);
+  }, [initialValue]);
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     e.preventDefault();
 
-    if (isLoading || isAnimating) {
-      return;
-    }
+    if (isPending) return;
 
     if (status !== "authenticated") {
-      setIsLoading(true);
-
-      // Clear existing timer if any
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-
-      // Show toast only once after a delay
-      debounceTimerRef.current = setTimeout(() => {
-        error({
-          title: "Please sign in",
-          description: "You need to be logged in to favorite listings"
-        });
-        setIsLoading(false);
-      }, 1000);
-
+      error({
+        title: "Please sign in",
+        description: "You need to be logged in to favorite listings"
+      });
       return;
     }
 
-    setIsAnimating(true);
-    handleUpdate();
-    setHasFavorited((prev) => !prev);
-    hasFavoritedRef.current = !hasFavoritedRef.current;
+    // TRIGGER LOADING IMMEDIATELY
+    startLoading();
 
-    setTimeout(() => {
-      setIsAnimating(false);
-    }, 450);
+    startTransition(async () => {
+      try {
+        await updateFavorite({
+          listingId,
+          favorite: !hasFavorited,
+        });
+        
+        // Refresh the page data
+        router.refresh();
+      } catch (err) {
+        error("Failed to update favorite");
+        stopLoading();
+      }
+      // Note: stopLoading will be called mostly by the GlobalLoadingOverlay 
+      // effect since the route will "change" (refresh) or we can call it manually 
+      // if it's too fast. But GlobalLoadingOverlay has a 1.5s timer.
+    });
   };
 
   return (
     <button
       type="button"
       onClick={handleClick}
-      disabled={isAnimating || isLoading}
-      className="relative hover:opacity-80 transition cursor-pointer z-[5] disabled:cursor-not-allowed disabled:opacity-50"
+      disabled={isPending}
+      className={cn(
+        "relative hover:opacity-80 transition cursor-pointer z-[5] disabled:cursor-not-allowed",
+        isPending && "opacity-70"
+      )}
     >
       <AiOutlineHeart
         size={28}
@@ -111,7 +98,7 @@ const HeartButton: React.FC<HeartButtonProps> = ({
           }}
           transition={{
             duration: 0.45,
-            ease: [0.34, 1.56, 0.64, 1], // Natural spring feel
+            ease: [0.34, 1.56, 0.64, 1],
           }}
         >
           <AiFillHeart

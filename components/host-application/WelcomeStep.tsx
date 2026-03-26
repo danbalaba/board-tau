@@ -19,7 +19,7 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext }) => {
     {
       icon: <FileText className="w-6 h-6" />,
       title: "Easy Application",
-      description: "Complete our simple 7-step application in minutes"
+      description: "Complete our simple 9-step application in minutes"
     },
     {
       icon: <CheckCircle className="w-6 h-6" />,
@@ -35,11 +35,13 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext }) => {
 
   const steps = [
     { number: "01", title: "Personal Info", description: "Tell us about yourself" },
-    { number: "02", title: "Property Details", description: "Describe your property" },
-    { number: "03", title: "Location", description: "Where is your property?" },
-    { number: "04", title: "Configuration", description: "Set up your property" },
-    { number: "05", title: "Documents", description: "Upload requirements" },
-    { number: "06", title: "Review & Submit", description: "Final check" }
+    { number: "02", title: "Property Basics", description: "Describe your property" },
+    { number: "03", title: "Location", description: "Where is your property located?" },
+    { number: "04", title: "Property Setup", description: "Configure main amenities" },
+    { number: "05", title: "Room Details", description: "Set up rooms and pricing" },
+    { number: "06", title: "Photos", description: "Upload property & room photos" },
+    { number: "07", title: "Documents", description: "Upload verify requirements" },
+    { number: "08", title: "Review & Submit", description: "Final check of application" }
   ];
 
   return (

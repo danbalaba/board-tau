@@ -132,11 +132,11 @@ const ResponsiveToasters: React.FC = () => {
       {/* Desktop toasters */}
       {!isMobile && <HotToaster />}
       {/* Admin toaster */}
-      {!isMobile && <SonnerToaster position="top-center" />}
+      {!isMobile && <SonnerToaster position="top-center" style={{ zIndex: 9999 }} />}
 
       {/* Mobile toaster (Sileo) */}
       {isMobile && (
-        <div style={{ position: 'fixed', top: '80px', left: 0, right: 0, zIndex: 60 }}>
+        <div style={{ position: 'fixed', top: '80px', left: 0, right: 0, zIndex: 9999 }}>
           <Toaster
             position="top-center"
             options={{

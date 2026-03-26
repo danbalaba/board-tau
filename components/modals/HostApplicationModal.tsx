@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { ChevronRight, ChevronLeft, FileText, Home, User, MapPin, Upload, CheckCircle, AlertCircle, Building2, Info, ArrowRight, Camera, Bed } from 'lucide-react';
 import { TAU_COORDINATES } from '@/utils/constants';
 import { ROOM_TYPES } from '@/data/roomTypes';
 import { validateStep } from '@/services/validation/hostApplication';
-import { toast } from 'react-hot-toast';
+import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 
 import Modal from './Modal';
 import Button from '../common/Button';
@@ -38,10 +38,13 @@ const STEPS = {
 
 interface RoomType {
   roomType: string;
-  count: string;
+  bathroomArrangement: string;
   price: string;
   bedType: string;
   capacity: string;
+  size: string;
+  availableSlots: string;
+  reservationFee: string;
   description: string;
   amenities: string[];
 }
@@ -87,9 +90,9 @@ interface HostApplicationFormData {
     bathroomType: string;
     amenities: string[];
     rules: string[];
-    smokingAllowed: string;
-    petsAllowed: string;
-    visitorsAllowed: string;
+    smokingAllowed: boolean;
+    petsAllowed: boolean;
+    visitorsAllowed: boolean;
     // Rules / Preferences
     femaleOnly: boolean;
     maleOnly: boolean;
@@ -124,8 +127,27 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
   const [step, setStep] = useState(STEPS.WELCOME);
   const [isLoading, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
-  const [mapCenter, setMapCenter] = useState<[number, number]>(TAU_COORDINATES); // Tarlac Agricultural University (TAU) coordinates
+  const [mapCenter, setMapCenter] = useState<[number, number]>(TAU_COORDINATES);
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
+  const toast = useResponsiveToast();
+
+  // Lock background scroll when modal is open
+  useEffect(() => {
+    const body = document.body;
+    const scrollY = window.scrollY;
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.width = '100%';
+    return () => {
+      body.style.overflow = '';
+      body.style.position = '';
+      body.style.top = '';
+      body.style.width = '';
+      window.scrollTo(0, scrollY);
+    };
+  }, []);
+
 
     const {
      register,
@@ -135,6 +157,8 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
      formState: { errors },
      reset,
      setValue,
+     setError,
+     clearErrors,
      getValues,
      trigger
    } = useForm<HostApplicationFormData>({
@@ -143,7 +167,7 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
     defaultValues: {
        businessInfo: {
          businessName: '',
-         businessType: 'boarding-house',
+         businessType: '',
          businessRegistrationNumber: '',
          taxIdentificationNumber: '',
          businessDescription: '',
@@ -155,7 +179,7 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
          category: ['Student-Friendly'],
          roomType: ROOM_TYPES.SOLO,
          price: '',
-         leaseTerms: '1-month'
+         leaseTerms: ''
        },
       contactInfo: {
         fullName: '',
@@ -179,10 +203,13 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
          rooms: [
            {
              roomType: ROOM_TYPES.SOLO,
-             count: '',
+             bathroomArrangement: 'PRIVATE_CR',
              price: '',
              bedType: 'Single',
              capacity: '1',
+             size: '',
+             availableSlots: '',
+             reservationFee: '500',
              description: '',
              amenities: []
            }
@@ -191,9 +218,9 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
          bathroomType: 'shared',
          amenities: [],
          rules: [],
-         smokingAllowed: 'no',
-         petsAllowed: 'no',
-         visitorsAllowed: 'allowed',
+         smokingAllowed: false,
+         petsAllowed: false,
+         visitorsAllowed: false,
          // Rules / Preferences
          femaleOnly: false,
          maleOnly: false,
@@ -232,6 +259,42 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
     control
   });
 
+  // Auto-populate room cards when totalRooms changes
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name === 'propertyConfig.totalRooms') {
+        const totalRooms = parseInt(value?.propertyConfig?.totalRooms || '0', 10);
+        if (isNaN(totalRooms) || totalRooms < 1) return;
+
+        const currentCount = getValues('propertyConfig.rooms').length;
+
+        if (totalRooms > currentCount) {
+          // Add rooms to match total
+          for (let i = currentCount; i < totalRooms; i++) {
+            append({
+              roomType: ROOM_TYPES.SOLO,
+              bathroomArrangement: 'PRIVATE_CR',
+              price: '',
+              bedType: 'Single',
+              capacity: '1',
+              size: '',
+              availableSlots: '',
+              reservationFee: '500',
+              description: '',
+              amenities: [],
+            });
+          }
+        } else if (totalRooms < currentCount) {
+          // Remove extra rooms from the end
+          for (let i = currentCount - 1; i >= totalRooms; i--) {
+            remove(i);
+          }
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, append, remove, getValues]);
+
   const [isContinuing, setIsContinuing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -247,6 +310,7 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
      }
 
      setIsContinuing(true);
+     clearErrors();
      console.log('Current step:', step, 'Moving to:', step + 1);
 
      // Get current form values
@@ -256,64 +320,74 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
      const validationResult = validateStep(step, formValues);
 
       if (!validationResult.valid) {
-        // Show specific field errors in toast notifications
-        validationResult.errors.slice(0, 3).forEach(error => {
-          toast.error(error.message, {
-            duration: 5000,
-            style: {
-              background: '#dc2626',
-              color: 'white',
-              fontWeight: '500',
-            },
-            icon: '⚠️',
-          });
-        });
-
-       // Set validation errors
+       // Set validation errors in react-hook-form to display in individual components
        validationResult.errors.forEach(error => {
-         // For React Hook Form to display errors, we need to trigger validation on the field
-         // This will show the error message in the Input/Select/Textarea components
+         setError(error.field as any, { 
+           type: 'manual', 
+           message: error.message 
+         });
        });
 
-       // Find the first error field and scroll to it
-       const firstError = validationResult.errors[0];
-       if (firstError) {
-         const fieldId = firstError.field;
-         const errorElement = document.getElementById(fieldId);
-         if (errorElement) {
-           errorElement.scrollIntoView({
-             behavior: 'smooth',
-             block: 'center'
-           });
-           // Add a visual highlight effect
-           errorElement.style.animation = 'pulse 1s';
-           setTimeout(() => {
-             errorElement.style.animation = '';
-           }, 1000);
-         } else {
-           // If element not found, try to find by name or partial match
-           const elements = document.querySelectorAll(`[name*="${fieldId}"], [id*="${fieldId}"]`);
-           if (elements.length > 0) {
-             (elements[0] as HTMLElement).scrollIntoView({
-               behavior: 'smooth',
-               block: 'center'
-             });
-             (elements[0] as HTMLElement).style.animation = 'pulse 1s';
-             setTimeout(() => {
-               (elements[0] as HTMLElement).style.animation = '';
-             }, 1000);
-           }
-         }
-       }
+       // Show specific field errors in toast notifications (prioritize general ones)
+       const errorPriority = (field: string) => {
+         if (field.includes('propertyImages')) return 1;
+         if (field.includes('documents')) return 2;
+         return 3;
+       };
+
+       const sortedErrors = [...validationResult.errors].sort((a, b) => errorPriority(a.field) - errorPriority(b.field));
+
+       sortedErrors.slice(0, 2).forEach(error => {
+         toast.error(error.message, {
+           duration: 5000,
+           style: {
+             background: '#dc2626',
+             color: 'white',
+             fontWeight: '500',
+           },
+           icon: '⚠️',
+         });
+       });
+
+        // Find the first error field and scroll to it
+        const firstError = validationResult.errors[0];
+        if (firstError) {
+          const fieldId = firstError.field;
+          const errorElement = document.getElementById(fieldId);
+          const scrollContainer = document.querySelector('.overflow-y-auto');
+          
+          if (errorElement && scrollContainer) {
+            // Force a smooth scroll to the error element within the modal container
+            const topOffset = 100;
+            const elementPosition = errorElement.getBoundingClientRect().top;
+            const containerPosition = scrollContainer.getBoundingClientRect().top;
+            const scrollTarget = scrollContainer.scrollTop + (elementPosition - containerPosition) - topOffset;
+            
+            scrollContainer.scrollTo({
+              top: scrollTarget,
+              behavior: 'smooth'
+            });
+
+            // Add a visual highlight effect
+            errorElement.style.transition = 'all 0.3s ease';
+            errorElement.style.boxShadow = '0 0 0 4px rgba(220, 38, 38, 0.2)';
+            
+            setTimeout(() => {
+              errorElement.style.boxShadow = '';
+            }, 3000);
+          }
+        }
 
        // Trigger validation for all fields in current step to show errors
        const fieldsToValidate = getFieldsToValidateForStep(step);
        await trigger(fieldsToValidate as any);
 
-       // Allow continue again after delay
-       setTimeout(() => setIsContinuing(false), 2000);
+       // Allow continue again after a short delay
+       setTimeout(() => setIsContinuing(false), 500);
        return;
      }
+
+     // Sanitized values are preserved in formValues via reference
 
       if (step < Object.keys(STEPS).length - 1) {
         setStep(step + 1);
@@ -328,6 +402,8 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
             });
           }
         }, 100); // Small delay to ensure the DOM has updated
+      } else {
+        setIsContinuing(false);
       }
    };
 
@@ -372,7 +448,7 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
            'propertyConfig.rooms'
          ];
       case STEPS.PROPERTY_IMAGES:
-        return []; // Images are optional
+        return [ 'propertyImages.property', 'propertyImages.rooms' ];
       case STEPS.DOCUMENTS:
         return [
           'documents.governmentId',
@@ -391,9 +467,14 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
       e.stopPropagation();
       e.preventDefault();
     }
+    
+    // Always reset continuing state and clear errors when going back
+    setIsContinuing(false);
+    clearErrors();
+    
     console.log('Current step:', step, 'Moving to:', step - 1);
     if (step > 0) {
-      setStep(step - 1);
+      setStep(prev => prev - 1);
     }
   };
 
@@ -422,6 +503,9 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
     // In real implementation, you would upload the file to storage and get a URL
     const fakeUrl = `https://boardtau-storage.com/uploads/${documentType}-${Date.now()}.pdf`;
     setValue(`documents.${documentType}`, fakeUrl as any);
+    
+    // Clear error for this specific field in real-time
+    clearErrors(`documents.${documentType}` as any);
   };
 
   const onSubmit = async (data: HostApplicationFormData) => {
@@ -479,9 +563,10 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
               totalRooms: Number(data.propertyConfig.totalRooms),
               rooms: data.propertyConfig.rooms.map(room => ({
                 ...room,
-                count: Number(room.count),
                 price: Number(room.price),
-                capacity: Number(room.capacity)
+                capacity: (room.bedType === 'Bunk' || room.bedType === 'Double' || room.bedType === 'Queen')
+                  ? Number(room.capacity) * 2 
+                  : Number(room.capacity)
               })),
               bathroomCount: Number(data.propertyConfig.bathroomCount),
               amenities: data.propertyConfig.amenities,
@@ -699,12 +784,12 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
           {step === STEPS.WELCOME ? (
             <WelcomeStep onNext={nextStep} />
           ) : (
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
               {step === STEPS.LANDLORD_INFO && (
-                <LandlordInfoStep register={register} errors={errors} watch={watch} />
+                <LandlordInfoStep register={register} errors={errors} watch={watch} control={control} />
               )}
               {step === STEPS.PROPERTY_BASIC && (
-                <PropertyBasicStep register={register} errors={errors} watch={watch} />
+                <PropertyBasicStep register={register} errors={errors} watch={watch} control={control} />
               )}
               {step === STEPS.LOCATION && (
                 <LocationStep
@@ -725,43 +810,46 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
                   getValues={getValues}
                 />
               )}
-              {step === STEPS.ROOM_CONFIG && (
-                <RoomConfigStep
-                  register={register}
-                  errors={errors}
-                  watch={watch}
-                  fields={fields}
-                  append={append}
-                  remove={remove}
-                  control={control}
-                  getValues={getValues}
-                  setValue={setValue}
-                />
-              )}
-              {step === STEPS.PROPERTY_IMAGES && (
-                <PropertyImagesStep
-                  register={register}
-                  errors={errors}
-                  watch={watch}
-                  control={control}
-                  getValues={getValues}
-                />
-              )}
-              {step === STEPS.DOCUMENTS && (
-                <DocumentsStep
-                  register={register}
-                  errors={errors}
-                  uploadedFiles={uploadedFiles}
-                  onFileUpload={handleFileUpload as (documentType: string, file: File) => void}
-                />
-              )}
+               {step === STEPS.ROOM_CONFIG && (
+                 <RoomConfigStep
+                   register={register}
+                   errors={errors}
+                   watch={watch}
+                   fields={fields}
+                   append={append}
+                   remove={remove}
+                   control={control}
+                   getValues={getValues}
+                   setValue={setValue}
+                 />
+               )}
+               {step === STEPS.PROPERTY_IMAGES && (
+                 <PropertyImagesStep
+                   register={register}
+                   errors={errors}
+                   watch={watch}
+                   control={control}
+                   getValues={getValues}
+                   setValue={setValue}
+                   clearErrors={clearErrors}
+                 />
+               )}
+               {step === STEPS.DOCUMENTS && (
+                 <DocumentsStep
+                   register={register}
+                   errors={errors}
+                   uploadedFiles={uploadedFiles}
+                   onFileUpload={handleFileUpload as (documentType: string, file: File) => void}
+                 />
+               )}
               {step === STEPS.REVIEW && <ReviewStep watch={watch} onBack={prevStep} />}
 
               {/* Next/Submit Button */}
               {step > 0 && (
                 <div className="pt-6">
                   <Button
-                    type="submit"
+                    type={step === STEPS.REVIEW ? "submit" : "button"}
+                    onClick={step === STEPS.REVIEW ? undefined : (e) => nextStep(e)}
                     className="w-full"
                     isLoading={isLoading || isContinuing || isSubmitting}
                     disabled={isContinuing || isSubmitting}

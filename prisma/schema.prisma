@@ -13,6 +13,13 @@ enum Role {
   LANDLORD
 }
 
+enum InquiryRole {
+  STUDENT
+  STAFF
+  FACULTY
+  OTHER
+}
+
 model UserRole {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   name        String    @unique
@@ -38,6 +45,7 @@ enum InquiryStatus {
   PENDING
   APPROVED
   REJECTED
+  CANCELLED
   EXPIRED
 }
 
@@ -56,9 +64,10 @@ enum ContactMethod {
 }
 
 enum ReservationStatus {
-  PENDING
-  CONFIRMED
+  PENDING_PAYMENT
+  RESERVED
   CANCELLED
+  EXPIRED
 }
 
 enum PaymentMethod {
@@ -270,6 +279,7 @@ model Listing {
   approvedBy        String?   @db.ObjectId
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  amenities_tags    String[]  @default([])
 
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   amenities         ListingAmenity?
@@ -294,6 +304,7 @@ model Room {
   bedType           BedType?
   size              Float?
   status            RoomStatus @default(AVAILABLE)
+  reservationFee    Int       @default(0)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -310,13 +321,14 @@ model Inquiry {
   roomId            String    @db.ObjectId
   userId            String    @db.ObjectId
   moveInDate        DateTime
-  stayDuration      Int
+  checkOutDate      DateTime
   occupantsCount    Int
-  role              Role      @default(USER)
-  hasPets           Boolean
-  smokes            Boolean
-  contactMethod     ContactMethod
+  role              InquiryRole @default(STUDENT)
   message           String?
+  profilePhotoUrl   String?
+  idAttachmentUrl   String?
+  paymentMethod     String?
+  reservationFee    Int       @default(0)
   status            InquiryStatus @default(PENDING)
   paymentStatus     PaymentStatus @default(UNPAID)
   isApproved        Boolean   @default(false)
@@ -341,7 +353,7 @@ model Reservation {
   endDate           DateTime
   durationInDays    Int
   totalPrice        Int
-  status            ReservationStatus @default(PENDING)
+  status            ReservationStatus @default(PENDING_PAYMENT)
   paymentStatus     PaymentStatus @default(PENDING)
   paymentMethod     PaymentMethod?
   paymentReference  String?

@@ -46,11 +46,11 @@ export async function PUT(request: NextRequest) {
 
     const { status, message } = await request.json();
 
-    if (!status || !["approved", "rejected"].includes(status)) {
+    if (!status || !["APPROVED", "REJECTED"].includes(status)) {
       return NextResponse.json(
         {
           success: false,
-          error: "Valid status (approved/rejected) is required",
+          error: "Valid status (APPROVED/REJECTED) is required",
         },
         { status: 400 }
       );

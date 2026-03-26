@@ -9,8 +9,8 @@ import { GiFamilyHouse } from "react-icons/gi";
 /** BoardTAU Step 1 — boarding house categories (multi-select). */
 export const categories = [
   { label: "Student-Friendly", value: "Student-Friendly", icon: MdOutlineSchool, description: "Boarding houses suitable for students." },
-  { label: "Budget-Friendly", value: "Budget-Friendly", icon: MdOutlineAttachMoney, description: "Affordable options for students or working individuals." },
-  { label: "Premium / Private", value: "Premium / Private", icon: MdOutlineKingBed, description: "Higher-end boarding houses or private rooms." },
+  { label: "Budget-Friendly", value: "Budget Boarding House", icon: MdOutlineAttachMoney, description: "Affordable options for students or working individuals." },
+  { label: "Premium / Private", value: "Private Boarding House", icon: MdOutlineKingBed, description: "Higher-end boarding houses or private rooms." },
   { label: "Family-Friendly", value: "Family-Friendly", icon: MdOutlineGroups, description: "Allows visitors, pets, or accommodates small families." },
   { label: "Pet-Friendly", value: "Pet-Friendly", icon: GiFamilyHouse, description: "Explicitly allows pets." },
   { label: "Apartment", value: "Apartment", icon: MdOutlineKingBed, description: "Full apartment listing, not typical boarding rooms." },
@@ -22,6 +22,7 @@ export const LISTINGS_BATCH = 16;
 
 export const menuItems = [
   { label: "My favorites", path: "/favorites" },
+  { label: "My inquiries", path: "/inquiries" },
   { label: "My reservations", path: "/reservations" },
   { label: "My profile", path: "/profile" },
 ];

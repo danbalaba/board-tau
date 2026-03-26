@@ -41,7 +41,6 @@ export interface HostApplicationData {
     totalRooms: number;
     rooms: Array<{
       roomType: string;
-      count: number;
       price: number;
       bedType: string;
       capacity: number;
@@ -52,9 +51,9 @@ export interface HostApplicationData {
     bathroomType: string;
     amenities: string[];
     rules: string[];
-    smokingAllowed: string;
-    petsAllowed: string;
-    visitorsAllowed: string;
+    smokingAllowed: boolean;
+    petsAllowed: boolean;
+    visitorsAllowed: boolean;
     // Rules / Preferences
     femaleOnly: boolean;
     maleOnly: boolean;
@@ -147,10 +146,6 @@ export const createHostApplication = async (data: HostApplicationData) => {
   data.propertyConfig.rooms.forEach((room, index) => {
     if (!room.roomType) {
       throw new Error(`Room type is required for room ${index + 1}`);
-    }
-
-    if (!room.count || room.count < 1 || room.count > 20) {
-      throw new Error(`Room count must be between 1 and 20 for room ${index + 1}`);
     }
 
     if (!room.price || room.price < 1000 || room.price > 50000) {

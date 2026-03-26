@@ -34,23 +34,23 @@ interface LandlordInquiriesClientProps {
 
 export default function LandlordInquiriesClient({ inquiries }: LandlordInquiriesClientProps) {
   const { inquiries: inquiriesList, nextCursor } = inquiries;
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
 
   const statusColors: Record<string, string> = {
-    pending: 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white',
-    approved: 'bg-gradient-to-r from-green-500 to-green-600 text-white',
-    rejected: 'bg-gradient-to-r from-red-500 to-red-600 text-white',
+    PENDING: 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white',
+    APPROVED: 'bg-gradient-to-r from-green-500 to-green-600 text-white',
+    REJECTED: 'bg-gradient-to-r from-red-500 to-red-600 text-white',
   };
 
   const formatStatus = (status: string) => {
-    return status.charAt(0).toUpperCase() + status.slice(1);
+    return status.charAt(0) + status.slice(1).toLowerCase();
   };
 
-  const filteredInquiries = selectedStatus === 'all'
+  const filteredInquiries = selectedStatus === 'ALL'
     ? inquiriesList
     : inquiriesList.filter(inquiry => inquiry.status === selectedStatus);
 
-  const handleRespond = async (inquiryId: string, status: 'approved' | 'rejected') => {
+  const handleRespond = async (inquiryId: string, status: 'APPROVED' | 'REJECTED') => {
     try {
       const response = await fetch(`/api/landlord/inquiries?id=${inquiryId}`, {
         method: 'PUT',
@@ -101,10 +101,10 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
               onChange={(e) => setSelectedStatus(e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 text-sm"
             >
-              <option value="all">All Inquiries</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              <option value="ALL">All Inquiries</option>
+              <option value="PENDING">Pending</option>
+              <option value="APPROVED">Approved</option>
+              <option value="REJECTED">Rejected</option>
             </select>
           </div>
         </div>
@@ -178,17 +178,17 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
                   <FaEye size={12} />
                   <span className="font-semibold text-xs">View Details</span>
                 </Link>
-                {inquiry.status === 'pending' && (
+                {inquiry.status === 'PENDING' && (
                   <>
                     <button
-                      onClick={() => handleRespond(inquiry.id, 'approved')}
+                      onClick={() => handleRespond(inquiry.id, 'APPROVED')}
                       className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-green-500/30 group-hover:scale-[1.02]"
                     >
                       <FaCheck size={12} />
                       <span className="font-semibold text-xs">Approve</span>
                     </button>
                     <button
-                      onClick={() => handleRespond(inquiry.id, 'rejected')}
+                      onClick={() => handleRespond(inquiry.id, 'REJECTED')}
                       className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-red-500/30 group-hover:scale-[1.02]"
                     >
                       <FaTimes size={12} />

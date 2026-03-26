@@ -13,6 +13,9 @@ module.exports = {
         primary: {
           DEFAULT: 'rgb(47, 125, 109)', // #2f7d6d
           foreground: 'rgb(248, 250, 249)',
+          hover: 'rgb(38, 101, 88)',
+          light: 'rgb(216, 230, 227)',
+          dark: 'rgb(30, 81, 70)',
         },
         secondary: {
           DEFAULT: 'rgb(243, 244, 246)',

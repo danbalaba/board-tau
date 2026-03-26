@@ -1,115 +1,95 @@
-# BoardTAU Amenities & Categories Reference
+# BoardTAU Amenities & Categories Reference (Philippine Context)
 
-This file is a master reference for all **room-level amenities**, **listing-level amenities**, and **boarding house categories**. It ensures consistent mapping between frontend filters and backend schema.
+This file is a master reference for all **room-level amenities**, **listing-level amenities**, and **boarding house categories** specifically tailored for students of Tarlac Agricultural University (TAU). It ensures consistent mapping between frontend filters, database storage, and the Heuristic Scoring Algorithm.
 
 ---
 
 ## 1. Room-Level Amenities
 
-### Solo Room
-| Amenity               | Type / Notes                                   | Backend Mapping            |
-|-----------------------|-----------------------------------------------|----------------------------|
-| Private Bathroom       | Yes / No                                      | Room.amenities             |
-| Private Kitchen        | Yes / No                                      | Room.amenities             |
-| Air Conditioning       | Yes / No                                      | Room.amenities             |
-| Bed Type               | Single / Double / Queen                       | Room.bedType               |
-| Desk / Study Table     | Yes / No                                      | Room.amenities             |
-| Closet / Wardrobe      | Yes / No                                      | Room.amenities             |
-| Balcony / Window       | Yes / No                                      | Room.amenities             |
-| Mini-Fridge / Refrigerator | Yes / No                                  | Room.amenities             |
-| Room Size (Sq. Meters) | Optional numeric                              | Room.size                  |
-| Price per room         | Always a room-level property                  | Room.price                 |
-| Natural Light / View   | Yes / No                                      | Room.amenities             |
-| Heating / Fan          | Yes / No                                      | Room.amenities             |
-| WiFi / Ethernet Access | Yes / No                                      | Room.amenities             |
+These amenities are physically contained within the specific room.
 
-### Bedspace Room
-| Amenity               | Type / Notes                                   | Backend Mapping            |
+### Solo Room & Bedspace Room 
+| Amenity               | Type / Notes                                   | Backend Field Mapping      |
 |-----------------------|-----------------------------------------------|----------------------------|
-| Shared Bathroom        | Number or Yes/No                              | Room.amenities             |
-| Shared Kitchen         | Yes / No                                      | Room.amenities             |
-| Air Conditioning       | Yes / No                                      | Room.amenities             |
-| Bed Count / Capacity   | Max occupants per room                         | Room.capacity              |
-| Available Slots        | Remaining beds                                 | Room.availableSlots        |
-| Desk / Shared Table    | Yes / No                                      | Room.amenities             |
-| Closet per Bed         | Yes / No                                      | Room.amenities             |
-| Bed Type               | Single / Bunk / Double                        | Room.bedType               |
-| Price per bed          | Always room-level property                     | Room.price                 |
-| Personal Lock / Storage| Yes / No                                      | Room.amenities             |
-| Fan / AC               | Yes / No                                      | Room.amenities             |
-| Window / Ventilation   | Yes / No                                      | Room.amenities             |
-| Desk Lamp / Reading Light | Yes / No                                   | Room.amenities             |
+| Private Bathroom (Own CR)| Yes / No                                | Room.amenities             |
+| Air Conditioning (AC) | Yes / No                                      | Room.amenities             |
+| Electric Fan Included | Yes / No (Wall/Stand Fan)                     | Room.amenities             |
+| Foam / Mattress Included| Yes / No (Does not just provide bedframe)   | Room.amenities             |
+| Bed Type              | Single / Double / Bunk Bed (Double Deck)      | Room.bedType               |
+| Desk / Study Table    | Yes / No                                      | Room.amenities             |
+| Closet / Cabinet with Lock | Yes / No                                 | Room.amenities             |
+| Sub-Meter (Electricity)| Yes / No (Student pays exact consumption)    | Room.amenities             |
+| Sub-Meter (Water)     | Yes / No                                      | Room.amenities             |
+| Room Size (Sq. Meters)| Optional numeric                              | Room.size                  |
 
 > ✅ Notes:
-> - Room-level amenities are **strict filters** in Step 2 of the multi-question wizard.
-> - Each room can have different values; Solo vs Bedspace rooms have separate applicable fields.
-> - Price always comes from Room.price to avoid conflicts with listing-level price.
+> - Room-level amenities are **strict filters** evaluated when a user is specifically looking inside a room category.
+> - `Heating` and `Mini-Fridges` were removed as they are culturally inaccurate for generic provincial boarding houses.
 
 ---
 
 ## 2. Listing-Level Amenities
 
-These amenities apply to the **whole boarding house or apartment**:
+These amenities apply to the **entire boarding house or compound**:
 
-| Amenity                   | Type / Notes                                   | Backend Mapping            |
-|----------------------------|-----------------------------------------------|----------------------------|
-| WiFi / Internet            | Yes / No                                      | Listing.amenities          |
-| Laundry Area / Washer      | Yes / No                                      | Listing.amenities          |
-| Parking / Garage           | Yes / No                                      | Listing.amenities          |
-| Gated / Secure             | Yes / No                                      | Listing.amenities          |
-| 24h Security / Guard       | Yes / No                                      | Listing.security24h        |
-| CCTV / Surveillance        | Yes / No                                      | Listing.cctv               |
-| Fire Safety Equipment      | Yes / No                                      | Listing.fireSafety         |
-| Study Room / Common Area   | Yes / No                                      | Listing.amenities          |
-| Kitchen / Shared Kitchen   | Yes / No                                      | Listing.amenities          |
-| Elevator / Accessible      | Yes / No                                      | Listing.amenities          |
-| Near Public Transport      | Yes / No                                      | Listing.nearTransport      |
-| Quiet Environment / Noise Control | Yes / No                              | Listing.quietEnvironment   |
-| Flexible Lease / Short-Term Stay | Yes / No                                | Listing.flexibleLease      |
-| Pet-Friendly               | Yes / No                                      | Listing.petsAllowed        |
-| Visitor-Friendly           | Yes / No                                      | Listing.visitorsAllowed    |
-| Smoking Allowed            | Yes / No                                      | Listing.smokingAllowed     |
-| Furnished                  | Yes / No                                      | Listing.amenities          |
-| Gym / Pool / Recreation    | Yes / No                                      | Listing.amenities          |
-| Elevator / Wheelchair Accessible | Yes / No                                | Listing.amenities          |
+| Amenity                           | Type / Notes                                   | Backend Field Mapping      |
+|------------------------------------|-----------------------------------------------|----------------------------|
+| WiFi / Internet Access             | Yes / No                                      | Listing.amenities          |
+| Laundry Area / Sampayan            | Yes / No                                      | Listing.amenities          |
+| Cooking / Gas Stove Allowed        | Yes / No (Or Rice Cooker allowed)             | Listing.amenities          |
+| Water Dispenser / Purified Water   | Yes / No (Free drinking water provided)       | Listing.amenities          |
+| Sari-Sari Store / Canteen Nearby   | Yes / No (Essential for midnight cravings)    | Listing.amenities          |
+| Common TV / Lounge                 | Yes / No                                      | Listing.amenities          |
+| Kitchen / Shared Kitchen           | Yes / No                                      | Listing.amenities          |
+| Parking / Motorcycle Parking       | Yes / No                                      | Listing.amenities          |
+| Gated / Secure                     | Yes / No                                      | Listing.amenities          |
 
 > ✅ Notes:
-> - Listing-level amenities are **secondary filters** (Step 6 in the wizard)
-> - Avoid duplication of room-level amenities here (e.g., private bathroom, private kitchen)
+> - Listing-level amenities are **strict filters** (Step 6 in the wizard). If checked, the DB strictly filters using `$all` on the string fields.
 
 ---
 
-## 3. Recommended Categories
+## 3. Rules & Preferences (Toggle Constraints)
 
-| Category Name               | Notes / Purpose |
-|------------------------------|----------------|
-| Student-Friendly            | Near campus, study-focused environment |
-| Budget-Friendly             | Affordable for students or working individuals |
-| Premium / Private           | Higher-end boarding houses or private rooms |
-| Family-Friendly             | Allows visitors, pets, or accommodates small families |
-| Pet-Friendly                | Explicitly allows pets |
-| Apartment                   | Full apartment listing, not typical boarding rooms |
-| Short-Term / Flexible Lease | Temporary stays or short-term rentals |
-| Quiet / Study Environment   | Focused on study-friendly, noise-controlled environment |
-| Extended Suggestions        | Optional: Near Cafeteria/Stores, Furnished, Pool/Gym, Accessible / Elevator |
+These are strict dealbreakers for tenants/landlords.
+
+| Rule / Preference         | Type / Notes                                   | Backend Field Mapping      |
+|---------------------------|-----------------------------------------------|----------------------------|
+| Female Only               | True / False                                  | Listing.femaleOnly         |
+| Male Only                 | True / False                                  | Listing.maleOnly           |
+| Visitors Allowed          | True / False (For strictly doing academic reqs)| Listing.visitorsAllowed    |
+| Pets Allowed              | True / False                                  | Listing.petsAllowed        |
+| Smoking Allowed           | True / False                                  | Listing.smokingAllowed     |
+| No Curfew Enforced        | Yes / No (Essential for thesis students)      | Listing.amenities          |
 
 > ✅ Notes:
-> - Multi-select allowed in Step 5
-> - Categories only filter **listing-level**, not individual rooms
-> - Standardize category names in backend (e.g., kebab-case) for consistency
+> - Do not enforce Male AND Female at the same time in the URL, as this creates a Database paradox dropping all listings.
+> - `No Curfew` is saved as a positive string trait in `amenities` so it can be queried dynamically.
 
 ---
 
-## 4. Extra / Optional Amenities (Ideas for Future)
+## 4. Advanced Features (Heuristic Scoring Multipliers)
 
-- Solar Panels / Eco-Friendly
-- Rooftop / Terrace
-- Coffee Station / Pantry
-- Bicycle Parking / Storage
-- Community Lounge / TV Room
-- Shared Garden / Outdoor Space
-- Smart Lock / Keyless Entry
-- Noise-Cancelling / Soundproofing
-- Recycling / Composting Options
+These features do **not** drop a boarding house from search results. Instead, they act as **Bonus Points** pushed into the `$addFields` MongoDB Aggregation stage. 
 
-> These can be added as optional listing-level or room-level amenities in future iterations.
+| Advanced Feature          | Points Allocated | Reason                                         | Backend Field Mapping    |
+|---------------------------|------------------|------------------------------------------------|--------------------------|
+| CCTV / Security Cameras   | +15 Points       | Massively highly requested safety feature.     | Listing.features.cctv    |
+| 24/7 Security / Landlord  | +10 Points       | Landlord lives on premises or security guard.  | Listing.features.security24h |
+| Near Transport / Tricycle  | +10 Points       | Easy commute access to TAU gates.              | Listing.features.nearTransport |
+| Quiet / Study Environment | +5 Points        | Documented house rules against noise/drinking. | Listing.features.studyFriendly |
+
+---
+
+## 5. Recommended Categories (Listing Types)
+
+| Category Name               | Database String          | Notes / Purpose |
+|------------------------------|--------------------------|----------------|
+| Student-Friendly            | Student-Friendly         | Near campus, study-focused environment |
+| Budget Boarding House       | Budget Boarding House    | Highly affordable options. |
+| Private Boarding House      | Private Boarding House   | Higher-end boarding houses or private rooms |
+| Family-Friendly             | Family-Friendly          | Accommodates small families or professionals |
+| Pet-Friendly                | Pet-Friendly             | Explicitly allows pets |
+| Apartment                   | Apartment                | Full apartment unit with own meter/kitchen. |
+| Short-Term / Flexible Lease | Short-Term / Flexible Lease| Temporary stays or Semestral rentals |
+| Quiet / Study Environment   | Quiet / Study Environment| Focused on study-friendly, noise-controlled environment |

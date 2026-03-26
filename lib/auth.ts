@@ -174,6 +174,7 @@ export const authOptions: AuthOptions = {
         session.user.email = token.email;
         session.user.role = token.role;
         session.user.emailVerified = token.emailVerified;
+        session.user.image = token.image; // PERSIST IMAGE IN SESSION
       }
 
       return session;
@@ -205,7 +206,8 @@ export const authOptions: AuthOptions = {
           ...token,
           id: user.id,
           role: (user as { role?: string }).role,
-          emailVerified: userWithEmailVerified.emailVerified
+          emailVerified: userWithEmailVerified.emailVerified,
+          image: user.image // PASS IMAGE TO TOKEN
         } as any; // Type assertion to fix TypeScript error
       }
 
@@ -213,7 +215,8 @@ export const authOptions: AuthOptions = {
       if (account?.provider === "google" || account?.provider === "facebook") {
         return {
           ...token,
-          emailVerified: new Date()
+          emailVerified: new Date(),
+          image: token.picture || token.image // SYNC GOOGLE IMAGE
         } as any; // Type assertion to fix TypeScript error
       }
 

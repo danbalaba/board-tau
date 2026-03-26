@@ -29,10 +29,6 @@ export async function POST(req: Request) {
     );
 
     if (event.type === 'checkout.session.completed') {
-      if (!event.data.object.customer_details?.email) {
-        throw new Error('Missing user email');
-      }
-
       const session = event.data.object as Stripe.Checkout.Session;
 
       console.log('Stripe session metadata:', session.metadata);
@@ -41,11 +37,14 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ result: event, ok: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error('Stripe webhook error:', err);
+    // Explicitly write the exact stripe error stack trace physically to the log so we can debug without guessing
+    const fs = require('fs');
+    fs.appendFileSync('stripe-error.log', '\n[' + new Date().toISOString() + '] ' + (err.stack || err.message || String(err)));
 
     return NextResponse.json(
-      { message: 'Something went wrong', ok: false },
+      { message: err.message || 'Something went wrong', ok: false },
       { status: 500 }
     );
   }

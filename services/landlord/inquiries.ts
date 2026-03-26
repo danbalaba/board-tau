@@ -117,6 +117,9 @@ export const respondToInquiry = async (
         userId: landlord.id,
       },
     },
+    include: {
+      room: true,
+    }
   });
 
   if (!inquiry) {
@@ -129,6 +132,33 @@ export const respondToInquiry = async (
       status,
     },
   });
+
+  // If approved, dynamically spawn the reservation record!
+  if (status === "APPROVED" && inquiry.room) {
+    const moveIn = new Date(inquiry.moveInDate);
+    const checkOut = new Date(inquiry.checkOutDate);
+    
+    // Calculate total days for stay reference
+    const durationInDays = Math.ceil((checkOut.getTime() - moveIn.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Important: Use the fixed reservationFee from the inquiry record!
+    const totalPrice = (inquiry as any).reservationFee || 0;
+
+    await db.reservation.create({
+      data: {
+        userId: inquiry.userId,
+        listingId: inquiry.listingId,
+        roomId: inquiry.roomId,
+        inquiryId: inquiry.id,
+        startDate: moveIn,
+        endDate: checkOut,
+        durationInDays,
+        totalPrice,
+        status: "PENDING_PAYMENT",
+        paymentStatus: "PENDING",
+      }
+    });
+  }
 
   // TODO: Send notification to user
 

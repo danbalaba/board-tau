@@ -5,6 +5,7 @@ import { MapPin, Navigation, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { geocodeAddress, reverseGeocode } from '@/services/geocoding';
 import { toast } from 'react-hot-toast';
+import Switch from '../inputs/Switch';
 
 const Map = dynamic(() => import('../common/Map'), { ssr: false });
 
@@ -158,36 +159,38 @@ const LocationStep: React.FC<LocationStepProps> = ({
                 <Search className="w-5 h-5" />
                 <span>Address Details</span>
               </h4>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isManualMode}
-                  onChange={(e) => setIsManualMode(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
-                />
-                <span className="text-sm text-gray-600 dark:text-gray-400">Manual Address</span>
-              </label>
+              <Switch 
+                checked={isManualMode}
+                onChange={setIsManualMode}
+                label="Manual Search"
+              />
             </div>
 
             <div className="space-y-6">
               <div>
-                <div className="flex space-x-2">
-                  <Input
-                    label="Complete Address"
-                    id="location.address"
-                    type="text"
-                    register={register}
-                    errors={errors}
-                    watch={watch}
-                    required
-                    placeholder="Enter full address including street, barangay, etc."
-                    useStaticLabel={true}
-                    onChange={handleAddressChange}
-                    validationRules={{
-                      required: "Address is required",
-                      minLength: { value: 10, message: "Address must be at least 10 characters" }
-                    }}
-                  />
+                <div className="flex items-start space-x-2">
+                  <div className="flex-1 min-w-0">
+                    <Input
+                      label="Complete Address"
+                      id="location.address"
+                      type="text"
+                      register={register}
+                      errors={errors}
+                      watch={watch}
+                      required
+                      placeholder="Enter full address including street, barangay, etc."
+                      useStaticLabel={true}
+                      onChange={handleAddressChange}
+                      validationRules={{
+                        required: "Address is required",
+                        minLength: { value: 10, message: "Address must be at least 10 characters" },
+                        pattern: {
+                          value: /^[a-zA-Z0-9\s,.\-#ñÑ]+$/,
+                          message: "Only letters, numbers, spaces, and common separators (, . # -) are allowed. Symbols like $%^ are blocked."
+                        }
+                      }}
+                    />
+                  </div>
                   {isManualMode && (
                     <button
                       type="button"
@@ -221,7 +224,7 @@ const LocationStep: React.FC<LocationStepProps> = ({
                           toast.error('Please enter a valid address to search');
                         }
                       }}
-                      className="mt-8 px-4 py-2 bg-primary dark:bg-primary text-white rounded-lg hover:bg-primary-hover dark:hover:bg-primary-hover transition-colors flex items-center space-x-2"
+                      className="mt-[26px] h-[52px] px-6 bg-primary dark:bg-primary text-white rounded-2xl hover:bg-primary/90 transition-all font-semibold flex items-center justify-center space-x-2 shadow-sm whitespace-nowrap min-w-[120px]"
                     >
                       {isSearching ? (
                         <>
@@ -258,7 +261,11 @@ const LocationStep: React.FC<LocationStepProps> = ({
                   useStaticLabel={true}
                   validationRules={{
                     required: "City is required",
-                    minLength: { value: 2, message: "City name must be at least 2 characters" }
+                    minLength: { value: 2, message: "City name must be at least 2 characters" },
+                    pattern: {
+                      value: /^[a-zA-ZñÑ\s-]+$/,
+                      message: "City name can only contain letters, spaces, and hyphens"
+                    }
                   }}
                 />
                 <Input
@@ -273,7 +280,11 @@ const LocationStep: React.FC<LocationStepProps> = ({
                   useStaticLabel={true}
                   validationRules={{
                     required: "Province is required",
-                    minLength: { value: 2, message: "Province name must be at least 2 characters" }
+                    minLength: { value: 2, message: "Province name must be at least 2 characters" },
+                    pattern: {
+                      value: /^[a-zA-ZñÑ\s-]+$/,
+                      message: "Province name can only contain letters, spaces, and hyphens"
+                    }
                   }}
                 />
               </div>
@@ -292,7 +303,7 @@ const LocationStep: React.FC<LocationStepProps> = ({
                   required: "Zip code is required",
                   pattern: {
                     value: /^\d{4,5}$/,
-                    message: "Please enter a valid 4 or 5-digit zip code"
+                    message: "Zip code must contain only numbers (4 to 5 digits)"
                   }
                 }}
               />

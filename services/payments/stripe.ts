@@ -37,10 +37,8 @@ export const createStripeCheckoutSession = async (inquiryId: string) => {
     throw new Error("Unauthorized");
   }
 
-  // Calculate total price based on stay duration and room price
-  const monthlyPrice = inquiry.room?.price || inquiry.listing.price;
-  const durationMonths = getDurationMonths(parseInt(inquiry.stayDuration as any));
-  const totalPrice = monthlyPrice * durationMonths;
+  // Use the fixed reservation fee stored in the inquiry
+  const totalPrice = (inquiry as any).reservationFee || 0;
 
   // Create Stripe product
   const product = await stripe.products.create({
@@ -119,17 +117,11 @@ export const handleStripeWebhook = async (session: any) => {
     });
   }
 
-  // Create a reservation record
-  await db.reservation.create({
+  // Update the existing reservation record
+  await db.reservation.update({
+    where: { inquiryId: inquiryId },
     data: {
-      userId,
-      listingId,
-      roomId, // Add roomId
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 1 month default
-      durationInDays: 30,
-      totalPrice: Number(totalPrice),
-      status: "CONFIRMED",
+      status: "RESERVED",
       paymentStatus: "PAID",
     },
   });

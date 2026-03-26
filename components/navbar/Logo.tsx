@@ -33,7 +33,7 @@ const Logo = () => {
 
   if (!mounted) {
     return (
-      <Link href="/" onClick={handleLogoClick} className="h-[35px] w-[150px] relative hidden md:block ">
+      <Link href="/" onClick={handleLogoClick} className={`h-[35px] w-[150px] relative ${pathname === "/" ? "hidden md:block" : "flex"}`}>
         <Image
           src="/images/TauBOARD-Light.png"
           alt="logo"
@@ -49,7 +49,7 @@ const Logo = () => {
   const isDark = theme === "dark";
 
   return (
-    <Link href="/" onClick={handleLogoClick} className="h-[35px] w-[150px] relative hidden md:block ">
+    <Link href="/" onClick={handleLogoClick} className={`h-[35px] w-[150px] relative ${pathname === "/" ? "hidden md:block" : "flex"}`}>
       <Image
         src={isDark ? "/images/TauBOARD-Dark.png" : "/images/TauBOARD-Light.png"}
         alt="logo"

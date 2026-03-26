@@ -21,6 +21,7 @@ import { ROOM_TYPES } from "@/data/roomTypes";
 import { colleges } from "@/data/colleges";
 import { rulesPreferences } from "@/data/rulesPreferences";
 import { advancedFilters } from "@/data/advancedFilters";
+import { buildSearchUrl } from "@/utils/searchUrlBuilder";
 
   const Map = dynamic(() => import("../common/Map"), {
     ssr: false,
@@ -58,11 +59,11 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
       roomType: "",
       bedType: "",
       roomAmenities: [] as string[],
-      capacity: 1,
-      availableSlots: 1,
+      capacity: "",
+      availableSlots: "",
       roomSize: "",
-      minPrice: 0,
-      maxPrice: 100000,
+      minPrice: "",
+      maxPrice: "",
       advanced: [] as string[],
     },
   });
@@ -77,11 +78,11 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
   const roomType = watch("roomType");
   const bedType = watch("bedType");
   const roomAmenitiesSelected = watch("roomAmenities") ?? [];
-  const capacity = watch("capacity") ?? 1;
-  const availableSlots = watch("availableSlots") ?? 1;
+  const capacity = watch("capacity") || "";
+  const availableSlots = watch("availableSlots") || "";
   const roomSize = watch("roomSize");
-  const minPrice = watch("minPrice") ?? 0;
-  const maxPrice = watch("maxPrice") ?? 100000;
+  const minPrice = watch("minPrice") || "";
+  const maxPrice = watch("maxPrice") || "";
   const advancedSelected = watch("advanced") ?? [];
 
   const collegeOption = useMemo(() => colleges.find((c) => c.value === college), [college]);
@@ -155,73 +156,7 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
       return;
     }
 
-    const co = colleges.find((c) => c.value === data.college);
-    const origin = co?.latlng ?? null;
-
-    let currentQuery: Record<string, unknown> = {};
-    if (searchParams) currentQuery = queryString.parse(searchParams.toString()) as Record<string, unknown>;
-
-     // Convert rules and advanced filters to boolean params for easier query handling
-    const rulesMap: Record<string, string> = {
-      "female-only": "femaleOnly",
-      "male-only": "maleOnly",
-      "visitors-allowed": "visitorsAllowed",
-      "pets-allowed": "petsAllowed",
-      "smoking-allowed": "smokingAllowed",
-    };
-
-    const advancedMap: Record<string, string> = {
-      "24-7-security": "security24h",
-      "cctv": "cctv",
-      "fire-safety": "fireSafety",
-      "near-public-transport": "nearTransport",
-      "study-friendly": "studyFriendly",
-      "quiet-environment": "quietEnvironment",
-      "flexible-lease": "flexibleLease",
-    };
-
-     const updatedQuery: Record<string, unknown> = {
-      ...currentQuery,
-      college: data.college,
-      categories: (data.categories ?? []).length ? data.categories : undefined,
-      distance: data.distance,
-      moveInDate: data.moveInMonth || undefined,
-      stayDuration: data.stayDuration || undefined,
-      amenities: (data.amenities ?? []).length ? data.amenities : undefined,
-      roomType: data.roomType || undefined,
-      bedType: data.bedType || undefined,
-      roomAmenities: (data.roomAmenities ?? []).length ? data.roomAmenities : undefined,
-      // Only include capacity and availableSlots if room type is not SOLO (since SOLO rooms always have fixed values)
-      capacity: data.roomType === ROOM_TYPES.SOLO ? undefined : (data.capacity || undefined),
-      availableSlots: data.roomType === ROOM_TYPES.SOLO ? undefined : (data.availableSlots || undefined),
-      roomSize: data.roomSize || undefined,
-      minPrice: data.minPrice || undefined,
-      maxPrice: data.maxPrice || undefined,
-      // Rules as boolean params
-      femaleOnly: (data.rules ?? []).includes("female-only") ? "true" : undefined,
-      maleOnly: (data.rules ?? []).includes("male-only") ? "true" : undefined,
-      visitorsAllowed: (data.rules ?? []).includes("visitors-allowed") ? "true" : undefined,
-      petsAllowed: (data.rules ?? []).includes("pets-allowed") ? "true" : undefined,
-      smokingAllowed: (data.rules ?? []).includes("smoking-allowed") ? "true" : undefined,
-      // Advanced filters as boolean params
-      security24h: (data.advanced ?? []).includes("24-7-security") ? "true" : undefined,
-      cctv: (data.advanced ?? []).includes("cctv") ? "true" : undefined,
-      fireSafety: (data.advanced ?? []).includes("fire-safety") ? "true" : undefined,
-      nearTransport: (data.advanced ?? []).includes("near-public-transport") ? "true" : undefined,
-      studyFriendly: (data.advanced ?? []).includes("study-friendly") ? "true" : undefined,
-      quietEnvironment: (data.advanced ?? []).includes("quiet-environment") ? "true" : undefined,
-      flexibleLease: (data.advanced ?? []).includes("flexible-lease") ? "true" : undefined,
-    };
-
-    if (origin && origin.length >= 2) {
-      updatedQuery.originLat = origin[0];
-      updatedQuery.originLng = origin[1];
-    }
-
-    const url = queryString.stringifyUrl(
-      { url: "/", query: updatedQuery as Record<string, string | string[] | number | undefined> },
-      { skipNull: true }
-    );
+    const url = buildSearchUrl(data, searchParams as any);
     onCloseModal?.();
     router.push(url);
   };
@@ -242,7 +177,7 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
       <Select
         id="bedType"
         label="Bed type"
-        options={bedTypeOptions.filter(option => ["Single", "Double", "Queen"].includes(option.value))}
+        options={[{ value: "", label: "Any bed type" }, ...bedTypeOptions.filter(option => ["Single", "Double", "Queen"].includes(option.value))]}
         value={bedType}
         onChange={(v) => setCustomValue("bedType", v)}
       />
@@ -275,25 +210,25 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
       <Select
         id="bedType"
         label="Bed type"
-        options={bedTypeOptions.filter(option => ["Single", "Bunk"].includes(option.value))}
+        options={[{ value: "", label: "Any bed type" }, ...bedTypeOptions.filter(option => ["Single", "Bunk"].includes(option.value))]}
         value={bedType}
         onChange={(v) => setCustomValue("bedType", v)}
       />
       <Counter
         title="Room capacity"
-        subtitle="Maximum number of people per room"
+        subtitle="Minimum number of people required per room"
         watch={watch}
         onChange={setCustomValue}
         name="capacity"
-        minValue={2}
+        minValue={0}
       />
       <Counter
         title="Available slots"
-        subtitle="Number of available beds"
+        subtitle="Minimum number of available beds required"
         watch={watch}
         onChange={setCustomValue}
         name="availableSlots"
-        minValue={1}
+        minValue={0}
       />
     </div>
   );
