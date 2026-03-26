@@ -1,8 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { FaStar, FaEye, FaComment, FaChevronDown } from 'react-icons/fa';
+import Button from "@/components/common/Button";
+import ModernSelect from '@/components/common/ModernSelect';
+import { cn } from '@/lib/utils';
 
 interface Review {
   id: string;
@@ -37,10 +40,12 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
   const [selectedRating, setSelectedRating] = useState<string>('all');
 
   const statusColors: Record<string, string> = {
-    pending: 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white',
-    approved: 'bg-gradient-to-r from-green-500 to-green-600 text-white',
-    rejected: 'bg-gradient-to-r from-red-500 to-red-600 text-white',
+    pending: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20',
+    approved: 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20',
+    rejected: 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20',
   };
+
+  const router = useRouter();
 
   const formatStatus = (status: string) => {
     return status.charAt(0).toUpperCase() + status.slice(1);
@@ -127,162 +132,189 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-6 rounded-2xl border border-blue-200 dark:border-gray-700">
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-              Reviews
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Manage property reviews and responses
-            </p>
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary hover:scale-110 transition-transform duration-300">
+              <FaStar size={22} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-0.5 tracking-tight">
+                Reviews
+              </h1>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Manage property reviews and responses
+              </p>
+            </div>
           </div>
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-4 py-2 rounded-2xl shadow-lg">
-            <FaStar size={16} />
-            <span className="font-semibold text-sm">{filteredReviews.length}</span>
+          <div className="hidden sm:inline-flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-2 rounded-xl shadow-sm">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total</span>
+            <span className="font-black text-primary text-base">{filteredReviews.length}</span>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-lg">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-900 dark:text-white">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-6 w-full sm:w-auto mt-2 sm:mt-0">
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <span className="text-[11px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 whitespace-nowrap mb-0 sm:mb-2 text-right w-16 sm:w-auto">
               Status:
             </span>
-            <select
+            <ModernSelect
+              instanceId="reviewStatus"
               value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 text-sm"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
+              onChange={setSelectedStatus}
+              className="w-full sm:w-auto min-w-[200px]"
+              options={[
+                { value: 'all', label: 'All Status' },
+                { value: 'pending', label: 'Pending' },
+                { value: 'approved', label: 'Approved' },
+                { value: 'rejected', label: 'Rejected' },
+              ]}
+            />
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-900 dark:text-white">
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <span className="text-[11px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 whitespace-nowrap mb-0 sm:mb-2 text-right w-16 sm:w-auto">
               Rating:
             </span>
-            <select
+            <ModernSelect
+              instanceId="reviewRating"
               value={selectedRating}
-              onChange={(e) => setSelectedRating(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 text-sm"
-            >
-              <option value="all">All Ratings</option>
-              <option value="5">5 Stars</option>
-              <option value="4">4 Stars</option>
-              <option value="3">3 Stars</option>
-              <option value="2">2 Stars</option>
-              <option value="1">1 Star</option>
-            </select>
+              onChange={setSelectedRating}
+              className="w-full sm:w-auto min-w-[200px]"
+              options={[
+                { value: 'all', label: 'All Ratings' },
+                { value: '5', label: '5 Stars' },
+                { value: '4', label: '4 Stars' },
+                { value: '3', label: '3 Stars' },
+                { value: '2', label: '2 Stars' },
+                { value: '1', label: '1 Star' },
+              ]}
+            />
           </div>
         </div>
       </div>
 
       {/* Reviews List */}
       {filteredReviews.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-2xl mb-4">
-            <FaStar size={32} className="text-blue-500 dark:text-blue-400" />
+        <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center justify-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-2xl mb-4 text-primary">
+            <FaStar size={24} />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">
             No reviews found
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Your properties haven't received any reviews yet.
+          <p className="text-sm font-medium text-gray-500 max-w-sm mx-auto">
+            Your properties haven't received any reviews matching the current criteria yet.
           </p>
         </div>
       ) : (
         <div className="space-y-4">
           {filteredReviews.map((review) => (
-            <div
+              <div
               key={review.id}
-              className="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 hover:shadow-2xl"
+              className="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:shadow-xl hover:border-primary/20 transition-all duration-300 shadow-sm"
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-start gap-4">
-                  <div className="relative w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-xl overflow-hidden flex-shrink-0 group-hover:scale-[1.05] transition-transform duration-300">
-                    {review.listing.imageSrc ? (
-                      <img
-                        src={review.listing.imageSrc}
-                        alt={review.listing.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
-                        <FaStar size={24} className="text-gray-400 dark:text-gray-500 group-hover:scale-110 transition-transform" />
-                      </div>
-                    )}
-                    <div className="absolute bottom-1 right-1">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusColors[review.status]} shadow-lg`}>
-                        {formatStatus(review.status)}
-                      </span>
+              <div className="flex flex-col md:flex-row items-start gap-6">
+                <div className="relative w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden flex-shrink-0 group-hover:shadow-md transition-all duration-300">
+                  {review.listing.imageSrc ? (
+                    <img
+                      src={review.listing.imageSrc}
+                      alt={review.listing.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300">
+                      <FaStar size={24} />
                     </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                      {review.listing.title}
-                    </h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                      Review by <span className="font-semibold">{review.user.name}</span> ({review.user.email})
-                    </p>
-                    <div className="flex items-center gap-2 mb-3">
+                  )}
+                </div>
+                <div className="flex-1 w-full">
+                  <div className="flex items-start justify-between mb-1 gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={cn("px-2 py-0.5 rounded-md text-[9px] uppercase font-black tracking-widest", statusColors[review.status])}>
+                          {review.status}
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-black text-gray-900 dark:text-white mb-1 group-hover:text-primary transition-colors line-clamp-1">
+                        {review.listing.title}
+                      </h3>
+                    </div>
+                    <div className="bg-primary/5 px-3 py-1.5 rounded-xl border border-primary/10 flex items-center gap-2 shadow-sm">
                       {renderStars(review.rating)}
-                      <span className="text-xs text-gray-600 dark:text-gray-400">
-                        {review.rating} stars
+                      <span className="text-xs font-black text-primary">
+                        {review.rating.toFixed(1)}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 leading-relaxed">
-                      {review.comment}
-                    </p>
-                    {review.response && (
-                      <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-3 mb-2">
-                        <div className="flex items-center gap-2 mb-2">
-                          <FaComment size={12} className="text-blue-600 dark:text-blue-400" />
-                          <span className="text-xs font-semibold text-gray-900 dark:text-white">
-                            Your Response:
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                          {review.response}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Responded on {new Date(review.respondedAt!).toLocaleDateString()}
-                        </p>
-                      </div>
-                    )}
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Review on {new Date(review.createdAt).toLocaleDateString()}
+                  </div>
+                  
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-black uppercase">
+                      {review.user.name?.charAt(0) || 'U'}
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">
+                      <span className="font-bold text-gray-900 dark:text-gray-100">{review.user.name || 'Anonymous User'}</span> 
+                      <span className="mx-1.5 opacity-50">•</span> 
+                      {new Date(review.createdAt).toLocaleDateString()}
                     </p>
                   </div>
+                  
+                  <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800 text-sm text-gray-600 dark:text-gray-300 leading-relaxed italic relative mb-4">
+                    <span className="absolute -top-3 left-4 text-3xl text-gray-200 dark:text-gray-700">"</span>
+                    <p className="relative z-10 whitespace-pre-line">{review.comment || 'No comment provided.'}</p>
+                  </div>
+
+                  {review.response && (
+                    <div className="flex flex-col mb-4">
+                      <div className="flex items-center gap-2 mb-2 pl-4">
+                        <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 text-[10px] font-black uppercase">
+                          L
+                        </div>
+                        <p className="text-xs font-bold text-gray-900 dark:text-white">Your Response</p>
+                        <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider ml-auto">
+                          {new Date(review.respondedAt!).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="ml-10 bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10 rounded-xl rounded-tl-sm p-3 text-sm text-gray-700 dark:text-gray-300">
+                        {review.response}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <Link
-                  href={`/landlord/reviews/${review.id}`}
-                  className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/30 group-hover:scale-[1.02]"
+              <div className="flex items-center justify-end gap-3 pt-4 mt-2 border-t border-gray-100 dark:border-gray-800">
+                <Button
+                  outline
+                  onClick={() => router.push(`/landlord/reviews/${review.id}`)}
+                  className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border-gray-200 dark:border-gray-700"
                 >
-                  <FaEye size={12} />
-                  <span className="font-semibold text-xs">View Details</span>
-                </Link>
+                  <span className="flex items-center gap-2">
+                    <FaEye size={12} />
+                    View Details
+                  </span>
+                </Button>
+                
                 {!review.response && (
-                  <button
-                    onClick={() => setRespondModal({
-                      isOpen: true,
-                      reviewId: review.id,
-                      reviewTitle: review.listing.title
-                    })}
-                    className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-green-500/30 group-hover:scale-[1.02]"
-                  >
-                    <FaComment size={12} />
-                    <span className="font-semibold text-xs">Respond</span>
-                  </button>
+                  <div className="flex items-center gap-2 border-l border-gray-100 dark:border-gray-800 pl-3">
+                    <Button
+                      onClick={() => setRespondModal({
+                        isOpen: true,
+                        reviewId: review.id,
+                        reviewTitle: review.listing.title
+                      })}
+                      className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+                    >
+                      <span className="flex items-center gap-2">
+                        <FaComment size={12} />
+                        Respond
+                      </span>
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -293,59 +325,74 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
       {/* Load More */}
       {nextCursor && (
         <div className="text-center py-6">
-          <button
-            className="group flex items-center justify-center gap-3 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-6 py-3 rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-gray-500/30 transform hover:-translate-y-1"
+          <Button
+            outline
             onClick={() => console.log('Load more reviews')}
+            className="px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest border-gray-200 dark:border-gray-700 hover:border-primary/50"
           >
-            <span className="font-semibold text-sm">Load More</span>
-            <FaChevronDown size={12} className="group-hover:translate-y-1 transition-transform" />
-          </button>
+            <span className="flex items-center justify-center gap-2">
+              Load More
+              <FaChevronDown size={12} className="animate-bounce" />
+            </span>
+          </Button>
         </div>
       )}
 
       {/* Respond Modal */}
       {respondModal.isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 w-full max-w-lg shadow-2xl">
+        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 w-full max-w-lg shadow-2xl overflow-hidden shadow-gray-200/50 dark:shadow-none animate-in zoom-in-95 duration-200">
             <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Respond to Review: {respondModal.reviewTitle}
+              <h2 className="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">
+                Respond to Review
               </h2>
+              <p className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-6 line-clamp-1">
+                For property: <span className="text-primary">{respondModal.reviewTitle}</span>
+              </p>
               
-              <form onSubmit={handleSubmitResponse} className="space-y-4">
+              <form onSubmit={handleSubmitResponse} className="space-y-6">
                 <div>
                   <textarea
                     value={responseText}
                     onChange={(e) => setResponseText(e.target.value)}
-                    placeholder="Enter your response..."
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 text-sm resize-vertical min-h-[120px]"
+                    placeholder="Write your response clearly and professionally..."
+                    className="w-full p-4 bg-gray-50/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-gray-900 dark:text-white text-sm font-medium resize-none min-h-[140px] transition-all"
                   />
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2 px-1">
+                    Your response will be visible publicly.
+                  </p>
                 </div>
                 
-                <div className="flex items-center justify-end gap-3">
-                  <button
+                <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-2">
+                  <Button
+                    outline
                     type="button"
                     onClick={() => {
                       setRespondModal({ isOpen: false, reviewId: '', reviewTitle: '' });
                       setResponseText('');
                     }}
-                    className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400"
                   >
                     Cancel
-                  </button>
+                  </Button>
                   
-                  <button
+                  <Button
                     type="submit"
                     disabled={submitting || !responseText.trim()}
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-2 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-green-500/30 font-semibold text-sm"
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 disabled:opacity-50 disabled:shadow-none"
                   >
                     {submitting ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-white"></div>
+                        Submitting...
+                      </div>
                     ) : (
-                      <FaComment size={12} />
+                      <span className="flex items-center gap-2">
+                        <FaComment size={12} />
+                        Submit Response
+                      </span>
                     )}
-                    {submitting ? 'Submitting...' : 'Submit Response'}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>

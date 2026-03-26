@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
+    console.log("POST /api/landlord/properties payload:", JSON.stringify(data, null, 2));
 
     const result = await createProperty(data);
 

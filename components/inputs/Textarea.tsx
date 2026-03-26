@@ -10,13 +10,15 @@ import { cn } from "@/utils/helper";
 interface TextareaProps<T extends FieldValues = FieldValues> extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   id: string;
   label: string;
-  register: UseFormRegister<T>;
-  errors: FieldErrors<T>;
-  watch: UseFormWatch<T>;
+  register?: UseFormRegister<T>;
+  errors?: FieldErrors<T>;
+  watch?: UseFormWatch<T>;
   autoFocus?: boolean;
   required?: boolean;
   rows?: number;
   validationRules?: any;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
 const Textarea: React.FC<TextareaProps> = ({
@@ -30,12 +32,16 @@ const Textarea: React.FC<TextareaProps> = ({
   rows = 3,
   disabled,
   validationRules,
+  value: externalValue,
+  onChange: externalOnChange,
   ...props
 }) => {
-  const value = watch(id);
+  const internalValue = watch && watch(id);
+  const value = externalValue !== undefined ? externalValue : internalValue;
 
   // Get error for nested path (e.g., 'contactInfo.fullName')
   const getError = (path: string) => {
+    if (!errors) return undefined;
     return path.split('.').reduce((obj: any, key: string) => obj && obj[key], errors);
   };
 
@@ -56,9 +62,19 @@ const Textarea: React.FC<TextareaProps> = ({
       <textarea
         id={id}
         disabled={disabled}
-        {...register(id, {
-          required: required ? "This field is required" : false,
-          ...validationRules
+        {...(!register && {
+          value: value || '',
+          onChange: (e) => {
+            if (externalOnChange) {
+              externalOnChange(e);
+            }
+          }
+        })}
+        {...(register && {
+          ...register(id, {
+            required: required ? "This field is required" : false,
+            ...validationRules
+          })
         })}
         className={cn(
           `text-[15px] peer w-full px-4 py-3 font-light bg-white dark:bg-gray-800 border-[1px] rounded-input outline-none transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed focus:ring-2 focus:ring-offset-1`,

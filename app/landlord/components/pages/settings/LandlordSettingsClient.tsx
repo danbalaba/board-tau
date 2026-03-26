@@ -11,6 +11,11 @@ import {
   FaCreditCard,
   FaSave,
 } from 'react-icons/fa';
+import { User, Mail, Phone, MapPin, Lock, Bell, CreditCard, Save, Info } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/utils/helper';
+import Input from '@/components/inputs/Input';
+import Textarea from '@/components/inputs/Textarea';
 
 export default function LandlordSettingsClient() {
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'payment' | 'security'>('profile');
@@ -46,13 +51,8 @@ export default function LandlordSettingsClient() {
     setIsLoading(true);
 
     try {
-      // Here you would implement the API call to update settings
       console.log('Updating settings:', formData);
-
-      // Mock API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Show success message
       alert('Settings updated successfully!');
     } catch (error) {
       console.error('Error updating settings:', error);
@@ -63,79 +63,104 @@ export default function LandlordSettingsClient() {
   };
 
   const tabs = [
-    { id: 'profile', label: 'Profile', icon: FaUser },
-    { id: 'notifications', label: 'Notifications', icon: FaBell },
-    { id: 'payment', label: 'Payment Settings', icon: FaCreditCard },
-    { id: 'security', label: 'Security', icon: FaLock },
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'payment', label: 'Payment Settings', icon: CreditCard },
+    { id: 'security', label: 'Security', icon: Lock },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto space-y-8 p-4">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Settings
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-br from-primary/10 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm"
+      >
+        <h1 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+          <span className="p-2 bg-primary/20 rounded-xl text-primary">
+            <Lock size={22} />
+          </span>
+          Account Settings
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Manage your landlord profile and preferences
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm font-medium">
+          Personalize your landlord profile and notification preferences
         </p>
-      </div>
+      </motion.div>
 
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Sidebar */}
-        <div className="w-full md:w-64">
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <nav className="space-y-1">
+      <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8">
+        {/* Sidebar Navigation */}
+        <aside className="lg:col-span-3">
+          <div className="bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 p-4 shadow-xl shadow-gray-100/50 dark:shadow-none sticky top-24">
+            <nav className="space-y-2">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as 'profile' | 'notifications' | 'payment' | 'security')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      activeTab === tab.id
-                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                    }`}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={cn(
+                      "w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300",
+                      isActive
+                        ? "bg-primary text-white shadow-md shadow-primary/20"
+                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary transition-all"
+                    )}
                   >
-                    <Icon size={16} />
+                    <Icon size={18} className={isActive ? "text-white" : "text-primary"} />
                     <span>{tab.label}</span>
                   </button>
                 );
               })}
             </nav>
           </div>
-        </div>
+        </aside>
 
-        {/* Content */}
-        <div className="flex-1">
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            {activeTab === 'profile' && (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Profile Information
-                </h2>
-
-                {/* Profile Image */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Profile Image
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                      {formData.profileImage ? (
-                        <img
-                          src={URL.createObjectURL(formData.profileImage)}
-                          alt="Profile"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <FaUser size={40} />
-                        </div>
-                      )}
+        {/* Content Area */}
+        <main className="lg:col-span-9">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 md:p-8 shadow-sm"
+            >
+              {activeTab === 'profile' && (
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  <div className="flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 pb-5">
+                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                      <User size={18} />
                     </div>
-                    <div>
+                    <h2 className="text-xl font-black text-gray-900 dark:text-white">
+                      Profile Information
+                    </h2>
+                  </div>
+
+                  {/* Profile Image Section */}
+                  <div className="flex flex-col md:flex-row items-center gap-6 bg-gray-50 dark:bg-gray-800/50 p-5 rounded-xl border border-gray-100 dark:border-gray-800">
+                    <div className="relative group">
+                      <div className="w-24 h-24 bg-white dark:bg-gray-700 rounded-3xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-xl overflow-hidden">
+                        {formData.profileImage ? (
+                          <img
+                            src={URL.createObjectURL(formData.profileImage)}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-primary/30">
+                            <User size={48} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="absolute -bottom-2 -right-2 p-1.5 bg-primary text-white rounded-xl shadow-lg border-2 border-white dark:border-gray-900">
+                        <FaSave size={12} />
+                      </div>
+                    </div>
+                    <div className="flex-1 text-center md:text-left">
+                      <h4 className="font-bold text-gray-900 dark:text-white mb-2">Your Avatar</h4>
+                      <p className="text-gray-500 text-sm mb-4">PNG, JPG or GIF. Max 2MB.</p>
                       <input
                         type="file"
                         accept="image/*"
@@ -145,280 +170,199 @@ export default function LandlordSettingsClient() {
                       />
                       <label
                         htmlFor="profile-image-upload"
-                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer text-sm"
+                        className="inline-flex items-center px-6 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all cursor-pointer shadow-sm active:scale-95"
                       >
-                        <FaUser size={14} className="mr-2" />
-                        Change Image
+                        Upload New Photo
                       </label>
                     </div>
                   </div>
-                </div>
 
-                {/* Name */}
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    <FaUser className="inline mr-1" /> Full Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter your full name"
-                  />
-                </div>
+                  {/* Basic Fields Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <Input
+                      id="name"
+                      label="Full Name"
+                      placeholder="Your display name"
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      icon={User}
+                      useStaticLabel
+                    />
 
-                {/* Email */}
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    <FaEnvelope className="inline mr-1" /> Email Address
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter your email"
-                  />
-                </div>
+                    <Input
+                      id="email"
+                      label="Email Address"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={formData.email}
+                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      icon={Mail}
+                      useStaticLabel
+                    />
 
-                {/* Phone */}
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    <FaPhone className="inline mr-1" /> Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter your phone number"
-                  />
-                </div>
+                    <Input
+                      id="phone"
+                      label="Phone Number"
+                      type="tel"
+                      placeholder="+63"
+                      value={formData.phone}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                      icon={Phone}
+                      useStaticLabel
+                    />
 
-                {/* Address */}
-                <div>
-                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    <FaMapMarkerAlt className="inline mr-1" /> Business Address
-                  </label>
-                  <input
-                    type="text"
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter your business address"
-                  />
-                </div>
+                    <Input
+                      id="address"
+                      label="Business Address"
+                      placeholder="Primary location"
+                      value={formData.address}
+                      onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                      icon={MapPin}
+                      useStaticLabel
+                    />
+                  </div>
 
-                {/* Bio */}
-                <div>
-                  <label htmlFor="bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    About Yourself
-                  </label>
-                  <textarea
+                  <Textarea
                     id="bio"
-                    name="bio"
+                    label="About Yourself"
+                    placeholder="Tell us about your property management experience..."
                     value={formData.bio}
-                    onChange={handleInputChange}
+                    onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Tell us about yourself and your properties"
+                    required
                   />
-                </div>
 
-                {/* Submit Button */}
-                <div className="flex items-center gap-4">
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {isLoading ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <FaSave size={14} />
-                        Save Changes
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            )}
+                  {/* Submit Section */}
+                  <div className="flex justify-end pt-4">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full md:w-auto flex items-center justify-center gap-3 bg-primary text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 disabled:opacity-50 active:scale-[0.98]"
+                    >
+                      {isLoading ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save size={16} />
+                          Save Changes
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
 
-            {activeTab === 'notifications' && (
-              <div className="space-y-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Notification Preferences
-                </h2>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-900 dark:text-white">Email Notifications</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Receive notifications via email</p>
+              {activeTab === 'notifications' && (
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4 border-b border-gray-100 dark:border-gray-800 pb-6">
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+                      <Bell size={24} />
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" defaultChecked className="sr-only peer" />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white">
+                      Notification Preferences
+                    </h2>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-900 dark:text-white">SMS Notifications</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Receive notifications via SMS</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
+                  <div className="space-y-4">
+                    {[
+                      { title: 'Email Notifications', desc: 'Receive notifications via email', checked: true },
+                      { title: 'SMS Notifications', desc: 'Receive notifications via SMS', checked: false },
+                      { title: 'New Inquiry Alerts', desc: 'Get notified when you receive a new inquiry', checked: true },
+                      { title: 'Booking Confirmation', desc: 'Get notified when a booking is confirmed', checked: true },
+                      { title: 'Payment Reminders', desc: 'Get notified about upcoming payments', checked: true },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center justify-between p-6 bg-gray-50 dark:bg-gray-800/50 rounded-[1.5rem] border border-gray-100 dark:border-gray-800">
+                        <div>
+                          <h3 className="font-bold text-gray-900 dark:text-white">{item.title}</h3>
+                          <p className="text-sm text-gray-500">{item.desc}</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" defaultChecked={item.checked} className="sr-only peer" />
+                          <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner"></div>
+                        </label>
+                      </div>
+                    ))}
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-900 dark:text-white">New Inquiry Alerts</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Get notified when you receive a new inquiry</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" defaultChecked className="sr-only peer" />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-900 dark:text-white">Booking Confirmation</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Get notified when a booking is confirmed</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" defaultChecked className="sr-only peer" />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-900 dark:text-white">Payment Reminders</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Get notified about upcoming payments</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" defaultChecked className="sr-only peer" />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
-                  >
-                    <FaSave size={14} />
-                    Save Preferences
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'payment' && (
-              <div className="space-y-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Payment Settings
-                </h2>
-
-                <div className="space-y-4">
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Stripe Payment Gateway</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Connect your Stripe account to accept card payments</p>
-                    <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
-                      <FaCreditCard size={14} />
-                      Connect Stripe
-                    </button>
-                  </div>
-
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">PayMongo Payment Gateway</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Connect your PayMongo account to accept GCash and Maya payments</p>
-                    <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
-                      <FaCreditCard size={14} />
-                      Connect PayMongo
-                    </button>
-                  </div>
-
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Bank Transfer</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Enable bank transfer payments</p>
-                    <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
-                      <FaCreditCard size={14} />
-                      Configure Bank Transfer
+                  <div className="flex justify-end pt-4">
+                    <button className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-primary-hover transition-all shadow-md active:scale-95 text-sm uppercase tracking-wider">
+                      <Save size={16} />
+                      Save Preferences
                     </button>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {activeTab === 'security' && (
-              <div className="space-y-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Security Settings
-                </h2>
-
-                <div className="space-y-4">
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Two-Factor Authentication</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Add an extra layer of security to your account</p>
-                    <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
-                      <FaLock size={14} />
-                      Enable 2FA
-                    </button>
+              {activeTab === 'payment' && (
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4 border-b border-gray-100 dark:border-gray-800 pb-6">
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+                      <CreditCard size={24} />
+                    </div>
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white">
+                      Payment Settings
+                    </h2>
                   </div>
 
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Change Password</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Update your account password</p>
-                    <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
-                      <FaLock size={14} />
-                      Change Password
-                    </button>
-                  </div>
-
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Account Activity</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">View recent login activity and device information</p>
-                    <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
-                      <FaUser size={14} />
-                      View Activity
-                    </button>
-                  </div>
-
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Sessions Management</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Manage your active sessions on other devices</p>
-                    <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
-                      <FaUser size={14} />
-                      Manage Sessions
-                    </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[
+                      { name: 'Stripe', desc: 'Accept credit card payments worldwide.' },
+                      { name: 'PayMongo', desc: 'GCash, Maya, and local card payments.' },
+                      { name: 'Bank Transfer', desc: 'Direct deposit to your local bank account.' },
+                    ].map((gate) => (
+                      <div key={gate.name} className="p-8 bg-gray-50 dark:bg-gray-800/50 rounded-[2rem] border border-gray-100 dark:border-gray-800 flex flex-col justify-between">
+                        <div>
+                          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">{gate.name}</h3>
+                          <p className="text-sm text-gray-500 mb-8">{gate.desc}</p>
+                        </div>
+                        <button className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-900 text-primary border border-primary/20 hover:bg-primary hover:text-white px-4 py-2.5 rounded-lg font-bold transition-all shadow-sm text-sm">
+                          Configure {gate.name}
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
+              )}
+
+              {activeTab === 'security' && (
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4 border-b border-gray-100 dark:border-gray-800 pb-6">
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+                      <Lock size={24} />
+                    </div>
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white">
+                      Security Settings
+                    </h2>
+                  </div>
+
+                  <div className="space-y-4">
+                    {[
+                      { title: 'Two-Factor Authentication', desc: 'Add an extra layer of security to your account.' },
+                      { title: 'Change Password', desc: 'Regularly update your password to stay safe.' },
+                      { title: 'Account Activity', desc: 'Monitor your recent login activity and locations.' },
+                    ].map((item) => (
+                      <div key={item.title} className="flex items-center justify-between p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+                        <div>
+                          <h3 className="font-bold text-gray-900 dark:text-white mb-0.5 text-base">{item.title}</h3>
+                          <p className="text-sm text-gray-500">{item.desc}</p>
+                        </div>
+                        <button className="bg-primary/10 text-primary hover:bg-primary hover:text-white px-5 py-2.5 rounded-lg font-bold transition-all text-sm">
+                          Manage
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </main>
       </div>
     </div>
   );

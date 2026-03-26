@@ -8,7 +8,7 @@ import { cn } from "@/utils/helper";
 
 interface SelectProps {
   id: string;
-  label: string;
+  label?: string;
   options: { value: string; label: string }[];
   register?: UseFormRegister<FieldValues>;
   errors?: FieldErrors;
@@ -17,6 +17,7 @@ interface SelectProps {
   value?: any;
   onChange?: (value: any) => void;
   validationRules?: any;
+  className?: string;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -30,6 +31,7 @@ const Select: React.FC<SelectProps> = ({
   value,
   onChange,
   validationRules,
+  className,
 }) => {
   // Get error for nested path (e.g., 'contactInfo.fullName')
   const getError = (path: string) => {
@@ -39,16 +41,18 @@ const Select: React.FC<SelectProps> = ({
   const error = getError(id);
 
   return (
-    <div className="relative">
-      <label
-        htmlFor={id}
-        className={cn(
-          "block text-sm font-medium mb-2 transition-all duration-200",
-          error ? "text-red-500" : "text-gray-700 dark:text-gray-300"
-        )}
-      >
-        {label}
-      </label>
+    <div className={cn("relative", className)}>
+      {label && (
+        <label
+          htmlFor={id}
+          className={cn(
+            "block text-sm font-medium mb-2 transition-all duration-200",
+            error ? "text-red-500" : "text-gray-700 dark:text-gray-300"
+          )}
+        >
+          {label}
+        </label>
+      )}
       <select
         id={id}
         {...(register ? register(id, {

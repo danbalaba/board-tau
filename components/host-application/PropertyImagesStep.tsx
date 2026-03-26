@@ -16,6 +16,8 @@ interface PropertyImagesStepProps {
   getValues: any;
   setValue: any;
   clearErrors: any;
+  onPropertyFilesChange?: (files: File[]) => void;
+  onRoomFilesChange?: (roomIndex: number, files: File[]) => void;
 }
 
 const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
@@ -25,7 +27,9 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
   control,
   getValues,
   setValue,
-  clearErrors
+  clearErrors,
+  onPropertyFilesChange,
+  onRoomFilesChange
 }) => {
   const toast = useResponsiveToast();
   
@@ -34,6 +38,11 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
   
   const [propertyImages, setPropertyImages] = useState<string[]>(initialData.property || []);
   const [roomImages, setRoomImages] = useState<Record<number, string[]>>(initialData.rooms || {});
+  
+  // Also keep track of File objects for parents that need them (like Landlord dashboard)
+  const [internalPropertyFiles, setInternalPropertyFiles] = useState<File[]>([]);
+  const [internalRoomFiles, setInternalRoomFiles] = useState<Record<number, File[]>>({});
+
   const [dragOver, setDragOver] = useState<number | 'property' | null>(null);
 
   const rooms = watch('propertyConfig.rooms') || [];
@@ -102,7 +111,12 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
     if (validFiles.length > 0) {
       const newImages = validFiles.map(file => URL.createObjectURL(file));
       const updated = [...propertyImages, ...newImages];
+      const updatedFiles = [...internalPropertyFiles, ...validFiles];
+      
       setPropertyImages(updated);
+      setInternalPropertyFiles(updatedFiles);
+      if (onPropertyFilesChange) onPropertyFilesChange(updatedFiles);
+      
       syncToForm(updated, roomImages);
       toast.success(`Successfully added ${validFiles.length} images.`);
     }
@@ -119,7 +133,15 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
         ...roomImages,
         [roomIndex]: [...(roomImages[roomIndex] || []), ...newImages]
       };
+      const updatedRoomFiles = {
+        ...internalRoomFiles,
+        [roomIndex]: [...(internalRoomFiles[roomIndex] || []), ...validFiles]
+      };
+      
       setRoomImages(updatedRoomImages);
+      setInternalRoomFiles(updatedRoomFiles);
+      if (onRoomFilesChange) onRoomFilesChange(roomIndex, updatedRoomFiles[roomIndex]);
+      
       syncToForm(propertyImages, updatedRoomImages);
       toast.success(`Successfully added ${validFiles.length} room images.`);
     }
@@ -127,7 +149,12 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
 
   const removePropertyImage = (index: number) => {
     const updated = propertyImages.filter((_, i) => i !== index);
+    const updatedFiles = internalPropertyFiles.filter((_, i) => i !== index);
+    
     setPropertyImages(updated);
+    setInternalPropertyFiles(updatedFiles);
+    if (onPropertyFilesChange) onPropertyFilesChange(updatedFiles);
+    
     syncToForm(updated, roomImages);
   };
 
@@ -136,7 +163,15 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
       ...roomImages,
       [roomIndex]: roomImages[roomIndex].filter((_, i) => i !== imageIndex)
     };
+    const updatedRoomFiles = {
+      ...internalRoomFiles,
+      [roomIndex]: internalRoomFiles[roomIndex].filter((_, i) => i !== imageIndex)
+    };
+    
     setRoomImages(updatedRoomImages);
+    setInternalRoomFiles(updatedRoomFiles);
+    if (onRoomFilesChange) onRoomFilesChange(roomIndex, updatedRoomFiles[roomIndex]);
+    
     syncToForm(propertyImages, updatedRoomImages);
   };
 
