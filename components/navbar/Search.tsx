@@ -105,9 +105,9 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                     <div className="flex items-center mr-5 text-primary">
                       <FaMapMarkerAlt className="text-sm" />
                     </div>
-                    <div className="flex flex-col">
+                    <div className="flex flex-col min-w-0 w-full">
                       <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Location</span>
-                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate block w-full">
                         {locationLabel}
                       </span>
                     </div>
@@ -123,9 +123,9 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                     <div className="flex items-center mr-5 text-[#2F7D6D] dark:text-[#4FA89A]">
                       <FaSearch className="text-sm" />
                     </div>
-                    <div className="flex flex-col">
+                    <div className="flex flex-col min-w-0 w-full">
                       <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Budget</span>
-                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate block w-full">
                         {priceLabel}
                       </span>
                     </div>
@@ -141,9 +141,9 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                     <div className="flex items-center mr-5 text-[#2F7D6D] dark:text-[#4FA89A]">
                       <FaBed className="text-sm" />
                     </div>
-                    <div className="flex flex-col">
+                    <div className="flex flex-col min-w-0 w-full">
                       <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Room Type</span>
-                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate block w-full">
                         {roomTypeLabel}
                       </span>
                     </div>
@@ -202,9 +202,9 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                       <div className="flex items-center mr-5 text-primary">
                         <FaMapMarkerAlt className="text-lg" />
                       </div>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col min-w-0 w-full">
                         <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Location</span>
-                        <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
+                        <span className="font-semibold text-base text-gray-900 dark:text-white truncate block w-full">
                           {locationLabel}
                         </span>
                       </div>
@@ -221,9 +221,9 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                       <div className="flex items-center mr-5 text-primary">
                         <FaSearch className="text-lg" />
                       </div>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col min-w-0 w-full">
                         <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Budget</span>
-                        <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
+                        <span className="font-semibold text-base text-gray-900 dark:text-white truncate block w-full">
                           {priceLabel}
                         </span>
                       </div>
@@ -240,9 +240,9 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                       <div className="flex items-center mr-5 text-primary">
                         <FaBed className="text-lg" />
                       </div>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col min-w-0 w-full">
                         <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Room Type</span>
-                        <span className="font-semibold text-base text-gray-900 dark:text-white truncate">
+                        <span className="font-semibold text-base text-gray-900 dark:text-white truncate block w-full">
                           {roomTypeLabel}
                         </span>
                       </div>
