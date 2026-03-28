@@ -142,7 +142,7 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
     
     // Check if we have a partial match and just route to the first one?
     // User expects fetch/possible matches to direct to section.
-    if (filteredSuggestions.length > 0 && filteredSuggestions[0].action) {
+    if (filteredSuggestions.length > 0) {
       setIsSearchExpanded(false);
       filteredSuggestions[0].action();
       return;
