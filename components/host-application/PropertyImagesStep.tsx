@@ -156,6 +156,7 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
     if (onPropertyFilesChange) onPropertyFilesChange(updatedFiles);
     
     syncToForm(updated, roomImages);
+    toast.success('Property image removed');
   };
 
   const removeRoomImage = (roomIndex: number, imageIndex: number) => {
@@ -173,6 +174,7 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
     if (onRoomFilesChange) onRoomFilesChange(roomIndex, updatedRoomFiles[roomIndex]);
     
     syncToForm(propertyImages, updatedRoomImages);
+    toast.success('Room image removed');
   };
 
   const handleDragOver = (e: React.DragEvent, id: number | 'property') => {

@@ -16,8 +16,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import Input from '@/components/inputs/Input';
 import Textarea from '@/components/inputs/Textarea';
+import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 
 export default function LandlordSettingsClient() {
+  const { success, error: toastError } = useResponsiveToast();
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'payment' | 'security'>('profile');
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -53,10 +55,10 @@ export default function LandlordSettingsClient() {
     try {
       console.log('Updating settings:', formData);
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert('Settings updated successfully!');
+      success('Settings updated successfully!');
     } catch (error) {
       console.error('Error updating settings:', error);
-      alert('Failed to update settings. Please try again.');
+      toastError('Failed to update settings. Please try again.');
     } finally {
       setIsLoading(false);
     }

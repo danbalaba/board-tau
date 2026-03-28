@@ -3,6 +3,7 @@ import {
   getLandlordInquiries,
   getInquiryDetails,
   respondToInquiry,
+  deleteInquiry,
 } from "@/services/landlord/inquiries";
 
 export async function GET(request: NextRequest) {
@@ -68,6 +69,39 @@ export async function PUT(request: NextRequest) {
       {
         success: false,
         error: error instanceof Error ? error.message : "Failed to respond to inquiry",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const inquiryId = searchParams.get("id");
+
+    if (!inquiryId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Inquiry ID is required",
+        },
+        { status: 400 }
+      );
+    }
+
+    const result = await deleteInquiry(inquiryId);
+
+    return NextResponse.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error deleting inquiry:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to delete inquiry",
       },
       { status: 500 }
     );

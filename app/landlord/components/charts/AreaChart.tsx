@@ -1,8 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
-
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import {
   Card,
   CardContent,
@@ -18,13 +17,9 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/app/admin/components/ui/chart"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/app/admin/components/ui/select"
+import dynamic from 'next/dynamic'
+const ModernSelect = dynamic(() => import('@/components/common/ModernSelect'), { ssr: false })
+import { IconCalendarStats } from "@tabler/icons-react"
 
 export const description = "Revenue and Bookings Overview"
 
@@ -54,18 +49,17 @@ const chartData = [
 const chartConfig = {
   revenue: {
     label: "Revenue (₱)",
-    color: "var(--chart-1)",
+    color: "#2f7d6d",
   },
   bookings: {
     label: "Bookings",
-    color: "var(--chart-2)",
+    color: "#1473E6",
   },
 } satisfies ChartConfig
 
 export function ChartAreaInteractive() {
   const [timeRange, setTimeRange] = React.useState("90d")
 
-  // Find the latest date in the chart data to use as reference point
   const latestDate = new Date(Math.max(...chartData.map(item => new Date(item.date).getTime())))
 
   const filteredData = chartData.filter((item) => {
@@ -81,7 +75,6 @@ export function ChartAreaInteractive() {
     return date >= startDate && date <= latestDate
   })
 
-  // Get description based on selected time range
   const getDescription = () => {
     switch (timeRange) {
       case "7d":
@@ -96,72 +89,67 @@ export function ChartAreaInteractive() {
   }
 
   return (
-    <Card className="pt-0">
-      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-        <div className="grid flex-1 gap-1">
-          <CardTitle>Revenue & Bookings Overview</CardTitle>
-          <CardDescription>
+    <Card className="pt-0 border-none shadow-none bg-transparent">
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center gap-4 space-y-0 border-b border-gray-100 dark:border-gray-800 py-6 px-0!">
+        <div className="grid flex-1 gap-1.5">
+          <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">Revenue & Bookings Overview</CardTitle>
+          <CardDescription className="text-sm font-medium text-gray-500">
             {getDescription()}
           </CardDescription>
         </div>
-        <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger
-            className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex"
-            aria-label="Select a value"
-          >
-            <SelectValue placeholder="Last 3 months" />
-          </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            <SelectItem value="90d" className="rounded-lg">
-              Last 3 months
-            </SelectItem>
-            <SelectItem value="30d" className="rounded-lg">
-              Last 30 days
-            </SelectItem>
-            <SelectItem value="7d" className="rounded-lg">
-              Last 7 days
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="w-full sm:w-auto">
+          <ModernSelect
+            instanceId="timeRangeArea"
+            value={timeRange}
+            onChange={setTimeRange}
+            size="sm"
+            icon={<IconCalendarStats size={14} />}
+            options={[
+              { value: "90d", label: "Last 3 months" },
+              { value: "30d", label: "Last 30 days" },
+              { value: "7d", label: "Last 7 days" },
+            ]}
+          />
+        </div>
       </CardHeader>
-      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+      <CardContent className="px-0! pt-8 sm:pt-10">
         <ChartContainer
           config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
+          className="aspect-auto h-[320px] w-full"
         >
           <AreaChart data={filteredData}>
             <defs>
               <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-revenue)"
+                  stopColor="#2f7d6d"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-revenue)"
+                  stopColor="#2f7d6d"
                   stopOpacity={0.1}
                 />
               </linearGradient>
               <linearGradient id="fillBookings" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-bookings)"
+                  stopColor="#1473E6"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-bookings)"
+                  stopColor="#1473E6"
                   stopOpacity={0.1}
                 />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} />
+            <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-800" />
             <XAxis
               dataKey="date"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
+              tickMargin={12}
               minTickGap={32}
               tickFormatter={(value) => {
                 const date = new Date(value)
@@ -170,15 +158,23 @@ export function ChartAreaInteractive() {
                   day: "numeric",
                 })
               }}
+              className="text-[10px] font-bold text-gray-400 uppercase tracking-widest"
+            />
+            <YAxis 
+               tickLine={false}
+               axisLine={false}
+               tickFormatter={(value) => `₱${value >= 1000 ? value / 1000 + 'k' : value}`}
+               className="text-[10px] font-black text-gray-300"
             />
             <ChartTooltip
-              cursor={false}
+              cursor={{ stroke: '#2f7d6d', strokeWidth: 1, strokeDasharray: '4 4' }}
               content={
                 <ChartTooltipContent
                   labelFormatter={(value: string) => {
                     return new Date(value).toLocaleDateString("en-US", {
-                      month: "short",
+                      month: "long",
                       day: "numeric",
+                      year: "numeric"
                     })
                   }}
                   indicator="dot"
@@ -187,19 +183,21 @@ export function ChartAreaInteractive() {
             />
             <Area
               dataKey="bookings"
-              type="natural"
+              type="monotone"
               fill="url(#fillBookings)"
-              stroke="var(--color-bookings)"
+              stroke="#1473E6"
+              strokeWidth={3}
               stackId="a"
             />
             <Area
               dataKey="revenue"
-              type="natural"
+              type="monotone"
               fill="url(#fillRevenue)"
-              stroke="var(--color-revenue)"
+              stroke="#2f7d6d"
+              strokeWidth={3}
               stackId="a"
             />
-            <ChartLegend content={<ChartLegendContent />} />
+            <ChartLegend content={<ChartLegendContent />} className="mt-8" />
           </AreaChart>
         </ChartContainer>
       </CardContent>
