@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 import { Toaster, sileo } from "sileo";
 import { useMediaQuery } from "react-responsive";
 import { Toaster as HotToaster } from "./Toast";
-import { Toaster as SonnerToaster } from "sonner";
 import { useTheme } from "next-themes";
 
 // Responsive toast context
@@ -129,10 +128,8 @@ const ResponsiveToasters: React.FC = () => {
 
   return (
     <>
-      {/* Desktop toasters */}
+      {/* Desktop toasters - Only render HotToaster (react-hot-toast) */}
       {!isMobile && <HotToaster />}
-      {/* Admin toaster */}
-      {!isMobile && <SonnerToaster position="top-center" style={{ zIndex: 9999 }} />}
 
       {/* Mobile toaster (Sileo) */}
       {isMobile && (
