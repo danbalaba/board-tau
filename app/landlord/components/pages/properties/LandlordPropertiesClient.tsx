@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -19,12 +19,20 @@ import {
   IconSortDescending,
   IconCalendarEvent,
   IconHistory,
-  IconCircleCheck
+  IconCircleCheck,
+  IconInbox,
+  IconTag,
+  IconCalendarFilled,
+  IconCurrencyPeso,
+  IconLayoutGrid,
+  IconList
 } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import Button from '@/components/common/Button';
-import ModernSelect from '@/components/common/ModernSelect';
+import { toast } from 'sonner';
+import dynamic from 'next/dynamic';
+const ModernSelect = dynamic(() => import('@/components/common/ModernSelect'), { ssr: false });
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,28 +63,47 @@ interface LandlordPropertiesClientProps {
 
 export default function LandlordPropertiesClient({ properties }: LandlordPropertiesClientProps) {
   const router = useRouter();
-  const { listings, nextCursor } = properties;
+  const [listings, setListings] = useState(properties.listings);
+  const [nextCursor, setNextCursor] = useState(properties.nextCursor);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const sortedListings = [...listings].sort((a, b) => {
-    switch (sortBy) {
-      case 'oldest':
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      case 'price_asc':
-        return a.price - b.price;
-      case 'price_desc':
-        return b.price - a.price;
-      case 'status':
-        return a.status.localeCompare(b.status);
-      case 'newest':
-      default:
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    }
-  });
+  // Sync state with props when the page refreshes
+  useEffect(() => {
+    setListings(properties.listings);
+    setNextCursor(properties.nextCursor);
+  }, [properties]);
+
+  const sortedListings = useMemo(() => {
+    return [...listings].sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'price_asc':
+          return a.price - b.price;
+        case 'price_desc':
+          return b.price - a.price;
+        case 'status':
+          return a.status.localeCompare(b.status);
+        case 'newest':
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
+  }, [listings, sortBy]);
+
+  const sortOptions = useMemo(() => [
+    { value: 'newest', label: 'Newest', icon: IconHistory },
+    { value: 'oldest', label: 'Oldest', icon: IconCalendarEvent },
+    { value: 'price_asc', label: 'Price Low', icon: IconSortAscending },
+    { value: 'price_desc', label: 'Price High', icon: IconSortDescending },
+    { value: 'status', label: 'Status', icon: IconCircleCheck },
+  ], []);
 
   const statusColors: Record<string, string> = {
     active: 'bg-green-500/10 text-green-600 border-green-500/20',
@@ -85,11 +112,11 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
     flagged: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
   };
 
-  const formatStatus = (status: string) => {
+  const formatStatus = useCallback((status: string) => {
     return status.charAt(0).toUpperCase() + status.slice(1);
-  };
+  }, []);
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!selectedProperty) return;
     setIsDeleting(true);
 
@@ -99,17 +126,38 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
       });
 
       if (response.ok) {
+        setListings(prev => prev.filter(p => p.id !== selectedProperty.id));
         setDeleteModalOpen(false);
-        router.refresh(); // Refresh without full reload
+        router.refresh();
+        toast.success(`Property "${selectedProperty.title}" has been deleted.`);
       } else {
-        alert('Failed to delete property. Please try again.');
+        toast.error('Failed to delete property. Please try again.');
       }
     } catch (error) {
-      alert('An expected error occurred while deleting the property.');
+      toast.error('An unexpected error occurred while deleting the property.');
     } finally {
       setIsDeleting(false);
     }
-  };
+  }, [selectedProperty, router]);
+
+  const handleLoadMore = useCallback(async () => {
+    if (!nextCursor || isLoadingMore) return;
+
+    setIsLoadingMore(true);
+    try {
+      const response = await fetch(`/api/landlord/properties?cursor=${nextCursor}`);
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        setListings((prev) => [...prev, ...data.data.listings]);
+        setNextCursor(data.data.nextCursor);
+      }
+    } catch (error) {
+      console.error('Error loading more properties:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [nextCursor, isLoadingMore]);
 
   return (
     <div className="space-y-8 p-1">
@@ -295,6 +343,33 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
                 );
               })}
             </div>
+            <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={cn(
+                  "p-2 rounded-xl transition-all duration-300",
+                  viewMode === 'grid'
+                    ? "bg-primary text-white shadow-lg shadow-primary/30"
+                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                )}
+                title="Grid View"
+              >
+                <IconLayoutGrid size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  "p-2 rounded-xl transition-all duration-300",
+                  viewMode === 'list'
+                    ? "bg-primary text-white shadow-lg shadow-primary/30"
+                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                )}
+                title="List View"
+              >
+                <IconList size={18} />
+              </button>
+            </div>
+
             <Link href="/landlord/properties/create" className="w-full sm:w-auto">
               <Button className="rounded-xl w-full px-5 py-3 shadow-xl shadow-primary/20 group">
                 <span className="flex items-center gap-2">
@@ -332,112 +407,211 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
           </Link>
         </motion.div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className={cn(
+          viewMode === 'grid' 
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            : "flex flex-col gap-4"
+        )}>
           {sortedListings.map((property, idx) => (
-            <motion.div
-              key={property.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              className="group bg-white dark:bg-gray-900 rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none hover:shadow-2xl transition-all duration-500"
-            >
-              {/* Property Image */}
-              <div className="relative h-52 overflow-hidden">
-                {property.imageSrc ? (
-                  <img
-                    src={property.imageSrc}
-                    alt={property.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                    <IconBuilding size={32} className="text-gray-300" />
-                  </div>
-                )}
-                {/* Status Badge */}
-                <div className="absolute top-4 left-4">
-                  <div className={cn(
-                    "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-lg border border-white/50 dark:border-gray-800 flex items-center gap-1.5",
-                    statusColors[property.status].split(' ')[1]
-                  )}>
-                    <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse capitalize", statusColors[property.status].split(' ')[0].replace('bg-', 'bg-').replace('/10', ''))} />
-                    {formatStatus(property.status)}
-                  </div>
-                </div>
-              </div>
-
-              {/* Property Details */}
-              <div className="p-6">
-                <div className="flex justify-between items-start gap-4 mb-3">
-                  <div className="min-w-0">
-                    <h3 className="text-lg font-black text-gray-900 dark:text-white group-hover:text-primary transition-colors leading-tight mb-1 truncate">
-                      {property.title}
-                    </h3>
-                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">{property.roomCount} Rooms • {property.bathroomCount} Baths</p>
+            viewMode === 'grid' ? (
+              <motion.div
+                key={property.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="group bg-white dark:bg-gray-900 rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none hover:shadow-2xl transition-all duration-500"
+              >
+                {/* Property Image */}
+                <div className="relative h-52 overflow-hidden">
+                  {property.imageSrc ? (
+                    <img
+                      src={property.imageSrc}
+                      alt={property.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                      <IconBuilding size={32} className="text-gray-300" />
+                    </div>
+                  )}
+                  {/* Status Badge */}
+                  <div className="absolute top-4 left-4">
+                    <div className={cn(
+                      "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-lg border border-white/50 dark:border-gray-800 flex items-center gap-1.5",
+                      statusColors[property.status].split(' ')[1]
+                    )}>
+                      <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse capitalize", statusColors[property.status].split(' ')[0].replace('bg-', 'bg-').replace('/10', ''))} />
+                      {formatStatus(property.status)}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 mb-6">
-                  <span className="text-2xl font-black text-gray-900 dark:text-white">₱{property.price.toLocaleString()}</span>
-                  <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">/ Mo</span>
+                {/* Property Details */}
+                <div className="p-6">
+                  <div className="flex justify-between items-start gap-4 mb-3">
+                    <div className="min-w-0">
+                      <h3 className="text-lg font-black text-gray-900 dark:text-white group-hover:text-primary transition-colors leading-tight mb-1 truncate">
+                        {property.title}
+                      </h3>
+                      <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">{property.roomCount} Rooms • {property.bathroomCount} Baths</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 mb-6">
+                    <span className="text-2xl font-black text-gray-900 dark:text-white">₱{property.price.toLocaleString()}</span>
+                    <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">/ Mo</span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-between gap-3">
+                    <Link href={`/landlord/properties/${property.id}/edit`} className="flex-1">
+                      <Button className="rounded-xl w-full py-2.5 text-[10px] font-black uppercase tracking-widest shadow-md shadow-primary/10 group/btn">
+                        <span className="flex items-center justify-center gap-2">
+                          <IconEdit className="group-hover/btn:rotate-12 transition-transform duration-300" size={11} />
+                          Edit
+                        </span>
+                      </Button>
+                    </Link>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary/40 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all duration-300 group/dots">
+                          <IconDots size={12} className="text-gray-400 group-hover/dots:text-primary transition-colors" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        sideOffset={8}
+                        className="w-48 p-1.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl shadow-gray-200/50 dark:shadow-black/40"
+                      >
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem
+                            className="flex items-center gap-3 px-3 py-2.5 text-[12px] font-bold text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer hover:bg-primary/5 hover:text-primary dark:hover:bg-primary/10 transition-colors"
+                            onClick={() => {
+                              setSelectedProperty(property);
+                              setViewModalOpen(true);
+                            }}
+                          >
+                            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
+                              <IconEye size={11} className="text-blue-500" />
+                            </div>
+                            View Details
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator className="my-1 bg-gray-100 dark:bg-gray-700" />
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem
+                            className="flex items-center gap-3 px-3 py-2.5 text-[12px] font-bold text-red-500 rounded-lg cursor-pointer hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                            onClick={() => {
+                              setSelectedProperty(property);
+                              setDeleteModalOpen(true);
+                            }}
+                          >
+                            <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center">
+                              <IconTrash size={11} className="text-red-500" />
+                            </div>
+                            Delete Property
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
+              </motion.div>
+            ) : (
+              /* List View Mode */
+              <motion.div
+                key={property.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="group bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 hover:border-primary/20 p-4 transition-all duration-300 shadow-sm hover:shadow-md"
+              >
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  {/* Property Image */}
+                  <div className="relative w-full sm:w-32 h-40 sm:h-32 rounded-xl overflow-hidden flex-shrink-0">
+                    {property.imageSrc ? (
+                      <img
+                        src={property.imageSrc}
+                        alt={property.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                        <IconBuilding size={20} className="text-gray-300" />
+                      </div>
+                    )}
+                  </div>
 
-                {/* Actions */}
-                <div className="flex items-center justify-between gap-3">
-                  <Link href={`/landlord/properties/${property.id}/edit`} className="flex-1">
-                    <Button className="rounded-xl w-full py-2.5 text-[10px] font-black uppercase tracking-widest shadow-md shadow-primary/10 group/btn">
-                      <span className="flex items-center justify-center gap-2">
-                        <IconEdit className="group-hover/btn:rotate-12 transition-transform duration-300" size={11} />
-                        Edit
-                      </span>
-                    </Button>
-                  </Link>
+                  {/* Property Content */}
+                  <div className="flex-1 min-w-0 w-full sm:w-auto">
+                    <div className="flex items-center justify-between sm:justify-start gap-3 mb-2">
+                      <h3 className="text-xl font-black text-gray-900 dark:text-white truncate group-hover:text-primary transition-colors">
+                        {property.title}
+                      </h3>
+                      <div className={cn(
+                        "px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border",
+                        statusColors[property.status]
+                      )}>
+                        {formatStatus(property.status)}
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-4 text-gray-500 dark:text-gray-400 mb-2">
+                       <span className="text-xs font-bold flex items-center gap-1.5">
+                         <IconBuilding size={14} className="text-primary" />
+                         {property.roomCount} Rooms
+                       </span>
+                       <span className="text-xs font-bold flex items-center gap-1.5">
+                         <IconBath size={14} className="text-blue-500" />
+                         {property.bathroomCount} Baths
+                       </span>
+                       <span className="text-xs font-bold flex items-center gap-1.5">
+                         <IconCalendarFilled size={14} className="text-orange-500" />
+                         {new Date(property.createdAt).toLocaleDateString()}
+                       </span>
+                    </div>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary/40 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all duration-300 group/dots">
-                        <IconDots size={12} className="text-gray-400 group-hover/dots:text-primary transition-colors" />
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-black text-gray-900 dark:text-white">₱{property.price.toLocaleString()}</span>
+                      <span className="text-[10px] items-center font-bold uppercase tracking-widest text-gray-400">/ month</span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 w-full sm:w-auto mt-4 sm:mt-0 pt-4 sm:pt-0 sm:pl-6 border-t sm:border-t-0 sm:border-l border-gray-100 dark:border-gray-800">
+                    <Link href={`/landlord/properties/${property.id}/edit`} className="flex-1 sm:flex-none">
+                      <button className="w-full sm:w-auto p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center">
+                        <IconEdit size={16} />
+                        <span className="sm:hidden ml-2 text-[10px] font-black uppercase tracking-widest">Edit</span>
                       </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      sideOffset={8}
-                      className="w-48 p-1.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl shadow-gray-200/50 dark:shadow-black/40"
+                    </Link>
+                    <button 
+                      onClick={() => {
+                        setSelectedProperty(property);
+                        setViewModalOpen(true);
+                      }}
+                      className="flex-1 sm:flex-none p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all flex items-center justify-center"
                     >
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem
-                          className="flex items-center gap-3 px-3 py-2.5 text-[12px] font-bold text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer hover:bg-primary/5 hover:text-primary dark:hover:bg-primary/10 transition-colors"
-                          onClick={() => {
-                            setSelectedProperty(property);
-                            setViewModalOpen(true);
-                          }}
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
-                            <IconEye size={11} className="text-blue-500" />
-                          </div>
-                          View Details
-                        </DropdownMenuItem>
-                      </DropdownMenuGroup>
-                      <DropdownMenuSeparator className="my-1 bg-gray-100 dark:bg-gray-700" />
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem
-                          className="flex items-center gap-3 px-3 py-2.5 text-[12px] font-bold text-red-500 rounded-lg cursor-pointer hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                          onClick={() => {
-                            setSelectedProperty(property);
-                            setDeleteModalOpen(true);
-                          }}
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center">
-                            <IconTrash size={11} className="text-red-500" />
-                          </div>
-                          Delete Property
-                        </DropdownMenuItem>
-                      </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      <IconEye size={16} />
+                      <span className="sm:hidden ml-2 text-[10px] font-black uppercase tracking-widest">View</span>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setSelectedProperty(property);
+                        setDeleteModalOpen(true);
+                      }}
+                      className="flex-1 sm:flex-none p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all flex items-center justify-center"
+                    >
+                      <IconTrash size={16} />
+                      <span className="sm:hidden ml-2 text-[10px] font-black uppercase tracking-widest">Delete</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            )
           ))}
         </div>
       )}
@@ -445,10 +619,15 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
       {/* Pagination / Load More */}
       {nextCursor && (
         <div className="flex justify-center pt-8">
-          <Button outline className="rounded-xl px-8 py-3.5 group transition-all">
+          <Button 
+            outline 
+            className="rounded-xl px-10 py-4 group transition-all hover:bg-primary hover:text-white"
+            onClick={handleLoadMore}
+            isLoading={isLoadingMore}
+          >
             <span className="flex items-center gap-2 uppercase font-black tracking-[0.15em] text-[10px]">
-              Load More Properties
-              <IconChevronDown className="group-hover:translate-y-0.5 transition-transform" size={10} />
+              {isLoadingMore ? 'Fetching properties...' : 'Load More Properties'}
+              <IconChevronDown className={cn("group-hover:translate-y-0.5 transition-transform", isLoadingMore && "animate-bounce")} size={10} />
             </span>
           </Button>
         </div>

@@ -1,5 +1,6 @@
 import React from "react";
-import Image from "next/image";
+import * as AvatarPrimitive from "@radix-ui/react-avatar";
+import { IconUser } from "@tabler/icons-react";
 
 interface AvatarProps {
   src: string | null | undefined;
@@ -9,14 +10,19 @@ interface AvatarProps {
 
 const Avatar: React.FC<AvatarProps> = ({ src, alt = "Avatar", className }) => {
   return (
-    <Image
-      className={`rounded-full select-none ${className || ""}`}
-      height="28"
-      width="28"
-      alt={alt}
-      src={src || "/images/placeholder.jpg"}
-      unoptimized
-    />
+    <AvatarPrimitive.Root className={`relative flex h-full w-full min-h-[28px] min-w-[28px] shrink-0 overflow-hidden rounded-full ${className || ""}`}>
+      <AvatarPrimitive.Image
+        src={src || undefined}
+        alt={alt}
+        className="aspect-square h-full w-full object-cover"
+      />
+      <AvatarPrimitive.Fallback
+        delayMs={0}
+        className="flex h-full w-full items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500"
+      >
+        <IconUser size={18} />
+      </AvatarPrimitive.Fallback>
+    </AvatarPrimitive.Root>
   );
 };
 

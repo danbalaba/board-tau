@@ -137,10 +137,10 @@ export const respondToInquiry = async (
   if (status === "APPROVED" && inquiry.room) {
     const moveIn = new Date(inquiry.moveInDate);
     const checkOut = new Date(inquiry.checkOutDate);
-    
+
     // Calculate total days for stay reference
     const durationInDays = Math.ceil((checkOut.getTime() - moveIn.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     // Important: Use the fixed reservationFee from the inquiry record!
     const totalPrice = (inquiry as any).reservationFee || 0;
 
@@ -163,4 +163,25 @@ export const respondToInquiry = async (
   // TODO: Send notification to user
 
   return updatedInquiry;
+};
+
+export const deleteInquiry = async (inquiryId: string) => {
+  const landlord = await requireLandlord();
+
+  const inquiry = await db.inquiry.findFirst({
+    where: {
+      id: inquiryId,
+      listing: {
+        userId: landlord.id,
+      },
+    },
+  });
+
+  if (!inquiry) {
+    throw new Error("Inquiry not found");
+  }
+
+  return await db.inquiry.delete({
+    where: { id: inquiryId },
+  });
 };

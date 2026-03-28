@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -16,7 +16,6 @@ import {
   SidebarMenuItem,
   SidebarRail,
   useSidebar,
-  SidebarTrigger,
 } from '@/app/admin/components/ui/sidebar';
 import {
   IconHome,
@@ -24,25 +23,24 @@ import {
   IconMail,
   IconCalendarCheck,
   IconStar,
-  IconChartLine,
+  IconChartBar,
+  IconLayoutDashboard,
+  IconHistory,
+  IconMessage,
+  IconCalendarStats,
+  IconBook,
+  IconBriefcase,
+  IconUsers,
+  IconSettings
 } from '@tabler/icons-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/app/admin/components/ui/dropdown-menu';
-import { IconUserCircle, IconLogout, IconSettings } from '@tabler/icons-react';
-import { signOut } from 'next-auth/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 const navItems = [
   {
     href: '/landlord',
     label: 'Dashboard',
-    icon: IconHome,
+    icon: IconLayoutDashboard,
   },
   {
     href: '/landlord/properties',
@@ -52,7 +50,7 @@ const navItems = [
   {
     href: '/landlord/inquiries',
     label: 'Inquiries',
-    icon: IconMail,
+    icon: IconMessage,
   },
   {
     href: '/landlord/reservations',
@@ -62,7 +60,7 @@ const navItems = [
   {
     href: '/landlord/bookings',
     label: 'Bookings',
-    icon: IconCalendarCheck,
+    icon: IconCalendarStats,
   },
   {
     href: '/landlord/reviews',
@@ -72,7 +70,7 @@ const navItems = [
   {
     href: '/landlord/analytics',
     label: 'Analytics',
-    icon: IconChartLine,
+    icon: IconChartBar,
   },
 ];
 
@@ -80,142 +78,98 @@ export default function LandlordSidebar() {
   const pathname = usePathname();
   const { state } = useSidebar();
   const { theme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Handle initial mount to avoid hydration mismatch
-  React.useEffect(() => {
+  useEffect(() => {
     setMounted(true);
   }, []);
 
   const isDark = theme === "dark";
 
-  // Show fallback logo during SSR
-  if (!mounted) {
-    return (
-      <Sidebar
-        variant='sidebar'
-        collapsible='offcanvas'
-        className='transition-all duration-500 ease-in-out bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg'
-      >
-        <SidebarHeader className='p-4 border-b border-gray-200 dark:border-gray-700'>
-          <Link href="/landlord" className="flex items-center gap-3">
-            <div className="h-[35px] w-[150px] relative">
-              <Image
-                src="/images/TauBOARD-Light.png"
-                alt="BoardTAU Logo"
-                fill
-                sizes="150px"
-                priority
-                unoptimized
-              />
-            </div>
-          </Link>
-        </SidebarHeader>
-        <SidebarContent className='overflow-x-hidden'>
-          <SidebarGroup>
-            <SidebarMenu className='space-y-2'>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.href} className='group/menu-item'>
-                  <SidebarMenuButton
-                    asChild
-                    tooltip={item.label}
-                    className='relative overflow-hidden transition-all duration-300 ease-in-out group-hover/menu-item:scale-[1.02] text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  >
-                    <Link href={item.href}>
-                      <item.icon 
-                        data-slot="sidebar-menu-button-icon" 
-                        className='transition-all duration-300 text-gray-500 dark:text-gray-400 group-hover/menu-item:text-blue-600 dark:group-hover/menu-item:text-blue-400'
-                      />
-                      <span className='font-medium transition-all duration-300 text-gray-700 dark:text-gray-300'>
-                        {item.label}
-                      </span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter className='p-4 border-t border-gray-200 dark:border-gray-700'>
-          <div className='text-xs text-gray-500 dark:text-gray-400 text-center'>
-            <p className='animate-pulse'>Landlord Portal v2.0</p>
-            <p className='mt-1 opacity-75'>2026 © BoardTAU</p>
-          </div>
-        </SidebarFooter>
-        <SidebarRail />
-      </Sidebar>
-    );
-  }
-
   return (
     <Sidebar
       variant='sidebar'
       collapsible='offcanvas'
-      className='transition-all duration-500 ease-in-out bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg'
+      className='border-r border-gray-200/50 dark:border-gray-800/50 bg-white/70 dark:bg-gray-950/70 backdrop-blur-xl transition-all duration-300'
     >
-      <SidebarHeader className='p-4 border-b border-gray-200 dark:border-gray-700'>
-        <Link href="/landlord" className="flex items-center gap-3">
-          <div className="h-[35px] w-[150px] relative">
-            <Image
-              src={isDark ? "/images/TauBOARD-Dark.png" : "/images/TauBOARD-Light.png"}
-              alt="BoardTAU Logo"
-              fill
-              sizes="150px"
-              priority
-              unoptimized
-            />
-          </div>
-        </Link>
+      <SidebarHeader className='p-6 mb-2'>
+        <motion.div
+           initial={{ opacity: 0, x: -20 }}
+           animate={{ opacity: 1, x: 0 }}
+           transition={{ duration: 0.5 }}
+        >
+          <Link href="/landlord" className="flex items-center gap-3 group">
+            <div className="h-[35px] w-[140px] relative transition-transform duration-300 group-hover:scale-105">
+              {!mounted ? (
+                <Image
+                  src="/images/TauBOARD-Light.png"
+                  alt="BoardTAU Logo"
+                  fill
+                  sizes="140px"
+                  priority
+                  unoptimized
+                  className="object-contain"
+                />
+              ) : (
+                <Image
+                  src={isDark ? "/images/TauBOARD-Dark.png" : "/images/TauBOARD-Light.png"}
+                  alt="BoardTAU Logo"
+                  fill
+                  sizes="140px"
+                  priority
+                  unoptimized
+                  className="object-contain"
+                />
+              )}
+            </div>
+          </Link>
+        </motion.div>
       </SidebarHeader>
 
-      <SidebarContent className='overflow-x-hidden'>
+      <SidebarContent className='px-4'>
         <SidebarGroup>
-          <SidebarMenu className='space-y-2'>
-            {navItems.map((item) => {
+          <SidebarMenu className='gap-2'>
+            {navItems.map((item, index) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || (item.href !== '/landlord' && pathname.startsWith(item.href));
 
               return (
-                <SidebarMenuItem key={item.href} className='group/menu-item'>
+                <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
                     tooltip={item.label}
                     isActive={isActive}
-                    className={`
-                      relative overflow-hidden
-                      transition-all duration-300 ease-in-out
-                      group-hover/menu-item:scale-[1.02]
-                      ${
-                        isActive
-                          ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/40'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }
-                    `}
+                    className={cn(
+                      "group relative h-11 px-4 rounded-xl transition-all duration-300",
+                      isActive 
+                        ? "bg-primary text-white shadow-lg shadow-primary/25 translate-x-1" 
+                        : "text-gray-500 dark:text-gray-400 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary dark:hover:text-primary"
+                    )}
                   >
-                    <Link href={item.href} className='relative'>
+                    <Link href={item.href} className="flex items-center gap-3 w-full">
                       <Icon 
-                        data-slot="sidebar-menu-button-icon" 
-                        className={`
-                          transition-all duration-300 ease-in-out
-                          ${isActive ? 'text-white' : 'text-gray-500 dark:text-gray-400 group-hover/menu-item:text-blue-600 dark:group-hover/menu-item:text-blue-400'}
-                          ${!isActive ? 'group-hover/menu-item:rotate-5' : ''}
-                        `}
+                        size={20}
+                        className={cn(
+                          "transition-transform duration-300",
+                          isActive ? "text-white" : "group-hover:scale-110"
+                        )}
                       />
-                      <span className={`
-                        font-medium transition-all duration-300 ease-in-out
-                        ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
-                      `}>
+                      <span className={cn(
+                        "font-black text-xs uppercase tracking-[0.05em] transition-all duration-300",
+                        isActive ? "opacity-100" : "opacity-80 group-hover:opacity-100"
+                      )}>
                         {item.label}
                       </span>
+                      
                       {isActive && (
-                        <div className='absolute left-0 top-0 bottom-0 w-1 bg-white/30 animate-pulse' />
+                        <motion.div
+                          layoutId="active-nav-indicator"
+                          className="absolute left-0 w-1 h-5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.3 }}
+                        />
                       )}
-                      {/* Animated background effect on hover */}
-                      <div className={`
-                        absolute inset-0 bg-gradient-to-r from-blue-500/20 to-transparent
-                        transition-all duration-300 ease-in-out
-                        ${!isActive ? 'opacity-0 group-hover/menu-item:opacity-100' : ''}
-                      `} />
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -225,13 +179,23 @@ export default function LandlordSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className='p-4 border-t border-gray-200 dark:border-gray-700'>
-        <div className='text-xs text-gray-500 dark:text-gray-400 text-center'>
-          <p className='animate-pulse'>Landlord Portal v2.0</p>
-          <p className='mt-1 opacity-75'>2026 © BoardTAU</p>
+      <SidebarFooter className='p-6 mt-auto border-t border-gray-100/50 dark:border-gray-800/50'>
+        <div className="flex flex-col gap-4">
+          <div className="bg-gradient-to-br from-primary/10 to-transparent p-4 rounded-2xl border border-primary/10">
+            <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Status</p>
+            <div className="flex items-center gap-2 text-emerald-500">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-bold">System Online</span>
+            </div>
+          </div>
+          
+          <div className='flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-gray-400'>
+             <span>v3.0.0</span>
+             <span>© 2026 TAU</span>
+          </div>
         </div>
       </SidebarFooter>
-
+      
       <SidebarRail />
     </Sidebar>
   );
