@@ -10,6 +10,7 @@ import { cn } from '@/utils/helper';
 import Input from '@/components/inputs/Input';
 import Textarea from '@/components/inputs/Textarea';
 import Button from '@/components/common/Button';
+import { toast } from 'sonner';
 
 const LocalCheckbox = ({
   id,
@@ -184,16 +185,19 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
     e.preventDefault();
 
     if (!validateForm()) {
+      toast.error('Please fill in all required fields correctly.');
       return;
     }
 
     setIsSubmitting(true);
+    const updateToast = toast.loading('Synchronizing property updates...');
 
     try {
       let imageUrl = formData.existingImageSrc;
 
       // Upload new image if selected
       if (formData.image) {
+        toast.message('Uploading new property image...', { id: updateToast });
         const res = await edgestore.publicFiles.upload({
           file: formData.image,
         });
@@ -240,13 +244,14 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
       const result = await response.json();
 
       if (result.success) {
+        toast.success('Property updated successfully!', { id: updateToast });
         router.push('/landlord/properties');
         router.refresh();
       } else {
-        alert(`Error: ${result.error || 'Failed to update property'}`);
+        toast.error(`Error: ${result.error || 'Failed to update property'}`, { id: updateToast });
       }
     } catch (error) {
-      alert('An unexpected error occurred. Please try again.');
+      toast.error('An unexpected error occurred. Please try again.', { id: updateToast });
     } finally {
       setIsSubmitting(false);
     }

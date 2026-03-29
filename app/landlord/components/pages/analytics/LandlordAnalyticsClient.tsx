@@ -9,13 +9,15 @@ import {
   IconCash,
   IconUsers,
 } from '@tabler/icons-react';
-import { ChartAreaInteractive } from '@/app/landlord/components/charts/AreaChart';
-import { ChartBarInteractive } from '@/app/landlord/components/charts/BarChart';
-import { ChartLineInteractive } from '@/app/landlord/components/charts/LineChart';
-import { ChartPieLabel } from '@/app/landlord/components/charts/PieChart';
-import { ChartRadarDots } from '@/app/landlord/components/charts/RadarChart';
-import { ChartRadialLabel } from '@/app/landlord/components/charts/RadialChart';
-import { ChartTooltipDefault } from '@/app/landlord/components/charts/ToolTips';
+import dynamic from 'next/dynamic';
+
+const ChartAreaInteractive = dynamic(() => import('@/app/landlord/components/charts/AreaChart').then(mod => mod.ChartAreaInteractive), { ssr: false });
+const ChartBarInteractive = dynamic(() => import('@/app/landlord/components/charts/BarChart').then(mod => mod.ChartBarInteractive), { ssr: false });
+const ChartLineInteractive = dynamic(() => import('@/app/landlord/components/charts/LineChart').then(mod => mod.ChartLineInteractive), { ssr: false });
+const ChartPieLabel = dynamic(() => import('@/app/landlord/components/charts/PieChart').then(mod => mod.ChartPieLabel), { ssr: false });
+const ChartRadarDots = dynamic(() => import('@/app/landlord/components/charts/RadarChart').then(mod => mod.ChartRadarDots), { ssr: false });
+const ChartRadialLabel = dynamic(() => import('@/app/landlord/components/charts/RadialChart').then(mod => mod.ChartRadialLabel), { ssr: false });
+const ChartTooltipDefault = dynamic(() => import('@/app/landlord/components/charts/ToolTips').then(mod => mod.ChartTooltipDefault), { ssr: false });
 import ModernSelect from '@/components/common/ModernSelect';
 
 interface LandlordAnalyticsClientProps {
@@ -39,23 +41,6 @@ export default function LandlordAnalyticsClient({
 }: LandlordAnalyticsClientProps) {
   const [timePeriod, setTimePeriod] = useState<'month' | 'quarter' | 'year'>('month');
 
-  // Sample data for charts (would be replaced with real data from API)
-  const revenueData = [
-    { name: 'Jan', revenue: 12000 },
-    { name: 'Feb', revenue: 19800 },
-    { name: 'Mar', revenue: 15000 },
-    { name: 'Apr', revenue: 25000 },
-    { name: 'May', revenue: 32000 },
-    { name: 'Jun', revenue: 28000 },
-  ];
-
-  const occupancyData = [
-    { name: 'Property A', occupancy: 85 },
-    { name: 'Property B', occupancy: 60 },
-    { name: 'Property C', occupancy: 95 },
-    { name: 'Property D', occupancy: 70 },
-  ];
-
   const propertyPerformanceData = [
     { name: 'Property A', inquiries: 15, bookings: 8, revenue: 24000 },
     { name: 'Property B', inquiries: 10, bookings: 5, revenue: 15000 },
@@ -63,7 +48,7 @@ export default function LandlordAnalyticsClient({
     { name: 'Property D', inquiries: 8, bookings: 4, revenue: 12000 },
   ];
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  const COLORS = ['#2f7d6d', '#1473E6', '#F59E0B', '#8B5CF6'];
 
   const statsCards = [
     {
@@ -128,33 +113,33 @@ export default function LandlordAnalyticsClient({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10 pb-20">
       {/* Page Header */}
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary hover:scale-110 transition-transform duration-300">
-              <IconChartLine size={22} />
+      <div className="bg-white dark:bg-gray-950 p-8 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-2xl shadow-gray-200/50 dark:shadow-black/20">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-primary/10 text-primary rounded-[24px] flex items-center justify-center shadow-inner">
+              <IconChartLine size={32} strokeWidth={2.5} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-0.5 tracking-tight">
-                Analytics & Reports
+              <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-1.5 tracking-tighter">
+                Analytics & Performance
               </h1>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Track your property performance and revenue
+              <p className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                Real-time property tracking & revenue insights
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="w-full sm:w-auto">
             <ModernSelect
-              instanceId="timePeriod"
+              instanceId="analytics-time-period"
               value={timePeriod}
-              onChange={(val: string) => setTimePeriod(val as 'month' | 'quarter' | 'year')}
-              className="w-full sm:w-auto min-w-[180px]"
+              onChange={(val: any) => setTimePeriod(val)}
+              className="min-w-[260px]"
               options={[
-                { value: 'month', label: 'This Month' },
-                { value: 'quarter', label: 'This Quarter' },
-                { value: 'year', label: 'This Year' },
+                { value: 'month', label: 'This Calendar Month' },
+                { value: 'quarter', label: 'Fiscal Quarter' },
+                { value: 'year', label: 'Fiscal Year' },
               ]}
             />
           </div>
@@ -162,92 +147,84 @@ export default function LandlordAnalyticsClient({
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statsCards.map((stat, index) => {
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statsCards.map((stat) => {
           const Icon = stat.icon;
           return (
             <div
               key={stat.label}
-              className="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 hover:shadow-2xl"
+              className="group relative bg-white dark:bg-gray-900 rounded-[28px] border border-gray-100 dark:border-gray-800 p-8 hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colors[stat.color]} group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon size={18} />
+              <div className="flex items-center justify-between mb-6">
+                <div className={`w-14 h-14 rounded-[20px] flex items-center justify-center ${colors[stat.color]} group-hover:scale-110 transition-transform duration-500 shadow-xl`}>
+                  <Icon size={24} strokeWidth={2.5} />
                 </div>
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
+                <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
                   {stat.label}
                 </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                <p className="text-3xl font-black text-gray-900 dark:text-white mb-2 tracking-tighter">
                   {stat.value}
                 </p>
-                <p className="text-xs text-green-600 dark:text-green-400 font-medium">
-                  +12.5% from last period
-                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-black">
+                    +15.2%
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                    vs last period
+                  </span>
+                </div>
               </div>
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
             </div>
           );
         })}
       </div>
 
-      {/* Revenue & Bookings Overview */}
-      <div>
+      {/* Primary Chart: Revenue & Bookings */}
+      <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
         <ChartAreaInteractive />
       </div>
 
-      {/* Performance Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Monthly Bookings & Revenue */}
-        <div>
+      {/* Grid of Secondary Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartLineInteractive />
         </div>
-
-        {/* Property Type Distribution */}
-        <div>
+        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartPieLabel />
         </div>
-
-        {/* Property Performance Metrics */}
-        <div>
+        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartRadarDots />
         </div>
-
-        {/* Review Ratings */}
-        <div>
+        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartRadialLabel />
         </div>
-
-        {/* Inquiry Sources */}
-        <div>
+        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartTooltipDefault />
         </div>
-
-        {/* Monthly Revenue by Property */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartBarInteractive />
         </div>
       </div>
 
-      {/* Detailed Reports */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue by Property */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
-          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-6">
+      {/* Bottom Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <div className="bg-white dark:bg-gray-950 rounded-[32px] border border-gray-100 dark:border-gray-800 p-10 shadow-sm">
+          <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-8 tracking-tighter">
             Revenue by Property
           </h3>
-          <div className="space-y-3">
-            {propertyPerformanceData.map((property) => (
-              <div key={property.name} className="group flex items-center justify-between p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-md transition-all duration-300">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2.5 h-2.5 rounded-full ${COLORS[propertyPerformanceData.indexOf(property) % COLORS.length]} group-hover:scale-150 transition-transform shadow-sm`} />
-                  <span className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+          <div className="space-y-4">
+            {propertyPerformanceData.map((property, idx) => (
+              <div key={property.name} className="group flex items-center justify-between p-6 bg-gray-50/50 dark:bg-gray-900/50 rounded-[24px] border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-xl transition-all duration-500">
+                <div className="flex items-center gap-5">
+                  <div className="w-3 h-3 rounded-full shadow-lg" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                  <span className="text-base font-black text-gray-900 dark:text-white group-hover:text-primary transition-colors tracking-tight">
                     {property.name}
                   </span>
                 </div>
-                <span className="text-sm font-black text-gray-900 dark:text-white">
+                <span className="text-lg font-black text-gray-900 dark:text-white tabular-nums">
                   ₱{property.revenue.toLocaleString()}
                 </span>
               </div>
@@ -255,44 +232,26 @@ export default function LandlordAnalyticsClient({
           </div>
         </div>
 
-        {/* Booking Statistics */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
-          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-6">
+        <div className="bg-white dark:bg-gray-950 rounded-[32px] border border-gray-100 dark:border-gray-800 p-10 shadow-sm">
+          <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-8 tracking-tighter">
             Booking Statistics
           </h3>
-          <div className="space-y-3">
-            <div className="group flex items-center justify-between p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-md transition-all duration-300">
-              <span className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 group-hover:text-primary transition-colors">
-                Total Bookings
-              </span>
-              <span className="text-lg font-black text-gray-900 dark:text-white">
-                {stats.confirmedBookings}
-              </span>
-            </div>
-            <div className="group flex items-center justify-between p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-md transition-all duration-300">
-              <span className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 group-hover:text-primary transition-colors">
-                Total Revenue
-              </span>
-              <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                ₱{revenue.totalRevenue.toLocaleString()}
-              </span>
-            </div>
-            <div className="group flex items-center justify-between p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-md transition-all duration-300">
-              <span className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 group-hover:text-primary transition-colors">
-                Avg Booking Value
-              </span>
-              <span className="text-lg font-black text-gray-900 dark:text-white">
-                ₱{revenue.averageBookingValue.toLocaleString()}
-              </span>
-            </div>
-            <div className="group flex items-center justify-between p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-md transition-all duration-300">
-              <span className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 group-hover:text-primary transition-colors">
-                Occupancy Rate
-              </span>
-              <span className="text-lg font-black text-gray-900 dark:text-white">
-                {occupancy.occupancyRate.toFixed(1)}%
-              </span>
-            </div>
+          <div className="space-y-4">
+            {[
+              { label: 'Total Confirmed Bookings', value: stats.confirmedBookings, suffix: 'units' },
+              { label: 'Gross Analytics Revenue', value: stats.monthlyRevenue.toLocaleString(), prefix: '₱' },
+              { label: 'Average Daily Rate', value: '4,500', prefix: '₱' },
+              { label: 'Portfolio Occupancy', value: occupancy.occupancyRate.toFixed(1), suffix: '%' },
+            ].map((item) => (
+              <div key={item.label} className="group flex items-center justify-between p-6 bg-gray-50/50 dark:bg-gray-900/50 rounded-[24px] border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-xl transition-all duration-500">
+                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 group-hover:text-primary transition-colors">
+                  {item.label}
+                </span>
+                <span className="text-xl font-black text-gray-900 dark:text-white tabular-nums">
+                  {item.prefix}{item.value}{item.suffix}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

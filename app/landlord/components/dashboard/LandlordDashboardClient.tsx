@@ -1,18 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
-  FaBuilding,
-  FaEnvelope,
-  FaCalendarCheck,
-  FaStar,
-  FaChartLine,
-  FaPlus,
-  FaEye,
-  FaChevronRight,
-  FaHome
-} from 'react-icons/fa';
+  IconBuilding,
+  IconMail,
+  IconCalendarCheck,
+  IconStar,
+  IconChartLine,
+  IconPlus,
+  IconEye,
+  IconChevronRight,
+  IconHome,
+  IconActivity,
+  IconArrowRight,
+  IconCreditCard,
+  IconMessage2
+} from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { ChartAreaInteractive } from '@/app/landlord/components/charts/AreaChart';
 import { ChartBarInteractive } from '@/app/landlord/components/charts/BarChart';
@@ -21,6 +25,7 @@ import { ChartPieLabel } from '@/app/landlord/components/charts/PieChart';
 import { ChartRadarDots } from '@/app/landlord/components/charts/RadarChart';
 import { ChartRadialLabel } from '@/app/landlord/components/charts/RadialChart';
 import { ChartTooltipDefault } from '@/app/landlord/components/charts/ToolTips';
+import Button from '@/components/common/Button';
 
 interface LandlordDashboardStats {
   totalProperties: number;
@@ -36,97 +41,136 @@ interface LandlordDashboardClientProps {
   stats: LandlordDashboardStats;
 }
 
-export default function LandlordDashboardClient({ stats }: LandlordDashboardClientProps) {
-  // Mock data for charts (would be replaced with real data from API)
-  const revenueData = [
-    { name: 'Jan', revenue: 12000 },
-    { name: 'Feb', revenue: 19800 },
-    { name: 'Mar', revenue: 15000 },
-    { name: 'Apr', revenue: 25000 },
-    { name: 'May', revenue: 32000 },
-    { name: 'Jun', revenue: 28000 },
-  ];
+const recentActivities = [
+  {
+    id: 1,
+    type: 'INQUIRY',
+    title: 'New Inquiry Received',
+    description: 'for Apartment #3 - Luxury Studio',
+    time: '2 hours ago',
+    status: 'Pending',
+    icon: IconMail,
+    color: 'amber',
+    href: '/landlord/inquiries'
+  },
+  {
+    id: 2,
+    type: 'BOOKING',
+    title: 'Booking Confirmed',
+    description: 'James Wilson booked Sunset Villa',
+    time: '5 hours ago',
+    status: 'Confirmed',
+    icon: IconCalendarCheck,
+    color: 'emerald',
+    href: '/landlord/bookings'
+  },
+  {
+    id: 3,
+    type: 'REVIEW',
+    title: 'New 5-Star Review',
+    description: 'from Sarah Jenkins about Loft #12',
+    time: 'Yesterday',
+    status: 'Published',
+    icon: IconStar,
+    color: 'blue',
+    href: '/landlord/reviews'
+  },
+  {
+    id: 4,
+    type: 'PAYMENT',
+    title: 'Payment Received',
+    description: '₱12,500 from Unit 4B Monthly Rent',
+    time: '2 days ago',
+    status: 'Success',
+    icon: IconCreditCard,
+    color: 'purple',
+    href: '/landlord/payments'
+  }
+];
 
-  const quickActions = [
-    {
-      title: 'Add Property',
-      icon: FaPlus,
-      href: '/landlord/properties/create',
-      description: 'List a new property for rent',
-    },
-    {
-      title: 'View Inquiries',
-      icon: FaEye,
-      href: '/landlord/inquiries',
-      description: 'Check pending inquiries',
-    },
-    {
-      title: 'Manage Bookings',
-      icon: FaCalendarCheck,
-      href: '/landlord/bookings',
-      description: 'View confirmed bookings',
-    },
-  ];
+export default function LandlordDashboardClient({ stats }: LandlordDashboardClientProps) {
+  const [filter, setFilter] = useState('ALL');
 
   const statsCards = [
     {
       label: 'Total Properties',
       value: stats.totalProperties,
-      icon: FaBuilding,
+      icon: IconBuilding,
       color: 'blue',
     },
     {
       label: 'Active Listings',
       value: stats.activeListings,
-      icon: FaBuilding,
+      icon: IconBuilding,
       color: 'green',
     },
     {
       label: 'Pending Inquiries',
       value: stats.pendingInquiries,
-      icon: FaEnvelope,
+      icon: IconMessage2,
       color: 'yellow',
     },
     {
       label: 'Confirmed Bookings',
       value: stats.confirmedBookings,
-      icon: FaCalendarCheck,
+      icon: IconCalendarCheck,
       color: 'purple',
     },
     {
       label: 'Average Rating',
       value: stats.averageRating.toFixed(1),
-      icon: FaStar,
+      icon: IconStar,
       color: 'orange',
     },
     {
       label: 'Total Reviews',
       value: stats.totalReviews,
-      icon: FaStar,
+      icon: IconStar,
       color: 'red',
     },
     {
       label: 'Monthly Revenue',
       value: `₱${stats.monthlyRevenue.toLocaleString()}`,
-      icon: FaChartLine,
+      icon: IconChartLine,
       color: 'indigo',
     },
   ];
 
+  const quickActions = [
+    {
+      title: 'Add Property',
+      icon: IconPlus,
+      href: '/landlord/properties/create',
+      description: 'List a new property for rent',
+    },
+    {
+      title: 'View Inquiries',
+      icon: IconEye,
+      href: '/landlord/inquiries',
+      description: 'Check pending inquiries',
+    },
+    {
+      title: 'Manage Bookings',
+      icon: IconCalendarCheck,
+      href: '/landlord/bookings',
+      description: 'View confirmed bookings',
+    },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-10 pb-20">
       {/* Page Header */}
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary hover:scale-110 transition-transform duration-300">
-            <FaHome size={22} />
+      <div className="bg-white dark:bg-gray-950 p-8 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-2xl shadow-gray-200/50 dark:shadow-black/20">
+        <div className="flex items-center gap-6">
+          <div className="w-16 h-16 bg-primary/10 text-primary rounded-[24px] flex items-center justify-center shadow-inner">
+            <IconHome size={32} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-0.5 tracking-tight">
+            <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-1.5 tracking-tighter">
               Landlord Dashboard
             </h1>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 max-w-2xl">
-              Manage your properties, inquiries, and bookings efficiently with real-time insights
+            <p className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+              High-level overview of your rental empire
             </p>
           </div>
         </div>
@@ -140,23 +184,23 @@ export default function LandlordDashboardClient({ stats }: LandlordDashboardClie
             <Link
               key={action.title}
               href={action.href}
-              className="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:shadow-xl hover:border-primary/20 transition-all duration-300 shadow-sm"
+              className="group relative bg-white dark:bg-gray-900 rounded-[28px] border border-gray-100 dark:border-gray-800 p-8 hover:shadow-2xl hover:border-primary/30 transition-all duration-500 overflow-hidden"
             >
-              <div className="relative z-10 flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                  <Icon size={20} />
+              <div className="relative z-10 flex flex-col items-start gap-4">
+                <div className="w-14 h-14 bg-primary/10 text-primary rounded-[20px] flex items-center justify-center group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-sm">
+                  <Icon size={24} strokeWidth={2.5} />
                 </div>
-                <div className="flex-1 pr-6">
-                  <h3 className="text-lg font-black text-gray-900 dark:text-white mb-1 group-hover:text-primary transition-colors tracking-tight">
+                <div>
+                  <h3 className="text-xl font-black text-gray-900 dark:text-white mb-1 tracking-tight">
                     {action.title}
                   </h3>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 leading-relaxed">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 leading-relaxed uppercase tracking-tighter text-[11px]">
                     {action.description}
                   </p>
                 </div>
-              </div>
-              <div className="absolute right-6 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-300">
-                <FaChevronRight size={14} className="text-primary" />
+                <div className="mt-2 w-10 h-10 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center group-hover:bg-primary/5 transition-all">
+                   <IconArrowRight size={18} className="text-primary translate-x-0 group-hover:translate-x-1 transition-transform" />
+                </div>
               </div>
             </Link>
           );
@@ -180,94 +224,94 @@ export default function LandlordDashboardClient({ stats }: LandlordDashboardClie
           return (
             <div
               key={stat.label}
-              className="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:shadow-xl hover:border-primary/20 transition-all duration-300 shadow-sm overflow-hidden"
+              className="group relative bg-white dark:bg-gray-900 rounded-[24px] border border-gray-100 dark:border-gray-800 p-6 hover:shadow-xl hover:border-primary/20 transition-all duration-500 shadow-sm overflow-hidden"
             >
               <div className="flex items-start justify-between mb-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colors[stat.color] || 'text-primary bg-primary/10'} group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon size={22} />
+                <div className={`w-12 h-12 rounded-[18px] flex items-center justify-center ${colors[stat.color] || 'text-primary bg-primary/10'} group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
+                  <Icon size={22} strokeWidth={2.5} />
                 </div>
-                {index === 1 && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-sm shadow-emerald-500/50" />}
+                {index === 1 && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />}
               </div>
               <div>
-                <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
                   {stat.label}
                 </p>
-                <p className="text-3xl font-black text-gray-900 dark:text-white mb-2 tracking-tight group-hover:text-primary transition-colors">
+                <p className="text-2xl font-black text-gray-900 dark:text-white mb-2 tracking-tighter group-hover:text-primary transition-colors">
                   {stat.value}
                 </p>
-                <p className="text-[12px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-500/10 inline-flex px-2 py-0.5 rounded-md">
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-500/10 inline-flex px-2 py-0.5 rounded-lg shadow-sm">
                   +12.5% vs last month
                 </p>
               </div>
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/50 to-primary transform scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-500" />
             </div>
           );
         })}
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue & Bookings Overview */}
-        <div>
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartAreaInteractive />
         </div>
-
-        {/* Property Type Distribution */}
-        <div>
+        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartPieLabel />
         </div>
-
-        {/* Monthly Bookings & Revenue */}
-        <div>
+        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartLineInteractive />
         </div>
+        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+             <div>
+                <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 text-primary rounded-xl">
+                    <IconActivity size={18} />
+                  </div>
+                  Recent Activity
+                </h3>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Real-time system updates</p>
+             </div>
+             <Button outline className="rounded-[18px] py-1.5 px-4 text-[10px] font-black uppercase tracking-widest min-w-max w-auto">
+               View All History
+             </Button>
+          </div>
+          
+          <div className="space-y-4">
+            {recentActivities.map((activity) => {
+              const Icon = activity.icon;
+              const accentColor: Record<string, string> = {
+                amber: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/30',
+                emerald: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30',
+                blue: 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/30',
+                purple: 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-900/30',
+              };
 
-        {/* Property Performance Metrics */}
-        <div>
-          <ChartRadarDots />
-        </div>
-
-        {/* Review Ratings */}
-        <div>
-          <ChartRadialLabel />
-        </div>
-
-        {/* Inquiry Sources */}
-        <div>
-          <ChartTooltipDefault />
-        </div>
-
-        {/* Monthly Revenue by Property */}
-        <div className="lg:col-span-2">
-          <ChartBarInteractive />
-        </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
-        <h3 className="text-xl font-black text-gray-900 dark:text-white mb-6">
-          Recent Activity
-        </h3>
-        <div className="space-y-4">
-          {/* Placeholder activity items */}
-          {[1, 2, 3, 4].map((item) => (
-            <div key={item} className="group flex items-center gap-4 p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/20 transition-all duration-300">
-              <div className="flex-shrink-0 w-12 h-12 bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 flex items-center justify-center group-hover:scale-110 group-hover:border-primary/30 transition-transform duration-300 shadow-sm">
-                <FaEnvelope size={18} className="text-gray-400 group-hover:text-primary transition-colors" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-black text-gray-900 dark:text-white mb-0.5 group-hover:text-primary transition-colors tracking-tight">
-                  New inquiry received
-                </p>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                  for <span className="font-bold text-gray-700 dark:text-gray-300">Apartment #3</span> • 2 hours ago
-                </p>
-              </div>
-              <span className="text-[10px] uppercase tracking-widest font-black px-3 py-1 bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-md border border-amber-500/20">
-                Pending
-              </span>
-            </div>
-          ))}
+              return (
+                <Link
+                  key={activity.id}
+                  href={activity.href}
+                  className="group flex items-center gap-5 p-5 bg-gray-50/50 dark:bg-gray-900/50 rounded-[28px] border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:bg-white dark:hover:bg-gray-900 hover:shadow-xl transition-all duration-500"
+                >
+                  <div className={cn("flex-shrink-0 w-14 h-14 rounded-[22px] flex items-center justify-center border-2 transition-transform duration-500 group-hover:scale-110 shadow-sm", accentColor[activity.color])}>
+                    <Icon size={24} strokeWidth={2.5} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-4 mb-0.5">
+                      <p className="text-base font-black text-gray-900 dark:text-white group-hover:text-primary transition-colors tracking-tight truncate">
+                        {activity.title}
+                      </p>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest shrink-0">{activity.time}</span>
+                    </div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                       {activity.description}
+                    </p>
+                  </div>
+                  <div className={cn("hidden sm:flex items-center px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border", accentColor[activity.color])}>
+                    {activity.status}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

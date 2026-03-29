@@ -23,14 +23,16 @@ import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { cn } from '@/utils/helper';
 import Button from '@/components/common/Button';
 
-// Step Components (Ported from host-application)
-import PropertyBasicStep from '@/components/host-application/PropertyBasicStep';
-import PropertyConfigStep from '@/components/host-application/PropertyConfigStep';
-import LocationStep from '@/components/host-application/LocationStep';
-import PropertyImagesStep from '@/components/host-application/PropertyImagesStep';
-import RoomConfigStep from '@/components/host-application/RoomConfigStep';
-import DocumentsStep from '@/components/host-application/DocumentsStep';
-import ReviewStep from '@/components/host-application/ReviewStep';
+import dynamic from 'next/dynamic';
+
+// Dynamically imported Step Components (Optimized rendering)
+const PropertyBasicStep = dynamic(() => import('@/components/host-application/PropertyBasicStep'), { ssr: false });
+const PropertyConfigStep = dynamic(() => import('@/components/host-application/PropertyConfigStep'), { ssr: false });
+const LocationStep = dynamic(() => import('@/components/host-application/LocationStep'), { ssr: false });
+const PropertyImagesStep = dynamic(() => import('@/components/host-application/PropertyImagesStep'), { ssr: false });
+const RoomConfigStep = dynamic(() => import('@/components/host-application/RoomConfigStep'), { ssr: false });
+const DocumentsStep = dynamic(() => import('@/components/host-application/DocumentsStep'), { ssr: false });
+const ReviewStep = dynamic(() => import('@/components/host-application/ReviewStep'), { ssr: false });
 
 const STEPS = [
   { id: 'basic', title: 'Basic Info', icon: Building2 },

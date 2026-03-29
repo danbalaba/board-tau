@@ -81,8 +81,8 @@ export async function hasPendingLandlordApplication(): Promise<boolean> {
 
     // If user is not a landlord yet but has an application pending
     return userFromDb?.role === "user" &&
-           userFromDb.landlordApprovedAt === null &&
-           userFromDb.isVerifiedLandlord === false;
+      userFromDb.landlordApprovedAt === null &&
+      userFromDb.isVerifiedLandlord === false;
   } catch {
     return false;
   }
