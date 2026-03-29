@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Toast as ToastType, Toaster as HotToaster } from "react-hot-toast";
+import { Toast as ToastType, Toaster as HotToaster, toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AiFillCheckCircle,
@@ -43,13 +43,13 @@ const toastVariants = {
 };
 
 // Premium glassmorphism toast component
-const GlassToast = ({ toast }: { toast: ToastType }) => {
-  const variant = toastVariants[toast.type as keyof typeof toastVariants] || toastVariants.info;
+const GlassToast = ({ toast: toastInstance }: { toast: ToastType }) => {
+  const variant = toastVariants[toastInstance.type as keyof typeof toastVariants] || toastVariants.info;
   const IconComponent = variant.icon;
 
   return (
     <AnimatePresence mode="wait">
-      {toast.visible && (
+      {toastInstance.visible && (
         <motion.div
           initial={{
             opacity: 0,
@@ -117,19 +117,17 @@ const GlassToast = ({ toast }: { toast: ToastType }) => {
                 transition={{ delay: 0.2 }}
                 className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-relaxed"
               >
-                {typeof toast.message === "string" ? toast.message : " "}
+                {typeof toastInstance.message === "string" ? toastInstance.message : " "}
               </motion.p>
             </div>
 
             {/* Close button */}
-            {toast.type !== "loading" && (
+            {toastInstance.type !== "loading" && (
               <motion.button
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 }}
-                onClick={() => {
-                  // @ts-ignore - dismiss functionality exists in react-hot-toast
-                }}
+                onClick={() => toast.dismiss(toastInstance.id)}
                 className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300
                          transition-colors duration-200 p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
               >
@@ -139,12 +137,12 @@ const GlassToast = ({ toast }: { toast: ToastType }) => {
           </div>
 
           {/* Progress indicator (for auto-dismiss) */}
-          {toast.duration && (
+          {toastInstance.duration && (
             <motion.div
               initial={{ width: "100%" }}
               animate={{ width: "0%" }}
               transition={{
-                duration: toast.duration / 1000,
+                duration: toastInstance.duration / 1000,
                 ease: "linear",
               }}
               className="absolute bottom-0 left-0 h-0.5 bg-current opacity-30"
