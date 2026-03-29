@@ -145,7 +145,9 @@ const AuthModal = ({
               throw new Error(callback.error);
             }
           } else if (callback?.ok) {
-            toast.success("You've successfully logged in.");
+            toast.success("You've successfully logged in.", {
+              duration: 3000,
+            });
             onCloseModal?.();
 
             // Fetch user role to determine redirect

@@ -165,7 +165,7 @@ export function ChartLineInteractive() {
               stroke={chartConfig[activeChart as keyof typeof chartConfig].color}
               strokeWidth={4}
               dot={{ r: 6, fill: 'white', stroke: chartConfig[activeChart as keyof typeof chartConfig].color, strokeWidth: 3 }}
-              activeDot={{ r: 8, fill: chartConfig[activeChart as keyof typeof chartConfig].color, stroke: 'white', strokeWidth: 3, shadow: '0 0 10px var(--primary)' }}
+              activeDot={{ r: 8, fill: chartConfig[activeChart as keyof typeof chartConfig].color, stroke: 'white', strokeWidth: 3 }}
             />
           </LineChart>
         </ChartContainer>
