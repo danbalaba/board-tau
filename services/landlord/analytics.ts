@@ -13,6 +13,7 @@ export const getLandlordDashboardStats = async () => {
     confirmedBookingsCount,
     reviewStats,
     revenueStats,
+    occupancyData,
   ] = await Promise.all([
     // Total properties (active + pending)
     db.listing.count({
@@ -70,7 +71,69 @@ export const getLandlordDashboardStats = async () => {
       },
       _sum: { totalPrice: true },
     }),
+    // Occupancy statistics
+    (async () => {
+      // Get all rooms for landlord's properties
+      const properties = await db.listing.findMany({
+        where: {
+          userId: landlord.id,
+          status: "active",
+        },
+        include: {
+          rooms: true,
+        },
+      });
+
+      // Calculate total capacity and occupied rooms
+      let totalCapacity = 0;
+      let occupiedRooms = 0;
+
+      for (const property of properties) {
+        for (const room of property.rooms) {
+          totalCapacity += room.capacity;
+          // Count active reservations for this room
+          const activeReservations = await db.reservation.count({
+            where: {
+              roomId: room.id,
+              status: "RESERVED",
+              startDate: { lte: new Date() },
+              endDate: { gte: new Date() },
+            },
+          });
+          occupiedRooms += Math.min(activeReservations, room.capacity);
+        }
+      }
+
+      // Count reservations ending within 30 days (expiring leases)
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
+      const expiringLeases = await db.reservation.count({
+        where: {
+          listing: {
+            userId: landlord.id,
+          },
+          status: "RESERVED",
+          endDate: {
+            gte: new Date(),
+            lte: thirtyDaysFromNow,
+          },
+        },
+      });
+
+      return {
+        vacantRooms: totalCapacity - occupiedRooms,
+        occupiedRooms,
+        expiringLeases,
+      };
+    })(),
   ]);
+
+  // Calculate occupancy rate
+  const totalRooms = occupancyData.vacantRooms + occupancyData.occupiedRooms;
+  const occupancyRate = totalRooms > 0 
+    ? Math.round((occupancyData.occupiedRooms / totalRooms) * 100) 
+    : 0;
 
   return {
     totalProperties: propertyCount,
@@ -80,6 +143,10 @@ export const getLandlordDashboardStats = async () => {
     averageRating: reviewStats._avg.rating || 0,
     totalReviews: reviewStats._count.id,
     monthlyRevenue: revenueStats._sum.totalPrice || 0,
+    occupancyRate,
+    vacantRooms: occupancyData.vacantRooms,
+    occupiedRooms: occupancyData.occupiedRooms,
+    expiringLeases: occupancyData.expiringLeases,
   };
 };
 

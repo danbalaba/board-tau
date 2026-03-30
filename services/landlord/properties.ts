@@ -348,150 +348,163 @@ export const updateProperty = async (propertyId: string, data: any) => {
     const safeImages = Array.isArray(images) ? images : [];
     const safeCategory = Array.isArray(category) ? category : [];
 
-    // 1. Update base listing
-    const listing = await db.listing.update({
-      where: {
-        id: propertyId,
-      },
-      data: {
-        title: title || existing.title,
-        description: description || existing.description,
-        price: safePrice,
-        roomCount: safeRoomCount,
-        bathroomCount: safeBathroomCount,
-        country: country || existing.country,
-        region: region || existing.region,
-        latitude: safeLat,
-        longitude: safeLng,
-        location: {
-          type: "Point",
-          coordinates: [safeLng, safeLat],
-        },
-        imageSrc: safeImages[0] || existing.imageSrc,
-        status: "pending", // Re-verify on edit
-      },
-    });
+    // OPTIMIZATION: Only update listing if values actually changed
+    const titleChanged = title !== undefined && title !== existing.title;
+    const descriptionChanged = description !== undefined && description !== existing.description;
+    const priceChanged = safePrice !== existing.price;
+    const roomCountChanged = safeRoomCount !== existing.roomCount;
+    const bathroomCountChanged = safeBathroomCount !== existing.bathroomCount;
+    const countryChanged = country !== undefined && country !== existing.country;
+    const regionChanged = region !== undefined && region !== existing.region;
+    const imageChanged = safeImages.length > 0 && safeImages[0] !== existing.imageSrc;
 
-    console.log("DEBUG: Base listing updated:", listing.id);
+    // 1. Update base listing (only if something changed)
+    const listingUpdateData: any = {};
+    if (titleChanged) listingUpdateData.title = title;
+    if (descriptionChanged) listingUpdateData.description = description;
+    if (priceChanged) listingUpdateData.price = safePrice;
+    if (roomCountChanged) listingUpdateData.roomCount = safeRoomCount;
+    if (bathroomCountChanged) listingUpdateData.bathroomCount = safeBathroomCount;
+    if (countryChanged) listingUpdateData.country = country;
+    if (regionChanged) listingUpdateData.region = region;
+    if (imageChanged) listingUpdateData.imageSrc = safeImages[0];
+    listingUpdateData.latitude = safeLat;
+    listingUpdateData.longitude = safeLng;
+    listingUpdateData.location = { type: "Point", coordinates: [safeLng, safeLat] };
+    listingUpdateData.status = "pending";
 
-    // 2. Update/Create Amenities
-    if (amenities) {
-      await db.listingAmenity.upsert({
-        where: { listingId: propertyId },
-        update: {
-          wifi: safeAmenities.some((a: string) => String(a).toLowerCase().includes("wifi")),
-          parking: safeAmenities.some((a: string) => String(a).toLowerCase().includes("parking")),
-          pool: safeAmenities.some((a: string) => String(a).toLowerCase().includes("pool")),
-          gym: safeAmenities.some((a: string) => String(a).toLowerCase().includes("gym")),
-          airConditioning: safeAmenities.some((a: string) => String(a).toLowerCase().includes("air cond")),
-          laundry: safeAmenities.some((a: string) => String(a).toLowerCase().includes("laundry")),
-        },
-        create: {
-          listingId: propertyId,
-          wifi: safeAmenities.some((a: string) => String(a).toLowerCase().includes("wifi")),
-          parking: safeAmenities.some((a: string) => String(a).toLowerCase().includes("parking")),
-          pool: safeAmenities.some((a: string) => String(a).toLowerCase().includes("pool")),
-          gym: safeAmenities.some((a: string) => String(a).toLowerCase().includes("gym")),
-          airConditioning: safeAmenities.some((a: string) => String(a).toLowerCase().includes("air cond")),
-          laundry: safeAmenities.some((a: string) => String(a).toLowerCase().includes("laundry")),
-        }
-      });
-    }
+    const listing = Object.keys(listingUpdateData).length > 0 
+      ? await db.listing.update({
+          where: { id: propertyId },
+          data: listingUpdateData,
+        })
+      : existing;
 
-    // 3. Update/Create Rules
-    await db.listingRule.upsert({
-      where: { listingId: propertyId },
-      update: {
-        femaleOnly: !!femaleOnly,
-        maleOnly: !!maleOnly,
-        visitorsAllowed: visitorsAllowed !== false,
-        petsAllowed: !!petsAllowed,
-        smokingAllowed: !!smokingAllowed,
-      },
-      create: {
-        listingId: propertyId,
-        femaleOnly: !!femaleOnly,
-        maleOnly: !!maleOnly,
-        visitorsAllowed: visitorsAllowed !== false,
-        petsAllowed: !!petsAllowed,
-        smokingAllowed: !!smokingAllowed,
-      }
-    });
+    // OPTIMIZATION: Run independent database operations in PARALLEL
+    const updatePromises: Promise<any>[] = [];
 
-    // 4. Update/Create Features
-    await db.listingFeature.upsert({
-      where: { listingId: propertyId },
-      update: {
-        security24h: !!security24h,
-        cctv: !!cctv,
-        fireSafety: !!fireSafety,
-        nearTransport: nearTransport !== false,
-        studyFriendly: studyFriendly !== false,
-        quietEnvironment: !!quietEnvironment,
-        flexibleLease: flexibleLease !== false,
-      },
-      create: {
-        listingId: propertyId,
-        security24h: !!security24h,
-        cctv: !!cctv,
-        fireSafety: !!fireSafety,
-        nearTransport: nearTransport !== false,
-        studyFriendly: studyFriendly !== false,
-        quietEnvironment: !!quietEnvironment,
-        flexibleLease: flexibleLease !== false,
-      }
-    });
-
-    // 5. Update Categories
-    if (category) {
-      await db.listingCategory.deleteMany({
-        where: { listingId: propertyId },
-      });
-      for (const cat of safeCategory) {
-        const categoryRecord = await db.category.upsert({
-          where: { name: String(cat) },
-          update: {},
-          create: {
-            name: String(cat),
-            label: String(cat),
-            icon: "default-icon",
+    // 2. Update/Create Amenities (only if provided)
+    if (amenities !== undefined && existing.amenities) {
+      updatePromises.push(
+        db.listingAmenity.upsert({
+          where: { listingId: propertyId },
+          update: {
+            wifi: safeAmenities.some((a: string) => String(a).toLowerCase().includes("wifi")),
+            parking: safeAmenities.some((a: string) => String(a).toLowerCase().includes("parking")),
+            pool: safeAmenities.some((a: string) => String(a).toLowerCase().includes("pool")),
+            gym: safeAmenities.some((a: string) => String(a).toLowerCase().includes("gym")),
+            airConditioning: safeAmenities.some((a: string) => String(a).toLowerCase().includes("air cond")),
+            laundry: safeAmenities.some((a: string) => String(a).toLowerCase().includes("laundry")),
           },
-        });
-        await db.listingCategory.create({
-          data: {
+          create: {
             listingId: propertyId,
-            categoryId: categoryRecord.id,
+            wifi: safeAmenities.some((a: string) => String(a).toLowerCase().includes("wifi")),
+            parking: safeAmenities.some((a: string) => String(a).toLowerCase().includes("parking")),
+            pool: safeAmenities.some((a: string) => String(a).toLowerCase().includes("pool")),
+            gym: safeAmenities.some((a: string) => String(a).toLowerCase().includes("gym")),
+            airConditioning: safeAmenities.some((a: string) => String(a).toLowerCase().includes("air cond")),
+            laundry: safeAmenities.some((a: string) => String(a).toLowerCase().includes("laundry")),
           }
-        });
-      }
+        })
+      );
     }
 
-    // 6. Update Images
-    if (images) {
-      await db.listingImage.deleteMany({
-        where: { listingId: propertyId },
-      });
-      for (let i = 0; i < safeImages.length; i++) {
-        await db.listingImage.create({
-          data: {
+    // 3. Update/Create Rules (always update if provided)
+    if (femaleOnly !== undefined || maleOnly !== undefined || visitorsAllowed !== undefined || petsAllowed !== undefined || smokingAllowed !== undefined) {
+      updatePromises.push(
+        db.listingRule.upsert({
+          where: { listingId: propertyId },
+          update: {
+            femaleOnly: !!femaleOnly,
+            maleOnly: !!maleOnly,
+            visitorsAllowed: visitorsAllowed !== false,
+            petsAllowed: !!petsAllowed,
+            smokingAllowed: !!smokingAllowed,
+          },
+          create: {
             listingId: propertyId,
-            url: safeImages[i],
-            order: i,
+            femaleOnly: !!femaleOnly,
+            maleOnly: !!maleOnly,
+            visitorsAllowed: visitorsAllowed !== false,
+            petsAllowed: !!petsAllowed,
+            smokingAllowed: !!smokingAllowed,
           }
-        });
-      }
+        })
+      );
     }
 
-    // Update rooms if provided
-    if (rooms) {
-      // Delete existing rooms
-      await db.room.deleteMany({
-        where: { listingId: propertyId },
-      });
+    // 4. Update/Create Features (always update if provided)
+    if (security24h !== undefined || cctv !== undefined || fireSafety !== undefined || 
+        nearTransport !== undefined || studyFriendly !== undefined || quietEnvironment !== undefined || flexibleLease !== undefined) {
+      updatePromises.push(
+        db.listingFeature.upsert({
+          where: { listingId: propertyId },
+          update: {
+            security24h: !!security24h,
+            cctv: !!cctv,
+            fireSafety: !!fireSafety,
+            nearTransport: nearTransport !== false,
+            studyFriendly: studyFriendly !== false,
+            quietEnvironment: !!quietEnvironment,
+            flexibleLease: flexibleLease !== false,
+          },
+          create: {
+            listingId: propertyId,
+            security24h: !!security24h,
+            cctv: !!cctv,
+            fireSafety: !!fireSafety,
+            nearTransport: nearTransport !== false,
+            studyFriendly: studyFriendly !== false,
+            quietEnvironment: !!quietEnvironment,
+            flexibleLease: flexibleLease !== false,
+          }
+        })
+      );
+    }
 
-      // Create new rooms
+    // 5. Update Categories (only if provided and changed)
+    if (category !== undefined) {
+      updatePromises.push(
+        (async () => {
+          await db.listingCategory.deleteMany({ where: { listingId: propertyId } });
+          const categoryPromises = safeCategory.map(async (cat: string) => {
+            const categoryRecord = await db.category.upsert({
+              where: { name: String(cat) },
+              update: {},
+              create: { name: String(cat), label: String(cat), icon: "default-icon" },
+            });
+            return db.listingCategory.create({
+              data: { listingId: propertyId, categoryId: categoryRecord.id }
+            });
+          });
+          await Promise.all(categoryPromises);
+        })()
+      );
+    }
+
+    // 6. Update Images (only if provided and changed)
+    if (images !== undefined && safeImages.length > 0) {
+      updatePromises.push(
+        (async () => {
+          await db.listingImage.deleteMany({ where: { listingId: propertyId } });
+          const imagePromises = safeImages.map((url: string, idx: number) => 
+            db.listingImage.create({ data: { listingId: propertyId, url, order: idx } })
+          );
+          await Promise.all(imagePromises);
+        })()
+      );
+    }
+
+    // Execute all parallel operations
+    if (updatePromises.length > 0) {
+      await Promise.all(updatePromises);
+    }
+
+    // 7. Update rooms if provided (needs to be sequential for proper ordering)
+    if (rooms !== undefined) {
+      await db.room.deleteMany({ where: { listingId: propertyId } });
+      
       for (const room of rooms) {
-        // Normalize BedType
         let bedType = "SINGLE";
         const bt = String(room.bedType || "").toUpperCase();
         if (bt.includes("DOUBLE")) bedType = "DOUBLE";
@@ -520,25 +533,19 @@ export const updateProperty = async (propertyId: string, data: any) => {
           },
         });
 
-        // Room Amenities
+        // Room amenities in parallel
         if (room.amenities && room.amenities.length > 0) {
-          for (const amenityName of room.amenities) {
+          const amenityPromises = (room.amenities as string[]).map(async (amenityName: string) => {
             const amenityRecord = await db.roomAmenityType.upsert({
               where: { name: String(amenityName) },
               update: {},
-              create: {
-                name: String(amenityName),
-                icon: "default-icon",
-              },
+              create: { name: String(amenityName), icon: "default-icon" },
             });
-
-            await db.roomAmenity.create({
-              data: {
-                roomId: createdRoom.id,
-                amenityTypeId: amenityRecord.id,
-              }
+            return db.roomAmenity.create({
+              data: { roomId: createdRoom.id, amenityTypeId: amenityRecord.id }
             });
-          }
+          });
+          await Promise.all(amenityPromises);
         }
       }
     }
