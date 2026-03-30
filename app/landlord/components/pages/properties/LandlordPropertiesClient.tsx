@@ -25,7 +25,8 @@ import {
   IconCalendarFilled,
   IconCurrencyPeso,
   IconLayoutGrid,
-  IconList
+  IconList,
+  IconLoader2
 } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
@@ -33,6 +34,7 @@ import Button from '@/components/common/Button';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 const ModernSelect = dynamic(() => import('@/components/common/ModernSelect'), { ssr: false });
+import ModernSearchInput from '@/components/common/ModernSearchInput';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,6 +74,7 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
   const [isDeleting, setIsDeleting] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filteredListings, setFilteredListings] = useState(listings);
 
   // Sync state with props when the page refreshes
   useEffect(() => {
@@ -80,7 +83,7 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
   }, [properties]);
 
   const sortedListings = useMemo(() => {
-    return [...listings].sort((a, b) => {
+    return [...filteredListings].sort((a, b) => {
       switch (sortBy) {
         case 'oldest':
           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -95,7 +98,7 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }
     });
-  }, [listings, sortBy]);
+  }, [filteredListings, sortBy]);
 
   const sortOptions = useMemo(() => [
     { value: 'newest', label: 'Newest', icon: IconHistory },
@@ -149,7 +152,10 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
       const data = await response.json();
 
       if (data.success && data.data) {
-        setListings((prev) => [...prev, ...data.data.listings]);
+        const newListings = data.data.listings;
+        setListings((prev) => [...prev, ...newListings]);
+        // Critical Fix: Sync filteredListings so search results include new items
+        setFilteredListings((prev) => [...prev, ...newListings]);
         setNextCursor(data.data.nextCursor);
       }
     } catch (error) {
@@ -228,66 +234,123 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
               initial={{ opacity: 0, scale: 0.95, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 40 }}
-              className="relative bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-8 max-w-xl w-full shadow-2xl overflow-hidden"
+              className="relative bg-white dark:bg-gray-900 rounded-[40px] border border-gray-100 dark:border-gray-800 max-w-2xl w-full shadow-2xl overflow-hidden group"
             >
+              {/* Background Accent Bloom */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
+
+              {/* Close Button */}
               <button
                 onClick={() => setViewModalOpen(false)}
-                className="absolute top-6 right-6 p-2 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="absolute top-6 right-6 z-50 p-2.5 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-2xl text-white transition-all active:scale-90"
               >
-                <IconX size={18} />
+                <IconX size={20} />
               </button>
 
-              <div className="flex flex-col gap-6 max-h-[85vh] overflow-y-auto pr-2 custom-scrollbar">
-                {/* Header Section */}
-                <div className="flex items-start gap-6">
-                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden flex-shrink-0 shadow-lg border-2 border-white dark:border-gray-800">
-                    {selectedProperty.imageSrc ? (
-                      <img src={selectedProperty.imageSrc} className="w-full h-full object-cover" alt="" />
-                    ) : (
-                      <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center"><IconBuilding size={32} className="text-gray-300" /></div>
-                    )}
-                  </div>
-                  <div className="flex-1 pt-1">
-                    <div className={cn(
-                      "inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border mb-3",
-                      statusColors[selectedProperty.status]
-                    )}>
-                      {formatStatus(selectedProperty.status)}
-                    </div>
-                    <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-tight mb-2">{selectedProperty.title}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">{selectedProperty.description}</p>
-                  </div>
-                </div>
-
-                {/* Details Grid */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    { label: 'Monthly Price', value: `₱${selectedProperty.price.toLocaleString()}`, icon: IconBuilding, color: 'text-primary' },
-                    { label: 'Room Count', value: selectedProperty.roomCount, icon: IconBuilding, color: 'text-blue-500' },
-                    { label: 'Bathrooms', value: selectedProperty.bathroomCount, icon: IconBath, color: 'text-purple-500' },
-                    { label: 'Registered', value: new Date(selectedProperty.createdAt).toLocaleDateString(), icon: IconPlus, color: 'text-orange-500' },
-                  ].map((item, i) => (
-                    <div key={i} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
-                      <div className={cn("w-8 h-8 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center mb-2 shadow-sm", item.color)}>
-                        <item.icon size={14} />
+              <div className="max-h-[90vh] overflow-y-auto custom-scrollbar">
+                {/* Hero Section */}
+                <div className="relative h-64 md:h-80 w-full overflow-hidden">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={selectedProperty.id}
+                      initial={{ scale: 1.1, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.8 }}
+                      className="w-full h-full"
+                    >
+                      {selectedProperty.imageSrc ? (
+                        <img 
+                          src={selectedProperty.imageSrc} 
+                          className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
+                          alt={selectedProperty.title} 
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                          <IconBuilding size={80} className="text-gray-300" />
+                        </div>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+                  
+                  {/* Overlay Polish */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/20 to-transparent" />
+                  
+                  <div className="absolute bottom-6 left-8 right-8">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="flex flex-col gap-3"
+                    >
+                      <div className={cn(
+                        "inline-flex items-center self-start px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] border shadow-lg backdrop-blur-md",
+                        statusColors[selectedProperty.status]
+                      )}>
+                        <div className={cn("w-1.5 h-1.5 rounded-full mr-2 animate-pulse", statusColors[selectedProperty.status].split(' ')[0].replace('bg-', 'bg-').replace('/10', ''))} />
+                        {formatStatus(selectedProperty.status)}
                       </div>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{item.label}</p>
-                      <p className="text-base font-black text-gray-900 dark:text-white">{item.value}</p>
-                    </div>
-                  ))}
+                      <h3 className="text-3xl md:text-4xl font-black text-white leading-none tracking-tight">
+                        {selectedProperty.title}
+                      </h3>
+                    </motion.div>
+                  </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex flex-col sm:flex-row justify-center gap-3 pt-6 border-t border-gray-100 dark:border-gray-800">
-                  <Link href={`/landlord/properties/${selectedProperty.id}/edit`} className="w-full sm:w-auto">
-                    <Button className="rounded-xl w-full py-2.5 px-6 shadow-lg shadow-primary/20 flex items-center justify-center">
-                      <IconEdit className="mr-2" size={12} />
-                      Open Full Editor
+                <div className="p-8 md:p-10 space-y-10">
+                  {/* Detailed Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {[
+                      { label: 'Price (Monthly)', value: `₱${selectedProperty.price.toLocaleString()}`, icon: IconCurrencyPeso, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                      { label: 'Bedroom Units', value: selectedProperty.roomCount, icon: IconBuilding, color: 'text-primary', bg: 'bg-primary/10' },
+                      { label: 'Shared Baths', value: selectedProperty.bathroomCount, icon: IconBath, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                      { label: 'Created On', value: new Date(selectedProperty.createdAt).toLocaleDateString(), icon: IconCalendarFilled, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+                    ].map((item, i) => (
+                      <motion.div 
+                        key={i}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 * i }}
+                        className="p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-3xl border border-gray-100 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 transition-all hover:shadow-xl hover:shadow-gray-200/50 dark:hover:shadow-none"
+                      >
+                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-3 shadow-sm", item.bg, item.color)}>
+                          <item.icon size={18} strokeWidth={2.5} />
+                        </div>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">{item.label}</p>
+                        <p className="text-sm font-black text-gray-900 dark:text-white leading-none tracking-tight">{item.value}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Description Section */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-4 bg-gray-50 dark:bg-gray-800 inline-block px-3 py-1.5 rounded-full">Overview Content</h4>
+                    <p className="text-base font-medium text-gray-600 dark:text-gray-400 leading-relaxed italic border-l-4 border-primary/20 pl-6 py-2">
+                       "{selectedProperty.description}"
+                    </p>
+                  </motion.div>
+
+                  {/* Action Footer */}
+                  <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                    <Link href={`/landlord/properties/${selectedProperty.id}/edit`} className="flex-1">
+                      <Button className="w-full rounded-2xl py-4 px-8 text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-primary/20 group/btn">
+                        <span className="flex items-center justify-center gap-2">
+                          <IconEdit size={14} className="group-hover/btn:rotate-12 transition-transform" />
+                          Launch Full Editor
+                        </span>
+                      </Button>
+                    </Link>
+                    <Button 
+                      outline 
+                      onClick={() => setViewModalOpen(false)} 
+                      className="flex-1 rounded-2xl py-4 px-8 text-[11px] font-black uppercase tracking-widest border-gray-100 dark:border-gray-800"
+                    >
+                      Return to Listings
                     </Button>
-                  </Link>
-                  <Button outline onClick={() => setViewModalOpen(false)} className="rounded-xl w-full sm:w-auto py-2.5 px-6 flex items-center justify-center">
-                    Close Window
-                  </Button>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -299,9 +362,15 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm"
+        className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 md:p-5 rounded-2xl border border-primary/10 shadow-sm"
       >
-        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* Abstract background elements - Contained to avoid bleed without cutting off search dropdown */}
+        <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
+          <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-blue-400/10 rounded-full blur-xl" />
+        </div>
+
+        <div className="relative z-20 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="p-2.5 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary">
               <IconBuilding size={20} />
@@ -315,13 +384,43 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
               </p>
             </div>
           </div>
-          <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 w-full lg:w-auto mt-4 lg:mt-0">
-            <div className="flex flex-wrap items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
+          <div className="flex flex-col lg:flex-row items-center gap-4 w-full lg:w-auto mt-4 lg:mt-0">
+            {/* Optimized Search Bar */}
+            <div className="w-full lg:w-72">
+              <ModernSearchInput
+                data={listings}
+                searchKeys={['title', 'id', 'status']}
+                onSearch={setFilteredListings}
+                placeholder="Search properties..."
+                onSuggestionClick={(property) => {
+                  setSelectedProperty(property);
+                  setViewModalOpen(true);
+                }}
+                renderSuggestion={(property) => (
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                      {property.imageSrc ? (
+                        <img src={property.imageSrc} className="w-full h-full object-cover" alt="" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">
+                          <IconBuilding size={16} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-black text-gray-900 dark:text-white truncate">{property.title}</p>
+                      <p className="text-[10px] font-bold text-primary tracking-widest uppercase">₱{property.price.toLocaleString()}</p>
+                    </div>
+                  </div>
+                )}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5 bg-white/50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
               {[
                 { value: 'newest', label: 'Newest', icon: IconCalendarEvent },
                 { value: 'oldest', label: 'Oldest', icon: IconHistory },
-                { value: 'price_desc', label: 'High Price', icon: IconSortDescending },
-                { value: 'price_asc', label: 'Low Price', icon: IconSortAscending },
+                { value: 'price_desc', label: 'High', icon: IconSortDescending },
+                { value: 'price_asc', label: 'Low', icon: IconSortAscending },
                 { value: 'status', label: 'Status', icon: IconCircleCheck },
               ].map((option) => {
                 const Icon = option.icon;
@@ -331,58 +430,55 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
                     key={option.value}
                     onClick={() => setSortBy(option.value)}
                     className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300",
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-300",
                       isSelected
-                        ? "bg-primary text-white shadow-lg shadow-primary/30 scale-[1.02]"
-                        : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm"
+                        ? "bg-primary text-white shadow-md shadow-primary/30"
+                        : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700"
                     )}
                   >
-                    <Icon size={14} className={cn("transition-transform duration-300", isSelected && "rotate-3")} />
+                    <Icon size={12} className={cn("transition-transform duration-300", isSelected && "rotate-3")} />
                     <span>{option.label}</span>
                   </button>
                 );
               })}
             </div>
-            <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
+            <div className="flex items-center gap-1 bg-white/50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
               <button
                 onClick={() => setViewMode('grid')}
                 className={cn(
-                  "p-2 rounded-xl transition-all duration-300",
+                  "p-1.5 rounded-lg transition-all duration-300",
                   viewMode === 'grid'
-                    ? "bg-primary text-white shadow-lg shadow-primary/30"
-                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                    ? "bg-primary text-white shadow-md"
+                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400"
                 )}
                 title="Grid View"
               >
-                <IconLayoutGrid size={18} />
+                <IconLayoutGrid size={16} />
               </button>
               <button
                 onClick={() => setViewMode('list')}
                 className={cn(
-                  "p-2 rounded-xl transition-all duration-300",
+                  "p-1.5 rounded-lg transition-all duration-300",
                   viewMode === 'list'
-                    ? "bg-primary text-white shadow-lg shadow-primary/30"
-                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                    ? "bg-primary text-white shadow-md"
+                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400"
                 )}
                 title="List View"
               >
-                <IconList size={18} />
+                <IconList size={16} />
               </button>
             </div>
 
             <Link href="/landlord/properties/create" className="w-full sm:w-auto">
-              <Button className="rounded-xl w-full px-5 py-3 shadow-xl shadow-primary/20 group">
+              <Button className="rounded-xl w-full px-4 py-2.5 shadow-lg shadow-primary/20 group">
                 <span className="flex items-center gap-2">
-                  <IconPlus size={11} className="group-hover:rotate-90 transition-transform duration-300" />
-                  <span className="text-xs uppercase tracking-widest font-black">Add Property</span>
+                  <IconPlus size={10} className="group-hover:rotate-90 transition-transform duration-300" />
+                  <span className="text-[11px] uppercase tracking-wider font-black">Add Property</span>
                 </span>
               </Button>
             </Link>
           </div>
         </div>
-        {/* Abstract background elements */}
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
-        <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-blue-400/10 rounded-full blur-xl" />
       </motion.div>
 
       {/* Properties List */}
@@ -616,22 +712,93 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
         </div>
       )}
 
-      {/* Pagination / Load More */}
-      {nextCursor && (
-        <div className="flex justify-center pt-8">
-          <Button 
-            outline 
-            className="rounded-xl px-10 py-4 group transition-all hover:bg-primary hover:text-white"
-            onClick={handleLoadMore}
-            isLoading={isLoadingMore}
+      {/* Enhanced Pagination / Load More */}
+      <AnimatePresence>
+        {nextCursor && listings.length >= 16 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="flex flex-col items-center justify-center pt-16 pb-12 relative"
           >
-            <span className="flex items-center gap-2 uppercase font-black tracking-[0.15em] text-[10px]">
-              {isLoadingMore ? 'Fetching properties...' : 'Load More Properties'}
-              <IconChevronDown className={cn("group-hover:translate-y-0.5 transition-transform", isLoadingMore && "animate-bounce")} size={10} />
-            </span>
-          </Button>
-        </div>
-      )}
+            {/* Background Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-32 bg-primary/5 blur-[80px] rounded-full pointer-events-none" />
+            
+            <button 
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className={cn(
+                "group relative overflow-hidden rounded-2xl transition-all duration-500",
+                isLoadingMore 
+                  ? "cursor-default bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 px-12 py-5"
+                  : "bg-white dark:bg-gray-900 border border-primary/20 hover:border-primary/50 shadow-xl hover:shadow-2xl hover:shadow-primary/10 px-10 py-4 active:scale-95"
+              )}
+            >
+              {/* Animated Accent Bar */}
+              <motion.div 
+                className="absolute top-0 left-0 h-1 bg-primary"
+                initial={{ width: 0 }}
+                animate={isLoadingMore ? { 
+                  width: ["0%", "100%", "0%"],
+                  left: ["0%", "0%", "100%"]
+                } : { width: 0 }}
+                transition={isLoadingMore ? { 
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                } : {}}
+              />
+
+              <div className="relative flex flex-col items-center gap-3">
+                {isLoadingMore ? (
+                  <>
+                    <div className="flex items-center gap-3 text-primary">
+                      <motion.div 
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      >
+                        <IconLoader2 size={14} />
+                      </motion.div>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">
+                        Discovering more properties
+                      </span>
+                    </div>
+                    <div className="flex gap-1">
+                      {[1, 2, 3].map(i => (
+                        <motion.div 
+                          key={i}
+                          animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
+                          transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                          className="w-1 h-1 rounded-full bg-primary"
+                        />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-3 h-full">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+                      Explore More Properties
+                    </span>
+                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                      <IconChevronDown className="group-hover:translate-y-0.5 transition-transform" size={14} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </button>
+
+            {!isLoadingMore && (
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-4 text-[9px] font-bold text-gray-400 uppercase tracking-widest"
+              >
+                Showing {listings.length} properties
+              </motion.p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -30,11 +30,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 
-interface AccountSettingsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
 const accountSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
   newPassword: z.string().min(8, 'New password must be at least 8 characters'),

@@ -308,9 +308,9 @@ export default function LandlordCreatePropertyClient() {
   const renderStep = () => {
     switch (currentStep) {
       case 0:
-        return <PropertyBasicStep register={register} errors={errors} watch={watch} control={control} />;
+        return <PropertyBasicStep register={register} errors={errors} watch={watch} control={control} setValue={setValue} />;
       case 1:
-        return <PropertyConfigStep register={register} errors={errors} watch={watch} control={control} getValues={getValues} />;
+        return <PropertyConfigStep register={register} errors={errors} watch={watch} control={control} getValues={getValues} setValue={setValue} />;
       case 2:
         return (
           <LocationStep 

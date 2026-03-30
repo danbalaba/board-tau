@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Upload, Image, X } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Upload, Image, X, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -288,10 +288,12 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
           <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
             {propertyImages.map((image, index) => (
               <div key={index} className="relative group">
-                <img
+                <motion.img
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   src={image}
                   alt={`Property ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg"
+                  className="w-full h-32 object-cover rounded-lg shadow-sm"
                 />
                 <button
                   type="button"
@@ -364,10 +366,12 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
             <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
               {roomImages[roomIndex].map((image, imageIndex) => (
                 <div key={imageIndex} className="relative group">
-                  <img
+                  <motion.img
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     src={image}
                     alt={`Room ${roomIndex + 1} - ${imageIndex + 1}`}
-                    className="w-full h-24 object-cover rounded-lg"
+                    className="w-full h-24 object-cover rounded-lg shadow-sm"
                   />
                   <button
                     type="button"

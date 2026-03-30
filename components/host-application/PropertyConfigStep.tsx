@@ -2,7 +2,9 @@ import React from 'react';
 import Input from '../inputs/Input';
 import Checkbox from '../inputs/Checkbox';
 import { Bath, CheckCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { IconCheck, IconChecks, IconX } from '@tabler/icons-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/utils/helper';
 
 
 interface PropertyConfigStepProps {
@@ -11,6 +13,7 @@ interface PropertyConfigStepProps {
   watch: any;
   control: any;
   getValues: any;
+  setValue: any;
 }
 
 const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
@@ -18,10 +21,74 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
   errors,
   watch,
   control,
-  getValues
+  getValues,
+  setValue
 }) => {
+  const currentAmenities = watch('propertyConfig.amenities') || [];
+
+  const allAmenities = [
+    "WiFi",
+    "Laundry Area",
+    "Parking",
+    "Gated",
+    "Kitchen Access",
+    "Study Room",
+    "Elevator",
+    "Furnished",
+    "Gym",
+    "Water Heater"
+  ];
+
+  const currentRules = [
+    watch('propertyConfig.femaleOnly'),
+    watch('propertyConfig.maleOnly'),
+    watch('propertyConfig.visitorsAllowed'),
+    watch('propertyConfig.petsAllowed'),
+    watch('propertyConfig.smokingAllowed')
+  ];
+
+  const currentFeatures = [
+    watch('propertyConfig.security24h'),
+    watch('propertyConfig.cctv'),
+    watch('propertyConfig.fireSafety'),
+    watch('propertyConfig.nearTransport'),
+    watch('propertyConfig.studyFriendly'),
+    watch('propertyConfig.quietEnvironment'),
+    watch('propertyConfig.flexibleLease')
+  ];
+
+  const handleSelectRules = () => {
+    const allRulesKeys = [
+      'propertyConfig.femaleOnly',
+      'propertyConfig.maleOnly',
+      'propertyConfig.visitorsAllowed',
+      'propertyConfig.petsAllowed',
+      'propertyConfig.smokingAllowed'
+    ];
+    const isAllSelected = currentRules.every(Boolean);
+    allRulesKeys.forEach(key => setValue(key, !isAllSelected, { shouldValidate: true }));
+  };
+
+  const handleSelectFeatures = () => {
+    const allFeaturesKeys = [
+      'propertyConfig.security24h',
+      'propertyConfig.cctv',
+      'propertyConfig.fireSafety',
+      'propertyConfig.nearTransport',
+      'propertyConfig.studyFriendly',
+      'propertyConfig.quietEnvironment',
+      'propertyConfig.flexibleLease'
+    ];
+    const isAllSelected = currentFeatures.every(Boolean);
+    allFeaturesKeys.forEach(key => setValue(key, !isAllSelected, { shouldValidate: true }));
+  };
+
+  const handleSelectAll = () => {
+    const isAllSelected = currentAmenities.length === allAmenities.length;
+    setValue('propertyConfig.amenities', isAllSelected ? [] : allAmenities, { shouldValidate: true });
+  };
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       <motion.div
         className="bg-gradient-to-r from-purple/10 to-purple/5 dark:from-purple/20 dark:to-purple/10 rounded-xl p-6 border border-purple/20 dark:border-purple/30"
         initial={{ opacity: 0, y: 20 }}
@@ -88,7 +155,31 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.4 }}
       >
-        <h4 className="font-medium text-gray-900 dark:text-white mb-4">Rules & Preferences</h4>
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="font-medium text-gray-900 dark:text-white">Rules & Preferences</h4>
+          <button
+            type="button"
+            onClick={handleSelectRules}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-[0.1em] transition-all duration-300",
+              currentRules.every(Boolean)
+                ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+                : "bg-gray-50 dark:bg-gray-800 text-gray-400 border-gray-100 dark:border-gray-700 hover:border-primary/40 hover:text-primary"
+            )}
+          >
+            <AnimatePresence mode="wait">
+              {currentRules.every(Boolean) ? (
+                <motion.span key="deselect" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-1.5">
+                  <IconX size={10} strokeWidth={4} /> Deselect All
+                </motion.span>
+              ) : (
+                <motion.span key="select" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-1.5">
+                  <IconChecks size={10} strokeWidth={3} /> Select All
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-2">
           <Checkbox
             id="propertyConfig.femaleOnly"
@@ -129,7 +220,31 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.6 }}
       >
-        <h4 className="font-medium text-gray-900 dark:text-white mb-4">Advanced Features</h4>
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="font-medium text-gray-900 dark:text-white">Advanced Features</h4>
+          <button
+            type="button"
+            onClick={handleSelectFeatures}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-[0.1em] transition-all duration-300",
+              currentFeatures.every(Boolean)
+                ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+                : "bg-gray-50 dark:bg-gray-800 text-gray-400 border-gray-100 dark:border-gray-700 hover:border-primary/40 hover:text-primary"
+            )}
+          >
+            <AnimatePresence mode="wait">
+              {currentFeatures.every(Boolean) ? (
+                <motion.span key="deselect" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-1.5">
+                  <IconX size={10} strokeWidth={3.5} /> Deselect All
+                </motion.span>
+              ) : (
+                <motion.span key="select" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-1.5">
+                  <IconChecks size={10} strokeWidth={2.5} /> Select All
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-2">
           <Checkbox
             id="propertyConfig.security24h"
@@ -182,8 +297,34 @@ const PropertyConfigStep: React.FC<PropertyConfigStepProps> = ({
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.8 }}
       >
-        <h4 className="font-medium text-gray-900 dark:text-white mb-4">Property Amenities</h4>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Select amenities available for the entire property (listing-level)</p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h4 className="font-medium text-gray-900 dark:text-white mb-1">Property Amenities</h4>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Select amenities available for the entire property (listing-level)</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleSelectAll}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-[0.1em] transition-all duration-300",
+              currentAmenities.length === allAmenities.length
+                ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+                : "bg-gray-50 dark:bg-gray-800 text-gray-400 border-gray-100 dark:border-gray-700 hover:border-primary/40 hover:text-primary"
+            )}
+          >
+            <AnimatePresence mode="wait">
+              {currentAmenities.length === allAmenities.length ? (
+                <motion.span key="deselect" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-1.5">
+                  <IconX size={10} strokeWidth={3.5} /> Deselect All
+                </motion.span>
+              ) : (
+                <motion.span key="select" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-1.5">
+                  <IconChecks size={10} strokeWidth={2.5} /> Select All
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-2">
           <Checkbox id="propertyConfig.amenities" label="WiFi / Internet" value="WiFi" register={register} watch={watch} />
           <Checkbox id="propertyConfig.amenities" label="Laundry Area / Washer" value="Laundry Area" register={register} watch={watch} />

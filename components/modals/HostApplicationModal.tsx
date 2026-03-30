@@ -789,7 +789,7 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
                 <LandlordInfoStep register={register} errors={errors} watch={watch} control={control} />
               )}
               {step === STEPS.PROPERTY_BASIC && (
-                <PropertyBasicStep register={register} errors={errors} watch={watch} control={control} />
+                <PropertyBasicStep register={register} errors={errors} watch={watch} control={control} setValue={setValue} />
               )}
               {step === STEPS.LOCATION && (
                 <LocationStep
@@ -803,12 +803,13 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
               )}
               {step === STEPS.PROPERTY_CONFIG && (
                 <PropertyConfigStep
-                  register={register}
-                  errors={errors}
-                  watch={watch}
-                  control={control}
-                  getValues={getValues}
-                />
+                   register={register}
+                   errors={errors}
+                   watch={watch}
+                   control={control}
+                   getValues={getValues}
+                   setValue={setValue}
+                 />
               )}
                {step === STEPS.ROOM_CONFIG && (
                  <RoomConfigStep
