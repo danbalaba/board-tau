@@ -274,13 +274,13 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
       } else {
         toastError(`Update failed: ${result.error || 'Server rejected changes'}`);
       }
-    } catch (error) {
-      toastError('An unexpected architectural error occurred during synchronization.');
-    } finally {
-      setIsSubmitting(false);
-      setUploadProgress(0);
-    }
-  };
+} catch (error) {
+       toastError('An unexpected architectural error occurred during synchronization.');
+     } finally {
+       setIsSubmitting(false);
+       setUploadProgress(0);
+     }
+   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 p-4 pt-10 pb-20">
