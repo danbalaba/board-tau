@@ -90,14 +90,14 @@ export function ChartAreaInteractive() {
 
   return (
     <Card className="pt-0 border-none shadow-none bg-transparent">
-      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center gap-4 space-y-0 border-b border-gray-100 dark:border-gray-800 py-6 px-0!">
-        <div className="grid flex-1 gap-1.5">
-          <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">Revenue & Bookings Overview</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0 pb-4 px-0!">
+        <div className="flex flex-col gap-1.5">
+          <CardTitle className="text-base font-bold tracking-tight text-gray-900 dark:text-white">Revenue & Bookings</CardTitle>
           <CardDescription className="text-sm font-medium text-gray-500">
             {getDescription()}
           </CardDescription>
         </div>
-        <div className="w-full sm:w-auto">
+        <div className="w-auto">
           <ModernSelect
             instanceId="timeRangeArea"
             value={timeRange}
@@ -112,10 +112,10 @@ export function ChartAreaInteractive() {
           />
         </div>
       </CardHeader>
-      <CardContent className="px-0! pt-8 sm:pt-10">
+      <CardContent className="px-0! pt-6">
         <ChartContainer
           config={chartConfig}
-          className="aspect-auto h-[320px] w-full"
+          className="aspect-auto h-[280px] w-full"
         >
           <AreaChart data={filteredData}>
             <defs>
@@ -158,13 +158,13 @@ export function ChartAreaInteractive() {
                   day: "numeric",
                 })
               }}
-              className="text-[10px] font-bold text-gray-400 uppercase tracking-widest"
+              className="text-[11px] font-bold text-gray-400 uppercase tracking-widest"
             />
             <YAxis 
                tickLine={false}
                axisLine={false}
                tickFormatter={(value) => `₱${value >= 1000 ? value / 1000 + 'k' : value}`}
-               className="text-[10px] font-black text-gray-300"
+               className="text-[11px] font-bold text-gray-300"
             />
             <ChartTooltip
               cursor={{ stroke: '#2f7d6d', strokeWidth: 1, strokeDasharray: '4 4' }}

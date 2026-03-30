@@ -55,24 +55,24 @@ export function ChartLineInteractive() {
 
   return (
     <Card className="bg-transparent border-none shadow-none">
-      <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-6 px-0! py-8 border-b border-gray-100 dark:border-gray-800">
-        <div className="flex flex-col gap-1.5 flex-1">
-          <CardTitle className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Growth Trend Analysis</CardTitle>
-          <CardDescription className="text-sm font-medium text-gray-500">
+      <CardHeader className="flex flex-row items-center justify-between gap-4 px-0! pb-4 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex flex-col gap-1">
+          <CardTitle className="text-base font-bold text-gray-900 dark:text-white tracking-tight">Growth Trend Analysis</CardTitle>
+          <CardDescription className="text-xs font-medium text-gray-500">
             Real-time trajectory over the past 6 months
           </CardDescription>
         </div>
         
-        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-auto">
           <ModernSelect
             instanceId="metricSelect"
             value={activeChart}
             onChange={(val) => setActiveChart(val as any)}
             size="sm"
-            icon={<IconChartLine size={14} />}
+            icon={<IconChartLine size={12} />}
             options={[
-              { value: "bookings", label: "Bookings Volume" },
-              { value: "revenue", label: "Revenue Growth" },
+              { value: "bookings", label: "Bookings" },
+              { value: "revenue", label: "Revenue" },
             ]}
           />
           <ModernSelect
@@ -80,17 +80,17 @@ export function ChartLineInteractive() {
             value={viewType}
             onChange={setViewType}
             size="sm"
-            icon={<IconTrendingUp size={14} />}
+            icon={<IconTrendingUp size={12} />}
             options={[
-              { value: "growth", label: "Growth View" },
-              { value: "cumulative", label: "Comparison" },
+              { value: "growth", label: "Growth" },
+              { value: "cumulative", label: "Compare" },
             ]}
           />
         </div>
       </CardHeader>
 
-      <CardContent className="px-0! pt-8 sm:pt-10">
-        <div className="mb-10 flex items-center gap-6 overflow-x-auto pb-4 custom-scrollbar">
+      <CardContent className="px-0! pt-4">
+        <div className="mb-4 flex items-center gap-3 overflow-x-auto pb-2 custom-scrollbar">
           {["bookings", "revenue"].map((key) => {
             const isSelected = activeChart === key;
             const color = chartConfig[key as keyof typeof chartConfig].color;
@@ -98,25 +98,25 @@ export function ChartLineInteractive() {
               <button
                 key={key}
                 onClick={() => setActiveChart(key as any)}
-                className={`min-w-[180px] p-6 rounded-[24px] border transition-all duration-300 relative overflow-hidden group ${
+                className={`min-w-[120px] p-3 rounded-xl border transition-all duration-300 relative overflow-hidden group ${
                   isSelected 
-                    ? "bg-white dark:bg-gray-950 border-primary/30 shadow-2xl shadow-primary/5 ring-1 ring-primary/5" 
+                    ? "bg-white dark:bg-gray-950 border-primary/30 shadow-lg shadow-primary/5 ring-1 ring-primary/5" 
                     : "bg-gray-50/50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-800 hover:border-primary/10"
                 }`}
               >
                 <div className="flex flex-col relative z-10">
-                  <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isSelected ? 'text-primary' : 'text-gray-400'}`}>
+                  <span className={`text-[9px] font-bold uppercase tracking-wide ${isSelected ? 'text-primary' : 'text-gray-400'}`}>
                     Total {chartConfig[key as keyof typeof chartConfig].label}
                   </span>
-                  <span className={`text-2xl font-black mt-2 tracking-tight ${isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                  <span className={`text-lg font-bold mt-1 tracking-tight ${isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
                     {total[key as keyof typeof total].toLocaleString()}
                   </span>
-                  <div className={`mt-4 flex items-center gap-2 text-[10px] font-black tracking-widest uppercase ${isSelected ? 'text-emerald-500' : 'text-gray-400'}`}>
-                    <IconTrendingUp size={14} /> +15.5% Growth
+                  <div className={`mt-1 flex items-center gap-1 text-[9px] font-bold tracking-wide ${isSelected ? 'text-emerald-500' : 'text-gray-400'}`}>
+                    <IconTrendingUp size={10} /> +15.5%
                   </div>
                 </div>
                 {isSelected && (
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-primary/[0.03] rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-125" />
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-primary/[0.03] rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-125" />
                 )}
               </button>
             )
@@ -125,19 +125,19 @@ export function ChartLineInteractive() {
 
         <ChartContainer
           config={chartConfig}
-          className="aspect-auto h-[350px] w-full"
+          className="aspect-auto h-[220px] w-full"
         >
           <LineChart
             accessibilityLayer
             data={chartData}
-            margin={{ top: 20, right: 20, left: 10, bottom: 20 }}
+            margin={{ top: 15, right: 15, left: 5, bottom: 15 }}
           >
             <CartesianGrid vertical={false} strokeDasharray="4 4" className="stroke-gray-100 dark:stroke-gray-800" />
             <XAxis
               dataKey="date"
               tickLine={false}
               axisLine={false}
-              tickMargin={12}
+              tickMargin={8}
               tickFormatter={(value) => {
                 const date = new Date(value)
                 return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
@@ -154,7 +154,7 @@ export function ChartLineInteractive() {
               cursor={{ stroke: '#2f7d6d', strokeWidth: 1.5, strokeDasharray: '6 6' }}
               content={
                 <ChartTooltipContent
-                  className="w-[200px] p-5 rounded-[20px] border-none shadow-2xl bg-white/95 dark:bg-gray-950/95 backdrop-blur-md"
+                  className="w-[160px] p-3 rounded-xl border-none shadow-xl bg-white/95 dark:bg-gray-950/95 backdrop-blur-md"
                   indicator="line"
                 />
               }
@@ -163,9 +163,9 @@ export function ChartLineInteractive() {
               dataKey={activeChart}
               type="monotone"
               stroke={chartConfig[activeChart as keyof typeof chartConfig].color}
-              strokeWidth={4}
-              dot={{ r: 6, fill: 'white', stroke: chartConfig[activeChart as keyof typeof chartConfig].color, strokeWidth: 3 }}
-              activeDot={{ r: 8, fill: chartConfig[activeChart as keyof typeof chartConfig].color, stroke: 'white', strokeWidth: 3 }}
+              strokeWidth={3}
+              dot={{ r: 4, fill: 'white', stroke: chartConfig[activeChart as keyof typeof chartConfig].color, strokeWidth: 2 }}
+              activeDot={{ r: 6, fill: chartConfig[activeChart as keyof typeof chartConfig].color, stroke: 'white', strokeWidth: 2 }}
             />
           </LineChart>
         </ChartContainer>

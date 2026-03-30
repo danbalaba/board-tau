@@ -113,33 +113,30 @@ export default function LandlordAnalyticsClient({
   };
 
   return (
-    <div className="space-y-10 pb-20">
+    <div className="space-y-4 pb-12">
       {/* Page Header */}
-      <div className="bg-white dark:bg-gray-950 p-8 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-2xl shadow-gray-200/50 dark:shadow-black/20">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 bg-primary/10 text-primary rounded-[24px] flex items-center justify-center shadow-inner">
-              <IconChartLine size={32} strokeWidth={2.5} />
+      <div className="bg-white dark:bg-gray-950 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+        <div className="flex flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
+              <IconChartLine size={18} strokeWidth={2.5} />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-1.5 tracking-tighter">
+              <h1 className="text-base font-bold text-gray-900 dark:text-white tracking-tight">
                 Analytics & Performance
               </h1>
-              <p className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                Real-time property tracking & revenue insights
-              </p>
             </div>
           </div>
-          <div className="w-full sm:w-auto">
+          <div className="w-auto">
             <ModernSelect
               instanceId="analytics-time-period"
               value={timePeriod}
               onChange={(val: any) => setTimePeriod(val)}
-              className="min-w-[260px]"
+              className="min-w-[140px]"
               options={[
-                { value: 'month', label: 'This Calendar Month' },
-                { value: 'quarter', label: 'Fiscal Quarter' },
-                { value: 'year', label: 'Fiscal Year' },
+                { value: 'month', label: 'This Month' },
+                { value: 'quarter', label: 'Quarter' },
+                { value: 'year', label: 'Year' },
               ]}
             />
           </div>
@@ -147,33 +144,30 @@ export default function LandlordAnalyticsClient({
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {statsCards.map((stat) => {
           const Icon = stat.icon;
           return (
             <div
               key={stat.label}
-              className="group relative bg-white dark:bg-gray-900 rounded-[28px] border border-gray-100 dark:border-gray-800 p-8 hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1"
+              className="group relative bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3 hover:border-primary/30 transition-all duration-300 hover:shadow-md"
             >
-              <div className="flex items-center justify-between mb-6">
-                <div className={`w-14 h-14 rounded-[20px] flex items-center justify-center ${colors[stat.color]} group-hover:scale-110 transition-transform duration-500 shadow-xl`}>
-                  <Icon size={24} strokeWidth={2.5} />
+              <div className="flex items-center justify-between mb-2">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colors[stat.color]} group-hover:scale-105 transition-transform duration-300 shadow-md`}>
+                  <Icon size={14} strokeWidth={2.5} />
                 </div>
-                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
               </div>
               <div>
-                <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
                   {stat.label}
                 </p>
-                <p className="text-3xl font-black text-gray-900 dark:text-white mb-2 tracking-tighter">
+                <p className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
                   {stat.value}
                 </p>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-black">
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">
                     +15.2%
-                  </span>
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                    vs last period
                   </span>
                 </div>
               </div>
@@ -183,48 +177,48 @@ export default function LandlordAnalyticsClient({
       </div>
 
       {/* Primary Chart: Revenue & Bookings */}
-      <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
+      <div className="bg-white dark:bg-gray-950 p-2 rounded-lg border border-gray-100 dark:border-gray-800 shadow-sm">
         <ChartAreaInteractive />
       </div>
 
       {/* Grid of Secondary Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="bg-white dark:bg-gray-950 p-3 rounded-lg border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartLineInteractive />
         </div>
-        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-950 p-3 rounded-lg border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartPieLabel />
         </div>
-        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-950 p-3 rounded-lg border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartRadarDots />
         </div>
-        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-950 p-3 rounded-lg border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartRadialLabel />
         </div>
-        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-950 p-3 rounded-lg border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartTooltipDefault />
         </div>
-        <div className="lg:col-span-2 bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-950 p-3 rounded-lg border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartBarInteractive />
         </div>
       </div>
 
       {/* Bottom Insights */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        <div className="bg-white dark:bg-gray-950 rounded-[32px] border border-gray-100 dark:border-gray-800 p-10 shadow-sm">
-          <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-8 tracking-tighter">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-gray-950 rounded-xl border border-gray-100 dark:border-gray-800 p-4 shadow-sm">
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 tracking-tight">
             Revenue by Property
           </h3>
-          <div className="space-y-4">
+          <div className="space-y-2">
             {propertyPerformanceData.map((property, idx) => (
-              <div key={property.name} className="group flex items-center justify-between p-6 bg-gray-50/50 dark:bg-gray-900/50 rounded-[24px] border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-xl transition-all duration-500">
-                <div className="flex items-center gap-5">
-                  <div className="w-3 h-3 rounded-full shadow-lg" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                  <span className="text-base font-black text-gray-900 dark:text-white group-hover:text-primary transition-colors tracking-tight">
+              <div key={property.name} className="group flex items-center justify-between p-2.5 px-3 bg-gray-50/50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-md transition-all duration-300">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                  <span className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-primary transition-colors tracking-tight">
                     {property.name}
                   </span>
                 </div>
-                <span className="text-lg font-black text-gray-900 dark:text-white tabular-nums">
+                <span className="text-xs font-bold text-gray-700 dark:text-gray-300 tabular-nums">
                   ₱{property.revenue.toLocaleString()}
                 </span>
               </div>
@@ -232,22 +226,22 @@ export default function LandlordAnalyticsClient({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-950 rounded-[32px] border border-gray-100 dark:border-gray-800 p-10 shadow-sm">
-          <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-8 tracking-tighter">
+        <div className="bg-white dark:bg-gray-950 rounded-xl border border-gray-100 dark:border-gray-800 p-4 shadow-sm">
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 tracking-tight">
             Booking Statistics
           </h3>
-          <div className="space-y-4">
+          <div className="space-y-2">
             {[
-              { label: 'Total Confirmed Bookings', value: stats.confirmedBookings, suffix: 'units' },
-              { label: 'Gross Analytics Revenue', value: stats.monthlyRevenue.toLocaleString(), prefix: '₱' },
-              { label: 'Average Daily Rate', value: '4,500', prefix: '₱' },
-              { label: 'Portfolio Occupancy', value: occupancy.occupancyRate.toFixed(1), suffix: '%' },
+              { label: 'Confirmed Bookings', value: stats.confirmedBookings, suffix: '' },
+              { label: 'Analytics Revenue', value: stats.monthlyRevenue.toLocaleString(), prefix: '₱' },
+              { label: 'Daily Rate', value: '4,500', prefix: '₱' },
+              { label: 'Occupancy', value: occupancy.occupancyRate.toFixed(1), suffix: '%' },
             ].map((item) => (
-              <div key={item.label} className="group flex items-center justify-between p-6 bg-gray-50/50 dark:bg-gray-900/50 rounded-[24px] border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-xl transition-all duration-500">
-                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 group-hover:text-primary transition-colors">
+              <div key={item.label} className="group flex items-center justify-between p-2.5 px-3 bg-gray-50/50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:shadow-md transition-all duration-300">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 group-hover:text-primary transition-colors">
                   {item.label}
                 </span>
-                <span className="text-xl font-black text-gray-900 dark:text-white tabular-nums">
+                <span className="text-xs font-bold text-gray-700 dark:text-gray-300 tabular-nums">
                   {item.prefix}{item.value}{item.suffix}
                 </span>
               </div>
