@@ -32,7 +32,10 @@ import { cn } from '@/utils/helper';
 import Button from '@/components/common/Button';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
-const ModernSelect = dynamic(() => import('@/components/common/ModernSelect'), { ssr: false });
+import { 
+  generateTablePDF 
+} from '@/utils/pdfGenerator';
+import GenerateReportButton from '@/components/common/GenerateReportButton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -158,6 +161,29 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
       setIsLoadingMore(false);
     }
   }, [nextCursor, isLoadingMore]);
+
+  const handleGenerateReport = async () => {
+    const columns = ['Title', 'Price (PHP)', 'Status', 'Rooms', 'Baths', 'Date Added'];
+    const data = sortedListings.map(p => [
+      p.title,
+      p.price.toLocaleString(),
+      p.status.toUpperCase(),
+      p.roomCount.toString(),
+      p.bathroomCount.toString(),
+      new Date(p.createdAt).toLocaleDateString()
+    ]);
+
+    await generateTablePDF(
+      'Properties_Report',
+      columns,
+      data,
+      {
+        title: 'Property Portfolio Report',
+        subtitle: `A comprehensive list of your current property listings (${sortedListings.length} total)`,
+        author: 'Landlord Dashboard'
+      }
+    );
+  };
 
   return (
     <div className="space-y-8 p-1">
@@ -370,8 +396,13 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
               </button>
             </div>
 
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport} 
+
+            />
+
             <Link href="/landlord/properties/create" className="w-full sm:w-auto">
-              <Button className="rounded-xl w-full px-5 py-3 shadow-xl shadow-primary/20 group">
+              <Button className="rounded-xl w-full px-5 py-3 shadow-xl shadow-primary/20 group bg-primary text-white">
                 <span className="flex items-center gap-2">
                   <IconPlus size={11} className="group-hover:rotate-90 transition-transform duration-300" />
                   <span className="text-xs uppercase tracking-widest font-black">Add Property</span>

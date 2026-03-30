@@ -25,6 +25,10 @@ import {
 } from '@tabler/icons-react';
 import Button from "@/components/common/Button";
 import { cn } from '@/utils/helper';
+import { 
+  generateTablePDF 
+} from '@/utils/pdfGenerator';
+import GenerateReportButton from '@/components/common/GenerateReportButton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -171,6 +175,29 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
     }
   }, [nextCursor, isLoadingMore]);
 
+  const handleGenerateReport = async () => {
+    const columns = ['Listing', 'Guest', 'Status', 'Payment', 'Total Price', 'Dates'];
+    const data = filteredBookings.map((b: any) => [
+      b.listing.title,
+      b.user.name || b.user.email,
+      b.status.toUpperCase(),
+      b.paymentStatus.toUpperCase(),
+      `PHP ${b.totalPrice.toLocaleString()}`,
+      `${new Date(b.startDate).toLocaleDateString()} - ${new Date(b.endDate).toLocaleDateString()}`
+    ]);
+
+    await generateTablePDF(
+      'Bookings_Report',
+      columns,
+      data,
+      {
+        title: 'Property Bookings Report',
+        subtitle: `Overview of all ${filteredBookings.length} bookings matching current filters`,
+        author: 'Landlord Dashboard'
+      }
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -298,6 +325,10 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
                 <IconList size={18} />
               </button>
             </div>
+
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport}
+            />
           </div>
         </div>
       </div>
