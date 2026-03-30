@@ -10,7 +10,7 @@ import { cn } from '@/utils/helper';
 import Input from '@/components/inputs/Input';
 import Textarea from '@/components/inputs/Textarea';
 import Button from '@/components/common/Button';
-import { toast } from 'sonner';
+import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 
 const LocalCheckbox = ({
   id,
@@ -99,8 +99,22 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
     amenities: [] as string[],
   });
 
+  const { success: toastSuccess, error: toastError } = useResponsiveToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [errors, setErrors] = useState<any>({});
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // Handle preview URL cleanup
+  useEffect(() => {
+    if (formData.image) {
+      const url = URL.createObjectURL(formData.image);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [formData.image]);
 
   const amenitiesList = [
     'Wifi',
@@ -150,6 +164,14 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
     }));
   };
 
+  const handleSelectAllAmenities = () => {
+    const allSelected = formData.amenities.length === amenitiesList.length;
+    setFormData((prev) => ({
+      ...prev,
+      amenities: allSelected ? [] : [...amenitiesList],
+    }));
+  };
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -185,21 +207,23 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error('Please fill in all required fields correctly.');
+      toastError('Please check the form for errors before submitting.');
       return;
     }
 
     setIsSubmitting(true);
-    const updateToast = toast.loading('Synchronizing property updates...');
+    setUploadProgress(0);
 
     try {
       let imageUrl = formData.existingImageSrc;
 
       // Upload new image if selected
       if (formData.image) {
-        toast.message('Uploading new property image...', { id: updateToast });
         const res = await edgestore.publicFiles.upload({
           file: formData.image,
+          onProgressChange: (progress) => {
+            setUploadProgress(progress);
+          },
         });
         imageUrl = res.url;
       }
@@ -212,7 +236,7 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
         bathroomCount: parseInt(formData.bathroomCount),
         guestCount: parseInt(formData.guestCount),
         location: formData.location,
-        latlng: [120.9842, 14.5995], // Keep existing or default
+        latlng: [120.9842, 14.5995],
         country: "Philippines",
         region: "Metro Manila",
         images: [imageUrl],
@@ -244,16 +268,17 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
       const result = await response.json();
 
       if (result.success) {
-        toast.success('Property updated successfully!', { id: updateToast });
+        toastSuccess('Property configuration has been successfully updated.');
         router.push('/landlord/properties');
         router.refresh();
       } else {
-        toast.error(`Error: ${result.error || 'Failed to update property'}`, { id: updateToast });
+        toastError(`Update failed: ${result.error || 'Server rejected changes'}`);
       }
     } catch (error) {
-      toast.error('An unexpected error occurred. Please try again.', { id: updateToast });
+      toastError('An unexpected architectural error occurred during synchronization.');
     } finally {
       setIsSubmitting(false);
+      setUploadProgress(0);
     }
   };
 
@@ -284,18 +309,6 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
       </motion.div>
 
       <form onSubmit={handleSubmit} className="space-y-10">
-        {/* Progress Tracker (Visual Only) */}
-        <div className="flex items-center gap-4 px-10">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-black text-xs">1</div>
-            <span className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">Basics</span>
-          </div>
-          <div className="h-[2px] flex-1 bg-gray-100 dark:bg-gray-800" />
-          <div className="flex items-center gap-2 opacity-50">
-            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 flex items-center justify-center font-black text-xs">2</div>
-            <span className="text-sm font-black uppercase tracking-widest text-gray-500">Amenities</span>
-          </div>
-        </div>
 
         {/* Property Basic Info */}
         <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 md:p-8 shadow-sm relative overflow-hidden group">
@@ -419,13 +432,35 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
             <Check size={100} />
           </div>
 
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-              <Check size={18} />
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                <Check size={18} />
+              </div>
+              <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                Amenities
+              </h2>
             </div>
-            <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">
-              Amenities
-            </h2>
+
+            <button
+              type="button"
+              onClick={handleSelectAllAmenities}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-primary/10 hover:text-primary transition-all group border border-gray-100 dark:border-gray-700"
+            >
+              <div className={cn(
+                "w-4 h-4 rounded border-2 flex items-center justify-center transition-all",
+                formData.amenities.length === amenitiesList.length
+                  ? "bg-primary border-primary"
+                  : "border-gray-300 dark:border-gray-600 group-hover:border-primary/50"
+              )}>
+                {formData.amenities.length === amenitiesList.length && (
+                  <Check className="w-3 h-3 text-white stroke-[4px]" />
+                )}
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-widest">
+                {formData.amenities.length === amenitiesList.length ? 'Deselect All' : 'Select All'}
+              </span>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-6 bg-gray-50/50 dark:bg-gray-800/20 p-6 rounded-2xl">
@@ -452,7 +487,7 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
               <FaUpload size={18} />
             </div>
             <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">
-              Visual Showcase
+              Update Photo
             </h2>
           </div>
 
@@ -465,8 +500,10 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
             {(formData.image || formData.existingImageSrc) ? (
               <div className="flex flex-col items-center">
                 <div className="relative group overflow-hidden rounded-[2rem] shadow-2xl border-4 border-white dark:border-gray-800 max-w-xl w-full">
-                  <img
-                    src={formData.image ? URL.createObjectURL(formData.image) : formData.existingImageSrc}
+                  <motion.img
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    src={previewUrl || formData.existingImageSrc}
                     alt="Property preview"
                     className="aspect-video w-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
@@ -483,8 +520,7 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
                   )}
                 </div>
                 <div className="mt-8 text-center">
-                  <p className="font-black text-gray-900 dark:text-white uppercase tracking-widest text-xs">Current Showcase Image</p>
-                  <p className="text-gray-400 text-[10px] mt-2 max-w-xs">High-quality images attract 3x more views from potential tenants.</p>
+                  <p className="font-black text-gray-900 dark:text-white uppercase tracking-widest text-xs">Current Property Image</p>
                 </div>
               </div>
             ) : (
@@ -492,9 +528,9 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
                 <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-[2rem] flex items-center justify-center mx-auto mb-8 text-gray-300">
                   <FaUpload size={40} />
                 </div>
-                <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-3">Add Visual Context</h3>
+                <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-3">Update Photo</h3>
                 <p className="text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-10 font-medium line-relaxed">
-                  Upload the primary hero image for your property listing.
+                  Upload a high-resolution image to represent your property.
                 </p>
                 <input
                   type="file"
@@ -550,11 +586,24 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
             <Button
               type="submit"
               isLoading={isSubmitting}
-              className="w-full sm:w-auto min-w-[140px] px-8 py-2.5 rounded-xl shadow-lg shadow-primary/20"
+              className="w-full sm:w-auto min-w-[200px] px-8 py-3 rounded-xl shadow-lg shadow-primary/20 relative overflow-hidden"
             >
+              {isSubmitting && uploadProgress > 0 && uploadProgress < 100 && (
+                <motion.div 
+                  className="absolute bottom-0 left-0 h-1 bg-white/30"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${uploadProgress}%` }}
+                />
+              )}
               <span className="flex items-center justify-center gap-2">
-                <FaSave size={14} />
-                <span className="text-[11px] font-black uppercase tracking-widest">Update</span>
+                {isSubmitting && uploadProgress > 0 && uploadProgress < 100 ? (
+                   <span className="text-[10px] font-black uppercase tracking-widest">{uploadProgress}% Uploading</span>
+                ) : (
+                  <>
+                    <FaSave size={14} />
+                    <span className="text-[11px] font-black uppercase tracking-widest">Authorize Updates</span>
+                  </>
+                )}
               </span>
             </Button>
           </div>

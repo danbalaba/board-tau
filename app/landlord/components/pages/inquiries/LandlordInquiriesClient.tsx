@@ -7,7 +7,6 @@ import {
   IconEye,
   IconCheck,
   IconX,
-  IconChevronDown,
   IconClock,
   IconCircleCheck,
   IconCircleX,
@@ -27,8 +26,11 @@ import {
   IconBuilding,
   IconCreditCard,
   IconArrowRight,
-  IconMessage
+  IconMessage,
+  IconLoader2,
+  IconChevronDown
 } from "@tabler/icons-react"
+import ModernSearchInput from "@/components/common/ModernSearchInput"
 import Button from "@/components/common/Button"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/utils/helper"
@@ -78,9 +80,9 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL")
   const [viewMode, setViewMode] = useState<"grid" | "list">("list")
-  const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("newest")
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null)
+  const [filteredInquiries, setFilteredInquiries] = useState(listings)
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -103,22 +105,12 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
     REJECTED: IconCircleX,
   }
 
-  const filteredInquiries = useMemo(() => {
-    let result = [...listings];
+  const displayedInquiries = useMemo(() => {
+    let result = [...filteredInquiries];
 
     // Status filter
     if (selectedStatus !== "ALL") {
       result = result.filter((inquiry) => inquiry.status === selectedStatus);
-    }
-
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter((inquiry) =>
-        inquiry.listing.title.toLowerCase().includes(query) ||
-        (inquiry.user.name?.toLowerCase() || '').includes(query) ||
-        inquiry.user.email.toLowerCase().includes(query)
-      )
     }
 
     // Sorting
@@ -133,7 +125,7 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
     });
 
     return result;
-  }, [selectedStatus, listings, searchQuery, sortBy])
+  }, [selectedStatus, filteredInquiries, sortBy])
 
   const handleConfirmDelete = useCallback(async () => {
     if (!selectedInquiry) return;
@@ -196,7 +188,10 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
       const data = await response.json()
 
       if (data.success && data.data) {
-        setListings((prev) => [...prev, ...data.data.inquiries])
+        const newInquiries = data.data.inquiries;
+        setListings((prev) => [...prev, ...newInquiries]);
+        // Sync filteredInquiries for search
+        setFilteredInquiries((prev) => [...prev, ...newInquiries]);
         setNextCursor(data.data.nextCursor)
       }
     } catch (error) {
@@ -374,40 +369,58 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-[32px] border border-primary/10 shadow-sm"
+        className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 md:p-5 rounded-[24px] border border-primary/10 shadow-sm"
       >
-        <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-[24px] flex items-center justify-center text-primary shadow-xl shadow-primary/10">
-              <IconMail size={32} strokeWidth={2} />
+        {/* Decorative elements - Contained for dropdown visibility */}
+        <div className="absolute inset-0 overflow-hidden rounded-[24px] pointer-events-none">
+          <div className="absolute top-0 right-0 -mt-16 -mr-16 w-38 h-38 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-20 -mb-16 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl " />
+        </div>
+
+        <div className="relative z-20 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-[18px] flex items-center justify-center text-primary shadow-lg shadow-primary/5">
+              <IconMail size={24} strokeWidth={2} />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
-                Tenant Inquiries
+              <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+                Inquiries
               </h1>
-              <p className="text-[11px] font-black text-gray-500 uppercase tracking-[0.2em] mt-1 opacity-70">
-                Manage your active inquiries & requests
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mt-1">
+                Active tenant requests
               </p>
             </div>
           </div>
 
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 w-full xl:w-auto mt-4 lg:mt-0">
             {/* Search Input */}
-            <div className="relative w-full lg:w-72 group">
-              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
-                <IconSearch size={16} strokeWidth={2.5} />
-              </div>
-              <input
-                type="text"
-                placeholder="Search tenant or property..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 py-2.5 pl-11 pr-4 text-xs font-bold text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+            {/* Optimized Search Bar */}
+            <div className="w-full lg:w-80">
+              <ModernSearchInput
+                data={listings}
+                searchKeys={['user.name', 'user.email', 'listing.title']}
+                onSearch={setFilteredInquiries}
+                placeholder="Search inquiries..."
+                onSuggestionClick={(inquiry) => {
+                   setSelectedInquiry(inquiry);
+                   setViewModalOpen(true);
+                }}
+                renderSuggestion={(inquiry) => (
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-black text-xs flex-shrink-0 shadow-sm shadow-primary/20">
+                      {inquiry.user.name?.charAt(0) || 'U'}
+                    </div>
+                    <div className="flex-1 min-w-0 px-1">
+                      <p className="text-xs font-black text-gray-900 dark:text-white truncate">{inquiry.user.name || 'Anonymous User'}</p>
+                      <p className="text-[9px] font-bold text-primary tracking-widest uppercase truncate mt-0.5">{inquiry.listing.title}</p>
+                    </div>
+                  </div>
+                )}
               />
             </div>
 
             {/* Sorting */}
-            <div className="flex flex-wrap items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
+            <div className="flex flex-wrap items-center gap-1.5 bg-white/50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
               {[
                 { value: 'newest', label: 'Newest', icon: IconHistory },
                 { value: 'oldest', label: 'Oldest', icon: IconCalendarEvent },
@@ -419,14 +432,14 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
                     key={option.value}
                     onClick={() => setSortBy(option.value)}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-300",
                       isSelected
-                        ? "bg-primary text-white shadow-lg shadow-primary/30"
+                        ? "bg-primary text-white shadow-md shadow-primary/30"
                         : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700"
                     )}
                   >
                     <Icon size={12} />
-                    <span className="hidden sm:inline">{option.label}</span>
+                    <span>{option.label}</span>
                   </button>
                 );
               })}
@@ -435,9 +448,9 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
             {/* Optimized Filters Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all backdrop-blur-sm">
-                  <IconFilter size={14} />
-                  Filters {selectedStatus !== 'ALL' && <span className="w-2 h-2 rounded-full bg-primary" />}
+                <button className="flex items-center gap-1.5 px-3 py-2 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-primary transition-all backdrop-blur-sm">
+                  <IconFilter size={12} />
+                  <span>Filters</span> {selectedStatus !== 'ALL' && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 p-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl">
@@ -469,42 +482,38 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm">
+            <div className="flex items-center gap-1 bg-white/50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm">
               <button
                 onClick={() => setViewMode("grid")}
                 className={cn(
-                  "p-2.5 rounded-xl transition-all duration-300",
+                  "p-1.5 rounded-lg transition-all duration-300",
                   viewMode === "grid"
-                    ? "bg-primary text-white shadow-lg shadow-primary/30 scale-105"
-                    : "text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    ? "bg-primary text-white shadow-md"
+                    : "text-gray-400 hover:text-gray-900"
                 )}
                 title="Grid View"
               >
-                <IconLayoutGrid size={18} />
+                <IconLayoutGrid size={16} />
               </button>
               <button
                 onClick={() => setViewMode("list")}
                 className={cn(
-                  "p-2.5 rounded-xl transition-all duration-300",
+                  "p-1.5 rounded-lg transition-all duration-300",
                   viewMode === "list"
-                    ? "bg-primary text-white shadow-lg shadow-primary/30 scale-105"
-                    : "text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    ? "bg-primary text-white shadow-md"
+                    : "text-gray-400 hover:text-gray-900"
                 )}
                 title="List View"
               >
-                <IconList size={18} />
+                <IconList size={16} />
               </button>
             </div>
           </div>
         </div>
-
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 -mt-16 -mr-16 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-20 -mb-16 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
       </motion.div>
 
       <AnimatePresence mode="wait">
-        {filteredInquiries.length === 0 ? (
+        {displayedInquiries.length === 0 ? (
           <motion.div
             key="empty"
             initial={{ opacity: 0, scale: 0.95 }}
@@ -517,13 +526,8 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
             </div>
             <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">Box is Empty</h3>
             <p className="text-sm font-medium text-gray-400 max-w-sm mx-auto leading-relaxed">
-              {searchQuery ? `No inquiries found matching "${searchQuery}"` : "No inquiries currently match your filter criteria."}
+              No inquiries currently match your filter criteria.
             </p>
-            {searchQuery && (
-              <Button outline onClick={() => setSearchQuery("")} className="mt-8 rounded-xl px-6 py-2.5 text-[10px] font-black uppercase tracking-widest">
-                Clear Search
-              </Button>
-            )}
           </motion.div>
         ) : (
           <motion.div
@@ -534,7 +538,7 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
                 : "flex flex-col gap-6"
             )}
           >
-            {filteredInquiries.map((inquiry, idx) => {
+            {displayedInquiries.map((inquiry, idx) => {
               const StatusIcon = statusIcons[inquiry.status] || IconClock;
 
               return (
@@ -664,26 +668,93 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
         )}
       </AnimatePresence>
 
-      {/* Pagination Container */}
-      {nextCursor && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex justify-center pt-8"
-        >
-          <Button
-            outline
-            className="rounded-[20px] px-10 py-4 border-2 border-gray-100 dark:border-gray-800 group hover:border-primary/40 hover:bg-primary/5 transition-all shadow-sm"
-            onClick={handleLoadMore}
-            isLoading={isLoadingMore}
+      {/* Enhanced Pagination / Load More */}
+      <AnimatePresence>
+        {nextCursor && displayedInquiries.length >= 16 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="flex flex-col items-center justify-center pt-16 pb-12 relative"
           >
-            <span className="flex items-center gap-2 uppercase font-black tracking-[0.2em] text-[10px] text-gray-500 group-hover:text-primary transition-colors">
-              {isLoadingMore ? "Processing..." : "Load More Inquiries"}
-              <IconChevronDown className="group-hover:translate-y-1 transition-transform" size={12} strokeWidth={3} />
-            </span>
-          </Button>
-        </motion.div>
-      )}
+            {/* Background Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-32 bg-primary/5 blur-[80px] rounded-full pointer-events-none" />
+            
+            <button 
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className={cn(
+                "group relative overflow-hidden rounded-2xl transition-all duration-500",
+                isLoadingMore 
+                  ? "cursor-default bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 px-12 py-5"
+                  : "bg-white dark:bg-gray-900 border border-primary/20 hover:border-primary/50 shadow-xl hover:shadow-2xl hover:shadow-primary/10 px-10 py-4 active:scale-95"
+              )}
+            >
+              {/* Animated Accent Bar */}
+              <motion.div 
+                className="absolute top-0 left-0 h-1 bg-primary"
+                initial={{ width: 0 }}
+                animate={isLoadingMore ? { 
+                  width: ["0%", "100%", "0%"],
+                  left: ["0%", "0%", "100%"]
+                } : { width: 0 }}
+                transition={isLoadingMore ? { 
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                } : {}}
+              />
+
+              <div className="relative flex flex-col items-center gap-3">
+                {isLoadingMore ? (
+                  <>
+                    <div className="flex items-center gap-3 text-primary">
+                      <motion.div 
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      >
+                        <IconLoader2 size={14} />
+                      </motion.div>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">
+                        Discovering more inquiries
+                      </span>
+                    </div>
+                    <div className="flex gap-1">
+                      {[1, 2, 3].map(i => (
+                        <motion.div 
+                          key={i}
+                          animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
+                          transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                          className="w-1 h-1 rounded-full bg-primary"
+                        />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-3 h-full">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+                      Explore More Inquiries
+                    </span>
+                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                      <IconChevronDown className="group-hover:translate-y-0.5 transition-transform" size={14} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </button>
+
+            {!isLoadingMore && (
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-4 text-[9px] font-bold text-gray-400 uppercase tracking-widest"
+              >
+                Showing {displayedInquiries.length} inquiries
+              </motion.p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

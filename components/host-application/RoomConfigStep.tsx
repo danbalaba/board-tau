@@ -140,6 +140,18 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
     });
     return () => subscription.unsubscribe();
   }, [watch, setValue]);
+
+  const handleSelectAllRoomAmenities = (index: number, roomType: string) => {
+    const applicable = getApplicableAmenities(roomType).map(a => a.value);
+    const current = watch(`propertyConfig.rooms[${index}].amenities`) || [];
+    const isAllSelected = applicable.every(a => current.includes(a));
+    
+    // Merge existing custom amenities that are not in the applicable list
+    const custom = current.filter((a: string) => !applicable.includes(a));
+    const next = isAllSelected ? custom : [...new Set([...applicable, ...custom])];
+    
+    setValue(`propertyConfig.rooms[${index}].amenities`, next, { shouldValidate: true });
+  };
   const [customAmenityText, setCustomAmenityText] = useState('');
   const [selectedRoomIndex, setSelectedRoomIndex] = useState<number>(-1);
   const [loadingIndices, setLoadingIndices] = useState<number[]>([]);
@@ -528,10 +540,21 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
 
                     {/* Room Amenities */}
                     <div>
-                      <h6 className="font-medium text-gray-900 dark:text-white mb-1">Room Amenities</h6>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                        Amenities specific to this room (bathroom handled above)
-                      </p>
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h6 className="font-medium text-gray-900 dark:text-white mb-0.5">Room Amenities</h6>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                            Amenities specific to this room (bathroom handled above)
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectAllRoomAmenities(index, currentRoomType)}
+                          className="text-[10px] font-bold text-primary hover:underline uppercase tracking-wider"
+                        >
+                          {getApplicableAmenities(currentRoomType).every(a => (watch(`propertyConfig.rooms[${index}].amenities`) || []).includes(a.value)) ? 'Deselect All' : 'Select All'}
+                        </button>
+                      </div>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-2">
                         {getApplicableAmenities(currentRoomType).map((amenity) => (
                           <Checkbox

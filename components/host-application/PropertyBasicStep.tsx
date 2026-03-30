@@ -5,17 +5,20 @@ import Checkbox from '../inputs/Checkbox';
 import { Controller } from 'react-hook-form';
 import ReactSelect from 'react-select';
 import { Building2, Tag, MapPin, DollarSign } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { IconCheck, IconChecks, IconX } from '@tabler/icons-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { categories } from '@/utils/constants';
+import { cn } from '@/utils/helper';
 
 interface PropertyBasicStepProps {
   register: any;
   errors: any;
   watch: any;
   control: any;
+  setValue: any;
 }
 
-const PropertyBasicStep: React.FC<PropertyBasicStepProps> = ({ register, errors, watch, control }) => {
+const PropertyBasicStep: React.FC<PropertyBasicStepProps> = ({ register, errors, watch, control, setValue }) => {
   return (
     <div className="space-y-6">
       <motion.div
@@ -179,9 +182,37 @@ const PropertyBasicStep: React.FC<PropertyBasicStepProps> = ({ register, errors,
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
-                Property Categories (Select all that apply)
-              </label>
+              <div className="flex items-center justify-between mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Property Categories (Select all that apply)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentCats = watch('propertyInfo.category') || [];
+                    const allVals = categories.map(c => c.value);
+                    setValue('propertyInfo.category', currentCats.length === allVals.length ? [] : allVals, { shouldValidate: true });
+                  }}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-[0.1em] transition-all duration-300",
+                    (watch('propertyInfo.category') || []).length === categories.length
+                      ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+                      : "bg-gray-50 dark:bg-gray-800 text-gray-400 border-gray-100 dark:border-gray-700 hover:border-primary/40 hover:text-primary"
+                  )}
+                >
+                  <AnimatePresence mode="wait">
+                    {(watch('propertyInfo.category') || []).length === categories.length ? (
+                      <motion.span key="deselect" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-1.5">
+                        <IconX size={10} strokeWidth={4} /> Deselect All
+                      </motion.span>
+                    ) : (
+                      <motion.span key="select" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-1.5">
+                        <IconChecks size={10} strokeWidth={3} /> Select All
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </button>
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-2">
                 {categories.map((category) => (
                   <Checkbox

@@ -15,10 +15,26 @@ import {
   IconInbox,
   IconStarFilled,
   IconLayoutGrid,
-  IconList
+  IconList,
+  IconFilter,
+  IconHistory,
+  IconCalendarEvent,
+  IconSortDescending,
+  IconSortAscending,
+  IconLoader2
 } from '@tabler/icons-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Button from "@/components/common/Button";
 import { cn } from '@/utils/helper';
+import ModernSearchInput from '@/components/common/ModernSearchInput';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/app/admin/components/ui/dropdown-menu';
 
 interface Review {
   id: string;
@@ -49,16 +65,19 @@ interface LandlordReviewsClientProps {
 
 export default function LandlordReviewsClient({ reviews }: LandlordReviewsClientProps) {
   const router = useRouter();
-  const [listings, setListings] = useState(reviews.reviews);
+  const [allReviews, setAllReviews] = useState(reviews.reviews);
+  const [filteredReviewsState, setFilteredReviewsState] = useState(reviews.reviews);
   const [nextCursor, setNextCursor] = useState(reviews.nextCursor);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedRating, setSelectedRating] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [sortBy, setSortBy] = useState<string>('newest');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Sync state with props
   useEffect(() => {
-    setListings(reviews.reviews);
+    setAllReviews(reviews.reviews);
+    setFilteredReviewsState(reviews.reviews);
     setNextCursor(reviews.nextCursor);
   }, [reviews]);
 
@@ -86,13 +105,33 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
     );
   }, []);
 
-  const filteredReviews = useMemo(() => {
-    return listings.filter(review => {
-      const statusMatch = selectedStatus === 'all' || review.status === selectedStatus;
-      const ratingMatch = selectedRating === 'all' || review.rating === parseInt(selectedRating);
-      return statusMatch && ratingMatch;
+  const displayedReviews = useMemo(() => {
+    let result = [...filteredReviewsState];
+    
+    if (selectedStatus !== 'all' || selectedRating !== 'all') {
+      result = result.filter(review => {
+        const statusMatch = selectedStatus === 'all' || review.status === selectedStatus;
+        const ratingMatch = selectedRating === 'all' || review.rating === parseInt(selectedRating);
+        return statusMatch && ratingMatch;
+      });
+    }
+
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'rating_desc':
+          return b.rating - a.rating;
+        case 'rating_asc':
+          return a.rating - b.rating;
+        case 'newest':
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
     });
-  }, [selectedStatus, selectedRating, listings]);
+
+    return result;
+  }, [selectedStatus, selectedRating, filteredReviewsState, sortBy]);
 
   const statusOptions = useMemo(() => [
     { value: 'all', label: 'All Reviews', icon: IconInbox },
@@ -120,7 +159,10 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
       });
 
       if (res.ok) {
-        setListings(prev => prev.map(review => 
+        setAllReviews(prev => prev.map(review => 
+          review.id === reviewId ? { ...review, response, status: 'approved' } : review
+        ));
+        setFilteredReviewsState(prev => prev.map(review => 
           review.id === reviewId ? { ...review, response, status: 'approved' } : review
         ));
         router.refresh();
@@ -139,7 +181,8 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
       const data = await response.json();
 
       if (data.success && data.data) {
-        setListings(prev => [...prev, ...data.data.reviews]);
+        setAllReviews(prev => [...prev, ...data.data.reviews]);
+        setFilteredReviewsState(prev => [...prev, ...data.data.reviews]);
         setNextCursor(data.data.nextCursor);
       }
     } catch (error) {
@@ -164,7 +207,10 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
       if (res.ok) {
         const reviewId = respondModal.reviewId;
         const responseValue = responseText.trim();
-        setListings(prev => prev.map(review => 
+        setAllReviews(prev => prev.map(review => 
+          review.id === reviewId ? { ...review, response: responseValue, status: 'approved' } : review
+        ));
+        setFilteredReviewsState(prev => prev.map(review => 
           review.id === reviewId ? { ...review, response: responseValue, status: 'approved' } : review
         ));
         setRespondModal({ isOpen: false, reviewId: '', reviewTitle: '' });
@@ -181,150 +227,171 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm">
-        <div className="flex items-center justify-between">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 md:p-5 rounded-2xl border border-primary/10 shadow-sm"
+      >
+        {/* Decorative elements - Contained for dropdown visibility */}
+        <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
+          <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-blue-400/10 rounded-full blur-xl" />
+        </div>
+
+        <div className="relative z-20 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={cn(
-                  "p-2 rounded-xl transition-all duration-300",
-                  viewMode === 'grid'
-                    ? "bg-primary text-white shadow-lg shadow-primary/30"
-                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                )}
-              >
-                <IconLayoutGrid size={18} />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={cn(
-                  "p-2 rounded-xl transition-all duration-300",
-                  viewMode === 'list'
-                    ? "bg-primary text-white shadow-lg shadow-primary/30"
-                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                )}
-              >
-                <IconList size={18} />
-              </button>
-            </div>
-            
-            <div className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary hover:scale-110 transition-transform duration-300">
-              <IconStar size={22} />
+            <div className="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary">
+              <IconStar size={20} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-0.5 tracking-tight">
-                Guest Reviews
+              <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">
+                Reviews
               </h1>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Manage property reviews and responses
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                Tenant feedback & ratings
               </p>
             </div>
           </div>
-          
-          <div className="hidden xl:flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
-              <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 px-2">Status</span>
-              {[
-                { value: 'all', label: 'All Reviews', icon: IconInbox },
-                { value: 'pending', label: 'Pending', icon: IconClock },
-                { value: 'approved', label: 'Approved', icon: IconCircleCheck },
-                { value: 'rejected', label: 'Rejected', icon: IconCircleX },
-              ].map((option) => {
-                const Icon = option.icon;
-                const isSelected = selectedStatus === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => setSelectedStatus(option.value)}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
-                      isSelected
-                        ? "bg-primary text-white shadow-lg shadow-primary/30"
-                        : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700"
-                    )}
-                  >
-                    <Icon size={12} />
-                    <span>{option.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
-              <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 px-2">Rating</span>
-              {['all', '5', '4', '3', '2', '1'].map((rating) => {
-                const isSelected = selectedRating === rating;
-                return (
-                  <button
-                    key={rating}
-                    onClick={() => setSelectedRating(rating)}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
-                      isSelected
-                        ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30"
-                        : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700"
-                    )}
-                  >
-                    {rating === 'all' ? (
-                      <>
-                        <IconInbox size={12} />
-                        <span>All Ratings</span>
-                      </>
-                    ) : (
-                      <>
-                        <IconStarFilled size={10} className={isSelected ? "text-white" : "text-amber-500"} />
-                        <span>{rating} Stars</span>
-                      </>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Filters */}
-      <div className="xl:hidden flex flex-col gap-4 bg-white/50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm mb-4">
-        <div>
-          <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Status</span>
-          <div className="flex flex-wrap gap-2">
-            {['all', 'pending', 'approved', 'rejected'].map((status) => (
-              <button
-                key={status}
-                onClick={() => setSelectedStatus(status)}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                  selectedStatus === status ? "bg-primary text-white" : "bg-white dark:bg-gray-800 text-gray-500 border border-gray-100 dark:border-gray-700"
+          <div className="flex flex-col lg:flex-row items-center gap-4 w-full lg:w-auto">
+            {/* Optimized Search Bar */}
+            <div className="w-full lg:w-72">
+              <ModernSearchInput
+                data={allReviews}
+                searchKeys={['listing.title', 'user.name', 'comment']}
+                onSearch={setFilteredReviewsState}
+                placeholder="Search reviews..."
+                onSuggestionClick={(review) => {
+                  router.push(`/landlord/reviews/${review.id}`);
+                }}
+                renderSuggestion={(review) => (
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                      {review.listing.imageSrc ? (
+                        <img src={review.listing.imageSrc} className="w-full h-full object-cover" alt="" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">
+                          <IconStar size={14} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-black text-gray-900 dark:text-white truncate">{review.user.name || 'Anonymous'}</p>
+                      <p className="text-[9px] font-bold text-primary tracking-widest uppercase truncate">{review.listing.title}</p>
+                    </div>
+                  </div>
                 )}
-              >
-                {status}
-              </button>
-            ))}
+              />
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 bg-white/50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm">
+                {[
+                  { value: 'newest', label: 'Recent', icon: IconHistory },
+                  { value: 'oldest', label: 'Oldest', icon: IconCalendarEvent },
+                  { value: 'rating_desc', label: 'High', icon: IconSortDescending },
+                  { value: 'rating_asc', label: 'Low', icon: IconSortAscending },
+                ].map((option) => {
+                  const Icon = option.icon;
+                  const isSelected = sortBy === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => setSortBy(option.value)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-300",
+                        isSelected
+                          ? "bg-primary text-white shadow-md shadow-primary/30"
+                          : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700"
+                      )}
+                    >
+                      <Icon size={12} />
+                      <span className="hidden sm:inline">{option.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Optimized Filters Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1.5 px-3 py-2 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-primary transition-all backdrop-blur-sm">
+                    <IconFilter size={12} />
+                    <span>Filters</span> {(selectedStatus !== 'all' || selectedRating !== 'all') && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 p-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl">
+                  <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">Status</div>
+                  <DropdownMenuGroup>
+                    {['all', 'pending', 'approved', 'rejected'].map((status) => (
+                      <DropdownMenuItem
+                        key={status}
+                        onClick={() => setSelectedStatus(status)}
+                        className={cn(
+                          "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
+                          selectedStatus === status ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        )}
+                      >
+                        <span className="capitalize">{status}</span>
+                        {selectedStatus === status && <IconCheck size={14} className="ml-auto" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">Rating</div>
+                  <DropdownMenuGroup>
+                    {['all', '5', '4', '3', '2', '1'].map((rating) => (
+                      <DropdownMenuItem
+                        key={rating}
+                        onClick={() => setSelectedRating(rating)}
+                        className={cn(
+                          "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
+                          selectedRating === rating ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        )}
+                      >
+                        <div className="flex items-center gap-1">
+                          {rating === 'all' ? 'All Ratings' : (
+                            <>
+                              <span>{rating}</span>
+                              <IconStarFilled size={10} className="text-amber-400" />
+                            </>
+                          )}
+                        </div>
+                        {selectedRating === rating && <IconCheck size={14} className="ml-auto" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <div className="flex items-center gap-1 bg-white/50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    "p-1.5 rounded-lg transition-all duration-300 text-gray-400 hover:text-gray-900",
+                    viewMode === 'grid' && "bg-primary text-white shadow-md"
+                  )}
+                  title="Grid View"
+                >
+                  <IconLayoutGrid size={16} />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    "p-1.5 rounded-lg transition-all duration-300 text-gray-400 hover:text-gray-900",
+                    viewMode === 'list' && "bg-primary text-white shadow-md"
+                  )}
+                  title="List View"
+                >
+                  <IconList size={16} />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-        <div>
-          <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Rating</span>
-          <div className="flex flex-wrap gap-2">
-            {['all', '5', '4', '3', '2', '1'].map((rating) => (
-              <button
-                key={rating}
-                onClick={() => setSelectedRating(rating)}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                  selectedRating === rating ? "bg-amber-500 text-white" : "bg-white dark:bg-gray-800 text-gray-500 border border-gray-100 dark:border-gray-700"
-                )}
-              >
-                {rating === 'all' ? 'All' : `${rating} ★`}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      </motion.div>
 
       {/* Reviews List */}
-      {filteredReviews.length === 0 ? (
+      {displayedReviews.length === 0 ? (
         <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center justify-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-2xl mb-4 text-primary">
             <IconStar size={24} />
@@ -342,7 +409,7 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
             ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             : "space-y-4"
         )}>
-          {filteredReviews.map((review) => (
+          {displayedReviews.map((review) => (
             viewMode === 'grid' ? (
               <div
                 key={review.id}
@@ -523,22 +590,6 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
         </div>
       )}
 
-      {/* Load More */}
-      {nextCursor && (
-        <div className="flex justify-center pt-8">
-          <Button 
-            outline 
-            className="rounded-xl px-10 py-4 group transition-all hover:bg-primary hover:text-white"
-            onClick={handleLoadMore}
-            isLoading={isLoadingMore}
-          >
-            <span className="flex items-center gap-2 uppercase font-black tracking-[0.15em] text-[10px]">
-              {isLoadingMore ? 'Fetching reviews...' : 'Load More Reviews'}
-              <IconChevronDown className={cn("group-hover:translate-y-0.5 transition-transform", isLoadingMore && "animate-bounce")} size={10} />
-            </span>
-          </Button>
-        </div>
-      )}
 
       {/* Respond Modal */}
       {respondModal.isOpen && (
@@ -601,6 +652,93 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
           </div>
         </div>
       )}
+      {/* Enhanced Pagination / Load More */}
+      <AnimatePresence>
+        {nextCursor && allReviews.length >= 16 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="flex flex-col items-center justify-center pt-16 pb-12 relative"
+          >
+            {/* Background Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-32 bg-primary/5 blur-[80px] rounded-full pointer-events-none" />
+            
+            <button 
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className={cn(
+                "group relative overflow-hidden rounded-2xl transition-all duration-500",
+                isLoadingMore 
+                  ? "cursor-default bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 px-12 py-5"
+                  : "bg-white dark:bg-gray-900 border border-primary/20 hover:border-primary/50 shadow-xl hover:shadow-2xl hover:shadow-primary/10 px-10 py-4 active:scale-95"
+              )}
+            >
+              {/* Animated Accent Bar */}
+              <motion.div 
+                className="absolute top-0 left-0 h-1 bg-primary"
+                initial={{ width: 0 }}
+                animate={isLoadingMore ? { 
+                  width: ["0%", "100%", "0%"],
+                  left: ["0%", "0%", "100%"]
+                } : { width: 0 }}
+                transition={isLoadingMore ? { 
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                } : {}}
+              />
+
+              <div className="relative flex flex-col items-center gap-3">
+                {isLoadingMore ? (
+                  <>
+                    <div className="flex items-center gap-3 text-primary">
+                      <motion.div 
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      >
+                        <IconLoader2 size={14} />
+                      </motion.div>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">
+                        Discovering more reviews
+                      </span>
+                    </div>
+                    <div className="flex gap-1">
+                      {[1, 2, 3].map(i => (
+                        <motion.div 
+                          key={i}
+                          animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
+                          transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                          className="w-1 h-1 rounded-full bg-primary"
+                        />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-3 h-full">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+                      Explore More Reviews
+                    </span>
+                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                      <IconChevronDown className="group-hover:translate-y-0.5 transition-transform" size={14} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </button>
+
+            {!isLoadingMore && (
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-4 text-[9px] font-bold text-gray-400 uppercase tracking-widest"
+              >
+                Showing {allReviews.length} reviews
+              </motion.p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

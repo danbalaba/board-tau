@@ -21,10 +21,14 @@ import {
   IconSortDescending,
   IconHistory,
   IconCalendarEvent,
-  IconFilter
+  IconFilter,
+  IconSearch,
+  IconLoader2
 } from '@tabler/icons-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Button from "@/components/common/Button";
 import { cn } from '@/utils/helper';
+import ModernSearchInput from '@/components/common/ModernSearchInput';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,17 +67,19 @@ interface LandlordBookingsClientProps {
 
 export default function LandlordBookingsClient({ bookings }: LandlordBookingsClientProps) {
   const router = useRouter();
-  const [listings, setListings] = useState(bookings.bookings);
+  const [allBookings, setAllBookings] = useState(bookings.bookings);
+  const [filteredBookings, setFilteredBookings] = useState(bookings.bookings);
   const [nextCursor, setNextCursor] = useState(bookings.nextCursor);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('newest');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Sync state with props
   useEffect(() => {
-    setListings(bookings.bookings);
+    setAllBookings(bookings.bookings);
+    setFilteredBookings(bookings.bookings);
     setNextCursor(bookings.nextCursor);
   }, [bookings]);
 
@@ -93,12 +99,16 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
     return status.charAt(0).toUpperCase() + status.slice(1);
   }, []);
 
-  const filteredBookings = useMemo(() => {
-    let result = listings.filter(booking => {
-      const statusMatch = selectedStatus === 'all' || booking.status?.toLowerCase() === selectedStatus.toLowerCase();
-      const paymentMatch = selectedPaymentStatus === 'all' || booking.paymentStatus?.toLowerCase() === selectedPaymentStatus.toLowerCase();
-      return statusMatch && paymentMatch;
-    });
+  const displayedBookings = useMemo(() => {
+    let result = [...filteredBookings];
+    
+    if (selectedStatus !== 'all' || selectedPaymentStatus !== 'all') {
+      result = result.filter(booking => {
+        const statusMatch = selectedStatus === 'all' || booking.status?.toLowerCase() === selectedStatus.toLowerCase();
+        const paymentMatch = selectedPaymentStatus === 'all' || booking.paymentStatus?.toLowerCase() === selectedPaymentStatus.toLowerCase();
+        return statusMatch && paymentMatch;
+      });
+    }
 
     result.sort((a, b) => {
       switch (sortBy) {
@@ -115,7 +125,7 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
     });
 
     return result;
-  }, [selectedStatus, selectedPaymentStatus, listings, sortBy]);
+  }, [selectedStatus, selectedPaymentStatus, filteredBookings, sortBy]);
 
   const statusOptions = useMemo(() => [
     { value: 'all', label: 'All', icon: IconInbox },
@@ -142,7 +152,10 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
       });
 
       if (response.ok) {
-        setListings(prev => prev.map(booking => 
+        setAllBookings(prev => prev.map(booking => 
+          booking.id === bookingId ? { ...booking, status } : booking
+        ));
+        setFilteredBookings(prev => prev.map(booking => 
           booking.id === bookingId ? { ...booking, status } : booking
         ));
         router.refresh();
@@ -161,7 +174,8 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
       const data = await response.json();
 
       if (data.success && data.data) {
-        setListings(prev => [...prev, ...data.data.bookings]);
+        setAllBookings(prev => [...prev, ...data.data.bookings]);
+        setFilteredBookings(prev => [...prev, ...data.data.bookings]);
         setNextCursor(data.data.nextCursor);
       }
     } catch (error) {
@@ -174,133 +188,169 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 md:p-5 rounded-2xl border border-primary/10 shadow-sm"
+      >
+        {/* Abstract background elements - Contained for dropdown visibility */}
+        <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
+          <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-blue-400/10 rounded-full blur-xl" />
+        </div>
+
+        <div className="relative z-20 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary hover:scale-110 transition-transform duration-300">
-              <IconCalendarCheck size={22} />
+            <div className="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary">
+              <IconCalendarCheck size={20} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-0.5 tracking-tight">
+              <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">
                 Bookings
               </h1>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Manage your property bookings and payments
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                Confirmed reservations
               </p>
             </div>
           </div>
-          
-          <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 w-full lg:w-auto mt-4 lg:mt-0">
-            {/* Sorting */}
-            <div className="flex flex-wrap items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
-              {[
-                { value: 'newest', label: 'Newest', icon: IconHistory },
-                { value: 'oldest', label: 'Oldest', icon: IconCalendarEvent },
-                { value: 'price_desc', label: 'High Price', icon: IconSortDescending },
-                { value: 'price_asc', label: 'Low Price', icon: IconSortAscending },
-              ].map((option) => {
-                const Icon = option.icon;
-                const isSelected = sortBy === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => setSortBy(option.value)}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
-                      isSelected
-                        ? "bg-primary text-white shadow-lg shadow-primary/30"
-                        : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700"
-                    )}
-                  >
-                    <Icon size={12} />
-                    <span className="hidden sm:inline">{option.label}</span>
-                  </button>
-                );
-              })}
+          <div className="flex flex-col lg:flex-row items-center gap-4 w-full lg:w-auto">
+            {/* Optimized Search Bar */}
+            <div className="w-full lg:w-72">
+              <ModernSearchInput
+                data={allBookings}
+                searchKeys={['listing.title', 'user.name', 'user.email']}
+                onSearch={setFilteredBookings}
+                placeholder="Search bookings..."
+                onSuggestionClick={(booking) => {
+                  router.push(`/landlord/bookings/${booking.id}`);
+                }}
+                renderSuggestion={(booking) => (
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                      {booking.listing.imageSrc ? (
+                        <img src={booking.listing.imageSrc} className="w-full h-full object-cover" alt="" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">
+                          <IconCalendarCheck size={14} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-black text-gray-900 dark:text-white truncate">{booking.user.name || 'Anonymous'}</p>
+                      <p className="text-[9px] font-bold text-primary tracking-widest uppercase truncate">{booking.listing.title}</p>
+                    </div>
+                  </div>
+                )}
+              />
             </div>
+            
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 bg-white/50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
+                {[
+                  { value: 'newest', label: 'Recent', icon: IconHistory },
+                  { value: 'oldest', label: 'Oldest', icon: IconCalendarEvent },
+                  { value: 'price_desc', label: 'High', icon: IconSortDescending },
+                  { value: 'price_asc', label: 'Low', icon: IconSortAscending },
+                ].map((option) => {
+                  const Icon = option.icon;
+                  const isSelected = sortBy === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => setSortBy(option.value)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-300",
+                        isSelected
+                          ? "bg-primary text-white shadow-md shadow-primary/30"
+                          : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700"
+                      )}
+                    >
+                      <Icon size={12} />
+                      <span className="hidden sm:inline">{option.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
 
-            {/* Optimized Filters Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all backdrop-blur-sm">
-                  <IconFilter size={14} />
-                  Filters {((selectedStatus !== 'all') || (selectedPaymentStatus !== 'all')) && <span className="w-2 h-2 rounded-full bg-primary" />}
+              {/* Optimized Filters Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1.5 px-3 py-2 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-primary transition-all backdrop-blur-sm">
+                    <IconFilter size={12} />
+                    <span>Filters</span> {(selectedStatus !== 'all' || selectedPaymentStatus !== 'all') && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 p-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl">
+                  <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">Booking Status</div>
+                  <DropdownMenuGroup>
+                    {statusOptions.map((option) => {
+                      const Icon = option.icon;
+                      return (
+                        <DropdownMenuItem
+                          key={option.value}
+                          onClick={() => setSelectedStatus(option.value)}
+                          className={cn(
+                            "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
+                            selectedStatus === option.value ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          )}
+                        >
+                          <Icon size={14} />
+                          {option.label}
+                          {selectedStatus === option.value && <IconCheck size={14} className="ml-auto" />}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">Payment Status</div>
+                  <DropdownMenuGroup>
+                    {paymentOptions.map((option) => {
+                      const Icon = option.icon;
+                      return (
+                        <DropdownMenuItem
+                          key={option.value}
+                          onClick={() => setSelectedPaymentStatus(option.value)}
+                          className={cn(
+                            "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
+                            selectedPaymentStatus === option.value ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          )}
+                        >
+                          <Icon size={14} />
+                          {option.label}
+                          {selectedPaymentStatus === option.value && <IconCheck size={14} className="ml-auto" />}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <div className="flex items-center gap-1 bg-white/50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    "p-1.5 rounded-lg transition-all duration-300 text-gray-400 hover:text-gray-900",
+                    viewMode === 'grid' && "bg-primary text-white shadow-md"
+                  )}
+                  title="Grid View"
+                >
+                  <IconLayoutGrid size={16} />
                 </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 p-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl">
-                <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">Status</div>
-                <DropdownMenuGroup>
-                  {statusOptions.map((option: any) => {
-                    const Icon = option.icon;
-                    return (
-                      <DropdownMenuItem
-                        key={option.value}
-                        onClick={() => setSelectedStatus(option.value)}
-                        className={cn(
-                          "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
-                          selectedStatus === option.value ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                        )}
-                      >
-                        <Icon size={14} />
-                        {option.label}
-                        {selectedStatus === option.value && <IconCheck size={14} className="ml-auto" />}
-                      </DropdownMenuItem>
-                    );
-                  })}
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator className="my-1 bg-gray-100 dark:bg-gray-700" />
-                <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">Payment</div>
-                <DropdownMenuGroup>
-                  {paymentOptions.map((option: any) => {
-                    const Icon = option.icon;
-                    return (
-                      <DropdownMenuItem
-                        key={option.value}
-                        onClick={() => setSelectedPaymentStatus(option.value)}
-                        className={cn(
-                          "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
-                          selectedPaymentStatus === option.value ? "bg-blue-500/10 text-blue-600" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                        )}
-                      >
-                        <Icon size={14} />
-                        {option.label}
-                        {selectedPaymentStatus === option.value && <IconCheck size={14} className="ml-auto" />}
-                      </DropdownMenuItem>
-                    );
-                  })}
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={cn(
-                  "p-2 rounded-xl transition-all duration-300",
-                  viewMode === 'grid'
-                    ? "bg-primary text-white shadow-lg shadow-primary/30"
-                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                )}
-                title="Grid View"
-              >
-                <IconLayoutGrid size={18} />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={cn(
-                  "p-2 rounded-xl transition-all duration-300",
-                  viewMode === 'list'
-                    ? "bg-primary text-white shadow-lg shadow-primary/30"
-                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                )}
-                title="List View"
-              >
-                <IconList size={18} />
-              </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    "p-1.5 rounded-lg transition-all duration-300 text-gray-400 hover:text-gray-900",
+                    viewMode === 'list' && "bg-primary text-white shadow-md"
+                  )}
+                  title="List View"
+                >
+                  <IconList size={16} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Mobile Filters */}
       <div className="lg:hidden flex flex-col gap-4 bg-white/50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm mb-4">
@@ -341,7 +391,7 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
       </div>
 
       {/* Bookings List */}
-      {filteredBookings.length === 0 ? (
+      {displayedBookings.length === 0 ? (
         <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center justify-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-2xl mb-4 text-primary">
             <IconCalendarCheck size={24} />
@@ -359,7 +409,7 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
             ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             : "space-y-4"
         )}>
-          {filteredBookings.map((booking: any) => (
+          {displayedBookings.map((booking: any) => (
             viewMode === 'grid' ? (
               <div
                 key={booking.id}
@@ -544,22 +594,93 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
         </div>
       )}
 
-      {/* Load More */}
-      {nextCursor && (
-        <div className="flex justify-center pt-8">
-          <Button 
-            outline 
-            className="rounded-xl px-10 py-4 group transition-all hover:bg-primary hover:text-white"
-            onClick={handleLoadMore}
-            isLoading={isLoadingMore}
+      {/* Enhanced Pagination / Load More */}
+      <AnimatePresence>
+        {nextCursor && allBookings.length >= 16 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="flex flex-col items-center justify-center pt-16 pb-12 relative"
           >
-            <span className="flex items-center gap-2 uppercase font-black tracking-[0.15em] text-[10px]">
-              {isLoadingMore ? 'Fetching bookings...' : 'Load More Bookings'}
-              <IconChevronDown className={cn("group-hover:translate-y-0.5 transition-transform", isLoadingMore && "animate-bounce")} size={10} />
-            </span>
-          </Button>
-        </div>
-      )}
+            {/* Background Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-32 bg-primary/5 blur-[80px] rounded-full pointer-events-none" />
+            
+            <button 
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className={cn(
+                "group relative overflow-hidden rounded-2xl transition-all duration-500",
+                isLoadingMore 
+                  ? "cursor-default bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 px-12 py-5"
+                  : "bg-white dark:bg-gray-900 border border-primary/20 hover:border-primary/50 shadow-xl hover:shadow-2xl hover:shadow-primary/10 px-10 py-4 active:scale-95"
+              )}
+            >
+              {/* Animated Accent Bar */}
+              <motion.div 
+                className="absolute top-0 left-0 h-1 bg-primary"
+                initial={{ width: 0 }}
+                animate={isLoadingMore ? { 
+                  width: ["0%", "100%", "0%"],
+                  left: ["0%", "0%", "100%"]
+                } : { width: 0 }}
+                transition={isLoadingMore ? { 
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                } : {}}
+              />
+
+              <div className="relative flex flex-col items-center gap-3">
+                {isLoadingMore ? (
+                  <>
+                    <div className="flex items-center gap-3 text-primary">
+                      <motion.div 
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      >
+                        <IconLoader2 size={14} />
+                      </motion.div>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">
+                        Discovering more bookings
+                      </span>
+                    </div>
+                    <div className="flex gap-1">
+                      {[1, 2, 3].map(i => (
+                        <motion.div 
+                          key={i}
+                          animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
+                          transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                          className="w-1 h-1 rounded-full bg-primary"
+                        />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-3 h-full">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+                      Explore More Bookings
+                    </span>
+                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                      <IconChevronDown className="group-hover:translate-y-0.5 transition-transform" size={14} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </button>
+
+            {!isLoadingMore && (
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-4 text-[9px] font-bold text-gray-400 uppercase tracking-widest"
+              >
+                Showing {allBookings.length} bookings
+              </motion.p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
