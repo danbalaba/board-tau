@@ -15,7 +15,11 @@ import {
   IconActivity,
   IconArrowRight,
   IconCreditCard,
-  IconMessage2
+  IconMessage2,
+  IconPercentage,
+  IconBed,
+  IconDoor,
+  IconCalendarEvent
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { ChartAreaInteractive } from '@/app/landlord/components/charts/AreaChart';
@@ -35,6 +39,10 @@ interface LandlordDashboardStats {
   averageRating: number;
   totalReviews: number;
   monthlyRevenue: number;
+  occupancyRate: number;
+  vacantRooms: number;
+  occupiedRooms: number;
+  expiringLeases: number;
 }
 
 interface LandlordDashboardClientProps {
@@ -134,6 +142,12 @@ export default function LandlordDashboardClient({ stats }: LandlordDashboardClie
       icon: IconChartLine,
       color: 'indigo',
     },
+    {
+      label: 'Occupancy Rate',
+      value: `${stats.occupancyRate}%`,
+      icon: IconPercentage,
+      color: 'cyan',
+    },
   ];
 
   const quickActions = [
@@ -219,6 +233,8 @@ export default function LandlordDashboardClient({ stats }: LandlordDashboardClie
             orange: 'text-orange-600 bg-orange-50 dark:bg-orange-500/10 dark:text-orange-400',
             red: 'text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400',
             indigo: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 dark:text-indigo-400',
+            cyan: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-500/10 dark:text-cyan-400',
+            teal: 'text-teal-600 bg-teal-50 dark:bg-teal-500/10 dark:text-teal-400',
           };
 
           return (
@@ -249,33 +265,32 @@ export default function LandlordDashboardClient({ stats }: LandlordDashboardClie
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white dark:bg-gray-950 p-5 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartAreaInteractive />
         </div>
-        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-950 p-5 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartPieLabel />
         </div>
-        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-950 p-5 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartLineInteractive />
         </div>
-        <div className="bg-white dark:bg-gray-950 p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
-          <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
-             <div>
-                <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 text-primary rounded-xl">
-                    <IconActivity size={18} />
-                  </div>
+        <div className="bg-white dark:bg-gray-950 p-6 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+          <div className="flex flex-row items-center justify-between mb-6 gap-4">
+             <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/10 text-primary rounded-lg">
+                  <IconActivity size={14} />
+                </div>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
                   Recent Activity
                 </h3>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Real-time system updates</p>
              </div>
-             <Button outline className="rounded-[18px] py-1.5 px-4 text-[10px] font-black uppercase tracking-widest min-w-max w-auto">
-               View All History
+             <Button outline className="rounded-[14px] py-1 px-3 text-[9px] font-bold uppercase tracking-widest">
+               View All
              </Button>
           </div>
           
-          <div className="space-y-4">
+          <div className="space-y-3">
             {recentActivities.map((activity) => {
               const Icon = activity.icon;
               const accentColor: Record<string, string> = {
@@ -289,24 +304,21 @@ export default function LandlordDashboardClient({ stats }: LandlordDashboardClie
                 <Link
                   key={activity.id}
                   href={activity.href}
-                  className="group flex items-center gap-5 p-5 bg-gray-50/50 dark:bg-gray-900/50 rounded-[28px] border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:bg-white dark:hover:bg-gray-900 hover:shadow-xl transition-all duration-500"
+                  className="group flex items-center gap-3 p-3 bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:bg-white dark:hover:bg-gray-900 hover:shadow-lg transition-all duration-300"
                 >
-                  <div className={cn("flex-shrink-0 w-14 h-14 rounded-[22px] flex items-center justify-center border-2 transition-transform duration-500 group-hover:scale-110 shadow-sm", accentColor[activity.color])}>
-                    <Icon size={24} strokeWidth={2.5} />
+                  <div className={cn("flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center border transition-transform duration-300 group-hover:scale-105 shadow-sm", accentColor[activity.color])}>
+                    <Icon size={16} strokeWidth={2.5} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-4 mb-0.5">
-                      <p className="text-base font-black text-gray-900 dark:text-white group-hover:text-primary transition-colors tracking-tight truncate">
+                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                      <p className="text-xs font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors tracking-tight truncate">
                         {activity.title}
                       </p>
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest shrink-0">{activity.time}</span>
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest shrink-0">{activity.time}</span>
                     </div>
-                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                    <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
                        {activity.description}
                     </p>
-                  </div>
-                  <div className={cn("hidden sm:flex items-center px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border", accentColor[activity.color])}>
-                    {activity.status}
                   </div>
                 </Link>
               );
