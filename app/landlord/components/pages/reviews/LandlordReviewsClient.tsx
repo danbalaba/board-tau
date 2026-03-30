@@ -35,6 +35,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/app/admin/components/ui/dropdown-menu';
+import { 
+  generateTablePDF 
+} from '@/utils/pdfGenerator';
+import GenerateReportButton from '@/components/common/GenerateReportButton';
 
 interface Review {
   id: string;
@@ -192,6 +196,28 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
     }
   }, [nextCursor, isLoadingMore]);
 
+  const handleGenerateReport = async () => {
+    const columns = ['Listing', 'Guest', 'Rating', 'Comment', 'Date'];
+    const data = filteredReviews.map((r: any) => [
+      r.listing.title,
+      r.user.name || r.user.email,
+      `${r.rating} / 5`,
+      r.comment || 'N/A',
+      new Date(r.createdAt).toLocaleDateString()
+    ]);
+
+    await generateTablePDF(
+      'Reviews_Report',
+      columns,
+      data,
+      {
+        title: 'Property Reviews Report',
+        subtitle: `Compilation of all ${filteredReviews.length} reviews for your properties`,
+        author: 'Landlord Dashboard'
+      }
+    );
+  };
+
   const handleSubmitResponse = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!responseText.trim()) return;
@@ -242,6 +268,37 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
           <div className="flex items-center gap-4">
             <div className="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary">
               <IconStar size={20} />
+            <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={cn(
+                  "p-2 rounded-xl transition-all duration-300",
+                  viewMode === 'grid'
+                    ? "bg-primary text-white shadow-lg shadow-primary/30"
+                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                )}
+              >
+                <IconLayoutGrid size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  "p-2 rounded-xl transition-all duration-300",
+                  viewMode === 'list'
+                    ? "bg-primary text-white shadow-lg shadow-primary/30"
+                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                )}
+              >
+                <IconList size={18} />
+              </button>
+            </div>
+            
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport}
+            />
+
+            <div className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary hover:scale-110 transition-transform duration-300">
+              <IconStar size={22} />
             </div>
             <div>
               <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">

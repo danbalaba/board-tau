@@ -35,6 +35,10 @@ import Button from "@/components/common/Button"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/utils/helper"
 import { toast } from "sonner"
+import { 
+  generateTablePDF 
+} from '@/utils/pdfGenerator';
+import GenerateReportButton from '@/components/common/GenerateReportButton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,7 +46,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/app/admin/components/ui/dropdown-menu'
+} from '@/app/admin/components/ui/dropdown-menu';
 
 
 interface Inquiry {
@@ -201,6 +205,27 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
     }
   }, [nextCursor, isLoadingMore])
 
+  const handleGenerateReport = async () => {
+    const columns = ['Listing', 'Tenant', 'Status', 'Date Received'];
+    const data = filteredInquiries.map((i: any) => [
+      i.listing.title,
+      i.user.name || i.user.email,
+      i.status.toUpperCase(),
+      new Date(i.createdAt).toLocaleDateString()
+    ]);
+
+    await generateTablePDF(
+      'Inquiries_Report',
+      columns,
+      data,
+      {
+        title: 'Tenant Inquiries Report',
+        subtitle: `Detailed view of all ${filteredInquiries.length} inquiries received`,
+        author: 'Landlord Dashboard'
+      }
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-10 pb-20 p-2">
       {/* Delete Confirmation Modal */}
@@ -267,7 +292,7 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
               initial={{ opacity: 0, scale: 0.95, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 40 }}
-              className="relative bg-white dark:bg-gray-900 rounded-[32px] border border-gray-100 dark:border-gray-800 p-8 max-w-xl w-full shadow-2xl overflow-hidden"
+              className="relative bg-white dark:bg-gray-900 rounded-[32px] border border-gray-100 dark:border-gray-800 p-8 max-w-5xl w-full shadow-2xl overflow-hidden"
             >
               <button
                 onClick={() => setViewModalOpen(false)}
@@ -339,14 +364,13 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
                   ))}
                 </div>
 
-                {/* Actions */}
-                <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6 border-t border-gray-100 dark:border-gray-800">
+                {/* Actions */}                <div className="flex flex-row justify-center items-center gap-4 pt-6 border-t border-gray-100 dark:border-gray-800">
                   <Button
                     onClick={() => {
                       setViewModalOpen(false);
                       router.push(`/landlord/inquiries/${selectedInquiry.id}`);
                     }}
-                    className="rounded-xl w-full py-3 px-6 shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
+                    className="rounded-xl w-auto py-3 px-10 shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
                   >
                     <IconEye size={16} />
                     <span className="text-xs font-black uppercase tracking-widest">Open Conversation</span>
@@ -354,11 +378,12 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
                   <Button
                     outline
                     onClick={() => setViewModalOpen(false)}
-                    className="rounded-xl w-full sm:w-auto py-3 px-8 text-xs font-black uppercase tracking-widest"
+                    className="rounded-xl w-auto py-3 px-10 text-xs font-black uppercase tracking-widest"
                   >
                     Close
                   </Button>
                 </div>
+
               </div>
             </motion.div>
           </div>
@@ -392,7 +417,7 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
             </div>
           </div>
 
-          <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 w-full xl:w-auto mt-4 lg:mt-0">
+          <div className="flex flex-wrap lg:flex-row items-center gap-4 w-full xl:w-auto mt-4 lg:mt-0">
             {/* Search Input */}
             {/* Optimized Search Bar */}
             <div className="w-full lg:w-80">
@@ -416,6 +441,16 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
                     </div>
                   </div>
                 )}
+            <div className="relative w-full lg:w-72 group">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
+                <IconSearch size={16} strokeWidth={2.5} />
+              </div>
+              <input
+                type="text"
+                placeholder="Search tenant or property..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 py-3 pl-11 pr-4 text-xs font-bold text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
               />
             </div>
 
@@ -453,7 +488,7 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
                   <span>Filters</span> {selectedStatus !== 'ALL' && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 p-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl">
+              <DropdownMenuContent align="end" className="w-72 p-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl">
                 <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">Status</div>
                 <DropdownMenuGroup>
                   {[
@@ -508,6 +543,10 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
                 <IconList size={16} />
               </button>
             </div>
+            
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport}
+            />
           </div>
         </div>
       </motion.div>
