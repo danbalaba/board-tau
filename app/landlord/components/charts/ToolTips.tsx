@@ -51,26 +51,26 @@ export function ChartTooltipDefault() {
 
   return (
     <Card className="bg-transparent border-none shadow-none">
-      <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-6 px-0! py-8 border-b border-gray-100 dark:border-gray-800">
-        <div className="flex flex-col gap-1.5 flex-1">
-          <CardTitle className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Lead Origin Analysis</CardTitle>
-          <CardDescription className="text-sm font-medium text-gray-500">
+      <CardHeader className="flex flex-row items-center justify-between gap-4 px-0! pb-4 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex flex-col gap-1">
+          <CardTitle className="text-base font-bold text-gray-900 dark:text-white tracking-tight">Lead Origin Analysis</CardTitle>
+          <CardDescription className="text-xs font-medium text-gray-500">
             Channel conversion breakdown
           </CardDescription>
         </div>
         
-        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-auto">
           <ModernSelect
             instanceId="sourceSelect"
             value={sourceFilter}
             onChange={setSourceFilter}
             size="sm"
-            icon={<IconFilter size={14} />}
+            icon={<IconFilter size={12} />}
             options={[
-              { value: "all", label: "All Active Channels" },
-              { value: "direct", label: "Direct Traffic" },
-              { value: "email", label: "Email Marketing" },
-              { value: "social", label: "Social Presence" },
+              { value: "all", label: "All Channels" },
+              { value: "direct", label: "Direct" },
+              { value: "email", label: "Email" },
+              { value: "social", label: "Social" },
             ]}
           />
           <ModernSelect
@@ -78,23 +78,23 @@ export function ChartTooltipDefault() {
             value={displayMode}
             onChange={setDisplayMode}
             size="sm"
-            icon={<IconListSearch size={14} />}
+            icon={<IconListSearch size={12} />}
             options={[
-              { value: "stacked", label: "Stacked View" },
-              { value: "grouped", label: "Comparison Mode" },
+              { value: "stacked", label: "Stacked" },
+              { value: "grouped", label: "Compare" },
             ]}
           />
         </div>
       </CardHeader>
 
-      <CardContent className="px-0! pt-12">
-        <ChartContainer config={chartConfig} className="aspect-auto h-[350px] w-full">
-          <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 20 }}>
+      <CardContent className="px-0! pt-4">
+        <ChartContainer config={chartConfig} className="aspect-auto h-[200px] w-full">
+          <BarChart accessibilityLayer data={chartData} margin={{ top: 12, right: 5, left: 5, bottom: 12 }}>
             <CartesianGrid vertical={false} strokeDasharray="4 4" className="stroke-gray-100 dark:stroke-gray-800" />
             <XAxis
               dataKey="date"
               tickLine={false}
-              tickMargin={12}
+              tickMargin={8}
               axisLine={false}
               tickFormatter={(value) => {
                 const date = new Date(value)
@@ -106,39 +106,39 @@ export function ChartTooltipDefault() {
                tickLine={false}
                axisLine={false}
                tickFormatter={(value) => value >= 1000 ? value / 1000 + 'k' : value}
-               className="text-[10px] font-black text-gray-300"
+               className="text-[10px] font-bold text-gray-300"
             />
             <Bar
               dataKey="direct"
               stackId={displayMode === "stacked" ? "a" : undefined}
               fill="#2f7d6d"
-              radius={displayMode === "stacked" ? [4, 4, 4, 4] : [8, 8, 4, 4]}
-              barSize={displayMode === "stacked" ? 50 : 25}
+              radius={displayMode === "stacked" ? [3, 3, 3, 3] : [6, 6, 3, 3]}
+              barSize={displayMode === "stacked" ? 35 : 18}
               hide={sourceFilter !== "all" && sourceFilter !== "direct"}
             />
             <Bar
               dataKey="email"
               stackId={displayMode === "stacked" ? "a" : undefined}
               fill="#1473E6"
-              radius={displayMode === "stacked" ? [4, 4, 4, 4] : [8, 8, 4, 4]}
-              barSize={displayMode === "stacked" ? 50 : 25}
+              radius={displayMode === "stacked" ? [3, 3, 3, 3] : [6, 6, 3, 3]}
+              barSize={displayMode === "stacked" ? 35 : 18}
               hide={sourceFilter !== "all" && sourceFilter !== "email"}
             />
             <Bar
               dataKey="social"
               stackId={displayMode === "stacked" ? "a" : undefined}
               fill="#F59E0B"
-              radius={displayMode === "stacked" ? [8, 8, 4, 4] : [8, 8, 4, 4]}
-              barSize={displayMode === "stacked" ? 50 : 25}
+              radius={displayMode === "stacked" ? [6, 6, 3, 3] : [6, 6, 3, 3]}
+              barSize={displayMode === "stacked" ? 35 : 18}
               hide={sourceFilter !== "all" && sourceFilter !== "social"}
             />
             <ChartTooltip
               content={
                 <ChartTooltipContent 
-                  className="w-[200px] p-5 rounded-[20px] border-none shadow-2xl bg-white/95 dark:bg-gray-950/95 backdrop-blur-md" 
+                  className="w-[160px] p-3 rounded-xl border-none shadow-xl bg-white/95 dark:bg-gray-950/95 backdrop-blur-md" 
                 />
               }
-              cursor={{ fill: 'var(--primary)', opacity: 0.05, radius: 12 }}
+              cursor={{ fill: 'var(--primary)', opacity: 0.05, radius: 8 }}
             />
           </BarChart>
         </ChartContainer>
