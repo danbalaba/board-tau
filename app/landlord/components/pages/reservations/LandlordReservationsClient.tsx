@@ -20,6 +20,10 @@ import {
 import Button from "@/components/common/Button";
 import { cn } from '@/utils/helper';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
+import { 
+  generateTablePDF 
+} from '@/utils/pdfGenerator';
+import GenerateReportButton from '@/components/common/GenerateReportButton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -130,6 +134,28 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
     }
   }, [router, success, toastError]);
 
+  const handleGenerateReport = async () => {
+    const columns = ['Listing', 'Tenant', 'Status', 'Move In Date', 'Duration'];
+    const data = filteredReservations.map((r: any) => [
+      r.listing.title,
+      r.user.name || r.user.email,
+      r.status.toUpperCase(),
+      new Date(r.moveInDate).toLocaleDateString(),
+      `${r.stayDuration} days`
+    ]);
+
+    await generateTablePDF(
+      'Reservations_Report',
+      columns,
+      data,
+      {
+        title: 'Reservation Requests Report',
+        subtitle: `Overview of ${filteredReservations.length} reservation requests`,
+        author: 'Landlord Dashboard'
+      }
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -233,6 +259,10 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
                 <IconList size={18} />
               </button>
             </div>
+
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport}
+            />
           </div>
         </div>
       </div>
