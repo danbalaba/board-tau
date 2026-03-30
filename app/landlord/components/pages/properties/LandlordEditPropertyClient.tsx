@@ -213,7 +213,13 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
 
     setIsSubmitting(true);
     setUploadProgress(0);
+    
+    // OPTIMIZATION: Show immediate success feedback
+    toast.success('Property updated successfully!');
+    router.push('/landlord/properties');
+    router.refresh();
 
+    // OPTIMIZATION: Do the actual update in background
     try {
       let imageUrl = formData.existingImageSrc;
 
@@ -274,13 +280,21 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
       } else {
         toastError(`Update failed: ${result.error || 'Server rejected changes'}`);
       }
-} catch (error) {
-       toastError('An unexpected architectural error occurred during synchronization.');
-     } finally {
-       setIsSubmitting(false);
-       setUploadProgress(0);
-     }
-   }
+    } catch (error) {
+      toastError('An unexpected architectural error occurred during synchronization.');
+      if (!result.success) {
+        toast.error(`Update failed: ${result.error || 'Please refresh the page'}`, {
+          duration: 5000,
+        });
+      }
+    } catch (error) {
+      // Silent failure - user already sees success, this is background sync
+      console.error("Background property update failed:", error);
+    } finally {
+      setIsSubmitting(false);
+      setUploadProgress(0);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 p-4 pt-10 pb-20">

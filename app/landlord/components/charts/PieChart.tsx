@@ -43,24 +43,24 @@ export function ChartPieLabel() {
 
   return (
     <Card className="bg-transparent border-none shadow-none">
-      <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-6 px-0! py-8 border-b border-gray-100 dark:border-gray-800">
-        <div className="flex flex-col gap-1.5 flex-1">
-          <CardTitle className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Portfolio Allocation</CardTitle>
-          <CardDescription className="text-sm font-medium text-gray-500">
+      <CardHeader className="flex flex-row items-center justify-between gap-4 px-0! pb-4 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex flex-col gap-1">
+          <CardTitle className="text-base font-bold text-gray-900 dark:text-white tracking-tight">Portfolio Allocation</CardTitle>
+          <CardDescription className="text-xs font-medium text-gray-500">
             Distribution across categories
           </CardDescription>
         </div>
         
-        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-auto">
           <ModernSelect
             instanceId="pieMetric"
             value={activeMetric}
             onChange={(val) => setActiveMetric(val as any)}
             size="sm"
-            icon={<IconChartPie size={14} />}
+            icon={<IconChartPie size={12} />}
             options={[
-              { value: "count", label: "By Unit Count" },
-              { value: "revenue", label: "By Revenue Share" },
+              { value: "count", label: "By Count" },
+              { value: "revenue", label: "By Revenue" },
             ]}
           />
           <ModernSelect
@@ -68,25 +68,25 @@ export function ChartPieLabel() {
             value={viewType}
             onChange={setViewType}
             size="sm"
-            icon={<IconHash size={14} />}
+            icon={<IconHash size={12} />}
             options={[
-              { value: "donut", label: "Donut Chart" },
-              { value: "pie", label: "Classic Pie" },
+              { value: "donut", label: "Donut" },
+              { value: "pie", label: "Pie" },
             ]}
           />
         </div>
       </CardHeader>
 
-      <CardContent className="px-0! pt-10 flex flex-col items-center">
+      <CardContent className="px-0! pt-1 flex flex-col items-center">
         <ChartContainer
           config={chartConfig}
-          className="aspect-square max-h-[380px] w-full"
+          className="aspect-square max-h-[200px] w-full"
         >
           <PieChart>
             <ChartTooltip
               content={
                 <ChartTooltipContent 
-                  className="w-[200px] p-5 rounded-[20px] border-none shadow-2xl bg-white/95 dark:bg-gray-950/95 backdrop-blur-md"
+                  className="w-[140px] p-3 rounded-xl border-none shadow-xl bg-white/95 dark:bg-gray-950/95 backdrop-blur-md"
                   nameKey="type" 
                 />
               }
@@ -95,17 +95,17 @@ export function ChartPieLabel() {
               data={chartData}
               dataKey={activeMetric}
               nameKey="type"
-              innerRadius={viewType === "donut" ? 90 : 0}
-              outerRadius={135}
-              strokeWidth={8}
+              innerRadius={viewType === "donut" ? 50 : 0}
+              outerRadius={80}
+              strokeWidth={4}
               stroke="white"
-              paddingAngle={6}
+              paddingAngle={3}
             >
               {chartData.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
                   fill={entry.fill} 
-                  style={{ filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.12))" }}
+                  style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.06))" }}
                 />
               ))}
             </Pie>
@@ -113,8 +113,8 @@ export function ChartPieLabel() {
               verticalAlign="bottom" 
               align="center"
               iconType="circle"
-              wrapperStyle={{ paddingTop: "60px" }}
-              formatter={(value) => <span className="text-[11px] font-black uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500 mx-2">{value}</span>}
+              wrapperStyle={{ paddingTop: "20px" }}
+              formatter={(value) => <span className="text-[9px] font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mx-1">{value}</span>}
             />
           </PieChart>
         </ChartContainer>

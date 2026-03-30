@@ -29,6 +29,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Button from "@/components/common/Button";
 import { cn } from '@/utils/helper';
 import ModernSearchInput from '@/components/common/ModernSearchInput';
+import { 
+  generateTablePDF 
+} from '@/utils/pdfGenerator';
+import GenerateReportButton from '@/components/common/GenerateReportButton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -184,6 +188,29 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
       setIsLoadingMore(false);
     }
   }, [nextCursor, isLoadingMore]);
+
+  const handleGenerateReport = async () => {
+    const columns = ['Listing', 'Guest', 'Status', 'Payment', 'Total Price', 'Dates'];
+    const data = filteredBookings.map((b: any) => [
+      b.listing.title,
+      b.user.name || b.user.email,
+      b.status.toUpperCase(),
+      b.paymentStatus.toUpperCase(),
+      `PHP ${b.totalPrice.toLocaleString()}`,
+      `${new Date(b.startDate).toLocaleDateString()} - ${new Date(b.endDate).toLocaleDateString()}`
+    ]);
+
+    await generateTablePDF(
+      'Bookings_Report',
+      columns,
+      data,
+      {
+        title: 'Property Bookings Report',
+        subtitle: `Overview of all ${filteredBookings.length} bookings matching current filters`,
+        author: 'Landlord Dashboard'
+      }
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -348,6 +375,10 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
                 </button>
               </div>
             </div>
+
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport}
+            />
           </div>
         </div>
       </motion.div>
