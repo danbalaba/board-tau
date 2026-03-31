@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   IconBuilding,
   IconEdit,
@@ -25,15 +25,16 @@ import {
   IconCalendarFilled,
   IconCurrencyPeso,
   IconLayoutGrid,
-  IconList
+  IconList,
+  IconSearchOff
 } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import Button from '@/components/common/Button';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
-import { 
-  generateTablePDF 
+import {
+  generateTablePDF
 } from '@/utils/pdfGenerator';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
 import {
@@ -44,6 +45,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/app/admin/components/ui/dropdown-menu';
+import { ModernLoadMore } from '@/components/common/ModernLoadMore';
 
 interface Property {
   id: string;
@@ -66,6 +68,9 @@ interface LandlordPropertiesClientProps {
 
 export default function LandlordPropertiesClient({ properties }: LandlordPropertiesClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get('search');
+
   const [listings, setListings] = useState(properties.listings);
   const [nextCursor, setNextCursor] = useState(properties.nextCursor);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -76,14 +81,22 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
   const [sortBy, setSortBy] = useState('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  // Sync state with props when the page refreshes
   useEffect(() => {
     setListings(properties.listings);
     setNextCursor(properties.nextCursor);
   }, [properties]);
 
-  const sortedListings = useMemo(() => {
-    return [...listings].sort((a, b) => {
+  const filteredAndSortedListings = useMemo(() => {
+    let result = [...listings];
+
+    if (searchQuery) {
+      result = result.filter(p =>
+        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    return result.sort((a, b) => {
       switch (sortBy) {
         case 'oldest':
           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -98,7 +111,7 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }
     });
-  }, [listings, sortBy]);
+  }, [listings, sortBy, searchQuery]);
 
   const sortOptions = useMemo(() => [
     { value: 'newest', label: 'Newest', icon: IconHistory },
@@ -164,7 +177,7 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
 
   const handleGenerateReport = async () => {
     const columns = ['Title', 'Price (PHP)', 'Status', 'Rooms', 'Baths', 'Date Added'];
-    const data = sortedListings.map(p => [
+    const data = filteredAndSortedListings.map(p => [
       p.title,
       p.price.toLocaleString(),
       p.status.toUpperCase(),
@@ -179,10 +192,14 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
       data,
       {
         title: 'Property Portfolio Report',
-        subtitle: `A comprehensive list of your current property listings (${sortedListings.length} total)`,
+        subtitle: `A comprehensive list of your current property listings (${filteredAndSortedListings.length} total)`,
         author: 'Landlord Dashboard'
       }
     );
+  };
+
+  const clearSearch = () => {
+    router.push('/landlord/properties');
   };
 
   return (
@@ -342,6 +359,18 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
             </div>
           </div>
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 w-full lg:w-auto mt-4 lg:mt-0">
+            {searchQuery && (
+              <div className="flex items-center gap-3 px-4 py-2 bg-primary/10 border border-primary/20 rounded-xl animate-in fade-in slide-in-from-right-4 duration-500">
+                <IconSearchOff size={14} className="text-primary" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary">Search: {searchQuery}</span>
+                <button
+                  onClick={clearSearch}
+                  className="p-1 hover:bg-primary/20 rounded-md transition-colors text-primary"
+                >
+                  <IconX size={12} />
+                </button>
+              </div>
+            )}
             <div className="flex flex-wrap items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
               {[
                 { value: 'newest', label: 'Newest', icon: IconCalendarEvent },
@@ -396,8 +425,8 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
               </button>
             </div>
 
-            <GenerateReportButton 
-              onGeneratePDF={handleGenerateReport} 
+            <GenerateReportButton
+              onGeneratePDF={handleGenerateReport}
 
             />
 
@@ -417,33 +446,43 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
       </motion.div>
 
       {/* Properties List */}
-      {listings.length === 0 ? (
+      {filteredAndSortedListings.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center py-16 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm"
         >
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-2xl mb-6 text-gray-300">
-            <IconBuilding size={32} />
+            {searchQuery ? <IconSearchOff size={32} /> : <IconBuilding size={32} />}
           </div>
-          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">No properties listed yet</h3>
+          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">
+            {searchQuery ? `No matches for "${searchQuery}"` : "No properties listed yet"}
+          </h3>
           <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto text-sm leading-relaxed font-medium">
-            Your rental portfolio is currently empty. Start growing your business by listing your first property today.
+            {searchQuery
+              ? "Try adjusting your search or clear it to see all properties."
+              : "Your rental portfolio is currently empty. Start growing your business by listing your first property today."}
           </p>
-          <Link href="/landlord/properties/create">
-            <Button className="rounded-xl px-6 py-3 shadow-lg shadow-primary/20">
-              <IconPlus className="mr-2" size={12} />
-              <span className="text-xs uppercase tracking-widest font-black">Add Property</span>
+          {searchQuery ? (
+            <Button onClick={clearSearch} className="rounded-xl px-6 py-3 shadow-lg shadow-primary/20">
+              Clear Search
             </Button>
-          </Link>
+          ) : (
+            <Link href="/landlord/properties/create">
+              <Button className="rounded-xl px-6 py-3 shadow-lg shadow-primary/20">
+                <IconPlus className="mr-2" size={12} />
+                <span className="text-xs uppercase tracking-widest font-black">Add Property</span>
+              </Button>
+            </Link>
+          )}
         </motion.div>
       ) : (
         <div className={cn(
-          viewMode === 'grid' 
+          viewMode === 'grid'
             ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             : "flex flex-col gap-4"
         )}>
-          {sortedListings.map((property, idx) => (
+          {filteredAndSortedListings.map((property, idx) => (
             viewMode === 'grid' ? (
               <motion.div
                 key={property.id}
@@ -589,20 +628,20 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
                         {formatStatus(property.status)}
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-wrap items-center gap-4 text-gray-500 dark:text-gray-400 mb-2">
-                       <span className="text-xs font-bold flex items-center gap-1.5">
-                         <IconBuilding size={14} className="text-primary" />
-                         {property.roomCount} Rooms
-                       </span>
-                       <span className="text-xs font-bold flex items-center gap-1.5">
-                         <IconBath size={14} className="text-blue-500" />
-                         {property.bathroomCount} Baths
-                       </span>
-                       <span className="text-xs font-bold flex items-center gap-1.5">
-                         <IconCalendarFilled size={14} className="text-orange-500" />
-                         {new Date(property.createdAt).toLocaleDateString()}
-                       </span>
+                      <span className="text-xs font-bold flex items-center gap-1.5">
+                        <IconBuilding size={14} className="text-primary" />
+                        {property.roomCount} Rooms
+                      </span>
+                      <span className="text-xs font-bold flex items-center gap-1.5">
+                        <IconBath size={14} className="text-blue-500" />
+                        {property.bathroomCount} Baths
+                      </span>
+                      <span className="text-xs font-bold flex items-center gap-1.5">
+                        <IconCalendarFilled size={14} className="text-orange-500" />
+                        {new Date(property.createdAt).toLocaleDateString()}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -619,7 +658,7 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
                         <span className="sm:hidden ml-2 text-[10px] font-black uppercase tracking-widest">Edit</span>
                       </button>
                     </Link>
-                    <button 
+                    <button
                       onClick={() => {
                         setSelectedProperty(property);
                         setViewModalOpen(true);
@@ -629,7 +668,7 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
                       <IconEye size={16} />
                       <span className="sm:hidden ml-2 text-[10px] font-black uppercase tracking-widest">View</span>
                     </button>
-                    <button 
+                    <button
                       onClick={() => {
                         setSelectedProperty(property);
                         setDeleteModalOpen(true);
@@ -647,22 +686,15 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
         </div>
       )}
 
-      {/* Pagination / Load More */}
-      {nextCursor && (
-        <div className="flex justify-center pt-8">
-          <Button 
-            outline 
-            className="rounded-xl px-10 py-4 group transition-all hover:bg-primary hover:text-white"
-            onClick={handleLoadMore}
-            isLoading={isLoadingMore}
-          >
-            <span className="flex items-center gap-2 uppercase font-black tracking-[0.15em] text-[10px]">
-              {isLoadingMore ? 'Fetching properties...' : 'Load More Properties'}
-              <IconChevronDown className={cn("group-hover:translate-y-0.5 transition-transform", isLoadingMore && "animate-bounce")} size={10} />
-            </span>
-          </Button>
-        </div>
-      )}
+      <div className="mt-8 bg-white/20 dark:bg-gray-800/10 backdrop-blur-sm rounded-[32px] border border-gray-100/50 dark:border-gray-800/50 p-2 transition-all duration-700">
+        <ModernLoadMore
+          onLoadMore={handleLoadMore}
+          isLoading={isLoadingMore}
+          hasMore={!!nextCursor && !searchQuery}
+          label="See More Properties"
+          loadingLabel="Discovering Properties..."
+        />
+      </div>
     </div>
   );
 }

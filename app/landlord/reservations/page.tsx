@@ -9,8 +9,10 @@ export default async function LandlordReservationsPage() {
     return null;
   }
 
+  const take = 10;
+  
   // Get all reservation requests for the landlord's listings
-  const reservations = await db.inquiry.findMany({
+  const inquiries = await db.inquiry.findMany({
     where: {
       listing: { userId: user.id },
     },
@@ -40,7 +42,12 @@ export default async function LandlordReservationsPage() {
     orderBy: {
       createdAt: "desc",
     },
+    take: take + 1,
   });
 
-  return <LandlordReservationsClient reservations={reservations} />;
+  const hasNextPage = inquiries.length > take;
+  const nextCursor = hasNextPage ? inquiries[take].id : null;
+  const paginatedInquiries = inquiries.slice(0, take);
+
+  return <LandlordReservationsClient initialReservations={{ inquiries: paginatedInquiries, nextCursor }} />;
 }

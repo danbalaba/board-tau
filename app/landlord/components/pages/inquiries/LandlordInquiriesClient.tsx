@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   IconMail,
   IconEye,
@@ -33,8 +33,8 @@ import Button from "@/components/common/Button"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/utils/helper"
 import { toast } from "sonner"
-import { 
-  generateTablePDF 
+import {
+  generateTablePDF
 } from '@/utils/pdfGenerator';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
 import {
@@ -45,6 +45,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/app/admin/components/ui/dropdown-menu';
+import { ModernLoadMore } from '@/components/common/ModernLoadMore';
 
 
 interface Inquiry {
@@ -77,12 +78,15 @@ interface LandlordInquiriesClientProps {
 
 export default function LandlordInquiriesClient({ inquiries }: LandlordInquiriesClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const initialSearch = searchParams.get('search') || ""
+
   const [listings, setListings] = useState(inquiries.inquiries)
   const [nextCursor, setNextCursor] = useState(inquiries.nextCursor)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL")
   const [viewMode, setViewMode] = useState<"grid" | "list">("list")
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState(initialSearch)
   const [sortBy, setSortBy] = useState("newest")
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null)
   const [viewModalOpen, setViewModalOpen] = useState(false)
@@ -94,6 +98,13 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
     setListings(inquiries.inquiries)
     setNextCursor(inquiries.nextCursor)
   }, [inquiries])
+
+  // Update searchQuery when URL changes
+  useEffect(() => {
+    if (initialSearch) {
+      setSearchQuery(initialSearch)
+    }
+  }, [initialSearch])
 
   const statusColors: Record<string, string> = {
     PENDING: "bg-amber-500/10 text-amber-600 border-amber-500/20",
@@ -520,8 +531,8 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
                 <IconList size={18} />
               </button>
             </div>
-            
-            <GenerateReportButton 
+
+            <GenerateReportButton
               onGeneratePDF={handleGenerateReport}
             />
           </div>
@@ -693,26 +704,15 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
         )}
       </AnimatePresence>
 
-      {/* Pagination Container */}
-      {nextCursor && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex justify-center pt-8"
-        >
-          <Button
-            outline
-            className="rounded-[20px] px-10 py-4 border-2 border-gray-100 dark:border-gray-800 group hover:border-primary/40 hover:bg-primary/5 transition-all shadow-sm"
-            onClick={handleLoadMore}
-            isLoading={isLoadingMore}
-          >
-            <span className="flex items-center gap-2 uppercase font-black tracking-[0.2em] text-[10px] text-gray-500 group-hover:text-primary transition-colors">
-              {isLoadingMore ? "Processing..." : "Load More Inquiries"}
-              <IconChevronDown className="group-hover:translate-y-1 transition-transform" size={12} strokeWidth={3} />
-            </span>
-          </Button>
-        </motion.div>
-      )}
+      <div className="mt-8 bg-white/30 dark:bg-gray-800/20 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700/50 p-2 shadow-xl shadow-gray-200/10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+        <ModernLoadMore
+          onLoadMore={handleLoadMore}
+          isLoading={isLoadingMore}
+          hasMore={!!nextCursor}
+          label="View More Inquiries"
+          loadingLabel="Synchronizing Messages..."
+        />
+      </div>
     </div>
   )
 }
