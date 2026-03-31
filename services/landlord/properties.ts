@@ -17,8 +17,32 @@ export const getLandlordProperties = async (args?: { cursor?: string }) => {
     take: LISTINGS_BATCH,
     orderBy: { createdAt: "desc" },
     include: {
-      rooms: true,
+      rooms: {
+        include: {
+          amenities: {
+            include: {
+              amenityType: true,
+            },
+          },
+          images: true,
+        },
+      },
       images: true,
+      amenities: true,
+      rules: true,
+      features: true,
+      categories: {
+        include: {
+          category: true,
+        },
+      },
+      user: {
+        select: {
+          businessName: true,
+          phoneNumber: true,
+          email: true,
+        },
+      },
     },
   };
 

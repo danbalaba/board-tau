@@ -434,21 +434,19 @@ export default function LandlordCreatePropertyClient() {
           {/* Navigation Controls */}
           <div className="mt-10 pt-8 border-t border-gray-100 dark:border-gray-800">
             <div className="grid grid-cols-2 sm:grid-cols-3 items-center gap-4">
-              {/* Left Column: Previous Button */}
               <div className="flex justify-start">
-                <Button
-                  outline
-                  type="button"
-                  onClick={handleBack}
-                  disabled={currentStep === 0 || isSubmitting}
-                  className={cn(
-                    "min-w-[140px] px-6 py-2.5 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest transition-all",
-                    currentStep === 0 && "opacity-0 pointer-events-none"
-                  )}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
-                </Button>
+                {currentStep > 0 && (
+                  <Button
+                    outline
+                    type="button"
+                    onClick={handleBack}
+                    disabled={isSubmitting}
+                    className="min-w-[140px] px-6 py-2.5 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest transition-all"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Previous
+                  </Button>
+                )}
               </div>
 
               {/* Center Column: Step Indicator */}
