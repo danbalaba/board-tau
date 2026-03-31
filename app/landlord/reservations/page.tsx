@@ -49,5 +49,8 @@ export default async function LandlordReservationsPage() {
   const nextCursor = hasNextPage ? inquiries[take].id : null;
   const paginatedInquiries = inquiries.slice(0, take);
 
-  return <LandlordReservationsClient initialReservations={{ inquiries: paginatedInquiries, nextCursor }} />;
+  // Convert Prisma objects to plain POJOs to avoid Next.js "toStringTag" server reference issues
+  const serializedInquiries = JSON.parse(JSON.stringify(paginatedInquiries));
+
+  return <LandlordReservationsClient initialReservations={{ inquiries: serializedInquiries, nextCursor }} />;
 }
