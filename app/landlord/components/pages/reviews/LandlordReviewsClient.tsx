@@ -19,6 +19,10 @@ import {
 } from '@tabler/icons-react';
 import Button from "@/components/common/Button";
 import { cn } from '@/utils/helper';
+import { 
+  generateTablePDF 
+} from '@/utils/pdfGenerator';
+import GenerateReportButton from '@/components/common/GenerateReportButton';
 
 interface Review {
   id: string;
@@ -149,6 +153,28 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
     }
   }, [nextCursor, isLoadingMore]);
 
+  const handleGenerateReport = async () => {
+    const columns = ['Listing', 'Guest', 'Rating', 'Comment', 'Date'];
+    const data = filteredReviews.map((r: any) => [
+      r.listing.title,
+      r.user.name || r.user.email,
+      `${r.rating} / 5`,
+      r.comment || 'N/A',
+      new Date(r.createdAt).toLocaleDateString()
+    ]);
+
+    await generateTablePDF(
+      'Reviews_Report',
+      columns,
+      data,
+      {
+        title: 'Property Reviews Report',
+        subtitle: `Compilation of all ${filteredReviews.length} reviews for your properties`,
+        author: 'Landlord Dashboard'
+      }
+    );
+  };
+
   const handleSubmitResponse = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!responseText.trim()) return;
@@ -209,6 +235,10 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
               </button>
             </div>
             
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport}
+            />
+
             <div className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary hover:scale-110 transition-transform duration-300">
               <IconStar size={22} />
             </div>
