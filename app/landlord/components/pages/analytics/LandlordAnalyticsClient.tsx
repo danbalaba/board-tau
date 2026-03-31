@@ -187,8 +187,9 @@ export default function LandlordAnalyticsClient({
       { type: "Loft", count: 5, revenue: 25000 },
     ];
 
-    // 4. Factor Performance (RadarChart)
-    const radarChartData = [
+    // 4. Factor Performance (RadarChart) - Matching actual chart data
+    // Global Data
+    const radarChartGlobalData = [
       { metric: "Location", value: 85 },
       { metric: "Value", value: 90 },
       { metric: "Cleanliness", value: 75 },
@@ -197,13 +198,79 @@ export default function LandlordAnalyticsClient({
       { metric: "Accuracy", value: 88 },
     ];
 
-    // 5. Public Sentiments (RadialChart)
-    const radialChartData = [
+    // Property A (Luxury) Data
+    const radarChartPropertyAData = [
+      { metric: "Location", value: 92 },
+      { metric: "Value", value: 85 },
+      { metric: "Cleanliness", value: 88 },
+      { metric: "Amenities", value: 90 },
+      { metric: "Communication", value: 95 },
+      { metric: "Accuracy", value: 91 },
+    ];
+
+    // Property B (Studio) Data
+    const radarChartPropertyBData = [
+      { metric: "Location", value: 78 },
+      { metric: "Value", value: 95 },
+      { metric: "Cleanliness", value: 82 },
+      { metric: "Amenities", value: 70 },
+      { metric: "Communication", value: 88 },
+      { metric: "Accuracy", value: 85 },
+    ];
+
+    // 5. Public Sentiments (RadialChart) - Matching actual chart data
+    // Global Rating Data
+    const radialChartGlobalRatingData = [
       { rating: "5 Star", value: 45 },
       { rating: "4 Star", value: 30 },
       { rating: "3 Star", value: 15 },
       { rating: "2 Star", value: 7 },
       { rating: "1 Star", value: 3 },
+    ];
+
+    // Property A (Luxury) Rating Data
+    const radialChartPropertyARatingData = [
+      { rating: "5 Star", value: 52 },
+      { rating: "4 Star", value: 28 },
+      { rating: "3 Star", value: 12 },
+      { rating: "2 Star", value: 5 },
+      { rating: "1 Star", value: 3 },
+    ];
+
+    // Property B (Studio) Rating Data
+    const radialChartPropertyBRatingData = [
+      { rating: "5 Star", value: 38 },
+      { rating: "4 Star", value: 32 },
+      { rating: "3 Star", value: 18 },
+      { rating: "2 Star", value: 8 },
+      { rating: "1 Star", value: 4 },
+    ];
+
+    // Global Volume Data
+    const radialChartGlobalVolumeData = [
+      { rating: "5 Star", value: 150 },
+      { rating: "4 Star", value: 95 },
+      { rating: "3 Star", value: 45 },
+      { rating: "2 Star", value: 20 },
+      { rating: "1 Star", value: 10 },
+    ];
+
+    // Property A (Luxury) Volume Data
+    const radialChartPropertyAVolumeData = [
+      { rating: "5 Star", value: 85 },
+      { rating: "4 Star", value: 50 },
+      { rating: "3 Star", value: 25 },
+      { rating: "2 Star", value: 12 },
+      { rating: "1 Star", value: 5 },
+    ];
+
+    // Property B (Studio) Volume Data
+    const radialChartPropertyBVolumeData = [
+      { rating: "5 Star", value: 65 },
+      { rating: "4 Star", value: 45 },
+      { rating: "3 Star", value: 20 },
+      { rating: "2 Star", value: 8 },
+      { rating: "1 Star", value: 5 },
     ];
 
     // 6. Lead Origin Analysis (ToolTips)
@@ -272,13 +339,23 @@ export default function LandlordAnalyticsClient({
         title: 'Factor Performance Area (Quality Distribution)',
         type: 'table',
         columns: ['Quality Factor', 'Global Score (%)', 'Property A (Luxury) (%)', 'Property B (Studio) (%)'],
-        data: radarChartData.map(d => [d.metric, `${d.value}%`, `${d.value + 2}%`, `${d.value - 5}%`])
+        data: radarChartGlobalData.map((d, i) => [
+          d.metric, 
+          `${d.value}%`, 
+          `${radarChartPropertyAData[i].value}%`, 
+          `${radarChartPropertyBData[i].value}%`
+        ])
       },
       {
         title: 'Public Sentiments (Guest Ratings Breakdown)',
         type: 'table',
         columns: ['Rating Category', 'Volume (Global)', 'Property A (Luxury)', 'Property B (Studio)'],
-        data: radialChartData.map(d => [d.rating, d.value.toString(), (d.value * 0.6).toFixed(0), (d.value * 0.4).toFixed(0)])
+        data: radialChartGlobalRatingData.map((d, i) => [
+          d.rating, 
+          d.value.toString(), 
+          radialChartPropertyARatingData[i].value.toString(), 
+          radialChartPropertyBRatingData[i].value.toString()
+        ])
       },
       {
         title: 'Lead Origin Analysis (Channel Breakdown)',
@@ -342,7 +419,7 @@ export default function LandlordAnalyticsClient({
               </h1>
             </div>
           </div>
-          <div className="w-auto">
+          <div className="flex items-center gap-3">
             <ModernSelect
               instanceId="analytics-time-period"
               value={timePeriod}

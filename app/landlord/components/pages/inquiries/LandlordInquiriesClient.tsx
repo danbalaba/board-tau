@@ -416,9 +416,9 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
             </div>
           </div>
 
-          <div className="flex flex-wrap lg:flex-row items-center gap-4 w-full xl:w-auto mt-4 lg:mt-0">
+          <div className="flex flex-wrap lg:flex-row items-center gap-3 w-full xl:w-auto mt-4 lg:mt-0">
             {/* Search Input */}
-            <div className="relative w-full lg:w-72 group">
+            <div className="relative w-full lg:w-44 group">
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
                 <IconSearch size={16} strokeWidth={2.5} />
               </div>
@@ -432,7 +432,7 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
             </div>
 
             {/* Sorting */}
-            <div className="flex flex-wrap items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
+            <div className="flex flex-wrap items-center gap-1.5 bg-white/50 dark:bg-gray-800/50 p-1 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
               {[
                 { value: 'newest', label: 'Newest', icon: IconHistory },
                 { value: 'oldest', label: 'Oldest', icon: IconCalendarEvent },
@@ -444,7 +444,7 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
                     key={option.value}
                     onClick={() => setSortBy(option.value)}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                      "flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
                       isSelected
                         ? "bg-primary text-white shadow-lg shadow-primary/30"
                         : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700"
@@ -460,7 +460,7 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
             {/* Optimized Filters Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all backdrop-blur-sm">
+                <button className="flex items-center gap-2 px-4 py-3 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all backdrop-blur-sm">
                   <IconFilter size={14} />
                   Filters {selectedStatus !== 'ALL' && <span className="w-2 h-2 rounded-full bg-primary" />}
                 </button>
@@ -494,7 +494,7 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm">
+            <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm ml-auto">
               <button
                 onClick={() => setViewMode("grid")}
                 className={cn(
@@ -519,11 +519,10 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
               >
                 <IconList size={18} />
               </button>
+              <GenerateReportButton 
+                onGeneratePDF={handleGenerateReport}
+              />
             </div>
-            
-            <GenerateReportButton 
-              onGeneratePDF={handleGenerateReport}
-            />
           </div>
         </div>
 
