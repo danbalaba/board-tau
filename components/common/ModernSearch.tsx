@@ -60,7 +60,7 @@ const KBarContent = ({ children }: { children: React.ReactNode }) => {
       keywords: "home dashboard main overview",
       section: "Navigation",
       perform: () => router.push("/landlord"),
-      icon: <IconLayoutDashboard size={20} />,
+      icon: "dashboard",
       subtitle: "Overview of your rental empire"
     },
     {
@@ -70,7 +70,7 @@ const KBarContent = ({ children }: { children: React.ReactNode }) => {
       keywords: "listings houses apartments rentals properties buildings",
       section: "Management",
       perform: () => router.push("/landlord/properties"),
-      icon: <IconBuilding size={20} />,
+      icon: "properties",
       subtitle: "Manage your active listings and portfolios"
     },
     {
@@ -80,7 +80,7 @@ const KBarContent = ({ children }: { children: React.ReactNode }) => {
       keywords: "messages inquiries chats potential tenants questions",
       section: "Management",
       perform: () => router.push("/landlord/inquiries"),
-      icon: <IconMessage size={20} />,
+      icon: "inquiries",
       subtitle: "Respond to potential tenants"
     },
     {
@@ -90,7 +90,7 @@ const KBarContent = ({ children }: { children: React.ReactNode }) => {
       keywords: "reservations pending bookings schedule",
       section: "Management",
       perform: () => router.push("/landlord/reservations"),
-      icon: <IconCalendarCheck size={20} />,
+      icon: "reservations",
       subtitle: "Approve or decline new booking requests"
     },
     {
@@ -100,7 +100,7 @@ const KBarContent = ({ children }: { children: React.ReactNode }) => {
       keywords: "bookings history active reservations schedule",
       section: "Management",
       perform: () => router.push("/landlord/bookings"),
-      icon: <IconCalendarStats size={20} />,
+      icon: "bookings",
       subtitle: "View all confirmed rental bookings"
     },
     {
@@ -110,7 +110,7 @@ const KBarContent = ({ children }: { children: React.ReactNode }) => {
       keywords: "reviews feedback ratings testimonials",
       section: "Analytics",
       perform: () => router.push("/landlord/reviews"),
-      icon: <IconStar size={20} />,
+      icon: "reviews",
       subtitle: "What your tenants are saying about you"
     },
     {
@@ -120,7 +120,7 @@ const KBarContent = ({ children }: { children: React.ReactNode }) => {
       keywords: "analytics stats statistics revenue performance",
       section: "Analytics",
       perform: () => router.push("/landlord/analytics"),
-      icon: <IconChartBar size={20} />,
+      icon: "analytics",
       subtitle: "In-depth insights into your business"
     },
     {
@@ -130,7 +130,7 @@ const KBarContent = ({ children }: { children: React.ReactNode }) => {
       keywords: "add new listing property create",
       section: "Management",
       perform: () => router.push("/landlord/properties?action=create"),
-      icon: <IconBuilding size={20} className="text-emerald-500" />,
+      icon: "create-property",
       subtitle: "List a new room or apartment"
     },
     {
@@ -140,7 +140,7 @@ const KBarContent = ({ children }: { children: React.ReactNode }) => {
       keywords: "tenants residents roommates users",
       section: "Management",
       perform: () => router.push("/landlord/tenants"),
-      icon: <IconUsers size={20} />,
+      icon: "tenants",
       subtitle: "View and manage your current residents"
     },
     {
@@ -150,7 +150,7 @@ const KBarContent = ({ children }: { children: React.ReactNode }) => {
       keywords: "settings configuration account system preferences",
       section: "Account Settings",
       perform: () => router.push("/landlord/settings"),
-      icon: <IconSettings size={20} />,
+      icon: "account",
       subtitle: "Tweak your dashboard experience"
     }
   ], [router]);
@@ -159,10 +159,6 @@ const KBarContent = ({ children }: { children: React.ReactNode }) => {
 
   const [dynamicResults, setDynamicResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-
-  const isDashboardOrAnalytics = useMemo(() => 
-    pathname === '/landlord' || pathname === '/landlord/analytics', 
-  [pathname]);
 
   const currentSection = useMemo(() => {
     if (pathname.includes('/landlord/properties')) return 'properties';
@@ -202,9 +198,8 @@ const KBarContent = ({ children }: { children: React.ReactNode }) => {
   );
 
   useEffect(() => {
-    if (isDashboardOrAnalytics) return;
     fetchResults(search, currentSection);
-  }, [search, currentSection, fetchResults, isDashboardOrAnalytics]);
+  }, [search, currentSection, fetchResults]);
 
   useRegisterActions(
     dynamicResults.map((res: any) => ({
@@ -213,56 +208,54 @@ const KBarContent = ({ children }: { children: React.ReactNode }) => {
       section: res.section,
       subtitle: res.subtitle,
       perform: () => router.push(res.perform),
-      icon: res.icon === 'building' ? <IconBuilding size={20} /> : res.icon === 'message' ? <IconMessage size={20} /> : res.icon === 'calendar-stats' ? <IconCalendarStats size={20} /> : res.icon === 'users' ? <IconUsers size={20} /> : res.icon === 'star' ? <IconStar size={20} /> : <IconCalendar size={20} />
+      icon: res.icon
     })),
     [dynamicResults, router]
   );
 
   return (
     <>
-      {isDashboardOrAnalytics && (
-        <KBarPortal>
-          <KBarPositioner className="bg-white/40 dark:bg-black/40 backdrop-blur-sm z-[100000]">
-            <KBarAnimator className="w-full max-w-[600px] bg-white/95 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-800/50 rounded-3xl shadow-2xl overflow-hidden glassmorphism transform transition-all">
-              <div className="relative">
-                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-primary">
-                  {isSearching ? (
-                    <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                  ) : (
-                    <IconSearch size={22} className="opacity-70" />
-                  )}
-                </div>
-                <KBarSearch
-                  className="w-full h-16 pl-16 pr-6 bg-transparent text-lg font-bold text-gray-900 dark:text-white outline-none placeholder:text-gray-400 placeholder:font-medium"
-                  placeholder={placeholder}
-                />
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2 py-1 rounded-xl border border-gray-200/50 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-800/50 shadow-sm leading-none">
-                  <IconCommand size={10} className="text-gray-400 font-black" />
-                  <span className="text-[10px] font-black text-gray-400">ESC</span>
-                </div>
+      <KBarPortal>
+        <KBarPositioner className="bg-white/40 dark:bg-black/40 backdrop-blur-sm z-[100000]">
+          <KBarAnimator className="w-full max-w-[600px] bg-white/95 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-800/50 rounded-3xl shadow-2xl overflow-hidden glassmorphism transform transition-all">
+            <div className="relative">
+              <div className="absolute left-6 top-1/2 -translate-y-1/2 text-primary">
+                {isSearching ? (
+                  <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                ) : (
+                  <IconSearch size={22} className="opacity-70" />
+                )}
               </div>
+              <KBarSearch
+                className="w-full h-16 pl-16 pr-6 bg-transparent text-lg font-bold text-gray-900 dark:text-white outline-none placeholder:text-gray-400 placeholder:font-medium"
+                placeholder={placeholder}
+              />
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2 py-1 rounded-xl border border-gray-200/50 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-800/50 shadow-sm leading-none">
+                <IconCommand size={10} className="text-gray-400 font-black" />
+                <span className="text-[10px] font-black text-gray-400">ESC</span>
+              </div>
+            </div>
 
-              <div className="max-h-[450px] overflow-auto pb-4 custom-scrollbar">
-                <RenderResults />
-              </div>
+            <div className="max-h-[450px] overflow-auto pb-4 custom-scrollbar">
+              <RenderResults />
+            </div>
 
-              <div className="px-6 py-4 border-t border-gray-100/50 dark:border-gray-800/50 bg-gray-50/30 dark:bg-gray-800/20 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[10px] font-black text-gray-400 shadow-sm">↵</span>
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Select</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[10px] font-black text-gray-400 shadow-sm">↑↓</span>
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Navigate</span>
-                  </div>
+            <div className="px-6 py-4 border-t border-gray-100/50 dark:border-gray-800/50 bg-gray-50/30 dark:bg-gray-800/20 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <span className="px-1.5 py-0.5 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[10px] font-black text-gray-400 shadow-sm">↵</span>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Select</span>
                 </div>
-                <span className="text-[10px] font-black text-primary/40 uppercase tracking-widest">BoardTAU Commander</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="px-1.5 py-0.5 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[10px] font-black text-gray-400 shadow-sm">↑↓</span>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Navigate</span>
+                </div>
               </div>
-            </KBarAnimator>
-          </KBarPositioner>
-        </KBarPortal>
-      )}
+              <span className="text-[10px] font-black text-primary/40 uppercase tracking-widest">BoardTAU Commander</span>
+            </div>
+          </KBarAnimator>
+        </KBarPositioner>
+      </KBarPortal>
       {children}
     </>
   );
@@ -288,6 +281,28 @@ function RenderResults() {
 }
 
 const ResultItem = React.forwardRef(({ item, active }: { item: Action, active: boolean }, ref: React.Ref<HTMLDivElement>) => {
+  const renderIcon = (iconName: any) => {
+    switch (iconName) {
+      case 'dashboard': return <IconLayoutDashboard size={20} />;
+      case 'properties':
+      case 'building':
+      case 'create-property': return <IconBuilding size={20} />;
+      case 'inquiries':
+      case 'message': return <IconMessage size={20} />;
+      case 'reservations': return <IconCalendarCheck size={20} />;
+      case 'bookings':
+      case 'calendar-stats': return <IconCalendarStats size={20} />;
+      case 'reviews':
+      case 'star': return <IconStar size={20} />;
+      case 'analytics': return <IconChartBar size={20} />;
+      case 'tenants':
+      case 'users': return <IconUsers size={20} />;
+      case 'account': return <IconSettings size={20} />;
+      case 'calendar': return <IconCalendar size={20} />;
+      default: return typeof iconName === 'string' ? <IconSearch size={20} /> : iconName;
+    }
+  };
+
   return (
     <div
       ref={ref}
@@ -303,7 +318,7 @@ const ResultItem = React.forwardRef(({ item, active }: { item: Action, active: b
             ? "bg-primary text-white shadow-lg shadow-primary/30 rotate-3 scale-110"
             : "bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:text-primary group-hover:bg-primary/10"
         )}>
-          {item.icon}
+          {renderIcon(item.icon)}
         </div>
         <div>
           <div className="flex items-center gap-2">

@@ -70,8 +70,6 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
   }, []);
 
   const isDark = theme === "dark";
-  const isDashboardOrAnalytics = pathname === '/landlord' || pathname === '/landlord/analytics';
-  const hideSearch = !isDashboardOrAnalytics;
 
   return (
     <>
@@ -114,7 +112,6 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
 
         {/* Center - Search Bar Trigger */}
         <div className="flex-1 max-w-xl px-8 hidden md:block relative">
-          {!hideSearch && (
             <button
               onClick={() => query.toggle()}
               className="w-full max-w-[280px] group flex items-center h-10 px-4 rounded-2xl border border-transparent bg-gray-100/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300"
@@ -126,7 +123,6 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
                 <span className="text-[10px] font-black text-gray-400">K</span>
               </div>
             </button>
-          )}
         </div>
 
         {/* Right side - Actions & User */}

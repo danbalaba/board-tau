@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { 
-  IconSearch, 
-  IconLoader2, 
-  IconX, 
+import {
+  IconSearch,
+  IconLoader2,
+  IconX,
   IconCommand,
   IconArrowRight,
   IconBuilding,
@@ -27,11 +27,11 @@ interface SectionSearchProps {
   className?: string;
 }
 
-export const SectionSearch = ({ 
-  section, 
-  placeholder = "Search matches...", 
+export const SectionSearch = ({
+  section,
+  placeholder = "Search matches...",
   onSearchChange,
-  className 
+  className
 }: SectionSearchProps) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
@@ -78,7 +78,7 @@ export const SectionSearch = ({
       setResults([]);
       setIsOpen(false);
     }
-    
+
     // Notify parent if needed for live filtering of the main list
     onSearchChange?.(query);
   }, [query, fetchMatches, onSearchChange]);
