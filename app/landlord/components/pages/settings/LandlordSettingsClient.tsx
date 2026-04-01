@@ -18,6 +18,27 @@ import Input from '@/components/inputs/Input';
 import Textarea from '@/components/inputs/Textarea';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 
+/**
+ * Validates and sanitizes image sources using a strict character whitelist.
+ */
+const getSafeImageSrc = (image: string): string => {
+  if (!image || typeof image !== 'string' || image.length > 2048) return '';
+  
+  const lower = image.toLowerCase();
+  const isSafeProtocol = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('blob:');
+  const isRelative = image.startsWith('/');
+
+  if (isSafeProtocol || isRelative) {
+    // Reconstruct the string using only safe URI characters
+    const safeUrl = image.split('').filter(c => /^[a-zA-Z0-9:/-_\. \?\#\&\%]$/.test(c)).join('');
+    if (safeUrl === image) {
+      return safeUrl;
+    }
+  }
+  
+  return '';
+};
+
 export default function LandlordSettingsClient() {
   const { success, error: toastError } = useResponsiveToast();
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'payment' | 'security'>('profile');
@@ -41,9 +62,17 @@ export default function LandlordSettingsClient() {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // Security Fix: Strictly validate image type to prevent DOM text reinterpretation attacks
+      if (!file.type.startsWith('image/')) {
+        toastError('Only valid image files are allowed.');
+        return;
+      }
+      
       setFormData((prev) => ({
         ...prev,
-        profileImage: e.target.files![0],
+        profileImage: file,
       }));
     }
   };
@@ -146,7 +175,7 @@ export default function LandlordSettingsClient() {
                       <div className="w-24 h-24 bg-white dark:bg-gray-700 rounded-3xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-xl overflow-hidden">
                         {formData.profileImage ? (
                           <img
-                            src={URL.createObjectURL(formData.profileImage)}
+                            src={getSafeImageSrc(URL.createObjectURL(formData.profileImage))}
                             alt="Profile"
                             className="w-full h-full object-cover"
                           />

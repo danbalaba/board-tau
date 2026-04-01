@@ -57,11 +57,10 @@ export const validateOTP = (otp: string): string | null => {
 
 // Sanitization function to prevent XSS
 export const sanitizeInput = (input: string): string => {
-  // Remove HTML tags
-  let sanitized = input.replace(/<[^>]*>/g, '');
+  if (!input) return '';
   // Trim whitespace
-  sanitized = sanitized.trim();
-  // Remove potentially malicious characters
+  let sanitized = input.trim();
+  // Encode HTML entities to completely neutralize XSS payloads without vulnerable RegExp
   sanitized = validator.escape(sanitized);
   return sanitized;
 };

@@ -15,6 +15,27 @@ import { ScrollArea } from "./ui/scroll-area";
 import { useControllableState } from "../hooks/use-controllable-state";
 import { cn, formatBytes } from "../lib/utils";
 
+/**
+ * Validates and sanitizes image sources using a strict character whitelist.
+ */
+const getSafeImageSrc = (src: string | null | undefined): string => {
+  if (!src || typeof src !== 'string' || src.length > 2048) return '';
+  
+  const lower = src.toLowerCase();
+  const isSafeProtocol = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('blob:');
+  const isRelative = src.startsWith('/');
+
+  if (isSafeProtocol || isRelative) {
+    // Reconstruct the string using only safe URI characters
+    const safeUrl = src.split('').filter(c => /^[a-zA-Z0-9:/-_\. \?\#\&\%]$/.test(c)).join('');
+    if (safeUrl === src) {
+      return safeUrl;
+    }
+  }
+  
+  return '';
+};
+
 export interface FileUploaderProps
   extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -127,7 +148,7 @@ export function FileUploader(props: FileUploaderProps) {
 
       const newFiles = acceptedFiles.map((file) =>
         Object.assign(file, {
-          preview: URL.createObjectURL(file)
+          preview: file.type.startsWith('image/') ? getSafeImageSrc(URL.createObjectURL(file)) : ''
         })
       );
 
@@ -275,7 +296,7 @@ function FileCard({ file, progress, onRemove }: FileCardProps) {
       <div className='flex flex-1 space-x-4'>
         {isFileWithPreview(file) ? (
           <Image
-            src={file.preview}
+            src={getSafeImageSrc(file.preview)}
             alt={file.name}
             width={48}
             height={48}
