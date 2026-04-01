@@ -243,7 +243,13 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const filesArray = Array.from(e.target.files);
+      // Security Fix: Strictly filter only image files to prevent DOM text reinterpretation attacks
+      const filesArray = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
+      
+      if (filesArray.length !== e.target.files.length) {
+        toast.error('Only image files are allowed.');
+      }
+      
       setFormData(prev => ({ ...prev, propertyFiles: [...prev.propertyFiles, ...filesArray] }));
     }
   };
@@ -614,7 +620,13 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
                                 <Plus size={20} />
                               </div>
                               <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 group-hover/add:text-primary">Add More Photos</span>
-                              <input type="file" multiple className="hidden" onChange={handleImageChange} />
+                              <input 
+                                type="file" 
+                                accept="image/png, image/jpeg, image/jpg, image/webp" 
+                                multiple 
+                                className="hidden" 
+                                onChange={handleImageChange} 
+                              />
                             </label>
                           </div>
                           

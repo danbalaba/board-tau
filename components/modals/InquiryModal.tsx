@@ -651,7 +651,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
               {profilePhoto && (
                 <div className="mt-2">
                   <img
-                    src={URL.createObjectURL(profilePhoto)}
+                    src={profilePhoto.type.startsWith('image/') ? URL.createObjectURL(profilePhoto) : ''}
                     alt="Profile preview"
                     className="w-24 h-24 object-cover rounded-lg border-2 border-primary"
                   />
@@ -727,7 +727,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
               {idAttachment && (
                 <div className="mt-2">
                   <img
-                    src={URL.createObjectURL(idAttachment)}
+                    src={idAttachment.type.startsWith('image/') ? URL.createObjectURL(idAttachment) : ''}
                     alt="ID preview"
                     className="w-24 h-24 object-cover rounded-lg border-2 border-primary"
                   />

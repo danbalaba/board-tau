@@ -109,7 +109,7 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
     const validFiles = validateFiles(files, propertyImages.length, MAX_PROPERTY_IMAGES);
     
     if (validFiles.length > 0) {
-      const newImages = validFiles.map(file => URL.createObjectURL(file));
+      const newImages = validFiles.map(file => file.type.startsWith('image/') ? URL.createObjectURL(file) : '');
       const updated = [...propertyImages, ...newImages];
       const updatedFiles = [...internalPropertyFiles, ...validFiles];
       
@@ -128,7 +128,7 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
     const validFiles = validateFiles(files, currentRoomCount, MAX_ROOM_IMAGES);
     
     if (validFiles.length > 0) {
-      const newImages = validFiles.map(file => URL.createObjectURL(file));
+      const newImages = validFiles.map(file => file.type.startsWith('image/') ? URL.createObjectURL(file) : '');
       const updatedRoomImages = {
         ...roomImages,
         [roomIndex]: [...(roomImages[roomIndex] || []), ...newImages]
@@ -195,7 +195,7 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
     if (id === 'property') {
       const validFiles = validateFiles(files, propertyImages.length, MAX_PROPERTY_IMAGES);
       if (validFiles.length > 0) {
-        const newImages = validFiles.map(file => URL.createObjectURL(file));
+        const newImages = validFiles.map(file => file.type.startsWith('image/') ? URL.createObjectURL(file) : '');
         const updated = [...propertyImages, ...newImages];
         setPropertyImages(updated);
         syncToForm(updated, roomImages);
@@ -206,7 +206,7 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
       const currentRoomCount = (roomImages[roomIndex] || []).length;
       const validFiles = validateFiles(files, currentRoomCount, MAX_ROOM_IMAGES);
       if (validFiles.length > 0) {
-        const newImages = validFiles.map(file => URL.createObjectURL(file));
+        const newImages = validFiles.map(file => file.type.startsWith('image/') ? URL.createObjectURL(file) : '');
         const updatedRoomImages = {
           ...roomImages,
           [roomIndex]: [...(roomImages[roomIndex] || []), ...newImages]
@@ -289,7 +289,7 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
             {propertyImages.map((image, index) => (
               <div key={index} className="relative group">
                 <img
-                  src={image}
+                  src={/^(https?|blob|data):/i.test(image) ? image : ''}
                   alt={`Property ${index + 1}`}
                   className="w-full h-32 object-cover rounded-lg"
                 />
@@ -365,7 +365,7 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
               {roomImages[roomIndex].map((image, imageIndex) => (
                 <div key={imageIndex} className="relative group">
                   <img
-                    src={image}
+                    src={/^(https?|blob|data):/i.test(image) ? image : ''}
                     alt={`Room ${roomIndex + 1} - ${imageIndex + 1}`}
                     className="w-full h-24 object-cover rounded-lg"
                   />
