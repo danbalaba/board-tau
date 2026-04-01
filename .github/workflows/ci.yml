@@ -39,9 +39,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: npm ci --legacy-peer-deps --ignore-scripts
-      - run: |
-          echo "DATABASE_URL=mongodb://localhost:27017" > .env
-          npx prisma generate
       - run: npm run lint
       - run: npm run type-check
 
@@ -73,9 +70,6 @@ jobs:
           node-version: 20.19.0
           cache: 'npm'
       - run: npm ci --legacy-peer-deps --ignore-scripts
-      - run: |
-          echo "DATABASE_URL=mongodb://localhost:27017" > .env
-          npx prisma generate
       - run: npm run test:coverage
 
   build:
@@ -107,9 +101,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: npm ci --legacy-peer-deps --ignore-scripts
-      - run: |
-          echo "DATABASE_URL=mongodb://localhost:27017" > .env
-          npx prisma generate
       - run: npm run build
       - uses: actions/upload-artifact@v7
         with:
@@ -144,9 +135,6 @@ jobs:
           node-version: 20.19.0
           cache: 'npm'
       - run: npm ci --legacy-peer-deps --ignore-scripts
-      - run: |
-          echo "DATABASE_URL=mongodb://localhost:27017" > .env
-          npx prisma generate
       - run: npm run build
 
   deploy:
