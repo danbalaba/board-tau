@@ -14,15 +14,32 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  LineChart,
+  Line,
 } from 'recharts';
+import { motion } from 'framer-motion';
+import {
+  TrendingUp,
+  BarChart3,
+  Activity,
+  Star,
+  ArrowUpRight,
+  ArrowDownRight,
+  Target,
+  Zap,
+} from 'lucide-react';
+import { cn } from "@/lib/utils";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from '@/app/admin/components/ui/chart';
 
 // Sample data for performance metrics
 const revenueData = [
@@ -49,125 +66,181 @@ const pricingData = [
   { property: 'Downtown Loft', price: 200, competitors: 190 }
 ];
 
+const chartConfig = {
+  revenue: {
+    label: 'Revenue',
+    color: 'hsl(var(--primary))',
+  },
+  bookings: {
+    label: 'Bookings',
+    color: 'hsl(var(--chart-2))',
+  },
+  occupancy: {
+    label: 'Occupancy',
+    color: 'hsl(var(--primary))',
+  },
+  price: {
+    label: 'Your Price',
+    color: 'hsl(var(--primary))',
+  },
+  competitors: {
+    label: 'Competitors',
+    color: 'hsl(var(--chart-2))',
+  },
+} satisfies ChartConfig;
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+  },
+};
+
 export function PerformanceMetrics() {
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Performance Metrics</h2>
-          <p className="text-muted-foreground">Track property performance and occupancy</p>
+          <h2 className="text-2xl font-bold tracking-tight">Performance Analytics</h2>
+          <p className="text-muted-foreground">Detailed metrics across all properties and listings</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,245</div>
-            <p className="text-sm text-muted-foreground">+12.5% from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Average Occupancy</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">86.3%</div>
-            <p className="text-sm text-muted-foreground">+2.1% from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$186,750</div>
-            <p className="text-sm text-muted-foreground">+15.2% from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Average Review Score</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">4.8</div>
-            <p className="text-sm text-muted-foreground">+0.1 from last month</p>
-          </CardContent>
-        </Card>
+        {[
+          { title: "Total Bookings", value: "1,245", trend: "+12.5%", icon: Zap, color: "text-amber-500", trendColor: "text-emerald-500" },
+          { title: "Avg Occupancy", value: "86.3%", trend: "+2.1%", icon: Activity, color: "text-primary", trendColor: "text-emerald-500" },
+          { title: "Total Revenue", value: "$186,750", trend: "+15.2%", icon: TrendingUp, color: "text-emerald-500", trendColor: "text-emerald-500" },
+          { title: "Avg Rating", value: "4.8", trend: "+0.1", icon: Star, color: "text-amber-500 fill-amber-500", trendColor: "text-emerald-500" },
+        ].map((kpi, i) => (
+          <motion.div key={i} variants={itemVariants}>
+            <Card className="overflow-hidden relative">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                <kpi.icon className="w-12 h-12" />
+              </div>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                <kpi.icon className={cn("w-4 h-4", kpi.color)} />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{kpi.value}</div>
+                <div className="flex items-center mt-1">
+                  <ArrowUpRight className={cn("w-3 h-3 mr-1", kpi.trendColor)} />
+                  <p className={cn("text-xs font-medium", kpi.trendColor)}>{kpi.trend} from last month</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue & Bookings</CardTitle>
-            <CardDescription>Monthly revenue and booking trends</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Legend />
-                  <Bar yAxisId="left" dataKey="revenue" name="Revenue ($)" fill="#1890ff" />
-                  <Bar yAxisId="right" dataKey="bookings" name="Bookings" fill="#52c41a" />
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Revenue & Bookings</CardTitle>
+                  <CardDescription>Performance trends over time</CardDescription>
+                </div>
+                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[350px] w-full">
+                <BarChart data={revenueData} margin={{ top: 20 }}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+                  <YAxis yAxisId="left" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v) => `$${v}`} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Bar yAxisId="left" dataKey="revenue" fill="var(--color-revenue)" radius={[4, 4, 0, 0]} />
+                  <Bar yAxisId="left" dataKey="bookings" fill="var(--color-bookings)" radius={[4, 4, 0, 0]} />
                 </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Occupancy Rate</CardTitle>
-            <CardDescription>Occupancy by property</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={occupancyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="property" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="occupancy" name="Occupancy %" fill="#8884d8" />
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Occupancy Rate</CardTitle>
+                  <CardDescription>Conversion by top properties</CardDescription>
+                </div>
+                <Target className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[350px] w-full">
+                <BarChart data={occupancyData} layout="vertical" margin={{ left: 10 }}>
+                  <YAxis
+                    dataKey="property"
+                    type="category"
+                    tickLine={false}
+                    axisLine={false}
+                    width={100}
+                    tickMargin={10}
+                  />
+                  <XAxis type="number" hide />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar
+                    dataKey="occupancy"
+                    fill="var(--color-occupancy)"
+                    radius={[0, 4, 4, 0]}
+                    barSize={20}
+                  />
                 </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Pricing Comparison</CardTitle>
-          <CardDescription>Your prices vs. competitors</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={pricingData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="property" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="price" name="Your Price" fill="#1890ff" />
-                <Bar dataKey="competitors" name="Competitors" fill="#52c41a" />
+      <motion.div variants={itemVariants}>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Pricing Strategy</CardTitle>
+                <CardDescription>Competitive pricing analysis</CardDescription>
+              </div>
+              <BarChart3 className="w-4 h-4 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+              <BarChart data={pricingData} margin={{ top: 20 }}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis dataKey="property" tickLine={false} axisLine={false} tickMargin={8} />
+                <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Bar dataKey="price" fill="var(--color-price)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="competitors" fill="var(--color-competitors)" radius={[4, 4, 0, 0]} />
               </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }

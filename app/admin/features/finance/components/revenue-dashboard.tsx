@@ -14,15 +14,35 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  LineChart,
+  Line,
 } from 'recharts';
+import { motion } from 'framer-motion';
+import {
+  DollarSign,
+  CreditCard,
+  Scale,
+  TrendingUp,
+  PieChart as PieChartIcon,
+  Activity,
+  ArrowUpRight,
+  ArrowDownRight,
+  Receipt,
+  Download,
+} from 'lucide-react';
+import { cn } from "@/lib/utils";
+import { Button } from "@/app/admin/components/ui/button";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from '@/app/admin/components/ui/chart';
 import { useRevenueDashboard } from '@/app/admin/hooks/use-revenue-dashboard';
 
 export function RevenueDashboard() {
@@ -93,169 +113,280 @@ export function RevenueDashboard() {
     { category: 'Utilities', amount: 1000 },
   ];
 
+  const chartConfig = {
+    revenue: {
+      label: 'Revenue',
+      color: 'hsl(var(--primary))',
+    },
+    bookings: {
+      label: 'Bookings',
+      color: 'hsl(var(--chart-2))',
+    },
+    accommodation: {
+      label: 'Accommodation',
+      color: 'hsl(var(--chart-1))',
+    },
+    cleaning: {
+      label: 'Cleaning Fees',
+      color: 'hsl(var(--chart-2))',
+    },
+    service: {
+      label: 'Service Fees',
+      color: 'hsl(var(--chart-3))',
+    },
+    other: {
+      label: 'Other',
+      color: 'hsl(var(--chart-4))',
+    },
+    amount: {
+      label: 'Amount',
+      color: 'hsl(var(--primary))',
+    },
+  } satisfies ChartConfig;
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+    },
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Revenue Dashboard</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Financial Overview</h2>
           <p className="text-muted-foreground">Comprehensive revenue and financial analytics</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Report
+          </Button>
+          <Button size="sm">
+            <CreditCard className="w-4 h-4 mr-2" />
+            Payouts
+          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${data?.data?.totalRevenue?.toLocaleString()}</div>
-            <p className="text-sm text-muted-foreground">For the last 30 days</p>
-          </CardContent>
-        </Card>
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <DollarSign className="w-12 h-12" />
+            </div>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <DollarSign className="w-4 h-4 text-emerald-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${data?.data?.totalRevenue?.toLocaleString()}</div>
+              <div className="flex items-center mt-1">
+                <ArrowUpRight className="w-3 h-3 text-emerald-500 mr-1" />
+                <p className="text-xs text-emerald-500">+12.5% from last period</p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Average Daily Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${data?.data?.averageDailyRevenue?.toFixed(2)}</div>
-            <p className="text-sm text-muted-foreground">Average per day</p>
-          </CardContent>
-        </Card>
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <Activity className="w-12 h-12" />
+            </div>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Avg Daily Revenue</CardTitle>
+              <Activity className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${data?.data?.averageDailyRevenue?.toFixed(2)}</div>
+              <p className="text-sm text-muted-foreground mt-1">Average per day</p>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Top Property Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${topProperties[0]?.revenue?.toLocaleString() || '0'}</div>
-            <p className="text-sm text-muted-foreground">
-              {topProperties[0]?.listingTitle || 'No properties'}
-            </p>
-          </CardContent>
-        </Card>
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <TrendingUp className="w-12 h-12" />
+            </div>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Top Performance</CardTitle>
+              <TrendingUp className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${topProperties[0]?.revenue?.toLocaleString() || '0'}</div>
+              <p className="text-sm text-muted-foreground mt-1 truncate max-w-full">
+                {topProperties[0]?.listingTitle || 'No properties'}
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Days</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">30</div>
-            <p className="text-sm text-muted-foreground">Analysis period</p>
-          </CardContent>
-        </Card>
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <Receipt className="w-12 h-12" />
+            </div>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Platform Fee</CardTitle>
+              <Receipt className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">15%</div>
+              <p className="text-sm text-muted-foreground mt-1 text-emerald-500 font-medium">Optimized for growth</p>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue & Bookings</CardTitle>
-            <CardDescription>Monthly revenue and booking trends</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Legend />
-                  <Bar yAxisId="left" dataKey="revenue" name="Revenue ($)" fill="#1890ff" />
-                  <Bar yAxisId="right" dataKey="bookings" name="Bookings" fill="#52c41a" />
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Revenue & Bookings</CardTitle>
+                  <CardDescription>Monthly revenue and booking trends</CardDescription>
+                </div>
+                <Activity className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[350px] w-full">
+                <BarChart data={revenueData} margin={{ top: 20 }}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+                  <YAxis yAxisId="left" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v) => `$${v}`} />
+                  <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tickMargin={8} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Bar yAxisId="left" dataKey="revenue" fill="var(--color-revenue)" radius={[4, 4, 0, 0]} />
+                  <Bar yAxisId="right" dataKey="bookings" fill="var(--color-bookings)" radius={[4, 4, 0, 0]} />
                 </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue Breakdown</CardTitle>
-            <CardDescription>Revenue sources and breakdown</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Revenue Breakdown</CardTitle>
+                  <CardDescription>Revenue sources and breakdown</CardDescription>
+                </div>
+                <PieChartIcon className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </CardHeader>
+            <CardContent className="flex flex-col">
+              <ChartContainer config={chartConfig} className="h-[280px]">
                 <PieChart>
                   <Pie
                     data={revenueBreakdownData}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                    innerRadius={60}
                     outerRadius={80}
-                    fill="#8884d8"
+                    paddingAngle={5}
                     dataKey="value"
                   >
                     {revenueBreakdownData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                  <ChartLegend content={<ChartLegendContent className="mt-4" />} />
                 </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+              </ChartContainer>
+              <div className="grid grid-cols-2 gap-4 mt-4 border-t pt-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase font-semibold">Growth Strategy</p>
+                  <p className="text-sm font-medium">Aggressive Expansion</p>
+                </div>
+                <div className="space-y-1 text-right">
+                  <p className="text-xs text-muted-foreground uppercase font-semibold">Fiscal Health</p>
+                  <p className="text-sm font-medium text-emerald-600">Strong</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Expenses</CardTitle>
-          <CardDescription>Breakdown of monthly operating expenses</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={expensesData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="category" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="amount" name="Amount ($)" fill="#8884d8" />
+      <motion.div variants={itemVariants}>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Operating Expenses</CardTitle>
+                <CardDescription>Breakdown of monthly operating costs</CardDescription>
+              </div>
+              <Scale className="w-4 h-4 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+              <BarChart data={expensesData} layout="vertical" margin={{ left: 10 }}>
+                <YAxis
+                  dataKey="category"
+                  type="category"
+                  tickLine={false}
+                  axisLine={false}
+                  width={100}
+                />
+                <XAxis type="number" hide />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar
+                  dataKey="amount"
+                  fill="var(--color-amount)"
+                  radius={[0, 4, 4, 0]}
+                  barSize={20}
+                />
               </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Gross Margin</CardTitle>
-            <CardDescription>Gross margin percentage</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">75%</div>
-            <p className="text-sm text-muted-foreground">Average gross margin</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Net Profit Margin</CardTitle>
-            <CardDescription>Net profit margin percentage</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">24.6%</div>
-            <p className="text-sm text-muted-foreground">Average net margin</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue Growth</CardTitle>
-            <CardDescription>Monthly revenue growth rate</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">+12.5%</div>
-            <p className="text-sm text-muted-foreground">Month-over-month growth</p>
-          </CardContent>
-        </Card>
+        {[
+          { title: "Gross Margin", value: "75%", desc: "Average gross margin", icon: TrendingUp },
+          { title: "Net Profit Margin", value: "24.6%", desc: "Average net margin", icon: Activity },
+          { title: "Revenue Growth", value: "+12.5%", desc: "Month-over-month", icon: TrendingUp },
+        ].map((stat, i) => (
+          <motion.div key={i} variants={itemVariants}>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                <stat.icon className="w-4 h-4 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stat.value}</div>
+                <p className="text-sm text-muted-foreground">{stat.desc}</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
       </div>
-    </div>
+    </motion.div>
   );
 }

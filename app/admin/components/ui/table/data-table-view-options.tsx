@@ -47,9 +47,9 @@ export function DataTableViewOptions<TData>({
           role='combobox'
           variant='outline'
           size='sm'
-          className='ml-auto hidden h-8 lg:flex'
+          className='ml-auto hidden h-8 lg:flex hover:bg-primary hover:text-white transition-all duration-200'
         >
-          <Settings2 />
+          <Settings2 className="w-4 h-4 mr-2" />
           View
           <CaretSortIcon className='ml-auto opacity-50' />
         </Button>

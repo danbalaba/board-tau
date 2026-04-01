@@ -17,6 +17,8 @@ export interface UserProfile {
   createdAt: Date;
   updatedAt: Date;
   bio: string | null;
+  city: string | null;
+  region: string | null;
 }
 
 // Server-side function to get user profile
@@ -44,6 +46,8 @@ export async function getUserProfile(): Promise<UserProfile> {
       createdAt: true,
       updatedAt: true,
       bio: true,
+      city: true,
+      region: true,
     },
   });
 
@@ -78,6 +82,12 @@ export async function updateUserProfile(data: Partial<UserProfile>): Promise<Use
   }
   if (data.image !== undefined) {
     allowedFields.image = data.image; // Allow updating profile image
+  }
+  if (data.city !== undefined) {
+    (allowedFields as any).city = data.city ? sanitizeInput(data.city) : null;
+  }
+  if (data.region !== undefined) {
+    (allowedFields as any).region = data.region ? sanitizeInput(data.region) : null;
   }
 
   const updatedUser = await db.user.update({
