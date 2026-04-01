@@ -22,6 +22,7 @@ import { useEdgeStore } from '@/lib/edgestore';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { cn } from '@/utils/helper';
 import Button from '@/components/common/Button';
+import LoadingAnimation from '@/components/common/LoadingAnimation';
 
 import dynamic from 'next/dynamic';
 
@@ -48,9 +49,16 @@ export default function LandlordCreatePropertyClient() {
   const router = useRouter();
   const { edgestore } = useEdgeStore();
   const toast = useResponsiveToast();
+  const [isMounted, setIsMounted] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number]>([15.635189, 120.415343]);
+
+  // Synchronized entrance sequence
+  useEffect(() => {
+    const timer = setTimeout(() => setIsMounted(true), 600);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Document and Image upload state
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
@@ -368,53 +376,83 @@ export default function LandlordCreatePropertyClient() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-1">Add New Property</h1>
-        <p className="text-gray-500 dark:text-gray-400 font-medium text-sm">Complete the steps below to list your property on BoardTAU</p>
-      </div>
-
-      {/* Steper */}
-      <div className="mb-12 relative">
-        <div className="flex justify-between items-center relative z-10">
-          {STEPS.map((step, index) => {
-            const Icon = step.icon;
-            const isActive = currentStep === index;
-            const isCompleted = currentStep > index;
-
-            return (
-              <div key={step.id} className="flex flex-col items-center group cursor-pointer" onClick={() => index < currentStep && setCurrentStep(index)}>
-                <div className={cn(
-                  "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 border-2",
-                  isActive 
-                    ? "bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105" 
-                    : isCompleted
-                      ? "bg-green-500 border-green-500 text-white"
-                      : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 group-hover:border-primary/40"
-                )}>
-                  {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-4 h-4" />}
+      <AnimatePresence>
+        {!isMounted ? (
+          <div className="flex-1 flex items-center justify-center py-60 bg-black/10 backdrop-blur-[2px]">
+            <LoadingAnimation text="Synchronizing creator..." size="large" />
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
+            {/* Header */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm mb-12"
+            >
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-2.5 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary">
+                    <Building2 size={20} />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">
+                      New Listing
+                    </h1>
+                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">
+                      Expand your rental portfolio
+                    </p>
+                  </div>
                 </div>
-                <span className={cn(
-                  "mt-3 text-xs font-bold uppercase tracking-wider transition-colors duration-300 hidden md:block",
-                  isActive ? "text-primary dark:text-primary" : "text-gray-400 dark:text-gray-500"
-                )}>
-                  {step.title}
-                </span>
               </div>
-            );
-          })}
-        </div>
-        
-        {/* Progress Line */}
-        <div className="absolute top-6 left-0 w-full h-0.5 bg-gray-100 dark:bg-gray-800 -z-0">
-          <motion.div 
-            className="h-full bg-primary"
-            initial={{ width: '0%' }}
-            animate={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
-            transition={{ duration: 0.5 }}
-          />
-        </div>
-      </div>
+              {/* Abstract background elements */}
+              <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
+            </motion.div>
+
+            {/* Stepper */}
+            <div className="mb-12 relative">
+              <div className="flex justify-between items-center relative z-10">
+                {STEPS.map((step, index) => {
+                  const Icon = step.icon;
+                  const isActive = currentStep === index;
+                  const isCompleted = currentStep > index;
+
+                  return (
+                    <div key={step.id} className="flex flex-col items-center group cursor-pointer" onClick={() => index < currentStep && setCurrentStep(index)}>
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 border-2",
+                        isActive 
+                          ? "bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105" 
+                          : isCompleted
+                            ? "bg-green-500 border-green-500 text-white"
+                            : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 group-hover:border-primary/40"
+                      )}>
+                        {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-4 h-4" />}
+                      </div>
+                      <span className={cn(
+                        "mt-3 text-xs font-bold uppercase tracking-wider transition-colors duration-300 hidden md:block",
+                        isActive ? "text-primary dark:text-primary" : "text-gray-400 dark:text-gray-500"
+                      )}>
+                        {step.title}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Progress Line */}
+              <div className="absolute top-6 left-0 w-full h-0.5 bg-gray-100 dark:bg-gray-800 -z-0">
+                <motion.div 
+                  className="h-full bg-primary"
+                  initial={{ width: '0%' }}
+                  animate={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
+                  transition={{ duration: 0.5 }}
+                />
+              </div>
+            </div>
 
       {/* Content Form */}
       <FormProvider {...methods}>
@@ -492,6 +530,9 @@ export default function LandlordCreatePropertyClient() {
           </div>
         </div>
       </FormProvider>
-    </div>
-  );
+    </motion.div>
+  )}
+</AnimatePresence>
+</div>
+);
 }
