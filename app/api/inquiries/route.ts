@@ -1,17 +1,23 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
+import { hasPermission } from "@/lib/rbac";
 
 export async function POST(request: Request) {
   try {
-    console.log("Received inquiry request");
-
     const user = await getCurrentUser();
-    console.log("Current user:", user);
 
     if (!user) {
-      console.log("No user found - returning 401");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // ENFORCE PERMISSION: CREATE_INQUIRY
+    const canCreate = await hasPermission(user.id, 'CREATE_INQUIRY');
+    if (!canCreate) {
+      return NextResponse.json(
+        { error: "Forbidden", message: "Institutional protocols prohibit this action for your current role." },
+        { status: 403 }
+      );
     }
 
     const data = await request.json();

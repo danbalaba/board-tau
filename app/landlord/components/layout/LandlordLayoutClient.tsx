@@ -23,16 +23,18 @@ export default function LandlordLayoutClient({
   user,
 }: LandlordLayoutClientProps) {
   return (
-    <SidebarProvider defaultOpen={true}>
-      <LandlordSidebar />
-      <SidebarInset>
-        <LandlordTopbar user={user} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background pt-16">
-          <div className="w-full px-4 py-8">
-            {children}
-          </div>
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="h-screen overflow-hidden bg-background">
+      <SidebarProvider defaultOpen={true}>
+        <LandlordSidebar />
+        <SidebarInset className="flex flex-col h-screen overflow-y-auto">
+          <LandlordTopbar user={user} />
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
+            <div className="w-full px-4 py-8">
+              {children}
+            </div>
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -18,225 +18,261 @@ import {
 } from '@/app/admin/components/ui/table';
 import { Badge } from '@/app/admin/components/ui/badge';
 import { Button } from '@/app/admin/components/ui/button';
-import { Eye, Edit, Trash2 } from 'lucide-react';
-
-interface Property {
-  id: string;
-  name: string;
-  host: string;
-  location: string;
-  type: string;
-  status: 'active' | 'inactive' | 'pending';
-  price: number;
-  bedrooms: number;
-  bathrooms: number;
-  size: number;
-  createdDate: string;
-  lastUpdated: string;
-}
-
-const properties: Property[] = [
-  {
-    id: '1',
-    name: 'Cozy Studio in Downtown',
-    host: 'Jane Smith',
-    location: 'New York, NY',
-    type: 'Studio',
-    status: 'active',
-    price: 150,
-    bedrooms: 0,
-    bathrooms: 1,
-    size: 450,
-    createdDate: '2023-01-15T10:30:00Z',
-    lastUpdated: '2024-01-10T09:15:00Z'
-  },
-  {
-    id: '2',
-    name: 'Beach Villa with Ocean View',
-    host: 'Mike Johnson',
-    location: 'Miami, FL',
-    type: 'Villa',
-    status: 'active',
-    price: 250,
-    bedrooms: 3,
-    bathrooms: 2,
-    size: 1200,
-    createdDate: '2023-02-20T14:20:00Z',
-    lastUpdated: '2024-01-09T16:45:00Z'
-  },
-  {
-    id: '3',
-    name: 'Luxury Apartment in City Center',
-    host: 'Tom Brown',
-    location: 'Los Angeles, CA',
-    type: 'Apartment',
-    status: 'pending',
-    price: 300,
-    bedrooms: 2,
-    bathrooms: 2,
-    size: 850,
-    createdDate: '2023-03-10T08:15:00Z',
-    lastUpdated: '2024-01-08T14:20:00Z'
-  },
-  {
-    id: '4',
-    name: 'Downtown Loft',
-    host: 'Sarah Williams',
-    location: 'Chicago, IL',
-    type: 'Loft',
-    status: 'inactive',
-    price: 200,
-    bedrooms: 1,
-    bathrooms: 1,
-    size: 600,
-    createdDate: '2023-04-05T13:45:00Z',
-    lastUpdated: '2024-01-07T11:30:00Z'
-  }
-];
+import {
+  Eye,
+  Edit,
+  Trash2,
+  Building2,
+  MapPin,
+  TrendingUp,
+  Search,
+  RefreshCw,
+  MoreHorizontal,
+  Home,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+} from 'lucide-react';
+import { useProperties, useDeleteProperty, type Property } from '@/app/admin/hooks/use-properties';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from "@/lib/utils";
+import { toast } from 'sonner';
+import { Input } from "@/app/admin/components/ui/input";
 
 const statusColors = {
-  active: 'default',
-  inactive: 'secondary',
-  pending: 'destructive'
-};
-
-const statusLabels = {
-  active: 'Active',
-  inactive: 'Inactive',
-  pending: 'Pending'
+  active: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  pending: 'bg-amber-100 text-amber-700 border-amber-200',
+  inactive: 'bg-slate-100 text-slate-700 border-slate-200',
+  rejected: 'bg-rose-100 text-rose-700 border-rose-200',
 };
 
 export function PropertyDirectory() {
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState<string>('');
+
+  const { data, isLoading, isError, error, refetch } = useProperties({
+    page,
+    search: search || undefined,
+    status: status || undefined,
+  });
+
+  const { mutate: deleteProperty } = useDeleteProperty();
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this property? This action is irreversible.')) {
+      deleteProperty(id, {
+        onSuccess: () => toast.success('Property deleted successfully'),
+        onError: (err: any) => toast.error(`Failed to delete: ${err.message}`),
+      });
+    }
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[400px] gap-4">
+        <Building2 className="w-10 h-10 text-primary animate-pulse" />
+        <p className="text-sm text-muted-foreground animate-pulse">Syncing property records...</p>
+      </div>
+    );
+  }
+
+  const properties = data?.data || [];
+  const total = data?.meta?.total || 0;
+  const activeCount = properties.filter(p => p.status === 'active').length;
+  const pendingCount = properties.filter(p => p.status === 'pending').length;
+  const avgPrice = total > 0 ? (properties.reduce((sum, p) => sum + p.price, 0) / properties.length) : 0;
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Property Directory</h2>
-          <p className="text-muted-foreground">Manage all properties on the platform</p>
+        <div className="flex items-center gap-4">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Building2 className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Property Asset Registry</h2>
+            <p className="text-muted-foreground">Comprehensive inventory of all platform listings</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Reload
+          </Button>
+          <Button size="sm">
+            Configure Assets
+          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Properties</CardTitle>
-            <CardDescription>All properties</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{properties.length}</div>
-            <p className="text-sm text-muted-foreground">Total properties</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Properties</CardTitle>
-            <CardDescription>Currently available properties</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {properties.filter(prop => prop.status === 'active').length}
-            </div>
-            <p className="text-sm text-muted-foreground">Active properties</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending Approval</CardTitle>
-            <CardDescription>Properties awaiting approval</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {properties.filter(prop => prop.status === 'pending').length}
-            </div>
-            <p className="text-sm text-muted-foreground">Pending properties</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Average Price</CardTitle>
-            <CardDescription>Average nightly price</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              ${(properties.reduce((sum, prop) => sum + prop.price, 0) / properties.length).toFixed(0)}
-            </div>
-            <p className="text-sm text-muted-foreground">Average price</p>
-          </CardContent>
-        </Card>
+        {[
+          { title: "Total Units", value: total, desc: "Global inventory", icon: Home },
+          { title: "Live Assets", value: activeCount, desc: "Currently active", icon: CheckCircle2 },
+          { title: "Approval Desk", value: pendingCount, desc: "Pending review", icon: Clock },
+          { title: "Avg Real Estate", value: `$${avgPrice.toFixed(0)}`, desc: "Market average", icon: TrendingUp },
+        ].map((stat, i) => (
+          <motion.div key={i} variants={itemVariants}>
+            <Card className="hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{stat.title}</CardTitle>
+                <stat.icon className="w-4 h-4 text-primary opacity-70" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <p className="text-[10px] text-muted-foreground mt-1 font-medium">{stat.desc}</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Properties</CardTitle>
-          <CardDescription>View and manage all properties</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Host</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {properties.map((property) => (
-                <TableRow key={property.id}>
-                  <TableCell className="font-medium">{property.name}</TableCell>
-                  <TableCell>{property.host}</TableCell>
-                  <TableCell>{property.location}</TableCell>
-                  <TableCell>{property.type}</TableCell>
-                  <TableCell>${property.price.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <Badge variant={statusColors[property.status] as any}>
-                      {statusLabels[property.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(property.createdDate).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => console.log('View', property.id)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => console.log('Edit', property.id)}
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => console.log('Delete', property.id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
-                      </Button>
-                    </div>
-                  </TableCell>
+      <motion.div variants={itemVariants}>
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b bg-muted/20 pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Asset Inventory</CardTitle>
+                <CardDescription>Managed listings and property details</CardDescription>
+              </div>
+              <div className="flex gap-2 items-center">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search registry..."
+                    className="pl-9 w-[250px] h-9"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-1 bg-muted p-1 rounded-md">
+                  {[
+                    { label: 'All', value: '' },
+                    { label: 'Active', value: 'active' },
+                    { label: 'Pending', value: 'pending' },
+                  ].map((tab) => (
+                    <button
+                      key={tab.label}
+                      onClick={() => setStatus(tab.value)}
+                      className={cn(
+                        "px-3 py-1 text-xs font-medium rounded-sm transition-all",
+                        status === tab.value ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30">
+                  <TableHead className="w-[300px]">Property Details</TableHead>
+                  <TableHead>Host Management</TableHead>
+                  <TableHead>Asset Type</TableHead>
+                  <TableHead>Valuation</TableHead>
+                  <TableHead>Operational Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+              </TableHeader>
+              <TableBody>
+                <AnimatePresence mode="popLayout">
+                  {properties.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic">
+                        No property assets matched your current filters.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    properties.map((property) => (
+                      <motion.tr
+                        layout
+                        key={property.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="group hover:bg-muted/30 transition-colors"
+                      >
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-foreground">{property.title}</span>
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                              <MapPin className="w-3 h-3" />
+                              {property.region || 'Undefined Region'}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-sm bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                              {property.owner?.name?.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-medium">{property.owner?.name}</span>
+                              <span className="text-[10px] text-muted-foreground">{property.owner?.email}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="font-normal text-[10px] px-1.5 py-0">
+                            {property.roomsCount} Rooms
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-mono text-sm font-semibold text-emerald-600">
+                            ${property.price}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={cn("text-[10px] font-semibold border-solid shadow-none px-2", statusColors[property.status as keyof typeof statusColors])}>
+                            {property.status.toUpperCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-amber-100 hover:text-amber-600">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 hover:bg-rose-100 hover:text-rose-600"
+                              onClick={() => handleDelete(property.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </motion.tr>
+                    ))
+                  )}
+                </AnimatePresence>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }

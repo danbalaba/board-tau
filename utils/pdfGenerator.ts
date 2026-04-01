@@ -147,7 +147,7 @@ export const generateVisualPDF = async (
     useCORS: true,
     logging: false,
     backgroundColor: '#ffffff'
-  });
+  } as any);
 
   const imgData = canvas.toDataURL('image/png');
   const imgProps = doc.getImageProperties(imgData);
