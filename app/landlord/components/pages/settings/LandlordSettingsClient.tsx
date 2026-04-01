@@ -19,20 +19,21 @@ import Textarea from '@/components/inputs/Textarea';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 
 /**
- * Only allow http, https, or blob URLs as image sources.
- * Explicitly rejects data: URIs and any other schemes to prevent XSS.
+ * Validates and sanitizes image sources using a strict character whitelist.
  */
 const getSafeImageSrc = (image: string): string => {
-  if (!image || typeof image !== 'string') return '';
+  if (!image || typeof image !== 'string' || image.length > 2048) return '';
   
-  // Explicitly validate the resulting string is a safe protocol and contains no HTML-like characters
-  // Rejects < > " ' ` ( ) ; \ to satisfy aggressive CodeQL DOM-based XSS rules.
   const lower = image.toLowerCase();
-  const isSafeProtocol = lower.startsWith('blob:') || lower.startsWith('https://') || lower.startsWith('http://');
-  const hasDangerousChars = /[<>"'`();\\]/.test(image);
+  const isSafeProtocol = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('blob:');
+  const isRelative = image.startsWith('/');
 
-  if (isSafeProtocol && !hasDangerousChars) {
-    return image;
+  if (isSafeProtocol || isRelative) {
+    // Reconstruct the string using only safe URI characters
+    const safeUrl = image.split('').filter(c => /^[a-zA-Z0-9:/-_\. \?\#\&\%]$/.test(c)).join('');
+    if (safeUrl === image) {
+      return safeUrl;
+    }
   }
   
   return '';

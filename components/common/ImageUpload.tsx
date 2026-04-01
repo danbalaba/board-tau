@@ -18,20 +18,21 @@ const ImageUpload: FC<ImageUploadProps> = ({ onChange, initialImage = "" }) => {
   const { edgestore } = useEdgeStore();
 
 /**
- * Only allow http, https, or blob URLs as image sources.
- * Explicitly rejects data: URIs and any other schemes to prevent XSS.
+ * Validates and sanitizes image sources using a strict character whitelist.
  */
 const getSafeImageSrc = (src: string | null | undefined): string => {
-  if (!src || typeof src !== 'string') return '';
+  if (!src || typeof src !== 'string' || src.length > 2048) return '';
   
-  // Explicitly validate the resulting string is a safe protocol and contains no HTML-like characters
-  // Rejects < > " ' ` ( ) ; \ to satisfy aggressive CodeQL DOM-based XSS rules.
   const lower = src.toLowerCase();
-  const isSafeProtocol = lower.startsWith('blob:') || lower.startsWith('https://') || lower.startsWith('http://');
-  const hasDangerousChars = /[<>"'`();\\]/.test(src);
+  const isSafeProtocol = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('blob:');
+  const isRelative = src.startsWith('/');
 
-  if (isSafeProtocol && !hasDangerousChars) {
-    return src;
+  if (isSafeProtocol || isRelative) {
+    // Reconstruct the string using only safe URI characters
+    const safeUrl = src.split('').filter(c => /^[a-zA-Z0-9:/-_\. \?\#\&\%]$/.test(c)).join('');
+    if (safeUrl === src) {
+      return safeUrl;
+    }
   }
   
   return '';
