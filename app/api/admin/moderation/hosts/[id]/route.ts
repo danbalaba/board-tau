@@ -50,7 +50,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (status === 'approved') {
       await db.user.update({
         where: { id: updatedApplication.userId },
-        data: { role: 'LANDLORD' },
+        data: { 
+          role: 'LANDLORD',
+          isVerifiedLandlord: true,
+          landlordApprovedAt: new Date()
+        },
       });
     }
 

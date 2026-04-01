@@ -72,6 +72,14 @@ export async function PUT(
       role: body.role,
     };
 
+    if (body.role === 'LANDLORD') {
+      updateData.isVerifiedLandlord = true;
+      updateData.landlordApprovedAt = new Date();
+    } else if (body.role === 'USER') {
+      updateData.isVerifiedLandlord = false;
+      updateData.landlordApprovedAt = null;
+    }
+
     if (body.status === 'active') {
       updateData.isActive = true;
       updateData.deletedAt = null;
@@ -145,8 +153,16 @@ export async function PATCH(
     // Update other fields if provided
     if (body.name) updateData.name = body.name;
     if (body.email) updateData.email = body.email;
-    if (body.role) updateData.role = body.role;
-
+    if (body.role) {
+      updateData.role = body.role;
+      if (body.role === 'LANDLORD') {
+        updateData.isVerifiedLandlord = true;
+        updateData.landlordApprovedAt = new Date();
+      } else if (body.role === 'USER') {
+        updateData.isVerifiedLandlord = false;
+        updateData.landlordApprovedAt = null;
+      }
+    }
     const updatedUser = await db.user.update({
       where: {
         id,
