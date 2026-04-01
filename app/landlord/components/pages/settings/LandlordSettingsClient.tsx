@@ -41,9 +41,17 @@ export default function LandlordSettingsClient() {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // Security Fix: Strictly validate image type to prevent DOM text reinterpretation attacks
+      if (!file.type.startsWith('image/')) {
+        toastError('Only valid image files are allowed.');
+        return;
+      }
+      
       setFormData((prev) => ({
         ...prev,
-        profileImage: e.target.files![0],
+        profileImage: file,
       }));
     }
   };

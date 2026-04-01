@@ -127,7 +127,7 @@ export function FileUploader(props: FileUploaderProps) {
 
       const newFiles = acceptedFiles.map((file) =>
         Object.assign(file, {
-          preview: URL.createObjectURL(file)
+          preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : ''
         })
       );
 

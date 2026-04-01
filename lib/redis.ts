@@ -24,7 +24,7 @@ export const cache = {
       const data = await redis.get(key);
       return data ? JSON.parse(data) : null;
     } catch (error) {
-      console.error(`Cache get error for key ${key}:`, error);
+      console.error('Cache get error for key %s:', key, error);
       return null;
     }
   },
@@ -41,7 +41,7 @@ export const cache = {
       await redis.set(key, JSON.stringify(data), 'EX', ttl);
       return true;
     } catch (error) {
-      console.error(`Cache set error for key ${key}:`, error);
+      console.error('Cache set error for key %s:', key, error);
       return false;
     }
   },
@@ -56,7 +56,7 @@ export const cache = {
       await redis.del(key);
       return true;
     } catch (error) {
-      console.error(`Cache delete error for key ${key}:`, error);
+      console.error('Cache delete error for key %s:', key, error);
       return false;
     }
   },
@@ -71,7 +71,7 @@ export const cache = {
       const result = await redis.exists(key);
       return result === 1;
     } catch (error) {
-      console.error(`Cache exists check error for key ${key}:`, error);
+      console.error('Cache exists check error for key %s:', key, error);
       return false;
     }
   },
@@ -85,7 +85,7 @@ export const cache = {
     try {
       return await redis.ttl(key);
     } catch (error) {
-      console.error(`Cache TTL check error for key ${key}:`, error);
+      console.error('Cache TTL check error for key %s:', key, error);
       return -1;
     }
   },
