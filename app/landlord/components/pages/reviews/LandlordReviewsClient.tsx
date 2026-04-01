@@ -16,7 +16,8 @@ import {
   IconStarFilled,
   IconLayoutGrid,
   IconList,
-  IconSearchOff
+  IconSearchOff,
+  IconFilter
 } from '@tabler/icons-react';
 import Button from "@/components/common/Button";
 import { cn } from '@/utils/helper';
@@ -24,7 +25,16 @@ import {
   generateTablePDF
 } from '@/utils/pdfGenerator';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/app/admin/components/ui/dropdown-menu';
 import { ModernLoadMore } from '@/components/common/ModernLoadMore';
+import { SectionSearch } from '@/components/common/SectionSearch';
 
 interface Review {
   id: string;
@@ -94,14 +104,16 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
     );
   }, []);
 
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || '');
+
   const filteredReviews = useMemo(() => {
     return listings.filter(review => {
       const statusMatch = selectedStatus === 'all' || review.status === selectedStatus;
       const ratingMatch = selectedRating === 'all' || review.rating === parseInt(selectedRating);
 
       let searchMatch = true;
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
+      if (localSearchQuery) {
+        const query = localSearchQuery.toLowerCase();
         searchMatch = review.listing.title.toLowerCase().includes(query) ||
           (review.user.name?.toLowerCase() || '').includes(query) ||
           (review.comment?.toLowerCase() || '').includes(query);
@@ -109,7 +121,7 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
 
       return statusMatch && ratingMatch && searchMatch;
     });
-  }, [selectedStatus, selectedRating, listings, searchQuery]);
+  }, [selectedStatus, selectedRating, listings, localSearchQuery]);
 
   const clearSearch = () => {
     router.push('/landlord/reviews');
@@ -224,165 +236,125 @@ export default function LandlordReviewsClient({ reviews }: LandlordReviewsClient
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm">
-        <div className="flex items-center justify-between">
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 rounded-2xl border border-primary/10 shadow-sm relative">
+        {/* Background clipping wrapper */}
+        <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
+        </div>
+
+        <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
+            <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-xl flex items-center justify-center text-primary shadow-lg">
+              <IconStar size={24} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
+                Guest Reviews
+              </h1>
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-0.5 opacity-70">
+                Monitor and respond to guest feedback
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap lg:flex-row items-center gap-3 w-full xl:w-auto">
+            <SectionSearch
+              section="reviews"
+              placeholder="Search reviews..."
+              onSearchChange={setLocalSearchQuery}
+              className="w-full lg:w-72"
+            />
+            
+            <GenerateReportButton
+              onGeneratePDF={handleGenerateReport}
+            />
+
+            <div className="flex items-center gap-1 bg-white/50 dark:bg-gray-800/50 p-1 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
               <button
                 onClick={() => setViewMode('grid')}
                 className={cn(
-                  "p-2 rounded-xl transition-all duration-300",
+                  "p-1.5 rounded-xl transition-all duration-300",
                   viewMode === 'grid'
                     ? "bg-primary text-white shadow-lg shadow-primary/30"
                     : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
                 )}
               >
-                <IconLayoutGrid size={18} />
+                <IconLayoutGrid size={16} />
               </button>
               <button
                 onClick={() => setViewMode('list')}
                 className={cn(
-                  "p-2 rounded-xl transition-all duration-300",
+                  "p-1.5 rounded-xl transition-all duration-300",
                   viewMode === 'list'
                     ? "bg-primary text-white shadow-lg shadow-primary/30"
                     : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
                 )}
               >
-                <IconList size={18} />
+                <IconList size={16} />
               </button>
             </div>
 
-            <GenerateReportButton
-              onGeneratePDF={handleGenerateReport}
-            />
-
-            <div className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary hover:scale-110 transition-transform duration-300">
-              <IconStar size={22} />
-            </div>
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-0.5 tracking-tight">
-                  Guest Reviews
-                </h1>
-                {searchQuery && (
-                  <div className="flex items-center gap-3 px-3 py-1 bg-primary/10 border border-primary/20 rounded-xl animate-in fade-in slide-in-from-left-4">
-                    <IconSearchOff size={12} className="text-primary" />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-primary">Search: {searchQuery}</span>
-                    <button
-                      onClick={clearSearch}
-                      className="p-0.5 hover:bg-primary/20 rounded-md transition-colors text-primary"
-                    >
-                      <IconX size={10} />
-                    </button>
-                  </div>
-                )}
-              </div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Manage property reviews and responses
-              </p>
-            </div>
+            {/* Combined Filters Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 px-3 py-1.5 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all backdrop-blur-sm shadow-sm">
+                  <IconFilter size={14} />
+                  Filters {(selectedStatus !== 'all' || selectedRating !== 'all') && <span className="w-2 h-2 rounded-full bg-primary" />}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64 p-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl">
+                <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">Status</div>
+                <DropdownMenuGroup>
+                  {[
+                    { value: 'all', label: 'All Reviews', icon: IconInbox },
+                    { value: 'pending', label: 'Pending Response', icon: IconClock },
+                    { value: 'approved', label: 'Approved', icon: IconCircleCheck },
+                    { value: 'rejected', label: 'Rejected', icon: IconCircleX },
+                  ].map((option) => {
+                    const isSelected = selectedStatus === option.value;
+                    const Icon = option.icon;
+                    return (
+                      <DropdownMenuItem
+                        key={option.value}
+                        onClick={() => setSelectedStatus(option.value)}
+                        className={cn(
+                          "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
+                          isSelected ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        )}
+                      >
+                        <Icon size={14} />
+                        {option.label}
+                        {isSelected && <IconCheck size={14} className="ml-auto" />}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator className="my-1 bg-gray-100 dark:bg-gray-700" />
+                <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">Rating</div>
+                <DropdownMenuGroup className="grid grid-cols-3 gap-1">
+                  {['all', '5', '4', '3', '2', '1'].map((rating) => {
+                    const isSelected = selectedRating === rating;
+                    return (
+                      <DropdownMenuItem
+                        key={rating}
+                        onClick={() => setSelectedRating(rating)}
+                        className={cn(
+                          "cursor-pointer flex items-center justify-center p-2 rounded-lg text-xs font-black transition-all",
+                          isSelected ? "bg-primary text-white shadow-md" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-transparent"
+                        )}
+                      >
+                        {rating === 'all' ? 'All' : `${rating}★`}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          <div className="hidden xl:flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
-              <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 px-2">Status</span>
-              {[
-                { value: 'all', label: 'All Reviews', icon: IconInbox },
-                { value: 'pending', label: 'Pending', icon: IconClock },
-                { value: 'approved', label: 'Approved', icon: IconCircleCheck },
-                { value: 'rejected', label: 'Rejected', icon: IconCircleX },
-              ].map((option) => {
-                const Icon = option.icon;
-                const isSelected = selectedStatus === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => setSelectedStatus(option.value)}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
-                      isSelected
-                        ? "bg-primary text-white shadow-lg shadow-primary/30"
-                        : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700"
-                    )}
-                  >
-                    <Icon size={12} />
-                    <span>{option.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
-              <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 px-2">Rating</span>
-              {['all', '5', '4', '3', '2', '1'].map((rating) => {
-                const isSelected = selectedRating === rating;
-                return (
-                  <button
-                    key={rating}
-                    onClick={() => setSelectedRating(rating)}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
-                      isSelected
-                        ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30"
-                        : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700"
-                    )}
-                  >
-                    {rating === 'all' ? (
-                      <>
-                        <IconInbox size={12} />
-                        <span>All Ratings</span>
-                      </>
-                    ) : (
-                      <>
-                        <IconStarFilled size={10} className={isSelected ? "text-white" : "text-amber-500"} />
-                        <span>{rating} Stars</span>
-                      </>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Mobile Filters */}
-      <div className="xl:hidden flex flex-col gap-4 bg-white/50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm mb-4">
-        <div>
-          <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Status</span>
-          <div className="flex flex-wrap gap-2">
-            {['all', 'pending', 'approved', 'rejected'].map((status) => (
-              <button
-                key={status}
-                onClick={() => setSelectedStatus(status)}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                  selectedStatus === status ? "bg-primary text-white" : "bg-white dark:bg-gray-800 text-gray-500 border border-gray-100 dark:border-gray-700"
-                )}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div>
-          <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Rating</span>
-          <div className="flex flex-wrap gap-2">
-            {['all', '5', '4', '3', '2', '1'].map((rating) => (
-              <button
-                key={rating}
-                onClick={() => setSelectedRating(rating)}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                  selectedRating === rating ? "bg-amber-500 text-white" : "bg-white dark:bg-gray-800 text-gray-500 border border-gray-100 dark:border-gray-700"
-                )}
-              >
-                {rating === 'all' ? 'All' : `${rating} ★`}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {/* Reviews List */}
       {filteredReviews.length === 0 ? (

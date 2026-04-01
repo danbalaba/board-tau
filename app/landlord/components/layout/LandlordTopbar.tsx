@@ -70,7 +70,8 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
   }, []);
 
   const isDark = theme === "dark";
-  const hideSearch = pathname === '/landlord' || pathname === '/landlord/analytics';
+  const isDashboardOrAnalytics = pathname === '/landlord' || pathname === '/landlord/analytics';
+  const hideSearch = !isDashboardOrAnalytics;
 
   return (
     <>

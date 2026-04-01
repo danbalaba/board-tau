@@ -46,6 +46,7 @@ import {
   DropdownMenuTrigger,
 } from '@/app/admin/components/ui/dropdown-menu';
 import { ModernLoadMore } from '@/components/common/ModernLoadMore';
+import { SectionSearch } from '@/components/common/SectionSearch';
 
 interface Property {
   id: string;
@@ -86,13 +87,16 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
     setNextCursor(properties.nextCursor);
   }, [properties]);
 
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || '');
+
   const filteredAndSortedListings = useMemo(() => {
     let result = [...listings];
 
-    if (searchQuery) {
+    if (localSearchQuery) {
+      const q = localSearchQuery.toLowerCase();
       result = result.filter(p =>
-        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchQuery.toLowerCase())
+        p.title.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q)
       );
     }
 
@@ -342,107 +346,116 @@ export default function LandlordPropertiesClient({ properties }: LandlordPropert
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm"
+        className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 rounded-[24px] border border-primary/10 shadow-sm"
       >
-        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* Abstract background elements - Clipped via a separate absolute wrapper */}
+        <div className="absolute inset-0 overflow-hidden rounded-[24px] pointer-events-none">
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
+          <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-blue-400/10 rounded-full blur-xl" />
+        </div>
+
+        <div className="relative z-10 flex flex-col xl:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="p-2.5 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary">
-              <IconBuilding size={20} />
+              <IconBuilding size={18} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">
+              <h1 className="text-xl font-black text-gray-900 dark:text-white leading-tight">
                 Properties
               </h1>
-              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider opacity-70">
                 Manage your rental portfolio
               </p>
             </div>
           </div>
-          <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 w-full lg:w-auto mt-4 lg:mt-0">
-            {searchQuery && (
-              <div className="flex items-center gap-3 px-4 py-2 bg-primary/10 border border-primary/20 rounded-xl animate-in fade-in slide-in-from-right-4 duration-500">
-                <IconSearchOff size={14} className="text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-primary">Search: {searchQuery}</span>
-                <button
-                  onClick={clearSearch}
-                  className="p-1 hover:bg-primary/20 rounded-md transition-colors text-primary"
-                >
-                  <IconX size={12} />
+          
+          <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3 w-full lg:w-auto mt-4 lg:mt-0">
+            <SectionSearch 
+              section="properties" 
+              placeholder="Search properties..." 
+              onSearchChange={setLocalSearchQuery}
+              className="w-full lg:w-72"
+            />
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 px-3 py-1.5 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all backdrop-blur-sm shadow-sm">
+                  <IconHistory size={14} />
+                  Sort By
                 </button>
-              </div>
-            )}
-            <div className="flex flex-wrap items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
-              {[
-                { value: 'newest', label: 'Newest', icon: IconCalendarEvent },
-                { value: 'oldest', label: 'Oldest', icon: IconHistory },
-                { value: 'price_desc', label: 'High Price', icon: IconSortDescending },
-                { value: 'price_asc', label: 'Low Price', icon: IconSortAscending },
-                { value: 'status', label: 'Status', icon: IconCircleCheck },
-              ].map((option) => {
-                const Icon = option.icon;
-                const isSelected = sortBy === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => setSortBy(option.value)}
-                    className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300",
-                      isSelected
-                        ? "bg-primary text-white shadow-lg shadow-primary/30 scale-[1.02]"
-                        : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm"
-                    )}
-                  >
-                    <Icon size={14} className={cn("transition-transform duration-300", isSelected && "rotate-3")} />
-                    <span>{option.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 p-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl">
+                <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">Order by</div>
+                <DropdownMenuGroup>
+                  {[
+                    { value: 'newest', label: 'Newest first', icon: IconCalendarEvent },
+                    { value: 'oldest', label: 'Oldest first', icon: IconHistory },
+                    { value: 'price_desc', label: 'Price: High to Low', icon: IconSortDescending },
+                    { value: 'price_asc', label: 'Price: Low to High', icon: IconSortAscending },
+                    { value: 'status', label: 'By Status', icon: IconCircleCheck },
+                  ].map((option) => {
+                    const Icon = option.icon;
+                    const isSelected = sortBy === option.value;
+                    return (
+                      <DropdownMenuItem
+                        key={option.value}
+                        onClick={() => setSortBy(option.value)}
+                        className={cn(
+                          "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
+                          isSelected ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        )}
+                      >
+                        <Icon size={14} />
+                        {option.label}
+                        {isSelected && <IconCheck size={14} className="ml-auto" />}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <div className="flex items-center gap-1 bg-white/50 dark:bg-gray-800/50 p-1 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
               <button
                 onClick={() => setViewMode('grid')}
                 className={cn(
-                  "p-2 rounded-xl transition-all duration-300",
+                  "p-1.5 rounded-xl transition-all duration-300",
                   viewMode === 'grid'
                     ? "bg-primary text-white shadow-lg shadow-primary/30"
                     : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
                 )}
                 title="Grid View"
               >
-                <IconLayoutGrid size={18} />
+                <IconLayoutGrid size={16} />
               </button>
               <button
                 onClick={() => setViewMode('list')}
                 className={cn(
-                  "p-2 rounded-xl transition-all duration-300",
+                  "p-1.5 rounded-xl transition-all duration-300",
                   viewMode === 'list'
                     ? "bg-primary text-white shadow-lg shadow-primary/30"
                     : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
                 )}
                 title="List View"
               >
-                <IconList size={18} />
+                <IconList size={16} />
               </button>
             </div>
 
             <GenerateReportButton
               onGeneratePDF={handleGenerateReport}
-
             />
 
             <Link href="/landlord/properties/create" className="w-full sm:w-auto">
-              <Button className="rounded-xl w-full px-5 py-3 shadow-xl shadow-primary/20 group bg-primary text-white">
+              <Button className="rounded-xl w-full px-4 py-2 shadow-lg shadow-primary/10 group bg-primary text-white border-none h-9">
                 <span className="flex items-center gap-2">
-                  <IconPlus size={11} className="group-hover:rotate-90 transition-transform duration-300" />
-                  <span className="text-xs uppercase tracking-widest font-black">Add Property</span>
+                  <IconPlus size={12} className="group-hover:rotate-90 transition-transform duration-300" />
+                  <span className="text-[10px] uppercase tracking-[0.15em] font-black">Add Property</span>
                 </span>
               </Button>
             </Link>
           </div>
         </div>
-        {/* Abstract background elements */}
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
-        <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-blue-400/10 rounded-full blur-xl" />
       </motion.div>
 
       {/* Properties List */}

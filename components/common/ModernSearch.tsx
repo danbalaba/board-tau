@@ -220,7 +220,7 @@ const KBarContent = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
-      {!isDashboardOrAnalytics && (
+      {isDashboardOrAnalytics && (
         <KBarPortal>
           <KBarPositioner className="bg-white/40 dark:bg-black/40 backdrop-blur-sm z-[100000]">
             <KBarAnimator className="w-full max-w-[600px] bg-white/95 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-800/50 rounded-3xl shadow-2xl overflow-hidden glassmorphism transform transition-all">
