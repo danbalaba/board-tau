@@ -28,17 +28,15 @@ interface AccountSettingsModalProps {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { toast } from 'sonner';
+import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 
-interface AccountSettingsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/;
+const passwordErrorMsg = "Must contain an uppercase letter, number, and special character";
 
 const accountSchema = z.object({
-  currentPassword: z.string().min(1, 'Current password is required'),
-  newPassword: z.string().min(8, 'New password must be at least 8 characters'),
-  confirmPassword: z.string().min(1, 'Please confirm your new password'),
+  currentPassword: z.string().min(1, 'Current password is required').regex(passwordRegex, passwordErrorMsg),
+  newPassword: z.string().min(8, 'New password must be at least 8 characters').regex(passwordRegex, passwordErrorMsg),
+  confirmPassword: z.string().min(1, 'Please confirm your new password').regex(passwordRegex, passwordErrorMsg),
   emailNotifications: z.boolean(),
   pushNotifications: z.boolean(),
 }).refine((data) => data.newPassword === data.confirmPassword, {
@@ -49,6 +47,7 @@ const accountSchema = z.object({
 type AccountFormValues = z.infer<typeof accountSchema>;
 
 export function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalProps) {
+  const { success, error: toastError, loading } = useResponsiveToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -70,14 +69,29 @@ export function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalPr
 
   const onSubmit = async (data: AccountFormValues) => {
     setIsLoading(true);
+    loading('Updating security...', 'Verifying credentials.');
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Account Update Data:', data);
-      toast.success('Account security updated successfully!');
+      const response = await fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          oldPassword: data.currentPassword,
+          newPassword: data.newPassword,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update account settings.');
+      }
+
+      success('Security Updated!', 'Your account settings have been successfully updated.');
       onClose();
-    } catch (error) {
-      toast.error('Failed to update account settings.');
+    } catch (error: any) {
+      toastError('Update Failed', error.message || 'Failed to update account settings.');
     } finally {
       setIsLoading(false);
     }

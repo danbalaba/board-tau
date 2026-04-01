@@ -18,6 +18,8 @@ interface LandlordLayoutClientProps {
   };
 }
 
+import { ModernSearch } from '@/components/common/ModernSearch';
+
 export default function LandlordLayoutClient({
   children,
   user,
@@ -34,5 +36,18 @@ export default function LandlordLayoutClient({
         </SidebarInset>
       </SidebarProvider>
     </div>
+    <ModernSearch>
+      <SidebarProvider defaultOpen={true}>
+        <LandlordSidebar />
+        <SidebarInset>
+          <LandlordTopbar user={user} />
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background pt-16">
+            <div className="w-full px-4 py-8">
+              {children}
+            </div>
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </ModernSearch>
   );
 }

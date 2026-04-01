@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { FaUsers, FaEye, FaFile, FaHistory } from 'react-icons/fa';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { FaUsers, FaEye, FaFile, FaHistory, FaSearch, FaTimes } from 'react-icons/fa';
 
 interface Tenant {
   id: string;
@@ -31,6 +32,10 @@ interface LandlordTenantsClientProps {
 }
 
 export default function LandlordTenantsClient({ tenants }: LandlordTenantsClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get('search');
+
   const { tenants: tenantsList, nextCursor } = tenants;
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
@@ -44,21 +49,53 @@ export default function LandlordTenantsClient({ tenants }: LandlordTenantsClient
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
-  const filteredTenants = selectedStatus === 'all'
-    ? tenantsList
-    : tenantsList.filter(tenant => tenant.status === selectedStatus);
+  const clearSearch = () => {
+    router.push('/landlord/tenants');
+  };
+
+  const filteredTenants = useMemo(() => {
+    return tenantsList.filter(tenant => {
+      const statusMatch = selectedStatus === 'all' || tenant.status === selectedStatus;
+
+      let searchMatch = true;
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        searchMatch = (tenant.user.name?.toLowerCase() || '').includes(query) ||
+          tenant.user.email.toLowerCase().includes(query) ||
+          tenant.listing.title.toLowerCase().includes(query);
+      }
+
+      return statusMatch && searchMatch;
+    });
+  }, [selectedStatus, tenantsList, searchQuery]);
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Tenants
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Manage your property tenants and their information
-          </p>
+      <div className="flex items-center justify-between bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl">
+            <FaUsers size={24} />
+          </div>
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-0.5">
+                Tenants
+              </h1>
+              {searchQuery && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full text-xs font-bold">
+                  <FaSearch size={10} />
+                  <span>Search: {searchQuery}</span>
+                  <button onClick={clearSearch} className="hover:text-blue-900">
+                    <FaTimes size={10} />
+                  </button>
+                </div>
+              )}
+            </div>
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Manage your property tenants and their information
+            </p>
+          </div>
         </div>
       </div>
 
