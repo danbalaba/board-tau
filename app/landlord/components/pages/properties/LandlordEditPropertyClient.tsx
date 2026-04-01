@@ -31,6 +31,23 @@ import Button from '@/components/common/Button';
 import LoadingAnimation from '@/components/common/LoadingAnimation';
 import { toast } from 'sonner';
 
+/**
+ * Only allow http, https, or blob URLs as image sources.
+ * Explicitly rejects data: URIs and any other schemes to prevent XSS.
+ */
+const getSafeImageSrc = (image: string): string => {
+  if (!image) return '';
+  const lowerImage = image.toLowerCase();
+  const isSafeProtocol = lowerImage.startsWith('http://') || 
+                         lowerImage.startsWith('https://') || 
+                         lowerImage.startsWith('blob:');
+
+  if (isSafeProtocol && !/[<>"]/.test(image)) {
+    return image;
+  }
+  return '';
+};
+
 const LocalCheckbox = ({
   id,
   label,
@@ -601,7 +618,7 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
                           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                             {formData.existingImages.map((url: string, i: number) => (
                               <div key={i} className="relative aspect-video rounded-2xl overflow-hidden group/img shadow-md">
-                                <img src={url} alt="" className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-700" />
+                                <img src={getSafeImageSrc(url)} alt="" className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-700" />
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                                   <button type="button" onClick={() => deleteExistingImage(url)} className="p-2 bg-red-500 text-white rounded-lg shadow-xl hover:scale-110 transition-all">
                                     <Trash2 size={16} />
@@ -611,7 +628,7 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
                             ))}
                             {formData.propertyFiles.map((file, i) => (
                               <div key={i} className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/30 shadow-md">
-                                <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
+                                <img src={getSafeImageSrc(URL.createObjectURL(file))} alt="" className="w-full h-full object-cover" />
                                 <div className="absolute top-2 right-2 px-2 py-0.5 bg-primary text-white text-[8px] font-black uppercase tracking-widest rounded-full">New</div>
                               </div>
                             ))}

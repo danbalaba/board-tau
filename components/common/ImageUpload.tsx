@@ -17,9 +17,26 @@ const ImageUpload: FC<ImageUploadProps> = ({ onChange, initialImage = "" }) => {
   const [isDragging, setIsDragging] = useState(false);
   const { edgestore } = useEdgeStore();
 
+/**
+ * Only allow http, https, or blob URLs as image sources.
+ * Explicitly rejects data: URIs and any other schemes to prevent XSS.
+ */
+const getSafeImageSrc = (src: string | null | undefined): string => {
+  if (!src) return '';
+  const lower = src.toLowerCase();
+  const isSafeProtocol = lower.startsWith('http://') || 
+                         lower.startsWith('https://') || 
+                         lower.startsWith('blob:');
+
+  if (isSafeProtocol && !/[<>"]/.test(src)) {
+    return src;
+  }
+  return '';
+};
+
   const uploadImage = (e: any, file: File) => {
     if(!file.type.startsWith("image")) return;
-    setImage(URL.createObjectURL(file));
+    setImage(getSafeImageSrc(URL.createObjectURL(file)));
     startTransition(async () => {
       const res = await edgestore.publicFiles.upload({
         file,
@@ -80,7 +97,7 @@ const ImageUpload: FC<ImageUploadProps> = ({ onChange, initialImage = "" }) => {
           <Image
             fill
             style={{ objectFit: "cover" }}
-            src={image}
+            src={getSafeImageSrc(image)}
             alt="hotel"
             sizes="100vw"
             className="z-10"

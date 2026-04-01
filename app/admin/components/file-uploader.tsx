@@ -15,6 +15,23 @@ import { ScrollArea } from "./ui/scroll-area";
 import { useControllableState } from "../hooks/use-controllable-state";
 import { cn, formatBytes } from "../lib/utils";
 
+/**
+ * Only allow http, https, or blob URLs as image sources.
+ * Explicitly rejects data: URIs and any other schemes to prevent XSS.
+ */
+const getSafeImageSrc = (src: string | null | undefined): string => {
+  if (!src) return '';
+  const lower = src.toLowerCase();
+  const isSafeProtocol = lower.startsWith('http://') || 
+                         lower.startsWith('https://') || 
+                         lower.startsWith('blob:');
+
+  if (isSafeProtocol && !/[<>"]/.test(src)) {
+    return src;
+  }
+  return '';
+};
+
 export interface FileUploaderProps
   extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -127,7 +144,7 @@ export function FileUploader(props: FileUploaderProps) {
 
       const newFiles = acceptedFiles.map((file) =>
         Object.assign(file, {
-          preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : ''
+          preview: file.type.startsWith('image/') ? getSafeImageSrc(URL.createObjectURL(file)) : ''
         })
       );
 
@@ -275,7 +292,7 @@ function FileCard({ file, progress, onRemove }: FileCardProps) {
       <div className='flex flex-1 space-x-4'>
         {isFileWithPreview(file) ? (
           <Image
-            src={file.preview}
+            src={getSafeImageSrc(file.preview)}
             alt={file.name}
             width={48}
             height={48}

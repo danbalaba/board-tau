@@ -8,11 +8,28 @@ interface AvatarProps {
   className?: string;
 }
 
+/**
+ * Only allow http, https, or blob URLs as image sources.
+ * Explicitly rejects data: URIs and any other schemes to prevent XSS.
+ */
+const getSafeImageSrc = (src: string | null | undefined): string | undefined => {
+  if (!src) return undefined;
+  const lower = src.toLowerCase();
+  const isSafeProtocol = lower.startsWith('http://') || 
+                         lower.startsWith('https://') || 
+                         lower.startsWith('blob:');
+
+  if (isSafeProtocol && !/[<>"]/.test(src)) {
+    return src;
+  }
+  return undefined;
+};
+
 const Avatar: React.FC<AvatarProps> = ({ src, alt = "Avatar", className }) => {
   return (
     <AvatarPrimitive.Root className={`relative flex h-full w-full min-h-[28px] min-w-[28px] shrink-0 overflow-hidden rounded-full ${className || ""}`}>
       <AvatarPrimitive.Image
-        src={src || undefined}
+        src={getSafeImageSrc(src)}
         alt={alt}
         className="aspect-square h-full w-full object-cover"
       />
