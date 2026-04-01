@@ -1,11 +1,5 @@
 import { getLandlordReviews } from '@/services/landlord/reviews';
-import LandlordReviewsClient from '@/app/landlord/components/pages/reviews/LandlordReviewsClient';
-
-// Type assertion to bypass TypeScript error temporarily
-type AnyReviews = {
-  reviews: any[];
-  nextCursor: string | null;
-};
+import LandlordReviews from '../features/reviews';
 import { requireLandlord } from '@/lib/landlord';
 
 export const metadata = {
@@ -17,5 +11,5 @@ export default async function LandlordReviewsPage() {
   await requireLandlord();
   const reviews = await getLandlordReviews();
 
-  return <LandlordReviewsClient reviews={reviews} />;
+  return <LandlordReviews reviews={reviews as any} />;
 }
