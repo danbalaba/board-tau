@@ -157,6 +157,19 @@ const PropertyDetailsModal = ({
   const modalScrollRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll({ container: modalScrollRef });
   
+  // Body scroll lock effect
+  useEffect(() => {
+    // Save current overflow
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    // Lock scroll
+    document.body.style.overflow = 'hidden';
+    
+    // Recovery on unmount
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
+
   // Header animations
   const headerHeight = useTransform(scrollY, [0, 80], [256, 110]);
   const headerContentOpacity = useTransform(scrollY, [0, 60], [1, 0]);
@@ -179,12 +192,13 @@ const PropertyDetailsModal = ({
         initial={{ opacity: 0, scale: 0.95, y: 40 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 40 }}
-        className="relative bg-white dark:bg-gray-900 rounded-[2.5rem] border border-white/20 dark:border-gray-800 max-w-4xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        ref={modalScrollRef}
+        className="relative bg-white dark:bg-gray-900 rounded-[2.5rem] border border-white/20 dark:border-gray-800 max-w-4xl w-full shadow-2xl overflow-y-auto flex flex-col max-h-[90vh] custom-scrollbar"
       >
-        {/* Header / Banner */}
+        {/* Header / Banner - Now Sticky to capture scroll gestures directly */}
         <motion.div 
           style={{ height: headerHeight }}
-          className="relative flex-shrink-0 z-20 group"
+          className="sticky top-0 w-full flex-shrink-0 z-30 group"
         >
           <div className="absolute inset-0 w-full h-full overflow-hidden">
             {property.imageSrc ? (
@@ -268,10 +282,9 @@ const PropertyDetailsModal = ({
           </motion.button>
         </motion.div>
 
-        {/* Scrollable Content */}
+        {/* Content Section - Simplified flow hierarchy */}
         <div 
-          ref={modalScrollRef}
-          className="flex-1 overflow-y-auto custom-scrollbar p-8 md:p-10 z-10"
+          className="p-8 md:p-10 z-10"
         >
           {/* Image Gallery Preview (if multiple) */}
           {property.images.length > 1 && (
