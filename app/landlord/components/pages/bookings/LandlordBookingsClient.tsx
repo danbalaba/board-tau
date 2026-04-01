@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { 
-  IconCalendarCheck, 
-  IconEye, 
-  IconCheck, 
-  IconX, 
-  IconCalendar, 
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  IconCalendarCheck,
+  IconEye,
+  IconCheck,
+  IconX,
+  IconCalendar,
   IconChevronDown,
   IconClock,
   IconCircleCheck,
@@ -21,12 +21,13 @@ import {
   IconSortDescending,
   IconHistory,
   IconCalendarEvent,
-  IconFilter
+  IconFilter,
+  IconSearchOff
 } from '@tabler/icons-react';
 import Button from "@/components/common/Button";
 import { cn } from '@/utils/helper';
-import { 
-  generateTablePDF 
+import {
+  generateTablePDF
 } from '@/utils/pdfGenerator';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
 import {
@@ -37,6 +38,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/app/admin/components/ui/dropdown-menu';
+import { ModernLoadMore } from '@/components/common/ModernLoadMore';
 
 interface Booking {
   id: string;
@@ -67,6 +69,8 @@ interface LandlordBookingsClientProps {
 
 export default function LandlordBookingsClient({ bookings }: LandlordBookingsClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get('search');
   const [listings, setListings] = useState(bookings.bookings);
   const [nextCursor, setNextCursor] = useState(bookings.nextCursor);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -101,7 +105,16 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
     let result = listings.filter(booking => {
       const statusMatch = selectedStatus === 'all' || booking.status?.toLowerCase() === selectedStatus.toLowerCase();
       const paymentMatch = selectedPaymentStatus === 'all' || booking.paymentStatus?.toLowerCase() === selectedPaymentStatus.toLowerCase();
-      return statusMatch && paymentMatch;
+
+      let searchMatch = true;
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        searchMatch = booking.listing.title.toLowerCase().includes(query) ||
+          (booking.user.name?.toLowerCase() || '').includes(query) ||
+          booking.user.email.toLowerCase().includes(query);
+      }
+
+      return statusMatch && paymentMatch && searchMatch;
     });
 
     result.sort((a, b) => {
@@ -119,7 +132,11 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
     });
 
     return result;
-  }, [selectedStatus, selectedPaymentStatus, listings, sortBy]);
+  }, [selectedStatus, selectedPaymentStatus, listings, sortBy, searchQuery]);
+
+  const clearSearch = () => {
+    router.push('/landlord/bookings');
+  };
 
   const statusOptions = useMemo(() => [
     { value: 'all', label: 'All', icon: IconInbox },
@@ -146,7 +163,7 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
       });
 
       if (response.ok) {
-        setListings(prev => prev.map(booking => 
+        setListings(prev => prev.map(booking =>
           booking.id === bookingId ? { ...booking, status } : booking
         ));
         router.refresh();
@@ -208,15 +225,29 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
               <IconCalendarCheck size={22} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-0.5 tracking-tight">
-                Bookings
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-0.5 tracking-tight">
+                  Bookings
+                </h1>
+                {searchQuery && (
+                  <div className="flex items-center gap-3 px-3 py-1 bg-primary/10 border border-primary/20 rounded-xl animate-in fade-in slide-in-from-left-4">
+                    <IconSearchOff size={12} className="text-primary" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-primary">Search: {searchQuery}</span>
+                    <button
+                      onClick={clearSearch}
+                      className="p-0.5 hover:bg-primary/20 rounded-md transition-colors text-primary"
+                    >
+                      <IconX size={10} />
+                    </button>
+                  </div>
+                )}
+              </div>
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Manage your property bookings and payments
               </p>
             </div>
           </div>
-          
+
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 w-full lg:w-auto mt-4 lg:mt-0">
             {/* Sorting */}
             <div className="flex flex-wrap items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
@@ -326,7 +357,7 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
               </button>
             </div>
 
-            <GenerateReportButton 
+            <GenerateReportButton
               onGeneratePDF={handleGenerateReport}
             />
           </div>
@@ -386,7 +417,7 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
         </div>
       ) : (
         <div className={cn(
-          viewMode === 'grid' 
+          viewMode === 'grid'
             ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             : "space-y-4"
         )}>
@@ -423,7 +454,7 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
                   <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2 group-hover:text-primary transition-colors line-clamp-1">
                     {booking.listing.title}
                   </h3>
-                  
+
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-black ring-2 ring-primary/5">
@@ -455,7 +486,7 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
                   >
                     Manage Booking
                   </Button>
-                  
+
                   {booking.status === 'pending' && (
                     <div className="grid grid-cols-2 gap-2">
                       <Button
@@ -477,120 +508,113 @@ export default function LandlordBookingsClient({ bookings }: LandlordBookingsCli
               </div>
             ) : (
               <div
-              key={booking.id}
-              className="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:border-primary/20 transition-all duration-300 hover:shadow-xl shadow-sm"
-            >
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-2">
-                <div className="flex items-start gap-5 flex-1">
-                  <div className="relative w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden flex-shrink-0 group-hover:shadow-md transition-all duration-300">
-                    {booking.listing.imageSrc ? (
-                      <img
-                        src={booking.listing.imageSrc}
-                        alt={booking.listing.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300">
-                        <IconCalendarCheck size={24} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={cn("px-2 py-0.5 rounded-md text-[9px] uppercase font-black tracking-widest", statusColors[booking.status])}>
-                        {booking.status}
-                      </span>
-                      <span className={cn("px-2 py-0.5 rounded-md text-[9px] uppercase font-black tracking-widest", paymentStatusColors[booking.paymentStatus])}>
-                        {booking.paymentStatus}
-                      </span>
+                key={booking.id}
+                className="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:border-primary/20 transition-all duration-300 hover:shadow-xl shadow-sm"
+              >
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-2">
+                  <div className="flex items-start gap-5 flex-1">
+                    <div className="relative w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden flex-shrink-0 group-hover:shadow-md transition-all duration-300">
+                      {booking.listing.imageSrc ? (
+                        <img
+                          src={booking.listing.imageSrc}
+                          alt={booking.listing.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">
+                          <IconCalendarCheck size={24} />
+                        </div>
+                      )}
                     </div>
-                    <h3 className="text-lg font-black text-gray-900 dark:text-white mb-1 group-hover:text-primary transition-colors line-clamp-1">
-                      {booking.listing.title}
-                    </h3>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-black uppercase">
-                        {booking.user.name?.charAt(0) || 'U'}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={cn("px-2 py-0.5 rounded-md text-[9px] uppercase font-black tracking-widest", statusColors[booking.status])}>
+                          {booking.status}
+                        </span>
+                        <span className={cn("px-2 py-0.5 rounded-md text-[9px] uppercase font-black tracking-widest", paymentStatusColors[booking.paymentStatus])}>
+                          {booking.paymentStatus}
+                        </span>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                        <span className="font-bold text-gray-900 dark:text-gray-100">{booking.user.name || 'Anonymous User'}</span>
+                      <h3 className="text-lg font-black text-gray-900 dark:text-white mb-1 group-hover:text-primary transition-colors line-clamp-1">
+                        {booking.listing.title}
+                      </h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-black uppercase">
+                          {booking.user.name?.charAt(0) || 'U'}
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                          <span className="font-bold text-gray-900 dark:text-gray-100">{booking.user.name || 'Anonymous User'}</span>
+                        </p>
+                      </div>
+                      <p className="text-xl font-black text-gray-900 dark:text-white mb-2">
+                        ₱{booking.totalPrice.toLocaleString()}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
+                        <span className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md">
+                          <IconCalendar size={10} className="text-primary" />
+                          {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                        Booked on {new Date(booking.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <p className="text-xl font-black text-gray-900 dark:text-white mb-2">
-                      ₱{booking.totalPrice.toLocaleString()}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
-                      <span className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md">
-                        <IconCalendar size={10} className="text-primary" />
-                        {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                      Booked on {new Date(booking.createdAt).toLocaleDateString()}
-                    </p>
                   </div>
                 </div>
-              </div>
 
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
-                <Button
-                  outline
-                  onClick={() => router.push(`/landlord/bookings/${booking.id}`)}
-                  className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border-gray-200 dark:border-gray-700"
-                >
-                  <span className="flex items-center gap-2">
-                    <IconEye size={12} />
-                    View Details
-                  </span>
-                </Button>
-                
-                {booking.status === 'pending' && (
-                  <div className="flex items-center gap-2 border-l border-gray-100 dark:border-gray-800 pl-3">
-                    <Button
-                      onClick={() => handleUpdateStatus(booking.id, 'confirmed')}
-                      className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
-                    >
-                      <span className="flex items-center gap-2">
-                        <IconCheck size={12} />
-                        Confirm
-                      </span>
-                    </Button>
-                    <Button
-                      outline
-                      onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
-                      className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border-red-200 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 dark:border-red-900/50"
-                    >
-                      <span className="flex items-center gap-2">
-                        <IconX size={12} />
-                        Cancel
-                      </span>
-                    </Button>
-                  </div>
-                )}
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-3 pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
+                  <Button
+                    outline
+                    onClick={() => router.push(`/landlord/bookings/${booking.id}`)}
+                    className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border-gray-200 dark:border-gray-700"
+                  >
+                    <span className="flex items-center gap-2">
+                      <IconEye size={12} />
+                      View Details
+                    </span>
+                  </Button>
+
+                  {booking.status === 'pending' && (
+                    <div className="flex items-center gap-2 border-l border-gray-100 dark:border-gray-800 pl-3">
+                      <Button
+                        onClick={() => handleUpdateStatus(booking.id, 'confirmed')}
+                        className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+                      >
+                        <span className="flex items-center gap-2">
+                          <IconCheck size={12} />
+                          Confirm
+                        </span>
+                      </Button>
+                      <Button
+                        outline
+                        onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
+                        className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border-red-200 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 dark:border-red-900/50"
+                      >
+                        <span className="flex items-center gap-2">
+                          <IconX size={12} />
+                          Cancel
+                        </span>
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
             )
           ))}
         </div>
       )}
 
-      {/* Load More */}
-      {nextCursor && (
-        <div className="flex justify-center pt-8">
-          <Button 
-            outline 
-            className="rounded-xl px-10 py-4 group transition-all hover:bg-primary hover:text-white"
-            onClick={handleLoadMore}
-            isLoading={isLoadingMore}
-          >
-            <span className="flex items-center gap-2 uppercase font-black tracking-[0.15em] text-[10px]">
-              {isLoadingMore ? 'Fetching bookings...' : 'Load More Bookings'}
-              <IconChevronDown className={cn("group-hover:translate-y-0.5 transition-transform", isLoadingMore && "animate-bounce")} size={10} />
-            </span>
-          </Button>
-        </div>
-      )}
+      <div className="mt-8 bg-white/20 dark:bg-gray-800/10 backdrop-blur-sm rounded-2xl border border-gray-100/50 dark:border-gray-800/50 p-2 shadow-lg shadow-gray-200/5 dark:shadow-none animate-in fade-in slide-in-from-bottom-6 duration-700">
+        <ModernLoadMore
+          onLoadMore={handleLoadMore}
+          isLoading={isLoadingMore}
+          hasMore={!!nextCursor}
+          label="Browse More Bookings"
+          loadingLabel="Confirming Schedules..."
+        />
+      </div>
     </div>
   );
 }

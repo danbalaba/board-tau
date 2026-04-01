@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { 
-  IconCalendar, 
-  IconEye, 
-  IconCheck, 
-  IconX, 
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  IconCalendar,
+  IconEye,
+  IconCheck,
+  IconX,
   IconClock,
   IconInbox,
   IconCircleCheck,
@@ -15,13 +15,14 @@ import {
   IconList,
   IconHistory,
   IconCalendarEvent,
-  IconFilter
+  IconFilter,
+  IconSearchOff
 } from '@tabler/icons-react';
 import Button from "@/components/common/Button";
 import { cn } from '@/utils/helper';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
-import { 
-  generateTablePDF 
+import {
+  generateTablePDF
 } from '@/utils/pdfGenerator';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
 import {
@@ -32,6 +33,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/app/admin/components/ui/dropdown-menu';
+import { ModernLoadMore } from '@/components/common/ModernLoadMore';
 
 interface ReservationRequest {
   id: string;
@@ -58,14 +60,41 @@ interface ReservationRequest {
 }
 
 interface LandlordReservationsClientProps {
-  reservations: ReservationRequest[];
+  initialReservations: {
+    inquiries: ReservationRequest[];
+    nextCursor: string | null;
+  };
 }
 
-export default function LandlordReservationsClient({ reservations }: LandlordReservationsClientProps) {
+export default function LandlordReservationsClient({ initialReservations }: LandlordReservationsClientProps) {
   const { success, error: toastError } = useResponsiveToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get('search');
+
+  const [reservations, setReservations] = useState<ReservationRequest[]>(initialReservations.inquiries);
+  const [nextCursor, setNextCursor] = useState<string | null>(initialReservations.nextCursor);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+
+  // Handle Load More
+  const handleLoadMore = useCallback(async () => {
+    if (!nextCursor || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const response = await fetch(`/api/landlord/reservations?cursor=${nextCursor}`);
+      const data = await response.json();
+      setReservations(prev => [...prev, ...data.inquiries]);
+      setNextCursor(data.nextCursor);
+    } catch (e) {
+      toastError('Failed to load more reservations');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [nextCursor, isLoadingMore, toastError]);
 
   const statusColors: Record<string, string> = {
     pending: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
@@ -78,20 +107,27 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
     paid: 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20',
   };
 
-  const router = useRouter();
-
-  const formatStatus = useCallback((status: string) => {
+  const formatStatus = (status: string) => {
     return status.charAt(0).toUpperCase() + status.slice(1);
-  }, []);
+  };
 
   const filteredReservations = useMemo(() => {
     let result = [...reservations];
-    
+
     if (selectedStatus !== 'all') {
-      result = result.filter(r => r.status?.toLowerCase() === selectedStatus.toLowerCase());
+      result = result.filter((r: ReservationRequest) => r.status?.toLowerCase() === selectedStatus.toLowerCase());
     }
-    
-    result.sort((a, b) => {
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((r: ReservationRequest) =>
+        r.listing.title.toLowerCase().includes(query) ||
+        (r.user.name?.toLowerCase() || '').includes(query) ||
+        r.user.email.toLowerCase().includes(query)
+      );
+    }
+
+    result.sort((a: ReservationRequest, b: ReservationRequest) => {
       switch (sortBy) {
         case 'oldest':
           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -102,7 +138,7 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
     });
 
     return result;
-  }, [selectedStatus, reservations, sortBy]);
+  }, [selectedStatus, reservations, sortBy, searchQuery]);
 
   const statusOptions = useMemo(() => [
     { value: 'all', label: 'All Requests', icon: IconInbox },
@@ -122,7 +158,6 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
       });
 
       if (response.ok) {
-        // Refresh the inquiries list
         router.refresh();
         success(`Reservation has been ${status}.`);
       } else {
@@ -156,11 +191,15 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
     );
   };
 
+  const clearSearch = () => {
+    router.push('/landlord/reservations');
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 relative z-10">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary hover:scale-110 transition-transform duration-300">
               <IconCalendar size={22} />
@@ -175,6 +214,18 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
             </div>
           </div>
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 w-full lg:w-auto mt-4 lg:mt-0">
+            {searchQuery && (
+              <div className="flex items-center gap-3 px-4 py-2 bg-primary/10 border border-primary/20 rounded-xl animate-in fade-in slide-in-from-right-4">
+                <IconSearchOff size={14} className="text-primary" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary">Search: {searchQuery}</span>
+                <button
+                  onClick={clearSearch}
+                  className="p-1 hover:bg-primary/20 rounded-md transition-colors text-primary"
+                >
+                  <IconX size={12} />
+                </button>
+              </div>
+            )}
             {/* Sorting */}
             <div className="flex flex-wrap items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
               {[
@@ -260,11 +311,12 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
               </button>
             </div>
 
-            <GenerateReportButton 
+            <GenerateReportButton
               onGeneratePDF={handleGenerateReport}
             />
           </div>
         </div>
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
       </div>
 
 
@@ -272,18 +324,25 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
       {filteredReservations.length === 0 ? (
         <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center justify-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-2xl mb-4 text-primary">
-            <IconCalendar size={24} />
+            {searchQuery ? <IconSearchOff size={24} /> : <IconCalendar size={24} />}
           </div>
           <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">
-            No reservation requests found
+            {searchQuery ? `No matches for "${searchQuery}"` : "No reservation requests found"}
           </h3>
           <p className="text-sm font-medium text-gray-500 max-w-sm mx-auto">
-            You haven't received any reservation requests matching the current criteria.
+            {searchQuery
+              ? "Try adjusting your search or clear it to see all requests."
+              : "You haven't received any reservation requests matching the current criteria."}
           </p>
+          {searchQuery && (
+            <Button onClick={clearSearch} className="mt-6 rounded-xl px-6 py-2.5 shadow-lg shadow-primary/20">
+              Clear Search
+            </Button>
+          )}
         </div>
       ) : (
         <div className={cn(
-          viewMode === 'grid' 
+          viewMode === 'grid'
             ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             : "space-y-4"
         )}>
@@ -322,7 +381,7 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
                   <h3 className="text-xl font-black text-gray-900 dark:text-white mb-3 group-hover:text-primary transition-colors line-clamp-1">
                     {reservation.listing.title}
                   </h3>
-                  
+
                   <div className="flex items-center gap-3 mb-6 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50">
                     <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-black ring-4 ring-white dark:ring-gray-800">
                       {reservation.user.name?.charAt(0) || 'U'}
@@ -359,7 +418,7 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
                   >
                     Manage Request
                   </Button>
-                  
+
                   {reservation.status === 'pending' && (
                     <div className="grid grid-cols-2 gap-2">
                       <Button
@@ -381,114 +440,123 @@ export default function LandlordReservationsClient({ reservations }: LandlordRes
               </div>
             ) : (
               <div
-              key={reservation.id}
-              className="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:border-primary/20 transition-all duration-300 hover:shadow-xl shadow-sm"
-            >
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-2">
-                <div className="flex items-start gap-5 flex-1">
-                  <div className="relative w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden flex-shrink-0 group-hover:shadow-md transition-all duration-300">
-                    {reservation.listing.imageSrc ? (
-                      <img
-                        src={reservation.listing.imageSrc}
-                        alt={reservation.listing.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300">
-                        <IconCalendar size={24} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={cn("px-2 py-0.5 rounded-md text-[9px] uppercase font-black tracking-widest", statusColors[reservation.status])}>
-                        {reservation.status}
-                      </span>
-                      {reservation.paymentStatus && (
-                        <span className={cn("px-2 py-0.5 rounded-md text-[9px] uppercase font-black tracking-widest", paymentStatusColors[reservation.paymentStatus])}>
-                          {reservation.paymentStatus}
-                        </span>
+                key={reservation.id}
+                className="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:border-primary/20 transition-all duration-300 hover:shadow-xl shadow-sm"
+              >
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-2">
+                  <div className="flex items-start gap-5 flex-1">
+                    <div className="relative w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden flex-shrink-0 group-hover:shadow-md transition-all duration-300">
+                      {reservation.listing.imageSrc ? (
+                        <img
+                          src={reservation.listing.imageSrc}
+                          alt={reservation.listing.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">
+                          <IconCalendar size={24} />
+                        </div>
                       )}
                     </div>
-                    <h3 className="text-lg font-black text-gray-900 dark:text-white mb-1 group-hover:text-primary transition-colors line-clamp-1">
-                      {reservation.listing.title}
-                    </h3>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-black uppercase">
-                        {reservation.user.name?.charAt(0) || 'U'}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={cn("px-2 py-0.5 rounded-md text-[9px] uppercase font-black tracking-widest", statusColors[reservation.status])}>
+                          {reservation.status}
+                        </span>
+                        {reservation.paymentStatus && (
+                          <span className={cn("px-2 py-0.5 rounded-md text-[9px] uppercase font-black tracking-widest", paymentStatusColors[reservation.paymentStatus])}>
+                            {reservation.paymentStatus}
+                          </span>
+                        )}
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                        <span className="font-bold text-gray-900 dark:text-gray-100">{reservation.user.name || 'Anonymous User'}</span>
+                      <h3 className="text-lg font-black text-gray-900 dark:text-white mb-1 group-hover:text-primary transition-colors line-clamp-1">
+                        {reservation.listing.title}
+                      </h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-black uppercase">
+                          {reservation.user.name?.charAt(0) || 'U'}
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                          <span className="font-bold text-gray-900 dark:text-gray-100">{reservation.user.name || 'Anonymous User'}</span>
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
+                        {reservation.room && (
+                          <span className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 bg-primary/5 text-primary rounded-md uppercase tracking-wider text-[10px]">Room</span>
+                            {reservation.room.name} • ₱{reservation.room.price.toLocaleString()}/mo
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md">
+                          <IconCalendar size={10} className="text-primary" />
+                          {new Date(reservation.moveInDate).toLocaleDateString()}
+                        </span>
+                        <span className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md">
+                          <IconClock size={10} className="text-primary" />
+                          {reservation.stayDuration} days
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                        Received {new Date(reservation.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-                    
-                    <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
-                      {reservation.room && (
-                        <span className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 bg-primary/5 text-primary rounded-md uppercase tracking-wider text-[10px]">Room</span>
-                          {reservation.room.name} • ₱{reservation.room.price.toLocaleString()}/mo
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md">
-                        <IconCalendar size={10} className="text-primary" />
-                        {new Date(reservation.moveInDate).toLocaleDateString()}
-                      </span>
-                      <span className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md">
-                        <IconClock size={10} className="text-primary" />
-                        {reservation.stayDuration} days
-                      </span>
-                    </div>
-
-                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                      Received {new Date(reservation.createdAt).toLocaleDateString()}
-                    </p>
                   </div>
                 </div>
-              </div>
 
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
-                <Button
-                  outline
-                  onClick={() => router.push(`/landlord/reservations/${reservation.id}`)}
-                  className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border-gray-200 dark:border-gray-700"
-                >
-                  <span className="flex items-center gap-2">
-                    <IconEye size={12} />
-                    View Details
-                  </span>
-                </Button>
-                
-                {reservation.status === 'pending' && (
-                  <div className="flex items-center gap-2 border-l border-gray-100 dark:border-gray-800 pl-3">
-                    <Button
-                      onClick={() => handleRespond(reservation.id, 'approved')}
-                      className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
-                    >
-                      <span className="flex items-center gap-2">
-                        <IconCheck size={12} />
-                        Approve
-                      </span>
-                    </Button>
-                    <Button
-                      outline
-                      onClick={() => handleRespond(reservation.id, 'rejected')}
-                      className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border-red-200 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 dark:border-red-900/50"
-                    >
-                      <span className="flex items-center gap-2">
-                        <IconX size={12} />
-                        Reject
-                      </span>
-                    </Button>
-                  </div>
-                )}
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-3 pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
+                  <Button
+                    outline
+                    onClick={() => router.push(`/landlord/reservations/${reservation.id}`)}
+                    className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border-gray-200 dark:border-gray-700"
+                  >
+                    <span className="flex items-center gap-2">
+                      <IconEye size={12} />
+                      View Details
+                    </span>
+                  </Button>
+
+                  {reservation.status === 'pending' && (
+                    <div className="flex items-center gap-2 border-l border-gray-100 dark:border-gray-800 pl-3">
+                      <Button
+                        onClick={() => handleRespond(reservation.id, 'approved')}
+                        className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+                      >
+                        <span className="flex items-center gap-2">
+                          <IconCheck size={12} />
+                          Approve
+                        </span>
+                      </Button>
+                      <Button
+                        outline
+                        onClick={() => handleRespond(reservation.id, 'rejected')}
+                        className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border-red-200 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 dark:border-red-900/50"
+                      >
+                        <span className="flex items-center gap-2">
+                          <IconX size={12} />
+                          Reject
+                        </span>
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
             )
           ))}
         </div>
       )}
+      <div className="mt-8 bg-white/30 dark:bg-gray-800/20 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700/50 p-2 shadow-xl shadow-gray-200/10 transition-all duration-700 group hover:shadow-primary/5">
+        <ModernLoadMore
+          onLoadMore={handleLoadMore}
+          isLoading={isLoadingMore}
+          hasMore={!!nextCursor}
+          label="See More Reservations"
+          loadingLabel="Updating Records..."
+        />
+      </div>
     </div>
   );
 }
