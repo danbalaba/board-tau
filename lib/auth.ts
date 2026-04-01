@@ -50,7 +50,7 @@ export const authOptions: AuthOptions = {
         if (!user || !user?.password) throw new Error("Invalid credentials");
 
         // Skip email verification for admin users
-        if (!user.emailVerified && user.role !== "admin") {
+        if (!user.emailVerified && user.role !== "ADMIN") {
           throw new Error("Email not verified. Please verify your email first.");
         }
 
@@ -67,6 +67,19 @@ export const authOptions: AuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
+      // Update last login timestamp for every sign in event
+      if (user.id) {
+        try {
+          await db.user.update({
+            where: { id: user.id },
+            data: { lastLogin: new Date() }
+          });
+          console.log(`🔐 lastLogin updated for user: ${user.id}`);
+        } catch (error) {
+          console.error("🔐 Failed to update lastLogin:", error);
+        }
+      }
+
       console.log("🔐 signIn callback - user:", user);
       console.log("🔐 signIn callback - account:", account);
       console.log("🔐 signIn callback - profile:", profile);

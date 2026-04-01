@@ -259,3 +259,30 @@ export function useSuspendUser() {
     },
   });
 }
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userData: any) => {
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create user');
+      }
+
+      const data: ApiResponse<User> = await response.json();
+      return data;
+    },
+    onSuccess: () => {
+      // Invalidate the 'users' query to ensure we have the latest data
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+}

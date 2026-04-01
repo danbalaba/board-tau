@@ -48,3 +48,20 @@ export interface Category {
   icon: IconType;
   description?: string;
 }
+
+export interface AppPermission {
+  id: string;
+  name: string;
+  module: string;
+  action: string;
+  description?: string;
+}
+
+export interface UserRole {
+  id: string;
+  name: string;
+  description?: string;
+  permissions: string[];
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}

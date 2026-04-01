@@ -184,7 +184,7 @@ export const createHostApplication = async (data: HostApplicationData) => {
   sendApplicationConfirmationEmail(user, application);
   // Get admin users
   const adminUsers = await db.user.findMany({
-    where: { role: 'admin' }
+    where: { role: 'ADMIN' }
   });
   adminUsers.forEach(admin => {
     sendAdminApplicationNotification(admin, application);
@@ -278,7 +278,7 @@ export const updateApplicationStatus = async (id: string, status: 'approved' | '
     await db.user.update({
       where: { id: application.userId },
       data: {
-        role: 'landlord',
+        role: 'LANDLORD',
         isVerifiedLandlord: true,
         landlordApprovedAt: new Date()
       }
