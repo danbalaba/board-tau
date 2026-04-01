@@ -15,6 +15,8 @@ export interface UserAnalytics {
   userRoles: Array<{ role: string; count: number }>;
   verificationStatus: Array<{ isVerifiedLandlord: boolean; count: number }>;
   timeRange: string;
+  growthData?: any[];
+  locationData?: any[];
 }
 
 export function useUserAnalytics(range: string = '30d') {
@@ -36,7 +38,9 @@ export function useUserAnalytics(range: string = '30d') {
 
       return data;
     },
-    refetchInterval: 300000, // Refetch every 5 minutes
+    refetchInterval: 30000, // Refetch every 30 seconds for real-time monitoring
+    staleTime: 0,           // Always consider the data stale to force fresh fetches
+    gcTime: 0,              // Clean up data immediately to avoid caching mock results
     retry: 3,
   });
 }

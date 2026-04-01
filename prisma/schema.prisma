@@ -103,7 +103,7 @@ model User {
   image         String?
   password      String?
   favoriteIds   String[]  @default([]) @db.ObjectId
-  role          String    @default("user")
+  role          Role      @default(USER)
   roleId        String?   @db.ObjectId
   isActive      Boolean   @default(true)
   deletedAt     DateTime?
@@ -113,6 +113,8 @@ model User {
   businessName String?
   phoneNumber String?
   lastLogin    DateTime?
+  city         String?
+  region       String?
   bio          String?
 
   roleRelation UserRole?    @relation(fields: [roleId], references: [id])

@@ -7,7 +7,7 @@ import Button from "@/components/common/Button";
 import Input from "@/components/inputs/Input";
 import Textarea from "@/components/inputs/Textarea";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
-import { CheckCircle, XCircle, User, Phone, Info, Mail } from "lucide-react";
+import { CheckCircle, XCircle, User, Phone, Info, Mail, MapPin, Globe } from "lucide-react";
 import { validateName, validatePhoneNumber, sanitizeInput } from "@/lib/validators";
 import Modal from "./Modal";
 import { motion, AnimatePresence } from "framer-motion";
@@ -116,6 +116,30 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     return phoneError ? phoneError : true;
                   }
                 })}
+                useStaticLabel={false}
+              />
+            </div>
+
+            {/* City & Region Row */}
+            <div className="grid grid-cols-2 gap-4 relative group">
+              <Input
+                id="city"
+                label="City"
+                icon={MapPin as any}
+                register={register as any}
+                errors={errors as any}
+                watch={watch as any}
+                {...register("city", { required: false })}
+                useStaticLabel={false}
+              />
+              <Input
+                id="region"
+                label="Region"
+                icon={Globe as any}
+                register={register as any}
+                errors={errors as any}
+                watch={watch as any}
+                {...register("region", { required: false })}
                 useStaticLabel={false}
               />
             </div>

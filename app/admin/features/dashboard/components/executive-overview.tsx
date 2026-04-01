@@ -8,21 +8,40 @@ import {
   CardHeader,
   CardTitle
 } from '@/app/admin/components/ui/card';
+import { cn } from "@/lib/utils";
 import {
   BarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  LineChart,
+  Line,
 } from 'recharts';
+import { motion } from 'framer-motion';
+import {
+  TrendingUp,
+  Users,
+  Star,
+  Home,
+  ArrowUpRight,
+  ArrowDownRight,
+  Activity,
+  Calendar,
+  Building2,
+  CheckCircle2,
+} from 'lucide-react';
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from '@/app/admin/components/ui/chart';
 import { useExecutiveOverview } from '@/app/admin/hooks/use-executive-overview';
 
 export function ExecutiveOverview() {
@@ -90,176 +109,320 @@ export function ExecutiveOverview() {
     { day: 'Sun', occupancy: 88 },
   ];
 
+  const chartConfig = {
+    revenue: {
+      label: 'Revenue',
+      color: 'hsl(var(--primary))',
+    },
+    bookings: {
+      label: 'Bookings',
+      color: 'hsl(var(--chart-2))',
+    },
+    apartments: {
+      label: 'Apartments',
+      color: 'hsl(var(--chart-1))',
+    },
+    houses: {
+      label: 'Houses',
+      color: 'hsl(var(--chart-2))',
+    },
+    condos: {
+      label: 'Condos',
+      color: 'hsl(var(--chart-3))',
+    },
+    studios: {
+      label: 'Studios',
+      color: 'hsl(var(--chart-4))',
+    },
+    occupancy: {
+      label: 'Occupancy',
+      color: 'hsl(var(--primary))',
+    },
+  } satisfies ChartConfig;
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+    },
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {/* KPIs Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${metrics?.totalRevenue?.toLocaleString()}</div>
-            <p className="text-sm text-muted-foreground">+{metrics?.revenueGrowthPercentage}% from last month</p>
-          </CardContent>
-        </Card>
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <TrendingUp className="w-12 h-12" />
+            </div>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <TrendingUp className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${metrics?.totalRevenue?.toLocaleString()}</div>
+              <div className="flex items-center mt-1">
+                {metrics?.revenueGrowthPercentage && metrics.revenueGrowthPercentage > 0 ? (
+                  <ArrowUpRight className="w-3 h-3 text-emerald-500 mr-1" />
+                ) : (
+                  <ArrowDownRight className="w-3 h-3 text-rose-500 mr-1" />
+                )}
+                <p className={cn(
+                  "text-xs",
+                  metrics?.revenueGrowthPercentage && metrics.revenueGrowthPercentage > 0 ? "text-emerald-500" : "text-rose-500"
+                )}>
+                  {Math.abs(metrics?.revenueGrowthPercentage || 0)}% from last month
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics?.totalReservations?.toLocaleString()}</div>
-            <p className="text-sm text-muted-foreground">Bookings this period</p>
-          </CardContent>
-        </Card>
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <Calendar className="w-12 h-12" />
+            </div>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+              <Calendar className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics?.totalReservations?.toLocaleString()}</div>
+              <p className="text-sm text-muted-foreground mt-1">Bookings this period</p>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics?.averageRating}/5</div>
-            <p className="text-sm text-muted-foreground">From {metrics?.totalReservations} bookings</p>
-          </CardContent>
-        </Card>
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <Star className="w-12 h-12" />
+            </div>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
+              <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics?.averageRating}/5</div>
+              <p className="text-sm text-muted-foreground mt-1">From {metrics?.totalReservations} bookings</p>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Properties</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics?.totalListings?.toLocaleString()}</div>
-            <p className="text-sm text-muted-foreground">+{metrics?.userGrowthPercentage}% from last month</p>
-          </CardContent>
-        </Card>
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <Building2 className="w-12 h-12" />
+            </div>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Active Properties</CardTitle>
+              <Building2 className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics?.totalListings?.toLocaleString()}</div>
+              <div className="flex items-center mt-1">
+                <ArrowUpRight className="w-3 h-3 text-emerald-500 mr-1" />
+                <p className="text-xs text-emerald-500">
+                  {metrics?.userGrowthPercentage}% from last month
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Revenue Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue & Bookings</CardTitle>
-          <CardDescription>Monthly revenue and booking trends</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis yAxisId="left" />
-                <YAxis yAxisId="right" orientation="right" />
-                <Tooltip />
-                <Legend />
-                <Bar yAxisId="left" dataKey="revenue" name="Revenue ($)" fill="#1890ff" />
-                <Bar yAxisId="right" dataKey="bookings" name="Bookings" fill="#52c41a" />
+      <motion.div variants={itemVariants}>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Revenue & Bookings</CardTitle>
+                <CardDescription>Monthly revenue and booking trends</CardDescription>
+              </div>
+              <Activity className="w-4 h-4 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[350px] w-full">
+              <BarChart data={revenueData} margin={{ top: 20 }}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                />
+                <YAxis
+                  yAxisId="left"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  tickFormatter={(value) => `$${value}`}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Bar
+                  yAxisId="left"
+                  dataKey="revenue"
+                  fill="var(--color-revenue)"
+                  radius={[4, 4, 0, 0]}
+                  barSize={32}
+                />
+                <Bar
+                  yAxisId="right"
+                  dataKey="bookings"
+                  fill="var(--color-bookings)"
+                  radius={[4, 4, 0, 0]}
+                  barSize={32}
+                />
               </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Property Type and Occupancy */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Property Type Distribution</CardTitle>
-            <CardDescription>Distribution of property types</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Property Type Distribution</CardTitle>
+                  <CardDescription>Platform listing breakdown</CardDescription>
+                </div>
+                <Home className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[300px]">
                 <PieChart>
                   <Pie
                     data={propertyTypeData}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                    innerRadius={60}
                     outerRadius={80}
-                    fill="#8884d8"
+                    paddingAngle={5}
                     dataKey="value"
                   >
                     {propertyTypeData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                  <ChartLegend content={<ChartLegendContent />} />
                 </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Occupancy Rate</CardTitle>
-            <CardDescription>Daily occupancy trends</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={occupancyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="occupancy" name="Occupancy %" stroke="#8884d8" strokeWidth={2} />
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Occupancy Rate</CardTitle>
+                  <CardDescription>Daily occupancy trends</CardDescription>
+                </div>
+                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[300px]">
+                <LineChart data={occupancyData} margin={{ left: 12, right: 12 }}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="day"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickFormatter={(value) => `${value}%`}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Line
+                    type="monotone"
+                    dataKey="occupancy"
+                    stroke="var(--color-occupancy)"
+                    strokeWidth={2}
+                    dot={{ fill: "var(--color-occupancy)" }}
+                    activeDot={{ r: 6 }}
+                  />
                 </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Latest platform activity</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+      <motion.div variants={itemVariants}>
+        <Card>
+          <CardHeader>
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <span className="text-blue-600 font-medium">H</span>
-                </div>
-                <div>
-                  <p className="font-medium">New Host Application</p>
-                  <p className="text-sm text-muted-foreground">John Doe submitted application</p>
-                </div>
+              <div>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardDescription>Latest platform activity</CardDescription>
               </div>
-              <div className="text-sm text-muted-foreground">2 hours ago</div>
+              <CheckCircle2 className="w-4 h-4 text-primary" />
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                  <span className="text-green-600 font-medium">P</span>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { type: 'host', title: 'New Host Application', desc: 'John Doe submitted application', time: '2 hours ago', icon: Users, color: 'bg-blue-100 text-blue-600' },
+                { type: 'property', title: 'New Property Listed', desc: 'Cozy Studio in Downtown', time: '5 hours ago', icon: Home, color: 'bg-green-100 text-green-600' },
+                { type: 'booking', title: 'Booking Completed', desc: 'Booking for 2 weeks at Beach Villa', time: '1 day ago', icon: Calendar, color: 'bg-amber-100 text-amber-600' },
+              ].map((activity, i) => (
+                <div key={i} className="flex items-center justify-between group cursor-pointer hover:bg-muted/50 p-2 rounded-lg transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110", activity.color)}>
+                      <activity.icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{activity.title}</p>
+                      <p className="text-sm text-muted-foreground">{activity.desc}</p>
+                    </div>
+                  </div>
+                  <div className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">{activity.time}</div>
                 </div>
-                <div>
-                  <p className="font-medium">New Property Listed</p>
-                  <p className="text-sm text-muted-foreground">Cozy Studio in Downtown</p>
-                </div>
-              </div>
-              <div className="text-sm text-muted-foreground">5 hours ago</div>
+              ))}
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                  <span className="text-yellow-600 font-medium">B</span>
-                </div>
-                <div>
-                  <p className="font-medium">Booking Completed</p>
-                  <p className="text-sm text-muted-foreground">Booking for 2 weeks at Beach Villa</p>
-                </div>
-              </div>
-              <div className="text-sm text-muted-foreground">1 day ago</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }
