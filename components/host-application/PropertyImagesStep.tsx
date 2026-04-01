@@ -13,7 +13,19 @@ const MAX_ROOM_IMAGES = 5;
  * Explicitly rejects data: URIs and any other schemes to prevent XSS.
  */
 const getSafeImageSrc = (image: string): string => {
-  return /^(https?|blob):/i.test(image) ? image : '';
+  if (!image || typeof image !== 'string') return '';
+  
+  // Explicitly validate the resulting string is a safe protocol and contains no HTML-like characters
+  // Rejects < > " ' ` ( ) ; \ to satisfy aggressive CodeQL DOM-based XSS rules.
+  const lower = image.toLowerCase();
+  const isSafeProtocol = lower.startsWith('blob:') || lower.startsWith('https://') || lower.startsWith('http://');
+  const hasDangerousChars = /[<>"'`();\\]/.test(image);
+
+  if (isSafeProtocol && !hasDangerousChars) {
+    return image;
+  }
+  
+  return '';
 };
 
 interface PropertyImagesStepProps {

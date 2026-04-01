@@ -18,6 +18,26 @@ import Input from '@/components/inputs/Input';
 import Textarea from '@/components/inputs/Textarea';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 
+/**
+ * Only allow http, https, or blob URLs as image sources.
+ * Explicitly rejects data: URIs and any other schemes to prevent XSS.
+ */
+const getSafeImageSrc = (image: string): string => {
+  if (!image || typeof image !== 'string') return '';
+  
+  // Explicitly validate the resulting string is a safe protocol and contains no HTML-like characters
+  // Rejects < > " ' ` ( ) ; \ to satisfy aggressive CodeQL DOM-based XSS rules.
+  const lower = image.toLowerCase();
+  const isSafeProtocol = lower.startsWith('blob:') || lower.startsWith('https://') || lower.startsWith('http://');
+  const hasDangerousChars = /[<>"'`();\\]/.test(image);
+
+  if (isSafeProtocol && !hasDangerousChars) {
+    return image;
+  }
+  
+  return '';
+};
+
 export default function LandlordSettingsClient() {
   const { success, error: toastError } = useResponsiveToast();
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'payment' | 'security'>('profile');
@@ -154,7 +174,7 @@ export default function LandlordSettingsClient() {
                       <div className="w-24 h-24 bg-white dark:bg-gray-700 rounded-3xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-xl overflow-hidden">
                         {formData.profileImage ? (
                           <img
-                            src={URL.createObjectURL(formData.profileImage)}
+                            src={getSafeImageSrc(URL.createObjectURL(formData.profileImage))}
                             alt="Profile"
                             className="w-full h-full object-cover"
                           />

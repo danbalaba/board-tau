@@ -8,11 +8,31 @@ interface AvatarProps {
   className?: string;
 }
 
+/**
+ * Only allow http, https, or blob URLs as image sources.
+ * Strictly blocks all characters that could lead to HTML attribute injection.
+ */
+const getSafeImageSrc = (src: string | null | undefined): string | undefined => {
+  if (!src || typeof src !== 'string') return undefined;
+  
+  const lower = src.toLowerCase();
+  const isSafeProtocol = lower.startsWith('http://') || 
+                         lower.startsWith('https://') || 
+                         lower.startsWith('blob:');
+
+  const hasDangerousChars = /[<>"'`();\\]/.test(src);
+
+  if (isSafeProtocol && !hasDangerousChars) {
+    return src;
+  }
+  return undefined;
+};
+
 const Avatar: React.FC<AvatarProps> = ({ src, alt = "Avatar", className }) => {
   return (
     <AvatarPrimitive.Root className={`relative flex h-full w-full min-h-[28px] min-w-[28px] shrink-0 overflow-hidden rounded-full ${className || ""}`}>
       <AvatarPrimitive.Image
-        src={src || undefined}
+        src={getSafeImageSrc(src)}
         alt={alt}
         className="aspect-square h-full w-full object-cover"
       />

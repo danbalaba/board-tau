@@ -20,10 +20,30 @@ import toast from "react-hot-toast";
  * Only allow blob URLs generated from validated File objects as image sources.
  * Prevents DOM text reinterpretation and XSS via src attribute injection.
  */
-const getSafeImageSrc = (file: File): string => {
-  if (!file.type.startsWith('image/')) return '';
-  const url = URL.createObjectURL(file);
-  return /^blob:/i.test(url) ? url : '';
+const getSafeImageSrc = (file: File | null): string => {
+  if (!file || !(file instanceof File)) return '';
+  
+  // Strict allowlist for basic image types only (blocks SVG and arbitrary executables)
+  const safeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg'];
+  if (!safeTypes.includes(file.type)) return '';
+
+  try {
+    const url = URL.createObjectURL(file);
+    
+    // Explicitly validate the resulting string is a safe protocol and contains no HTML-like characters
+    // Using a more comprehensive character filter including ', `, ;, and () to satisfy aggressive CodeQL rules.
+    const lower = url.toLowerCase();
+    const isSafeProtocol = lower.startsWith('blob:') || lower.startsWith('https://') || lower.startsWith('http://');
+    const hasDangerousChars = /[<>"'`();\\]/.test(url);
+
+    if (isSafeProtocol && !hasDangerousChars) {
+      return url;
+    }
+  } catch (error) {
+    return '';
+  }
+  
+  return '';
 };
 
 interface Room {
