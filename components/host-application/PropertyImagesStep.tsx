@@ -8,6 +8,26 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png'];
 const MAX_PROPERTY_IMAGES = 10;
 const MAX_ROOM_IMAGES = 5;
 
+/**
+ * Only allow http, https, or blob URLs as image sources.
+ * Explicitly rejects data: URIs and any other schemes to prevent XSS.
+ */
+const getSafeImageSrc = (image: string): string => {
+  if (!image || typeof image !== 'string') return '';
+  
+  // Explicitly validate the resulting string is a safe protocol and contains no HTML-like characters
+  // Rejects < > " ' ` ( ) ; \ to satisfy aggressive CodeQL DOM-based XSS rules.
+  const lower = image.toLowerCase();
+  const isSafeProtocol = lower.startsWith('blob:') || lower.startsWith('https://') || lower.startsWith('http://');
+  const hasDangerousChars = /[<>"'`();\\]/.test(image);
+
+  if (isSafeProtocol && !hasDangerousChars) {
+    return image;
+  }
+  
+  return '';
+};
+
 interface PropertyImagesStepProps {
   register: any;
   errors: any;
@@ -109,7 +129,7 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
     const validFiles = validateFiles(files, propertyImages.length, MAX_PROPERTY_IMAGES);
     
     if (validFiles.length > 0) {
-      const newImages = validFiles.map(file => URL.createObjectURL(file));
+      const newImages = validFiles.map(file => file.type.startsWith('image/') ? URL.createObjectURL(file) : '');
       const updated = [...propertyImages, ...newImages];
       const updatedFiles = [...internalPropertyFiles, ...validFiles];
       
@@ -128,7 +148,7 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
     const validFiles = validateFiles(files, currentRoomCount, MAX_ROOM_IMAGES);
     
     if (validFiles.length > 0) {
-      const newImages = validFiles.map(file => URL.createObjectURL(file));
+      const newImages = validFiles.map(file => file.type.startsWith('image/') ? URL.createObjectURL(file) : '');
       const updatedRoomImages = {
         ...roomImages,
         [roomIndex]: [...(roomImages[roomIndex] || []), ...newImages]
@@ -195,7 +215,7 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
     if (id === 'property') {
       const validFiles = validateFiles(files, propertyImages.length, MAX_PROPERTY_IMAGES);
       if (validFiles.length > 0) {
-        const newImages = validFiles.map(file => URL.createObjectURL(file));
+        const newImages = validFiles.map(file => file.type.startsWith('image/') ? URL.createObjectURL(file) : '');
         const updated = [...propertyImages, ...newImages];
         setPropertyImages(updated);
         syncToForm(updated, roomImages);
@@ -206,7 +226,7 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
       const currentRoomCount = (roomImages[roomIndex] || []).length;
       const validFiles = validateFiles(files, currentRoomCount, MAX_ROOM_IMAGES);
       if (validFiles.length > 0) {
-        const newImages = validFiles.map(file => URL.createObjectURL(file));
+        const newImages = validFiles.map(file => file.type.startsWith('image/') ? URL.createObjectURL(file) : '');
         const updatedRoomImages = {
           ...roomImages,
           [roomIndex]: [...(roomImages[roomIndex] || []), ...newImages]
@@ -289,7 +309,7 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
             {propertyImages.map((image, index) => (
               <div key={index} className="relative group">
                 <img
-                  src={image}
+                  src={getSafeImageSrc(image)}
                   alt={`Property ${index + 1}`}
                   className="w-full h-32 object-cover rounded-lg"
                 />
@@ -365,7 +385,7 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
               {roomImages[roomIndex].map((image, imageIndex) => (
                 <div key={imageIndex} className="relative group">
                   <img
-                    src={image}
+                    src={getSafeImageSrc(image)}
                     alt={`Room ${roomIndex + 1} - ${imageIndex + 1}`}
                     className="w-full h-24 object-cover rounded-lg"
                   />
