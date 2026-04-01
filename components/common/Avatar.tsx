@@ -10,16 +10,19 @@ interface AvatarProps {
 
 /**
  * Only allow http, https, or blob URLs as image sources.
- * Explicitly rejects data: URIs and any other schemes to prevent XSS.
+ * Strictly blocks all characters that could lead to HTML attribute injection.
  */
 const getSafeImageSrc = (src: string | null | undefined): string | undefined => {
-  if (!src) return undefined;
+  if (!src || typeof src !== 'string') return undefined;
+  
   const lower = src.toLowerCase();
   const isSafeProtocol = lower.startsWith('http://') || 
                          lower.startsWith('https://') || 
                          lower.startsWith('blob:');
 
-  if (isSafeProtocol && !/[<>"]/.test(src)) {
+  const hasDangerousChars = /[<>"'`();\\]/.test(src);
+
+  if (isSafeProtocol && !hasDangerousChars) {
     return src;
   }
   return undefined;

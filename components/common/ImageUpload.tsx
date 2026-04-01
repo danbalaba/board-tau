@@ -22,15 +22,18 @@ const ImageUpload: FC<ImageUploadProps> = ({ onChange, initialImage = "" }) => {
  * Explicitly rejects data: URIs and any other schemes to prevent XSS.
  */
 const getSafeImageSrc = (src: string | null | undefined): string => {
-  if (!src) return '';
+  if (!src || typeof src !== 'string') return '';
+  
+  // Explicitly validate the resulting string is a safe protocol and contains no HTML-like characters
+  // Rejects < > " ' ` ( ) ; \ to satisfy aggressive CodeQL DOM-based XSS rules.
   const lower = src.toLowerCase();
-  const isSafeProtocol = lower.startsWith('http://') || 
-                         lower.startsWith('https://') || 
-                         lower.startsWith('blob:');
+  const isSafeProtocol = lower.startsWith('blob:') || lower.startsWith('https://') || lower.startsWith('http://');
+  const hasDangerousChars = /[<>"'`();\\]/.test(src);
 
-  if (isSafeProtocol && !/[<>"]/.test(src)) {
+  if (isSafeProtocol && !hasDangerousChars) {
     return src;
   }
+  
   return '';
 };
 

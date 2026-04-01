@@ -33,18 +33,25 @@ import { toast } from 'sonner';
 
 /**
  * Only allow http, https, or blob URLs as image sources.
- * Explicitly rejects data: URIs and any other schemes to prevent XSS.
+ * Strictly blocks all characters that could lead to HTML attribute injection.
  */
 const getSafeImageSrc = (image: string): string => {
-  if (!image) return '';
+  if (!image || typeof image !== 'string') return '';
+  
   const lowerImage = image.toLowerCase();
+  
+  // 1. Strict protocol allow-list
   const isSafeProtocol = lowerImage.startsWith('http://') || 
                          lowerImage.startsWith('https://') || 
                          lowerImage.startsWith('blob:');
 
-  if (isSafeProtocol && !/[<>"]/.test(image)) {
+  // 2. Reject any additional metadata or attribute-breaking characters: < > " ' ` ( ) ; \
+  const hasDangerousChars = /[<>"'`();\\]/.test(image);
+
+  if (isSafeProtocol && !hasDangerousChars) {
     return image;
   }
+  
   return '';
 };
 
