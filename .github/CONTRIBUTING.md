@@ -23,6 +23,8 @@ Welcome to BoardTAU! We appreciate your interest in contributing to our project.
    ```bash
    npm install --legacy-peer-deps
    ```
+   > [!NOTE]
+   > The `--legacy-peer-deps` flag is required because the project uses **React 19**, which has peer dependency conflicts with some older utility libraries (like `kbar`). This flag safely bypasses those version checks.
 
 3. **Set up environment variables**
    Create a `.env` file in the root directory with the required variables. See `.env.example` for a template.
@@ -288,7 +290,7 @@ const ITEMS_PER_PAGE = 10;
 
 ### Common Issues
 
-1. **Dependency issues**: Run `npm install` again
+1. **Dependency issues**: Run `npm install --legacy-peer-deps` again to clear peer conflicts.
 2. **Database connection errors**: Check your `.env` file
 3. **Type errors**: Run `npm run type-check`
 4. **Test failures**: Run `npm run test:watch` to debug
