@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main", "feature/*" ]
+    branches: [ "main", "feature/*", "View_Features" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "View_Features" ]
 
 jobs:
   setup:
