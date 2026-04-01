@@ -1,15 +1,15 @@
 import { Metadata } from 'next';
-import { ListingsReview } from '@/app/admin/features/moderation/components/listings-review';
+import { ListingsReviewDashboard } from '@/app/admin/features/moderation/components/listings-review';
 
 export const metadata: Metadata = {
-  title: 'Listings Review - BoardTAU Admin',
-  description: 'Review and moderate property listings',
+  title: 'Market Inventory Hub - BoardTAU HQ',
+  description: 'Vetting and authorizing property listing assets for platform release',
 };
 
 export default function ListingsReviewPage() {
   return (
-    <div className="flex-1 flex flex-col space-y-6">
-      <ListingsReview />
+    <div className="flex-1 flex flex-col">
+      <ListingsReviewDashboard />
     </div>
   );
 }

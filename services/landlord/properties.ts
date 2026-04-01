@@ -4,21 +4,122 @@ import { db } from "@/lib/db";
 import { requireLandlord } from "@/lib/landlord";
 import { LISTINGS_BATCH } from "@/utils/constants";
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 
-export const getLandlordProperties = async (args?: { cursor?: string }) => {
+export type LandlordPropertyResult = {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  status: string;
+  roomCount: number;
+  bathroomCount: number;
+  imageSrc: string;
+  createdAt: Date;
+  region?: string;
+  country?: string;
+  amenities?: {
+    wifi: boolean;
+    parking: boolean;
+    pool: boolean;
+    gym: boolean;
+    airConditioning: boolean;
+    laundry: boolean;
+  } | null;
+  rules?: {
+    femaleOnly: boolean;
+    maleOnly: boolean;
+    visitorsAllowed: boolean;
+    petsAllowed: boolean;
+    smokingAllowed: boolean;
+  } | null;
+  features?: {
+    security24h: boolean;
+    cctv: boolean;
+    fireSafety: boolean;
+    nearTransport: boolean;
+    studyFriendly: boolean;
+    quietEnvironment: boolean;
+    flexibleLease: boolean;
+  } | null;
+  categories?: {
+    category: {
+      name: string;
+      label: string;
+    };
+  }[];
+  rooms?: {
+    id: string;
+    name: string;
+    price: number;
+    capacity: number;
+    availableSlots: number;
+    roomType: string;
+    bedType: string;
+    size: number | null;
+    reservationFee: number;
+    amenities?: {
+      amenityType: {
+        name: string;
+      };
+    }[];
+    images?: {
+      url: string;
+    }[];
+  }[];
+  images?: {
+    url: string;
+  }[];
+  user?: {
+    businessName: string | null;
+    phoneNumber: string | null;
+    email: string | null;
+  } | null;
+};
+
+export type LandlordPropertiesResult = {
+  listings: LandlordPropertyResult[];
+  nextCursor: string | null;
+};
+
+export const getLandlordProperties = async (args?: { cursor?: string }): Promise<LandlordPropertiesResult> => {
   const landlord = await requireLandlord();
 
   const { cursor } = args || {};
 
-  const filterQuery: any = {
+  const filterQuery: Prisma.ListingFindManyArgs = {
     where: {
       userId: landlord.id,
     },
     take: LISTINGS_BATCH,
     orderBy: { createdAt: "desc" },
     include: {
-      rooms: true,
+      rooms: {
+        include: {
+          amenities: {
+            include: {
+              amenityType: true,
+            },
+          },
+          images: true,
+        },
+      },
       images: true,
+      amenities: true,
+      rules: true,
+      features: true,
+      categories: {
+        include: {
+          category: true,
+        },
+      },
+      user: {
+        select: {
+          businessName: true,
+          phoneNumber: true,
+          email: true,
+        },
+      },
     },
   };
 
@@ -35,7 +136,7 @@ export const getLandlordProperties = async (args?: { cursor?: string }) => {
       : null;
 
   return {
-    listings: properties,
+    listings: properties as LandlordPropertyResult[],
     nextCursor,
   };
 };
