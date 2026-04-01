@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { Role } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sanitizeInput } from "@/lib/validators";
@@ -11,12 +12,14 @@ export interface UserProfile {
   image: string | null;
   phoneNumber: string | null;
   businessName: string | null;
-  role: string;
+  role: Role;
   emailVerified: Date | null;
   lastLogin: Date | null;
   createdAt: Date;
   updatedAt: Date;
   bio: string | null;
+  city: string | null;
+  region: string | null;
 }
 
 // Server-side function to get user profile
@@ -44,6 +47,8 @@ export async function getUserProfile(): Promise<UserProfile> {
       createdAt: true,
       updatedAt: true,
       bio: true,
+      city: true,
+      region: true,
     },
   });
 
@@ -79,12 +84,18 @@ export async function updateUserProfile(data: Partial<UserProfile>): Promise<Use
   if (data.image !== undefined) {
     allowedFields.image = data.image; // Allow updating profile image
   }
+  if (data.city !== undefined) {
+    (allowedFields as any).city = data.city ? sanitizeInput(data.city) : null;
+  }
+  if (data.region !== undefined) {
+    (allowedFields as any).region = data.region ? sanitizeInput(data.region) : null;
+  }
 
   const updatedUser = await db.user.update({
     where: {
       email: session.user.email,
     },
-    data: allowedFields,
+    data: allowedFields as any,
     select: {
       id: true,
       name: true,

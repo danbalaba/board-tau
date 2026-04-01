@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo, useCallback } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import {
   IconMail,
   IconEye,
@@ -33,8 +33,8 @@ import Button from "@/components/common/Button"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/utils/helper"
 import { toast } from "sonner"
-import {
-  generateTablePDF
+import { 
+  generateTablePDF 
 } from '@/utils/pdfGenerator';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
 import {
@@ -45,8 +45,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/app/admin/components/ui/dropdown-menu';
-import { ModernLoadMore } from '@/components/common/ModernLoadMore';
-import { SectionSearch } from '@/components/common/SectionSearch';
 
 
 interface Inquiry {
@@ -79,15 +77,12 @@ interface LandlordInquiriesClientProps {
 
 export default function LandlordInquiriesClient({ inquiries }: LandlordInquiriesClientProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const initialSearch = searchParams.get('search') || ""
-
   const [listings, setListings] = useState(inquiries.inquiries)
   const [nextCursor, setNextCursor] = useState(inquiries.nextCursor)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL")
   const [viewMode, setViewMode] = useState<"grid" | "list">("list")
-  const [searchQuery, setSearchQuery] = useState(initialSearch)
+  const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("newest")
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null)
   const [viewModalOpen, setViewModalOpen] = useState(false)
@@ -99,13 +94,6 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
     setListings(inquiries.inquiries)
     setNextCursor(inquiries.nextCursor)
   }, [inquiries])
-
-  // Update searchQuery when URL changes
-  useEffect(() => {
-    if (initialSearch) {
-      setSearchQuery(initialSearch)
-    }
-  }, [initialSearch])
 
   const statusColors: Record<string, string> = {
     PENDING: "bg-amber-500/10 text-amber-600 border-amber-500/20",
@@ -411,32 +399,28 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 rounded-[24px] border border-primary/10 shadow-sm"
+        className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-[32px] border border-primary/10 shadow-sm"
       >
-        {/* Background clipping wrapper */}
-        <div className="absolute inset-0 overflow-hidden rounded-[24px] pointer-events-none">
-          <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
-          <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-blue-400/10 rounded-full blur-xl" />
-        </div>
-
-        <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-xl flex items-center justify-center text-primary shadow-lg">
-              <IconMail size={24} strokeWidth={2.5} />
+        <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-[24px] flex items-center justify-center text-primary shadow-xl shadow-primary/10">
+              <IconMail size={32} strokeWidth={2} />
             </div>
             <div>
-              <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
+              <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
                 Tenant Inquiries
               </h1>
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-0.5 opacity-70">
+              <p className="text-[11px] font-black text-gray-500 uppercase tracking-[0.2em] mt-1 opacity-70">
                 Manage your active inquiries & requests
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap lg:flex-row items-center gap-3 w-full xl:w-auto mt-4 lg:mt-0">
+          <div className="flex flex-wrap lg:flex-row items-center gap-4 w-full xl:w-auto mt-4 lg:mt-0">
             {/* Search Input */}
+fix/landlord-analytics-public-sentiments
             <div className="relative w-full lg:w-44 group">
+
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
                 <IconSearch size={16} strokeWidth={2.5} />
               </div>
@@ -448,6 +432,7 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
                 className="w-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 py-3 pl-11 pr-4 text-xs font-bold text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
               />
             </div>
+fix/landlord-analytics-public-sentiments
 
             {/* Sorting */}
             <div className="flex flex-wrap items-center gap-1.5 bg-white/50 dark:bg-gray-800/50 p-1 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
@@ -481,47 +466,39 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
               className="w-full lg:w-72"
             />
 
-            {/* Sorting Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 px-3 py-1.5 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all backdrop-blur-sm shadow-sm">
-                  <IconHistory size={14} />
-                  Sort By
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 p-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl">
-                <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">Order by</div>
-                <DropdownMenuGroup>
-                  {[
-                    { value: 'newest', label: 'Newest first', icon: IconHistory },
-                    { value: 'oldest', label: 'Oldest first', icon: IconCalendarEvent },
-                  ].map((option) => {
-                    const Icon = option.icon;
-                    const isSelected = sortBy === option.value;
-                    return (
-                      <DropdownMenuItem
-                        key={option.value}
-                        onClick={() => setSortBy(option.value)}
-                        className={cn(
-                          "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
-                          isSelected ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                        )}
-                      >
-                        <Icon size={14} />
-                        {option.label}
-                        {isSelected && <IconCheck size={14} className="ml-auto" />}
-                      </DropdownMenuItem>
-                    );
-                  })}
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Sorting */}
+            <div className="flex flex-wrap items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
+              {[
+                { value: 'newest', label: 'Newest', icon: IconHistory },
+                { value: 'oldest', label: 'Oldest', icon: IconCalendarEvent },
+              ].map((option) => {
+                const Icon = option.icon;
+                const isSelected = sortBy === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => setSortBy(option.value)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                      isSelected
+                        ? "bg-primary text-white shadow-lg shadow-primary/30"
+                        : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700"
+                    )}
+                  >
+                    <Icon size={12} />
+                    <span className="hidden sm:inline">{option.label}</span>
+                  </button>
+                );
+              })}
+            </div>
 
             {/* Optimized Filters Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
+fix/landlord-analytics-public-sentiments
                 <button className="flex items-center gap-2 px-4 py-3 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all backdrop-blur-sm">
                 <button className="flex items-center gap-2 px-3 py-1.5 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all backdrop-blur-sm">
+
                   <IconFilter size={14} />
                   Filters {selectedStatus !== 'ALL' && <span className="w-2 h-2 rounded-full bg-primary" />}
                 </button>
@@ -555,38 +532,40 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
               </DropdownMenuContent>
             </DropdownMenu>
 
+fix/landlord-analytics-public-sentiments
             <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm ml-auto">
             <div className="flex items-center gap-1 bg-white/50 dark:bg-gray-800/50 p-1 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm">
+
               <button
                 onClick={() => setViewMode("grid")}
                 className={cn(
-                  "p-1.5 rounded-xl transition-all duration-300",
+                  "p-2.5 rounded-xl transition-all duration-300",
                   viewMode === "grid"
                     ? "bg-primary text-white shadow-lg shadow-primary/30 scale-105"
                     : "text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 )}
                 title="Grid View"
               >
-                <IconLayoutGrid size={16} />
+                <IconLayoutGrid size={18} />
               </button>
               <button
                 onClick={() => setViewMode("list")}
                 className={cn(
-                  "p-1.5 rounded-xl transition-all duration-300",
+                  "p-2.5 rounded-xl transition-all duration-300",
                   viewMode === "list"
                     ? "bg-primary text-white shadow-lg shadow-primary/30 scale-105"
                     : "text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 )}
                 title="List View"
               >
-                <IconList size={16} />
+                <IconList size={18} />
               </button>
               <GenerateReportButton 
                 onGeneratePDF={handleGenerateReport}
               />
             </div>
-
-            <GenerateReportButton
+            
+            <GenerateReportButton 
               onGeneratePDF={handleGenerateReport}
             />
           </div>
@@ -624,237 +603,160 @@ export default function LandlordInquiriesClient({ inquiries }: LandlordInquiries
             key="list"
             className={cn(
               viewMode === "grid"
-                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                : "space-y-4"
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                : "flex flex-col gap-6"
             )}
           >
-            {filteredInquiries.map((inquiry) => {
-              const renderStatusIcon = (status: string, size = 12, strokeWidth = 3) => {
-                switch (status) {
-                  case 'PENDING': return <IconClock size={size} strokeWidth={strokeWidth} />;
-                  case 'APPROVED': return <IconCircleCheck size={size} strokeWidth={strokeWidth} />;
-                  case 'REJECTED': return <IconCircleX size={size} strokeWidth={strokeWidth} />;
-                  default: return <IconClock size={size} strokeWidth={strokeWidth} />;
-                }
-              };
+            {filteredInquiries.map((inquiry, idx) => {
+              const StatusIcon = statusIcons[inquiry.status] || IconClock;
 
-              return viewMode === 'grid' ? (
-                <div
+              return (
+                <motion.div
                   key={inquiry.id}
-                  className="group relative bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-6 hover:border-primary/20 transition-all duration-300 hover:shadow-xl shadow-sm flex flex-col"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className={cn(
+                    "group relative bg-white dark:bg-gray-900 rounded-[40px] border border-gray-100 dark:border-gray-800 p-6 hover:border-primary/40 transition-all duration-500 shadow-xl shadow-gray-200/50 dark:shadow-none hover:shadow-2xl hover:-translate-y-2 overflow-hidden",
+                    viewMode === "list" && "flex flex-col sm:flex-row gap-8 items-center"
+                  )}
                 >
-                  <div className="relative h-44 rounded-2xl overflow-hidden mb-6">
+                  <div className={cn(
+                    "relative rounded-[24px] overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 z-10",
+                    viewMode === "grid" ? "h-48 mb-5 w-full" : "w-full sm:w-48 h-40"
+                  )}>
                     {inquiry.listing.imageSrc ? (
                       <img
                         src={inquiry.listing.imageSrc}
                         alt={inquiry.listing.title}
-                        loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gray-50 flex items-center justify-center text-gray-300">
-                        <IconMail size={32} />
+                      <div className="w-full h-full flex items-center justify-center text-gray-300">
+                        <IconMail size={40} strokeWidth={1.5} />
                       </div>
                     )}
-                    <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+
+                    {/* Status Badge overlay */}
+                    <div className="absolute top-3 left-3 z-20">
                       <span className={cn(
-                        "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] uppercase font-black tracking-widest shadow-lg backdrop-blur-md border",
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] uppercase font-black tracking-widest shadow-lg backdrop-blur-md border",
                         statusColors[inquiry.status] || "bg-white text-gray-800 border-gray-200"
                       )}>
-                        {renderStatusIcon(inquiry.status, 12, 3)}
+                        <StatusIcon size={12} strokeWidth={3} />
                         {inquiry.status}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex-1">
-                    <h3 className="text-xl font-black text-gray-900 dark:text-white mb-3 tracking-tight group-hover:text-primary transition-colors line-clamp-1">
-                      {inquiry.listing.title}
-                    </h3>
-
-                    <div className="flex items-center gap-3 mb-6 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50">
-                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-black text-xs uppercase ring-4 ring-white dark:ring-gray-800">
-                        {inquiry.user.name?.charAt(0) || 'U'}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-black text-gray-900 dark:text-gray-100 truncate">{inquiry.user.name || 'Anonymous User'}</p>
-                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-none truncate">Perspective Tenant</p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      {inquiry.room && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Room</span>
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 truncate">
-                            {inquiry.room.name}
-                          </div>
-                        </div>
-                      )}
-                      {inquiry.room && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Rate</span>
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
-                            ₱{inquiry.room.price.toLocaleString()}
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="flex flex-col gap-1 col-span-2">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Date Received</span>
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-gray-700 dark:text-gray-300">
-                          <IconCalendarEvent size={12} className="text-primary" />
-                          {new Date(inquiry.createdAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2 mt-auto pt-4 border-t border-gray-100 dark:border-gray-800">
-                    <Button
-                      outline
-                      onClick={() => router.push(`/landlord/inquiries/${inquiry.id}`)}
-                      className="w-full rounded-xl py-3 text-[10px] font-black uppercase tracking-widest"
-                    >
-                      <span className="flex items-center justify-center gap-2">
-                        <IconMessage size={14} />
-                        Message
-                      </span>
-                    </Button>
-
-                    {inquiry.status === "PENDING" && (
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          onClick={() => handleRespond(inquiry.id, "APPROVED")}
-                          className="rounded-xl py-2.5 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                        >
-                          <span className="flex items-center justify-center gap-2">
-                            <IconCheck size={14} />
-                            Approve
-                          </span>
-                        </Button>
-                        <Button
-                          outline
-                          onClick={() => handleRespond(inquiry.id, "REJECTED")}
-                          className="rounded-xl py-2.5 border-red-200 text-red-500"
-                        >
-                          <span className="flex items-center justify-center gap-2">
-                            <IconX size={14} />
-                            Reject
-                          </span>
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div
-                  key={inquiry.id}
-                  className="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:border-primary/20 transition-all duration-300 hover:shadow-xl shadow-sm"
-                >
-                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-2">
-                    <div className="flex items-start gap-5 flex-1 min-w-0">
-                      <div className="relative w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden flex-shrink-0 group-hover:shadow-md transition-all duration-300">
-                        {inquiry.listing.imageSrc ? (
-                          <img
-                            src={inquiry.listing.imageSrc}
-                            alt={inquiry.listing.title}
-                            loading="lazy"
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300">
-                            <IconMail size={24} />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={cn(
-                            "flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] uppercase font-black tracking-widest",
-                            statusColors[inquiry.status] || "bg-white text-gray-800 border-gray-200"
-                          )}>
-                            {renderStatusIcon(inquiry.status, 10, 3)}
-                            {inquiry.status}
-                          </span>
-                        </div>
-                        <h3 className="text-lg font-black text-gray-900 dark:text-white mb-1 group-hover:text-primary transition-colors line-clamp-1">
+                  <div className="flex-1 min-w-0 w-full z-10">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="min-w-0 pr-4">
+                        <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2 tracking-tight truncate group-hover:text-primary transition-colors">
                           {inquiry.listing.title}
                         </h3>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-black uppercase">
-                            {inquiry.user.name?.charAt(0) || 'U'}
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 font-medium truncate">
-                            <span className="font-bold text-gray-900 dark:text-gray-100">{inquiry.user.name || 'Anonymous User'}</span>
-                          </p>
-                        </div>
 
-                        <div className="flex flex-wrap items-center gap-4 text-[10px] font-bold text-gray-500 dark:text-gray-400">
-                          {inquiry.room && (
-                            <span className="flex items-center gap-1.5">
-                              <span className="px-1.5 py-0.5 bg-primary/5 text-primary rounded text-[9px] uppercase tracking-wider">Room</span>
-                              {inquiry.room.name} • ₱{inquiry.room.price.toLocaleString()}/mo
-                            </span>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <IconCalendarEvent size={12} className="text-primary/70" />
-                            {new Date(inquiry.createdAt).toLocaleDateString()}
-                          </span>
+                        <div className="flex items-center gap-3 mb-6 bg-gray-50 dark:bg-gray-800/50 p-2.5 rounded-2xl border border-gray-100/50 dark:border-gray-800 w-fit">
+                          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center text-white font-black text-xs uppercase shadow-lg shadow-primary/20">
+                            {inquiry.user.name?.charAt(0) || <IconUser size={14} />}
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5 leading-none">Perspective Tenant</p>
+                            <p className="text-sm font-black text-gray-900 dark:text-gray-100 max-w-[150px] sm:max-w-[200px] truncate leading-none">{inquiry.user.name || 'Anonymous User'}</p>
+                          </div>
                         </div>
+                      </div>
+
+
+                    </div>
+
+                    {inquiry.room && (
+                      <div className="flex items-center gap-3 mb-5 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-2xl border border-gray-100 dark:border-gray-800">
+                        <div className="flex-1">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Room Interest</p>
+                          <p className="text-xs font-black text-gray-900 dark:text-white truncate">{inquiry.room.name}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Rate</p>
+                          <p className="text-xs font-black text-primary">₱{inquiry.room.price.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">
+                      <div className="flex items-center gap-1.5">
+                        <IconCalendarEvent size={12} className="text-gray-300 dark:text-gray-600" />
+                        {new Date(inquiry.createdAt).toLocaleDateString()}
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-2 w-full md:w-40 flex-shrink-0 pt-4 md:pt-0 border-t md:border-none border-gray-100 dark:border-gray-800">
+                    <div className="flex flex-wrap items-center gap-3 pt-6 border-t border-gray-100 dark:border-gray-800">
                       <Button
                         outline
                         onClick={() => router.push(`/landlord/inquiries/${inquiry.id}`)}
-                        className="w-full rounded-xl py-2 text-[10px] font-black uppercase tracking-widest"
+                        className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-50 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700"
                       >
-                        Message
+                        <span className="flex items-center justify-center gap-2">
+                          <IconMessage size={14} />
+                          Message
+                        </span>
                       </Button>
-                      
+
                       {inquiry.status === "PENDING" && (
-                        <>
+                        <div className="flex gap-3 basis-[100%] sm:basis-auto flex-1">
                           <Button
                             onClick={() => handleRespond(inquiry.id, "APPROVED")}
-                            className="w-full rounded-xl py-2 text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                            className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white shadow-xl shadow-emerald-500/20 group/btn"
                           >
                             <span className="flex items-center justify-center gap-2">
-                              <IconCheck size={12} />
+                              <IconCheck size={14} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
                               Approve
                             </span>
                           </Button>
                           <Button
                             outline
                             onClick={() => handleRespond(inquiry.id, "REJECTED")}
-                            className="w-full rounded-xl py-2 text-[10px] font-black uppercase tracking-widest border-red-200 text-red-500"
+                            className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-widest border-rose-100 text-rose-500 hover:bg-rose-50 dark:border-rose-900/30 group/btn"
                           >
                             <span className="flex items-center justify-center gap-2">
-                              <IconX size={12} />
+                              <IconX size={14} strokeWidth={3} className="group-hover:rotate-90 transition-transform" />
                               Reject
                             </span>
                           </Button>
-                        </>
+                        </div>
                       )}
                     </div>
                   </div>
-                </div>
+
+                  {/* Subtle background glow effect on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-[32px]" />
+                </motion.div>
               );
             })}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="mt-8 bg-white/30 dark:bg-gray-800/20 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700/50 p-2 shadow-xl shadow-gray-200/10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-        <ModernLoadMore
-          onLoadMore={handleLoadMore}
-          isLoading={isLoadingMore}
-          hasMore={!!nextCursor}
-          label="View More Inquiries"
-          loadingLabel="Synchronizing Messages..."
-        />
-      </div>
+      {/* Pagination Container */}
+      {nextCursor && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex justify-center pt-8"
+        >
+          <Button
+            outline
+            className="rounded-[20px] px-10 py-4 border-2 border-gray-100 dark:border-gray-800 group hover:border-primary/40 hover:bg-primary/5 transition-all shadow-sm"
+            onClick={handleLoadMore}
+            isLoading={isLoadingMore}
+          >
+            <span className="flex items-center gap-2 uppercase font-black tracking-[0.2em] text-[10px] text-gray-500 group-hover:text-primary transition-colors">
+              {isLoadingMore ? "Processing..." : "Load More Inquiries"}
+              <IconChevronDown className="group-hover:translate-y-1 transition-transform" size={12} strokeWidth={3} />
+            </span>
+          </Button>
+        </motion.div>
+      )}
     </div>
   )
 }

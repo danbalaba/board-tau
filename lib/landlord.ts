@@ -58,7 +58,7 @@ export async function isLandlord(): Promise<boolean> {
       select: { role: true, isVerifiedLandlord: true },
     });
 
-    return !!(userFromDb?.role === "landlord" && userFromDb.isVerifiedLandlord);
+    return !!(userFromDb?.role === "LANDLORD" && userFromDb.isVerifiedLandlord);
   } catch {
     return false;
   }
@@ -80,9 +80,9 @@ export async function hasPendingLandlordApplication(): Promise<boolean> {
     });
 
     // If user is not a landlord yet but has an application pending
-    return userFromDb?.role === "user" &&
-      userFromDb.landlordApprovedAt === null &&
-      userFromDb.isVerifiedLandlord === false;
+    return userFromDb?.role === "USER" &&
+           userFromDb.landlordApprovedAt === null &&
+           userFromDb.isVerifiedLandlord === false;
   } catch {
     return false;
   }

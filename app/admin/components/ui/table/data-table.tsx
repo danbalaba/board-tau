@@ -32,7 +32,7 @@ export function DataTable<TData>({
         <div className='flex overflow-hidden rounded-lg border bg-background'>
           <ScrollArea className='w-full'>
             <Table>
-              <TableHeader className='bg-muted sticky top-0 z-1'>
+              <TableHeader className='bg-background sticky top-0 z-1 backdrop-blur-sm border-b'>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (

@@ -2,18 +2,18 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { signOut } from 'next-auth/react';
-import {
-  IconSettings,
-  IconUserCircle as IconUser,
-  IconLogout,
-  IconChartLine,
-  IconMail,
-  IconCreditCard,
-  IconShield,
-  IconSun,
-  IconMoon,
-  IconBell as IconBellTabler,
-  IconMenu2,
+import { 
+  IconSettings, 
+  IconUserCircle as IconUser, 
+  IconLogout, 
+  IconChartLine, 
+  IconMail, 
+  IconCreditCard, 
+  IconShield, 
+  IconSun, 
+  IconMoon, 
+  IconBell as IconBellTabler, 
+  IconMenu2, 
   IconSearch,
   IconCommand,
   IconX,
@@ -22,31 +22,38 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { useTheme } from 'next-themes';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuLabel,
 } from '@/app/admin/components/ui/dropdown-menu';
-import { useTheme } from 'next-themes';
-import { useKBar } from 'kbar';
 import { SidebarTrigger } from '@/app/admin/components/ui/sidebar';
-import Avatar from "@/components/common/Avatar";
-import { ProfileSettingsModal } from '../modals/ProfileSettingsModal';
-import { AccountSettingsModal } from '../modals/AccountSettingsModal';
-import { NotificationsModal } from '../modals/NotificationsModal';
-import { PaymentSettingsModal } from '../modals/PaymentSettingsModal';
-import { SecuritySettingsModal } from '../modals/SecuritySettingsModal';
-import { PerformanceModal } from '../modals/PerformanceModal';
-import { NotificationsListModal } from '../modals/NotificationsListModal';
-
+import { ProfileSettingsModal } from '@/app/landlord/components/modals/ProfileSettingsModal';
+import { AccountSettingsModal } from '@/app/landlord/components/modals/AccountSettingsModal';
+import { NotificationsModal } from '@/app/landlord/components/modals/NotificationsModal';
+import { NotificationsListModal } from '@/app/landlord/components/modals/NotificationsListModal';
+import { PaymentSettingsModal } from '@/app/landlord/components/modals/PaymentSettingsModal';
+import { SecuritySettingsModal } from '@/app/landlord/components/modals/SecuritySettingsModal';
+import { PerformanceModal } from '@/app/landlord/components/modals/PerformanceModal';
+import { cn } from '@/lib/utils';
+import * as z from 'zod';
+import { toast } from 'sonner';
+import Avatar from '@/components/common/Avatar';
 
 interface LandlordTopbarProps {
-  user: any;
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    image: string | null;
+    role: string;
+  };
 }
 
 export default function LandlordTopbar({ user }: LandlordTopbarProps) {
@@ -57,29 +64,104 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
   const [isPaymentSettingsModalOpen, setIsPaymentSettingsModalOpen] = useState(false);
   const [isSecuritySettingsModalOpen, setIsSecuritySettingsModalOpen] = useState(false);
   const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
-
-
-  const { query } = useKBar();
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
-
+  
   useEffect(() => {
     setMounted(true);
+    
+    // Keyboard shortcut for search
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchExpanded(true);
+      }
+      if (e.key === 'Escape') {
+        setIsSearchExpanded(false);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+  
+  useEffect(() => {
+    if (isSearchExpanded && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchExpanded]);
+
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  
+  const mockSuggestions = [
+    { label: 'Properties', category: 'Management', icon: IconChartLine, action: () => router.push('/landlord/properties') },
+    { label: 'Payments', category: 'Finance', icon: IconCreditCard, action: () => setIsPaymentSettingsModalOpen(true) },
+    { label: 'Profile Settings', category: 'Account', icon: IconUser, action: () => setIsProfileModalOpen(true) },
+    { label: 'Inquiries', category: 'Tenants', icon: IconMail, action: () => router.push('/landlord/inquiries') },
+    { label: 'Reservations', category: 'Bookings', icon: IconBellTabler, action: () => router.push('/landlord/reservations') },
+    { label: 'Security & Privacy', category: 'Account', icon: IconShield, action: () => setIsSecuritySettingsModalOpen(true) },
+    { label: 'Analytics', category: 'Insights', icon: IconChartLine, action: () => router.push('/landlord/analytics') },
+    { label: 'Settings', category: 'System', icon: IconSettings, action: () => setIsAccountModalOpen(true) },
+  ];
+
+  const filteredSuggestions = mockSuggestions.filter(item => 
+    item.label.toLowerCase().includes(searchQuery.toLowerCase())
+  ).slice(0, 5);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowSuggestions(false);
+    
+    // Validation using Zod
+    const schema = z.string().min(3, "Search term must be at least 3 characters");
+    const result = schema.safeParse(searchQuery);
+
+    if (!result.success) {
+      toast.error(result.error?.issues?.[0]?.message || "Search term must be at least 3 characters");
+      return;
+    }
+
+    setIsSearching(true);
+    // Simulate API search
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsSearching(false);
+    
+    // Check if we have an exact match
+    const exactMatch = mockSuggestions.find(item => item.label.toLowerCase() === searchQuery.toLowerCase());
+    if (exactMatch && exactMatch.action) {
+      setIsSearchExpanded(false);
+      exactMatch.action();
+      return;
+    }
+    
+    // Check if we have a partial match and just route to the first one?
+    // User expects fetch/possible matches to direct to section.
+    if (filteredSuggestions.length > 0) {
+      setIsSearchExpanded(false);
+      filteredSuggestions[0].action();
+      return;
+    }
+
+    toast.info(`No results found for "${searchQuery}" in our records.`);
+  };
 
   const isDark = theme === "dark";
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 h-16 flex items-center justify-between px-6 z-50 transition-all duration-300">
+      <header className="sticky top-0 w-full bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 h-16 flex items-center justify-between px-6 z-50 transition-all duration-300">
         {/* Left side - Logo & Sidebar Trigger */}
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <SidebarTrigger className='-ml-1 hover:bg-primary/10 transition-colors rounded-xl p-2' />
             <Link href="/landlord" className="flex items-center gap-3 group">
-              <motion.div
+              <motion.div 
                 className="h-[35px] w-[150px] relative"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -110,19 +192,125 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
           </div>
         </div>
 
-        {/* Center - Search Bar Trigger */}
+        {/* Center - Search Bar */}
         <div className="flex-1 max-w-xl px-8 hidden md:block relative">
-            <button
-              onClick={() => query.toggle()}
-              className="w-full max-w-[280px] group flex items-center h-10 px-4 rounded-2xl border border-transparent bg-gray-100/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300"
+          <form onSubmit={handleSearch}>
+            <motion.div 
+              className={cn(
+                "relative flex items-center h-10 rounded-2xl border transition-all duration-300",
+                isSearchExpanded 
+                  ? "bg-white dark:bg-gray-800 border-primary ring-4 ring-primary/10" 
+                  : "bg-gray-100/50 dark:bg-gray-800/50 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800"
+              )}
+              animate={{ width: isSearchExpanded ? "100%" : "280px" }}
             >
-              <IconSearch size={18} className="text-gray-400 group-hover:text-primary transition-colors duration-300 mr-3" />
-              <span className="text-sm font-medium text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300 transition-colors">Search everything...</span>
-              <div className="ml-auto flex items-center gap-0.5 px-1.5 py-0.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                <IconCommand size={10} className="text-gray-400" />
-                <span className="text-[10px] font-black text-gray-400">K</span>
-              </div>
-            </button>
+              {isSearching ? (
+                <div className="absolute left-3">
+                  <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                </div>
+              ) : (
+                <IconSearch 
+                  size={18} 
+                  className={cn(
+                    "absolute left-3 transition-colors duration-300",
+                    isSearchExpanded ? "text-primary" : "text-gray-400"
+                  )} 
+                />
+              )}
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search everything..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => {
+                  setIsSearchExpanded(true);
+                  if (searchQuery) setShowSuggestions(true);
+                }}
+                onBlur={() => {
+                  // Delay closing suggestions to allow for clicks
+                  setTimeout(() => {
+                    if (!searchQuery && !isSearching) setIsSearchExpanded(false);
+                    setShowSuggestions(false);
+                  }, 200);
+                }}
+                className="w-full bg-transparent pl-10 pr-12 py-2 text-sm font-medium focus:outline-none text-gray-900 dark:text-white placeholder:text-gray-400"
+              />
+              <AnimatePresence>
+                {!isSearchExpanded && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute right-3 flex items-center gap-0.5 px-1.5 py-0.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm"
+                  >
+                    <IconCommand size={10} className="text-gray-400" />
+                    <span className="text-[10px] font-black text-gray-400">K</span>
+                  </motion.div>
+                )}
+                {isSearchExpanded && searchQuery && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setShowSuggestions(false);
+                      setIsSearchExpanded(false);
+                    }}
+                    className="absolute right-3 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 transition-colors"
+                  >
+                    <IconX size={14} />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </form>
+
+          {/* Search Suggestions Dropdown */}
+          <AnimatePresence>
+            {showSuggestions && searchQuery && filteredSuggestions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 8, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                className="absolute top-full left-8 right-8 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-2xl p-2 z-[60] backdrop-blur-xl bg-white/95 dark:bg-gray-900/95"
+              >
+                <div className="p-2">
+                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2 mb-2">Possible Matches</h4>
+                  <div className="space-y-1">
+                    {filteredSuggestions.map((item, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setSearchQuery(item.label);
+                          setShowSuggestions(false);
+                          setIsSearchExpanded(false);
+                          if (item.action) {
+                            item.action();
+                          }
+                        }}
+                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-left group"
+                      >
+                        <div className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-500 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                          <item.icon size={16} />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-gray-900 dark:text-white leading-none mb-1">{item.label}</p>
+                          <p className="text-[10px] text-gray-500 font-medium leading-none">{item.category}</p>
+                        </div>
+                        <IconCommand size={12} className="text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Right side - Actions & User */}
@@ -131,8 +319,8 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="relative p-2.5 text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 rounded-xl transition-all duration-300 group">
-                <IconBellTabler
-                  size={22}
+                <IconBellTabler 
+                  size={22} 
                   className="group-hover:rotate-12 transition-transform duration-300"
                 />
                 <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full ring-4 ring-white dark:ring-gray-900"></span>
@@ -154,7 +342,7 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
               </div>
               <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
               <DropdownMenuGroup className="py-1">
-                <DropdownMenuItem
+                <DropdownMenuItem 
                   onClick={() => setIsNotificationsListModalOpen(true)}
                   className='rounded-xl flex items-center gap-3 p-3 transition-colors cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 border-transparent hover:border-primary/20 border'
                 >
@@ -166,7 +354,7 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
                     <p className="text-[10px] text-gray-500 font-medium">Check your messages</p>
                   </div>
                 </DropdownMenuItem>
-                <DropdownMenuItem
+                <DropdownMenuItem 
                   onClick={() => setIsNotificationsModalOpen(true)}
                   className='rounded-xl flex items-center gap-3 p-3 transition-colors cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 border-transparent hover:border-primary/20 border mt-1'
                 >
@@ -210,8 +398,8 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
               <button className='flex items-center gap-3 p-1.5 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 group'>
                 <div className='relative'>
                   <div className='w-9 h-9 rounded-full flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-300 overflow-hidden ring-2 ring-primary/20'>
-                    <Avatar
-                      src={user.image}
+                    <Avatar 
+                      src={user.image} 
                       alt={user.name || "User"}
                     />
                   </div>
@@ -238,8 +426,8 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
                 <div className='flex items-center gap-4'>
                   <div className='w-14 h-14 rounded-full flex items-center justify-center p-0.5 bg-gradient-to-br from-primary to-purple-500'>
                     <div className="w-full h-full bg-white dark:bg-gray-950 rounded-full flex items-center justify-center overflow-hidden">
-                      <Avatar
-                        src={user.image}
+                      <Avatar 
+                        src={user.image} 
                         alt={user.name || "User"}
                       />
                     </div>
@@ -256,7 +444,7 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
               <DropdownMenuGroup className="p-1">
-                <DropdownMenuItem
+                <DropdownMenuItem 
                   onClick={() => setIsProfileModalOpen(true)}
                   className='rounded-xl flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-all group border border-transparent hover:border-primary/10'
                 >
@@ -265,7 +453,7 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
                   </div>
                   <span className="font-bold text-sm">Profile Details</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem
+                <DropdownMenuItem 
                   onClick={() => setIsAccountModalOpen(true)}
                   className='rounded-xl flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-all group border border-transparent hover:border-primary/10 mt-1'
                 >
@@ -274,7 +462,7 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
                   </div>
                   <span className="font-bold text-sm">Account Settings</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem
+                <DropdownMenuItem 
                   onClick={() => setIsSecuritySettingsModalOpen(true)}
                   className='rounded-xl flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-all group border border-transparent hover:border-primary/10 mt-1'
                 >
@@ -286,7 +474,7 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
               </DropdownMenuGroup>
               <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
               <div className="p-1">
-                <DropdownMenuItem
+                <DropdownMenuItem 
                   onClick={() => signOut()}
                   className='rounded-xl flex items-center gap-3 p-3 cursor-pointer text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all font-black text-sm uppercase tracking-widest'
                 >

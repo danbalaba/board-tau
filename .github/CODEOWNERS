@@ -3,4 +3,5 @@
 /prisma/ @danbalaba
 /lib/    @danbalaba
 /utils/  @danbalaba
-/config/ @danbalaba
+/config/           @danbalaba
+/.github/workflows/ @danbalaba

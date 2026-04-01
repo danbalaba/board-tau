@@ -1,0 +1,43 @@
+name: ✨ Feature Request
+description: Suggest an idea or enhancement for BoardTAU.
+title: "[FEAT]: "
+labels: ["enhancement", "proposal"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Share your big idea! 🚀
+        We’re always looking for ways to make BoardTAU better for everyone.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem?
+      description: A clear and concise description of what the problem is.
+      placeholder: e.g. I'm always frustrated when...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+      description: A clear and concise description of what you want to happen.
+      placeholder: I'd like to see a feature that...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe alternatives you've considered
+      description: A clear and concise description of any alternative solutions or features you've considered.
+      placeholder: I could also do this by...
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Any examples or mockups?
+      description: If you have a visual idea, please share it here!
