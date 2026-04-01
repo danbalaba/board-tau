@@ -11,7 +11,7 @@ import {
   IconMapPin, 
   IconDots, 
 } from '@tabler/icons-react';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import {
   DropdownMenu,
@@ -45,7 +45,7 @@ export function LandlordPropertyCard({
   const isGrid = viewMode === 'grid';
 
   // Legacy pattern: Staggered entry animations for newly mounted items
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0, y: 15 },
     visible: { 
       opacity: 1, 
