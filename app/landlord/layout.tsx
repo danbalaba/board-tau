@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { requireLandlord } from '@/lib/landlord';
-import LandlordLayoutClient from './components/layout/LandlordLayoutClient';
+import LandlordLayoutClient from './features/layout';
 import { Inter } from 'next/font/google';
 import '@/app/globals.css';
 import 'react-loading-skeleton/dist/skeleton.css';

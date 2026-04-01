@@ -1,5 +1,5 @@
 import { getLandlordBookings } from '@/services/landlord/bookings';
-import LandlordBookingsClient from '../components/pages/bookings/LandlordBookingsClient';
+import LandlordBookings from '../features/bookings';
 import { requireLandlord } from '@/lib/landlord';
 
 export const metadata = {
@@ -11,5 +11,5 @@ export default async function LandlordBookingsPage() {
   await requireLandlord();
   const bookings = await getLandlordBookings();
 
-  return <LandlordBookingsClient bookings={bookings} />;
+  return <LandlordBookings bookings={bookings as any} />;
 }
