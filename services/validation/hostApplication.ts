@@ -10,17 +10,18 @@ export interface ValidationResult {
   errors: ValidationError[];
 }
 
+import validator from 'validator';
+
 /**
  * Basic sanitization to prevent XSS and SQL injection patterns in frontend strings
  */
 export const sanitizeString = (str: string): string => {
   if (!str) return '';
   
-  return str
-    .trim()
-    .replace(/[<>]/g, '')             // Basic XSS: remove < and >
-    .replace(/javascript:/gi, '')      // Basic XSS: remove javascript: pseudo-protocol
-    .replace(/onclick|onerror|onload/gi, '') // Basic XSS: remove event handlers
+  // Neutralize XSS completely via HTML entity encoding rather than fragile regex stripping
+  const encoded = validator.escape(str.trim());
+  
+  return encoded
     .replace(/SELECT\s+.*FROM|DROP\s+TABLE|DELETE\s+FROM|UNION\s+SELECT/gi, '') // Basic SQL Injection: remove common keywords
     .slice(0, 2000);                  // Prevent massive inputs
 };

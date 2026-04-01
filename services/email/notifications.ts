@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import validator from 'validator';
 
 // Email configuration using Nodemailer
 const transporter = nodemailer.createTransport({
@@ -36,19 +37,21 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
   }
 };
 
+const safe = (val: any) => validator.escape(String(val || ''));
+
 // Application submission confirmation email
 export const sendApplicationConfirmationEmail = async (user: any, application: any) => {
   const emailTemplate = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <h2 style="color: #2F7D6D;">Application Submitted Successfully!</h2>
-      <p>Dear ${user.name},</p>
+      <p>Dear ${safe(user.name)},</p>
       <p>Thank you for applying to become a landlord on BoardTAU. Your application has been received and is currently under review by our admin team.</p>
 
       <h3>Application Details:</h3>
       <ul>
-        <li><strong>Application ID:</strong> ${application.id}</li>
-        <li><strong>Business Name:</strong> ${application.businessInfo.businessName}</li>
-        <li><strong>Property Name:</strong> ${application.propertyInfo.propertyName}</li>
+        <li><strong>Application ID:</strong> ${safe(application.id)}</li>
+        <li><strong>Business Name:</strong> ${safe(application.businessInfo.businessName)}</li>
+        <li><strong>Property Name:</strong> ${safe(application.propertyInfo.propertyName)}</li>
         <li><strong>Status:</strong> Pending Review</li>
       </ul>
 
@@ -69,12 +72,11 @@ export const sendApplicationConfirmationEmail = async (user: any, application: a
 // Application approval email
 export const sendApplicationApprovalEmail = async (user: any, application: any) => {
   const dashboardLink = `${process.env.NEXTAUTH_URL}/landlord`;
-  const loginLink = `${process.env.NEXTAUTH_URL}/auth/login`;
 
   const emailTemplate = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <h2 style="color: #2F7D6D;">Congratulations! Your Application is Approved!</h2>
-      <p>Dear ${user.name},</p>
+      <p>Dear ${safe(user.name)},</p>
       <p>We are pleased to inform you that your landlord application has been approved!</p>
 
       <h3>Welcome to the BoardTAU Landlord Community!</h3>
@@ -83,7 +85,7 @@ export const sendApplicationApprovalEmail = async (user: any, application: any) 
 
       <h3>Getting Started:</h3>
       <ol>
-        <li>Click the link below to access your dashboard: <a href="${dashboardLink}" style="color: #2F7D6D;">${dashboardLink}</a></li>
+        <li>Click the link below to access your dashboard: <a href="${safe(dashboardLink)}" style="color: #2F7D6D;">${safe(dashboardLink)}</a></li>
         <li>Use your existing login credentials to sign in</li>
         <li>Complete your profile and start listing properties</li>
         <li>Review our landlord guide for best practices</li>
@@ -108,11 +110,11 @@ export const sendApplicationRejectionEmail = async (user: any, application: any,
   const emailTemplate = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <h2 style="color: #dc2626;">Application Review Update</h2>
-      <p>Dear ${user.name},</p>
+      <p>Dear ${safe(user.name)},</p>
       <p>We regret to inform you that your landlord application has been rejected.</p>
 
       <h3>Reason for Rejection:</h3>
-      <p>${reason}</p>
+      <p>${safe(reason)}</p>
 
       <h3>Next Steps:</h3>
       <p>If you believe this decision was made in error, or if you would like to reapply with additional information, please contact our support team.</p>
@@ -138,21 +140,21 @@ export const sendAdminApplicationNotification = async (admin: any, application: 
   const emailTemplate = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <h2 style="color: #2F7D6D;">New Landlord Application Received</h2>
-      <p>Dear ${admin.name},</p>
+      <p>Dear ${safe(admin.name)},</p>
       <p>A new landlord application has been submitted and is waiting for your review.</p>
 
       <h3>Application Details:</h3>
       <ul>
-        <li><strong>Application ID:</strong> ${application.id}</li>
-        <li><strong>Applicant Name:</strong> ${application.contactInfo.fullName}</li>
-        <li><strong>Business Name:</strong> ${application.businessInfo.businessName}</li>
-        <li><strong>Property Name:</strong> ${application.propertyInfo.propertyName}</li>
-        <li><strong>Email:</strong> ${application.contactInfo.email}</li>
-        <li><strong>Phone:</strong> ${application.contactInfo.phoneNumber}</li>
+        <li><strong>Application ID:</strong> ${safe(application.id)}</li>
+        <li><strong>Applicant Name:</strong> ${safe(application.contactInfo.fullName)}</li>
+        <li><strong>Business Name:</strong> ${safe(application.businessInfo.businessName)}</li>
+        <li><strong>Property Name:</strong> ${safe(application.propertyInfo.propertyName)}</li>
+        <li><strong>Email:</strong> ${safe(application.contactInfo.email)}</li>
+        <li><strong>Phone:</strong> ${safe(application.contactInfo.phoneNumber)}</li>
       </ul>
 
       <p>Click the link below to review the application:</p>
-      <p><a href="${adminDashboardLink}" style="color: #2F7D6D;">${adminDashboardLink}</a></p>
+      <p><a href="${safe(adminDashboardLink)}" style="color: #2F7D6D;">${safe(adminDashboardLink)}</a></p>
 
       <p>Best regards,</p>
       <p>The BoardTAU System</p>
