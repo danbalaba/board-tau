@@ -35,11 +35,7 @@ const queryClient = new QueryClient({
   },
 });
 
-interface ProvidersProps extends PropsWithChildren {
-  session?: any;
-}
-
-const Providers = ({ children, session }: ProvidersProps) => {
+const Providers = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     // Ensure light mode doesn't have any theme class
     const root = document.documentElement;
@@ -59,7 +55,7 @@ const Providers = ({ children, session }: ProvidersProps) => {
         themes={['light', 'dark']}
       >
         <QueryClientProvider client={queryClient}>
-          <SessionProvider session={session}>
+          <SessionProvider>
             <EdgeStoreProvider>
               <ResponsiveToastProvider>
                 {children}

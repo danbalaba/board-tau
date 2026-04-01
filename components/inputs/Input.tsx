@@ -24,6 +24,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   validationRules?: any;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  inputSize?: "default" | "small";
 }
 
 const Input: React.FC<InputProps> = ({
@@ -41,6 +42,7 @@ const Input: React.FC<InputProps> = ({
   validationRules,
   value: externalValue,
   onChange: externalOnChange,
+  inputSize = "default",
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -53,12 +55,12 @@ const Input: React.FC<InputProps> = ({
   // Get error for nested path
   const getError = (path: string) => {
     if (!errors) return undefined;
-    // Replace array format rooms[0] with rooms.0 for consistent path navigation
     const normalizedPath = path.replace(/\[(\d+)\]/g, '.$1');
     return normalizedPath.split('.').reduce((obj: any, key: string) => obj && obj[key], errors);
   };
 
   const error = getError(id);
+  const isSmall = inputSize === "small";
 
   // Floating Label Design
   if (!useStaticLabel) {
@@ -68,7 +70,7 @@ const Input: React.FC<InputProps> = ({
           {Icon && (
             <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 z-10 flex items-center justify-center">
               <Icon
-                size={18}
+                size={isSmall ? 14 : 18}
                 className={cn(
                   error ? "text-red-500" : "text-gray-400 group-focus-within:text-primary"
                 )}
@@ -81,7 +83,7 @@ const Input: React.FC<InputProps> = ({
             type={isPasswordInput ? (showPassword ? "text" : "password") : type}
             disabled={disabled}
             value={value || ''}
-            placeholder=" " // Required for peer-placeholder-shown
+            placeholder=" "
             onChange={(e) => {
               if (externalOnChange) {
                 externalOnChange(e);
@@ -94,11 +96,12 @@ const Input: React.FC<InputProps> = ({
               })
             })}
             className={cn(
-              "peer w-full px-4 py-4 text-sm font-medium bg-white dark:bg-gray-800 border-2 rounded-2xl outline-none transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed",
+              "peer w-full text-sm font-medium bg-white dark:bg-gray-800 border-2 rounded-2xl outline-none transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed",
+              isSmall ? "px-3 py-2.5 rounded-xl" : "px-4 py-4",
               error
                 ? "border-red-500/50 focus:border-red-500 ring-red-500/10"
                 : "border-gray-100 dark:border-gray-700/50 focus:border-primary dark:focus:border-primary/60 shadow-sm",
-              Icon ? "pl-11" : "pl-4",
+              Icon ? (isSmall ? "pl-9" : "pl-11") : "pl-4",
               isPasswordInput ? "pr-11" : "pr-4",
               "focus:ring-4 focus:ring-primary/5"
             )}
@@ -109,12 +112,14 @@ const Input: React.FC<InputProps> = ({
           <label
             htmlFor={id}
             className={cn(
-              "absolute text-sm font-bold duration-300 transform scale-75 z-10 origin-[0] px-2 rounded-md transition-all cursor-text",
-              "bg-white dark:bg-gray-800 -top-2.5", // Floating position (default)
-              Icon ? "left-9" : "left-2.5",
-              "peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-4  peer-placeholder-shown:bg-transparent", // Inside position
-              "peer-focus:scale-75 peer-focus:-translate-y-0.5 peer-focus:text-primary peer-focus:bg-white dark:peer-focus:bg-gray-800", // Float back up
-              value && "scale-75 -translate-y-0.5 bg-white dark:bg-gray-800", // Keep float if has value
+              "absolute font-bold duration-300 transform scale-75 z-10 origin-[0] px-2 rounded-md transition-all cursor-text",
+              isSmall ? "text-xs -top-2" : "text-sm -top-2.5",
+              "bg-white dark:bg-gray-800",
+              Icon ? (isSmall ? "left-7" : "left-9") : "left-2.5",
+              "peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-4 peer-placeholder-shown:bg-transparent",
+              isSmall && "peer-placeholder-shown:translate-y-2",
+              "peer-focus:scale-75 peer-focus:-translate-y-0.5 peer-focus:text-primary peer-focus:bg-white dark:peer-focus:bg-gray-800",
+              value && "scale-75 -translate-y-0.5 bg-white dark:bg-gray-800",
               error ? "text-red-500" : "text-gray-400"
             )}
           >
@@ -155,7 +160,8 @@ const Input: React.FC<InputProps> = ({
       <label
         htmlFor={id}
         className={cn(
-          "block text-xs font-black uppercase tracking-widest mb-2 ml-1 transition-all duration-200",
+          "block font-black uppercase tracking-widest mb-2 ml-1 transition-all duration-200",
+          isSmall ? "text-[9px]" : "text-xs",
           error ? "text-red-500" : "text-gray-500 dark:text-gray-400 group-focus-within:text-primary"
         )}
       >
@@ -164,9 +170,9 @@ const Input: React.FC<InputProps> = ({
 
       <div className="relative">
         {Icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 z-10 flex items-center justify-center">
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 z-10 flex items-center justify-center">
             <Icon
-              size={18}
+              size={isSmall ? 14 : 18}
               className={cn(
                 error ? "text-red-500" : "text-gray-400 group-focus-within:text-primary"
               )}
@@ -193,11 +199,12 @@ const Input: React.FC<InputProps> = ({
             })
           })}
           className={cn(
-            "peer w-full px-4 py-3.5 text-sm font-medium bg-white dark:bg-gray-800 border-2 rounded-2xl outline-none transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed",
+            "peer w-full text-sm font-medium bg-white dark:bg-gray-800 border-2 rounded-2xl outline-none transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed",
+            isSmall ? "px-3 py-2.5 rounded-xl" : "px-4 py-3.5",
             error
               ? "border-red-500/50 focus:border-red-500 ring-red-500/10"
               : "border-gray-100 dark:border-gray-700/50 focus:border-primary dark:focus:border-primary/60 shadow-sm",
-            Icon ? "pl-11" : "pl-4",
+            Icon ? (isSmall ? "pl-9" : "pl-11") : "pl-4",
             isPasswordInput ? "pr-11" : "pr-4",
             "focus:ring-4 focus:ring-primary/5"
           )}
