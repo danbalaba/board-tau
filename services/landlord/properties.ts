@@ -16,8 +16,8 @@ export type LandlordPropertyResult = {
   bathroomCount: number;
   imageSrc: string;
   createdAt: Date;
-  region?: string | null;
-  country?: string | null;
+  region?: string;
+  country?: string;
   amenities?: {
     wifi: boolean;
     parking: boolean;
