@@ -1,15 +1,18 @@
 import { Metadata } from 'next';
 import { RolesManagement } from '@/app/admin/features/user-management/components/roles-management';
+import PageContainer from '@/app/admin/components/layout/page-container';
 
 export const metadata: Metadata = {
-  title: 'Roles & Permissions - BoardTAU Admin',
-  description: 'Manage user roles and permissions',
+  title: 'Governance & Roles - BoardTAU Admin',
+  description: 'Institutional role management and privilege delegation',
 };
 
 export default function RolesPage() {
   return (
-    <div className="flex-1 flex flex-col space-y-6">
-      <RolesManagement />
-    </div>
+    <PageContainer scrollable>
+      <div className="space-y-6">
+        <RolesManagement />
+      </div>
+    </PageContainer>
   );
 }

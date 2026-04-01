@@ -46,17 +46,58 @@ async function main() {
 
   // 2. CREATE SYSTEM USERS
   const hashedPassword = await bcrypt.hash("Password@123", 10);
+  
+  const regions = ["Tarlac City", "Victoria", "Concepcion", "Camiling", "Capas", "Paniqui"];
+
+  // Create Admin
   await prisma.user.create({
-    data: { ...admin, password: hashedPassword, role: "ADMIN", emailVerified: new Date() }
-  });
-  const landlordDoc = await prisma.user.create({
-    data: { ...landlord, password: hashedPassword, role: "LANDLORD", isVerifiedLandlord: true, emailVerified: new Date() }
+    data: { 
+      ...admin, 
+      password: hashedPassword, 
+      role: "ADMIN", 
+      emailVerified: new Date(),
+      city: "Tarlac City",
+      region: "Tarlac",
+      lastLogin: new Date()
+    }
   });
 
+  // Create Landlord
+  const landlordDoc = await prisma.user.create({
+    data: { 
+      ...landlord, 
+      password: hashedPassword, 
+      role: "LANDLORD", 
+      isVerifiedLandlord: true, 
+      emailVerified: new Date(),
+      city: "Victoria",
+      region: "Tarlac",
+      lastLogin: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) 
+    }
+  });
+
+  // Create Students with randomized timelines and locations
   const students = [];
-  for (const name of studentNames) {
+  for (let i = 0; i < studentNames.length; i++) {
+    const name = studentNames[i];
+    const city = regions[i % regions.length];
+    
+    // Spread creation dates over past 90 days for Growth Chart
+    const createdAt = new Date();
+    createdAt.setDate(createdAt.getDate() - (i * 12)); 
+
     const user = await prisma.user.create({
-        data: { name, email: `${name.toLowerCase().replace(" ", ".")}@student.edu.ph`, password: hashedPassword, role: "USER", emailVerified: new Date() }
+        data: { 
+          name, 
+          email: `${name.toLowerCase().replace(" ", ".")}@student.edu.ph`, 
+          password: hashedPassword, 
+          role: "USER", 
+          emailVerified: new Date(),
+          city,
+          region: "Tarlac",
+          lastLogin: i % 2 === 0 ? new Date() : null, // Simulate active/inactive users
+          createdAt
+        }
     });
     students.push(user);
   }

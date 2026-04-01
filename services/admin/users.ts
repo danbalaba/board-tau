@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { Role } from "@prisma/client";
 import { requireAdmin, logAdminAction } from "@/lib/admin";
 
 const ADMIN_PAGE_SIZE = 20;
@@ -17,11 +18,11 @@ export async function getAdminUsers(args: {
 }) {
   await requireAdmin();
 
-  const where: { deletedAt: null; role?: string; OR?: { name?: { contains: string; mode: "insensitive" }; email?: { contains: string; mode: "insensitive" } }[] } = {
+  const where: { deletedAt: null; role?: Role; OR?: { name?: { contains: string; mode: "insensitive" }; email?: { contains: string; mode: "insensitive" } }[] } = {
     deletedAt: null,
   };
 
-  if (args.role) where.role = args.role;
+  if (args.role) where.role = args.role as Role;
   if (args.search?.trim()) {
     const q = args.search.trim();
     where.OR = [
@@ -73,7 +74,7 @@ export async function adminUpdateUserStatus(
     select: { id: true, role: true },
   });
   if (!user) throw new Error("User not found");
-  if (user.role === "admin") throw new Error("Cannot deactivate another admin");
+  if (user.role === "ADMIN") throw new Error("Cannot deactivate another admin");
 
   await db.user.update({
     where: { id: userId },
@@ -105,7 +106,7 @@ export async function adminSoftDeleteUser(userId: string, adminId: string) {
     select: { id: true, role: true },
   });
   if (!user) throw new Error("User not found");
-  if (user.role === "admin") throw new Error("Cannot delete another admin");
+  if (user.role === "ADMIN") throw new Error("Cannot delete another admin");
 
   await db.user.update({
     where: { id: userId },
