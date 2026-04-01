@@ -39,6 +39,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: rm -rf node_modules && npm ci --legacy-peer-deps --ignore-scripts
+      - run: npx prisma generate
       - run: npm run lint
       - run: npm run type-check
 
@@ -101,6 +102,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: rm -rf node_modules && npm ci --legacy-peer-deps --ignore-scripts
+      - run: npx prisma generate
       - run: npm run build
       - uses: actions/upload-artifact@v7
         with:
@@ -135,6 +137,7 @@ jobs:
           node-version: 20.19.0
           cache: 'npm'
       - run: rm -rf node_modules && npm ci --legacy-peer-deps --ignore-scripts
+      - run: npx prisma generate
       - run: npm run build
 
   deploy:
@@ -147,7 +150,8 @@ jobs:
         with:
           node-version: 20.19.0
           cache: 'npm'
-      - run: npm ci --legacy-peer-deps
+      - run: npm ci --legacy-peer-deps --ignore-scripts
+      - run: npx prisma generate
       - uses: actions/download-artifact@v7
         with:
           name: build-artifact
