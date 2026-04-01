@@ -41,11 +41,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -55,7 +60,7 @@ export default function RootLayout({
         className={`${fontVariables} font-sans antialiased`}
         suppressHydrationWarning
       >
-        <Providers>
+        <Providers session={session}>
           <LoadingProvider>
             <Suspense fallback={null}>
               <AuthErrorHandler />
