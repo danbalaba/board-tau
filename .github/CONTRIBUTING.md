@@ -21,10 +21,10 @@ Welcome to BoardTAU! We appreciate your interest in contributing to our project.
 
 2. **Install dependencies**
    ```bash
-   npm install --legacy-peer-deps
+   npm install
    ```
    > [!NOTE]
-   > The `--legacy-peer-deps` flag is required because the project uses **React 19**, which has peer dependency conflicts with some older utility libraries (like `kbar`). This flag safely bypasses those version checks.
+   > Peer dependency conflicts (like React 19 vs. kbar) are handled automatically via our `.npmrc` configuration.
 
 3. **Set up environment variables**
    Create a `.env` file in the root directory with the required variables. See `.env.example` for a template.
@@ -290,7 +290,7 @@ const ITEMS_PER_PAGE = 10;
 
 ### Common Issues
 
-1. **Dependency issues**: Run `npm install --legacy-peer-deps` again to clear peer conflicts.
+1. **Dependency issues**: Run `npm install` again. The project's `.npmrc` handles peer conflicts automatically.
 2. **Database connection errors**: Check your `.env` file
 3. **Type errors**: Run `npm run type-check`
 4. **Test failures**: Run `npm run test:watch` to debug

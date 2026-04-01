@@ -17,17 +17,17 @@ Since the `package-lock.json` and versions have changed significantly, we recomm
 **Windows (PowerShell):**
 ```powershell
 rm -r -Force node_modules, package-lock.json
-npm install --legacy-peer-deps
+npm install
 ```
 
 **macOS/Linux:**
 ```bash
 rm -rf node_modules package-lock.json
-npm install --legacy-peer-deps
+npm install
 ```
 
 > [!IMPORTANT]  
-> **NEVER** run just `npm install`. You must **ALWAYS** use the `--legacy-peer-deps` flag for now. This is because our project uses **React 19**, which has version conflicts with some older utility libraries (like `kbar`).
+> The project uses an `.npmrc` file to automatically handle peer dependency conflicts (like React 19 vs. kbar). You **no longer need to manually add the legacy flag**. Just run `npm install` and it will work!
 
 ---
 
