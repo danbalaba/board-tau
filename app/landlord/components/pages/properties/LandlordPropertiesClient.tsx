@@ -111,7 +111,7 @@ interface Property {
       label: string;
     };
   }[];
-  rooms: {
+  rooms?: {
     id: string;
     name: string;
     price: number;
@@ -121,16 +121,16 @@ interface Property {
     bedType: string;
     size: number | null;
     reservationFee: number;
-    amenities: {
+    amenities?: {
       amenityType: {
         name: string;
       };
     }[];
-    images: {
+    images?: {
       url: string;
     }[];
   }[];
-  images: {
+  images?: {
     url: string;
   }[];
   user?: {
@@ -287,14 +287,14 @@ const PropertyDetailsModal = ({
           className="p-8 md:p-10 z-10"
         >
           {/* Image Gallery Preview (if multiple) */}
-          {property.images.length > 1 && (
+          {(property.images?.length ?? 0) > 1 && (
             <div className="mb-10">
               <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary mb-4 flex items-center gap-2">
                  <IconLayoutGrid size={14} />
                  Property Gallery
               </h4>
               <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar scroll-smooth">
-                {property.images.map((img, i) => (
+                {property.images?.map((img, i) => (
                   <div key={i} className="relative w-40 h-28 flex-shrink-0 rounded-2xl overflow-hidden border-2 border-white dark:border-gray-800 shadow-lg">
                     <img src={img.url} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" alt="" />
                   </div>
@@ -341,15 +341,15 @@ const PropertyDetailsModal = ({
                     Room Inventory
                   </h4>
                   <span className="text-[10px] font-black bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full text-gray-500 uppercase tracking-widest">
-                    {property.rooms.length} Units
+                    {property.rooms?.length || 0} Units
                   </span>
                 </div>
                 <div className="grid grid-cols-1 gap-4">
-                  {property.rooms.map((room) => (
+                  {property.rooms?.map((room) => (
                     <div key={room.id} className="group flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 hover:border-primary/30 transition-all shadow-sm hover:shadow-md">
                       <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 relative">
                         {room.images?.[0]?.url ? (
-                          <img src={room.images[0].url} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt={room.name} />
+                          <img src={room.images?.[0].url} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt={room.name} />
                         ) : (
                           <div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-300"><IconBed size={24} /></div>
                         )}
@@ -392,9 +392,9 @@ const PropertyDetailsModal = ({
                         )}
 
                         {/* Room Amenities */}
-                        {room.amenities.length > 0 && (
+                        {(room.amenities?.length ?? 0) > 0 && (
                           <div className="flex flex-wrap gap-1.5 mt-1">
-                            {room.amenities.map((a, i) => (
+                            {room.amenities?.map((a, i) => (
                               <span key={i} className="text-[8px] font-bold uppercase tracking-tighter text-gray-400 bg-gray-50 dark:bg-gray-800 px-1.5 py-0.5 rounded border border-gray-100 dark:border-gray-700">
                                 {a.amenityType.name}
                               </span>
