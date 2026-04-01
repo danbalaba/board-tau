@@ -14,7 +14,7 @@ export const getSafeImageSrc = (image: string): string => {
   const isRelative = image.startsWith('/');
 
   if (isSafeProtocol || isRelative) {
-    const safeUrl = image.split('').filter(c => /^[a-zA-Z0-9:/-_\. \?\#\&\%]$/.test(c)).join('');
+    const safeUrl = image.split('').filter(c => /^[-a-zA-Z0-9:/_. ?#&%]$/.test(c)).join('');
     if (safeUrl === image) {
       return safeUrl;
     }

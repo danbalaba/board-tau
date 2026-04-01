@@ -95,7 +95,7 @@ export function LandlordPropertyDetailsModal({
                 </div>
                 
                 <motion.div style={{ opacity: headerContentOpacity }} className="absolute bottom-6 left-8 right-8 pointer-events-none">
-                  <div className={cn("inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 border backdrop-blur-md", statusColors[property.status]?.replace('bg-', 'bg-').replace('/10', '/80') || "bg-gray-500/80 text-white border-white/20")}>
+                  <div className={cn("inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 border backdrop-blur-md", statusColors[property.status]?.replace('/10', '/80') || "bg-gray-500/80 text-white border-white/20")}>
                     {formatStatus(property.status)}
                   </div>
                 </motion.div>
