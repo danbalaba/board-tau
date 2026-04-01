@@ -1,8 +1,8 @@
 import { getLandlordInquiries } from '@/services/landlord/inquiries';
-import LandlordInquiriesClient from '../components/pages/inquiries/LandlordInquiriesClient';
+import LandlordInquiryCenter from '../features/inquiry-center';
 
 export default async function LandlordInquiriesPage() {
   const inquiries = await getLandlordInquiries();
 
-  return <LandlordInquiriesClient inquiries={inquiries} />;
+  return <LandlordInquiryCenter inquiries={inquiries} />;
 }

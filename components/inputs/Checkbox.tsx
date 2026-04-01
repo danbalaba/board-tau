@@ -15,6 +15,7 @@ interface CheckboxProps {
   watch: UseFormWatch<any>;
   value?: string; // Optional specific value for array-based checkboxes
   required?: boolean;
+  className?: string;
 }
 
 const Checkbox: React.FC<CheckboxProps> = ({
@@ -24,6 +25,7 @@ const Checkbox: React.FC<CheckboxProps> = ({
   watch,
   value: choiceValue,
   required = false,
+  className,
 }) => {
   // Check if it's checked by watching either the boolean id or if choiceValue exists in the array
   const watchedValue = watch(id);
@@ -77,7 +79,8 @@ const Checkbox: React.FC<CheckboxProps> = ({
       <span
         className={cn(
           "text-[14px] font-medium transition-colors duration-200",
-          isChecked ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300"
+          isChecked ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300",
+          className
         )}
       >
         {label}

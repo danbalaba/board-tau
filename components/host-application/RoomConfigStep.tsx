@@ -5,11 +5,17 @@ import Checkbox from '../inputs/Checkbox';
 import Button from '../common/Button';
 import { Controller } from 'react-hook-form';
 import ReactSelect from 'react-select';
-import { Plus, Minus, Bed, Bath, Users, CheckCircle, PlusCircle, Loader2, ShowerHead, Building2 } from 'lucide-react';
+import { Plus, Minus, Bed, Bath, Users, CheckCircle, PlusCircle, Loader2, ShowerHead, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ROOM_TYPES, ROOM_TYPE_LABELS } from '@/data/roomTypes';
-import { ROOM_AMENITIES, ROOM_AMENITY_LABELS, BATHROOM_ARRANGEMENTS, BATHROOM_ARRANGEMENT_LABELS, roomAmenities } from '@/data/roomAmenities';
+import { 
+  BATHROOM_ARRANGEMENTS, 
+  BATHROOM_ARRANGEMENT_LABELS, 
+  roomAmenities, 
+  bedTypeOptions as CENTRAL_BED_TYPES 
+} from '@/data/roomAmenities';
 import Modal from '../modals/Modal';
+import { cn } from '@/utils/helper';
 
 interface RoomType {
   roomType: string;
@@ -43,7 +49,7 @@ const defaultRoom = (): RoomType => ({
   bedType: 'Single',
   capacity: '1',
   size: '',
-  availableSlots: '',
+  availableSlots: '1',
   reservationFee: '500',
   description: '',
   amenities: [],
@@ -52,16 +58,12 @@ const defaultRoom = (): RoomType => ({
 // react-select shared classNames
 const selectClassNames = {
   control: (state: any) =>
-    `!bg-white dark:!bg-gray-800 !border ${state.isFocused ? '!border-primary !ring-1 !ring-primary' : '!border-gray-200 dark:!border-gray-700'} !rounded-xl !p-[5px] !shadow-sm transition-all text-[15px]`,
-  singleValue: () => `!text-text-primary dark:!text-gray-100`,
-  menu: () => `!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-700 !shadow-xl !rounded-xl !mt-1 z-50 overflow-hidden`,
-  menuList: () => `!p-0`,
+    `!bg-white dark:!bg-gray-800 !border ${state.isFocused ? '!border-primary !ring-1 !ring-primary shadow-lg shadow-primary/10' : '!border-gray-200 dark:!border-gray-700'} !rounded-2xl !p-[5px] !shadow-sm transition-all text-[15px]`,
+  singleValue: () => `!text-text-primary dark:!text-gray-100 font-bold`,
+  menu: () => `!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-700 !shadow-2xl !rounded-2xl !mt-2 z-[60] overflow-hidden`,
+  menuList: () => `!p-0 !bg-white dark:!bg-gray-800`,
   option: (state: any) =>
-    `!cursor-pointer ${state.isSelected ? '!bg-primary/10 !text-primary font-medium' : state.isFocused ? '!bg-gray-100 dark:!bg-gray-700 !text-text-primary dark:!text-gray-100' : '!bg-transparent dark:!bg-transparent !text-text-primary dark:!text-gray-100'} !px-3 !py-2 !text-sm transition-colors`,
-  indicatorSeparator: () => `!bg-gray-200 dark:!bg-gray-700`,
-  dropdownIndicator: () => `!text-gray-400 dark:!text-gray-500 hover:!text-primary`,
-  placeholder: () => `!text-gray-400 dark:!text-gray-500 p-1`,
-  input: () => `dark:!text-gray-100`,
+    `!cursor-pointer ${state.isSelected ? '!bg-primary/10 !text-primary font-black' : state.isFocused ? '!bg-gray-100 dark:!bg-gray-700 !text-text-primary dark:!text-gray-100' : '!bg-transparent dark:!bg-transparent !text-text-primary dark:!text-gray-100'} !px-4 !py-3 !text-xs uppercase tracking-widest transition-colors`,
 };
 
 const roomTypeOptions = [
@@ -72,21 +74,21 @@ const roomTypeOptions = [
 const bathroomOptions = [
   {
     value: BATHROOM_ARRANGEMENTS.PRIVATE,
-    icon: <ShowerHead className="w-4 h-4 text-blue-500" />,
+    icon: <ShowerHead className="w-5 h-5 text-blue-500" />,
     label: 'Own private CR',
     description: 'Room has its own dedicated bathroom',
   },
   {
     value: BATHROOM_ARRANGEMENTS.SHARED_OCCUPANTS,
-    icon: <Bath className="w-4 h-4 text-indigo-500" />,
-    label: 'Shared CR (among occupants)',
-    description: 'Bathroom inside room, shared by all beds in this room',
+    icon: <Bath className="w-5 h-5 text-indigo-500" />,
+    label: 'Shared CR (Occupants)',
+    description: 'Bathroom shared by beds in this unit',
   },
   {
     value: BATHROOM_ARRANGEMENTS.COMMON,
-    icon: <Bath className="w-4 h-4 text-gray-400" />,
-    label: 'No CR — uses common bathroom',
-    description: "Uses the building's shared common bathrooms",
+    icon: <Bath className="w-5 h-5 text-gray-400" />,
+    label: 'Common Bathroom',
+    description: "Uses the building's main shared CR",
   },
 ];
 
@@ -103,43 +105,30 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
 }) => {
   const [showCustomAmenityModal, setShowCustomAmenityModal] = useState(false);
   
-  // Watch for changes in bedType, capacity, or roomType to sync availableSlots/totalCapacity
+  // Watch for changes and sync slots
   useEffect(() => {
     const subscription = watch((value: any, { name }: { name?: string }) => {
-      // Focus on room-level changes
       if (name?.startsWith('propertyConfig.rooms')) {
         const indexMatch = name.match(/rooms\[(\d+)\]/);
         if (indexMatch) {
           const index = parseInt(indexMatch[1], 10);
           const room = value.propertyConfig?.rooms?.[index];
-          
           if (!room) return;
 
           const bedType = room.bedType;
           const bedCountNum = parseInt(room.capacity || '1', 10);
-          const currentSlots = room.availableSlots;
-          
-          // Multiplier Logic:
-          // Single = 1
-          // Double / Queen / Bunk = 2
-          const multiplier = (bedType === 'Double' || bedType === 'Queen' || bedType === 'Bunk') ? 2 : 1;
-          const calculatedTotalCapacity = isNaN(bedCountNum) ? 0 : bedCountNum * multiplier;
+          const multiplier = (bedType === 'Double' || bedType === 'Bunk Bed') ? 2 : 1;
+          const calculatedTotalSlots = isNaN(bedCountNum) ? 0 : bedCountNum * multiplier;
 
-          // If the Bed Type, Bed Count, or Room Type changed, update the capacity to reflect the reality
-          // We always want the Total Room Capacity to sync with the Count * Multiplier by default
           if (name.endsWith('.capacity') || name.endsWith('.bedType') || name.endsWith('.roomType')) {
-            setValue(`propertyConfig.rooms[${index}].availableSlots`, calculatedTotalCapacity.toString());
-          } else if (name.endsWith('.availableSlots')) {
-            // If user manually updates capacity, ensure it doesn't exceed the logical limit
-            if (parseInt(currentSlots || '0', 10) > calculatedTotalCapacity) {
-              setValue(`propertyConfig.rooms[${index}].availableSlots`, calculatedTotalCapacity.toString());
-            }
+            setValue(`propertyConfig.rooms[${index}].availableSlots`, calculatedTotalSlots.toString());
           }
         }
       }
     });
     return () => subscription.unsubscribe();
   }, [watch, setValue]);
+
   const [customAmenityText, setCustomAmenityText] = useState('');
   const [selectedRoomIndex, setSelectedRoomIndex] = useState<number>(-1);
   const [loadingIndices, setLoadingIndices] = useState<number[]>([]);
@@ -155,7 +144,7 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
     if (customAmenityText.trim() && selectedRoomIndex !== -1) {
       const currentRooms = getValues('propertyConfig.rooms');
       const updatedRooms = [...currentRooms];
-      const customAmenity = customAmenityText.trim().toUpperCase().replace(/\s+/g, '_');
+      const customAmenity = customAmenityText.trim().replace(/\s+/g, '_');
       if (!updatedRooms[selectedRoomIndex].amenities.includes(customAmenity)) {
         updatedRooms[selectedRoomIndex].amenities.push(customAmenity);
         setValue('propertyConfig.rooms', updatedRooms);
@@ -166,16 +155,9 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
 
   const getBedTypeOptions = (roomType: string) => {
     if (roomType === ROOM_TYPES.SOLO) {
-      return [
-        { value: 'Single', label: 'Single Bed' },
-        { value: 'Double', label: 'Double Bed' },
-        { value: 'Queen', label: 'Queen Bed' },
-      ];
+      return CENTRAL_BED_TYPES.filter(o => o.value !== 'Bunk Bed');
     }
-    return [
-      { value: 'Single', label: 'Single Bed' },
-      { value: 'Bunk', label: 'Bunk Bed' },
-    ];
+    return CENTRAL_BED_TYPES.filter(o => o.value === 'Single' || o.value === 'Bunk Bed');
   };
 
   const getApplicableAmenities = (roomType: string) =>
@@ -183,98 +165,138 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
 
   const handleRoomTypeChange = (index: number, newRoomType: string) => {
     setLoadingIndices(prev => [...prev, index]);
-    setValue(`propertyConfig.rooms[${index}].roomType`, newRoomType);
+    setValue(`propertyConfig.rooms[index].roomType`, newRoomType);
     setTimeout(() => {
       setLoadingIndices(prev => prev.filter(i => i !== index));
     }, 400);
   };
 
-  // Bulk assign — set all rooms to the chosen room type
   const handleBulkAssign = () => {
     const currentRooms = getValues('propertyConfig.rooms');
     const updatedRooms = currentRooms.map((room: any) => ({
       ...room,
       roomType: bulkRoomType,
-      bedType: bulkRoomType === ROOM_TYPES.SOLO ? 'Single' : 'Single',
+      bedType: 'Single',
       amenities: [],
     }));
     setValue('propertyConfig.rooms', updatedRooms);
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-8">
+      {/* Step Header */}
       <motion.div
-        className="bg-gradient-to-r from-purple/10 to-purple/5 dark:from-purple/20 dark:to-purple/10 rounded-xl p-6 border border-purple/20 dark:border-purple/30"
-        initial={{ opacity: 0, y: 20 }}
+        className="bg-gradient-to-r from-blue-500/10 to-transparent dark:from-blue-500/20 rounded-2xl p-6 border border-blue-500/20 dark:border-blue-500/30 shadow-sm"
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="flex items-center space-x-3">
-          <Bed className="w-6 h-6 text-purple dark:text-purple" />
+        <div className="flex items-center space-x-4">
+          <div className="p-3 bg-blue-500/10 rounded-xl">
+            <Bed className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          </div>
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">Room Configuration</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Configure each room individually — type, price, bathroom, and amenities
+            <h3 className="font-black text-gray-900 dark:text-white uppercase tracking-wider text-sm">Room Configuration</h3>
+            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-0.5">
+              Specify inventory, pricing, and room-level details
             </p>
           </div>
         </div>
       </motion.div>
 
-      {/* Room List */}
-      <motion.div
-        className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        {/* Toolbar — Row 1: Title + Add Room button */}
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            Rooms
-            <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({fields.length} total)</span>
-          </h4>
-          <Button
-            type="button"
-            outline
-            onClick={() => append(defaultRoom())}
-            className="text-sm flex items-center gap-1"
-          >
-            <Plus className="w-4 h-4" />
-            Add Room
-          </Button>
-        </div>
-
-        {/* Toolbar — Row 2: Bulk Assign Helper */}
-        <div className="flex items-center gap-2 mb-5 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
-          <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap font-medium">Set all to:</span>
-          <div className="w-40 flex-shrink-0">
-            <ReactSelect
-              options={roomTypeOptions}
-              value={roomTypeOptions.find(o => o.value === bulkRoomType) || null}
-              onChange={(val: any) => setBulkRoomType(val?.value || ROOM_TYPES.SOLO)}
-              classNames={selectClassNames}
-              isSearchable={false}
-              instanceId="bulk-room-type"
-            />
+      {/* Header Controls */}
+      <div className="flex flex-col gap-8 py-6 px-4">
+        {/* Row 1: Title & Main Action */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-primary/10 rounded-2xl text-primary shadow-sm">
+              <Users size={22} />
+            </div>
+            <div className="flex flex-col">
+              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white leading-none">Individual Room Inventory</h4>
+              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-2 opacity-60">
+                {fields.length} {fields.length === 1 ? 'Active Unit' : 'Active Units'}
+              </span>
+            </div>
           </div>
-          <Button
-            type="button"
-            outline
-            onClick={handleBulkAssign}
-            className="text-sm whitespace-nowrap"
+          <Button 
+            type="button" 
+            onClick={() => append(defaultRoom())} 
+            className="flex items-center justify-center text-[10px] font-black uppercase py-3.5 px-7 gap-2 shadow-lg shadow-primary/10 bg-emerald-600 hover:bg-emerald-700 border-none text-white transition-all transform hover:scale-[1.02] active:scale-95 w-fit h-fit ml-auto"
           >
-            Apply to All
+            <Plus size={14} /> 
+            Add New Unit
           </Button>
-          <p className="text-xs text-gray-400 dark:text-gray-500 ml-auto hidden sm:block">
-            Tip: Use this to quickly set the same room type for all rooms
-          </p>
         </div>
 
-        {/* Room Cards */}
-        <div className="space-y-4">
-          {fields.map((field: any, index: number) => {
+        <div className="h-[1px] bg-gray-100 dark:bg-gray-800/60 w-full" />
+
+        {/* Row 2: Bulk Operations */}
+        <div className="space-y-6">
+          <div className="flex flex-col xl:flex-row xl:items-center gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-1.5 h-6 bg-primary/20 rounded-full" />
+              <span className="text-[11px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 whitespace-nowrap">Bulk Configure:</span>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-4 flex-1">
+              {/* Controls Group */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                <div className="flex-1 min-w-[200px]">
+                  <ReactSelect
+                    options={roomTypeOptions}
+                    value={roomTypeOptions.find(o => o.value === bulkRoomType)}
+                    onChange={(val: any) => setBulkRoomType(val?.value)}
+                    classNames={selectClassNames}
+                    isSearchable={false}
+                    menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                    styles={{ 
+                      menuPortal: base => ({ ...base, zIndex: 9999 }),
+                      control: (base) => ({ ...base, minHeight: '52px' })
+                    }}
+                    instanceId="bulk-room-type"
+                  />
+                </div>
+                <Button 
+                  type="button" 
+                  outline 
+                  onClick={handleBulkAssign} 
+                  className="text-[10px] font-black uppercase py-4 px-6 whitespace-nowrap border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 h-[52px] rounded-2xl"
+                >
+                  Apply to All
+                </Button>
+                <Button 
+                  type="button" 
+                  outline 
+                  onClick={() => {
+                    // Reset to a single empty room
+                    const emptyRooms = [defaultRoom()];
+                    setValue('propertyConfig.rooms', emptyRooms);
+                  }} 
+                  className="text-[10px] font-black uppercase py-4 px-6 whitespace-nowrap border-rose-100 dark:border-rose-900/30 text-rose-500 bg-rose-50/30 dark:bg-rose-500/5 hover:bg-rose-100 dark:hover:bg-rose-500/10 h-[52px] rounded-2xl"
+                >
+                  Clear Units
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Tip Box */}
+          <div className="bg-sky-50/50 dark:bg-sky-500/5 px-6 py-4 rounded-2xl border border-sky-100/50 dark:border-sky-500/10 flex items-center gap-4 mx-2">
+            <div className="p-2 bg-sky-500/10 rounded-xl text-sky-600">
+              <Info size={18} />
+            </div>
+            <p className="text-[10px] font-bold text-sky-700 dark:text-sky-400 uppercase tracking-widest leading-relaxed">
+              Tip: Use the bulk configuration tools to quickly categorize type, bed layout, and basic amenities across all active units at once.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Room List grid */}
+      <div className="grid grid-cols-1 gap-6">
+        <AnimatePresence mode="popLayout">
+          {fields.map((field, index) => {
             const currentRoomType = watch(`propertyConfig.rooms[${index}].roomType`) || ROOM_TYPES.SOLO;
             const currentBathroom = watch(`propertyConfig.rooms[${index}].bathroomArrangement`) || BATHROOM_ARRANGEMENTS.PRIVATE;
             const isLoading = loadingIndices.includes(index);
@@ -282,363 +304,164 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
             return (
               <motion.div
                 key={field.id}
-                className="bg-gray-50 dark:bg-gray-700/50 p-5 rounded-xl border border-gray-200 dark:border-gray-600"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.05 * index }}
+                layout
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className={cn(
+                  "bg-white dark:bg-gray-800 rounded-3xl border transition-all duration-500 overflow-hidden shadow-sm",
+                  isLoading ? "border-primary/50 opacity-80" : "border-gray-200 dark:border-gray-700 hover:border-primary/30"
+                )}
               >
-                {/* Card Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <h5 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                    <Bed className="w-4 h-4 text-primary" />
-                    Room {index + 1}
-                  </h5>
+                {/* Card Title Bar */}
+                <div className="px-8 py-5 bg-gray-50/50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center font-black text-primary shadow-sm text-sm">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <h5 className="font-black text-gray-900 dark:text-white uppercase tracking-widest text-[11px]">Room Details</h5>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{currentRoomType} Category</p>
+                    </div>
+                  </div>
                   {fields.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={e => { e.stopPropagation(); e.preventDefault(); remove(index); }}
-                      className="text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-1 transition-colors"
-                    >
-                      <Minus className="w-4 h-4" />
-                      Remove
-                    </button>
+                    <button type="button" onClick={() => remove(index)} className="p-2 hover:bg-rose-50 text-rose-500 rounded-lg transition-colors"><Minus className="w-4 h-4" /></button>
                   )}
                 </div>
 
-                {isLoading ? (
-                  <div className="flex items-center justify-center py-8 gap-2">
-                    <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Updating room configuration...</span>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Row 1: Room Type + Price */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Room Type */}
-                      <div>
-                        <label className="block text-[15px] font-medium text-text-primary dark:text-gray-100 mb-2">
-                          Room Type <span className="text-red-500">*</span>
-                        </label>
-                        <Controller
-                          name={`propertyConfig.rooms[${index}].roomType`}
-                          control={control}
-                          rules={{ required: 'Room type is required' }}
-                          render={({ field }) => (
-                            <ReactSelect
-                              {...field}
-                              options={roomTypeOptions}
-                              value={roomTypeOptions.find(o => o.value === field.value) || null}
-                              onChange={(val: any) => {
-                                field.onChange(val?.value);
-                                handleRoomTypeChange(index, val?.value);
-                              }}
-                              classNames={selectClassNames}
-                              isSearchable={false}
-                              placeholder="Select type..."
-                              instanceId={`room-type-${index}`}
-                            />
-                          )}
-                        />
-                        {errors?.propertyConfig?.rooms?.[index]?.roomType && (
-                          <p className="mt-1 text-xs text-red-500 font-medium">
-                            {errors.propertyConfig.rooms[index].roomType.message}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Bed Type */}
-                      <div>
-                        <label className="block text-[15px] font-medium text-text-primary dark:text-gray-100 mb-2">
-                          Bed Type <span className="text-red-500">*</span>
-                        </label>
-                        <Controller
-                          name={`propertyConfig.rooms[${index}].bedType`}
-                          control={control}
-                          rules={{ required: 'Bed type is required' }}
-                          render={({ field }) => {
-                            const opts = getBedTypeOptions(currentRoomType);
-                            return (
+                <div className="p-8">
+                  {isLoading ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                      <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Updating Configuration...</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-10">
+                      {/* Grid Row 1: Core Specs */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                         <div>
+                          <label className="block text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Room Type</label>
+                          <Controller
+                            name={`propertyConfig.rooms[${index}].roomType`}
+                            control={control}
+                            render={({ field }) => (
                               <ReactSelect
                                 {...field}
-                                options={opts}
-                                value={opts.find(o => o.value === field.value) || null}
-                                onChange={(val: any) => field.onChange(val?.value)}
+                                options={roomTypeOptions}
+                                value={roomTypeOptions.find(o => o.value === field.value)}
+                                onChange={(val: any) => {
+                                  field.onChange(val?.value);
+                                  handleRoomTypeChange(index, val?.value);
+                                }}
                                 classNames={selectClassNames}
                                 isSearchable={false}
-                                placeholder="Select bed type..."
-                                instanceId={`bed-type-${index}`}
-                               />
-                             );
-                           }}
-                         />
-                         {errors?.propertyConfig?.rooms?.[index]?.bedType && (
-                           <p className="mt-1 text-xs text-red-500 font-medium">
-                             {errors.propertyConfig.rooms[index].bedType.message}
-                           </p>
-                         )}
-                       </div>
-                    </div>
-
-                    {/* Row 2: Price + Reservation Fee */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input
-                        label={currentRoomType === ROOM_TYPES.SOLO ? 'Price per Room (PHP)' : 'Price per Bed (PHP)'}
-                        id={`propertyConfig.rooms[${index}].price`}
-                        type="number"
-                        register={register}
-                        errors={errors}
-                        watch={watch}
-                        min="100"
-                        required
-                        placeholder="15000"
-                        useStaticLabel={true}
-                      />
-                      <Input
-                        label="Reservation Fee (PHP)"
-                        id={`propertyConfig.rooms[${index}].reservationFee`}
-                        type="number"
-                        register={register}
-                        errors={errors}
-                        watch={watch}
-                        min="0"
-                        required
-                        placeholder="500"
-                        useStaticLabel={true}
-                      />
-                    </div>
-
-                    {/* Row 3: Type-specific fields */}
-                    {currentRoomType === ROOM_TYPES.SOLO ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                          label="Room Size (sq. meters)"
-                          id={`propertyConfig.rooms[${index}].size`}
-                          type="number"
-                          register={register}
-                          errors={errors}
-                          watch={watch}
-                          min="1"
-                          step="0.1"
-                          required
-                          placeholder="12"
-                          useStaticLabel={true}
-                        />
-                         <Input
-                          label="Bed Count"
-                          id={`propertyConfig.rooms[${index}].capacity`}
-                          type="number"
-                          register={register}
-                          errors={errors}
-                          watch={watch}
-                          min="1"
-                          required
-                          placeholder="1"
-                          useStaticLabel={true}
-                        />
-                        <Input
-                          label="Total Room Capacity"
-                          id={`propertyConfig.rooms[${index}].availableSlots`}
-                          type="number"
-                          register={register}
-                          errors={errors}
-                          watch={watch}
-                          min="1"
-                          required
-                          placeholder="1"
-                          useStaticLabel={true}
-                        />
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                          label="Bed Count"
-                          id={`propertyConfig.rooms[${index}].capacity`}
-                          type="number"
-                          register={register}
-                          errors={errors}
-                          watch={watch}
-                          min="1"
-                          required
-                          placeholder="1"
-                          useStaticLabel={true}
-                        />
-                        <Input
-                          label="Total Room Capacity"
-                          id={`propertyConfig.rooms[${index}].availableSlots`}
-                          type="number"
-                          register={register}
-                          errors={errors}
-                          watch={watch}
-                          min="1"
-                          required
-                          placeholder="2"
-                          useStaticLabel={true}
-                        />
-                      </div>
-                    )}
-
-                    {/* Bathroom Arrangement */}
-                    <div className="space-y-2">
-                      <label className="block text-[15px] font-medium text-text-primary dark:text-gray-100">
-                        <span className="flex items-center gap-2">
-                          <Bath className="w-4 h-4" />
-                          Bathroom Arrangement <span className="text-red-500">*</span>
-                        </span>
-                      </label>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                        Select the bathroom setup for this specific room
-                      </p>
-                      <div className="grid grid-cols-1 gap-2">
-                        {bathroomOptions.map(option => {
-                          const isSelected = currentBathroom === option.value;
-                          return (
-                            <label
-                              key={option.value}
-                              className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                                isSelected
-                                  ? 'border-primary bg-primary/5 dark:bg-primary/10'
-                                  : 'border-gray-200 dark:border-gray-600 hover:border-primary/40 dark:hover:border-primary/40 bg-white dark:bg-gray-800'
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                {...register(`propertyConfig.rooms[${index}].bathroomArrangement`, { required: true })}
-                                value={option.value}
-                                className="mt-0.5 accent-primary"
+                                menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                                styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                instanceId={`room-type-${index}`}
                               />
-                              <div className="flex items-start gap-2">
-                                <span className="mt-0.5 flex-shrink-0">{option.icon}</span>
-                                <div>
-                                  <p className={`text-sm font-medium ${isSelected ? 'text-primary' : 'text-gray-800 dark:text-gray-200'}`}>
-                                    {option.label}
-                                  </p>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400">{option.description}</p>
-                                </div>
-                              </div>
-                            </label>
-                          );
-                        })}
-                      </div>
-                      {errors?.propertyConfig?.rooms?.[index]?.bathroomArrangement && (
-                        <p className="mt-1 text-xs text-red-500 font-medium">
-                          Bathroom arrangement is required
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Room Amenities */}
-                    <div>
-                      <h6 className="font-medium text-gray-900 dark:text-white mb-1">Room Amenities</h6>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                        Amenities specific to this room (bathroom handled above)
-                      </p>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-2">
-                        {getApplicableAmenities(currentRoomType).map((amenity) => (
-                          <Checkbox
-                            key={amenity.value}
-                            id={`propertyConfig.rooms[${index}].amenities`}
-                            label={amenity.label}
-                            value={amenity.value}
-                            register={register}
-                            watch={watch}
+                            )}
                           />
-                        ))}
+                        </div>
 
-                        {/* Custom amenities */}
-                        {watch(`propertyConfig.rooms[${index}].amenities`)
-                          ?.filter((a: string) => !getApplicableAmenities(currentRoomType).some(p => p.value === a))
-                          .map((customAmenity: string) => (
-                            <Checkbox
-                              key={customAmenity}
-                              id={`propertyConfig.rooms[${index}].amenities`}
-                              label={customAmenity.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
-                              value={customAmenity}
-                              register={register}
-                              watch={watch}
-                            />
+                        <div>
+                          <label className="block text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Bed Type</label>
+                          <Controller
+                            name={`propertyConfig.rooms[${index}].bedType`}
+                            control={control}
+                            render={({ field }) => {
+                              const opts = getBedTypeOptions(currentRoomType);
+                              return (
+                                <ReactSelect
+                                  {...field}
+                                  options={opts}
+                                  value={opts.find(o => o.value === field.value)}
+                                  onChange={(val: any) => field.onChange(val?.value)}
+                                  classNames={selectClassNames}
+                                  isSearchable={false}
+                                  menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                                  styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                  instanceId={`bed-type-${index}`}
+                                 />
+                               );
+                             }}
+                           />
+                        </div>
+
+                        <Input label="Price (PHP)" id={`propertyConfig.rooms[${index}].price`} type="number" register={register} errors={errors} watch={watch} required placeholder="Monthly rent" useStaticLabel />
+                        <Input label="Res. Fee" id={`propertyConfig.rooms[${index}].reservationFee`} type="number" register={register} errors={errors} watch={watch} required useStaticLabel />
+                      </div>
+
+                      {/* Row 2: Capacity & Size */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-6 bg-gray-50/50 dark:bg-gray-900/30 rounded-3xl border border-gray-100 dark:border-gray-700/50">
+                        <Input label="Bed Count" id={`propertyConfig.rooms[${index}].capacity`} type="number" register={register} errors={errors} watch={watch} required useStaticLabel />
+                        <Input label={currentRoomType === ROOM_TYPES.SOLO ? "Max Occupants" : "Total Beds"} id={`propertyConfig.rooms[${index}].availableSlots`} type="number" register={register} errors={errors} watch={watch} required useStaticLabel />
+                        <Input label="Size (Sqm)" id={`propertyConfig.rooms[${index}].size`} type="number" register={register} errors={errors} watch={watch} step="0.5" placeholder="e.g. 15" useStaticLabel />
+                      </div>
+
+                      {/* Bathroom Section */}
+                      <div>
+                        <h6 className="text-[11px] font-black uppercase tracking-widest text-primary mb-5 flex items-center gap-2"><ShowerHead size={14} />Bathroom Setup</h6>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {bathroomOptions.map(option => {
+                            const isSelected = currentBathroom === option.value;
+                            return (
+                              <label key={option.value} className={cn("flex flex-col items-center text-center p-6 rounded-3xl border-2 transition-all cursor-pointer group", isSelected ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-lg" : "border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary/20")}>
+                                <input type="radio" {...register(`propertyConfig.rooms[${index}].bathroomArrangement`, { required: true })} value={option.value} className="hidden" />
+                                <div className={cn("mb-3 p-3 rounded-2xl transition-all", isSelected ? "bg-primary text-white scale-110" : "bg-gray-50 dark:bg-gray-900 text-gray-400 group-hover:scale-110")}>{option.icon}</div>
+                                <span className={cn("text-[10px] font-black uppercase tracking-widest mb-1", isSelected ? "text-primary" : "text-gray-500")}>{option.label}</span>
+                                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">{option.description}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Amenities Section */}
+                      <div>
+                        <h6 className="text-[11px] font-black uppercase tracking-widest text-blue-600 mb-5">Unit-Specific Amenities</h6>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-1">
+                          {getApplicableAmenities(currentRoomType).map((amenity) => (
+                            <div key={amenity.value} className="py-2 border-b border-gray-50 dark:border-gray-800">
+                               <Checkbox id={`propertyConfig.rooms[${index}].amenities`} label={amenity.label} value={amenity.value} register={register} watch={watch} className="text-[12px] font-bold" />
+                            </div>
                           ))}
+                          {watch(`propertyConfig.rooms[${index}].amenities`)?.filter((a: any) => !getApplicableAmenities(currentRoomType).some(p => p.value === a)).map((ca: string) => (
+                             <div key={ca} className="py-2 border-b border-gray-50 dark:border-gray-800">
+                               <Checkbox id={`propertyConfig.rooms[${index}].amenities`} label={ca.replace(/_/g, ' ')} value={ca} register={register} watch={watch} className="text-[12px] font-bold text-primary" />
+                             </div>
+                          ))}
+                        </div>
+                        <button type="button" onClick={() => handleAddCustomAmenity(index)} className="mt-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:gap-3 transition-all"><PlusCircle size={14} /> Add Additional Feature</button>
                       </div>
 
-                      <div className="mt-4">
-                        <Button
-                          type="button"
-                          outline
-                          onClick={() => handleAddCustomAmenity(index)}
-                          className="text-sm flex items-center gap-1"
-                        >
-                          <PlusCircle className="w-4 h-4" />
-                          Add Custom Amenity
-                        </Button>
-                      </div>
+                      <Textarea label="Unit Description" id={`propertyConfig.rooms[${index}].description`} register={register} errors={errors} watch={watch} required rows={3} placeholder="Describe the vibe of this unit..." />
                     </div>
-
-                    {/* Room Description */}
-                    <Textarea
-                      label="Room Description"
-                      id={`propertyConfig.rooms[${index}].description`}
-                      register={register}
-                      errors={errors}
-                      watch={watch}
-                      required
-                      rows={3}
-                      placeholder="Describe this room... Include features, amenities, and any special notes."
-                    />
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 italic">
-                      Take note: A detailed description helps students find exactly what they’re looking for.
-                    </p>
-                  </div>
-                )}
+                  )}
+                </div>
               </motion.div>
             );
           })}
-        </div>
-      </motion.div>
+        </AnimatePresence>
+      </div>
 
-      {/* Tips Banner */}
-      <motion.div
-        className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 border border-yellow-200 dark:border-yellow-800"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.6 }}
-      >
-        <div className="flex items-start space-x-3">
-          <CheckCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="font-medium text-yellow-900 dark:text-yellow-100 mb-1">Room Configuration Tips</h4>
-            <p className="text-sm text-yellow-700 dark:text-yellow-300">
-              • Each card above represents <strong>one specific room</strong> in your property<br />
-              • Use the <strong>Bathroom Arrangement</strong> question to specify each room's CR setup<br />
-              • The number of rooms is set in the previous step — use <strong>Apply to All</strong> to speed up setup<br />
-              • Be specific about amenities to attract the right tenants
-            </p>
-          </div>
+      {/* Info Tip */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-sky-50 dark:bg-sky-900/20 rounded-2xl p-6 border border-sky-100 dark:border-sky-800/50 flex gap-4">
+        <div className="p-2 bg-sky-500/10 rounded-xl h-fit text-sky-600"><Info size={20} /></div>
+        <div>
+          <h5 className="text-[11px] font-black uppercase tracking-widest text-sky-800 dark:text-sky-400 mb-1">Standardized Inventory</h5>
+          <p className="text-xs font-bold text-sky-700 dark:text-sky-300 leading-relaxed max-w-2xl">
+            Room categories (Solo vs. Bedspace) and Bed Types are used by the Heuristic Scoring Algorithm to match you with student preferences. Be precise about the "Total Capacity" to ensure your availability counts are accurate.
+          </p>
         </div>
       </motion.div>
 
       {/* Custom Amenity Modal */}
-      <Modal
-        isOpen={showCustomAmenityModal}
-        onClose={() => setShowCustomAmenityModal(false)}
-        title="Add Custom Amenity"
-        width="sm"
-      >
-        <div className="space-y-4">
-          <Input
-            label="Amenity Name"
-            id="customAmenity"
-            type="text"
-            value={customAmenityText}
-            onChange={(e: any) => setCustomAmenityText(e.target.value)}
-            placeholder="e.g., Smart TV, Microwave"
-            required
-          />
-          <div className="flex space-x-2 justify-end">
-            <Button type="button" outline onClick={() => setShowCustomAmenityModal(false)}>
-              Cancel
-            </Button>
-            <Button type="button" onClick={handleCustomAmenitySubmit} disabled={!customAmenityText.trim()}>
-              Add Amenity
-            </Button>
+      <Modal isOpen={showCustomAmenityModal} onClose={() => setShowCustomAmenityModal(false)} title="Add Room Feature" width="sm">
+        <div className="space-y-6 p-2">
+          <Input label="Feature Title" id="customAmenity" type="text" value={customAmenityText} onChange={(e: any) => setCustomAmenityText(e.target.value)} placeholder="e.g. Balcony, Study Corner" required />
+          <div className="flex gap-4">
+            <Button type="button" outline onClick={() => setShowCustomAmenityModal(false)} className="flex-1 uppercase text-[10px] font-black">Cancel</Button>
+            <Button type="button" onClick={handleCustomAmenitySubmit} disabled={!customAmenityText.trim()} className="flex-1 uppercase text-[10px] font-black shadow-lg shadow-primary/20">Add to Unit</Button>
           </div>
         </div>
       </Modal>

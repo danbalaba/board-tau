@@ -1,5 +1,5 @@
 import { getInquiryDetails } from '@/services/landlord/inquiries';
-import LandlordInquiryDetailClient from '../../components/pages/inquiries/LandlordInquiryDetailClient';
+import { LandlordInquiryDetailView } from '../../features/inquiry-center/landlord-inquiry-detail-view';
 import { notFound } from 'next/navigation';
 
 interface Props {
@@ -11,7 +11,7 @@ export default async function LandlordInquiryDetailPage({ params }: Props) {
   
   try {
     const inquiry = await getInquiryDetails(id);
-    return <LandlordInquiryDetailClient inquiry={inquiry} />;
+    return <LandlordInquiryDetailView inquiry={inquiry} />;
   } catch (error) {
     return notFound();
   }
