@@ -16,6 +16,16 @@ import "react-day-picker/style.css";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 
+/**
+ * Only allow blob URLs generated from validated File objects as image sources.
+ * Prevents DOM text reinterpretation and XSS via src attribute injection.
+ */
+const getSafeImageSrc = (file: File): string => {
+  if (!file.type.startsWith('image/')) return '';
+  const url = URL.createObjectURL(file);
+  return /^blob:/i.test(url) ? url : '';
+};
+
 interface Room {
   id: string;
   name: string;
@@ -651,7 +661,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
               {profilePhoto && (
                 <div className="mt-2">
                   <img
-                    src={profilePhoto.type.startsWith('image/') ? URL.createObjectURL(profilePhoto) : ''}
+                    src={getSafeImageSrc(profilePhoto)}
                     alt="Profile preview"
                     className="w-24 h-24 object-cover rounded-lg border-2 border-primary"
                   />
@@ -727,7 +737,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
               {idAttachment && (
                 <div className="mt-2">
                   <img
-                    src={idAttachment.type.startsWith('image/') ? URL.createObjectURL(idAttachment) : ''}
+                    src={getSafeImageSrc(idAttachment)}
                     alt="ID preview"
                     className="w-24 h-24 object-cover rounded-lg border-2 border-primary"
                   />
