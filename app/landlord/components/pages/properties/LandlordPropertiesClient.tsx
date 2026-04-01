@@ -49,7 +49,8 @@ import {
   IconUsers,
   IconBed,
   IconDimensions,
-  IconReceipt2
+  IconReceipt2,
+  IconSearchOff
 } from '@tabler/icons-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { cn } from '@/utils/helper';

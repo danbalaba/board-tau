@@ -4,6 +4,7 @@ import React from 'react';
 import LandlordSidebar from './LandlordSidebar';
 import LandlordTopbar from './LandlordTopbar';
 import { SidebarProvider, SidebarInset } from '@/app/admin/components/ui/sidebar';
+import { ModernSearch } from '@/components/common/ModernSearch';
 
 interface LandlordLayoutClientProps {
   children: React.ReactNode;
@@ -23,16 +24,18 @@ export default function LandlordLayoutClient({
   user,
 }: LandlordLayoutClientProps) {
   return (
-    <div className="h-screen overflow-hidden bg-background">
+    <ModernSearch>
       <SidebarProvider defaultOpen={true}>
         <LandlordSidebar />
         <SidebarInset className="flex flex-col h-screen overflow-y-auto">
           <LandlordTopbar user={user} />
-          <div className="w-full px-4 py-8">
-            {children}
-          </div>
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
+            <div className="w-full px-4 py-8">
+              {children}
+            </div>
+          </main>
         </SidebarInset>
       </SidebarProvider>
-    </div>
+    </ModernSearch>
   );
 }
