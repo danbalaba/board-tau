@@ -32,24 +32,21 @@ import LoadingAnimation from '@/components/common/LoadingAnimation';
 import { toast } from 'sonner';
 
 /**
- * Only allow http, https, or blob URLs as image sources.
- * Strictly blocks all characters that could lead to HTML attribute injection.
+ * Validates and sanitizes image sources using a strict character whitelist.
  */
 const getSafeImageSrc = (image: string): string => {
-  if (!image || typeof image !== 'string') return '';
+  if (!image || typeof image !== 'string' || image.length > 2048) return '';
   
-  const lowerImage = image.toLowerCase();
-  
-  // 1. Strict protocol allow-list
-  const isSafeProtocol = lowerImage.startsWith('http://') || 
-                         lowerImage.startsWith('https://') || 
-                         lowerImage.startsWith('blob:');
+  const lower = image.toLowerCase();
+  const isSafeProtocol = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('blob:');
+  const isRelative = image.startsWith('/');
 
-  // 2. Reject any additional metadata or attribute-breaking characters: < > " ' ` ( ) ; \
-  const hasDangerousChars = /[<>"'`();\\]/.test(image);
-
-  if (isSafeProtocol && !hasDangerousChars) {
-    return image;
+  if (isSafeProtocol || isRelative) {
+    // Reconstruct the string using only safe URI characters
+    const safeUrl = image.split('').filter(c => /^[a-zA-Z0-9:/-_\. \?\#\&\%]$/.test(c)).join('');
+    if (safeUrl === image) {
+      return safeUrl;
+    }
   }
   
   return '';

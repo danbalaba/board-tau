@@ -9,22 +9,23 @@ interface AvatarProps {
 }
 
 /**
- * Only allow http, https, or blob URLs as image sources.
- * Strictly blocks all characters that could lead to HTML attribute injection.
+ * Validates and sanitizes image sources using a strict character whitelist.
  */
 const getSafeImageSrc = (src: string | null | undefined): string | undefined => {
-  if (!src || typeof src !== 'string') return undefined;
+  if (!src || typeof src !== 'string' || src.length > 2048) return undefined;
   
   const lower = src.toLowerCase();
-  const isSafeProtocol = lower.startsWith('http://') || 
-                         lower.startsWith('https://') || 
-                         lower.startsWith('blob:');
+  const isSafeProtocol = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('blob:');
+  const isRelative = src.startsWith('/');
 
-  const hasDangerousChars = /[<>"'`();\\]/.test(src);
-
-  if (isSafeProtocol && !hasDangerousChars) {
-    return src;
+  if (isSafeProtocol || isRelative) {
+    // Reconstruct the string using only safe URI characters
+    const safeUrl = src.split('').filter(c => /^[a-zA-Z0-9:/-_\. \?\#\&\%]$/.test(c)).join('');
+    if (safeUrl === src) {
+      return safeUrl;
+    }
   }
+  
   return undefined;
 };
 
