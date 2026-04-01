@@ -21,7 +21,7 @@ Welcome to BoardTAU! We appreciate your interest in contributing to our project.
 
 2. **Install dependencies**
    ```bash
-   npm install
+   npm install --legacy-peer-deps
    ```
 
 3. **Set up environment variables**
