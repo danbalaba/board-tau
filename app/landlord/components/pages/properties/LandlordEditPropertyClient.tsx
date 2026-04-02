@@ -33,9 +33,10 @@ import { toast } from 'sonner';
 
 /**
  * Validates and sanitizes image sources using a strict character whitelist.
+ * Returns null for invalid/unsafe URLs to prevent console errors.
  */
-const getSafeImageSrc = (image: string): string => {
-  if (!image || typeof image !== 'string' || image.length > 2048) return '';
+const getSafeImageSrc = (image: string): string | null => {
+  if (!image || typeof image !== 'string' || image.length > 2048) return null;
   
   const lower = image.toLowerCase();
   const isSafeProtocol = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('blob:');
@@ -49,7 +50,7 @@ const getSafeImageSrc = (image: string): string => {
     }
   }
   
-  return '';
+  return null;
 };
 
 const LocalCheckbox = ({
@@ -620,22 +621,30 @@ export default function LandlordEditPropertyClient({ initialData }: LandlordEdit
                       <Section id="showcase" title="Visual Evidence" icon={FaImages} description="High-fidelity gallery management" setActiveSection={setActiveSection}>
                         <div className="space-y-10">
                           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {formData.existingImages.map((url: string, i: number) => (
-                              <div key={i} className="relative aspect-video rounded-2xl overflow-hidden group/img shadow-md">
-                                <img src={getSafeImageSrc(url)} alt="" className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-700" />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                                  <button type="button" onClick={() => deleteExistingImage(url)} className="p-2 bg-red-500 text-white rounded-lg shadow-xl hover:scale-110 transition-all">
-                                    <Trash2 size={16} />
-                                  </button>
+                            {formData.existingImages.map((url: string, i: number) => {
+                              const safeUrl = getSafeImageSrc(url);
+                              if (!safeUrl) return null;
+                              return (
+                                <div key={i} className="relative aspect-video rounded-2xl overflow-hidden group/img shadow-md">
+                                  <img src={safeUrl} alt="" className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-700" />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                                    <button type="button" onClick={() => deleteExistingImage(url)} className="p-2 bg-red-500 text-white rounded-lg shadow-xl hover:scale-110 transition-all">
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
-                            {formData.propertyFiles.map((file, i) => (
-                              <div key={i} className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/30 shadow-md">
-                                <img src={getSafeImageSrc(URL.createObjectURL(file))} alt="" className="w-full h-full object-cover" />
-                                <div className="absolute top-2 right-2 px-2 py-0.5 bg-primary text-white text-[8px] font-black uppercase tracking-widest rounded-full">New</div>
-                              </div>
-                            ))}
+                              );
+                            })}
+                            {formData.propertyFiles.map((file, i) => {
+                              const safeUrl = getSafeImageSrc(URL.createObjectURL(file));
+                              if (!safeUrl) return null;
+                              return (
+                                <div key={i} className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/30 shadow-md">
+                                  <img src={safeUrl} alt="" className="w-full h-full object-cover" />
+                                  <div className="absolute top-2 right-2 px-2 py-0.5 bg-primary text-white text-[8px] font-black uppercase tracking-widest rounded-full">New</div>
+                                </div>
+                              );
+                            })}
                             <label className="aspect-video rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary/40 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all group/add">
                               <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 group-hover/add:bg-primary group-hover/add:text-white transition-colors">
                                 <Plus size={20} />
