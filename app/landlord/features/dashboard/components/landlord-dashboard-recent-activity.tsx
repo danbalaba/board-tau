@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   IconMail,
@@ -8,9 +8,9 @@ import {
   IconStar,
   IconCreditCard,
   IconActivity,
+  IconX,
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
-import Button from '@/components/common/Button';
 
 const recentActivities = [
   {
@@ -59,57 +59,98 @@ const recentActivities = [
   }
 ];
 
-export function LandlordDashboardRecentActivity() {
-  return (
-    <div className="bg-white dark:bg-gray-950 p-6 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
-      <div className="flex flex-row items-center justify-between mb-6 gap-4">
-         <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-primary/10 text-primary rounded-lg">
-              <IconActivity size={14} />
-            </div>
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
-              Recent Activity
-            </h3>
-         </div>
-         <Button outline className="rounded-[14px] py-1 px-3 text-[9px] font-bold uppercase tracking-widest">
-           View All
-         </Button>
-      </div>
-      
-      <div className="space-y-3">
-        {recentActivities.map((activity) => {
-          const Icon = activity.icon;
-          const accentColor: Record<string, string> = {
-            amber: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/30',
-            emerald: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30',
-            blue: 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/30',
-            purple: 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-900/30',
-          };
+const accentColor: Record<string, string> = {
+  amber: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/30',
+  emerald: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30',
+  blue: 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/30',
+  purple: 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-900/30',
+};
 
-          return (
-            <Link
-              key={activity.id}
-              href={activity.href}
-              className="group flex items-center gap-3 p-3 bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:bg-white dark:hover:bg-gray-900 hover:shadow-lg transition-all duration-300"
-            >
-              <div className={cn("flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center border transition-transform duration-300 group-hover:scale-105 shadow-sm", accentColor[activity.color])}>
-                <Icon size={16} strokeWidth={2.5} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 mb-0.5">
-                  <p className="text-xs font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors tracking-tight truncate">
-                    {activity.title}
-                  </p>
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest shrink-0">{activity.time}</span>
-                </div>
-                <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                   {activity.description}
-                </p>
-              </div>
-            </Link>
-          );
-        })}
+function ActivityCard({ activity }: { activity: typeof recentActivities[0] }) {
+  const Icon = activity.icon;
+  return (
+    <Link
+      href={activity.href}
+      className="group flex items-center gap-3 p-3 bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/20 hover:bg-white dark:hover:bg-gray-900 hover:shadow-lg transition-all duration-300"
+    >
+      <div className={cn("flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center border transition-transform duration-300 group-hover:scale-105 shadow-sm", accentColor[activity.color])}>
+        <Icon size={16} strokeWidth={2.5} />
       </div>
-    </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2 mb-0.5">
+          <p className="text-xs font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors tracking-tight truncate">
+            {activity.title}
+          </p>
+          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest shrink-0">{activity.time}</span>
+        </div>
+        <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
+           {activity.description}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
+export function LandlordDashboardRecentActivity() {
+  const [showModal, setShowModal] = useState(false);
+
+  return (
+    <>
+      <div className="bg-white dark:bg-gray-950 p-6 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="flex flex-row items-center justify-between mb-6 gap-4">
+           <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-primary/10 text-primary rounded-lg">
+                <IconActivity size={14} />
+              </div>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
+                Recent Activity
+              </h3>
+           </div>
+           <button 
+             onClick={() => setShowModal(true)}
+             className="text-[10px] font-bold text-primary hover:text-primary/80 uppercase tracking-widest transition-colors"
+           >
+             View All
+           </button>
+        </div>
+        
+        <div className="space-y-3">
+          {recentActivities.slice(0, 5).map((activity) => (
+            <ActivityCard key={activity.id} activity={activity} />
+          ))}
+        </div>
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setShowModal(false)}>
+          <div 
+            className="bg-white dark:bg-gray-950 rounded-[24px] border border-gray-100 dark:border-gray-800 shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/10 text-primary rounded-lg">
+                  <IconActivity size={14} />
+                </div>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
+                  All Recent Activity
+                </h3>
+              </div>
+              <button 
+                onClick={() => setShowModal(false)}
+                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <IconX size={16} />
+              </button>
+            </div>
+            <div className="p-5 space-y-3 overflow-y-auto max-h-[60vh]">
+              {recentActivities.map((activity) => (
+                <ActivityCard key={activity.id} activity={activity} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
