@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { IconCalendar } from '@tabler/icons-react';
+import { IconCalendar, IconCalendarCheck } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
+import { useRegisterActions } from 'kbar';
 import { useReservationLogic, ReservationRequest } from './hooks/use-reservation-logic';
 import { LandlordReservationHeader } from './components/landlord-reservation-header';
 import { LandlordReservationCard } from './components/landlord-reservation-card';
@@ -20,9 +21,27 @@ export default function LandlordBookingReservations({ reservations }: LandlordBo
     setSortBy,
     viewMode,
     setViewMode,
+    searchQuery,
+    setSearchQuery,
+    rawReservations,
     handleRespond,
     handleGenerateReport
   } = useReservationLogic(reservations);
+
+  useRegisterActions(
+    rawReservations.map((res) => ({
+      id: `reservation-${res.id}`,
+      name: `Reservation: ${res.user.name || 'Anonymous Tenant'}`,
+      subtitle: `Property: ${res.listing.title} • ${res.status}`,
+      keywords: `reservation tenant stay ${res.user.name} ${res.listing.title}`,
+      section: 'Reservations',
+      perform: () => {
+        setSearchQuery(res.user.name || res.user.email);
+      },
+      icon: <IconCalendarCheck size={18} />
+    })),
+    [rawReservations]
+  );
 
   return (
     <div className="space-y-6">
@@ -34,6 +53,9 @@ export default function LandlordBookingReservations({ reservations }: LandlordBo
         viewMode={viewMode}
         setViewMode={setViewMode}
         handleGenerateReport={handleGenerateReport}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        rawReservations={rawReservations}
       />
 
       {filteredReservations.length === 0 ? (

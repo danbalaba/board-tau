@@ -33,12 +33,23 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredBookings = useMemo(() => {
     let result = listings.filter(booking => {
       const statusMatch = selectedStatus === 'all' || booking.status?.toLowerCase() === selectedStatus.toLowerCase();
       const paymentMatch = selectedPaymentStatus === 'all' || booking.paymentStatus?.toLowerCase() === selectedPaymentStatus.toLowerCase();
-      return statusMatch && paymentMatch;
+      
+      let searchMatch = true;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        searchMatch = 
+          booking.listing.title.toLowerCase().includes(q) || 
+          (booking.user.name?.toLowerCase() || '').includes(q) || 
+          booking.user.email.toLowerCase().includes(q);
+      }
+
+      return statusMatch && paymentMatch && searchMatch;
     });
 
     result.sort((a, b) => {
@@ -134,6 +145,9 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     viewMode,
     setViewMode,
     filteredBookings,
+    searchQuery,
+    setSearchQuery,
+    rawBookings: listings,
     handleUpdateStatus,
     handleLoadMore,
     handleGenerateReport

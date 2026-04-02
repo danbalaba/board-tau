@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 /**
  * Validates and sanitizes image sources using a strict character whitelist.
  */
-export const getSafeImageSrc = (image: string): string => {
-  if (!image || typeof image !== 'string' || image.length > 2048) return '';
+export const getSafeImageSrc = (image: string): string | undefined => {
+  if (!image || typeof image !== 'string' || image.length > 2048) return undefined;
   
   const lower = image.toLowerCase();
   const isSafeProtocol = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('blob:');
@@ -22,7 +22,7 @@ export const getSafeImageSrc = (image: string): string => {
     }
   }
   
-  return '';
+  return undefined;
 };
 
 export function usePropertyFormLogic(initialData: any) {
@@ -42,7 +42,7 @@ export function usePropertyFormLogic(initialData: any) {
     zipCode: initialData.zipCode || '',
     latlng: initialData.latlng || [120.9842, 14.5995],
     propertyFiles: [] as File[],
-    existingImages: (initialData.images || []).map((img: any) => img.url),
+    existingImages: (initialData.images || []).map((img: any) => img.url).filter(Boolean),
     amenities: [] as string[],
     rules: {
       femaleOnly: initialData.rules?.femaleOnly || false,

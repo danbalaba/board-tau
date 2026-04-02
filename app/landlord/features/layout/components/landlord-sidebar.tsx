@@ -92,20 +92,21 @@ export default function LandlordSidebar() {
       collapsible='offcanvas'
       className='border-r border-gray-200/50 dark:border-gray-800/50 bg-white/70 dark:bg-gray-950/70 backdrop-blur-xl transition-all duration-300'
     >
-      <SidebarHeader className='p-6 mb-2'>
+      <SidebarHeader className='p-8 mb-4'>
         <motion.div
-           initial={{ opacity: 0, x: -20 }}
-           animate={{ opacity: 1, x: 0 }}
-           transition={{ duration: 0.5 }}
+           initial={{ opacity: 0, scale: 0.95 }}
+           animate={{ opacity: 1, scale: 1 }}
+           transition={{ duration: 0.5, ease: "easeOut" }}
+           className="flex flex-col items-center justify-center gap-4"
         >
-          <Link href="/landlord" className="flex items-center gap-3 group">
-            <div className="h-[35px] w-[140px] relative transition-transform duration-300 group-hover:scale-105">
+          <Link href="/landlord" className="flex flex-col items-center gap-3 group">
+            <div className="h-[40px] w-[160px] relative transition-all duration-500 group-hover:scale-110 group-hover:filter group-hover:drop-shadow-[0_0_15px_rgba(var(--primary),0.3)]">
               {!mounted ? (
                 <Image
                   src="/images/TauBOARD-Light.png"
                   alt="BoardTAU Logo"
                   fill
-                  sizes="140px"
+                  sizes="160px"
                   priority
                   unoptimized
                   className="object-contain"
@@ -115,20 +116,21 @@ export default function LandlordSidebar() {
                   src={isDark ? "/images/TauBOARD-Dark.png" : "/images/TauBOARD-Light.png"}
                   alt="BoardTAU Logo"
                   fill
-                  sizes="140px"
+                  sizes="160px"
                   priority
                   unoptimized
                   className="object-contain"
                 />
               )}
             </div>
+            <div className="h-1 w-12 bg-gradient-to-r from-transparent via-primary/40 to-transparent rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
           </Link>
         </motion.div>
       </SidebarHeader>
 
-      <SidebarContent className='px-4'>
+      <SidebarContent className='px-5'>
         <SidebarGroup>
-          <SidebarMenu className='gap-2'>
+          <SidebarMenu className='gap-2.5'>
             {navItems.map((item, index) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || (item.href !== '/landlord' && pathname.startsWith(item.href));
@@ -140,23 +142,28 @@ export default function LandlordSidebar() {
                     tooltip={item.label}
                     isActive={isActive}
                     className={cn(
-                      "group relative h-11 px-4 rounded-xl transition-all duration-300",
+                      "group relative h-12 px-5 rounded-2xl transition-all duration-500 border border-transparent",
                       isActive 
-                        ? "bg-primary text-white shadow-lg shadow-primary/25 translate-x-1" 
-                        : "text-gray-500 dark:text-gray-400 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary dark:hover:text-primary"
+                        ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-xl shadow-primary/30 translate-x-1 border-white/10" 
+                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-primary dark:hover:text-primary-hover hover:translate-x-1 hover:border-gray-100 dark:hover:border-white/5"
                     )}
                   >
-                    <Link href={item.href} className="flex items-center gap-3 w-full">
-                      <Icon 
-                        size={20}
-                        className={cn(
-                          "transition-transform duration-300",
-                          isActive ? "text-white" : "group-hover:scale-110"
-                        )}
-                      />
+                    <Link href={item.href} className="flex items-center gap-4 w-full">
+                      <div className={cn(
+                        "p-2 rounded-xl transition-all duration-500",
+                        isActive ? "bg-white/20" : "bg-gray-100/50 dark:bg-white/5 group-hover:bg-primary/10"
+                      )}>
+                        <Icon 
+                          size={18}
+                          className={cn(
+                            "transition-all duration-500",
+                            isActive ? "text-white scale-110" : "group-hover:scale-110 group-hover:rotate-3"
+                          )}
+                        />
+                      </div>
                       <span className={cn(
-                        "font-black text-xs uppercase tracking-[0.05em] transition-all duration-300",
-                        isActive ? "opacity-100" : "opacity-80 group-hover:opacity-100"
+                        "font-black text-[11px] uppercase tracking-[0.08em] transition-all duration-300",
+                        isActive ? "opacity-100" : "opacity-70 group-hover:opacity-100"
                       )}>
                         {item.label}
                       </span>
@@ -179,19 +186,25 @@ export default function LandlordSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className='p-6 mt-auto border-t border-gray-100/50 dark:border-gray-800/50'>
-        <div className="flex flex-col gap-4">
-          <div className="bg-gradient-to-br from-primary/10 to-transparent p-4 rounded-2xl border border-primary/10">
-            <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Status</p>
-            <div className="flex items-center gap-2 text-emerald-500">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-bold">System Online</span>
+      <SidebarFooter className='p-8 mt-auto border-t border-gray-100/50 dark:border-gray-800/50 bg-gray-50/30 dark:bg-white/5'>
+        <div className="flex flex-col gap-5">
+          <div className="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm group/status cursor-default">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest leading-none">System Status</p>
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tight">Cloud Online</span>
+              <span className="text-[10px] font-medium text-gray-400">v3.4.2</span>
             </div>
           </div>
           
-          <div className='flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-gray-400'>
-             <span>v3.0.0</span>
-             <span>© 2026 TAU</span>
+          <div className='flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-gray-400/80 px-1'>
+             <div className="flex items-center gap-1.5 grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all cursor-default">
+               <div className="w-4 h-4 bg-primary rounded-md flex items-center justify-center text-[8px] text-white">T</div>
+               <span>TAU Board</span>
+             </div>
+             <span className="opacity-50">© 2026</span>
           </div>
         </div>
       </SidebarFooter>

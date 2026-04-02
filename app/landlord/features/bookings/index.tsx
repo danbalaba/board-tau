@@ -1,13 +1,15 @@
 'use client';
 
 import React from 'react';
-import { IconCalendarCheck, IconChevronDown } from '@tabler/icons-react';
+import { IconCalendarCheck, IconChevronDown, IconCalendarStats } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
+import { useRegisterActions } from 'kbar';
 import Button from '@/components/common/Button';
 import { useBookingLogic, Booking } from './hooks/use-booking-logic';
 import { LandlordBookingHeader } from './components/landlord-booking-header';
 import { LandlordBookingCard } from './components/landlord-booking-card';
+import { useLoadMore } from '@/hooks/useLoadMore';
 
 interface LandlordBookingsProps {
   bookings: {
@@ -41,10 +43,35 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
     viewMode,
     setViewMode,
     filteredBookings,
+    searchQuery,
+    setSearchQuery,
+    rawBookings,
     handleUpdateStatus,
     handleLoadMore,
     handleGenerateReport
   } = useBookingLogic(bookings.bookings, bookings.nextCursor);
+
+  const { ref: loadMoreRef } = useLoadMore(
+    handleLoadMore,
+    !!nextCursor,
+    isLoadingMore,
+    false
+  );
+
+  useRegisterActions(
+    rawBookings.map((booking) => ({
+      id: `booking-${booking.id}`,
+      name: `Booking: ${booking.user.name || 'Anonymous Guest'}`,
+      subtitle: `Property: ${booking.listing.title} • ${booking.status}`,
+      keywords: `booking guest tenant stay ${booking.user.name} ${booking.listing.title}`,
+      section: 'Bookings',
+      perform: () => {
+        setSearchQuery(booking.user.name || booking.user.email);
+      },
+      icon: <IconCalendarStats size={18} />
+    })),
+    [rawBookings]
+  );
 
   return (
     <div className="space-y-6">
@@ -58,6 +85,9 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
         viewMode={viewMode}
         setViewMode={setViewMode}
         handleGenerateReport={handleGenerateReport}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        rawBookings={rawBookings}
       />
 
       <AnimatePresence mode="popLayout">
@@ -80,15 +110,33 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
                 onUpdateStatus={handleUpdateStatus}
               />
             ))}
+            {/* Scroll Sentinel */}
+            <div ref={loadMoreRef} className="h-1 col-span-full opacity-0 pointer-events-none" />
           </motion.div>
         )}
       </AnimatePresence>
 
       {nextCursor && (
-        <div className="flex justify-center pt-8">
-          <Button outline className="rounded-xl px-10 py-4 group transition-all hover:bg-primary hover:text-white" onClick={handleLoadMore} isLoading={isLoadingMore}>
+        <div className="flex flex-col items-center gap-4 pt-12 pb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-[2px] bg-gradient-to-r from-transparent to-gray-200 dark:to-gray-800" />
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                {isLoadingMore ? 'Fetching more bookings...' : 'Scroll for more'}
+              </span>
+            </div>
+            <div className="w-12 h-[2px] bg-gradient-to-l from-transparent to-gray-200 dark:to-gray-800" />
+          </div>
+
+          <Button 
+            outline 
+            className="rounded-xl px-10 py-4 group transition-all hover:bg-primary hover:text-white border-2 border-gray-100 dark:border-gray-800" 
+            onClick={handleLoadMore} 
+            isLoading={isLoadingMore}
+          >
             <span className="flex items-center gap-2 uppercase font-black tracking-[0.15em] text-[10px]">
-              {isLoadingMore ? 'Fetching bookings...' : 'Load More Bookings'}
+              {isLoadingMore ? 'Fetching...' : 'Force Load More'}
               <IconChevronDown className={cn("group-hover:translate-y-0.5 transition-transform", isLoadingMore && "animate-bounce")} size={10} />
             </span>
           </Button>

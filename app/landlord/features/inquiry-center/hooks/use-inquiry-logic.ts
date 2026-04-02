@@ -158,6 +158,7 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     handleConfirmDelete,
     handleRespond,
     handleLoadMore,
-    handleGenerateReport
+    handleGenerateReport,
+    rawInquiries: listings
   };
 }

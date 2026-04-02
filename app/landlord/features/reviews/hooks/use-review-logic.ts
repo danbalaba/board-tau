@@ -32,14 +32,26 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedRating, setSelectedRating] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredReviews = useMemo(() => {
     return listings.filter(review => {
       const statusMatch = selectedStatus === 'all' || review.status === selectedStatus;
       const ratingMatch = selectedRating === 'all' || review.rating === Number(selectedRating);
-      return statusMatch && ratingMatch;
+      
+      let searchMatch = true;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        searchMatch = 
+          review.listing.title.toLowerCase().includes(q) || 
+          (review.user.name?.toLowerCase() || '').includes(q) || 
+          review.user.email.toLowerCase().includes(q) ||
+          (review.comment?.toLowerCase() || '').includes(q);
+      }
+
+      return statusMatch && ratingMatch && searchMatch;
     });
-  }, [selectedStatus, selectedRating, listings]);
+  }, [selectedStatus, selectedRating, listings, searchQuery]);
 
   const handleLoadMore = useCallback(async () => {
     if (!nextCursor || isLoadingMore) return;
@@ -97,6 +109,9 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
     setSelectedRating,
     viewMode,
     setViewMode,
+    searchQuery,
+    setSearchQuery,
+    rawReviews: listings,
     handleLoadMore,
     handleGenerateReport,
     respondModal,
