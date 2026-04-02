@@ -70,9 +70,9 @@ export function LandlordInquiryHeader({
           </div>
         </div>
 
-        <div className="flex flex-wrap lg:flex-row items-center gap-4 w-full xl:w-auto mt-4 lg:mt-0">
+        <div className="flex flex-nowrap items-center gap-3 w-full xl:w-auto mt-4 xl:mt-0">
           {/* Search Input */}
-          <div className="relative w-full lg:w-72 group">
+          <div className="relative flex-1 min-w-[160px] lg:min-w-[200px] max-w-[240px] group">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
               <IconSearch size={16} strokeWidth={2.5} />
             </div>
@@ -86,7 +86,7 @@ export function LandlordInquiryHeader({
           </div>
 
           {/* Sorting */}
-          <div className="flex flex-wrap items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
+          <div className="flex flex-nowrap items-center gap-1 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm flex-shrink-0">
             {[
               { value: 'newest', label: 'Newest', icon: IconHistory },
               { value: 'oldest', label: 'Oldest', icon: IconCalendarEvent },
@@ -98,14 +98,14 @@ export function LandlordInquiryHeader({
                   key={option.value}
                   onClick={() => setSortBy(option.value)}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                    "flex items-center gap-1 px-2.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
                     isSelected
                       ? "bg-primary text-white shadow-lg shadow-primary/30"
                       : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700"
                   )}
                 >
                   <Icon size={12} />
-                  <span className="hidden sm:inline">{option.label}</span>
+                  <span className="hidden xl:inline">{option.label}</span>
                 </button>
               );
             })}
@@ -114,7 +114,7 @@ export function LandlordInquiryHeader({
           {/* Filters Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all backdrop-blur-sm">
+              <button className="flex items-center gap-1.5 px-3 py-2 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all backdrop-blur-sm flex-shrink-0">
                 <IconFilter size={14} />
                 Filters {selectedStatus !== 'ALL' && <span className="w-2 h-2 rounded-full bg-primary" />}
               </button>
@@ -149,11 +149,11 @@ export function LandlordInquiryHeader({
           </DropdownMenu>
 
           {/* View Mode Toggle */}
-          <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm">
+          <div className="flex items-center gap-1 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm flex-shrink-0">
             <button
               onClick={() => setViewMode("grid")}
               className={cn(
-                "p-2.5 rounded-xl transition-all duration-300",
+                "p-2 rounded-xl transition-all duration-300",
                 viewMode === "grid" ? "bg-primary text-white shadow-lg shadow-primary/30" : "text-gray-400 hover:text-gray-900 dark:hover:text-white"
               )}
             >
@@ -162,7 +162,7 @@ export function LandlordInquiryHeader({
             <button
               onClick={() => setViewMode("list")}
               className={cn(
-                "p-2.5 rounded-xl transition-all duration-300",
+                "p-2 rounded-xl transition-all duration-300",
                 viewMode === "list" ? "bg-primary text-white shadow-lg shadow-primary/30" : "text-gray-400 hover:text-gray-900 dark:hover:text-white"
               )}
             >
@@ -170,7 +170,7 @@ export function LandlordInquiryHeader({
             </button>
           </div>
           
-          <GenerateReportButton onGeneratePDF={handleGenerateReport} />
+          <GenerateReportButton onGeneratePDF={handleGenerateReport} className="ml-auto flex-shrink-0" />
         </div>
       </div>
       
