@@ -15,6 +15,10 @@ interface LandlordLayoutClientProps {
     role: string;
     isVerifiedLandlord: boolean;
     landlordApprovedAt: Date | null;
+    phoneNumber?: string | null;
+    city?: string | null;
+    region?: string | null;
+    bio?: string | null;
   };
 }
 

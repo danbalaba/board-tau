@@ -35,6 +35,7 @@ import {
 } from '@/app/admin/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/app/admin/components/ui/sidebar';
 import { ProfileSettingsModal } from '@/app/landlord/components/modals/ProfileSettingsModal';
+import { ViewProfileModal } from '@/app/landlord/components/modals/ViewProfileModal';
 import { AccountSettingsModal } from '@/app/landlord/components/modals/AccountSettingsModal';
 import { NotificationsModal } from '@/app/landlord/components/modals/NotificationsModal';
 import { NotificationsListModal } from '@/app/landlord/components/modals/NotificationsListModal';
@@ -53,11 +54,18 @@ interface LandlordTopbarProps {
     email: string | null;
     image: string | null;
     role: string;
+    isVerifiedLandlord?: boolean;
+    landlordApprovedAt?: Date | null;
+    phoneNumber?: string | null;
+    city?: string | null;
+    region?: string | null;
+    bio?: string | null;
   };
 }
 
 export default function LandlordTopbar({ user }: LandlordTopbarProps) {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isViewProfileModalOpen, setIsViewProfileModalOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
   const [isNotificationsListModalOpen, setIsNotificationsListModalOpen] = useState(false);
@@ -445,7 +453,7 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
               <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
               <DropdownMenuGroup className="p-1">
                 <DropdownMenuItem 
-                  onClick={() => setIsProfileModalOpen(true)}
+                  onClick={() => setIsViewProfileModalOpen(true)}
                   className='rounded-xl flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-all group border border-transparent hover:border-primary/10'
                 >
                   <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
@@ -491,6 +499,11 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
       <ProfileSettingsModal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
+        user={user}
+      />
+      <ViewProfileModal
+        isOpen={isViewProfileModalOpen}
+        onClose={() => setIsViewProfileModalOpen(false)}
         user={user}
       />
       <AccountSettingsModal

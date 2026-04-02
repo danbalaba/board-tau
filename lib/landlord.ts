@@ -11,6 +11,10 @@ export type LandlordUser = {
   role: string;
   isVerifiedLandlord: boolean;
   landlordApprovedAt: Date | null;
+  phoneNumber?: string | null;
+  city?: string | null;
+  region?: string | null;
+  bio?: string | null;
 };
 
 /** Require landlord role; redirect if not authenticated or not a landlord. */
@@ -33,6 +37,10 @@ export async function requireLandlord(): Promise<LandlordUser> {
       role: true,
       isVerifiedLandlord: true,
       landlordApprovedAt: true,
+      phoneNumber: true,
+      city: true,
+      region: true,
+      bio: true,
     },
   });
 
