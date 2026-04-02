@@ -26,10 +26,12 @@ import * as z from 'zod';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { Switch } from '@/app/admin/components/ui/switch';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { geocodeAddress, reverseGeocode } from '@/services/geocoding';
 import { validateName, validatePhoneNumber } from '@/lib/validators';
 import { useEdgeStore } from '@/lib/edgestore';
 import { Loader2 } from 'lucide-react';
+import { updateUserProfileClient } from '@/services/user/profile';
 
 const Map = dynamic(() => import('@/components/common/Map'), { ssr: false });
 
@@ -42,6 +44,10 @@ interface ProfileSettingsModalProps {
     email: string | null;
     image: string | null;
     role: string;
+    phoneNumber?: string | null;
+    city?: string | null;
+    region?: string | null;
+    bio?: string | null;
   };
 }
 
@@ -61,6 +67,8 @@ const profileSchema = z.object({
   }),
   address: z.string().min(1, 'Address is required'),
   bio: z.string().max(500, 'Bio must be under 500 characters').optional(),
+  city: z.string().optional().nullable(),
+  region: z.string().optional().nullable(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -77,6 +85,7 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
   const { edgestore } = useEdgeStore();
+  const router = useRouter();
 
   const {
     register,
@@ -89,9 +98,11 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: user.name || '',
-      phone: '',
-      address: '',
-      bio: '',
+      phone: user.phoneNumber || '',
+      address: user.city && user.region ? `${user.city}, ${user.region}` : user.city || user.region || '',
+      bio: user.bio || '',
+      city: user.city || '',
+      region: user.region || '',
     },
   });
 
@@ -105,6 +116,8 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
       const addressInfo = await reverseGeocode(lat, lng);
       if (addressInfo) {
         setValue('address', addressInfo.address, { shouldValidate: true });
+        setValue('city', addressInfo.city, { shouldValidate: true });
+        setValue('region', addressInfo.province, { shouldValidate: true });
       }
     } catch (error) {
       console.error('Reverse geocoding error:', error);
@@ -127,6 +140,8 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
         setMapCenter(addressInfo.coordinates);
         // Important: setValue with shouldValidate: true but without triggering the watch again uncontrollably
         setValue('address', addressInfo.address, { shouldValidate: true });
+        setValue('city', addressInfo.city, { shouldValidate: true });
+        setValue('region', addressInfo.province, { shouldValidate: true });
         if (!silent) success('Location found on map!');
       } else {
         if (!silent) toastError('Address not found. Please try a more specific search.');
@@ -191,14 +206,21 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
     setIsLoading(true);
     loading('Synchronizing profile details...');
     try {
-      // Simulate API call with the updated image URL
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Profile Data:', { ...data, image: currentImageUrl });
+      // Call actual API to update profile
+      await updateUserProfileClient({
+        name: data.name,
+        phoneNumber: data.phone,
+        bio: data.bio,
+        image: currentImageUrl,
+        city: data.city,
+        region: data.region
+      });
       
       success('Profile updated successfully!');
+      router.refresh();
       onClose();
-    } catch (error) {
-      toastError('Failed to update profile. Please try again.');
+    } catch (error: any) {
+      toastError(error.message || 'Failed to update profile. Please try again.');
     } finally {
       setIsLoading(false);
     }

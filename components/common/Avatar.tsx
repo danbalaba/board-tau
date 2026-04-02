@@ -20,7 +20,7 @@ const getSafeImageSrc = (src: string | null | undefined): string | undefined => 
 
   if (isSafeProtocol || isRelative) {
     // Reconstruct the string using only safe URI characters
-    const safeUrl = src.split('').filter(c => /^[a-zA-Z0-9:/-_\. \?\#\&\%]$/.test(c)).join('');
+    const safeUrl = src.split('').filter(c => /^[a-zA-Z0-9:/\-_\. \?\#\&\%=\+~\!]$/.test(c)).join('');
     if (safeUrl === src) {
       return safeUrl;
     }
