@@ -22,6 +22,11 @@ import {
   IconBook,
   IconSeeding,
   IconCalendarFilled,
+  IconGenderFemale,
+  IconGenderMale,
+  IconPaw,
+  IconSmoking,
+  IconDeviceCctv,
 } from '@tabler/icons-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -325,9 +330,9 @@ export default function LandlordPropertyDetailsModal({
                       </h4>
                       <div className="space-y-4">
                         {[
-                          { key: 'femaleOnly', label: 'Female Only', icon: IconWoman, active: property.rules?.femaleOnly },
-                          { key: 'maleOnly', label: 'Male Only', icon: IconMan, active: property.rules?.maleOnly },
-                          { key: 'visitorsAllowed', label: 'Visitors Allowed', icon: IconFriends, active: property.rules?.visitorsAllowed },
+                          { key: 'femaleOnly', label: 'Female Only', icon: IconGenderFemale, active: property.rules?.femaleOnly },
+                          { key: 'maleOnly', label: 'Male Only', icon: IconGenderMale, active: property.rules?.maleOnly },
+                          { key: 'visitorsAllowed', label: 'Visitors Allowed', icon: IconUsers, active: property.rules?.visitorsAllowed },
                           { key: 'petsAllowed', label: 'Pets Allowed', icon: IconPaw, active: property.rules?.petsAllowed },
                           { key: 'smokingAllowed', label: 'Smoking Allowed', icon: IconSmoking, active: property.rules?.smokingAllowed },
                         ].map((rule) => (

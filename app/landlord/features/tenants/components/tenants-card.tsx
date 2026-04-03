@@ -109,39 +109,39 @@ export default function LandlordTenantCard({
 
       {/* Actions */}
       <div className="flex flex-wrap items-center justify-end gap-3 pt-6 mt-2 border-t border-gray-100 dark:border-gray-800">
-        <Button
-          outline
-          as={Link}
-          href={`/landlord/tenants/${tenant.id}`}
-          className="rounded-xl py-2 px-4 text-[10px] font-black uppercase tracking-widest border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-        >
-          <span className="flex items-center gap-2">
-            <IconEye size={14} />
-            Details
-          </span>
-        </Button>
-        <Button
-          outline
-          as={Link}
-          href={`/landlord/tenants/${tenant.id}?action=documents`}
-          className="rounded-xl py-2 px-4 text-[10px] font-black uppercase tracking-widest border-emerald-100 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-900/30"
-        >
-          <span className="flex items-center gap-2">
-            <IconFile size={14} />
-            Documents
-          </span>
-        </Button>
-        <Button
-          outline
-          as={Link}
-          href={`/landlord/tenants/${tenant.id}?action=history`}
-          className="rounded-xl py-2 px-4 text-[10px] font-black uppercase tracking-widest border-purple-100 text-purple-600 hover:bg-purple-50 dark:border-purple-900/30"
-        >
-          <span className="flex items-center gap-2">
-            <IconHistory size={14} />
-            History
-          </span>
-        </Button>
+        <Link href={`/landlord/tenants/${tenant.id}`} className="flex-1 md:flex-none">
+          <Button
+            outline
+            className="rounded-xl py-2 px-4 text-[10px] font-black uppercase tracking-widest border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+          >
+            <span className="flex items-center gap-2">
+              <IconEye size={14} />
+              Details
+            </span>
+          </Button>
+        </Link>
+        <Link href={`/landlord/tenants/${tenant.id}?action=documents`} className="flex-1 md:flex-none">
+          <Button
+            outline
+            className="rounded-xl py-2 px-4 text-[10px] font-black uppercase tracking-widest border-emerald-100 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-900/30"
+          >
+            <span className="flex items-center gap-2">
+              <IconFile size={14} />
+              Documents
+            </span>
+          </Button>
+        </Link>
+        <Link href={`/landlord/tenants/${tenant.id}?action=history`} className="flex-1 md:flex-none">
+          <Button
+            outline
+            className="rounded-xl py-2 px-4 text-[10px] font-black uppercase tracking-widest border-purple-100 text-purple-600 hover:bg-purple-50 dark:border-purple-900/30"
+          >
+            <span className="flex items-center gap-2">
+              <IconHistory size={14} />
+              History
+            </span>
+          </Button>
+        </Link>
       </div>
 
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-[32px]" />

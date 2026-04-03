@@ -48,6 +48,8 @@ interface ProfileSettingsModalProps {
     city?: string | null;
     region?: string | null;
     bio?: string | null;
+    isVerifiedLandlord?: boolean;
+    landlordApprovedAt?: Date | null;
   };
 }
 

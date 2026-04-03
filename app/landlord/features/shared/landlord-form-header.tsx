@@ -3,7 +3,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
-import { TablerIconsProps } from '@tabler/icons-react';
 
 interface LandlordFormHeaderProps {
   title: string;
