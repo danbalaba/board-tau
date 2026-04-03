@@ -54,8 +54,8 @@ interface LandlordTopbarProps {
     email: string | null;
     image: string | null;
     role: string;
-    isVerifiedLandlord?: boolean;
-    landlordApprovedAt?: Date | null;
+    isVerifiedLandlord: boolean;
+    landlordApprovedAt: Date | null;
     phoneNumber?: string | null;
     city?: string | null;
     region?: string | null;
