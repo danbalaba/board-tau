@@ -1,6 +1,6 @@
 import { getCurrentUser } from "@/services/user";
 import { db } from "@/lib/db";
-import LandlordReservationsClient from "../components/pages/reservations/LandlordReservationsClient";
+import LandlordReservationsFeature from '../features/reservations';
 
 export default async function LandlordReservationsPage() {
   const user = await getCurrentUser();
@@ -42,5 +42,5 @@ export default async function LandlordReservationsPage() {
     },
   });
 
-  return <LandlordReservationsClient reservations={reservations} />;
+  return <LandlordReservationsFeature reservations={reservations as any} />;
 }

@@ -1,4 +1,4 @@
-import LandlordCreatePropertyClient from '../../components/pages/properties/LandlordCreatePropertyClient';
+import LandlordPropertyEditorCreate from '../../features/property-management/landlord-property-editor-create';
 
 export const metadata = {
   title: 'Add Property - Landlord Dashboard',
@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function LandlordCreatePropertyPage() {
-  return <LandlordCreatePropertyClient />;
+  return <LandlordPropertyEditorCreate />;
 }

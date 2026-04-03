@@ -1,5 +1,5 @@
 import { getLandlordDashboardStats, getRevenueReport, getOccupancyReport } from '@/services/landlord/analytics';
-import LandlordAnalyticsClient from '../components/pages/analytics/LandlordAnalyticsClient';
+import LandlordAnalyticsFeature from '../features/analytics';
 import { requireLandlord } from '@/lib/landlord';
 
 export const metadata = {
@@ -13,5 +13,5 @@ export default async function LandlordAnalyticsPage() {
   const revenue = await getRevenueReport();
   const occupancy = await getOccupancyReport();
 
-  return <LandlordAnalyticsClient stats={stats} revenue={revenue} occupancy={occupancy} />;
+  return <LandlordAnalyticsFeature stats={stats} revenue={revenue} occupancy={occupancy} />;
 }

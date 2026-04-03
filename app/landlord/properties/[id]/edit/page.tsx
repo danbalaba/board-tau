@@ -1,6 +1,6 @@
 import { getLandlordPropertyById } from "@/services/landlord/properties";
 import { notFound, redirect } from "next/navigation";
-import LandlordEditPropertyClient from "../../../components/pages/properties/LandlordEditPropertyClient";
+import LandlordPropertyEditorEdit from "../../../features/property-management/landlord-property-editor-edit";
 
 export const metadata = {
   title: 'Edit Property - Landlord Dashboard',
@@ -27,7 +27,7 @@ const EditPropertyPage = async ({ params }: EditPropertyPageProps) => {
   }
 
   return (
-    <LandlordEditPropertyClient initialData={property} />
+    <LandlordPropertyEditorEdit initialData={property} />
   );
 };
 

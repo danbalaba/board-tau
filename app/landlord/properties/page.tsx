@@ -1,8 +1,8 @@
 import { getLandlordProperties } from '@/services/landlord/properties';
-import LandlordPropertiesClient from '../components/pages/properties/LandlordPropertiesClient';
+import LandlordPropertyManagementFeature from '../features/property-management';
 
 export default async function LandlordPropertiesPage() {
   const properties = await getLandlordProperties();
 
-  return <LandlordPropertiesClient properties={properties} />;
+  return <LandlordPropertyManagementFeature properties={properties} />;
 }

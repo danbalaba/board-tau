@@ -1,4 +1,4 @@
-import LandlordSettingsClient from '../components/pages/settings/LandlordSettingsClient';
+import LandlordSettingsFeature from '../features/settings';
 import { requireLandlord } from '@/lib/landlord';
 
 export const metadata = {
@@ -9,5 +9,5 @@ export const metadata = {
 export default async function LandlordSettingsPage() {
   await requireLandlord();
 
-  return <LandlordSettingsClient />;
+  return <LandlordSettingsFeature />;
 }

@@ -1,5 +1,5 @@
 import { getLandlordTenants } from '@/services/landlord/tenants';
-import LandlordTenantsClient from '../components/pages/tenants/LandlordTenantsClient';
+import LandlordTenantsFeature from '../features/tenants';
 import { requireLandlord } from '@/lib/landlord';
 
 export const metadata = {
@@ -11,5 +11,5 @@ export default async function LandlordTenantsPage() {
   await requireLandlord();
   const tenants = await getLandlordTenants();
 
-  return <LandlordTenantsClient tenants={tenants} />;
+  return <LandlordTenantsFeature tenants={tenants} />;
 }

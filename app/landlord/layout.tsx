@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { requireLandlord } from '@/lib/landlord';
-import LandlordLayoutClient from './components/layout/LandlordLayoutClient';
+import LandlordLayoutClientRoot from './features/layout/landlord-layout-client-root';
 import { Inter } from 'next/font/google';
 import '@/app/globals.css';
 import 'react-loading-skeleton/dist/skeleton.css';
@@ -24,9 +24,9 @@ export default async function LandlordLayout({
 
   return (
     <div className={`${inter.variable} ${inter.className} font-sans antialiased`}>
-      <LandlordLayoutClient user={landlord}>
+      <LandlordLayoutClientRoot user={landlord}>
         {children}
-      </LandlordLayoutClient>
+      </LandlordLayoutClientRoot>
     </div>
   );
 }
