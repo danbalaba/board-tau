@@ -3,35 +3,26 @@ import { LISTINGS_BATCH, TAU_COORDINATES } from "@/utils/constants";
 import { haversineKm } from "@/utils/helper";
 import { getCurrentUser } from "../user";
 import { getFallbackListings } from "./fallback";
+import { cache } from "@/lib/redis";
 
 // Generate AI-ready embedding text
 const generateEmbeddingText = (listing: any): string => {
   const parts = [
     listing.title,
     listing.description,
-    // Amenities (from ListingAmenity)
-    listing.amenities?.wifi ? "wifi" : "",
-    listing.amenities?.parking ? "parking" : "",
-    listing.amenities?.pool ? "pool" : "",
-    listing.amenities?.gym ? "gym" : "",
-    listing.amenities?.airConditioning ? "air conditioning" : "",
-    listing.amenities?.laundry ? "laundry" : "",
-    // Categories
-    ...(listing.categories || []).map((lc: any) => lc.category?.name || ""),
-    // Rules (from ListingRule)
-    listing.rules?.femaleOnly ? "female only" : "",
-    listing.rules?.maleOnly ? "male only" : "",
-    listing.rules?.visitorsAllowed ? "visitors allowed" : "",
-    listing.rules?.petsAllowed ? "pets allowed" : "",
-    listing.rules?.smokingAllowed ? "smoking allowed" : "",
-    // Features (from ListingFeature)
-    listing.features?.security24h ? "24/7 security" : "",
-    listing.features?.cctv ? "CCTV" : "",
-    listing.features?.fireSafety ? "fire safety" : "",
-    listing.features?.nearTransport ? "near public transport" : "",
-    listing.features?.studyFriendly ? "study friendly" : "",
-    listing.features?.quietEnvironment ? "quiet environment" : "",
-    listing.features?.flexibleLease ? "flexible lease" : "",
+    // BoardTAU Philippine-specific context
+    ...(listing.amenities_list || []),
+    ...(listing.category || []),
+    // Detailed rules
+    listing.rules?.femaleOnly ? "female only boarding house" : "",
+    listing.rules?.maleOnly ? "male only boarding house" : "",
+    listing.rules?.visitorsAllowed ? "visitors allowed" : "visitors strictly prohibited",
+    listing.rules?.petsAllowed ? "pet friendly" : "",
+    // High-value safety features
+    listing.features?.security24h ? "24/7 security guard" : "",
+    listing.features?.cctv ? "CCTV monitoring" : "",
+    listing.features?.nearTransport ? "near public transport tricycle" : "",
+    listing.features?.studyFriendly ? "quiet study friendly environment" : "",
   ];
 
   return parts.filter(Boolean).join(" ").toLowerCase();
@@ -41,7 +32,14 @@ export const getListings = async (query?: {
   [key: string]: string | string[] | undefined | null;
 }) => {
   try {
-    console.log("🔍 RAW PARAMS:", query);
+    // 1. Generate stable cache key
+    const cacheKey = cache.generateKey('listings', query);
+
+    // 2. Try to get from cache first
+    const cachedData = await cache.get(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
 
     // Parse query parameters with proper type conversion
     const parsedQuery = {
@@ -89,8 +87,6 @@ export const getListings = async (query?: {
       moveInDate: query?.moveInDate,
       stayDuration: query?.stayDuration,
     };
-
-    console.log("📋 PARSED FILTERS:", parsedQuery);
 
     const {
       userId,
@@ -226,13 +222,15 @@ export const getListings = async (query?: {
     }
 
     if (categoriesArr && Array.isArray(categoriesArr) && categoriesArr.length > 0) {
+      // Use denormalized category array for fast search
       listingWhere.category = { hasSome: categoriesArr };
     } else if (category) {
       listingWhere.category = { hasSome: [category] };
     }
 
     if (amenities && Array.isArray(amenities) && amenities.length > 0) {
-      listingWhere.amenities = { hasSome: amenities };
+      // Use denormalized amenities_list array
+      listingWhere.amenities_list = { hasSome: amenities };
     }
 
     // Gender restrictions (listing-level)
@@ -297,17 +295,15 @@ export const getListings = async (query?: {
       },
     };
 
-    console.log("🔍 PRISMA WHERE:", primaryQuery.where);
-
     let primaryListings = await db.listing.findMany(primaryQuery);
-
-    console.log("✅ STRICTER RESULTS (Primary):", primaryListings.length);
 
     // If no primary listings found, trigger fallback immediately
     if (primaryListings.length === 0) {
-      console.log("⚠️ PRIMARY FILTER RETURNED 0 RESULTS - TRIGGERING FALLBACK");
       const fallbackResult = await getFallbackListings(parsedQuery);
-      console.log("🔄 FALLBACK ACTIVATED - RETURNED", fallbackResult.listings.length, "RESULTS");
+      
+      // Cache fallback results for a shorter time (2 minutes)
+      await cache.set(cacheKey, fallbackResult, 120);
+      
       return fallbackResult;
     }
 
@@ -322,79 +318,60 @@ export const getListings = async (query?: {
       });
     }
 
-    // Calculate scores for all primary listings (including secondary filter scoring)
+    // Calculate scores for all primary listings (Heuristic v2.0)
     const scoredListings = primaryListings.map((listing) => {
-      const distanceKm = haversineKm(lat, lng, (listing as any).latitude || 0, (listing as any).longitude || 0);
-
-      // Calculate secondary filter scores
-      let score = 100; // Base score for meeting primary filters
+      // 1. Calculate Secondary Filter Scores (Weighted 50%)
       let secondaryScore = 0;
       let secondaryTotal = 0;
 
-      // Amenities match (secondary filter)
+      // Amenities match (secondary filter score)
       if (amenities && Array.isArray(amenities) && amenities.length > 0) {
         secondaryTotal += amenities.length;
-        const amenitiesMatch = amenities.filter((amenity: string) => {
-          const amenityKey = amenity.toLowerCase().replace(/\s+/g, '');
-          switch(amenityKey) {
-            case 'wifi':
-              return (listing as any).amenities?.wifi;
-            case 'parking':
-              return (listing as any).amenities?.parking;
-            case 'pool':
-              return (listing as any).amenities?.pool;
-            case 'gym':
-              return (listing as any).amenities?.gym;
-            case 'airconditioning':
-            case 'airconditioner':
-              return (listing as any).amenities?.airConditioning;
-            case 'laundry':
-              return (listing as any).amenities?.laundry;
-            default:
-              return false;
-          }
-        }).length;
+        const amenitiesMatch = amenities.filter((a: string) => 
+          (listing as any).amenities_list?.some((la: string) => la.toLowerCase() === a.toLowerCase())
+        ).length;
         secondaryScore += amenitiesMatch;
       }
 
-      // Rules match (secondary filter)
-      const rules = [
-        { key: "visitorsAllowed", value: visitorsAllowed },
-        { key: "petsAllowed", value: petsAllowed },
-        { key: "smokingAllowed", value: smokingAllowed },
+      // Rules / General Filters match
+      const secondaries = [
+        { val: visitorsAllowed, key: "visitorsAllowed", type: 'rule' },
+        { val: petsAllowed, key: "petsAllowed", type: 'rule' },
+        { val: smokingAllowed, key: "smokingAllowed", type: 'rule' },
       ];
 
-      // Advanced features match (secondary filter)
-      const advancedFeatures = [
-        { key: "security24h", value: security24h },
-        { key: "cctv", value: cctv },
-        { key: "fireSafety", value: fireSafety },
-        { key: "nearTransport", value: nearTransport },
-        { key: "studyFriendly", value: studyFriendly },
-        { key: "quietEnvironment", value: quietEnvironment },
-        { key: "flexibleLease", value: flexibleLease },
-      ];
-
-      [...rules, ...advancedFeatures].forEach((rule) => {
-        if (rule.value) {
+      secondaries.forEach((s) => {
+        if (s.val) {
           secondaryTotal++;
-          if ((listing as any)[rule.key]) {
-            secondaryScore++;
-          }
+          if ((listing as any).rules?.[s.key]) secondaryScore++;
         }
       });
 
-      // Calculate final score with secondary filter contribution
-      if (secondaryTotal > 0) {
-        const secondaryPercentage = (secondaryScore / secondaryTotal) * 50; // 50% of total score is secondary
-        score = 50 + secondaryPercentage; // 50% for primary, 50% for secondary
-      }
+      // Calculate secondary contribution (max 50 points)
+      const secondaryPoints = secondaryTotal > 0 
+        ? (secondaryScore / secondaryTotal) * 50 
+        : 50; // Full points if no secondary filters selected
+
+      // 2. Advanced Feature Multipliers (Bonus Points - Up to +40 based on docs)
+      // These are applied even if the user DIDN'T explicitly filter for them.
+      // But if they DID filter for them (in advancedSelected), we give them more weight.
+      
+      let bonusPoints = 0;
+      const f = (listing as any).features;
+      if (f?.cctv) bonusPoints += 15;
+      if (f?.security24h) bonusPoints += 10;
+      if (f?.nearTransport) bonusPoints += 10;
+      if (f?.studyFriendly) bonusPoints += 5;
+
+      // 3. Final Heuristic Score (Base 50 for Primary + max 50 for Secondary + Bonus)
+      // We cap the total score at 100 for display normalization.
+      const finalScore = Math.min(100, (50 + secondaryPoints + (bonusPoints / 40) * 10));
 
       const embeddingText = generateEmbeddingText(listing);
 
       return {
         ...listing,
-        score: Math.round(score),
+        score: Math.round(finalScore),
         embeddingText,
       };
     });
@@ -436,14 +413,17 @@ export const getListings = async (query?: {
       }
     }
 
-    console.log("🎉 FINAL RESULTS RETURNED:", paginatedListings.length);
-
-    return {
-      type: "exact",
+    const response = {
+      type: "exact" as const,
       message: "Showing exact matches",
       listings: paginatedListings,
       nextCursor,
     };
+
+    // Cache the result for 10 minutes
+    await cache.set(cacheKey, response, 600);
+
+    return response;
   } catch (error) {
     console.error("Error getting listings:", error);
     return {
@@ -456,6 +436,14 @@ export const getListings = async (query?: {
 };
 
 export const getListingById = async (id: string) => {
+  const cacheKey = `listing:id:${id}`;
+  
+  // Try cache
+  const cachedData = await cache.get(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
+
   const listing = await db.listing.findUnique({
     where: {
       id,
@@ -506,6 +494,11 @@ export const getListingById = async (id: string) => {
       },
     },
   });
+
+  if (listing) {
+    // Cache individual listing for 30 minutes
+    await cache.set(cacheKey, listing, 1800);
+  }
 
   return listing;
 };
@@ -560,14 +553,20 @@ export const createListing = async (data: { [x: string]: any }) => {
       },
       price: parseInt(price, 10),
       userId: user.id,
+      category: Array.isArray(category) ? category : category ? [category] : [],
+      amenities_list: Array.isArray(amenities) ? amenities : [],
       amenities: {
         create: {
           wifi: amenities.includes("WiFi"),
           parking: amenities.includes("Parking"),
-          pool: amenities.includes("Pool"),
-          gym: amenities.includes("Gym"),
+          cookingAllowed: amenities.includes("Kitchen Access") || amenities.includes("Kitchen / Cooking Allowed"),
+          waterDispenser: amenities.includes("Water Dispenser"),
+          sariSariStore: amenities.includes("Store Nearby") || amenities.includes("Sari-Sari Store / Canteen Nearby"),
+          commonTV: amenities.includes("Common TV"),
+          kitchen: amenities.includes("Kitchen Access"),
+          gated: amenities.includes("Gated / Secure"),
           airConditioning: amenities.includes("Air conditioning"),
-          laundry: amenities.includes("Laundry area"),
+          laundry: amenities.includes("Laundry area") || amenities.includes("Laundry Area / Sampayan"),
         },
       } as any,
       rules: {
@@ -593,8 +592,11 @@ export const createListing = async (data: { [x: string]: any }) => {
       rooms: {
         create: rooms,
       },
-    },
+    } as any,
   });
+
+  // ⚡ INVALDATION: Clear all listings caches when a new listing is created
+  await cache.delPattern("listings:*");
 
   return listing;
 };
