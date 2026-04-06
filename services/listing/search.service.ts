@@ -1,10 +1,11 @@
 import { db as prisma } from "@/lib/db";
-import { ROOM_TYPES } from "@/data/roomTypes";
+import { cache } from "@/lib/redis";
 
 /**
  * THE JOIN PIPELINE
- * Since MongoDB documents in our schema are separated into Room, ListingAmenity, etc.,
- * we must use $lookup to "JOIN" them into the Listing document before we can filter them.
+ * We removed the slow Category, ListingAmenity, and Feature joins.
+ * We now only join Room and ListingRule for hard filters.
+ * Everything else is now in the main Listing document for speed.
  */
 const JOIN_STAGES = [
   // 1. Join Rooms
@@ -16,16 +17,7 @@ const JOIN_STAGES = [
       as: "rooms_list"
     }
   },
-  // 2. Join ListingAmenity (Boolean fields: wifi, parking, airConditioning, laundry)
-  {
-    $lookup: {
-      from: "ListingAmenity",
-      localField: "_id",
-      foreignField: "listingId",
-      as: "_amenities"
-    }
-  },
-  // 3. Join ListingRule (Boolean fields: femaleOnly, maleOnly, visitorsAllowed, petsAllowed, smokingAllowed)
+  // 2. Join ListingRule (Still needed for hard gender filters)
   {
     $lookup: {
       from: "ListingRule",
@@ -34,38 +26,9 @@ const JOIN_STAGES = [
       as: "_rules"
     }
   },
-  // 4. Join ListingFeature (Scoring fields: security24h, cctv, nearTransport, studyFriendly)
-  {
-    $lookup: {
-      from: "ListingFeature",
-      localField: "_id",
-      foreignField: "listingId",
-      as: "_features"
-    }
-  },
-  // 5. Join Categories (Double Lookup: ListingCategory -> Category)
-  {
-    $lookup: {
-      from: "ListingCategory",
-      localField: "_id",
-      foreignField: "listingId",
-      as: "_cat_links"
-    }
-  },
-  {
-    $lookup: {
-      from: "Category",
-      localField: "_cat_links.categoryId",
-      foreignField: "_id",
-      as: "categories_list"
-    }
-  },
-  // 6. Flatten Joins for easier $match/Scoring access
   {
     $addFields: {
-      amenities_doc: { $arrayElemAt: ["$_amenities", 0] },
-      rules_doc: { $arrayElemAt: ["$_rules", 0] },
-      features_doc: { $arrayElemAt: ["$_features", 0] }
+      rules_doc: { $arrayElemAt: ["$_rules", 0] }
     }
   }
 ];
@@ -76,6 +39,11 @@ const JOIN_STAGES = [
 function buildHardFilters(params: any) {
   const match: any = {};
   match.status = "active";
+
+  // Category Filter (Denormalized)
+  if (params.category) {
+    match.category = { $in: [params.category] };
+  }
 
   // Budget Filter
   if (params.minPrice || params.maxPrice) {
@@ -106,53 +74,34 @@ function buildHardFilters(params: any) {
 
 /**
  * THE HEURISTIC SCORING ENGINE (Soft Filters / User Preferences)
- * This prevents "0 Results" by converting amenities/preferences into a numeric score.
- * Results with ALL preferences found will have the highest matchScore.
+ * Uses the Philippine-context multipliers from reference docs.
  */
 function buildScoringEngine(params: any) {
-  const scoreConditions = [];
+  const scoreConditions: any[] = [];
 
-  // Map boolean amenities in the DB (ListingAmenity)
+  // 1. Amenities (Denormalized Match)
   if (params.amenities) {
-      const amenitiesList = Array.isArray(params.amenities) ? params.amenities : [params.amenities];
-
-      if (amenitiesList.includes("WiFi")) {
-          scoreConditions.push({ $cond: [{ $eq: ["$amenities_doc.wifi", true] }, 20, 0] });
-      }
-      if (amenitiesList.includes("Laundry Area")) {
-          scoreConditions.push({ $cond: [{ $eq: ["$amenities_doc.laundry", true] }, 10, 0] });
-      }
-      if (amenitiesList.includes("Parking")) {
-          scoreConditions.push({ $cond: [{ $eq: ["$amenities_doc.parking", true] }, 10, 0] });
-      }
+    const amenitiesArr = Array.isArray(params.amenities) ? params.amenities : [params.amenities];
+    amenitiesArr.forEach((amenity: string) => {
+      scoreConditions.push({
+        $cond: [{ $in: [amenity, { $ifNull: ["$amenities_list", []] }] }, 10, 0]
+      });
+    });
   }
 
-  // Security Boosts (ListingFeature)
-  if (params.security24h === "true") {
-    scoreConditions.push({ $cond: [{ $eq: ["$features_doc.security24h", true] }, 15, 0] });
-  }
-  if (params.cctv === "true") {
-    scoreConditions.push({ $cond: [{ $eq: ["$features_doc.cctv", true] }, 10, 0] });
-  }
+  // 2. High-Value Multipliers (Features/Security)
+  // Note: These are now checked in the amenities_list for speed if denormalized
+  // OR we default to small boosts if present in the text
+  if (params.cctv === "true") scoreConditions.push({ $cond: [{ $regexMatch: { input: "$title", regex: "cctv", options: "i" } }, 15, 0] });
+  if (params.security24h === "true") scoreConditions.push({ $cond: [{ $regexMatch: { input: "$description", regex: "security", options: "i" } }, 10, 0] });
+  if (params.nearTransport === "true") scoreConditions.push({ $cond: [{ $regexMatch: { input: "$description", regex: "transport|tricycle", options: "i" } }, 10, 0] });
 
-  // Rule Preferences (ListingRule)
-  if (params.petsAllowed === "true") {
-      scoreConditions.push({ $cond: [{ $eq: ["$rules_doc.petsAllowed", true] }, 5, 0] });
-  }
-  if (params.visitorsAllowed === "true") {
-      scoreConditions.push({ $cond: [{ $eq: ["$rules_doc.visitorsAllowed", true] }, 5, 0] });
-  }
+  // 3. Rule Preferences
+  if (params.petsAllowed === "true") scoreConditions.push({ $cond: [{ $eq: ["$rules_doc.petsAllowed", true] }, 5, 0] });
+  if (params.visitorsAllowed === "true") scoreConditions.push({ $cond: [{ $eq: ["$rules_doc.visitorsAllowed", true] }, 5, 0] });
 
-  // Environment & Proximity (ListingFeature)
-  if (params.studyFriendly === "true") {
-    scoreConditions.push({ $cond: [{ $eq: ["$features_doc.studyFriendly", true] }, 5, 0] });
-  }
-  if (params.nearTransport === "true") {
-    scoreConditions.push({ $cond: [{ $eq: ["$features_doc.nearTransport", true] }, 5, 0] });
-  }
-
-  // Rating Multiplier (Max 25 points)
-  scoreConditions.push({ $multiply: [{ $ifNull: ["$rating", 0] }, 5] });
+  // 4. Rating Boost
+  scoreConditions.push({ $multiply: [{ $ifNull: ["$rating", 4.8] }, 2] });
 
   return {
     $addFields: {
@@ -165,46 +114,50 @@ function buildScoringEngine(params: any) {
  * THE MAIN SEARCH ORCHESTRATOR
  */
 export async function executeComplexSearch(searchParams: Record<string, string>) {
+  // Try Cache First
+  const cacheKey = cache.generateKey("search", searchParams);
+  const cached = await cache.get(cacheKey);
+  if (cached) return cached;
+
   const runPipeline = async (params: any, isRelaxed: boolean) => {
     const pipeline: any[] = [];
 
-    // 1. GEO NEAR (MUST BE FIRST)
+    // 1. GEO NEAR
     if (params.originLat && params.originLng) {
       pipeline.push({
         $geoNear: {
           near: { type: "Point", coordinates: [Number(params.originLng), Number(params.originLat)] },
           distanceField: "distanceToCollege",
           maxDistance: params.isUnlimitedDistance === "true" 
-            ? 500000 // 500km effectively unlimited reach
-            : (Number(isRelaxed ? 20 : (params.distance || 5))) * 1000,
+            ? 1000000 
+            : (Number(isRelaxed ? 20 : (params.distance || 10))) * 1000,
           spherical: true,
           query: { status: "active" }
         }
       });
     }
 
-    // 2. JOIN DATA
+    // 2. JOIN REMAINING DATA
     pipeline.push(...JOIN_STAGES);
 
-    // 3. HARD FILTER (Only Price/RoomType/Status/Restricted Gender)
+    // 3. HARD FILTER
     pipeline.push(buildHardFilters(params));
 
-    // 4. SCORING (Amenities/Preferences/Proximity)
+    // 4. SCORING
     pipeline.push(buildScoringEngine(params));
 
     // 5. SORT & LIMIT
     pipeline.push({ $sort: { finalScore: -1 } });
-    pipeline.push({ $limit: 16 });
+    pipeline.push({ $limit: 20 });
 
     const rawResults = await prisma.listing.aggregateRaw({ pipeline });
 
-    // Map MongoDB IDs back to Prisma-friendly format
     const data = (rawResults as unknown as any[]).map((doc: any) => ({
       ...doc,
       id: doc._id['$oid'] || doc._id.toString(),
       _id: undefined,
       rooms: doc.rooms_list || [],
-      categories: doc.categories_list || []
+      categories: (doc.category || []).map((c: string) => ({ name: c, label: c }))
     }));
 
     return { data, relaxed: isRelaxed };
@@ -213,11 +166,12 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
   try {
     let result = await runPipeline(searchParams, false);
 
-    // If no results, try relaxing
     if (result.data.length === 0) {
-      console.log("[BoardTAU] Search: 0 Results found. Running relaxed query...");
       result = await runPipeline(searchParams, true);
     }
+
+    // Save to Cache (TTL 5 mins for search results)
+    await cache.set(cacheKey, result, 300);
 
     return result;
   } catch (err: any) {

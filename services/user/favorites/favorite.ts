@@ -3,12 +3,17 @@
 import { db } from "@/lib/db";
 import { getCurrentUser } from "../user";
 import { revalidatePath } from "next/cache";
+import { cache } from "@/lib/redis";
 
 export const getFavorites = async () => {
   try {
     const user = await getCurrentUser();
-
     if (!user) return [];
+
+    const cacheKey = `user:favorites:${user.id}`;
+    const cached = await cache.get(cacheKey);
+    if (cached) return cached;
+
     const data = await db.user.findUnique({
       where: {
         id: user.id,
@@ -18,7 +23,9 @@ export const getFavorites = async () => {
       },
     });
 
-    return data?.favoriteIds ?? [];
+    const favorites = data?.favoriteIds ?? [];
+    await cache.set(cacheKey, favorites, 300); // 5 mins
+    return favorites;
   } catch (error) {
     return [];
   }
@@ -47,7 +54,7 @@ export const updateFavorite = async ({
     let hasFavorited;
 
     if (!favorite) {
-      newFavorites = favorites.filter((id) => id !== listingId);
+      newFavorites = favorites.filter((id: string) => id !== listingId);
       hasFavorited = false;
     } else {
       if (favorites.includes(listingId)) {
@@ -66,6 +73,9 @@ export const updateFavorite = async ({
         favoriteIds: newFavorites,
       },
     });
+
+    // Invalidate favorites cache
+    await cache.del(`user:favorites:${currentUser.id}`);
 
     revalidatePath("/");
     revalidatePath(`/listings/${listingId}`);

@@ -45,11 +45,20 @@ export function RoleFormModal({
   });
 
   React.useEffect(() => {
+    if (!open) return;
+
     if (initialData) {
-      setFormData({
-        name: initialData.name,
-        description: initialData.description || '',
-        permissions: initialData.permissions || []
+      setFormData(prev => {
+        // Prevent update loop if data is already in sync
+        if (prev.name === initialData.name && 
+            JSON.stringify(prev.permissions) === JSON.stringify(initialData.permissions || [])) {
+          return prev;
+        }
+        return {
+          name: initialData.name,
+          description: initialData.description || '',
+          permissions: initialData.permissions || []
+        };
       });
     } else {
       setFormData({
@@ -79,7 +88,10 @@ export function RoleFormModal({
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const modules = Array.from(new Set(permissions.map((p: any) => p.module)));
+  const modules = React.useMemo(() => 
+    Array.from(new Set(permissions.map((p: any) => p.module))),
+    [permissions]
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -163,6 +175,7 @@ export function RoleFormModal({
                                 <Checkbox 
                                   checked={isSelected}
                                   onCheckedChange={() => togglePermission(permission.name)}
+                                  onClick={(e) => e.stopPropagation()}
                                 />
                                 <div className="space-y-1">
                                   <p className="text-xs font-semibold leading-none">{permission.name}</p>

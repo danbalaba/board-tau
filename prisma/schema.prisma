@@ -162,6 +162,12 @@ model ListingAmenity {
   gym             Boolean   @default(false)
   airConditioning Boolean   @default(false)
   laundry         Boolean   @default(false)
+  cookingAllowed  Boolean   @default(false)
+  waterDispenser  Boolean   @default(false)
+  sariSariStore   Boolean   @default(false)
+  commonTV        Boolean   @default(false)
+  kitchen         Boolean   @default(false)
+  gated           Boolean   @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -281,6 +287,8 @@ model Listing {
   approvedBy        String?   @db.ObjectId
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  category          String[]  @default([])
+  amenities_list    String[]  @default([])
   amenities_tags    String[]  @default([])
 
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -229,7 +229,9 @@ export const createProperty = async (data: any) => {
         userId: landlord.id,
         status: "pending",
         imageSrc: safeImages[0] || "",
-      },
+        category: safeCategory,
+        amenities_list: safeAmenities,
+      } as any,
     });
     console.log("DEBUG: Base listing created:", listing.id);
 
@@ -243,7 +245,13 @@ export const createProperty = async (data: any) => {
         gym: safeAmenities.some((a: string) => String(a).toLowerCase().includes("gym")),
         airConditioning: safeAmenities.some((a: string) => String(a).toLowerCase().includes("air cond")),
         laundry: safeAmenities.some((a: string) => String(a).toLowerCase().includes("laundry")),
-      }
+        cookingAllowed: safeAmenities.some((a: string) => String(a).toLowerCase().includes("cook") || String(a).toLowerCase().includes("kitchen")),
+        waterDispenser: safeAmenities.some((a: string) => String(a).toLowerCase().includes("water")),
+        sariSariStore: safeAmenities.some((a: string) => String(a).toLowerCase().includes("store") || String(a).toLowerCase().includes("canteen")),
+        commonTV: safeAmenities.some((a: string) => String(a).toLowerCase().includes("tv")),
+        kitchen: safeAmenities.some((a: string) => String(a).toLowerCase().includes("kitchen")),
+        gated: safeAmenities.some((a: string) => String(a).toLowerCase().includes("gate")),
+      } as any
     });
     console.log("DEBUG: Amenities created");
 
@@ -473,11 +481,13 @@ export const updateProperty = async (propertyId: string, data: any) => {
     listingUpdateData.longitude = safeLng;
     listingUpdateData.location = { type: "Point", coordinates: [safeLng, safeLat] };
     listingUpdateData.status = "pending";
+    listingUpdateData.category = safeCategory;
+    listingUpdateData.amenities_list = safeAmenities;
 
     const listing = Object.keys(listingUpdateData).length > 0 
       ? await db.listing.update({
           where: { id: propertyId },
-          data: listingUpdateData,
+          data: listingUpdateData as any,
         })
       : existing;
 
@@ -496,7 +506,13 @@ export const updateProperty = async (propertyId: string, data: any) => {
             gym: safeAmenities.some((a: string) => String(a).toLowerCase().includes("gym")),
             airConditioning: safeAmenities.some((a: string) => String(a).toLowerCase().includes("air cond")),
             laundry: safeAmenities.some((a: string) => String(a).toLowerCase().includes("laundry")),
-          },
+            cookingAllowed: safeAmenities.some((a: string) => String(a).toLowerCase().includes("cook") || String(a).toLowerCase().includes("kitchen")),
+            waterDispenser: safeAmenities.some((a: string) => String(a).toLowerCase().includes("water")),
+            sariSariStore: safeAmenities.some((a: string) => String(a).toLowerCase().includes("store") || String(a).toLowerCase().includes("canteen")),
+            commonTV: safeAmenities.some((a: string) => String(a).toLowerCase().includes("tv")),
+            kitchen: safeAmenities.some((a: string) => String(a).toLowerCase().includes("kitchen")),
+            gated: safeAmenities.some((a: string) => String(a).toLowerCase().includes("gate")),
+          } as any,
           create: {
             listingId: propertyId,
             wifi: safeAmenities.some((a: string) => String(a).toLowerCase().includes("wifi")),
@@ -505,7 +521,13 @@ export const updateProperty = async (propertyId: string, data: any) => {
             gym: safeAmenities.some((a: string) => String(a).toLowerCase().includes("gym")),
             airConditioning: safeAmenities.some((a: string) => String(a).toLowerCase().includes("air cond")),
             laundry: safeAmenities.some((a: string) => String(a).toLowerCase().includes("laundry")),
-          }
+            cookingAllowed: safeAmenities.some((a: string) => String(a).toLowerCase().includes("cook") || String(a).toLowerCase().includes("kitchen")),
+            waterDispenser: safeAmenities.some((a: string) => String(a).toLowerCase().includes("water")),
+            sariSariStore: safeAmenities.some((a: string) => String(a).toLowerCase().includes("store") || String(a).toLowerCase().includes("canteen")),
+            commonTV: safeAmenities.some((a: string) => String(a).toLowerCase().includes("tv")),
+            kitchen: safeAmenities.some((a: string) => String(a).toLowerCase().includes("kitchen")),
+            gated: safeAmenities.some((a: string) => String(a).toLowerCase().includes("gate")),
+          } as any
         })
       );
     }
