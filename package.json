@@ -6,14 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "npx eslint .",
     "type-check": "tsc --noEmit",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage --passWithNoTests",
     "seed": "npx prisma db seed",
     "postinstall": "prisma generate",
-    "build:check": "next build --no-lint"
+    "build:check": "next build"
   },
   "overrides": {
     "fast-xml-parser": "^5.5.6"

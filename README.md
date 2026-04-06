@@ -32,30 +32,41 @@ BoardTAU is a comprehensive web-based platform designed to revolutionize the sea
 
 ### 🛠️ Technology Stack
 
-#### Frontend
-- **Next.js 16**: React framework with server-side rendering
-- **TypeScript**: Type-safe development
-- **Tailwind CSS**: Utility-first CSS framework
-- **Framer Motion**: Smooth animations and transitions
-- **React Hook Form**: Form management
-- **React Leaflet**: Interactive maps
-- **Recharts**: Data visualization charts
+#### 🚀 Core Frameworks
+- **Next.js 16.2.2**: React framework with server-side rendering and App Router.
+- **React 19.2.4**: Modern UI component library for building interactive interfaces.
+- **TypeScript 5.x**: Static typing for safer and more predictable development.
+- **Tailwind CSS 3.4.1**: Utility-first CSS framework for rapid and responsive styling.
 
-#### Backend
-- **Next.js API Routes**: Serverless API endpoints
-- **Prisma ORM**: Database management
-- **MongoDB**: NoSQL database
-- **NextAuth.js**: Authentication and authorization
-- **NodeMailer**: Email notifications
+#### 🗄️ Database & Backend
+- **Prisma 5.22.0**: Type-safe ORM for database management and migrations.
+- **MongoDB**: NoSQL database for flexible and scalable data storage.
+- **NextAuth.js 4.24.13**: Secure authentication and authorization (Google & Credentials).
+- **NodeMailer 8.0.4**: Robust email notification system.
 
-#### File Storage & Payments
-- **EdgeStore**: Image and file storage
-- **Stripe**: Payment processing integration
+#### 🏗️ State & Data Management
+- **TanStack React Query 5.96.1**: Powerful data fetching and server state management.
+- **Zustand 5.0.12**: Lightweight and scalable global state management.
+- **Zod 4.3.6**: TypeScript-first schema validation for forms and API responses.
+- **React Hook Form 7.71.1**: Performance-oriented form management.
 
-#### Other Features
-- **OTP Verification**: Secure email verification
-- **Responsive Design**: Mobile-first approach
-- **Dark/Light Theme**: Customizable user experience
+#### 🎨 UI & Interactive Components
+- **Radix UI**: Headless UI components for accessible and high-quality interfaces.
+- **Framer Motion 12.29.3**: Professional animations and interactive transitions.
+- **Lucide React 1.7.0**: Consistent and modern icon system.
+- **Recharts 3.7.0 / Chart.js 4.5.1**: Data visualization and analytics dashboards.
+- **React Leaflet 5.0.0**: Interactive maps for property location visualization.
+
+#### 💳 File Storage & Payments
+- **EdgeStore 0.7.0**: Modern image and file storage solution.
+- **Stripe 20.4.1**: Secure payment processing for reservations and fees.
+- **AWS SDK 3.x**: Integration with AWS S3 and core services.
+
+#### 📱 Additional Features
+- **OTP Verification**: Secure email verification for account security.
+- **Nuqs 2.8.9**: Type-safe URL search parameters for advanced filtering.
+- **Sonner 2.0.7**: Sleek and customizable toast notifications.
+- **Responsive Design**: Mobile-first experience across all devices.
 
 ## 🚀 Getting Started
 
