@@ -21,7 +21,8 @@ import { IconTrophy, IconBinary } from "@tabler/icons-react"
 
 export const description = "Property Performance Metrics"
 
-const chartData = [
+// Data for Global (all properties combined)
+const globalChartData = [
   { metric: "Location", value: 85 },
   { metric: "Value", value: 90 },
   { metric: "Cleanliness", value: 75 },
@@ -29,6 +30,39 @@ const chartData = [
   { metric: "Communication", value: 95 },
   { metric: "Accuracy", value: 88 },
 ]
+
+// Data for Property A (Luxury) - higher performance scores
+const propertyAChartData = [
+  { metric: "Location", value: 92 },
+  { metric: "Value", value: 85 },
+  { metric: "Cleanliness", value: 88 },
+  { metric: "Amenities", value: 90 },
+  { metric: "Communication", value: 95 },
+  { metric: "Accuracy", value: 91 },
+]
+
+// Data for Property B (Studio) - different performance distribution
+const propertyBChartData = [
+  { metric: "Location", value: 78 },
+  { metric: "Value", value: 95 },
+  { metric: "Cleanliness", value: 82 },
+  { metric: "Amenities", value: 70 },
+  { metric: "Communication", value: 88 },
+  { metric: "Accuracy", value: 85 },
+]
+
+// Helper function to get the correct data based on property selection
+const getChartData = (propertyId: string) => {
+  switch (propertyId) {
+    case "prop-a":
+      return propertyAChartData;
+    case "prop-b":
+      return propertyBChartData;
+    case "all":
+    default:
+      return globalChartData;
+  }
+}
 
 const chartConfig = {
   value: {
@@ -40,6 +74,9 @@ const chartConfig = {
 export function ChartRadarDots() {
   const [propertyId, setPropertyId] = React.useState("all")
   const [viewType, setViewType] = React.useState("radar")
+
+  // Get the current chart data based on property selection
+  const chartData = getChartData(propertyId);
 
   return (
     <Card className="bg-transparent border-none shadow-none">
@@ -60,8 +97,8 @@ export function ChartRadarDots() {
             icon={<IconTrophy size={12} />}
             options={[
               { value: "all", label: "Global" },
-              { value: "prop-a", label: "Property A" },
-              { value: "prop-b", label: "Property B" },
+              { value: "prop-a", label: "Property A (Luxury)" },
+              { value: "prop-b", label: "Property B (Studio)" },
             ]}
           />
           <ModernSelect
