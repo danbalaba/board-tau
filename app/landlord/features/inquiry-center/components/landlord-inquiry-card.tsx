@@ -52,13 +52,13 @@ export function LandlordInquiryCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: idx * 0.05 }}
       className={cn(
-        "group relative bg-white dark:bg-gray-900 rounded-[40px] border border-gray-100 dark:border-gray-800 p-6 hover:border-primary/40 transition-all duration-500 shadow-xl shadow-gray-200/50 dark:shadow-none hover:shadow-2xl hover:-translate-y-2 overflow-hidden",
-        viewMode === "list" && "flex flex-col sm:flex-row gap-8 items-center"
+        "group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 transition-all duration-300 shadow-sm",
+        viewMode === "grid" ? "flex flex-col p-6 rounded-3xl hover:shadow-xl hover:-translate-y-1" : "flex flex-col sm:flex-row gap-6 p-6 rounded-2xl hover:shadow-xl"
       )}
     >
       <div className={cn(
-        "relative rounded-[24px] overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 z-10",
-        viewMode === "grid" ? "h-48 mb-5 w-full" : "w-full sm:w-48 h-40"
+        "relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 z-10",
+        viewMode === "grid" ? "h-44 mb-6 w-full" : "w-full sm:w-48 h-40"
       )}>
         {inquiry.listing.imageSrc ? (
           <img
@@ -74,10 +74,10 @@ export function LandlordInquiryCard({
 
         <div className="absolute top-3 left-3 z-20">
           <span className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] uppercase font-black tracking-widest shadow-lg backdrop-blur-md border",
+            "flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[8px] uppercase font-black tracking-widest shadow-lg backdrop-blur-md",
             statusColors[inquiry.status] || "bg-white text-gray-800 border-gray-200"
           )}>
-            <StatusIcon size={12} strokeWidth={3} />
+            <StatusIcon size={10} strokeWidth={3} />
             {inquiry.status}
           </span>
         </div>
@@ -86,7 +86,10 @@ export function LandlordInquiryCard({
       <div className="flex-1 min-w-0 w-full z-10">
         <div className="flex items-start justify-between mb-4">
           <div className="min-w-0 pr-4">
-            <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2 tracking-tight truncate group-hover:text-primary transition-colors">
+            <h3 className={cn(
+              "font-black text-gray-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1 truncate",
+              viewMode === "grid" ? "text-xl mb-3" : "text-lg mb-1"
+            )}>
               {inquiry.listing.title}
             </h3>
 
@@ -160,7 +163,6 @@ export function LandlordInquiryCard({
         </div>
       </div>
 
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-[32px]" />
     </motion.div>
   );
 }

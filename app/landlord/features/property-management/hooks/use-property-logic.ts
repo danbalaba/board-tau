@@ -37,14 +37,26 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
   const [isDeleting, setIsDeleting] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setListings(initialProperties);
     setNextCursor(initialNextCursor);
   }, [initialProperties, initialNextCursor]);
 
-  const sortedListings = useMemo(() => {
-    return [...listings].sort((a, b) => {
+  const filteredListings = useMemo(() => {
+    let result = [...listings];
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(p => 
+        p.title.toLowerCase().includes(query) || 
+        p.region?.toLowerCase().includes(query) ||
+        p.description.toLowerCase().includes(query)
+      );
+    }
+
+    return result.sort((a, b) => {
       switch (sortBy) {
         case 'oldest':
           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -59,7 +71,7 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }
     });
-  }, [listings, sortBy]);
+  }, [listings, sortBy, searchQuery]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!selectedProperty) return;
@@ -102,7 +114,7 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
 
   const handleGenerateReport = async () => {
     const columns = ['Title', 'Price (PHP)', 'Status', 'Rooms', 'Baths', 'Date Added'];
-    const data = sortedListings.map(p => [
+    const data = filteredListings.map(p => [
       p.title,
       p.price.toLocaleString(),
       p.status.toUpperCase(),
@@ -112,13 +124,13 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
     ]);
     await generateTablePDF('Properties_Report', columns, data, {
       title: 'Property Portfolio Report',
-      subtitle: `Total listings: ${sortedListings.length}`,
+      subtitle: `Total listings: ${filteredListings.length}`,
       author: 'Landlord Dashboard'
     });
   };
 
   return {
-    listings: sortedListings,
+    listings: filteredListings,
     nextCursor,
     isLoadingMore,
     deleteModalOpen,
@@ -132,6 +144,8 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
     setSortBy,
     viewMode,
     setViewMode,
+    searchQuery,
+    setSearchQuery,
     handleConfirmDelete,
     handleLoadMore,
     handleGenerateReport

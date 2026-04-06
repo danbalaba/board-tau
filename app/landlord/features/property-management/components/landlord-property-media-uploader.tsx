@@ -11,7 +11,7 @@ interface LandlordPropertyMediaUploaderProps {
   setActiveSection: (id: string) => void;
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   deleteExistingImage: (url: string) => void;
-  getSafeImageSrc: (url: string) => string;
+  getSafeImageSrc: (url: string) => string | undefined;
 }
 
 export function LandlordPropertyMediaUploader({

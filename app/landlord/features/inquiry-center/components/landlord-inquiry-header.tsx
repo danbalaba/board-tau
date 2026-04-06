@@ -14,10 +14,13 @@ import {
   IconCircleX, 
   IconLayoutGrid, 
   IconList,
-  IconCheck
+  IconCheck,
+  IconChevronDown as IconChevronDownIcon
 } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
+import { LandlordInquirySearch } from './landlord-inquiry-search';
+import { Inquiry } from '../hooks/use-inquiry-logic';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +39,7 @@ interface LandlordInquiryHeaderProps {
   viewMode: 'grid' | 'list';
   setViewMode: (m: 'grid' | 'list') => void;
   handleGenerateReport: () => Promise<void>;
+  rawInquiries: Inquiry[];
 }
 
 export function LandlordInquiryHeader({
@@ -47,130 +51,143 @@ export function LandlordInquiryHeader({
   setSelectedStatus,
   viewMode,
   setViewMode,
-  handleGenerateReport
+  handleGenerateReport,
+  rawInquiries
 }: LandlordInquiryHeaderProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-[32px] border border-primary/10 shadow-sm"
+      className="relative p-6 rounded-2xl border border-primary/10 shadow-sm z-30"
     >
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl overflow-hidden pointer-events-none" />
       <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
-        <div className="flex items-center gap-6">
-          <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-[24px] flex items-center justify-center text-primary shadow-xl shadow-primary/10">
-            <IconMail size={32} strokeWidth={2} />
+        <div className="flex items-center gap-6 shrink-0">
+          <div className="p-2.5 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary">
+            <IconMail size={20} />
           </div>
-          <div>
-            <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight truncate">
               Tenant Inquiries
             </h1>
-            <p className="text-[11px] font-black text-gray-500 uppercase tracking-[0.2em] mt-1 opacity-70">
+            <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider truncate">
               Manage your active inquiries & requests
             </p>
           </div>
         </div>
 
-        <div className="flex flex-nowrap items-center gap-3 w-full xl:w-auto mt-4 xl:mt-0">
+        <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto lg:justify-end">
           {/* Search Input */}
-          <div className="relative flex-1 min-w-[160px] lg:min-w-[200px] max-w-[240px] group">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
-              <IconSearch size={16} strokeWidth={2.5} />
-            </div>
-            <input
-              type="text"
-              placeholder="Search tenant or property..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 py-3 pl-11 pr-4 text-xs font-bold text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+          <div className="w-full sm:w-auto lg:min-w-[320px]">
+            <LandlordInquirySearch 
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              inquiries={rawInquiries}
             />
           </div>
 
-          {/* Sorting */}
-          <div className="flex flex-nowrap items-center gap-1 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm flex-shrink-0">
-            {[
-              { value: 'newest', label: 'Newest', icon: IconHistory },
-              { value: 'oldest', label: 'Oldest', icon: IconCalendarEvent },
-            ].map((option) => {
-              const Icon = option.icon;
-              const isSelected = sortBy === option.value;
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => setSortBy(option.value)}
-                  className={cn(
-                    "flex items-center gap-1 px-2.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
-                    isSelected
-                      ? "bg-primary text-white shadow-lg shadow-primary/30"
-                      : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700"
-                  )}
-                >
-                  <Icon size={12} />
-                  <span className="hidden xl:inline">{option.label}</span>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Sorting */}
+            {/* Sorting Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all backdrop-blur-sm shadow-sm">
+                  <IconHistory size={14} />
+                  <span>Sort: {sortBy === 'newest' ? 'Newest' : 'Oldest'}</span>
+                  <IconChevronDownIcon size={14} className="opacity-50" />
                 </button>
-              );
-            })}
-          </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 p-2 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-2xl z-[150]">
+                <div className="px-3 py-2 text-[9px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-50 dark:border-gray-800 mb-1">
+                  Sort Inquiries By
+                </div>
+                <DropdownMenuGroup>
+                  {[
+                    { value: 'newest', label: 'Newest First', icon: IconHistory },
+                    { value: 'oldest', label: 'Oldest First', icon: IconCalendarEvent },
+                  ].map((option) => {
+                    const Icon = option.icon;
+                    const isSelected = sortBy === option.value;
+                    return (
+                      <DropdownMenuItem
+                        key={option.value}
+                        onClick={() => setSortBy(option.value)}
+                        className={cn(
+                          "cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all",
+                          isSelected ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        )}
+                      >
+                        <Icon size={16} className={cn("transition-colors", isSelected ? "text-primary" : "text-gray-400")} />
+                        {option.label}
+                        {isSelected && <IconCheck size={14} className="ml-auto" />}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-          {/* Filters Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-1.5 px-3 py-3 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all backdrop-blur-sm flex-shrink-0">
-                <IconFilter size={14} />
-                Filters {selectedStatus !== 'ALL' && <span className="w-2 h-2 rounded-full bg-primary" />}
+            {/* Filters Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary transition-all backdrop-blur-sm shadow-sm">
+                  <IconFilter size={14} />
+                  Filters {selectedStatus !== 'ALL' && <span className="w-2 h-2 rounded-full bg-primary" />}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72 p-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl">
+                <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">Status</div>
+                <DropdownMenuGroup>
+                  {[
+                    { value: "ALL", label: "All Active", icon: IconInbox },
+                    { value: "PENDING", label: "Pending", icon: IconClock },
+                    { value: "APPROVED", label: "Approved", icon: IconCircleCheck },
+                    { value: "REJECTED", label: "Rejected", icon: IconCircleX },
+                  ].map((option: any) => {
+                    const Icon = option.icon;
+                    return (
+                      <DropdownMenuItem
+                        key={option.value}
+                        onClick={() => setSelectedStatus(option.value)}
+                        className={cn(
+                          "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
+                          selectedStatus === option.value ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        )}
+                      >
+                        <Icon size={14} />
+                        {option.label}
+                        {selectedStatus === option.value && <IconCheck size={14} className="ml-auto" />}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm shrink-0">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={cn(
+                  "p-2.5 rounded-xl transition-all duration-300",
+                  viewMode === "grid" ? "bg-primary text-white shadow-lg shadow-primary/30" : "text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                )}
+              >
+                <IconLayoutGrid size={18} />
               </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72 p-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl">
-              <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">Status</div>
-              <DropdownMenuGroup>
-                {[
-                  { value: "ALL", label: "All Active", icon: IconInbox },
-                  { value: "PENDING", label: "Pending", icon: IconClock },
-                  { value: "APPROVED", label: "Approved", icon: IconCircleCheck },
-                  { value: "REJECTED", label: "Rejected", icon: IconCircleX },
-                ].map((option: any) => {
-                  const Icon = option.icon;
-                  return (
-                    <DropdownMenuItem
-                      key={option.value}
-                      onClick={() => setSelectedStatus(option.value)}
-                      className={cn(
-                        "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
-                        selectedStatus === option.value ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                      )}
-                    >
-                      <Icon size={14} />
-                      {option.label}
-                      {selectedStatus === option.value && <IconCheck size={14} className="ml-auto" />}
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* View Mode Toggle */}
-          <div className="flex items-center gap-1 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm flex-shrink-0">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={cn(
-                "p-2 rounded-xl transition-all duration-300",
-                viewMode === "grid" ? "bg-primary text-white shadow-lg shadow-primary/30" : "text-gray-400 hover:text-gray-900 dark:hover:text-white"
-              )}
-            >
-              <IconLayoutGrid size={18} />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "p-2 rounded-xl transition-all duration-300",
-                viewMode === "list" ? "bg-primary text-white shadow-lg shadow-primary/30" : "text-gray-400 hover:text-gray-900 dark:hover:text-white"
-              )}
-            >
-              <IconList size={18} />
-            </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={cn(
+                  "p-2.5 rounded-xl transition-all duration-300",
+                  viewMode === "list" ? "bg-primary text-white shadow-lg shadow-primary/30" : "text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                )}
+              >
+                <IconList size={18} />
+              </button>
+            </div>
+            
+            <GenerateReportButton onGeneratePDF={handleGenerateReport} />
           </div>
-          
-          <GenerateReportButton onGeneratePDF={handleGenerateReport} className="ml-auto flex-shrink-0" />
         </div>
       </div>
       

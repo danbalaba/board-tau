@@ -19,8 +19,9 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
+import { useKBar } from 'kbar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,18 +39,17 @@ import { toast } from 'sonner';
 // Feature Components
 import { LandlordSettingsModalHub } from '@/app/landlord/features/settings-hub/components/landlord-settings-modal-hub';
 import { LandlordTopbarUserMenu } from '@/app/landlord/features/layout/components/landlord-topbar-user-menu';
+import { NotificationsDropdown } from '@/app/landlord/features/notifications';
+import { useLandlordProfileStore } from '../../settings-hub/hooks/use-landlord-profile-store';
 
 interface LandlordTopbarProps {
-  user: {
-    id: string;
-    name: string | null;
-    email: string | null;
-    image: string | null;
-    role: string;
-  };
+  user: any;
 }
 
-export default function LandlordTopbar({ user }: LandlordTopbarProps) {
+export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProps) {
+  const storeUser = useLandlordProfileStore((state: any) => state.user);
+  const user = storeUser || initialUser;
+
   // Refactored Modal State
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -57,6 +57,7 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   
   const { theme, setTheme } = useTheme();
+  const isDark = theme === 'dark';
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
   
@@ -126,81 +127,53 @@ export default function LandlordTopbar({ user }: LandlordTopbarProps) {
     toast.info(`No results found for "${searchQuery}"`);
   };
 
-  const isDark = theme === "dark";
+  const pathname = usePathname();
+  const kbar = useKBar();
+  const isKBarPage = pathname === '/landlord' || pathname === '/landlord/analytics';
 
   return (
     <>
       <header className="sticky top-0 w-full bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 h-16 flex items-center justify-between px-6 z-50">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className='-ml-1 hover:bg-primary/10 transition-colors rounded-xl p-2' />
-            <Link href="/landlord" className="flex items-center gap-3">
-              <motion.div className="h-[35px] w-[150px] relative">
-                <Image
-                  src={mounted && isDark ? "/images/TauBOARD-Dark.png" : "/images/TauBOARD-Light.png"}
-                  alt="BoardTAU Logo"
-                  fill
-                  sizes="150px"
-                  priority
-                  unoptimized
-                  className="object-contain"
-                />
-              </motion.div>
-            </Link>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <SidebarTrigger className='-ml-1 hover:bg-primary/10 transition-colors rounded-xl p-2 h-10 w-10 text-gray-500' />
+            <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 hidden md:block mx-1" />
           </div>
         </div>
 
-        {/* Center - Search */}
+        {/* Center - Search (Only on KBar enabled pages) */}
         <div className="flex-1 max-w-xl px-8 hidden md:block relative">
-          <form onSubmit={handleSearch}>
-            <motion.div 
-              className={cn(
-                "relative flex items-center h-10 rounded-2xl border transition-all duration-300",
-                isSearchExpanded ? "bg-white dark:bg-gray-800 border-primary ring-4 ring-primary/10" : "bg-gray-100/50 dark:bg-gray-800/50 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800"
-              )}
-              animate={{ width: isSearchExpanded ? "100%" : "280px" }}
-            >
-              <IconSearch size={18} className={cn("absolute left-3", isSearchExpanded ? "text-primary" : "text-gray-400")} />
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search everything..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowSuggestions(true);
-                }}
-                onFocus={() => setIsSearchExpanded(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className="w-full bg-transparent pl-10 pr-12 py-2 text-sm font-medium focus:outline-none"
-              />
-            </motion.div>
-          </form>
-          {/* Suggestions omitted for brevity in summary, kept intact in logic */}
+          <AnimatePresence>
+            {isKBarPage && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="relative cursor-pointer group"
+                onClick={() => kbar.query.toggle()}
+              >
+                <div 
+                  className={cn(
+                    "flex items-center h-10 px-4 rounded-2xl border transition-all duration-300 w-[320px] bg-gray-100/50 dark:bg-gray-800/50 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-primary/20",
+                  )}
+                >
+                  <IconSearch size={18} className="text-gray-400 group-hover:text-primary transition-colors" />
+                  <span className="ml-3 text-sm font-medium text-gray-400 group-hover:text-gray-500 transition-colors flex-1">
+                    Search everything...
+                  </span>
+                  <div className="flex items-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                    <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-[10px] font-black">⌘</kbd>
+                    <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-[10px] font-black">K</kbd>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Notifications */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="relative p-2.5 text-gray-500 dark:text-gray-400 hover:text-primary rounded-xl transition-all">
-                <IconBellTabler size={22} />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full ring-4 ring-white dark:ring-gray-900"></span>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className='w-80 rounded-2xl p-2'>
-              <div className="px-4 py-3">
-                <h3 className="font-black text-sm">Notifications</h3>
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => handleOpenSettings()} className='rounded-xl flex items-center gap-3 p-3 cursor-pointer'>
-                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg"><IconMail size={18} /></div>
-                  <div className="flex-1"><p className="text-sm font-bold">Config Alerts</p></div>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <NotificationsDropdown />
 
           {/* Theme Toggle */}
           <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className="p-2.5 text-gray-500 hover:text-amber-400 rounded-xl transition-all">

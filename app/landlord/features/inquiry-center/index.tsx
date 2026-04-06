@@ -2,13 +2,15 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { IconInbox, IconChevronDown } from '@tabler/icons-react';
+import { IconInbox, IconChevronDown, IconMessage } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
+import { useRegisterActions } from 'kbar';
 import Button from '@/components/common/Button';
 import { useInquiryLogic, Inquiry } from './hooks/use-inquiry-logic';
 import { LandlordInquiryHeader } from './components/landlord-inquiry-header';
 import { LandlordInquiryCard } from './components/landlord-inquiry-card';
 import { LandlordInquiryModals } from './components/landlord-inquiry-modals';
+import { useLoadMore } from '@/hooks/useLoadMore';
 
 interface LandlordInquiryCenterProps {
   inquiries: {
@@ -39,11 +41,37 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
     handleConfirmDelete,
     handleRespond,
     handleLoadMore,
-    handleGenerateReport
+    handleGenerateReport,
+    rawInquiries
   } = useInquiryLogic(inquiries);
 
+  const { ref: loadMoreRef } = useLoadMore(
+    handleLoadMore,
+    !!nextCursor,
+    isLoadingMore,
+    false
+  );
+
+  useRegisterActions(
+    rawInquiries.map((inquiry) => ({
+      id: `inquiry-${inquiry.id}`,
+      name: `Inquiry from ${inquiry.user.name || 'Anonymous Tenant'}`,
+      subtitle: `Property: ${inquiry.listing.title}`,
+      keywords: `inquiry tenant message ${inquiry.user.name} ${inquiry.listing.title}`,
+      section: 'Inquiries',
+      perform: () => {
+        // We don't have a direct "view details" function exported from useInquiryLogic that we can call
+        // But we can trigger the same logic as the card's response button or just navigate
+        // For now, let's navigate to the inquiries page to ensure it's filtered
+        setSearchQuery(inquiry.user.name || inquiry.user.email);
+      },
+      icon: <IconMessage size={18} />
+    })),
+    [rawInquiries]
+  );
+
   return (
-    <div className="max-w-7xl mx-auto space-y-10 pb-20 p-2">
+    <div className="space-y-6">
       <LandlordInquiryModals 
         deleteModalOpen={deleteModalOpen}
         setDeleteModalOpen={setDeleteModalOpen}
@@ -64,6 +92,7 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
         viewMode={viewMode}
         setViewMode={setViewMode}
         handleGenerateReport={handleGenerateReport}
+        rawInquiries={rawInquiries}
       />
 
       <AnimatePresence mode="wait">
@@ -73,12 +102,12 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="text-center py-24 bg-white dark:bg-gray-900 rounded-[40px] border border-dashed border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center shadow-sm"
+            className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center shadow-sm"
           >
-            <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-[32px] flex items-center justify-center text-gray-300 mb-8 border border-gray-100 dark:border-gray-800">
-              <IconInbox size={48} strokeWidth={1.5} />
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-2xl mb-4 text-primary">
+              <IconInbox size={24} />
             </div>
-            <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">Box is Empty</h3>
+            <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Box is Empty</h3>
             <p className="text-sm font-medium text-gray-400 max-w-sm mx-auto leading-relaxed">
               {searchQuery ? `No inquiries found matching "${searchQuery}"` : "No inquiries currently match your filter criteria."}
             </p>
@@ -93,8 +122,8 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
             key="list"
             className={cn(
               viewMode === "grid"
-                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                : "flex flex-col gap-6"
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                : "space-y-4"
             )}
           >
             {filteredInquiries.map((inquiry, idx) => (
@@ -106,16 +135,25 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
                 handleRespond={handleRespond}
               />
             ))}
+            {/* Scroll Sentinel */}
+            <div ref={loadMoreRef} className="h-1 col-span-full opacity-0 pointer-events-none" />
           </motion.div>
         )}
       </AnimatePresence>
 
       {nextCursor && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex justify-center pt-8"
-        >
+        <div className="flex flex-col items-center gap-4 pt-12 pb-8">
+           <div className="flex items-center gap-4">
+            <div className="w-12 h-[2px] bg-gradient-to-r from-transparent to-gray-200 dark:to-gray-800" />
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                {isLoadingMore ? 'Fetching more inquiries...' : 'Scroll for more'}
+              </span>
+            </div>
+            <div className="w-12 h-[2px] bg-gradient-to-l from-transparent to-gray-200 dark:to-gray-800" />
+          </div>
+
           <Button
             outline
             className="rounded-[20px] px-10 py-4 border-2 border-gray-100 dark:border-gray-800 group hover:border-primary/40 hover:bg-primary/5 transition-all shadow-sm"
@@ -123,11 +161,11 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
             isLoading={isLoadingMore}
           >
             <span className="flex items-center gap-2 uppercase font-black tracking-[0.2em] text-[10px] text-gray-500 group-hover:text-primary transition-colors">
-              {isLoadingMore ? "Processing..." : "Load More Inquiries"}
+              {isLoadingMore ? "Processing..." : "Force Load More"}
               <IconChevronDown className="group-hover:translate-y-1 transition-transform" size={12} strokeWidth={3} />
             </span>
           </Button>
-        </motion.div>
+        </div>
       )}
     </div>
   );

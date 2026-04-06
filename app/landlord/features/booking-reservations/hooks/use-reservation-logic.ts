@@ -36,12 +36,22 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredReservations = useMemo(() => {
     let result = [...initialReservations];
     
     if (selectedStatus !== 'all') {
       result = result.filter(r => r.status?.toLowerCase() === selectedStatus.toLowerCase());
+    }
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(r => 
+        r.listing.title.toLowerCase().includes(q) || 
+        (r.user.name?.toLowerCase() || '').includes(q) || 
+        r.user.email.toLowerCase().includes(q)
+      );
     }
     
     result.sort((a, b) => {
@@ -51,7 +61,7 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
     });
 
     return result;
-  }, [selectedStatus, initialReservations, sortBy]);
+  }, [selectedStatus, initialReservations, sortBy, searchQuery]);
 
   const handleRespond = useCallback(async (inquiryId: string, status: 'approved' | 'rejected') => {
     try {
@@ -98,6 +108,9 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
     setSortBy,
     viewMode,
     setViewMode,
+    searchQuery,
+    setSearchQuery,
+    rawReservations: initialReservations,
     handleRespond,
     handleGenerateReport
   };

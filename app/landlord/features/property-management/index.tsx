@@ -1,15 +1,17 @@
 'use client';
 
 import React from 'react';
-import { IconSearchOff, IconChevronDown } from '@tabler/icons-react';
+import { IconSearchOff, IconChevronDown, IconBuilding } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
+import { useRegisterActions } from 'kbar';
 import Button from '@/components/common/Button';
 import { usePropertyLogic, Property } from './hooks/use-property-logic';
 import { LandlordPropertyHeader } from './components/landlord-property-header';
 import { LandlordPropertyCard } from './components/landlord-property-card';
 import { LandlordPropertyDetailsModal } from './components/landlord-property-details-modal';
 import { LandlordPropertyDeleteModal } from './components/landlord-property-delete-modal';
+import { useLoadMore } from '@/hooks/useLoadMore';
 
 interface LandlordPropertyManagementProps {
   properties: {
@@ -43,10 +45,35 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
     setSortBy,
     viewMode,
     setViewMode,
+    searchQuery,
+    setSearchQuery,
     handleConfirmDelete,
     handleLoadMore,
     handleGenerateReport
   } = usePropertyLogic(properties.listings, properties.nextCursor);
+
+  const { ref: loadMoreRef } = useLoadMore(
+    handleLoadMore,
+    !!nextCursor,
+    isLoadingMore,
+    false
+  );
+
+  useRegisterActions(
+    listings.map((property) => ({
+      id: `property-${property.id}`,
+      name: `Property: ${property.title}`,
+      subtitle: `${property.region || 'No region'} • PHP ${property.price.toLocaleString()}`,
+      keywords: `property listing ${property.title} ${property.region}`,
+      section: 'Properties',
+      perform: () => {
+        setSelectedProperty(property);
+        setViewModalOpen(true);
+      },
+      icon: <IconBuilding size={18} />
+    })),
+    [listings]
+  );
 
   return (
     <div className="space-y-8 p-1 pb-12">
@@ -55,6 +82,9 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
         setSortBy={setSortBy}
         viewMode={viewMode}
         setViewMode={setViewMode}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        properties={listings}
       />
 
       {/* Legacy pattern: No AnimatePresence wrapping the whole list to avoid juggling/popLayout artifacts */}
@@ -85,13 +115,34 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
               onDelete={(p) => { setSelectedProperty(p); setDeleteModalOpen(true); }}
             />
           ))}
+          {/* Scroll Sentinel for Infinite Loading */}
+          <div ref={loadMoreRef} className="h-10 w-full col-span-full opacity-0 pointer-events-none" />
         </div>
       )}
 
       {nextCursor && (
-        <div className="flex justify-center pt-8">
-          <Button outline className="rounded-2xl px-12 py-4 group hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/5" onClick={handleLoadMore} isLoading={isLoadingMore}>
-            <span className="flex items-center gap-2 uppercase font-black tracking-[0.2em] text-[10px]">{isLoadingMore ? 'Fetching...' : 'Show More Listings'} <IconChevronDown size={14} className="group-hover:translate-y-0.5 transition-transform" /></span>
+        <div className="flex flex-col items-center gap-4 pt-12 pb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-[2px] bg-gradient-to-r from-transparent to-gray-200 dark:to-gray-800" />
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                {isLoadingMore ? 'Fetching more listings...' : 'Scroll for more'}
+              </span>
+            </div>
+            <div className="w-12 h-[2px] bg-gradient-to-l from-transparent to-gray-200 dark:to-gray-800" />
+          </div>
+          
+          <Button 
+            outline 
+            className="rounded-2xl px-12 py-4 group hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/5 border-2 border-gray-100 dark:border-gray-800" 
+            onClick={handleLoadMore} 
+            isLoading={isLoadingMore}
+          >
+            <span className="flex items-center gap-2 uppercase font-black tracking-[0.2em] text-[10px]">
+              {isLoadingMore ? 'Fetching...' : 'Force Load More'} 
+              <IconChevronDown size={14} className="group-hover:translate-y-0.5 transition-transform" />
+            </span>
           </Button>
         </div>
       )}
