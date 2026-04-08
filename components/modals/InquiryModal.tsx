@@ -32,8 +32,8 @@ const getSafeImageSrc = (file: File | null): string => {
     const rawUrl = URL.createObjectURL(file);
     
     // 2. Strict character whitelist to satisfy aggressive CodeQL analysis
-    // Added literal hyphen (\-) which is common in blob UUIDs
-    const safeUrl = rawUrl.split('').filter(c => /^[a-zA-Z0-9:/-_\. \-]$/.test(c)).join('');
+    // Hyphen is placed at the start of the character class to prevent unintended ranges
+    const safeUrl = rawUrl.split('').filter(c => /^[-a-zA-Z0-9:/_. ]$/.test(c)).join('');
     
     if (safeUrl.startsWith('blob:') && safeUrl.length < 2048 && safeUrl === rawUrl) {
       return safeUrl;
@@ -57,8 +57,8 @@ const getSafeImageSrcString = (image: string | null | undefined): string => {
 
   if (isSafeProtocol || isRelative) {
     // Whitelist approach: Reconstruct the string using only safe characters
-    // Added literal hyphen (-) and equals sign (=) to the whitelist
-    const safeUrl = image.split('').filter(c => /^[a-zA-Z0-9:/-_\. \?\#\&\%=\-]$/.test(c)).join('');
+    // Hyphen is placed at the start of the character class to prevent unintended ranges
+    const safeUrl = image.split('').filter(c => /^[-a-zA-Z0-9:/_. ?#&%=]$/.test(c)).join('');
     if (safeUrl === image) {
       return safeUrl;
     }
