@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
 import { createStripeCheckoutSession } from "@/services/payments/stripe";
+import { createPayMongoCheckoutSession } from "@/services/payments/paymongo";
 
 export async function POST(
   request: Request,
@@ -71,11 +72,17 @@ export async function POST(
 
       return NextResponse.json(stripeSession);
     } else if (paymentMethod === "GCASH" || paymentMethod === "MAYA") {
-      // GCash and Maya are placeholders - coming soon
-      return NextResponse.json(
-        { message: `${paymentMethod} payment is coming soon. Please use Stripe for now.` },
-        { status: 400 }
-      );
+      // Create PayMongo checkout session
+      const paymongoSession = await createPayMongoCheckoutSession({
+        amount: reservation.totalPrice,
+        description: `Reservation for ${reservation.listing.title} - ${reservation.room.name}`,
+        name: user.name || "BoardTAU User",
+        email: user.email || "",
+        inquiryId: reservation.inquiryId!,
+        paymentMethod: paymentMethod as "GCASH" | "MAYA",
+      });
+
+      return NextResponse.json(paymongoSession);
     } else {
       return NextResponse.json(
         { message: "Invalid payment method" },
@@ -145,14 +152,12 @@ export async function GET(
         {
           id: "GCASH",
           name: "GCash",
-          enabled: false,
-          comingSoon: true,
+          enabled: true,
         },
         {
           id: "MAYA",
           name: "Maya",
-          enabled: false,
-          comingSoon: true,
+          enabled: true,
         },
       ],
     });

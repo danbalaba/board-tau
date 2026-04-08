@@ -8,12 +8,14 @@ import Button from "@/components/common/Button";
 import ReservationCard from "@/components/reservations/ReservationCard";
 import ReservationDetailsModal from "@/components/reservations/ReservationDetailsModal";
 import PaymentModal from "@/components/reservations/PaymentModal";
-import { Search, Filter, Loader2, ArrowUpDown, Clock, DollarSign } from "lucide-react";
-import { motion } from "framer-motion";
+import { Search, Filter, Loader2, ArrowUpDown, Clock, DollarSign, CheckCircle, RefreshCcw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import ModernSelect from "@/components/common/ModernSelect";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import Modal from "@/components/modals/Modal";
 import ModernLoader from "@/components/common/ModernLoader";
+import { useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -57,6 +59,7 @@ interface Reservation {
   status: string;
   paymentStatus: string;
   paymentMethod?: string;
+  preferredPaymentMethod?: string;
   paymentReference?: string;
   createdAt: string;
   listing: ReservationListing;
@@ -106,6 +109,47 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
 
     return () => clearTimeout(timer);
   }, []);
+
+  const searchParams = useSearchParams();
+  const statusParam = searchParams.get("status");
+  const methodParam = searchParams.get("method");
+
+  // Step 2b: Handle Auto-Sync on successful payment redirect
+  useEffect(() => {
+    if (statusParam === "success" && isMounted) {
+      const syncPayment = async () => {
+        const toastId = toast.loading("Verifying your payment... Just a moment!");
+        
+        try {
+          // 1. Give it 1 second for the webhook to potentially beat us to it
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
+          // 2. Call the manual sync API to force update the DB
+          const response = await fetch("/api/reservations/sync-payment");
+          const data = await response.json();
+          
+          if (data.success) {
+            toast.success("Payment Received! Your room is now RESERVED.", { id: toastId, duration: 5000 });
+            // 3. Force a refresh to show the "RESERVED" badge instantly
+            router.refresh();
+          } else {
+             // Already sync-ed or no pending found, just refresh
+             router.refresh();
+             toast.dismiss(toastId);
+          }
+        } catch (error) {
+          console.error("Sync error:", error);
+          toast.error("Still processing... Try refreshing manually in a bit.", { id: toastId });
+        }
+      };
+
+      syncPayment();
+    }
+    
+    if (statusParam === "cancelled" && isMounted) {
+       toast.error("Payment was cancelled or failed. Please try again.");
+    }
+  }, [statusParam, isMounted, router]);
 
   // Handle Loading state during filtering/sorting/searching
   useEffect(() => {
