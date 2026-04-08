@@ -19,6 +19,7 @@ interface Reservation {
   totalPrice: number;
   durationInDays: number;
   status: string;
+  preferredPaymentMethod?: string;
   listing: ReservationListing;
   room: ReservationRoom;
 }
@@ -44,7 +45,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   onClose,
   onPaymentSuccess,
 }) => {
-  const [selectedMethod, setSelectedMethod] = useState<string>("STRIPE");
+  // Auto-select the preferred method from inquiry (mapping gcash -> GCASH, etc)
+  const defaultMethod = reservation.preferredPaymentMethod 
+    ? reservation.preferredPaymentMethod.toUpperCase() 
+    : "STRIPE";
+
+  const [selectedMethod, setSelectedMethod] = useState<string>(defaultMethod);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,31 +58,24 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     {
       id: "STRIPE",
       name: "Credit/Debit Card (Stripe)",
-      icon: <CreditCard className="text-primary" />, // Changed text-blue-500 to text-primary
+      icon: <CreditCard className="text-primary" />,
       enabled: true,
     },
     {
       id: "GCASH",
       name: "GCash",
-      icon: <Smartphone className="text-primary" />, // Changed text-blue-600 to text-primary
-      enabled: false,
-      comingSoon: true,
+      icon: <Smartphone className="text-primary" />, 
+      enabled: true,
     },
     {
       id: "MAYA",
       name: "Maya",
       icon: <Wallet className="text-green-500" />,
-      enabled: false,
-      comingSoon: true,
+      enabled: true,
     },
   ];
 
   const handlePayment = async () => {
-    if (selectedMethod === "GCASH" || selectedMethod === "MAYA") {
-      setError("This payment method is coming soon. Please use Stripe.");
-      return;
-    }
-
     setIsProcessing(true);
     setError(null);
 
@@ -97,11 +96,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         throw new Error(data.message || "Payment failed");
       }
 
-      // If we get a URL, redirect to Stripe
       if (data.url) {
         window.location.href = data.url;
       } else {
-        // Payment processed successfully
         onPaymentSuccess?.();
         onClose();
       }
@@ -131,7 +128,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         </div>
 
         <div className="p-6 overflow-y-auto flex-1">
-          {/* Reservation Summary */}
+          {/* Summary */}
           <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-6">
             <h3 className="text-lg font-semibold text-text-primary dark:text-gray-100 mb-3">
               Reservation Summary
@@ -157,7 +154,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
               <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
                 <div className="flex justify-between items-center bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary-light">
+                   <div className="w-8 h-8 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary-light">
                     <CreditCard size={16} />
                   </div>
                   <span className="text-xl font-black text-primary">
@@ -180,9 +177,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   className={`flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition-colors ${
                     selectedMethod === method.id
                       ? "border-primary bg-primary/5 dark:bg-primary/10"
-                      : method.enabled
-                      ? "border-gray-200 dark:border-gray-700 hover:border-gray-300 shadow-sm"
-                      : "border-gray-100 dark:border-gray-800 opacity-60"
+                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 shadow-sm"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -192,45 +187,35 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                       value={method.id}
                       checked={selectedMethod === method.id}
                       onChange={() => setSelectedMethod(method.id)}
-                      disabled={!method.enabled}
                       className="w-4 h-4 text-primary accent-primary"
                     />
                     <span className="text-2xl">{method.icon}</span>
                     <div>
-                      <p className={`font-medium ${
-                        method.enabled
-                          ? "text-text-primary dark:text-gray-100"
-                          : "text-gray-500"
-                      }`}>
+                      <p className="font-medium text-text-primary dark:text-gray-100">
                         {method.name}
+                        {reservation.preferredPaymentMethod?.toUpperCase() === method.id && (
+                          <span className="ml-2 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] uppercase font-bold border border-emerald-200 dark:border-emerald-800">
+                             Preferred by you
+                          </span>
+                        )}
                       </p>
-                      {method.comingSoon && (
-                        <p className="text-xs text-orange-500 font-medium">
-                          Coming Soon
-                        </p>
-                      )}
                     </div>
                   </div>
-                  {!method.enabled && !method.comingSoon && (
-                    <span className="text-xs text-gray-400">Unavailable</span>
-                  )}
                 </label>
               ))}
             </div>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </div>
           )}
 
-          {/* Info Box */}
           <div className="mb-6 p-4 bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/80 rounded-xl flex items-start gap-3">
             <Info className="text-primary mt-0.5" size={20} />
             <p className="text-sm text-primary-dark dark:text-primary-light font-medium leading-relaxed">
-              Your payment is a **one-time reservation fee** to secure this slot. Monthly rent and utilities will be paid directly to the landlord.
+              Your payment is a **one-time reservation fee** to secure this slot.
             </p>
           </div>
         </div>

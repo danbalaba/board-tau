@@ -24,6 +24,7 @@ const ReservationPage = async () => {
     include: {
       listing: true, // Includes all fields including region/country
       room: true,
+      inquiry: true,
     },
     orderBy: {
       createdAt: "desc",
@@ -43,6 +44,7 @@ const ReservationPage = async () => {
     status: reservation.status as string,
     paymentStatus: reservation.paymentStatus as string,
     paymentMethod: reservation.paymentMethod || undefined,
+    preferredPaymentMethod: reservation.inquiry?.paymentMethod || undefined,
     paymentReference: reservation.paymentReference || undefined,
     createdAt: reservation.createdAt.toISOString(),
     listing: {

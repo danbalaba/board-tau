@@ -32,11 +32,24 @@ export async function hasPermission(userId: string, permissionName: string): Pro
     if (user.role === 'ADMIN') return true;
 
     // 3. Check permissions associated with the UserRole
-    if (user.roleRelation && user.roleRelation.permissions) {
+    if (user.roleRelation && user.roleRelation.permissions && user.roleRelation.permissions.length > 0) {
       return user.roleRelation.permissions.includes(permissionName);
     }
 
-    // 4. Default fallback: No permission
+    // 4. Default fallback: Grant basic permissions based on the User's legacy role level
+    // This handles users who haven't been assigned a specific granular role yet
+    const defaultPermissions: Record<string, string[]> = {
+      'USER': ['CREATE_INQUIRY', 'VIEW_LISTINGS', 'SEND_MESSAGES'],
+      'LANDLORD': ['CREATE_LISTING', 'APPROVE_INQUIRY', 'MANAGE_ROOMS'],
+      'ADMIN': ['*'] // Admin already handled above, but here for completeness
+    };
+
+    const rolesPermissions = defaultPermissions[user.role] || [];
+    if (rolesPermissions.includes(permissionName) || rolesPermissions.includes('*')) {
+      return true;
+    }
+
+    // 5. Final fallback: No permission
     return false;
   } catch (error) {
     console.error(`Error checking permission ${permissionName} for user ${userId}:`, error);

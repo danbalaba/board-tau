@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Modal from "./Modal";
 import Button from "@/components/common/Button";
 import FileUpload from "@/components/common/FileUpload";
@@ -13,8 +13,9 @@ import { useEdgeStore } from "@/lib/edgestore";
 import { format, addDays, differenceInDays } from "date-fns";
 import { DayPicker, DateRange } from "react-day-picker";
 import "react-day-picker/style.css";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info, Lightbulb, User, ShieldCheck, CreditCard, ChevronLeft } from "lucide-react";
 import toast from "react-hot-toast";
+import Webcam from "react-webcam";
 
 /**
  * Only allow blob URLs generated from validated File objects as image sources.
@@ -31,10 +32,10 @@ const getSafeImageSrc = (file: File | null): string => {
     const rawUrl = URL.createObjectURL(file);
     
     // 2. Strict character whitelist to satisfy aggressive CodeQL analysis
-    // Only allow characters typically found in safe URI/blob strings
-    const safeUrl = rawUrl.split('').filter(c => /^[a-zA-Z0-9:/-_\. ]$/.test(c)).join('');
+    // Hyphen is placed at the start of the character class to prevent unintended ranges
+    const safeUrl = rawUrl.split('').filter(c => /^[-a-zA-Z0-9:/_. ]$/.test(c)).join('');
     
-    if (safeUrl.startsWith('blob:') && safeUrl.length < 2048) {
+    if (safeUrl.startsWith('blob:') && safeUrl.length < 2048 && safeUrl === rawUrl) {
       return safeUrl;
     }
   } catch (error) {
@@ -56,7 +57,8 @@ const getSafeImageSrcString = (image: string | null | undefined): string => {
 
   if (isSafeProtocol || isRelative) {
     // Whitelist approach: Reconstruct the string using only safe characters
-    const safeUrl = image.split('').filter(c => /^[a-zA-Z0-9:/-_\. \?\#\&\%]$/.test(c)).join('');
+    // Hyphen is placed at the start of the character class to prevent unintended ranges
+    const safeUrl = image.split('').filter(c => /^[-a-zA-Z0-9:/_. ?#&%=]$/.test(c)).join('');
     if (safeUrl === image) {
       return safeUrl;
     }
@@ -119,8 +121,46 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
   const [submitted, setSubmitted] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [idAttachment, setIdAttachment] = useState<File | null>(null);
+  
+  // KYC / Verification specific state
+  const [isShowingIDList, setIsShowingIDList] = useState(false);
+  const [selectedIDTab, setSelectedIDTab] = useState<"primary" | "secondary">("primary");
+  const [capturedSelfie, setCapturedSelfie] = useState<string | null>(null);
+  const [capturedID, setCapturedID] = useState<string | null>(null);
+
   const [isUploading, setIsUploading] = useState(false);
   const { edgestore } = useEdgeStore();
+  
+  const webcamRef = useRef<Webcam>(null);
+
+  // Helper to convert base64 to File for EdgeStore
+  const base64ToFile = (base64: string, filename: string) => {
+    const arr = base64.split(',');
+    const mime = arr[0].match(/:(.*?);/)![1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  };
+
+  const captureSelfie = useCallback(() => {
+    const imageSrc = webcamRef.current?.getScreenshot();
+    if (imageSrc) {
+      setCapturedSelfie(imageSrc);
+      toast.success("Selfie captured!");
+    }
+  }, [webcamRef]);
+
+  const captureID = useCallback(() => {
+    const imageSrc = webcamRef.current?.getScreenshot();
+    if (imageSrc) {
+      setCapturedID(imageSrc);
+      toast.success("ID captured!");
+    }
+  }, [webcamRef]);
 
   const {
     register,
@@ -157,12 +197,13 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
     step1: !!watchedValues[0], // paymentMethod
     step2: !!(watchedValues[1] && watchedValues[2] && watchedValues[3] && watchedValues[4]), // moveInDate, checkOutDate, role, contactMethod
     step3: !!(watchedValues[5] && watchedValues[5].trim().length > 0), // message
-    step4: profilePhoto !== null,
-    step5: idAttachment !== null,
-    step6: true, // Always completed
+    step4: true, // Verification Guidelines matches always
+    step5: capturedSelfie !== null,
+    step6: capturedID !== null,
+    step7: true, // Review
   };
 
-  const totalSteps = 6;
+  const totalSteps = 7;
 
   // Check if current step is completed
   const isStepCompleted = (step: number) => {
@@ -175,10 +216,12 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
       case 3:
         return !!values.message && values.message.length > 0;
       case 4:
-        return profilePhoto !== null;
+        return true; // Guidelines page
       case 5:
-        return idAttachment !== null;
+        return capturedSelfie !== null;
       case 6:
+        return capturedID !== null;
+      case 7:
         return true;
       default:
         return false;
@@ -214,16 +257,10 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
       case 2:
         fieldsToValidate = ['moveInDate', 'checkOutDate', 'role', 'contactMethod'];
         break;
-      case 3:
-        fieldsToValidate = ['message'];
-        break;
       case 4:
-        fieldsToValidate = [];
-        break;
       case 5:
-        fieldsToValidate = [];
-        break;
       case 6:
+      case 7:
         fieldsToValidate = [];
         break;
     }
@@ -276,17 +313,19 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
       setIsUploading(true);
 
       let profilePhotoUrl = null;
-      if (data.profilePhoto) {
+      if (capturedSelfie) {
+        const file = base64ToFile(capturedSelfie, "selfie.jpg");
         const res = await edgestore.publicFiles.upload({
-          file: data.profilePhoto,
+          file: file,
         });
         profilePhotoUrl = res.url;
       }
 
       let idAttachmentUrl = null;
-      if (data.idAttachment) {
+      if (capturedID) {
+        const file = base64ToFile(capturedID, "id_card.jpg");
         const res = await edgestore.publicFiles.upload({
-          file: data.idAttachment,
+          file: file,
         });
         idAttachmentUrl = res.url;
       }
@@ -331,7 +370,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
         />
         
         <div className="flex justify-between items-center relative z-10">
-          {[1, 2, 3, 4, 5, 6].map((step) => {
+          {[1, 2, 3, 4, 5, 6, 7].map((step) => {
             const isCompleted = currentStep > step;
             const isActive = currentStep === step;
             return (
@@ -348,7 +387,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                 <span className={`text-[9px] font-bold uppercase tracking-widest hidden md:block transition-colors duration-300 ${
                   isActive ? "text-primary" : isCompleted ? "text-primary/60" : "text-gray-400"
                 }`}>
-                  {step === 1 ? "Pay" : step === 2 ? "Stay" : step === 3 ? "Note" : step === 4 ? "Photo" : step === 5 ? "ID" : "Review"}
+                  {step === 1 ? "Pay" : step === 2 ? "Stay" : step === 3 ? "Note" : step === 4 ? "Prepare" : step === 5 ? "Selfie" : step === 6 ? "ID" : "Review"}
                 </span>
               </div>
             );
@@ -382,29 +421,27 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                   <p className="text-sm text-text-secondary dark:text-gray-400">Pay with Visa, Mastercard, or AMEX</p>
                 </div>
               </label>
-              <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors opacity-50 ${getValues('paymentMethod') === 'gcash' ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+              <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${getValues('paymentMethod') === 'gcash' ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
                 <input
                   type="radio"
                   value="gcash"
                   {...register('paymentMethod', { required: "Payment method is required" })}
                   className="accent-primary"
-                  disabled
                 />
                 <div className="flex-1">
-                  <p className="font-medium">GCash <span className="text-xs text-gray-400">(Coming Soon)</span></p>
+                  <p className="font-medium">GCash</p>
                   <p className="text-sm text-text-secondary dark:text-gray-400">Mobile wallet payment</p>
                 </div>
               </label>
-              <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors opacity-50 ${getValues('paymentMethod') === 'maya' ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+              <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${getValues('paymentMethod') === 'maya' ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
                 <input
                   type="radio"
                   value="maya"
                   {...register('paymentMethod', { required: "Payment method is required" })}
                   className="accent-primary"
-                  disabled
                 />
                 <div className="flex-1">
-                  <p className="font-medium">Maya <span className="text-xs text-gray-400">(Coming Soon)</span></p>
+                  <p className="font-medium">Maya</p>
                   <p className="text-sm text-text-secondary dark:text-gray-400">Mobile wallet payment</p>
                 </div>
               </label>
@@ -653,200 +690,417 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
 
       case 4:
         return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-text-primary dark:text-gray-100">
-              <FaUser className="inline mr-2" />
-              4. Profile Photo
-              <span className="text-red-500 ml-1">*</span>
-            </h3>
-            <div className="space-y-3">
-              <p className="text-sm text-text-secondary dark:text-gray-400">
-                Help hosts recognize you by adding a profile photo.
-              </p>
-              <FileUpload
-                id="profilePhoto"
-                label=""
-                description="JPG, PNG, or WEBP (max. 5MB)"
-                accept=".jpg,.jpeg,.png,.webp"
-                onFileSelect={(file: File | null) => {
-                  if (file) {
-                    // Strict file type validation
-                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-                    if (!validTypes.includes(file.type)) {
-                      toast.error("Invalid file type. Only JPG, PNG, and WEBP allowed.");
-                      return;
-                    }
-                    if (file.name.match(/\.(php|exe|bat|sh|js|html)$/i)) {
-                      toast.error("Malicious file extensions are not allowed.");
-                      return;
-                    }
-                    if (file.size > 5 * 1024 * 1024) {
-                      toast.error("File size exceeds 5MB limit. Please choose a smaller file.");
-                      return;
-                    }
+          <div className="relative overflow-hidden min-h-[400px]">
+            <AnimatePresence mode="wait">
+              {!isShowingIDList ? (
+                <motion.div 
+                  key="guidelines"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-6"
+                >
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+                      Identity Verification
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      We'll verify your identity with these details. Make sure they match the information on your ID.
+                    </p>
+                  </div>
 
-                    setProfilePhoto(file);
-                    setValue('profilePhoto', file);
-                  } else {
-                    setProfilePhoto(null);
-                    setValue('profilePhoto', null);
-                  }
-                  // Force step completion update
-                  setCurrentStep(prev => prev);
-                }}
-                fileName={profilePhoto?.name}
-                required={true}
-              />
-              {profilePhoto && (
-                <div className="mt-2">
-                  <img
-                    src={getSafeImageSrc(profilePhoto)}
-                    alt="Profile preview"
-                    className="w-24 h-24 object-cover rounded-lg border-2 border-primary"
-                  />
-                </div>
+                  <div className="bg-blue-50/50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800/50">
+                    <div className="text-sm font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                      Please prepare a valid ID and make sure your camera is turned on.
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                    <div className="p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/50 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary/10 p-2 rounded-lg text-primary shrink-0">
+                          <ShieldCheck size={20} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm text-gray-800 dark:text-gray-200">Have your valid ID ready</p>
+                          <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">Confirm your identity as the authorized representative.</p>
+                          <button 
+                            type="button"
+                            onClick={() => setIsShowingIDList(true)}
+                            className="text-[10px] font-bold text-primary mt-1 hover:underline flex items-center gap-1"
+                          >
+                            <Info size={10} /> List of accepted IDs
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/50 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary/10 p-2 rounded-lg text-primary shrink-0">
+                          <FaCamera size={18} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm text-gray-800 dark:text-gray-200">Check your camera</p>
+                          <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">Ensure your laptop or desktop has a working webcam.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/50 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary/10 p-2 rounded-lg text-primary shrink-0">
+                          <FaIdCard size={18} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm text-gray-800 dark:text-gray-200">Use your physical ID</p>
+                          <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">Capture the original document. Avoid digital screens.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/50 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary/10 p-2 rounded-lg text-primary shrink-0">
+                          <FaCheck size={18} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm text-gray-800 dark:text-gray-200">Keep your face clear</p>
+                          <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">Ensure features are not obstructed during liveness check.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/50 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary/10 p-2 rounded-lg text-primary shrink-0">
+                          <Info size={18} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm text-gray-800 dark:text-gray-200">Show details clearly</p>
+                          <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">Your ID must be fully visible and readable. No redacting.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/50 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary/10 p-2 rounded-lg text-primary shrink-0">
+                          <Lightbulb size={20} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm text-gray-800 dark:text-gray-200">Find good lighting</p>
+                          <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">Stay in a well-lit area with a plain background.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 mt-6 border-t border-gray-100 dark:border-gray-800">
+                    <p className="text-[10px] text-gray-500 italic">
+                      Note: Identity verification is part of our Know Your Customer (KYC) process. You won't be able to proceed until this step is completed.
+                    </p>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div 
+                  key="idList"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="space-y-6"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <button 
+                        type="button"
+                        onClick={() => setIsShowingIDList(false)}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                      >
+                        <ChevronLeft />
+                      </button>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">List of valid IDs</h3>
+                    </div>
+                    <button onClick={() => setIsShowingIDList(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                       <FaTimes />
+                    </button>
+                  </div>
+
+                  {/* Tab Switcher */}
+                  <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-xl mb-6">
+                    <button 
+                      type="button"
+                      onClick={() => setSelectedIDTab("primary")}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${selectedIDTab === 'primary' ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                    >
+                      Primary IDs
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setSelectedIDTab("secondary")}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${selectedIDTab === 'secondary' ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                    >
+                      Secondary IDs
+                    </button>
+                  </div>
+
+                  <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    <AnimatePresence mode="wait">
+                      <motion.div 
+                        key={selectedIDTab}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        className="grid grid-cols-2 lg:grid-cols-3 gap-3"
+                      >
+                        {selectedIDTab === 'primary' ? (
+                          <>
+                            {[
+                              { name: "Driver's License", src: "/images/id-license.png" },
+                              { name: "SSS / UMID ID", src: "/images/id-sss.png" },
+                              { name: "Passport", src: "/images/id-passport.png" },
+                              { name: "National ID", src: "/images/id-national-id.png" },
+                              { name: "PRC ID", src: "/images/id-prc.png" },
+                              { name: "Voter's ID", src: "/images/id-voters.png" },
+                            ].map((id) => (
+                              <div key={id.name} className="group p-2.5 rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-primary transition-all shadow-sm flex flex-col items-center gap-3 text-center">
+                                <div className="w-full aspect-[1.6/1] rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900 shadow-inner">
+                                   <img 
+                                    src={id.src} 
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    alt={id.name}
+                                   />
+                                </div>
+                                <p className="text-[9px] font-black uppercase tracking-tighter text-gray-700 dark:text-gray-300 leading-tight">
+                                  {id.name}
+                                </p>
+                              </div>
+                            ))}
+                          </>
+                        ) : (
+                          <>
+                            {[
+                              { name: "Student ID (COR)", icon: <User size={20} />, color: "bg-blue-600 shadow-blue-200", src: "/images/id-secondary-studentID.png" },
+                              { name: "Staff ID", icon: <User size={20} />, color: "bg-indigo-600 shadow-indigo-200", src: "/images/id-secondary-staffID.png" },
+                              { name: "Faculty ID", icon: <User size={20} />, color: "bg-emerald-600 shadow-emerald-200", src: "/images/id-secondary-facultyID.png" },
+                              { name: "Pag-IBIG ID", icon: <Info size={20} />, color: "bg-gradient-to-br from-blue-500/10 to-blue-600/20 text-blue-600", src: "/images/id-secondary-pag-ibig.png" },
+                              { name: "Police Clearance", icon: <ShieldCheck size={20} />, color: "bg-blue-50 text-blue-600", src: "/images/id-secondary-police-clearance.png" },
+                              { name: "NBI Clearance", icon: <Info size={20} />, color: "bg-green-50 text-green-600", src: "/images/id-secondary-nbi-clearance.png" },
+                              { name: "PhilHealth ID", icon: <Info size={20} />, color: "bg-teal-50 text-teal-600", src: "/images/id-secondary-philhealth.png" },
+                              { name: "Postal ID", icon: <CreditCard size={20} />, color: "bg-rose-50 text-rose-600", src: "/images/id-secondary-postal-id.png" },
+                              { name: "TIN ID", icon: <CreditCard size={20} />, color: "bg-orange-50 text-orange-600", src: "/images/id-secondary-tin-id.png" },
+                            ].map((id: { name: string, icon?: any, color?: string, src?: string }) => (
+                              <div key={id.name} className="group p-2.5 rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-primary transition-all shadow-sm flex flex-col items-center gap-3 text-center">
+                                <div className="w-full aspect-[1.6/1] rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900 shadow-inner flex items-center justify-center">
+                                   {id.src ? (
+                                     <img 
+                                      src={id.src} 
+                                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                      alt={id.name}
+                                     />
+                                   ) : (
+                                     <div className={`w-full h-full ${id.color} flex flex-col items-center justify-center text-white p-3 gap-1 group-hover:scale-110 transition-transform duration-500`}>
+                                       {id.icon}
+                                       <span className="text-[7px] font-black uppercase tracking-tighter opacity-70">Official Doc</span>
+                                     </div>
+                                   )}
+                                </div>
+                                <p className="text-[9px] font-black uppercase tracking-tighter text-gray-700 dark:text-gray-300 leading-tight">
+                                  {id.name}
+                                </p>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+
+                  <div className="p-4 bg-primary/5 dark:bg-primary/10 border border-primary/10 rounded-2xl">
+                    <p className="text-[10px] text-primary font-bold flex items-center gap-2">
+                      <ShieldCheck size={14} />
+                      Only clear, original documents will be accepted for verification.
+                    </p>
+                  </div>
+
+                  <div className="flex justify-center pt-2">
+                    <button 
+                       type="button"
+                       onClick={() => setIsShowingIDList(false)}
+                       className="text-xs font-bold text-gray-500 hover:text-primary transition-colors underline underline-offset-4"
+                     >
+                      Understood, let's continue
+                    </button>
+                  </div>
+                </motion.div>
               )}
-              {!profilePhoto && (
-                <p className="text-sm text-red-500">Please upload a profile photo</p>
-              )}
-            </div>
+            </AnimatePresence>
           </div>
         );
 
       case 5:
         return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-text-primary dark:text-gray-100">
-              <FaIdCard className="inline mr-2" />
-              5. Attach ID
-              <span className="text-red-500 ml-1">*</span>
-            </h3>
-            <div className="space-y-3">
-              <p className="text-sm text-text-secondary dark:text-gray-400">
-                Please upload your ID based on your role:
-              </p>
-              <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                <p className="text-sm text-text-secondary dark:text-gray-400">
-                  • <span className="font-medium">Student:</span> Certificate of Registration (COR)
-                </p>
-                <p className="text-sm text-text-secondary dark:text-gray-400">
-                  • <span className="font-medium">Staff:</span> Staff ID Card
-                </p>
-                <p className="text-sm text-text-secondary dark:text-gray-400">
-                  • <span className="font-medium">Faculty:</span> Faculty ID Card
-                </p>
-                <p className="text-sm text-text-secondary dark:text-gray-400">
-                  • <span className="font-medium">Other:</span> Valid Government ID
-                </p>
-              </div>
-              <FileUpload
-                id="idAttachment"
-                label=""
-                description="JPG, PNG, or WEBP (max. 5MB)"
-                accept=".jpg,.jpeg,.png,.webp"
-                onFileSelect={(file: File | null) => {
-                  if (file) {
-                    // Strict file type validation
-                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-                    if (!validTypes.includes(file.type)) {
-                      toast.error("Invalid file type. Only JPG, PNG, and WEBP allowed.");
-                      return;
-                    }
-                    if (file.name.match(/\.(php|exe|bat|sh|js|html)$/i)) {
-                      toast.error("Malicious file extensions are not allowed.");
-                      return;
-                    }
-                    if (file.size > 5 * 1024 * 1024) {
-                      toast.error("File size exceeds 5MB limit. Please choose a smaller file.");
-                      return;
-                    }
+          <div className="space-y-6">
+             <div className="space-y-2">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <User className="text-primary" size={20} />
+                  Step 1: Capture Your Selfie
+                </h3>
+                <p className="text-xs text-gray-500">Position your face within the oval and look straight at the camera.</p>
+             </div>
 
-                    setIdAttachment(file);
-                    setValue('idAttachment', file);
-                  } else {
-                    setIdAttachment(null);
-                    setValue('idAttachment', null);
-                  }
-                  // Force step completion update
-                  setCurrentStep(prev => prev);
-                }}
-                fileName={idAttachment?.name}
-                required={true}
-              />
-              {idAttachment && (
-                <div className="mt-2">
-                  <img
-                    src={getSafeImageSrc(idAttachment)}
-                    alt="ID preview"
-                    className="w-24 h-24 object-cover rounded-lg border-2 border-primary"
-                  />
-                </div>
-              )}
-              {!idAttachment && (
-                <p className="text-sm text-red-500">Please upload your ID</p>
-              )}
-            </div>
+             <div className="relative aspect-[3/4] max-w-[300px] mx-auto rounded-3xl overflow-hidden shadow-2xl bg-black group">
+                {!capturedSelfie ? (
+                  <>
+                    <Webcam
+                      audio={false}
+                      ref={webcamRef}
+                      screenshotFormat="image/jpeg"
+                      videoConstraints={{ facingMode: "user" }}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Oval Overlay */}
+                    <div className="absolute inset-0 pointer-events-none">
+                       <svg viewBox="0 0 100 100" className="w-full h-full text-black/60 fill-current">
+                          <path d="M 0 0 L 100 0 L 100 100 L 0 100 Z M 50 15 C 30 15 15 35 15 50 C 15 65 30 85 50 85 C 70 85 85 65 85 50 C 85 35 70 15 50 15 Z" fillRule="evenodd" />
+                          <ellipse cx="50" cy="50" rx="35" ry="35" fill="none" stroke="white" strokeWidth="0.5" strokeDasharray="2 2" />
+                       </svg>
+                    </div>
+                    <div className="absolute bottom-6 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                       <button 
+                        type="button"
+                        onClick={captureSelfie}
+                        className="bg-white/90 backdrop-blur-md text-gray-900 px-6 py-2.5 rounded-full font-bold text-xs shadow-lg flex items-center gap-2 hover:bg-white transition-all transform hover:scale-105"
+                       >
+                         <FaCamera /> Capture Selfie
+                       </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="relative w-full h-full">
+                    <img src={capturedSelfie} className="w-full h-full object-cover" alt="Captured Selfie" />
+                    <button 
+                      type="button"
+                      onClick={() => setCapturedSelfie(null)}
+                      className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-red-500 transition-colors"
+                    >
+                      <FaTimes />
+                    </button>
+                    <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                       <span className="bg-green-500 text-white px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg">Good Image!</span>
+                    </div>
+                  </div>
+                )}
+             </div>
           </div>
         );
 
       case 6:
         return (
+          <div className="space-y-6">
+             <div className="space-y-2">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <FaIdCard className="text-primary" />
+                  Step 2: Capture Your ID Card
+                </h3>
+                <p className="text-xs text-gray-500">Align your ID card with the rectangle. Ensure text is clear and readable.</p>
+             </div>
+
+             <div className="relative aspect-[3/4] max-w-[300px] mx-auto rounded-3xl overflow-hidden shadow-2xl bg-black group">
+                {!capturedID ? (
+                  <>
+                    <Webcam
+                      audio={false}
+                      ref={webcamRef}
+                      screenshotFormat="image/jpeg"
+                      videoConstraints={{ facingMode: "environment" }}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Card Overlay */}
+                    <div className="absolute inset-0 pointer-events-none">
+                       <svg viewBox="0 0 100 100" className="w-full h-full text-black/60 fill-current">
+                          <path d="M 0 0 L 100 0 L 100 100 L 0 100 Z M 15 35 L 85 35 L 85 65 L 15 65 Z" fillRule="evenodd" />
+                          <rect x="15" y="35" width="70" height="30" rx="3" fill="none" stroke="white" strokeWidth="0.5" strokeDasharray="2 2" />
+                       </svg>
+                    </div>
+                    <div className="absolute bottom-6 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                       <button 
+                        type="button"
+                        onClick={captureID}
+                        className="bg-white/90 backdrop-blur-md text-gray-900 px-6 py-2.5 rounded-full font-bold text-xs shadow-lg flex items-center gap-2 hover:bg-white transition-all transform hover:scale-105"
+                       >
+                         <FaCamera /> Capture ID
+                       </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="relative w-full h-full">
+                    <img src={capturedID} className="w-full h-full object-cover" alt="Captured ID" />
+                    <button 
+                      type="button"
+                      onClick={() => setCapturedID(null)}
+                      className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-red-500 transition-colors"
+                    >
+                      <FaTimes />
+                    </button>
+                    <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                       <span className="bg-green-500 text-white px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg">Good Image!</span>
+                    </div>
+                  </div>
+                )}
+             </div>
+          </div>
+        );
+
+      case 7:
+        return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-text-primary dark:text-gray-100 flex items-center gap-2">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <FaCheck className="text-primary" />
-              6. Review Your Inquiry
+              Final Summary & Review
             </h3>
             
-            <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4 shadow-inner">
-              <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
+            <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 space-y-5">
+              <div className="grid grid-cols-2 gap-6 text-xs">
                 <div>
-                  <span className="font-semibold block text-gray-900 dark:text-gray-100 mb-1">Check In</span>
-                  {watchedValues[1] ? format(new Date(watchedValues[1]), 'MMM dd, yyyy') : '-'}
+                   <p className="text-gray-400 uppercase font-black tracking-widest mb-1">Check In</p>
+                   <p className="font-bold">{watchedValues[1] ? format(new Date(watchedValues[1]), 'MMM dd, yyyy') : '-'}</p>
                 </div>
                 <div>
-                  <span className="font-semibold block text-gray-900 dark:text-gray-100 mb-1">Check Out</span>
-                  {watchedValues[2] ? format(new Date(watchedValues[2]), 'MMM dd, yyyy') : '-'}
-                </div>
-                <div>
-                  <span className="font-semibold block text-gray-900 dark:text-gray-100 mb-1">Role</span>
-                  {watchedValues[3]}
-                </div>
-                <div>
-                  <span className="font-semibold block text-gray-900 dark:text-gray-100 mb-1">Payment Method</span>
-                  <span className="capitalize">{watchedValues[0]}</span>
+                   <p className="text-gray-400 uppercase font-black tracking-widest mb-1">Payment</p>
+                   <p className="font-bold capitalize">{watchedValues[0]}</p>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/30 p-4 rounded-xl border border-blue-100 dark:border-blue-800/50 shadow-sm">
-                  <span className="font-bold text-gray-600 dark:text-gray-300">Reservation Fee Due</span>
-                  <div className="flex flex-col items-end">
-                    <span className="font-black text-blue-600 dark:text-blue-400 text-xl tracking-tight">₱ {room.reservationFee.toLocaleString()}</span>
-                    <span className="text-[10px] text-blue-500 uppercase font-black tracking-widest opacity-70">Pay Securely</span>
-                  </div>
-                </div>
-                <p className="text-[10px] text-gray-500 mt-2 italic">* This is a one-time fee to hold the room. Monthly rent of ₱{room.price.toLocaleString()} is to be paid directly to the landlord.</p>
-              </div>
-              
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <span className="font-semibold block text-sm text-gray-900 dark:text-gray-100 mb-2">Message to Landlord</span>
-                <p className="text-sm text-gray-700 dark:text-gray-400 italic">"{watchedValues[5]}"</p>
+              <div className="flex gap-4">
+                 <div className="flex-1 space-y-1">
+                    <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Your Selfie</p>
+                    <div className="aspect-square rounded-2xl border-2 border-primary/20 overflow-hidden bg-gray-200 shadow-inner">
+                       {capturedSelfie ? <img src={capturedSelfie} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><FaUser className="text-gray-300 text-2xl" /></div>}
+                    </div>
+                 </div>
+                 <div className="flex-1 space-y-1">
+                    <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Valid ID</p>
+                    <div className="aspect-square rounded-2xl border-2 border-primary/20 overflow-hidden bg-gray-200 shadow-inner">
+                       {capturedID ? <img src={capturedID} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><FaIdCard className="text-gray-300 text-2xl" /></div>}
+                    </div>
+                 </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex gap-4">
-                <div className="flex items-center gap-2 text-sm">
-                  {profilePhoto ? <FaCheck className="text-primary" /> : <FaTimes className="text-red-500" />}
-                  <span>Profile Photo</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  {idAttachment ? <FaCheck className="text-primary" /> : <FaTimes className="text-red-500" />}
-                  <span>Valid ID</span>
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/50">
+                   <div>
+                      <span className="text-[10px] text-blue-500 uppercase font-black tracking-widest block opacity-70 mb-0.5">Verification Fee Included</span>
+                      <span className="font-black text-blue-600 dark:text-blue-400 text-xl tracking-tighter">₱ {room.reservationFee.toLocaleString()}</span>
+                   </div>
+                   <div className="bg-blue-600 text-white p-2 rounded-xl">
+                      <ShieldCheck size={24} />
+                   </div>
                 </div>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-               <FaCheck size={10} /> Everything looks great. Hit confirm below to send this securely.
-            </p>
           </div>
         );
 
@@ -941,11 +1195,17 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                   <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                     <div className="relative">
                       <div className="aspect-[4/3] w-full overflow-hidden">
-                        <img
-                          src={getSafeImageSrcString((room.images && room.images.length > 0) ? room.images[currentImageIndex].url : "/images/placeholder.jpg")}
-                          alt={room.name}
-                          className="w-full h-full object-cover"
-                        />
+                        {(room.images && room.images.length > 0) || getSafeImageSrcString("/images/placeholder.jpg") ? (
+                          <img
+                            src={getSafeImageSrcString((room.images && room.images.length > 0) ? room.images[currentImageIndex].url : "/images/placeholder.jpg")}
+                            alt={room.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <span className="text-gray-400">No image available</span>
+                          </div>
+                        )}
                       </div>
                       {(room.images && room.images.length > 1) && (
                         <>
