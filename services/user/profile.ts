@@ -109,6 +109,8 @@ export async function updateUserProfile(data: Partial<UserProfile>): Promise<Use
       createdAt: true,
       updatedAt: true,
       bio: true,
+      city: true,
+      region: true,
     },
   });
 

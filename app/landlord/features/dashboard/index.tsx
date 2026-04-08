@@ -8,6 +8,8 @@ import { LandlordDashboardRecentActivity } from './components/landlord-dashboard
 import { ChartAreaInteractive } from '@/app/landlord/components/charts/AreaChart';
 import { ChartPieLabel } from '@/app/landlord/components/charts/PieChart';
 import { ChartLineInteractive } from '@/app/landlord/components/charts/LineChart';
+import ViewProfileModal from '../../components/modals/ViewProfileModal';
+import { useState } from 'react';
 
 interface LandlordDashboardStats {
   totalProperties: number;
@@ -27,9 +29,16 @@ interface LandlordDashboardClientProps {
   stats: LandlordDashboardStats;
 }
 
-export default function LandlordDashboardFeature({ stats }: LandlordDashboardClientProps) {
+export default function LandlordDashboardFeature({ stats, user }: LandlordDashboardClientProps & { user: any }) {
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
   return (
     <div className="space-y-10 pb-20">
+      <ViewProfileModal 
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        user={user}
+      />
       {/* Page Header */}
       <div className="bg-white dark:bg-gray-950 p-8 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-2xl shadow-gray-200/50 dark:shadow-black/20">
         <div className="flex items-center gap-6">
@@ -48,7 +57,7 @@ export default function LandlordDashboardFeature({ stats }: LandlordDashboardCli
       </div>
 
       {/* Quick Actions Feature Zone */}
-      <LandlordDashboardQuickActions />
+      <LandlordDashboardQuickActions onViewProfile={() => setIsProfileModalOpen(true)} />
 
       {/* Stats KPI Section */}
       <LandlordDashboardStatsCards stats={stats} />

@@ -41,6 +41,7 @@ import { LandlordSettingsModalHub } from '@/app/landlord/features/settings-hub/c
 import { LandlordTopbarUserMenu } from '@/app/landlord/features/layout/components/landlord-topbar-user-menu';
 import { NotificationsDropdown } from '@/app/landlord/features/notifications';
 import { useLandlordProfileStore } from '../../settings-hub/hooks/use-landlord-profile-store';
+import ViewProfileModal from '@/app/landlord/components/modals/ViewProfileModal';
 
 interface LandlordTopbarProps {
   user: any;
@@ -52,6 +53,7 @@ export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProp
 
   // Refactored Modal State
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isViewProfileModalOpen, setIsViewProfileModalOpen] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -183,7 +185,11 @@ export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProp
           <div className="w-[1px] h-6 bg-gray-200 dark:bg-gray-800 mx-2" />
 
           {/* New Modular User Menu */}
-          <LandlordTopbarUserMenu user={user} onOpenSettings={handleOpenSettings} />
+          <LandlordTopbarUserMenu 
+            user={user} 
+            onOpenSettings={handleOpenSettings} 
+            onViewProfile={() => setIsViewProfileModalOpen(true)}
+          />
         </div>
       </header>
 
@@ -191,6 +197,13 @@ export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProp
       <LandlordSettingsModalHub 
         isOpen={isSettingsModalOpen} 
         onClose={() => setIsSettingsModalOpen(false)} 
+      />
+
+      {/* View Profile Modal - Exactly from refactor branch */}
+      <ViewProfileModal 
+        isOpen={isViewProfileModalOpen} 
+        onClose={() => setIsViewProfileModalOpen(false)} 
+        user={user} 
       />
     </>
   );

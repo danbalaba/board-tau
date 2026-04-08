@@ -28,9 +28,10 @@ interface LandlordTopbarUserMenuProps {
     role: string;
   };
   onOpenSettings: (tab?: string) => void;
+  onViewProfile: () => void;
 }
 
-export function LandlordTopbarUserMenu({ user, onOpenSettings }: LandlordTopbarUserMenuProps) {
+export function LandlordTopbarUserMenu({ user, onOpenSettings, onViewProfile }: LandlordTopbarUserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -78,7 +79,7 @@ export function LandlordTopbarUserMenu({ user, onOpenSettings }: LandlordTopbarU
         <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
         <DropdownMenuGroup className="p-1">
           <DropdownMenuItem 
-            onClick={() => onOpenSettings('profile')}
+            onClick={onViewProfile}
             className='rounded-xl flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-all group border border-transparent hover:border-primary/10'
           >
             <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
