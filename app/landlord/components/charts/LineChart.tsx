@@ -21,7 +21,17 @@ import { IconChartLine, IconTrendingUp } from "@tabler/icons-react"
 
 export const description = "Monthly Bookings & Revenue"
 
-const chartData = [
+interface ChartDataItem {
+  date: string;
+  bookings: number;
+  revenue: number;
+}
+
+interface ChartLineInteractiveProps {
+  data?: ChartDataItem[];
+}
+
+const defaultChartData: ChartDataItem[] = [
   { date: "2024-04", bookings: 120, revenue: 45000 },
   { date: "2024-05", bookings: 150, revenue: 58000 },
   { date: "2024-06", bookings: 180, revenue: 67000 },
@@ -41,16 +51,18 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function ChartLineInteractive() {
+export function ChartLineInteractive({ data }: ChartLineInteractiveProps) {
   const [activeChart, setActiveChart] = React.useState<keyof typeof chartConfig>("bookings")
   const [viewType, setViewType] = React.useState("growth")
+  
+  const chartData = data && data.length > 0 ? data : defaultChartData
 
   const total = React.useMemo(
     () => ({
       bookings: chartData.reduce((acc, curr) => acc + curr.bookings, 0),
       revenue: chartData.reduce((acc, curr) => acc + curr.revenue, 0),
     }),
-    []
+    [chartData]
   )
 
   return (

@@ -23,7 +23,17 @@ import { IconCalendarStats } from "@tabler/icons-react"
 
 export const description = "Revenue and Bookings Overview"
 
-const chartData = [
+interface ChartDataItem {
+  date: string;
+  revenue: number;
+  bookings: number;
+}
+
+interface ChartAreaInteractiveProps {
+  data?: ChartDataItem[];
+}
+
+const defaultChartData: ChartDataItem[] = [
   { date: "2024-04-01", revenue: 12000, bookings: 15 },
   { date: "2024-04-02", revenue: 19800, bookings: 22 },
   { date: "2024-04-03", revenue: 15000, bookings: 18 },
@@ -57,8 +67,10 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function ChartAreaInteractive() {
+export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
   const [timeRange, setTimeRange] = React.useState("90d")
+  
+  const chartData = data && data.length > 0 ? data : defaultChartData
 
   const latestDate = new Date(Math.max(...chartData.map(item => new Date(item.date).getTime())))
 

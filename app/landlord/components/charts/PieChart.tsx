@@ -21,11 +21,24 @@ import { IconChartPie, IconHash } from "@tabler/icons-react"
 
 export const description = "Property Type Distribution"
 
-const chartData = [
-  { type: "Apartment", count: 12, revenue: 45000, fill: "#2f7d6d" },
-  { type: "House", count: 8, revenue: 58000, fill: "#1473E6" },
-  { type: "Studio", count: 15, revenue: 32000, fill: "#F59E0B" },
-  { type: "Loft", count: 5, revenue: 25000, fill: "#8B5CF6" },
+interface ChartDataItem {
+  type: string;
+  count: number;
+  revenue: number;
+  fill?: string;
+}
+
+interface ChartPieLabelProps {
+  data?: ChartDataItem[];
+}
+
+const colors = ["#2f7d6d", "#1473E6", "#F59E0B", "#8B5CF6", "#EC4899", "#14B8A6"];
+
+const defaultChartData: ChartDataItem[] = [
+  { type: "Apartment", count: 12, revenue: 45000 },
+  { type: "House", count: 8, revenue: 58000 },
+  { type: "Studio", count: 15, revenue: 32000 },
+  { type: "Loft", count: 5, revenue: 25000 },
 ]
 
 const chartConfig = {
@@ -37,9 +50,23 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function ChartPieLabel() {
+export function ChartPieLabel({ data }: ChartPieLabelProps) {
   const [activeMetric, setActiveMetric] = React.useState<keyof typeof chartConfig>("count")
   const [viewType, setViewType] = React.useState("donut")
+  const [tick, setTick] = React.useState(0)
+
+  const processedData = React.useMemo(() => {
+    const source = data && data.length > 0 ? data : defaultChartData;
+    return source.map((d, i) => ({
+      ...d,
+      fill: d.fill || colors[i % colors.length]
+    }));
+  }, [data]);
+
+  const handleMetricChange = (val: string) => {
+    setActiveMetric(val as keyof typeof chartConfig);
+    setTick(t => t + 1);
+  };
 
   return (
     <Card className="bg-transparent border-none shadow-none">
@@ -55,7 +82,7 @@ export function ChartPieLabel() {
           <ModernSelect
             instanceId="pieMetric"
             value={activeMetric}
-            onChange={(val) => setActiveMetric(val as any)}
+            onChange={handleMetricChange}
             size="sm"
             icon={<IconChartPie size={12} />}
             options={[
@@ -82,7 +109,7 @@ export function ChartPieLabel() {
           config={chartConfig}
           className="aspect-square max-h-[200px] w-full"
         >
-          <PieChart>
+          <PieChart key={`${activeMetric}-${tick}`}>
             <ChartTooltip
               content={
                 <ChartTooltipContent 
@@ -92,7 +119,7 @@ export function ChartPieLabel() {
               }
             />
             <Pie
-              data={chartData}
+              data={processedData}
               dataKey={activeMetric}
               nameKey="type"
               innerRadius={viewType === "donut" ? 50 : 0}
@@ -101,10 +128,10 @@ export function ChartPieLabel() {
               stroke="white"
               paddingAngle={3}
             >
-              {chartData.map((entry, index) => (
+              {processedData.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
-                  fill={entry.fill} 
+                  fill={entry.fill}
                   style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.06))" }}
                 />
               ))}
