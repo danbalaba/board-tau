@@ -112,7 +112,7 @@ export function usePropertyCreatorLogic(initialData: any) {
       const currentValues = getValues();
       if (currentValues.documents) {
         Object.entries(currentValues.documents).forEach(([key, value]) => {
-          if (typeof value === 'string' && value.includes('pending-upload.com')) {
+          if (typeof value === 'string' && /^https?:\/\/pending-upload\.com/.test(value)) {
             setValue(`documents.${key}` as any, '');
           }
         });
