@@ -6,10 +6,13 @@ Welcome to BoardTAU! We appreciate your interest in contributing to our project.
 
 ### Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 20.x or 22.x ( LTS recommended) and npm 11.6.x
 - MongoDB database
 - Stripe account (for payments)
 - EdgeStore account (for file storage)
+
+> [!IMPORTANT]
+> Ensure your Node.js and npm versions match your team's versions to avoid inconsistent `package-lock.json` changes.
 
 ### Installation
 
@@ -21,10 +24,10 @@ Welcome to BoardTAU! We appreciate your interest in contributing to our project.
 
 2. **Install dependencies**
    ```bash
-   npm install
+   npm ci
    ```
    > [!NOTE]
-   > Peer dependency conflicts (like React 19 vs. kbar) are handled automatically via our `.npmrc` configuration.
+   > Always use `npm ci` instead of `npm install` to prevent lock file modifications. Peer dependency conflicts are handled automatically via our `.npmrc` configuration.
 
 3. **Set up environment variables**
    Create a `.env` file in the root directory with the required variables. See `.env.example` for a template.
@@ -290,7 +293,8 @@ const ITEMS_PER_PAGE = 10;
 
 ### Common Issues
 
-1. **Dependency issues**: Run `npm install` again. The project's `.npmrc` handles peer conflicts automatically.
+1. **Dependency issues**: Run `npm ci` again. The project's `.npmrc` handles peer conflicts automatically.
+2. **Lock file changes**: Ensure you and your team use the same Node/npm versions. If lock file keeps changing, regenerate it with: `rm -rf node_modules package-lock.json && npm ci`
 2. **Database connection errors**: Check your `.env` file
 3. **Type errors**: Run `npm run type-check`
 4. **Test failures**: Run `npm run test:watch` to debug
