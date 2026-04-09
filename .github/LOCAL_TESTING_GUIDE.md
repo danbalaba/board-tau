@@ -17,17 +17,17 @@ Since the `package-lock.json` and versions have changed significantly, we recomm
 **Windows (PowerShell):**
 ```powershell
 rm -r -Force node_modules, package-lock.json
-npm install
+npm ci
 ```
 
 **macOS/Linux:**
 ```bash
 rm -rf node_modules package-lock.json
-npm install
+npm ci
 ```
 
 > [!IMPORTANT]  
-> The project uses an `.npmrc` file to automatically handle peer dependency conflicts (like React 19 vs. kbar). You **no longer need to manually add the legacy flag**. Just run `npm install` and it will work!
+> The project uses an `.npmrc` file to automatically handle peer dependency conflicts (like React 19 vs. kbar). You **no longer need to manually add the legacy flag**. Just run `npm ci` and it will work! Always use `npm ci` instead of `npm install` to prevent lock file modifications.
 
 ---
 
@@ -56,3 +56,11 @@ npm run build
 - **"Cannot convert undefined or null to object"**: This means your Prisma CLI and Client are out of sync. Ensure you've run the clean install above.
 - **"ERESOLVE could not resolve"**: You forgot the `--legacy-peer-deps` flag! 
 - **"uuid types not found"**: We have upgraded to `uuid` v10 with built-in types. Remove `@types/uuid` if it's still in your package.json manually.
+
+### ⚠️ Important: Match Node/npm Versions
+If `package-lock.json` keeps changing after pulling, ensure your team uses the same Node and npm versions:
+```bash
+node -v
+npm -v
+```
+Coordinate with your team to use identical versions, then regenerate the lock file once with `npm ci`.
