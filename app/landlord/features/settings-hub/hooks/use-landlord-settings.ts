@@ -1,7 +1,8 @@
-'use client';
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
+import { updateUserProfileClient } from '@/services/user/profile';
+import { useEdgeStore } from '@/lib/edgestore';
 
 /**
  * Validates and sanitizes image sources using a strict character whitelist.
@@ -24,18 +25,50 @@ export const getSafeImageSrc = (image: string): string => {
 };
 
 export function useLandlordSettings() {
+  const router = useRouter();
   const { success, error: toastError } = useResponsiveToast();
+  const { edgestore } = useEdgeStore();
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'payment' | 'security'>('profile');
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   const [formData, setFormData] = useState({
-    name: 'John Landlord',
-    email: 'john.landlord@example.com',
-    phone: '+63 912 345 6789',
-    address: '123 Main Street, Tarlac City, Philippines',
-    bio: 'Experienced property manager with 5+ years in the boarding house business.',
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    bio: '',
     profileImage: null as File | null,
+    currentImageUrl: '',
   });
+
+  // Fetch initial data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch('/api/user/profile');
+        const data = await response.json();
+        
+        if (data) {
+          setFormData({
+            name: data.name || '',
+            email: data.email || '',
+            phone: data.phoneNumber || '',
+            address: data.address || '',
+            bio: data.bio || '',
+            profileImage: null,
+            currentImageUrl: data.image || '',
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      } finally {
+        setIsInitialLoad(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -58,12 +91,31 @@ export function useLandlordSettings() {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      let imageUrl = formData.currentImageUrl;
+
+      // 1. Upload new image if exists
+      if (formData.profileImage) {
+        const res = await edgestore.publicFiles.upload({
+          file: formData.profileImage,
+        });
+        imageUrl = res.url;
+      }
+
+      // 2. Update profile in database
+      await updateUserProfileClient({
+        name: formData.name,
+        phoneNumber: formData.phone,
+        address: formData.address,
+        bio: formData.bio,
+        image: imageUrl,
+      });
+
+      setFormData(prev => ({ ...prev, currentImageUrl: imageUrl, profileImage: null }));
+      router.refresh();
       success('Settings updated successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating settings:', error);
-      toastError('Failed to update settings. Please try again.');
+      toastError(error.message || 'Failed to update settings. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +124,7 @@ export function useLandlordSettings() {
   return {
     activeTab,
     setActiveTab,
-    isLoading,
+    isLoading: isLoading || isInitialLoad,
     formData,
     setFormData,
     handleInputChange,

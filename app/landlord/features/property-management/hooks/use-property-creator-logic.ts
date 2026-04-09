@@ -105,6 +105,20 @@ export function usePropertyCreatorLogic(initialData: any) {
     name: 'propertyConfig.rooms',
   });
 
+  // Self-cleaning effect for legacy placeholders
+  useEffect(() => {
+    if (isMounted) {
+      const currentValues = getValues();
+      if (currentValues.documents) {
+        Object.entries(currentValues.documents).forEach(([key, value]) => {
+          if (typeof value === 'string' && value.includes('pending-upload.com')) {
+            setValue(`documents.${key}` as any, '');
+          }
+        });
+      }
+    }
+  }, [isMounted, getValues, setValue]);
+
   const handleNext = async () => {
     try {
       console.log('Validating step:', currentStep);
@@ -184,7 +198,7 @@ export function usePropertyCreatorLogic(initialData: any) {
           });
           
           result.errors.forEach(err => {
-            methods.setError(err.field as any, { 
+            setError(err.field as any, { 
               type: 'manual', 
               message: err.message 
             });
@@ -325,22 +339,23 @@ export function usePropertyCreatorLogic(initialData: any) {
     }
 
     setUploadedFiles((prev) => ({ ...prev, [type]: file }));
-    // Update form state with a placeholder so validation passes
-    setValue(`documents.${type}` as any, `http://pending-upload.com/${file.name}`, { shouldValidate: true });
+    // Use a real blob URL for local browser preview
+    const blobUrl = URL.createObjectURL(file);
+    setValue(`documents.${type}` as any, blobUrl, { shouldValidate: true });
   };
 
   const handlePropertyFilesChange = (files: File[]) => {
     setPropertyFiles(files);
-    // Update form state with placeholder URLs for validation (requires 3 images)
-    const placeholders = files.map(f => `blob:${f.name}`);
-    setValue('propertyImages.property' as any, placeholders, { shouldValidate: true });
+    // Use real blob URLs for local browser preview
+    const blobUrls = files.map(f => URL.createObjectURL(f));
+    setValue('propertyImages.property' as any, blobUrls, { shouldValidate: true });
   };
 
   const handleRoomFilesChange = (roomIndex: number, files: File[]) => {
     setRoomFiles(prev => ({ ...prev, [roomIndex]: files }));
-    // Update form state for room images
-    const placeholders = files.map(f => `blob:${f.name}`);
-    setValue(`propertyImages.rooms.${roomIndex}` as any, placeholders, { shouldValidate: true });
+    // Use real blob URLs for local browser preview
+    const blobUrls = files.map(f => URL.createObjectURL(f));
+    setValue(`propertyImages.rooms.${roomIndex}` as any, blobUrls, { shouldValidate: true });
   };
 
   const onSubmit = async (data: any) => {
@@ -446,7 +461,7 @@ export function usePropertyCreatorLogic(initialData: any) {
     register,
     control,
     watch,
-    errors,
+    errors: methods.formState.errors,
     fields,
     append,
     remove,

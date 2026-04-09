@@ -77,7 +77,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
                     <MenuItem label="Admin" onClick={() => redirect("/admin")} />
                   )}
                   <hr />
-                  <MenuItem label="Log out" onClick={signOut} />
+                  <MenuItem label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
                 </>
               ) : (
                 <>

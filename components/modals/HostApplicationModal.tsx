@@ -500,9 +500,9 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ onCloseModa
       ...prev,
       [documentType]: file
     }));
-    // In real implementation, you would upload the file to storage and get a URL
-    const fakeUrl = `https://boardtau-storage.com/uploads/${documentType}-${Date.now()}.pdf`;
-    setValue(`documents.${documentType}`, fakeUrl as any);
+    // Use real blob URL for local browser preview
+    const blobUrl = URL.createObjectURL(file);
+    setValue(`documents.${documentType}`, blobUrl as any);
     
     // Clear error for this specific field in real-time
     clearErrors(`documents.${documentType}` as any);

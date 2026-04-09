@@ -43,6 +43,30 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setIsDragging(true);
   };
 
+  const validateFile = (file: File) => {
+    // 1. Type Check (Prioritized as per Step 5 behavior)
+    if (accept) {
+      const isImageAccept = accept.includes('image/jpeg') || accept.includes('image/png') || accept.includes('image/webp');
+      
+      if (isImageAccept) {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+          toast.error(`${file.name} is an invalid file type. Only JPG, PNG, and WEBP allowed.`, { id: `type-error-${file.name}` });
+          return false;
+        }
+      }
+      // General type check for other formats if needed could go here
+    }
+
+    // 2. Size Check
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(`File "${file.name}" is too large. Maximum size is 5MB.`, { id: `size-error-${file.name}` });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
@@ -50,11 +74,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       const file = files[0];
-      if (file.size > MAX_FILE_SIZE) {
-        toast.error(`File "${file.name}" is too large. Maximum size is 5MB.`);
-        return;
+      if (validateFile(file)) {
+        onFileSelect(file);
       }
-      onFileSelect(files[0]);
     }
   };
 
@@ -62,11 +84,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      if (file.size > MAX_FILE_SIZE) {
-        toast.error(`File "${file.name}" is too large. Maximum size is 5MB.`);
-        return;
+      if (validateFile(file)) {
+        onFileSelect(file);
       }
-      onFileSelect(file);
     }
   };
 

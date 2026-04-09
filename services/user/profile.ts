@@ -12,6 +12,7 @@ export interface UserProfile {
   image: string | null;
   phoneNumber: string | null;
   businessName: string | null;
+  address: string | null;
   role: Role;
   emailVerified: Date | null;
   lastLogin: Date | null;
@@ -41,6 +42,7 @@ export async function getUserProfile(): Promise<UserProfile> {
       image: true,
       phoneNumber: true,
       businessName: true,
+      address: true,
       role: true,
       emailVerified: true,
       lastLogin: true,
@@ -68,7 +70,7 @@ export async function updateUserProfile(data: Partial<UserProfile>): Promise<Use
   }
 
   // Only allow updating specific fields to prevent security issues
-  const allowedFields: Partial<UserProfile> = {};
+  const allowedFields: any = {};
   if (data.name !== undefined) {
     allowedFields.name = data.name ? sanitizeInput(data.name) : null;
   }
@@ -81,21 +83,24 @@ export async function updateUserProfile(data: Partial<UserProfile>): Promise<Use
   if (data.businessName !== undefined) {
     allowedFields.businessName = data.businessName ? sanitizeInput(data.businessName) : null;
   }
+  if (data.address !== undefined) {
+    allowedFields.address = data.address ? sanitizeInput(data.address) : null;
+  }
   if (data.image !== undefined) {
     allowedFields.image = data.image; // Allow updating profile image
   }
   if (data.city !== undefined) {
-    (allowedFields as any).city = data.city ? sanitizeInput(data.city) : null;
+    allowedFields.city = data.city ? sanitizeInput(data.city) : null;
   }
   if (data.region !== undefined) {
-    (allowedFields as any).region = data.region ? sanitizeInput(data.region) : null;
+    allowedFields.region = data.region ? sanitizeInput(data.region) : null;
   }
 
   const updatedUser = await db.user.update({
     where: {
       email: session.user.email,
     },
-    data: allowedFields as any,
+    data: allowedFields,
     select: {
       id: true,
       name: true,
@@ -103,6 +108,7 @@ export async function updateUserProfile(data: Partial<UserProfile>): Promise<Use
       image: true,
       phoneNumber: true,
       businessName: true,
+      address: true,
       role: true,
       emailVerified: true,
       lastLogin: true,

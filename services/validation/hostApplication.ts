@@ -302,7 +302,7 @@ const validateDocuments = (documents: any, errors: ValidationError[]): void => {
 
   for (const doc of requiredDocuments) {
     const documentValue = documents[doc];
-    if (!documentValue || typeof documentValue !== 'string' || !documentValue.startsWith('http')) {
+    if (!documentValue || typeof documentValue !== 'string' || (!documentValue.startsWith('http') && !documentValue.startsWith('blob:'))) {
       errors.push({ field: `documents.${doc}`, message: `Please upload a valid ${doc} document` });
     }
   }
