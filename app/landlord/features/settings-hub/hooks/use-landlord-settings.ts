@@ -24,11 +24,18 @@ export const getSafeImageSrc = (image: string): string => {
   return '';
 };
 
-export function useLandlordSettings() {
+export function useLandlordSettings(initialTab?: 'notifications' | 'payment' | 'security') {
   const router = useRouter();
   const { success, error: toastError } = useResponsiveToast();
   const { edgestore } = useEdgeStore();
-  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'payment' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<'notifications' | 'payment' | 'security'>(initialTab || 'notifications');
+
+  // Sync activeTab with initialTab when it changes (e.g., when reopening the modal with a specific tab)
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   

@@ -53,6 +53,8 @@ export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProp
 
   // Refactored Modal State
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<'notifications' | 'payment' | 'security' | undefined>(undefined);
+  const [modalMode, setModalMode] = useState<'account' | 'security' | 'all'>('all');
   const [isViewProfileModalOpen, setIsViewProfileModalOpen] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,17 +87,18 @@ export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProp
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   
-  const handleOpenSettings = (tab?: string) => {
+  const handleOpenSettings = (tab?: 'notifications' | 'payment' | 'security', mode: 'account' | 'security' | 'all' = 'all') => {
+    setSelectedTab(tab);
+    setModalMode(mode);
     setIsSettingsModalOpen(true);
   };
 
   const mockSuggestions = [
     { label: 'Properties', category: 'Management', icon: IconChartLine, action: () => router.push('/landlord/properties') },
-    { label: 'Payments', category: 'Finance', icon: IconCreditCard, action: () => handleOpenSettings() },
-    { label: 'Profile Settings', category: 'Account', icon: IconUser, action: () => handleOpenSettings() },
+    { label: 'Payments', category: 'Finance', icon: IconCreditCard, action: () => handleOpenSettings('payment', 'account') },
     { label: 'Inquiries', category: 'Tenants', icon: IconMail, action: () => router.push('/landlord/inquiries') },
-    { label: 'Security & Privacy', category: 'Account', icon: IconShield, action: () => handleOpenSettings() },
-    { label: 'Settings', category: 'System', icon: IconSettings, action: () => handleOpenSettings() },
+    { label: 'Security & Privacy', category: 'Account', icon: IconShield, action: () => handleOpenSettings('security', 'security') },
+    { label: 'Settings', category: 'System', icon: IconSettings, action: () => handleOpenSettings(undefined, 'account') },
   ];
 
   const filteredSuggestions = mockSuggestions.filter(item => 
@@ -197,6 +200,8 @@ export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProp
       <LandlordSettingsModalHub 
         isOpen={isSettingsModalOpen} 
         onClose={() => setIsSettingsModalOpen(false)} 
+        defaultTab={selectedTab}
+        mode={modalMode}
       />
 
       {/* View Profile Modal - Exactly from refactor branch */}
