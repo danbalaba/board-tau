@@ -164,8 +164,8 @@ export function usePropertyCreatorLogic(initialData: any) {
       // Maintain overrides for higher room counts and bathroom selection
       if (currentStep === 3) { // Property Configuration (Step 4) - Index 3
         // Mock bathroomType if missing to pass strict host validation
-        if (!validationData.propertyConfig.bathroomType) {
-          validationData.propertyConfig.bathroomType = 'PRIVATE';
+        if (!(validationData.propertyConfig as any).bathroomType) {
+          (validationData.propertyConfig as any).bathroomType = 'PRIVATE';
           // If we added it here, we should check if it was actually invalid before
           const bathroomErrIndex = result.errors.findIndex(e => e.field === 'propertyConfig.bathroomType');
           if (bathroomErrIndex > -1) {

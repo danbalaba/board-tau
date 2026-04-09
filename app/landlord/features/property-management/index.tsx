@@ -1,10 +1,11 @@
 'use client';
 
 import React from 'react';
-import { IconSearchOff, IconChevronDown, IconBuilding } from '@tabler/icons-react';
+import { IconSearchOff, IconChevronDown, IconBuilding, IconPlus } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import { useRegisterActions } from 'kbar';
+import { useRouter } from 'next/navigation';
 import { usePropertyLogic, Property } from './hooks/use-property-logic';
 import { LandlordPropertyHeader } from './components/landlord-property-header';
 import { LandlordPropertyCard } from './components/landlord-property-card';
@@ -13,7 +14,6 @@ import { LandlordPropertyDeleteModal } from './components/landlord-property-dele
 import { useLoadMore } from '@/hooks/useLoadMore';
 import Link from 'next/link';
 import { Button } from '@/app/admin/components/ui/button';
-import { IconPlus } from '@tabler/icons-react';
 
 interface LandlordPropertyManagementProps {
   properties: {
@@ -32,6 +32,7 @@ const statusColors: Record<string, string> = {
 const formatStatus = (status: string) => status.charAt(0).toUpperCase() + status.slice(1);
 
 export default function LandlordPropertyManagement({ properties }: LandlordPropertyManagementProps) {
+  const router = useRouter();
   const {
     listings,
     nextCursor,

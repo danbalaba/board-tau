@@ -4,6 +4,8 @@ import FileUpload from '../common/FileUpload';
 interface DocumentsStepProps {
   register: any;
   errors: any;
+  watch?: any;
+  control?: any;
   uploadedFiles: Record<string, File>;
   onFileUpload: (documentType: string, file: File) => void;
 }
@@ -11,6 +13,8 @@ interface DocumentsStepProps {
 const DocumentsStep: React.FC<DocumentsStepProps> = ({
   register,
   errors,
+  watch,
+  control,
   uploadedFiles,
   onFileUpload
 }) => {

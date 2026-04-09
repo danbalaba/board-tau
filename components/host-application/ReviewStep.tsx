@@ -14,8 +14,9 @@ import Button from '../common/Button';
 import { cn } from '@/utils/helper';
 
 interface ReviewStepProps {
-  watch: any;
-  onBack: () => void;
+  watch?: any;
+  control?: any;
+  onBack: (e?: any) => void;
 }
 
 const ReviewSection = ({ title, icon: Icon, children, colorClass }: any) => (
@@ -51,7 +52,7 @@ const ReviewField = ({ label, value, darkValue }: { label: string; value: any; d
   </div>
 );
 
-const ReviewStep: React.FC<ReviewStepProps> = ({ watch, onBack }) => {
+const ReviewStep: React.FC<ReviewStepProps> = ({ watch, control, onBack }) => {
   const rooms = watch('propertyConfig.rooms') || [];
   const propertyImages = watch('propertyImages.property') || [];
   const docs = watch('documents') || {};

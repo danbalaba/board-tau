@@ -13,6 +13,7 @@ interface LandlordLocationStepProps {
   register: any;
   errors: any;
   watch: any;
+  control?: any;
   mapCenter: [number, number];
   onLocationSelect: (lat: number, lng: number) => void;
   onAddressAutoFill?: (address: {
@@ -27,6 +28,7 @@ const LandlordLocationStep: React.FC<LandlordLocationStepProps> = ({
   register,
   errors,
   watch,
+  control,
   mapCenter,
   onLocationSelect,
   onAddressAutoFill
