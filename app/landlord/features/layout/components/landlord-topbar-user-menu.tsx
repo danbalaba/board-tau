@@ -31,7 +31,7 @@ interface LandlordTopbarUserMenuProps {
     profileImage?: string | null;
     role: string;
   };
-  onOpenSettings: (tab?: string) => void;
+  onOpenSettings: (tab?: 'notifications' | 'payment' | 'security', mode?: 'account' | 'security' | 'all') => void;
   onViewProfile: () => void;
 }
 
@@ -72,7 +72,7 @@ export function LandlordTopbarUserMenu({ user, onOpenSettings, onViewProfile }: 
             </div>
             <div>
               <h4 className='font-black text-gray-900 dark:text-white tracking-tight'>
-                {user.name || 'Tenant Landlord'}
+                {user.name || 'Landlord User'}
               </h4>
               <p className='text-xs font-medium text-gray-500 truncate max-w-[160px]'>
                 {user.email}
@@ -96,20 +96,20 @@ export function LandlordTopbarUserMenu({ user, onOpenSettings, onViewProfile }: 
           </DropdownMenuItem>
 
           <DropdownMenuItem 
-            onClick={() => onOpenSettings()}
+            onClick={() => onOpenSettings('notifications', 'account')}
             className='rounded-xl flex items-center justify-between p-2.5 cursor-pointer hover:bg-violet-50/50 dark:hover:bg-violet-500/10 transition-all group mt-1'
           >
             <div className='flex items-center gap-3'>
               <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                 <IconSettingsFilled size={20} />
               </div>
-              <span className="font-bold text-sm text-gray-700 dark:text-gray-300 group-hover:text-violet-600 transition-colors">Account Hub</span>
+              <span className="font-bold text-sm text-gray-700 dark:text-gray-300 group-hover:text-violet-600 transition-colors">Settings</span>
             </div>
             <IconChevronRight size={14} className="text-gray-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
           </DropdownMenuItem>
 
           <DropdownMenuItem 
-            onClick={() => onOpenSettings('security')}
+            onClick={() => onOpenSettings('security', 'security')}
             className='rounded-xl flex items-center justify-between p-2.5 cursor-pointer hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10 transition-all group mt-1'
           >
             <div className='flex items-center gap-3'>

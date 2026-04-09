@@ -5,104 +5,62 @@ import { User, Bell, Lock, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import { useLandlordSettings } from './hooks/use-landlord-settings';
-import { LandlordSettingsProfileTab } from './components/landlord-settings-profile-tab';
 import { LandlordSettingsNotificationsTab } from './components/landlord-settings-notifications-tab';
 import { LandlordSettingsPaymentTab } from './components/landlord-settings-payment-tab';
 import { LandlordSettingsSecurityTab } from './components/landlord-settings-security-tab';
 
-export default function LandlordSettingsHub() {
-  const {
-    activeTab,
-    setActiveTab,
-    isLoading,
-    formData,
-    setFormData,
-    handleInputChange,
-    handleImageChange,
-    handleSubmit,
-    getSafeImageSrc
-  } = useLandlordSettings();
+interface LandlordSettingsHubProps {
+  initialTab?: 'notifications' | 'payment' | 'security';
+  mode?: 'account' | 'security' | 'all';
+}
 
-  const tabs = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'payment', label: 'Payment Settings', icon: CreditCard },
-    { id: 'security', label: 'Security', icon: Lock },
-  ];
-
+export default function LandlordSettingsHub({ mode = 'all' }: LandlordSettingsHubProps) {
+  // Logic remains for mode-based display
   return (
-    <div className="max-w-6xl mx-auto space-y-8 p-4">
-      {/* Page Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-primary/10 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm"
-      >
-        <h1 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-          <span className="p-2 bg-primary/20 rounded-xl text-primary">
-            <Lock size={22} />
-          </span>
-          Account Settings Hub
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm font-medium">
-          Centralized management for your profile, security, and financial preferences
-        </p>
-      </motion.div>
-
-      <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8">
-        {/* Sidebar Navigation */}
-        <aside className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 p-4 shadow-xl shadow-gray-100/50 dark:shadow-none sticky top-24">
-            <nav className="space-y-2">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
-                    className={cn(
-                      "w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300",
-                      isActive
-                        ? "bg-primary text-white shadow-md shadow-primary/20"
-                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary transition-all"
-                    )}
-                  >
-                    <Icon size={18} className={isActive ? "text-white" : "text-primary"} />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
+    <div className="max-w-6xl mx-auto space-y-6">
+      {/* Premium Header - Matching ViewProfileModal reference */}
+      <div className="relative h-32 w-full bg-gradient-to-br from-primary/10 via-primary/5 to-purple-500/10 rounded-3xl overflow-hidden border border-primary/5">
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-950 shadow-xl flex items-center justify-center mb-3 border border-gray-100 dark:border-gray-800">
+            {mode === 'security' ? <Lock size={24} className="text-primary" /> : <User size={24} className="text-primary" />}
           </div>
-        </aside>
+          <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight leading-none">
+            {mode === 'security' ? 'Security & Privacy' : 'Settings'}
+          </h1>
+          <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-1.5">
+            {mode === 'security' ? 'Manage your credentials & protection' : 'Manage your preferences & account'}
+          </p>
+        </div>
+      </div>
 
-        {/* Dynamic Content Area */}
-        <main className="lg:col-span-9">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 md:p-8 shadow-sm"
-            >
-              {activeTab === 'profile' && (
-                <LandlordSettingsProfileTab 
-                  formData={formData} 
-                  setFormData={setFormData}
-                  handleImageChange={handleImageChange}
-                  handleSubmit={handleSubmit}
-                  isLoading={isLoading}
-                  getSafeImageSrc={getSafeImageSrc}
-                />
-              )}
-              {activeTab === 'notifications' && <LandlordSettingsNotificationsTab />}
-              {activeTab === 'payment' && <LandlordSettingsPaymentTab />}
-              {activeTab === 'security' && <LandlordSettingsSecurityTab />}
-            </motion.div>
-          </AnimatePresence>
+      {/* Unified Single-Page Scrollable Content */}
+      <div className="pt-6">
+        <main className="w-full max-w-4xl mx-auto">
+          <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-[2.5rem] border border-gray-100 dark:border-gray-800 p-8 md:p-10 shadow-xl shadow-gray-100/20 dark:shadow-none space-y-20">
+            {/* Render based on mode but in a single unified view */}
+            {(mode === 'account' || mode === 'all') && (
+              <>
+                <section id="notifications">
+                  <LandlordSettingsNotificationsTab />
+                </section>
+                
+                <div className="h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent" />
+                
+                <section id="payment">
+                  <LandlordSettingsPaymentTab />
+                </section>
+              </>
+            )}
+
+            {(mode === 'security' || mode === 'all') && (
+              <>
+                {mode === 'all' && <div className="h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent" />}
+                <section id="security">
+                  <LandlordSettingsSecurityTab />
+                </section>
+              </>
+            )}
+          </div>
         </main>
       </div>
     </div>
