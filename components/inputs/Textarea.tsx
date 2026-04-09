@@ -39,10 +39,11 @@ const Textarea: React.FC<TextareaProps> = ({
   const internalValue = watch && watch(id);
   const value = externalValue !== undefined ? externalValue : internalValue;
 
-  // Get error for nested path (e.g., 'contactInfo.fullName')
+  // Get error for nested path (e.g., 'contactInfo.fullName' or 'rooms[0].description')
   const getError = (path: string) => {
     if (!errors) return undefined;
-    return path.split('.').reduce((obj: any, key: string) => obj && obj[key], errors);
+    const normalizedPath = path.replace(/\[(\d+)\]/g, '.$1');
+    return normalizedPath.split('.').reduce((obj: any, key: string) => obj && obj[key], errors);
   };
 
   const error = getError(id);

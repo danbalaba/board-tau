@@ -11,8 +11,11 @@ import {
   IconLayoutGrid, 
   IconList,
   IconChevronDown,
-  IconCheck
+  IconCheck,
+  IconPlus,
+  IconFileDownload
 } from '@tabler/icons-react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { cn } from '@/utils/helper';
 
@@ -25,6 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/app/admin/components/ui/dropdown-menu';
+import { Button } from '@/app/admin/components/ui/button';
 
 interface LandlordPropertyHeaderProps {
   sortBy: string;
@@ -34,6 +38,7 @@ interface LandlordPropertyHeaderProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   properties: Property[];
+  onGenerateReport: () => void;
 }
 
 export function LandlordPropertyHeader({
@@ -43,7 +48,8 @@ export function LandlordPropertyHeader({
   setViewMode,
   searchQuery,
   setSearchQuery,
-  properties
+  properties,
+  onGenerateReport
 }: LandlordPropertyHeaderProps) {
   return (
     <motion.div
@@ -143,6 +149,23 @@ export function LandlordPropertyHeader({
             >
               <IconList size={18} />
             </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onGenerateReport}
+              className="h-11 px-5 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-500 hover:text-blue-600 hover:border-blue-100 dark:hover:border-blue-500/30 transition-all flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest shadow-sm hover:shadow-xl hover:shadow-blue-500/5 group"
+            >
+              <IconFileDownload size={18} className="group-hover:translate-y-0.5 transition-transform" />
+              <span>Export Report</span>
+            </button>
+
+            <Link href="/landlord/properties/create">
+              <Button className="h-11 px-6 rounded-2xl bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 border-b-4 border-primary/30 active:border-b-0 transition-all group">
+                <IconPlus size={18} className="mr-2 group-hover:rotate-90 transition-transform duration-300" />
+                <span className="text-[11px] font-black uppercase tracking-widest">Add Property</span>
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

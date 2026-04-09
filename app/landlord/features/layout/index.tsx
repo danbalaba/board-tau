@@ -30,9 +30,9 @@ export default function LandlordLayoutClient({
       <LandlordKBar>
         <SidebarProvider defaultOpen={true}>
           <LandlordSidebar />
-          <SidebarInset className="flex flex-col h-screen overflow-y-auto">
+          <SidebarInset className="flex flex-col h-screen overflow-hidden">
             <LandlordTopbar user={user} />
-            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
+            <main id="scroll-container" className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
               <div className="w-full px-4 py-8">
                 {children}
               </div>

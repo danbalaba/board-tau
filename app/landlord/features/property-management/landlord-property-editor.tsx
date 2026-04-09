@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { FaArrowLeft, FaSave, FaImages, FaInfoCircle } from 'react-icons/fa';
+import { FaArrowLeft, FaSave, FaImages } from 'react-icons/fa';
 import { Type, ShieldCheck, Wifi } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
@@ -33,6 +33,8 @@ export function LandlordPropertyEditor({ initialData }: LandlordPropertyEditorPr
     handleSubmitForm,
     getSafeImageSrc
   } = usePropertyFormLogic(initialData);
+
+  const isEditing = !!initialData?.id;
 
   return (
     <div className="w-full relative min-h-screen pb-32 transition-all duration-500">
@@ -65,13 +67,30 @@ export function LandlordPropertyEditor({ initialData }: LandlordPropertyEditorPr
                   </button>
                   <div>
                     <h1 className="text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-                      {formData.categories[0] || 'Property'} Editor
+                      {isEditing ? (
+                        <>
+                          <span className="text-primary">{formData.categories[0] || 'Property'}</span> Editor
+                        </>
+                      ) : (
+                        "New Listing"
+                      )}
                     </h1>
                     <p className="text-gray-500 dark:text-gray-400 font-black uppercase tracking-widest text-[10px] mt-1 space-x-2">
-                      <span>Managing:</span>
-                      <span className="text-primary">{formData.title}</span>
-                      <span className="text-gray-300">•</span>
-                      <span>ID: {initialData?.id ? `${initialData.id.slice(0, 8)}...` : 'NEW DRAFT'}</span>
+                      {isEditing ? (
+                        <>
+                          <span>Managing:</span>
+                          <span className="text-primary">{formData.title}</span>
+                          <span className="text-gray-300">•</span>
+                          <span>ID: {initialData.id.slice(0, 8)}...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Status:</span>
+                          <span className="text-emerald-500">Drafting</span>
+                          <span className="text-gray-300">•</span>
+                          <span>Create a new rental listing</span>
+                        </>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -153,9 +172,11 @@ export function LandlordPropertyEditor({ initialData }: LandlordPropertyEditorPr
                       <Button outline onClick={() => router.back()} disabled={isSubmitting} className="rounded-xl px-5 py-3 text-[10px] uppercase tracking-widest w-fit">
                         Discard Updates
                       </Button>
-                      <Button onClick={() => handleSubmitForm()} isLoading={isSubmitting} className="rounded-xl px-6 py-3 shadow-lg shadow-primary/20 flex items-center gap-2 group w-fit">
+                      <Button onClick={() => handleSubmitForm()} isLoading={isSubmitting} className="rounded-xl px-12 py-3 shadow-lg shadow-primary/20 flex items-center gap-2 group w-fit">
                         <FaSave size={13} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Push Changes</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">
+                          {isEditing ? 'Push Changes' : 'Publish Listing'}
+                        </span>
                       </Button>
                     </div>
                   </form>

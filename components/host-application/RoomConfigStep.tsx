@@ -434,7 +434,19 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
                         <button type="button" onClick={() => handleAddCustomAmenity(index)} className="mt-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:gap-3 transition-all"><PlusCircle size={14} /> Add Additional Feature</button>
                       </div>
 
-                      <Textarea label="Unit Description" id={`propertyConfig.rooms[${index}].description`} register={register} errors={errors} watch={watch} required rows={3} placeholder="Describe the vibe of this unit..." />
+                        <Textarea 
+                          label="Unit Description" 
+                          id={`propertyConfig.rooms[${index}].description`} 
+                          register={register} 
+                          errors={errors} 
+                          watch={watch} 
+                          required 
+                          rows={3} 
+                          placeholder="Describe the vibe of this unit..." 
+                          validationRules={{
+                             minLength: { value: 50, message: "Room description must be at least 50 characters" }
+                          }}
+                        />
                     </div>
                   )}
                 </div>

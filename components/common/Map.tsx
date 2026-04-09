@@ -97,7 +97,9 @@ const Map: React.FC<MapProps> = ({ center, onLocationSelect, onClick }) => {
     if (!map || !isMapInitialized.current || !map.getContainer()) return;
 
     try {
-      const latlng = (center as L.LatLngExpression) || DEFAULT_CENTER;
+      const latlng = (center && center.length === 2 && center[0] !== null && center[1] !== null) 
+        ? (center as L.LatLngExpression) 
+        : DEFAULT_CENTER;
       const zoom = center ? 14 : 12;
 
       map.setView(latlng, zoom);

@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  IconUser, 
-  IconAt, 
-  IconPhone, 
-  IconMapPin, 
-  IconId, 
+import {
+  IconUser,
+  IconAt,
+  IconPhone,
+  IconMapPin,
+  IconId,
   IconCalendarEvent,
   IconEdit
 } from '@tabler/icons-react';
@@ -20,7 +20,7 @@ import { ScrollArea } from '@/app/admin/components/ui/scroll-area';
 interface ViewProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  user: any; 
+  user: any;
 }
 
 export default function ViewProfileModal({
@@ -47,35 +47,35 @@ export default function ViewProfileModal({
         <ScrollArea className="max-h-[85vh]">
           {/* Cover Header/Background - CENTERED as requested */}
           <div className="h-28 w-full bg-gradient-to-br from-primary/10 via-primary/5 to-purple-500/10 relative transition-all duration-700">
-             
-             {/* Edit Icon Button - Top Right exactly as in refactor branch */}
-             <button
-               onClick={handleEditClick}
-               className="absolute top-4 right-4 w-9 h-9 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-gray-100 dark:border-gray-700 text-primary hover:bg-primary hover:text-white transition-all z-30 group"
-             >
-                <IconEdit size={16} className="transition-transform group-active:scale-90" />
-             </button>
-             
-             {/* Avatar Floating - CENTERED as requested */}
-             <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">
-                <div className="p-1.5 rounded-full bg-white dark:bg-gray-900 shadow-xl relative z-10 border border-gray-100/50 dark:border-gray-800/50">
-                  <div className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-white dark:border-gray-950 shadow-sm transition-transform duration-500 hover:scale-105">
-                    <Avatar className="w-full h-full">
-                      <AvatarImage src={user?.image || user?.profileImage} className="object-cover" />
-                      <AvatarFallback className="bg-primary/5 text-primary text-3xl font-black">
-                        {user?.name?.charAt(0) || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  {user.isVerifiedLandlord && (
-                    <div className="absolute bottom-1 right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 border-2 border-white dark:border-gray-900 z-20">
-                      <IconId size={16} className="text-white" />
-                    </div>
-                  )}
+
+            {/* Edit Icon Button - Top Right exactly as in refactor branch */}
+            <button
+              onClick={handleEditClick}
+              className="absolute top-4 right-4 w-9 h-9 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-gray-100 dark:border-gray-700 text-primary hover:bg-primary hover:text-white transition-all z-30 group"
+            >
+              <IconEdit size={16} className="transition-transform group-active:scale-90" />
+            </button>
+
+            {/* Avatar Floating - CENTERED as requested */}
+            <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">
+              <div className="p-1.5 rounded-full bg-white dark:bg-gray-900 shadow-xl relative z-10 border border-gray-100/50 dark:border-gray-800/50">
+                <div className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-white dark:border-gray-950 shadow-sm transition-transform duration-500 hover:scale-105">
+                  <Avatar className="w-full h-full">
+                    <AvatarImage src={user?.image || user?.profileImage} className="object-cover" />
+                    <AvatarFallback className="bg-primary/5 text-primary text-3xl font-black">
+                      {user?.name?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
-             </div>
+                {user.isVerifiedLandlord && (
+                  <div className="absolute bottom-1 right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 border-2 border-white dark:border-gray-900 z-20">
+                    <IconId size={16} className="text-white" />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          
+
           <div className="pt-16 px-6">
             {/* Header Text Section - CENTERED as requested */}
             <div className="text-center mb-10">
@@ -103,7 +103,7 @@ export default function ViewProfileModal({
             {/* Profile Information Section */}
             <div className="space-y-4 pb-10">
               <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">Detailed Credentials</h4>
-              
+
               <div className="grid gap-3">
                 {/* Details list exactly matching the design list */}
                 <div className="flex items-center gap-3 p-4 bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl border border-gray-100 dark:border-gray-800 transition-all hover:bg-white dark:hover:bg-gray-800">

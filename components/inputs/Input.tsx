@@ -82,19 +82,29 @@ const Input: React.FC<InputProps> = ({
             id={id}
             type={isPasswordInput ? (showPassword ? "text" : "password") : type}
             disabled={disabled}
-            value={value || ''}
             placeholder=" "
-            onChange={(e) => {
-              if (externalOnChange) {
-                externalOnChange(e);
-              }
-            }}
             {...(register && {
               ...register(id, {
                 required: required ? "This field is required" : false,
                 ...validationRules
               })
             })}
+            {...props}
+            value={value || ''}
+            onChange={(e) => {
+              // Priority 1: Handle registration if it exists
+              if (register) {
+                const r = register(id);
+                if (r && r.onChange) {
+                  r.onChange(e);
+                }
+              }
+              
+              // Priority 2: Handle external onChange if it exists
+              if (externalOnChange) {
+                externalOnChange(e);
+              }
+            }}
             className={cn(
               "peer w-full text-sm font-medium bg-white dark:bg-gray-800 border-2 rounded-2xl outline-none transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed",
               isSmall ? "px-3 py-2.5 rounded-xl" : "px-4 py-4",
@@ -106,7 +116,6 @@ const Input: React.FC<InputProps> = ({
               "focus:ring-4 focus:ring-primary/5"
             )}
             autoFocus={autoFocus}
-            {...props}
           />
 
           <label
@@ -184,20 +193,28 @@ const Input: React.FC<InputProps> = ({
           id={id}
           type={isPasswordInput ? (showPassword ? "text" : "password") : type}
           disabled={disabled}
-          {...(!register && {
-            value: value || '',
-            onChange: (e) => {
-              if (externalOnChange) {
-                externalOnChange(e);
-              }
-            }
-          })}
           {...(register && {
             ...register(id, {
               required: required ? "This field is required" : false,
               ...validationRules
             })
           })}
+          {...props}
+          value={value || ''}
+          onChange={(e) => {
+            // Priority 1: Handle registration if it exists
+            if (register) {
+              const r = register(id);
+              if (r && r.onChange) {
+                r.onChange(e);
+              }
+            }
+            
+            // Priority 2: Handle external onChange if it exists
+            if (externalOnChange) {
+              externalOnChange(e);
+            }
+          }}
           className={cn(
             "peer w-full text-sm font-medium bg-white dark:bg-gray-800 border-2 rounded-2xl outline-none transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed",
             isSmall ? "px-3 py-2.5 rounded-xl" : "px-4 py-3.5",
@@ -209,7 +226,6 @@ const Input: React.FC<InputProps> = ({
             "focus:ring-4 focus:ring-primary/5"
           )}
           autoFocus={autoFocus}
-          {...props}
         />
 
         {isPasswordInput && (

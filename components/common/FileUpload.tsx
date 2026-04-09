@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Upload, X } from "lucide-react";
 import { cn } from "@/utils/helper";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 
 export interface FileUploadProps {
   id: string;
@@ -24,6 +25,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
   accept,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const toast = useResponsiveToast();
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
@@ -46,6 +49,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
+      const file = files[0];
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`File "${file.name}" is too large. Maximum size is 5MB.`);
+        return;
+      }
       onFileSelect(files[0]);
     }
   };
@@ -53,7 +61,12 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      onFileSelect(files[0]);
+      const file = files[0];
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`File "${file.name}" is too large. Maximum size is 5MB.`);
+        return;
+      }
+      onFileSelect(file);
     }
   };
 

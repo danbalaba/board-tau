@@ -7,11 +7,11 @@ import { Input } from '@/app/admin/components/ui/input';
 import { Textarea } from '@/app/admin/components/ui/textarea';
 import { Label } from '@/app/admin/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/app/admin/components/ui/avatar';
-import { 
-  IconUser, 
-  IconMail, 
-  IconPhone, 
-  IconMapPin, 
+import {
+  IconUser,
+  IconMail,
+  IconPhone,
+  IconMapPin,
   IconCamera,
   IconAt,
   IconId,
@@ -104,14 +104,14 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
   // Handle map click for address selection
   const handleMapClick = async (lat: number, lng: number) => {
     setMapCenter([lat, lng]);
-    
+
     // Only auto-fill if not in manual mode
     if (!isManualMode) {
       setIsSearching(true);
-      
+
       // Provide immediate visual feedback just like in LocationStep
       setValue('address', `Locating... (${lat.toFixed(6)}, ${lng.toFixed(6)})`, { shouldValidate: false });
-      
+
       try {
         const addressInfo = await reverseGeocode(lat, lng);
         if (addressInfo) {
@@ -227,7 +227,7 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
                       {user.name?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  
+
                   {isUploading && (
                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-2">
                       <div className="w-full bg-white/20 rounded-full h-1 mb-1">
@@ -238,8 +238,8 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
                   )}
                 </div>
 
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
                   className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary text-white rounded-2xl shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all ring-4 ring-white dark:ring-gray-900"
@@ -296,7 +296,7 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
                     )}
                   />
                 </div>
-               </div>
+              </div>
 
               <div className="space-y-3 md:col-span-2">
                 <div className="flex items-center justify-between px-1">
@@ -306,7 +306,7 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
                     <Switch checked={isManualMode} onCheckedChange={setIsManualMode} />
                   </div>
                 </div>
-                
+
                 <div className="flex gap-2">
                   <div className="relative group flex-1">
                     <IconMapPin className={cn("absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors z-10", errors.address ? "text-red-500" : "text-gray-400")} />
@@ -321,8 +321,8 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
                     />
                   </div>
                   {!isManualMode && (
-                    <Button 
-                      type="button" 
+                    <Button
+                      type="button"
                       onClick={() => handleSearchAddress(false)}
                       disabled={isSearching}
                       className="h-11 px-4 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-primary hover:text-white transition-all shadow-none"
@@ -340,7 +340,7 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
                   />
                   {!isManualMode && (
                     <div className="absolute inset-0 bg-black/0 pointer-events-none group-hover:bg-black/5 transition-colors flex items-center justify-center">
-                       <p className="text-[10px] font-black text-white p-2 bg-primary/80 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest translate-y-2 group-hover:translate-y-0 transition-all">Click map for precision pin</p>
+                      <p className="text-[10px] font-black text-white p-2 bg-primary/80 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest translate-y-2 group-hover:translate-y-0 transition-all">Click map for precision pin</p>
                     </div>
                   )}
                 </div>
@@ -348,8 +348,8 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
 
               <div className="space-y-1.5 md:col-span-2">
                 <div className="flex justify-between items-center mb-1">
-                   <Label htmlFor="bio" className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Professional Identity bio</Label>
-                   <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tight bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-full border border-gray-100 dark:border-gray-800">500 Max</span>
+                  <Label htmlFor="bio" className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Professional Identity bio</Label>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tight bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-full border border-gray-100 dark:border-gray-800">500 Max</span>
                 </div>
                 <Textarea
                   id="bio"
@@ -364,9 +364,9 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
             </div>
 
             <div className="pt-2">
-               <Button 
-                type="submit" 
-                disabled={isLoading} 
+              <Button
+                type="submit"
+                disabled={isLoading}
                 className="w-full h-11 rounded-xl bg-primary hover:bg-primary/95 text-white shadow-xl shadow-primary/20 transition-all font-black uppercase tracking-[0.1em] text-[10px]"
               >
                 {isLoading ? "Synchronizing..." : "Store Profile Details"}
