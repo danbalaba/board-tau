@@ -43,6 +43,7 @@ export default function ViewProfileModal({
         isOpen={isOpen}
         onClose={onClose}
         title="Landlord Profile"
+        closeOnOutsideClick={false}
       >
         <ScrollArea className="max-h-[85vh]">
           {/* Cover Header/Background - CENTERED as requested */}

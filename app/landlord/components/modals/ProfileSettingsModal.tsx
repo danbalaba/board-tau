@@ -213,6 +213,7 @@ export function ProfileSettingsModal({ isOpen, onClose, user }: ProfileSettingsM
       onClose={onClose}
       width="md"
       hasFixedFooter={true}
+      closeOnOutsideClick={false}
     >
       <form onSubmit={handleSubmit(onSave)}>
         <ScrollArea className="h-[600px] pr-4 -mr-4">

@@ -21,80 +21,27 @@ import { IconStar, IconLayoutGrid } from "@tabler/icons-react"
 
 export const description = "Review Ratings Breakdown"
 
-// Data for Global (all properties combined)
-const globalRatingData = [
+interface ChartDataItem {
+  rating: string;
+  value: number;
+  fill?: string;
+  percentage?: number;
+}
+
+interface ChartRadialLabelProps {
+  data?: ChartDataItem[];
+  listings?: Array<{ id: string; title: string }>;
+}
+
+const colors = ["#2f7d6d", "#1473E6", "#F59E0B", "#8B5CF6", "#EC4899"];
+
+const defaultGlobalData: ChartDataItem[] = [
   { rating: "5 Star", value: 45, fill: "#2f7d6d" },
   { rating: "4 Star", value: 30, fill: "#1473E6" },
   { rating: "3 Star", value: 15, fill: "#F59E0B" },
   { rating: "2 Star", value: 7, fill: "#8B5CF6" },
   { rating: "1 Star", value: 3, fill: "#EC4899" },
 ]
-
-// Data for Property A (Luxury)
-const propertyARatingData = [
-  { rating: "5 Star", value: 52, fill: "#2f7d6d" },
-  { rating: "4 Star", value: 28, fill: "#1473E6" },
-  { rating: "3 Star", value: 12, fill: "#F59E0B" },
-  { rating: "2 Star", value: 5, fill: "#8B5CF6" },
-  { rating: "1 Star", value: 3, fill: "#EC4899" },
-]
-
-// Data for Property B (Studio)
-const propertyBRatingData = [
-  { rating: "5 Star", value: 38, fill: "#2f7d6d" },
-  { rating: "4 Star", value: 32, fill: "#1473E6" },
-  { rating: "3 Star", value: 18, fill: "#F59E0B" },
-  { rating: "2 Star", value: 8, fill: "#8B5CF6" },
-  { rating: "1 Star", value: 4, fill: "#EC4899" },
-]
-
-// Volume data for Global
-const globalVolumeData = [
-  { rating: "5 Star", value: 150, fill: "#2f7d6d" },
-  { rating: "4 Star", value: 95, fill: "#1473E6" },
-  { rating: "3 Star", value: 45, fill: "#F59E0B" },
-  { rating: "2 Star", value: 20, fill: "#8B5CF6" },
-  { rating: "1 Star", value: 10, fill: "#EC4899" },
-]
-
-// Volume data for Property A
-const propertyAVolumeData = [
-  { rating: "5 Star", value: 85, fill: "#2f7d6d" },
-  { rating: "4 Star", value: 50, fill: "#1473E6" },
-  { rating: "3 Star", value: 25, fill: "#F59E0B" },
-  { rating: "2 Star", value: 12, fill: "#8B5CF6" },
-  { rating: "1 Star", value: 5, fill: "#EC4899" },
-]
-
-// Volume data for Property B
-const propertyBVolumeData = [
-  { rating: "5 Star", value: 65, fill: "#2f7d6d" },
-  { rating: "4 Star", value: 45, fill: "#1473E6" },
-  { rating: "3 Star", value: 20, fill: "#F59E0B" },
-  { rating: "2 Star", value: 8, fill: "#8B5CF6" },
-  { rating: "1 Star", value: 5, fill: "#EC4899" },
-]
-
-// Helper function to get the correct data based on property and metric selection
-const getChartData = (propertyId: string, activeMetric: string) => {
-  const isVolume = activeMetric === "volume";
-  
-  switch (propertyId) {
-    case "prop-a":
-      return isVolume ? propertyAVolumeData : propertyARatingData;
-    case "prop-b":
-      return isVolume ? propertyBVolumeData : propertyBRatingData;
-    case "all":
-    default:
-      return isVolume ? globalVolumeData : globalRatingData;
-  }
-}
-
-// Helper function to get domain for the chart based on data
-const getChartDomain = (data: { rating: string; value: number; fill: string }[]) => {
-  const maxValue = Math.max(...data.map(d => d.value));
-  return [0, Math.ceil(maxValue * 1.1)] as [number, number];
-}
 
 const chartConfig = {
   value: {
@@ -103,13 +50,23 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function ChartRadialLabel() {
+export function ChartRadialLabel({ data, listings }: ChartRadialLabelProps) {
   const [propertyId, setPropertyId] = React.useState("all")
   const [activeMetric, setActiveMetric] = React.useState("rating")
+  
+  const processedData = data && data.length > 0
+    ? data.map((d, i) => ({ ...d, fill: colors[i % colors.length] }))
+    : defaultGlobalData.map((d, i) => ({ ...d, fill: colors[i % colors.length] }));
+  
+  const chartDomain = [0, Math.max(...processedData.map(d => d.value)) * 1.1] as [number, number];
 
-  // Get the current chart data based on selections
-  const chartData = getChartData(propertyId, activeMetric);
-  const chartDomain = getChartDomain(chartData);
+  const propertyOptions = [
+    { value: "all", label: "Global" },
+    ...(listings ? listings.map(l => ({ value: l.id, label: l.title })) : [
+      { value: "prop-a", label: "Property A (Luxury)" },
+      { value: "prop-b", label: "Property B (Studio)" },
+    ])
+  ];
 
   return (
     <Card className="bg-transparent border-none shadow-none">
@@ -128,11 +85,7 @@ export function ChartRadialLabel() {
             onChange={setPropertyId}
             size="sm"
             icon={<IconLayoutGrid size={12} />}
-            options={[
-              { value: "all", label: "Global" },
-              { value: "prop-a", label: "Property A (Luxury)" },
-              { value: "prop-b", label: "Property B (Studio)" },
-            ]}
+            options={propertyOptions}
           />
           <ModernSelect
             instanceId="radialMetric"
@@ -154,7 +107,7 @@ export function ChartRadialLabel() {
           className="aspect-square max-h-[200px] w-full"
         >
           <RadialBarChart 
-            data={chartData} 
+            data={processedData} 
             innerRadius="25%" 
             outerRadius="90%"
             barSize={10}

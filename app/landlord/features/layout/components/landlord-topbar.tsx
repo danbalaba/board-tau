@@ -29,6 +29,8 @@ export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProp
   const user = storeUser || initialUser;
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<'notifications' | 'payment' | 'security' | undefined>(undefined);
+  const [modalMode, setModalMode] = useState<'account' | 'security' | 'all'>('all');
   const [isViewProfileModalOpen, setIsViewProfileModalOpen] = useState(false);
   
   const [mounted, setMounted] = useState(false);
@@ -116,6 +118,8 @@ export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProp
       <LandlordSettingsModalHub 
         isOpen={isSettingsModalOpen} 
         onClose={() => setIsSettingsModalOpen(false)} 
+        defaultTab={selectedTab}
+        mode={modalMode}
       />
 
       {/* View Profile Modal - Exactly from refactor branch */}

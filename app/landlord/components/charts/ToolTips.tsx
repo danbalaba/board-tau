@@ -21,7 +21,18 @@ import { IconFilter, IconListSearch } from "@tabler/icons-react"
 
 export const description = "Inquiry Sources Breakdown"
 
-const chartData = [
+interface ChartDataItem {
+  date: string;
+  direct?: number;
+  email?: number;
+  social?: number;
+}
+
+interface ChartTooltipDefaultProps {
+  data?: ChartDataItem[];
+}
+
+const defaultChartData: ChartDataItem[] = [
   { date: "2024-04", direct: 120, email: 80, social: 50 },
   { date: "2024-05", direct: 150, email: 95, social: 60 },
   { date: "2024-06", direct: 180, email: 110, social: 75 },
@@ -45,9 +56,11 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function ChartTooltipDefault() {
+export function ChartTooltipDefault({ data }: ChartTooltipDefaultProps) {
   const [sourceFilter, setSourceFilter] = React.useState("all")
   const [displayMode, setDisplayMode] = React.useState("stacked")
+  
+  const chartData = data && data.length > 0 ? data : defaultChartData;
 
   return (
     <Card className="bg-transparent border-none shadow-none">

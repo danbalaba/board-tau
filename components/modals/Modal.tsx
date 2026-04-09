@@ -43,6 +43,7 @@ interface ModalProps {
   title?: string;
   width?: 'sm' | 'md' | 'lg' | 'xl';
   hasFixedFooter?: boolean;
+  closeOnOutsideClick?: boolean;
 }
 
 interface TriggerProps {
@@ -70,7 +71,7 @@ const Modal: FC<ModalProps> & {
   Trigger: typeof Trigger;
   Window: typeof Window;
   WindowHeader: typeof WindowHeader;
-} = ({ children, isOpen, onClose, title, width = 'md', hasFixedFooter }) => {
+} = ({ children, isOpen, onClose, title, width = 'md', hasFixedFooter, closeOnOutsideClick = true }) => {
   // Simplified API for direct control (no context)
   if (isOpen !== undefined) {
     const isClient = useIsClient();
@@ -125,7 +126,7 @@ const Modal: FC<ModalProps> & {
             onClick={(e) => {
               e.stopPropagation(); // prevent bubbling to parent modals
               // Close modal when clicking outside the inner box
-              if (e.target === e.currentTarget) {
+              if (closeOnOutsideClick && e.target === e.currentTarget) {
                 onClose?.();
               }
             }}

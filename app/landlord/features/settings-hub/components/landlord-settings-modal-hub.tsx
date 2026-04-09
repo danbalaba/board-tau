@@ -1,30 +1,35 @@
 'use client';
 
-import React from 'react';
-import { Modal } from '@/app/admin/components/ui/modal';
+import Modal from '@/components/modals/Modal';
+import { ScrollArea } from '@/app/admin/components/ui/scroll-area';
 import LandlordSettingsHub from '../index';
 
 interface LandlordSettingsModalHubProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultTab?: 'profile' | 'notifications' | 'payment' | 'security';
+  defaultTab?: 'notifications' | 'payment' | 'security';
+  mode?: 'account' | 'security' | 'all';
 }
 
 export function LandlordSettingsModalHub({
   isOpen,
   onClose,
-  defaultTab = 'profile'
+  defaultTab = 'notifications',
+  mode = 'all'
 }: LandlordSettingsModalHubProps) {
   return (
     <Modal
-      title="Settings Center"
-      description="Manage your landlord account preferences"
       isOpen={isOpen}
       onClose={onClose}
+      width="lg"
+      title={mode === 'security' ? 'Security & Privacy' : 'General Settings'}
+      closeOnOutsideClick={false}
     >
-      <div className="max-h-[80vh] overflow-y-auto custom-scrollbar -m-6 p-6 pb-20">
-        <LandlordSettingsHub />
-      </div>
+      <ScrollArea className="max-h-[85vh] -m-6">
+        <div className="p-8 pb-20">
+          <LandlordSettingsHub mode={mode} />
+        </div>
+      </ScrollArea>
     </Modal>
   );
 }
