@@ -115,7 +115,7 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
           <p className="text-gray-500 font-medium text-sm mb-10 text-center max-w-sm">Ready to grow your portfolio? Start by listing your first property today.</p>
           <Link href="/landlord/properties/create">
             <Button className="h-14 px-12 rounded-2xl bg-primary hover:bg-primary/90 text-white shadow-2xl shadow-primary/30 border-b-4 border-primary/30 active:border-b-0 transition-all group">
-              <IconPlus size={20} className="mr-3 group-hover:rotate-90 transition-transform duration-300" />
+              <IconPlus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
               <span className="text-[12px] font-black uppercase tracking-widest">Publish New Property</span>
             </Button>
           </Link>

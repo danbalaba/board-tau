@@ -7,7 +7,13 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Check, 
-  Info 
+  Info,
+  MapPin,
+  FileText,
+  Bed,
+  Camera,
+  Upload,
+  CheckCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FormProvider } from 'react-hook-form';
@@ -27,13 +33,13 @@ import DocumentsStep from '@/components/host-application/DocumentsStep';
 import ReviewStep from '@/components/host-application/ReviewStep';
 
 const STEPS = [
-  { id: 'identity', title: 'Identity' },
-  { id: 'location', title: 'Location' },
-  { id: 'config', title: 'Config' },
-  { id: 'rooms', title: 'Inventory' },
-  { id: 'images', title: 'Media' },
-  { id: 'docs', title: 'Safety' },
-  { id: 'review', title: 'Review' },
+  { id: 'identity', title: 'Property Basics', icon: Building2 },
+  { id: 'location', title: 'Location', icon: MapPin },
+  { id: 'config', title: 'Configuration', icon: FileText },
+  { id: 'rooms', title: 'Rooms', icon: Bed },
+  { id: 'images', title: 'Images', icon: Camera },
+  { id: 'docs', title: 'Documents', icon: Upload },
+  { id: 'review', title: 'Review', icon: CheckCircle },
 ];
 
 export function LandlordPropertyCreator() {
@@ -189,21 +195,21 @@ export function LandlordPropertyCreator() {
                   return (
                     <div 
                       key={step.id} 
-                      className="flex flex-col items-center group cursor-pointer" 
+                      className="flex flex-col items-center group cursor-pointer relative" 
                       onClick={() => index < currentStep && setCurrentStep(index)}
                     >
                       <div className={cn(
-                        "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 border-2",
+                        "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 border-2 relative z-10",
                         isActive 
                           ? "bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105" 
                           : isCompleted 
                             ? "bg-green-500 border-green-500 text-white" 
                             : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 group-hover:border-primary/40"
                       )}>
-                        {isCompleted ? <Check className="w-5 h-5" /> : index + 1}
+                        {isCompleted ? <Check className="w-5 h-5" /> : <step.icon className="w-5 h-5" />}
                       </div>
                       <span className={cn(
-                        "hidden md:block absolute -bottom-6 text-[8px] font-black uppercase tracking-widest transition-colors",
+                        "hidden md:block absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] font-black uppercase tracking-widest transition-colors",
                         isActive ? "text-primary" : "text-gray-400"
                       )}>
                         {step.title}
