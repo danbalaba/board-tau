@@ -106,7 +106,11 @@ export function LandlordPropertyDetailsModal({
 
                 <motion.div style={{ opacity: compactHeaderOpacity }} className="absolute inset-0 bg-white/20 dark:bg-gray-900/20 backdrop-blur-xl border-b border-white/10 flex items-center px-10 pointer-events-none">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-xl"><img src={property.imageSrc} className="w-full h-full object-cover" alt="" /></div>
+                    {property.imageSrc ? (
+                      <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-xl"><img src={property.imageSrc} className="w-full h-full object-cover" alt="" /></div>
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-300 border-2 border-white shadow-xl"><IconBuilding size={20} /></div>
+                    )}
                     <div>
                        <p className="text-[8px] font-black uppercase tracking-widest text-primary mb-0.5">Quick View</p>
                        <p className="text-sm font-black text-white">{property.title}</p>
@@ -127,35 +131,36 @@ export function LandlordPropertyDetailsModal({
                 <motion.button onClick={onClose} style={{ backgroundColor: closeButtonBg }} className="absolute top-6 right-6 p-2.5 hover:bg-black/40 backdrop-blur-md rounded-full text-white transition-all border border-white/20 z-50 shadow-xl"><IconX size={20} /></motion.button>
               </motion.div>
 
-              <div className="p-8 md:p-10 z-10 font-bold">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                  <div className="lg:col-span-7 space-y-10">
+              <div className="p-8 md:p-10 z-10">
+                {/* Highlights Row - Full Width */}
+                <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
+                  {[
+                    { label: 'Monthly', value: `₱${property.price.toLocaleString()}`, icon: IconCurrencyPeso, color: 'text-primary' },
+                    { label: 'Rooms', value: property.roomCount, icon: IconBuilding, color: 'text-blue-500' },
+                    { label: 'Baths', value: property.bathroomCount, icon: IconBath, color: 'text-purple-500' },
+                    { label: 'Category', value: property.categories?.[0]?.category.label || 'N/A', icon: IconTag, color: 'text-orange-500' },
+                  ].map((item, i) => (
+                    <div key={i} className="bg-gray-50/50 dark:bg-gray-800/50 p-5 rounded-[2rem] border border-gray-100 dark:border-gray-800 hover:scale-[1.02] transition-transform shadow-sm">
+                      <div className={cn("w-10 h-10 rounded-2xl bg-white dark:bg-gray-700 flex items-center justify-center mb-3 shadow-sm border border-gray-100 dark:border-gray-600", item.color)}><item.icon size={18} /></div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">{item.label}</p>
+                      <p className="text-sm font-black text-gray-900 dark:text-white truncate">{item.value}</p>
+                    </div>
+                  ))}
+                </section>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                  <div className="lg:col-span-7 space-y-12">
                     <section>
-                      <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary mb-4 flex items-center gap-2"><div className="w-4 h-0.5 bg-primary rounded-full" />About this property</h4>
-                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base font-medium">{property.description || "No description provided."}</p>
+                      <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary mb-5 flex items-center gap-2"><div className="w-4 h-0.5 bg-primary rounded-full" />About this property</h4>
+                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base font-medium break-words whitespace-pre-wrap">{property.description || "No description provided."}</p>
                     </section>
 
-                    <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      {[
-                        { label: 'Monthly', value: `₱${property.price.toLocaleString()}`, icon: IconCurrencyPeso, color: 'text-primary' },
-                        { label: 'Rooms', value: property.roomCount, icon: IconBuilding, color: 'text-blue-500' },
-                        { label: 'Baths', value: property.bathroomCount, icon: IconBath, color: 'text-purple-500' },
-                        { label: 'Category', value: property.categories?.[0]?.category.label || 'N/A', icon: IconTag, color: 'text-orange-500' },
-                      ].map((item, i) => (
-                        <div key={i} className="bg-gray-50/50 dark:bg-gray-800/50 p-4 rounded-3xl border border-gray-100 dark:border-gray-800 hover:scale-[1.02] transition-transform">
-                          <div className={cn("w-10 h-10 rounded-2xl bg-white dark:bg-gray-700 flex items-center justify-center mb-3 shadow-sm border border-gray-100 dark:border-gray-600", item.color)}><item.icon size={18} /></div>
-                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">{item.label}</p>
-                          <p className="text-sm font-black text-gray-900 dark:text-white truncate">{item.value}</p>
-                        </div>
-                      ))}
-                    </section>
-
                     <section>
-                      <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center justify-between mb-8">
                         <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2"><div className="w-4 h-0.5 bg-primary rounded-full" />Room Inventory</h4>
                         <span className="text-[10px] font-black bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full text-gray-500 uppercase tracking-widest">{property.rooms?.length || 0} Units</span>
                       </div>
-                      <div className="grid grid-cols-1 gap-4">
+                      <div className="grid grid-cols-1 gap-5">
                         {property.rooms?.map((room) => (
                           <div key={room.id} className="group flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 hover:border-primary/30 transition-all shadow-sm hover:shadow-md">
                             <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 relative">

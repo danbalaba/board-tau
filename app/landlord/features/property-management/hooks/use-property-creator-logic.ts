@@ -96,6 +96,7 @@ export function usePropertyCreatorLogic(initialData: any) {
     watch,
     setValue,
     getValues,
+    setError,
     clearErrors,
     formState: { errors },
   } = methods;
@@ -119,14 +120,22 @@ export function usePropertyCreatorLogic(initialData: any) {
     }
   }, [isMounted, getValues, setValue]);
 
+  // Real-time validation for business mission description
+  const missionDescription = watch('businessInfo.businessDescription');
+  useEffect(() => {
+    if (missionDescription && missionDescription.length >= 100) {
+      clearErrors('businessInfo.businessDescription' as any);
+    }
+  }, [missionDescription, clearErrors]);
+
   const handleNext = async () => {
     try {
       console.log('Validating step:', currentStep);
       // Perform validation for the current step before proceeding
       const currentValues = getValues();
       
-      // Mapping Landlord steps (0-6) to Host validation steps (2-8)
-      const validationStep = currentStep + 2;
+      // Mapping Landlord steps (0-7) to Host validation steps (1-8)
+      const validationStep = currentStep + 1;
       
       // Create a simplified validation object
       const validationData = {
@@ -153,7 +162,7 @@ export function usePropertyCreatorLogic(initialData: any) {
       }
 
       // Maintain overrides for higher room counts and bathroom selection
-      if (currentStep === 2) { // Property Configuration (Step 3) - Index 2
+      if (currentStep === 3) { // Property Configuration (Step 4) - Index 3
         // Mock bathroomType if missing to pass strict host validation
         if (!validationData.propertyConfig.bathroomType) {
           validationData.propertyConfig.bathroomType = 'PRIVATE';
@@ -255,8 +264,8 @@ export function usePropertyCreatorLogic(initialData: any) {
         return;
       }
 
-      // Step 2 -> 3: Sync Room Configurations with Total Rooms
-      if (currentStep === 2) {
+      // Step 3 -> 4: Sync Room Configurations with Total Rooms
+      if (currentStep === 3) {
         const targetRoomCount = parseInt(currentValues.propertyConfig.totalRooms) || 0;
         const currentRooms = currentValues.propertyConfig.rooms || [];
         
@@ -286,7 +295,7 @@ export function usePropertyCreatorLogic(initialData: any) {
         }
       }
 
-      if (currentStep < 6) {
+      if (currentStep < 7) {
         setCurrentStep(prev => prev + 1);
         const scrollContainer = document.getElementById('scroll-container');
         if (scrollContainer) {
@@ -342,6 +351,7 @@ export function usePropertyCreatorLogic(initialData: any) {
     // Use a real blob URL for local browser preview
     const blobUrl = URL.createObjectURL(file);
     setValue(`documents.${type}` as any, blobUrl, { shouldValidate: true });
+    clearErrors(`documents.${type}` as any);
   };
 
   const handlePropertyFilesChange = (files: File[]) => {
@@ -349,6 +359,9 @@ export function usePropertyCreatorLogic(initialData: any) {
     // Use real blob URLs for local browser preview
     const blobUrls = files.map(f => URL.createObjectURL(f));
     setValue('propertyImages.property' as any, blobUrls, { shouldValidate: true });
+    if (files.length > 0) {
+      clearErrors('propertyImages.property' as any);
+    }
   };
 
   const handleRoomFilesChange = (roomIndex: number, files: File[]) => {
@@ -356,6 +369,9 @@ export function usePropertyCreatorLogic(initialData: any) {
     // Use real blob URLs for local browser preview
     const blobUrls = files.map(f => URL.createObjectURL(f));
     setValue(`propertyImages.rooms.${roomIndex}` as any, blobUrls, { shouldValidate: true });
+    if (files.length > 0) {
+      clearErrors(`propertyImages.rooms.${roomIndex}` as any);
+    }
   };
 
   const onSubmit = async (data: any) => {
@@ -473,6 +489,8 @@ export function usePropertyCreatorLogic(initialData: any) {
     isSubmitting,
     isMounted,
     uploadedFiles,
+    propertyFiles,
+    roomFiles,
     handleNext,
     handleBack,
     handleLocationSelect,

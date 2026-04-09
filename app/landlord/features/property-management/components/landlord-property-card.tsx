@@ -124,7 +124,7 @@ export function LandlordPropertyCard({
 
             <div className="flex items-center gap-2">
               <Link href={`/landlord/properties/${property.id}/edit`}>
-                <Button size="sm" className="rounded-xl h-11 px-6 font-black text-[11px] uppercase tracking-widest bg-primary hover:bg-primary/90 text-white hover:scale-105 transition-all shadow-xl shadow-primary/20 border-b-4 border-primary/20 active:border-b-0">
+                <Button size="sm" className="rounded-xl h-9 px-4 font-black text-[10px] uppercase tracking-widest bg-primary hover:bg-primary/90 text-white hover:scale-105 transition-all shadow-xl shadow-primary/20 border-b-4 border-primary/20 active:border-b-0">
                   Edit Property
                 </Button>
               </Link>
@@ -234,7 +234,7 @@ export function LandlordPropertyCard({
         {/* Right: Actions */}
         <div className="flex sm:flex-col gap-3 w-full sm:w-auto mt-4 sm:mt-0 pt-4 sm:pt-0 sm:border-l border-gray-100 dark:border-gray-800 sm:pl-6">
           <Link href={`/landlord/properties/${property.id}/edit`}>
-            <Button className="w-full sm:w-36 rounded-xl h-11 bg-primary hover:bg-primary/90 text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 border-b-4 border-primary/20 active:border-b-0 transition-all">
+            <Button className="w-full sm:w-32 rounded-xl h-9 bg-primary hover:bg-primary/90 text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 border-b-4 border-primary/20 active:border-b-0 transition-all">
               Edit Property
             </Button>
           </Link>

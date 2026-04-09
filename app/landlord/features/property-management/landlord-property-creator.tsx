@@ -14,6 +14,7 @@ import {
   Camera,
   Upload,
   CheckCircle,
+  User,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FormProvider } from 'react-hook-form';
@@ -24,6 +25,7 @@ import LoadingAnimation from '@/components/common/LoadingAnimation';
 import { usePropertyCreatorLogic } from './hooks/use-property-creator-logic';
 
 // Wizard Steps
+import LandlordInfoStep from '@/components/host-application/LandlordInfoStep';
 import PropertyBasicStep from '@/components/host-application/PropertyBasicStep';
 import PropertyConfigStep from '@/components/host-application/PropertyConfigStep';
 import LandlordLocationStep from './components/landlord-location-step';
@@ -33,6 +35,7 @@ import DocumentsStep from '@/components/host-application/DocumentsStep';
 import ReviewStep from '@/components/host-application/ReviewStep';
 
 const STEPS = [
+  { id: 'landlord', title: 'Landlord Info', icon: User },
   { id: 'identity', title: 'Property Basics', icon: Building2 },
   { id: 'location', title: 'Location', icon: MapPin },
   { id: 'config', title: 'Configuration', icon: FileText },
@@ -61,6 +64,8 @@ export function LandlordPropertyCreator() {
     isSubmitting,
     isMounted,
     uploadedFiles,
+    propertyFiles,
+    roomFiles,
     handleNext,
     handleBack,
     handleLocationSelect,
@@ -75,7 +80,7 @@ export function LandlordPropertyCreator() {
     switch (currentStep) {
       case 0:
         return (
-          <PropertyBasicStep 
+          <LandlordInfoStep 
             register={register} 
             errors={errors} 
             watch={watch} 
@@ -83,6 +88,15 @@ export function LandlordPropertyCreator() {
           />
         );
       case 1:
+        return (
+          <PropertyBasicStep 
+            register={register} 
+            errors={errors} 
+            watch={watch} 
+            control={control} 
+          />
+        );
+      case 2:
         return (
           <LandlordLocationStep 
             register={register} 
@@ -94,7 +108,7 @@ export function LandlordPropertyCreator() {
             onAddressAutoFill={handleAddressAutoFill} 
           />
         );
-      case 2:
+      case 3:
         return (
           <PropertyConfigStep 
             register={register} 
@@ -104,7 +118,7 @@ export function LandlordPropertyCreator() {
             getValues={getValues}
           />
         );
-      case 3:
+      case 4:
         return (
           <RoomConfigStep 
             register={register} 
@@ -118,7 +132,7 @@ export function LandlordPropertyCreator() {
             setValue={setValue}
           />
         );
-      case 4:
+      case 5:
         return (
           <PropertyImagesStep 
             register={register} 
@@ -128,11 +142,13 @@ export function LandlordPropertyCreator() {
             getValues={getValues}
             setValue={setValue}
             clearErrors={clearErrors}
+            propertyFiles={propertyFiles}
+            roomFiles={roomFiles}
             onPropertyFilesChange={handlePropertyFilesChange}
             onRoomFilesChange={handleRoomFilesChange}
           />
         );
-      case 5:
+      case 6:
         return (
           <DocumentsStep 
             register={register} 
@@ -143,7 +159,7 @@ export function LandlordPropertyCreator() {
             onFileUpload={handleFileUpload} 
           />
         );
-      case 6:
+      case 7:
         return (
           <ReviewStep 
             watch={watch} 
