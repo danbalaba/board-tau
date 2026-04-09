@@ -21,7 +21,20 @@ import { IconSortDescending, IconBuildingCommunity } from "@tabler/icons-react"
 
 export const description = "Monthly Revenue by Property"
 
-const chartData = [
+interface BarChartDataItem {
+  date: string;
+  [key: string]: any;
+}
+
+interface ChartBarInteractiveProps {
+  data?: BarChartDataItem[];
+  listings?: Array<{ id: string; title: string }>;
+  listingMap?: Record<string, string>;
+}
+
+const colors = ["#2f7d6d", "#1473E6", "#F59E0B", "#8B5CF6", "#EC4899", "#14B8A6"];
+
+const defaultChartData = [
   { date: "2024-04", propertyA: 45000, propertyB: 38000, propertyC: 52000 },
   { date: "2024-05", propertyA: 52000, propertyB: 41000, propertyC: 58000 },
   { date: "2024-06", propertyA: 48000, propertyB: 39000, propertyC: 54000 },
@@ -30,41 +43,55 @@ const chartData = [
   { date: "2024-09", propertyA: 58000, propertyB: 45000, propertyC: 63000 },
 ]
 
-const chartConfig = {
-  propertyA: {
-    label: "Property A",
-    color: "#2f7d6d",
-  },
-  propertyB: {
-    label: "Property B",
-    color: "#1473E6",
-  },
-  propertyC: {
-    label: "Property C",
-    color: "#F59E0B",
-  },
-} satisfies ChartConfig
+const defaultConfig: ChartConfig = {
+  propertyA: { label: "Property A", color: "#2f7d6d" },
+  propertyB: { label: "Property B", color: "#1473E6" },
+  propertyC: { label: "Property C", color: "#F59E0B" },
+}
 
-export function ChartBarInteractive() {
-  const [activeChart, setActiveChart] = React.useState<keyof typeof chartConfig>("propertyA")
-  const [sortOrder, setSortOrder] = React.useState("desc")
+function buildChartConfig(listings?: Array<{ id: string; title: string }>): ChartConfig {
+  if (!listings || listings.length === 0) return defaultConfig;
+  
+  const config: ChartConfig = {};
+  listings.forEach((l, i) => {
+    config[l.id] = { label: l.title, color: colors[i % colors.length] };
+  });
+  return config;
+}
+
+export function ChartBarInteractive({ data, listings, listingMap }: ChartBarInteractiveProps) {
+  const chartData = data && data.length > 0 ? data : defaultChartData;
+  const chartConfig = buildChartConfig(listings);
+  
+  const keys = React.useMemo(() => Object.keys(chartConfig).filter(k => k !== 'revenue' && k !== 'bookings'), [chartConfig]);
+  const defaultKey = keys.length > 0 ? keys[0] : "propertyA";
+  
+  const [activeChart, setActiveChart] = React.useState<string>(defaultKey);
+  const [sortOrder, setSortOrder] = React.useState("desc");
+
+  React.useEffect(() => {
+    if (keys.length > 0 && !keys.includes(activeChart)) {
+      setActiveChart(keys[0]);
+    }
+  }, [keys, activeChart]);
 
   const sortedData = React.useMemo(() => {
     return [...chartData].sort((a, b) => {
-      const valA = a[activeChart as keyof typeof a] as number
-      const valB = b[activeChart as keyof typeof b] as number
-      return sortOrder === "desc" ? valB - valA : valA - valB
-    })
-  }, [activeChart, sortOrder])
+      const valA = a[activeChart as keyof typeof a] as number || 0;
+      const valB = b[activeChart as keyof typeof b] as number || 0;
+      return sortOrder === "desc" ? valB - valA : valA - valB;
+    });
+  }, [activeChart, sortOrder, chartData]);
 
-  const total = React.useMemo(
-    () => ({
-      propertyA: chartData.reduce((acc, curr) => acc + curr.propertyA, 0),
-      propertyB: chartData.reduce((acc, curr) => acc + curr.propertyB, 0),
-      propertyC: chartData.reduce((acc, curr) => acc + curr.propertyC, 0),
-    }),
-    []
-  )
+  const total = React.useMemo(() => {
+    const result: Record<string, number> = {};
+    keys.forEach(key => {
+      result[key] = chartData.reduce((acc, curr) => acc + ((curr[key as keyof typeof curr] as number) || 0), 0);
+    });
+    return result;
+  }, [chartData, keys]);
+
+  const propertyOptions = keys.map(k => ({ value: k, label: String(chartConfig[k as keyof typeof chartConfig]?.label || k) }));
 
   return (
     <Card className="bg-transparent border-none shadow-none">
@@ -80,14 +107,10 @@ export function ChartBarInteractive() {
           <ModernSelect
             instanceId="propertySelect"
             value={activeChart}
-            onChange={(val) => setActiveChart(val as any)}
+            onChange={(val) => setActiveChart(val as string)}
             size="sm"
             icon={<IconBuildingCommunity size={12} />}
-            options={[
-              { value: "propertyA", label: "Property A" },
-              { value: "propertyB", label: "Property B" },
-              { value: "propertyC", label: "Property C" },
-            ]}
+            options={propertyOptions.length > 0 ? propertyOptions : [{ value: "propertyA", label: "Property A" }]}
           />
           <ModernSelect
             instanceId="sortOrderBar"
@@ -105,13 +128,12 @@ export function ChartBarInteractive() {
       
       <CardContent className="px-0! pt-6">
         <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {["propertyA", "propertyB", "propertyC"].map((key) => {
+          {keys.slice(0, 3).map((key) => {
              const isSelected = activeChart === key;
-             const color = chartConfig[key as keyof typeof chartConfig].color;
+             const color = chartConfig[key as keyof typeof chartConfig]?.color || "#2f7d6d";
              return (
                <button 
                  key={key} 
-                 onClick={() => setActiveChart(key as any)}
                  className={`p-3 rounded-lg border transition-all duration-300 text-left relative overflow-hidden group ${
                    isSelected 
                     ? "bg-white dark:bg-gray-950 border-primary/30 shadow-lg shadow-primary/5 ring-1 ring-primary/5" 
@@ -120,10 +142,10 @@ export function ChartBarInteractive() {
                >
                  <div className="relative z-10">
                    <span className={`text-[9px] font-bold uppercase tracking-wide ${isSelected ? 'text-primary' : 'text-gray-400'}`}>
-                     {chartConfig[key as keyof typeof chartConfig].label}
+                     {chartConfig[key as keyof typeof chartConfig]?.label || key}
                    </span>
                    <p className={`text-lg font-bold mt-1 tracking-tight ${isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
-                     ₱{total[key as keyof typeof total].toLocaleString()}
+                     ₱{(total[key] || 0).toLocaleString()}
                    </p>
                  </div>
                  {isSelected && (
@@ -131,7 +153,7 @@ export function ChartBarInteractive() {
                  )}
                </button>
              )
-          })}
+           })}
         </div>
 
         <ChartContainer
@@ -174,15 +196,15 @@ export function ChartBarInteractive() {
               }
             />
             <Bar 
-              dataKey={activeChart} 
-              fill={chartConfig[activeChart as keyof typeof chartConfig].color} 
+              dataKey={keys[0] || "propertyA"} 
+              fill={chartConfig[keys[0] as keyof typeof chartConfig]?.color || "#2f7d6d"} 
               radius={[8, 8, 3, 3]} 
               barSize={32}
             >
                {sortedData.map((entry, index) => (
                  <Cell 
                    key={`cell-${index}`} 
-                   fill={chartConfig[activeChart as keyof typeof chartConfig].color}
+                   fill={chartConfig[keys[0] as keyof typeof chartConfig]?.color || "#2f7d6d"}
                    fillOpacity={index === sortedData.length - 1 ? 1 : 0.85}
                  />
                ))}
