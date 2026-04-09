@@ -15,12 +15,14 @@ const getSafeImageSrc = (src: string | null | undefined): string | undefined => 
   if (!src || typeof src !== 'string' || src.length > 2048) return undefined;
   
   const lower = src.toLowerCase();
-  const isSafeProtocol = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('blob:');
+  const isSafeProtocol = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('blob:') || lower.startsWith('data:');
   const isRelative = src.startsWith('/');
 
   if (isSafeProtocol || isRelative) {
     // Reconstruct the string using only safe URI characters
-    const safeUrl = src.split('').filter(c => /^[a-zA-Z0-9:/-_\. \?\#\&\%]$/.test(c)).join('');
+    // Expanded whitelist to include common valid URL characters
+    // We put the hyphen at the end to avoid it being interpreted as a range
+    const safeUrl = src.split('').filter(c => /^[a-zA-Z0-9:/\._ \?\#\&\%=\~\!\@\$\(\)\*\+\,\;\'-]$/.test(c)).join('');
     if (safeUrl === src) {
       return safeUrl;
     }

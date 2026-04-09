@@ -35,24 +35,43 @@ const buttonVariants = cva(
   }
 );
 
+interface ButtonProps extends React.ComponentProps<'button'>, VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+  isLoading?: boolean;
+  outline?: boolean;
+}
+
 function Button({
   className,
   variant,
   size,
   asChild = false,
+  isLoading = false,
+  outline = false,
+  children,
   ...props
-}: React.ComponentProps<'button'> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-  }) {
+}: ButtonProps) {
   const Comp = asChild ? Slot : 'button';
+
+  // If outline prop is provided, force variant to outline if not explicitly set
+  const effectiveVariant = outline ? 'outline' : variant;
 
   return (
     <Comp
       data-slot='button'
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant: effectiveVariant, size, className }))}
+      disabled={isLoading || props.disabled}
       {...props}
-    />
+    >
+      {isLoading ? (
+        <span className="flex items-center gap-2">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          {typeof children === 'string' ? 'Loading...' : children}
+        </span>
+      ) : (
+        children
+      )}
+    </Comp>
   );
 }
 

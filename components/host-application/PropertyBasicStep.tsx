@@ -102,7 +102,19 @@ const PropertyBasicStep: React.FC<PropertyBasicStepProps> = ({ register, errors,
         </div>
 
         <div className="mt-10">
-          <Textarea label="Tell us your mission" id="businessInfo.businessDescription" register={register} errors={errors} watch={watch} required rows={3} placeholder="Describe your boarding house business... What makes your property unique?" />
+          <Textarea 
+            label="Tell us your mission" 
+            id="businessInfo.businessDescription" 
+            register={register} 
+            errors={errors} 
+            watch={watch} 
+            required 
+            rows={3} 
+            placeholder="Describe your boarding house business... What makes your property unique?" 
+            validationRules={{
+              minLength: { value: 100, message: "Mission description must be at least 100 characters" }
+            }}
+          />
         </div>
       </motion.div>
 
@@ -120,7 +132,19 @@ const PropertyBasicStep: React.FC<PropertyBasicStepProps> = ({ register, errors,
 
         <div className="space-y-10">
           <Input label="Public Display Name" id="propertyInfo.propertyName" type="text" register={register} errors={errors} watch={watch} required placeholder="e.g. 'Maligaya Residence'" useStaticLabel />
-          <Textarea label="Marketing Narrative" id="propertyInfo.description" register={register} errors={errors} watch={watch} required rows={4} placeholder="Describe your property in detail... location, features, and what makes it attractive to TAU students." />
+          <Textarea 
+            label="Marketing Narrative" 
+            id="propertyInfo.description" 
+            register={register} 
+            errors={errors} 
+            watch={watch} 
+            required 
+            rows={4} 
+            placeholder="Describe your property in detail... location, features, and what makes it attractive to TAU students." 
+            validationRules={{
+              minLength: { value: 100, message: "Property description must be at least 100 characters" }
+            }}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 border-t border-gray-50 dark:border-gray-800 pt-10">
             <div>

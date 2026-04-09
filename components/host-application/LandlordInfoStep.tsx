@@ -195,7 +195,7 @@ const LandlordInfoStep: React.FC<LandlordInfoStepProps> = ({ register, errors, w
           placeholder="Briefly describe your experience managing properties for students. This helps us verify your application faster."
           validationRules={{
             required: "Required",
-            minLength: { value: 30, message: "Minimum 30 characters" }
+            minLength: { value: 100, message: "Minimum 100 characters" }
           }}
         />
         <div className="mt-8 flex gap-4 p-4 bg-primary/5 rounded-2xl border border-primary/10">

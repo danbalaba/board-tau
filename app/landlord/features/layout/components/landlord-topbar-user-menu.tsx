@@ -6,8 +6,11 @@ import {
   IconSettings, 
   IconUserCircle as IconUser, 
   IconLogout, 
-  IconShield, 
-  IconMenu2
+  IconShieldCheck as IconShield, 
+  IconMenu2,
+  IconFingerprint,
+  IconSettingsFilled,
+  IconChevronRight
 } from '@tabler/icons-react';
 import {
   DropdownMenu,
@@ -25,19 +28,21 @@ interface LandlordTopbarUserMenuProps {
     name: string | null;
     email: string | null;
     image: string | null;
+    profileImage?: string | null;
     role: string;
   };
   onOpenSettings: (tab?: string) => void;
+  onViewProfile: () => void;
 }
 
-export function LandlordTopbarUserMenu({ user, onOpenSettings }: LandlordTopbarUserMenuProps) {
+export function LandlordTopbarUserMenu({ user, onOpenSettings, onViewProfile }: LandlordTopbarUserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className='flex items-center gap-3 p-1.5 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 group'>
           <div className='relative'>
             <div className='w-9 h-9 rounded-full flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-300 overflow-hidden ring-2 ring-primary/20'>
-              <Avatar src={user.image} alt={user.name || "User"} />
+              <Avatar src={user.image || (user as any).profileImage} alt={user.name || "User"} />
             </div>
             <div className='absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-gray-900 rounded-full' />
           </div>
@@ -62,7 +67,7 @@ export function LandlordTopbarUserMenu({ user, onOpenSettings }: LandlordTopbarU
           <div className='flex items-center gap-4'>
             <div className='w-14 h-14 rounded-full flex items-center justify-center p-0.5 bg-gradient-to-br from-primary to-purple-500'>
               <div className="w-full h-full bg-white dark:bg-gray-950 rounded-full flex items-center justify-center overflow-hidden">
-                <Avatar src={user.image} alt={user.name || "User"} />
+                <Avatar src={user.image || (user as any).profileImage} alt={user.name || "User"} />
               </div>
             </div>
             <div>
@@ -78,31 +83,42 @@ export function LandlordTopbarUserMenu({ user, onOpenSettings }: LandlordTopbarU
         <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
         <DropdownMenuGroup className="p-1">
           <DropdownMenuItem 
-            onClick={() => onOpenSettings('profile')}
-            className='rounded-xl flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-all group border border-transparent hover:border-primary/10'
+            onClick={onViewProfile}
+            className='rounded-xl flex items-center justify-between p-2.5 cursor-pointer hover:bg-indigo-50/50 dark:hover:bg-indigo-500/10 transition-all group mt-1'
           >
-            <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-              <IconUser size={18} />
+            <div className='flex items-center gap-3'>
+              <div className="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <IconFingerprint size={20} stroke={2} />
+              </div>
+              <span className="font-bold text-sm text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 transition-colors">Profile Details</span>
             </div>
-            <span className="font-bold text-sm">Profile Details</span>
+            <IconChevronRight size={14} className="text-gray-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
           </DropdownMenuItem>
+
           <DropdownMenuItem 
             onClick={() => onOpenSettings()}
-            className='rounded-xl flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-all group border border-transparent hover:border-primary/10 mt-1'
+            className='rounded-xl flex items-center justify-between p-2.5 cursor-pointer hover:bg-violet-50/50 dark:hover:bg-violet-500/10 transition-all group mt-1'
           >
-            <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 flex items-center justify-center group-hover:bg-gray-900 dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-gray-900 transition-colors">
-              <IconSettings size={18} />
+            <div className='flex items-center gap-3'>
+              <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <IconSettingsFilled size={20} />
+              </div>
+              <span className="font-bold text-sm text-gray-700 dark:text-gray-300 group-hover:text-violet-600 transition-colors">Account Hub</span>
             </div>
-            <span className="font-bold text-sm">Account Hub</span>
+            <IconChevronRight size={14} className="text-gray-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
           </DropdownMenuItem>
+
           <DropdownMenuItem 
             onClick={() => onOpenSettings('security')}
-            className='rounded-xl flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-all group border border-transparent hover:border-primary/10 mt-1'
+            className='rounded-xl flex items-center justify-between p-2.5 cursor-pointer hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10 transition-all group mt-1'
           >
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-              <IconShield size={18} />
+            <div className='flex items-center gap-3'>
+              <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <IconShield size={20} stroke={2} />
+              </div>
+              <span className="font-bold text-sm text-gray-700 dark:text-gray-300 group-hover:text-emerald-600 transition-colors">Security & Privacy</span>
             </div>
-            <span className="font-bold text-sm">Security & Privacy</span>
+            <IconChevronRight size={14} className="text-gray-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />

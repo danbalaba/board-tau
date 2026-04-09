@@ -37,10 +37,10 @@ export function LandlordSettingsProfileTab({
       {/* Profile Image Section */}
       <div className="flex flex-col md:flex-row items-center gap-6 bg-gray-50 dark:bg-gray-800/50 p-5 rounded-xl border border-gray-100 dark:border-gray-800">
         <div className="relative group">
-          <div className="w-24 h-24 bg-white dark:bg-gray-700 rounded-3xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-xl overflow-hidden">
-            {formData.profileImage ? (
+          <div className="w-24 h-24 bg-white dark:bg-gray-700 rounded-3xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-xl">
+            {(formData.profileImage || formData.currentImageUrl) ? (
               <img
-                src={getSafeImageSrc(URL.createObjectURL(formData.profileImage))}
+                src={formData.profileImage ? URL.createObjectURL(formData.profileImage) : getSafeImageSrc(formData.currentImageUrl)}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
@@ -51,12 +51,12 @@ export function LandlordSettingsProfileTab({
             )}
           </div>
           <div className="absolute -bottom-2 -right-2 p-1.5 bg-primary text-white rounded-xl shadow-lg border-2 border-white dark:border-gray-900">
-            <FaSave size={12} />
+            <User size={12} />
           </div>
         </div>
         <div className="flex-1 text-center md:text-left">
           <h4 className="font-bold text-gray-900 dark:text-white mb-2">Your Avatar</h4>
-          <p className="text-gray-500 text-sm mb-4">PNG, JPG or GIF. Max 2MB.</p>
+          <p className="text-gray-500 text-sm mb-4">PNG, JPG or WEBP. Max 2MB.</p>
           <input
             type="file"
             accept="image/*"
@@ -77,6 +77,7 @@ export function LandlordSettingsProfileTab({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Input
           id="name"
+          name="name"
           label="Full Name"
           placeholder="Your display name"
           value={formData.name}
@@ -87,6 +88,7 @@ export function LandlordSettingsProfileTab({
 
         <Input
           id="email"
+          name="email"
           label="Email Address"
           type="email"
           placeholder="your@email.com"
@@ -94,10 +96,12 @@ export function LandlordSettingsProfileTab({
           onChange={(e) => setFormData((prev: any) => ({ ...prev, email: e.target.value }))}
           icon={Mail}
           useStaticLabel
+          disabled
         />
 
         <Input
           id="phone"
+          name="phone"
           label="Phone Number"
           type="tel"
           placeholder="+63"
@@ -109,6 +113,7 @@ export function LandlordSettingsProfileTab({
 
         <Input
           id="address"
+          name="address"
           label="Business Address"
           placeholder="Primary location"
           value={formData.address}
@@ -120,6 +125,7 @@ export function LandlordSettingsProfileTab({
 
       <Textarea
         id="bio"
+        name="bio"
         label="About Yourself"
         placeholder="Tell us about your property management experience..."
         value={formData.bio}

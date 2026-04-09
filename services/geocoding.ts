@@ -60,19 +60,18 @@ export const geocodeAddress = async (address: string): Promise<AddressInfo | nul
   }
 };
 
-// Reverse geocoding (coordinates to address)
+// Reverse geocoding (coordinates to address) - Bulletproof Version
 export const reverseGeocode = async (lat: number, lng: number): Promise<AddressInfo | null> => {
+  // Defensive return for invalid coordinates
+  if (!lat || !lng) return null;
+
   try {
-    // Check if coordinates are near Tarlac Agricultural University
+    // 1. Check for Tarlac Agricultural University Proximity (Local Logic)
     const tauLat = 15.635189;
     const tauLng = 120.415343;
-    const proximityThreshold = 0.002; // Approximately 200 meters
+    const proximityThreshold = 0.002;
+    const distance = Math.sqrt(Math.pow(lat - tauLat, 2) + Math.pow(lng - tauLng, 2));
 
-    const distance = Math.sqrt(
-      Math.pow(lat - tauLat, 2) + Math.pow(lng - tauLng, 2)
-    );
-
-    // If near TAU, return TAU-specific address
     if (distance < proximityThreshold) {
       return {
         address: 'Tarlac Agricultural University, San Isidro, Tarlac City, Tarlac',
@@ -83,47 +82,48 @@ export const reverseGeocode = async (lat: number, lng: number): Promise<AddressI
       };
     }
 
-    // Try to use Nominatim API for reverse geocoding
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-      {
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'BoardTAU/1.0'
+    // 2. Attempt Network Lookup (Defensively)
+    let response;
+    try {
+      response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+        {
+          headers: { 'User-Agent': 'BoardTAU-Dashboard-V2' }
         }
-      }
-    );
+      );
+    } catch (networkError) {
+      console.warn('Network blocked or offline, using local fallback:', networkError);
+      return {
+        address: `${lat.toFixed(6)}, ${lng.toFixed(6)}, Tarlac City, Tarlac`,
+        city: 'Tarlac City',
+        province: 'Tarlac',
+        zipCode: '2300',
+        coordinates: [lat, lng]
+      };
+    }
 
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      throw new Error(`Reverse geocoding API error: ${response.status}`);
+    if (!response || !response.ok) {
+      throw new Error('API server unreachable');
     }
 
     const data = await response.json();
-
-    if (!data.address) {
-      return null;
-    }
+    if (!data || !data.address) return null;
 
     const addressParts = parseAddress(data.display_name, data.address);
 
     return {
-      address: data.display_name,
-      city: addressParts.city || '',
-      province: addressParts.province || '',
-      zipCode: addressParts.zipCode || '',
+      address: data.display_name || 'Selected Location',
+      city: addressParts.city || 'Tarlac City',
+      province: addressParts.province || 'Tarlac',
+      zipCode: addressParts.zipCode || '2300',
       coordinates: [lat, lng]
     };
-  } catch (error) {
-    console.error('Reverse geocoding error:', error);
 
-    // Return fallback data with more meaningful address
+  } catch (error) {
+    // Catch-all prevents any Turbopack/Next.js crash screen
+    console.error('Handled Geocoding Exception:', error);
     return {
-      address: 'Unnamed Location, Tarlac City, Tarlac',
+      address: `Selected Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
       city: 'Tarlac City',
       province: 'Tarlac',
       zipCode: '2300',

@@ -141,6 +141,47 @@ export const getLandlordProperties = async (args?: { cursor?: string }): Promise
   };
 };
 
+export const getAllLandlordProperties = async (): Promise<LandlordPropertyResult[]> => {
+  const landlord = await requireLandlord();
+
+  const properties = await db.listing.findMany({
+    where: {
+      userId: landlord.id,
+    },
+    orderBy: { createdAt: "desc" },
+    include: {
+      rooms: {
+        include: {
+          amenities: {
+            include: {
+              amenityType: true,
+            },
+          },
+          images: true,
+        },
+      },
+      images: true,
+      amenities: true,
+      rules: true,
+      features: true,
+      categories: {
+        include: {
+          category: true,
+        },
+      },
+      user: {
+        select: {
+          businessName: true,
+          phoneNumber: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  return properties as LandlordPropertyResult[];
+};
+
 export const getLandlordPropertyById = async (id: string) => {
   const landlord = await requireLandlord();
 

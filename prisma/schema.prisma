@@ -112,6 +112,7 @@ model User {
   landlordVerificationDocs String?
   businessName String?
   phoneNumber String?
+  address      String?
   lastLogin    DateTime?
   city         String?
   region       String?

@@ -28,9 +28,9 @@ export const useLandlordProfileStore = create<LandlordProfileStore>((set) => ({
   user: null,
   isInitialized: false,
   setUser: (user) => set({ user, isInitialized: true }),
-  updateUser: (updates) => 
-    set((state) => ({ 
-      user: state.user ? { ...state.user, ...updates } : null 
+  updateUser: (updates) =>
+    set((state) => ({
+      user: state.user ? { ...state.user, ...updates } : null
     })),
   setInitialized: (val) => set({ isInitialized: val }),
 }));

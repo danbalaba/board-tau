@@ -38,6 +38,8 @@ interface PropertyImagesStepProps {
   clearErrors: any;
   onPropertyFilesChange?: (files: File[]) => void;
   onRoomFilesChange?: (roomIndex: number, files: File[]) => void;
+  propertyFiles?: File[];
+  roomFiles?: Record<number, File[]>;
 }
 
 const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
@@ -49,7 +51,9 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
   setValue,
   clearErrors,
   onPropertyFilesChange,
-  onRoomFilesChange
+  onRoomFilesChange,
+  propertyFiles = [],
+  roomFiles = {}
 }) => {
   const toast = useResponsiveToast();
   
@@ -60,8 +64,8 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
   const [roomImages, setRoomImages] = useState<Record<number, string[]>>(initialData.rooms || {});
   
   // Also keep track of File objects for parents that need them (like Landlord dashboard)
-  const [internalPropertyFiles, setInternalPropertyFiles] = useState<File[]>([]);
-  const [internalRoomFiles, setInternalRoomFiles] = useState<Record<number, File[]>>({});
+  const [internalPropertyFiles, setInternalPropertyFiles] = useState<File[]>(propertyFiles);
+  const [internalRoomFiles, setInternalRoomFiles] = useState<Record<number, File[]>>(roomFiles);
 
   const [dragOver, setDragOver] = useState<number | 'property' | null>(null);
 
@@ -217,7 +221,12 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
       if (validFiles.length > 0) {
         const newImages = validFiles.map(file => file.type.startsWith('image/') ? URL.createObjectURL(file) : '');
         const updated = [...propertyImages, ...newImages];
+        const updatedFiles = [...internalPropertyFiles, ...validFiles];
+        
         setPropertyImages(updated);
+        setInternalPropertyFiles(updatedFiles);
+        if (onPropertyFilesChange) onPropertyFilesChange(updatedFiles);
+        
         syncToForm(updated, roomImages);
         toast.success(`Successfully uploaded ${validFiles.length} property images.`);
       }
@@ -231,7 +240,15 @@ const PropertyImagesStep: React.FC<PropertyImagesStepProps> = ({
           ...roomImages,
           [roomIndex]: [...(roomImages[roomIndex] || []), ...newImages]
         };
+        const updatedRoomFiles = {
+          ...internalRoomFiles,
+          [roomIndex]: [...(internalRoomFiles[roomIndex] || []), ...validFiles]
+        };
+        
         setRoomImages(updatedRoomImages);
+        setInternalRoomFiles(updatedRoomFiles);
+        if (onRoomFilesChange) onRoomFilesChange(roomIndex, updatedRoomFiles[roomIndex]);
+        
         syncToForm(propertyImages, updatedRoomImages);
         toast.success(`Successfully uploaded ${validFiles.length} images for Room ${roomIndex + 1}.`);
       }

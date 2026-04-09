@@ -204,13 +204,13 @@ const validatePropertyBasicConfig = (propertyConfig: any, errors: ValidationErro
     errors.push({ field: 'propertyConfig.totalRooms', message: 'Total rooms must be between 1 and 50' });
   }
 
-  const bathroomCount = Number(propertyConfig.bathroomCount);
-  if (!bathroomCount || bathroomCount < 1) {
-    errors.push({ field: 'propertyConfig.bathroomCount', message: 'Number of bathrooms must be at least 1' });
-  }
-
   if (!propertyConfig.bathroomType) {
     errors.push({ field: 'propertyConfig.bathroomType', message: 'Please select a bathroom type' });
+  }
+
+  const bathroomCount = Number(propertyConfig.bathroomCount);
+  if (isNaN(bathroomCount) || bathroomCount < 0) {
+    errors.push({ field: 'propertyConfig.bathroomCount', message: 'Please enter a valid bathroom count' });
   }
 };
 
@@ -302,7 +302,7 @@ const validateDocuments = (documents: any, errors: ValidationError[]): void => {
 
   for (const doc of requiredDocuments) {
     const documentValue = documents[doc];
-    if (!documentValue || typeof documentValue !== 'string' || !documentValue.startsWith('http')) {
+    if (!documentValue || typeof documentValue !== 'string' || (!documentValue.startsWith('http') && !documentValue.startsWith('blob:'))) {
       errors.push({ field: `documents.${doc}`, message: `Please upload a valid ${doc} document` });
     }
   }

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { generateTablePDF } from '@/utils/pdfGenerator';
+import { getAllLandlordProperties } from '@/services/landlord/properties';
 
 export interface Property {
   id: string;
@@ -113,20 +114,58 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
   }, [nextCursor, isLoadingMore]);
 
   const handleGenerateReport = async () => {
-    const columns = ['Title', 'Price (PHP)', 'Status', 'Rooms', 'Baths', 'Date Added'];
-    const data = filteredListings.map(p => [
-      p.title,
-      p.price.toLocaleString(),
-      p.status.toUpperCase(),
-      p.roomCount.toString(),
-      p.bathroomCount.toString(),
-      new Date(p.createdAt).toLocaleDateString()
-    ]);
-    await generateTablePDF('Properties_Report', columns, data, {
-      title: 'Property Portfolio Report',
-      subtitle: `Total listings: ${filteredListings.length}`,
-      author: 'Landlord Dashboard'
-    });
+    try {
+      // Fetch the full portfolio to bypass UI pagination/infinite scroll limits
+      const allProperties = await getAllLandlordProperties();
+      
+      // Apply the same filter/sort logic used in the UI to the full set
+      let result = [...allProperties];
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        result = result.filter(p => 
+          p.title.toLowerCase().includes(query) || 
+          p.region?.toLowerCase().includes(query) ||
+          p.description.toLowerCase().includes(query)
+        );
+      }
+
+      result.sort((a: any, b: any) => {
+        switch (sortBy) {
+          case 'oldest':
+            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          case 'price_asc':
+            return a.price - b.price;
+          case 'price_desc':
+            return b.price - a.price;
+          case 'status':
+            return (a.status || '').localeCompare(b.status || '');
+          case 'newest':
+          default:
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+      });
+
+      const columns = ['Title', 'Price (PHP)', 'Status', 'Rooms', 'Baths', 'Date Added'];
+      const data = result.map(p => [
+        p.title,
+        p.price.toLocaleString(),
+        p.status.toUpperCase(),
+        p.roomCount.toString(),
+        p.bathroomCount.toString(),
+        new Date(p.createdAt).toLocaleDateString()
+      ]);
+
+      await generateTablePDF('Properties_Report', columns, data, {
+        title: 'Property Portfolio Report',
+        subtitle: `Total portfolio size: ${result.length} listings`,
+        author: 'Landlord Dashboard'
+      });
+      
+      toast.success(`Generated report for ${result.length} properties`);
+    } catch (error) {
+      console.error('Failed to generate report:', error);
+      toast.error('Failed to generate complete report');
+    }
   };
 
   return {

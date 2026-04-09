@@ -11,6 +11,10 @@ export type LandlordUser = {
   role: string;
   isVerifiedLandlord: boolean;
   landlordApprovedAt: Date | null;
+  phoneNumber: string | null;
+  bio: string | null;
+  city: string | null;
+  region: string | null;
 };
 
 /** Require landlord role; redirect if not authenticated or not a landlord. */
@@ -33,6 +37,10 @@ export async function requireLandlord(): Promise<LandlordUser> {
       role: true,
       isVerifiedLandlord: true,
       landlordApprovedAt: true,
+      phoneNumber: true,
+      bio: true,
+      city: true,
+      region: true,
     },
   });
 
@@ -81,8 +89,8 @@ export async function hasPendingLandlordApplication(): Promise<boolean> {
 
     // If user is not a landlord yet but has an application pending
     return userFromDb?.role === "USER" &&
-           userFromDb.landlordApprovedAt === null &&
-           userFromDb.isVerifiedLandlord === false;
+      userFromDb.landlordApprovedAt === null &&
+      userFromDb.isVerifiedLandlord === false;
   } catch {
     return false;
   }

@@ -27,7 +27,7 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
 
   const handleLogout = () => {
     setIsOpen(false);
-    signOut();
+    signOut({ callbackUrl: "/" });
   };
 
   // Close panel when user navigates

@@ -14,8 +14,9 @@ import Button from '../common/Button';
 import { cn } from '@/utils/helper';
 
 interface ReviewStepProps {
-  watch: any;
-  onBack: () => void;
+  watch?: any;
+  control?: any;
+  onBack: (e?: any) => void;
 }
 
 const ReviewSection = ({ title, icon: Icon, children, colorClass }: any) => (
@@ -51,7 +52,7 @@ const ReviewField = ({ label, value, darkValue }: { label: string; value: any; d
   </div>
 );
 
-const ReviewStep: React.FC<ReviewStepProps> = ({ watch, onBack }) => {
+const ReviewStep: React.FC<ReviewStepProps> = ({ watch, control, onBack }) => {
   const rooms = watch('propertyConfig.rooms') || [];
   const propertyImages = watch('propertyImages.property') || [];
   const docs = watch('documents') || {};
@@ -188,8 +189,9 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ watch, onBack }) => {
 
         {/* Step 6: Media and Docs */}
         <ReviewSection title="Media & Compliance" icon={BadgeCheck} colorClass="text-teal-500">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="sm:col-span-2 flex flex-col gap-1.5">
+          <div className="grid grid-cols-1 gap-8">
+            {/* Property Photos */}
+            <div className="flex flex-col gap-1.5">
               <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 ml-1">
                 Property Photos ({propertyImages.length})
               </span>
@@ -197,11 +199,35 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ watch, onBack }) => {
                 {renderImages()}
               </div>
             </div>
-            <ReviewField label="Government ID" value={getDocStatus(docs.governmentId, "Government ID")} />
-            <ReviewField label="Business Permit" value={getDocStatus(docs.businessPermit, "Business Permit")} />
-            <ReviewField label="Land Title" value={getDocStatus(docs.landTitle, "Land Title")} />
-            <ReviewField label="Barangay Clearance" value={getDocStatus(docs.barangayClearance, "Barangay Clearance")} />
-            <ReviewField label="Fire Safety Cert" value={getDocStatus(docs.fireSafetyCertificate, "Fire Safety Cert")} />
+
+            {/* Compliance Docs */}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 ml-1">
+                Compliance Documents
+              </span>
+              <div className="px-4 py-3 rounded-2xl bg-gray-50/50 dark:bg-gray-900/40 border border-gray-50 dark:border-gray-800/50 min-h-[46px] flex items-center">
+                <div className="flex gap-2 overflow-x-auto w-full custom-scrollbar pb-1">
+                  {Object.entries(docs).filter(([_, url]) => !!url).length > 0 ? (
+                    Object.entries(docs).filter(([_, url]) => !!url).map(([key, url]: [string, any], idx: number) => (
+                      <div key={key} className="flex flex-col items-center gap-1 shrink-0">
+                        <img 
+                          src={url} 
+                          alt={key} 
+                          onClick={() => window.open(url, '_blank')}
+                          className="w-10 h-10 sm:w-16 sm:h-16 object-cover rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:opacity-80 hover:scale-105 transition-all"
+                          title={`Click to view ${key.replace(/([A-Z])/g, ' $1')}`}
+                        />
+                        <span className="text-[7px] font-black uppercase text-gray-400 truncate w-10 sm:w-16 text-center">
+                          {key.replace(/([A-Z])/g, ' $1')}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-xs italic text-gray-400">No documents uploaded</span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </ReviewSection>
 
