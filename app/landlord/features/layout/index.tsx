@@ -32,7 +32,7 @@ export default function LandlordLayoutClient({
           <LandlordSidebar />
           <SidebarInset className="flex flex-col h-screen overflow-hidden">
             <LandlordTopbar user={user} />
-            <main id="scroll-container" className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
+            <main id="scroll-container" className="flex-1 overflow-x-hidden overflow-y-auto bg-background [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <div className="w-full px-4 py-8">
                 {children}
               </div>
