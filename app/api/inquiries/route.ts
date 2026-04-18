@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
 import { hasPermission } from "@/lib/rbac";
+import { sendInquirySubmissionEmail, sendInquiryReceiptEmail } from "@/services/email/notifications";
 
 export async function POST(request: Request) {
   try {
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
     // Get room details
     const room = await db.room.findUnique({
       where: { id: roomId },
+      include: { images: true }
     });
     console.log("Room details:", room);
 
@@ -66,12 +68,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Room is fully booked" }, { status: 400 });
     }
 
+    // NEW: Check if requested occupants exceed available slots
+    if (occupantsCount > room.availableSlots) {
+       return NextResponse.json({ 
+         error: "Insufficient Slots", 
+         message: `This room only has ${room.availableSlots} slots available, but you requested ${occupantsCount}.` 
+       }, { status: 400 });
+    }
+
     // Create inquiry with PENDING status
     const startDate = new Date(moveInDate);
     const endDate = new Date(checkOutDate);
 
     // Map role string to InquiryRole enum
     const roleEnum = role.toUpperCase();
+
+    // 1. Get Landlord ID (userId of the listing)
+    const listing = await db.listing.findUnique({
+      where: { id: listingId },
+      select: { userId: true, title: true }
+    });
+
+    if (!listing) {
+      return NextResponse.json({ error: "Listing not found" }, { status: 404 });
+    }
 
     const inquiry = await (db.inquiry as any).create({
       data: {
@@ -86,11 +106,54 @@ export async function POST(request: Request) {
         profilePhotoUrl: profilePhotoUrl || null,
         idAttachmentUrl: idAttachmentUrl || null,
         paymentMethod: paymentMethod || null,
-        reservationFee: (room as any).reservationFee || 0,
+        reservationFee: ((room as any).reservationFee || 0) * (occupantsCount || 1), // Multiplier logic added
         status: "PENDING",
         paymentStatus: "UNPAID",
       },
     });
+
+    // 2. Create Persistent Notification for Landlord
+    try {
+      await (db as any).notification.create({
+        data: {
+          userId: listing.userId,
+          type: "inquiry",
+          title: "New Inquiry Received",
+          description: `${user.name || 'A student'} inquired about ${listing.title}`,
+          link: `/landlord/inquiries`,
+          isRead: false
+        }
+      });
+
+      // 3. Send Email Notification to Landlord
+      const landlord = await db.user.findUnique({
+        where: { id: listing.userId },
+        select: { email: true, name: true }
+      });
+
+      if (landlord && landlord.email) {
+        await sendInquirySubmissionEmail(
+          landlord,
+          { name: user.name, message: message },
+          { title: listing.title },
+          room,
+          inquiry
+        );
+      }
+
+      // 4. Send Email Receipt to Tenant
+      if (user.email) {
+        await sendInquiryReceiptEmail(
+          user,
+          listing,
+          room,
+          inquiry
+        );
+      }
+    } catch (notifError) {
+      console.error("Failed to process landlord notifications:", notifError);
+      // We don't block the inquiry if notification fails, just log it
+    }
 
     console.log("Inquiry created successfully:", inquiry);
     return NextResponse.json(inquiry);
@@ -138,6 +201,7 @@ export async function GET(request: Request) {
             price: true,
             roomType: true,
             images: true,
+            reservationFee: true,
           },
         },
       },

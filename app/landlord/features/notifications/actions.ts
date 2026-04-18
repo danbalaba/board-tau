@@ -3,6 +3,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { revalidatePath } from "next/cache";
 
 export type NotificationType = 'inquiry' | 'reservation' | 'message' | 'review';
 
@@ -16,110 +17,91 @@ export interface NotificationItem {
   link: string;
 }
 
-export async function getLandlordNotifications() {
+export async function getLandlordNotifications(page: number = 0, limit: number = 5) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return { notifications: [], unreadCount: 0 };
+    return { notifications: [], unreadCount: 0, hasMore: false };
   }
 
   const userId = session.user.id;
+  const skip = page * limit;
 
-  // 1. Pending Inquiries
-  const pendingInquiries = await db.inquiry.findMany({
-    where: {
-      listing: { userId },
-      status: 'PENDING',
-    },
-    include: {
-      user: { select: { name: true } },
-      listing: { select: { title: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 5,
-  });
+  // 1. Fetch persistent notifications from the new table
+  const [dbNotifications, totalCount, unreadCount] = await Promise.all([
+    db.notification.findMany({
+      where: { userId, isArchived: false },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+    db.notification.count({ where: { userId, isArchived: false } }),
+    db.notification.count({ where: { userId, isRead: false, isArchived: false } })
+  ]);
 
-  // 2. Pending Reservations / Payment
-  const pendingReservations = await db.reservation.findMany({
-    where: {
-      listing: { userId },
-      status: { in: ['PENDING_PAYMENT', 'RESERVED'] },
-    },
-    include: {
-      user: { select: { name: true } },
-      listing: { select: { title: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 5,
-  });
-
-  // 3. Unread Messages
-  const unreadMessages = await db.message.findMany({
-    where: {
-      receiverId: userId,
-      read: false,
-    },
-    include: {
-      sender: { select: { name: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 5,
-  });
-
-  // 4. Pending Reviews (no response yet)
-  const pendingReviews = await db.review.findMany({
-    where: {
-      listing: { userId },
-      response: null,
-    },
-    include: {
-      user: { select: { name: true } },
-      listing: { select: { title: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 5,
-  });
-
-  const notifications: NotificationItem[] = [
-    ...pendingInquiries.map(iq => ({
-      id: iq.id,
-      type: 'inquiry' as const,
-      title: 'New Inquiry',
-      description: `${iq.user?.name || 'A user'} inquired about ${iq.listing?.title || 'your property'}`,
-      createdAt: iq.createdAt.toISOString(),
-      isRead: false,
-      link: `/landlord/inquiries`,
-    })),
-    ...pendingReservations.map(res => ({
-      id: res.id,
-      type: 'reservation' as const,
-      title: 'New Reservation',
-      description: `${res.user?.name || 'A user'} reserved ${res.listing?.title || 'your property'}`,
-      createdAt: res.createdAt.toISOString(),
-      isRead: false,
-      link: `/landlord/reservations`,
-    })),
-    ...unreadMessages.map(msg => ({
-      id: msg.id,
-      type: 'message' as const,
-      title: 'New Message',
-      description: `From ${msg.sender?.name || 'Unknown'}: ${msg.content.substring(0, 30)}${msg.content.length > 30 ? '...' : ''}`,
-      createdAt: msg.createdAt.toISOString(),
-      isRead: false,
-      link: `/landlord/tenants`, // Fallback link
-    })),
-    ...pendingReviews.map(rev => ({
-      id: rev.id,
-      type: 'review' as const,
-      title: 'New Review',
-      description: `${rev.user?.name || 'A user'} left a review for ${rev.listing?.title || 'your property'}`,
-      createdAt: rev.createdAt.toISOString(),
-      isRead: false,
-      link: `/landlord/reviews`,
-    })),
-  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const notifications: NotificationItem[] = dbNotifications.map(n => ({
+    id: n.id,
+    type: n.type as NotificationType,
+    title: n.title,
+    description: n.description,
+    createdAt: n.createdAt.toISOString(),
+    isRead: n.isRead,
+    link: n.link,
+  }));
 
   return {
-    notifications: notifications.slice(0, 10),
-    unreadCount: notifications.length,
+    notifications,
+    unreadCount,
+    hasMore: skip + notifications.length < totalCount,
   };
+}
+
+export async function markNotificationAsRead(id: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return { success: false };
+
+    await db.notification.update({
+      where: { id, userId: session.user.id },
+      data: { isRead: true }
+    });
+
+    revalidatePath("/landlord");
+    return { success: true };
+  } catch (error) {
+    return { success: false };
+  }
+}
+
+export async function markAllNotificationsAsRead() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return { success: false };
+
+    await db.notification.updateMany({
+      where: { userId: session.user.id, isRead: false },
+      data: { isRead: true }
+    });
+
+    revalidatePath("/landlord");
+    return { success: true };
+  } catch (error) {
+    return { success: false };
+  }
+}
+
+export async function clearAllNotifications() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return { success: false };
+
+    await db.notification.updateMany({
+      where: { userId: session.user.id, isArchived: false },
+      data: { isArchived: true }
+    });
+
+    revalidatePath("/landlord");
+    return { success: true };
+  } catch (error) {
+    return { success: false };
+  }
 }

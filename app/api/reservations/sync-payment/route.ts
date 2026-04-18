@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/services/user";
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
+import { sendReservationNotificationEmail } from "@/services/email/notifications";
 
 export async function GET() {
   try {
@@ -39,12 +40,16 @@ export async function GET() {
     */
 
     // 2. Update the reservation status
-    await db.reservation.update({
+    const updatedReservation = await db.reservation.update({
       where: { id: pendingReservation.id },
       data: {
         status: "RESERVED",
         paymentStatus: "PAID",
       },
+      include: {
+        listing: true,
+        user: true,
+      }
     });
 
     // 3. Update the associated Inquiry to APPROVED/PAID
@@ -64,6 +69,58 @@ export async function GET() {
         }
       }
     });
+
+    // 5. Create Persistent Notification for Landlord
+    try {
+      const listing = await db.listing.findUnique({
+        where: { id: pendingReservation.listingId },
+        select: { userId: true, title: true }
+      });
+
+      if (listing) {
+        await (db as any).notification.create({
+          data: {
+            userId: listing.userId,
+            type: "reservation",
+            title: "Payment Confirmed",
+            description: `${user.name || 'A student'} paid the reservation fee for ${listing.title}. Room is now RESERVED!`,
+            link: `/landlord/reservations`,
+            isRead: false
+          }
+        });
+
+        // 🔥 Trigger Email Notifications
+        const landlord = await db.user.findUnique({
+          where: { id: listing.userId },
+          select: { email: true, name: true }
+        });
+
+        // Tenant
+        if (updatedReservation.user.email) {
+          await sendReservationNotificationEmail(
+            updatedReservation.user,
+            updatedReservation.listing,
+            "RESERVED",
+            "Booking Confirmed!",
+            `Success! Your payment for ${updatedReservation.listing.title} has been verified and your stay is now secured.`
+          );
+        }
+
+        // Landlord
+        if (landlord && landlord.email) {
+          await sendReservationNotificationEmail(
+            landlord,
+            updatedReservation.listing,
+            "RESERVED",
+            "New Confirmed Reservation",
+            `${updatedReservation.user.name} has finalized their payment for ${updatedReservation.listing.title}.`,
+            true
+          );
+        }
+      }
+    } catch (notifError) {
+      console.error("Failed to create landlord payment notification:", notifError);
+    }
 
     return NextResponse.json({ 
       success: true, 

@@ -87,13 +87,23 @@ export const ResponsiveToastProvider: React.FC<{ children: React.ReactNode }> = 
       }
     } else {
       // Use existing toast library for desktop
-      const toastFunction = toast[type as keyof typeof toast];
+      // react-hot-toast doesn't have native .info() or .warning() methods, 
+      // but we can use the base toast() function with a type property
+      let toastFunction;
+      if (type === "success") toastFunction = toast.success;
+      else if (type === "error") toastFunction = toast.error;
+      else if (type === "loading") toastFunction = toast.loading;
+      else {
+        // Fallback for info and warning
+        toastFunction = (msg: string, opts: any) => toast(msg, { ...opts, type: type as any });
+      }
+
       if (toastFunction) {
         // Handle react-hot-toast API
         const displayMessage = typeof message === "string"
           ? message
           : message.description ? `${message.title}: ${message.description}` : message.title;
-        // @ts-ignore - react-hot-toast has dynamic type definitions
+        
         toastFunction(displayMessage, options);
       }
     }

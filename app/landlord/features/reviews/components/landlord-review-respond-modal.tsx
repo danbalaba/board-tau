@@ -64,7 +64,7 @@ export function LandlordReviewRespondModal({
               />
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2 px-1">Your response will be visible publicly.</p>
             </div>
-            
+
             <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-2">
               <Button outline type="button" onClick={onClose} className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400">Cancel</Button>
               <Button type="submit" disabled={submitting || !responseText.trim()} className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 disabled:opacity-50 disabled:shadow-none">

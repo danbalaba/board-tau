@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // LANDLORD & ADMIN USERS
 const landlord = {
   name: "TAU Property Management",
-  email: "landlord@boardtau.test",
+  email: "boardtau.official@gmail.com",
   password: "Password@123",
 };
 
@@ -46,15 +46,15 @@ async function main() {
 
   // 2. CREATE SYSTEM USERS
   const hashedPassword = await bcrypt.hash("Password@123", 10);
-  
+
   const regions = ["Tarlac City", "Victoria", "Concepcion", "Camiling", "Capas", "Paniqui"];
 
   // Create Admin
   await prisma.user.create({
-    data: { 
-      ...admin, 
-      password: hashedPassword, 
-      role: "ADMIN", 
+    data: {
+      ...admin,
+      password: hashedPassword,
+      role: "ADMIN",
       emailVerified: new Date(),
       city: "Tarlac City",
       region: "Tarlac",
@@ -64,15 +64,15 @@ async function main() {
 
   // Create Landlord
   const landlordDoc = await prisma.user.create({
-    data: { 
-      ...landlord, 
-      password: hashedPassword, 
-      role: "LANDLORD", 
-      isVerifiedLandlord: true, 
+    data: {
+      ...landlord,
+      password: hashedPassword,
+      role: "LANDLORD",
+      isVerifiedLandlord: true,
       emailVerified: new Date(),
       city: "Victoria",
       region: "Tarlac",
-      lastLogin: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) 
+      lastLogin: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
     }
   });
 
@@ -81,17 +81,17 @@ async function main() {
   for (let i = 0; i < studentNames.length; i++) {
     const name = studentNames[i];
     const city = regions[i % regions.length];
-    
+
     // Spread creation dates over past 90 days for Growth Chart
     const createdAt = new Date();
-    createdAt.setDate(createdAt.getDate() - (i * 12)); 
+    createdAt.setDate(createdAt.getDate() - (i * 12));
 
     const user = await prisma.user.create({
-        data: { 
-          name, 
-          email: `${name.toLowerCase().replace(" ", ".")}@student.edu.ph`, 
-          password: hashedPassword, 
-          role: "USER", 
+        data: {
+          name,
+          email: `${name.toLowerCase().replace(" ", ".")}@student.edu.ph`,
+          password: hashedPassword,
+          role: "USER",
           emailVerified: new Date(),
           city,
           region: "Tarlac",
@@ -252,7 +252,12 @@ async function main() {
                 userId: students[rv % students.length].id,
                 rating: 4 + Math.floor(Math.random() * 2),
                 comment: "Excellent stay near TAU campus! Highly recommended.",
-                status: "approved"
+                status: "approved",
+                cleanliness: 4 + Math.floor(Math.random() * 2),
+                accuracy: 4 + Math.floor(Math.random() * 2),
+                communication: 4 + Math.floor(Math.random() * 2),
+                location: 4 + Math.floor(Math.random() * 2),
+                value: 4 + Math.floor(Math.random() * 2),
             }
         });
     }

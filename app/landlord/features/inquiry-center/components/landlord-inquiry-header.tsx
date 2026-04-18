@@ -40,6 +40,8 @@ interface LandlordInquiryHeaderProps {
   setViewMode: (m: 'grid' | 'list') => void;
   handleGenerateReport: () => Promise<void>;
   rawInquiries: Inquiry[];
+  isArchived: boolean;
+  onToggleArchived: () => void;
 }
 
 export function LandlordInquiryHeader({
@@ -52,7 +54,9 @@ export function LandlordInquiryHeader({
   viewMode,
   setViewMode,
   handleGenerateReport,
-  rawInquiries
+  rawInquiries,
+  isArchived,
+  onToggleArchived
 }: LandlordInquiryHeaderProps) {
   return (
     <motion.div
@@ -163,6 +167,20 @@ export function LandlordInquiryHeader({
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Archived Toggle */}
+            <button
+              onClick={onToggleArchived}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all backdrop-blur-sm shadow-sm",
+                isArchived 
+                  ? "bg-amber-500/10 border-amber-500/20 text-amber-600 hover:bg-amber-500/20" 
+                  : "bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700 text-gray-500 hover:text-primary"
+              )}
+            >
+              <IconHistory size={14} className={isArchived ? "animate-spin-slow" : ""} />
+              <span>{isArchived ? "Viewing Archived" : "View Archived"}</span>
+            </button>
 
             {/* View Mode Toggle */}
             <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm shrink-0">

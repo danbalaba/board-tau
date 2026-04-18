@@ -2,6 +2,8 @@
 
 import { db } from "@/lib/db";
 import { requireLandlord } from "@/lib/landlord";
+import { createNotification } from "@/services/notification";
+import { sendReviewResponseEmail } from "@/services/email/notifications";
 
 export const getLandlordReviews = async (args?: {
   cursor?: string;
@@ -11,10 +13,16 @@ export const getLandlordReviews = async (args?: {
 
   const { cursor, status } = args || {};
 
+  // Optimization: Fetch listing IDs first to avoid relational filter memory overhead in MongoDB
+  const listings = await db.listing.findMany({
+    where: { userId: landlord.id },
+    select: { id: true }
+  });
+
+  const listingIds = listings.map(l => l.id);
+
   const where: any = {
-    listing: {
-      userId: landlord.id,
-    },
+    listingId: { in: listingIds }
   };
 
   if (status) {
@@ -32,6 +40,7 @@ export const getLandlordReviews = async (args?: {
           id: true,
           name: true,
           email: true,
+          image: true,
         },
       },
       listing: {
@@ -66,6 +75,7 @@ export const getReviewDetails = async (reviewId: string) => {
           id: true,
           name: true,
           email: true,
+          image: true,
         },
       },
       listing: {
@@ -95,6 +105,9 @@ export const respondToReview = async (reviewId: string, response: string) => {
         userId: landlord.id,
       },
     },
+    include: {
+      user: { select: { email: true, name: true } }
+    }
   });
 
   if (!review) {
@@ -107,9 +120,59 @@ export const respondToReview = async (reviewId: string, response: string) => {
       response,
       respondedAt: new Date(),
     },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
+      listing: { 
+        select: { 
+          id: true,
+          title: true,
+          imageSrc: true
+        } 
+      }
+    }
   });
 
-  // TODO: Send notification to user
+  // Notify the user about the landlord's response
+  await createNotification({
+    userId: review.userId,
+    type: "review",
+    title: "New review response",
+    description: `The landlord of ${updatedReview.listing.title} has responded to your review.`,
+    link: `/my-reviews?id=${updatedReview.id}`, // Matching the student dashboard path with ID
+  });
+
+  // Invalidate Cache & Revalidate Path
+  try {
+    const { cache } = await import("@/lib/redis");
+    const { revalidatePath } = await import("next/cache");
+    
+    await cache.del(`listing:id:${review.listingId}`);
+    await cache.delPattern("listings:*");
+    revalidatePath(`/listings/${review.listingId}`);
+    revalidatePath("/listings");
+  } catch (cacheError) {
+    console.error("Cache invalidation failed:", cacheError);
+  }
+
+  // 3. Send Email Notification to Tenant
+  try {
+    if (review.user && (review.user as any).email) {
+      await sendReviewResponseEmail(
+        review.user,
+        updatedReview.listing,
+        response
+      );
+    }
+  } catch (emailError) {
+    console.error("Failed to send review response email:", emailError);
+  }
 
   return updatedReview;
 };

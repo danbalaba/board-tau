@@ -15,9 +15,12 @@ export interface Review {
     id: string;
     name: string | null;
     email: string;
+    image?: string | null;
   };
   rating: number;
   comment: string | null;
+  images: string[];
+  videos?: string[];
   response: string | null;
   status: string;
   createdAt: Date;

@@ -124,7 +124,7 @@ export function LandlordTopbarUserMenu({ user, onOpenSettings, onViewProfile }: 
         <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
         <div className="p-1">
           <DropdownMenuItem 
-            onClick={() => signOut()}
+            onClick={() => signOut({ callbackUrl: '/' })}
             className='rounded-xl flex items-center gap-3 p-3 cursor-pointer text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all font-black text-sm uppercase tracking-widest'
           >
             <IconLogout size={18} />

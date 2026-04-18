@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FaHeart, FaCalendarCheck, FaHome, FaUser, FaHotel } from "react-icons/fa";
+import { Heart, CalendarCheck, Home, User as UserIcon, MessageCircle, Star, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { User } from "next-auth";
+import { getUnreadNotificationStats } from "@/services/notification";
 
 import Modal from "@/components/modals/Modal";
 import AuthModal from "@/components/modals/AuthModal";
@@ -21,6 +22,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [scrollDirection, setScrollDirection] = useState<"up" | "down" | "">("");
   const [lastY, setLastY] = useState(0);
+  const [unreadStats, setUnreadStats] = useState<{ total: number; byType: Record<string, number> } | null>(null);
 
   // Implement scroll direction tracking
   useEffect(() => {
@@ -48,6 +50,17 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
     router.push(url);
   };
 
+  useEffect(() => {
+    if (!user) return;
+    const fetchStats = async () => {
+      const stats = await getUnreadNotificationStats();
+      if (stats) setUnreadStats(stats);
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 10000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   return (
     <div
       className={`fixed bottom-0 left-0 right-0 z-40 md:hidden transition-transform duration-300 ease-in-out ${
@@ -56,7 +69,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
     >
       <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-t border-gray-200 dark:border-gray-700 shadow-2xl rounded-t-2xl px-4 py-3 pb-6">
         {/* Safe area padding */}
-        <div className="flex items-center justify-around gap-2">
+        <div className="flex items-center justify-between w-full pb-1">
           {/* Not logged in */}
           {!user ? (
             <>
@@ -66,7 +79,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
                     type="button"
                     className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-3 rounded-xl font-semibold transition-colors"
                   >
-                    <FaUser className="text-sm" />
+                    <UserIcon className="w-4 h-4" />
                     <span>Login</span>
                   </button>
                 </Modal.Trigger>
@@ -76,7 +89,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
                     type="button"
                     className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-4 py-3 rounded-xl font-semibold transition-colors"
                   >
-                    <FaHome className="text-sm" />
+                    <UserPlus className="w-4 h-4" />
                     <span>Signup</span>
                   </button>
                 </Modal.Trigger>
@@ -96,10 +109,10 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
               <button
                 type="button"
                 onClick={() => redirect("/")}
-                className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full"
               >
-                <FaHome className="text-xl text-gray-600 dark:text-gray-400" />
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                <Home className="w-6 h-6 sm:w-7 sm:h-7 text-gray-600 dark:text-gray-400" />
+                <span className="text-[11px] sm:text-xs font-medium text-gray-600 dark:text-gray-400 leading-tight">
                   Home
                 </span>
               </button>
@@ -108,56 +121,62 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
               <button
                 type="button"
                 onClick={() => redirect("/favorites")}
-                className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full"
               >
-                <FaHeart className="text-xl text-gray-600 dark:text-gray-400" />
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                <Heart className="w-6 h-6 sm:w-7 sm:h-7 text-gray-600 dark:text-gray-400" />
+                <span className="text-[11px] sm:text-xs font-medium text-gray-600 dark:text-gray-400 leading-tight">
                   Favorites
                 </span>
               </button>
 
-              {/* Reservations */}
+              {/* Inquiry */}
               <button
                 type="button"
-                onClick={() => redirect("/reservations")}
-                className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                onClick={() => redirect("/inquiries")}
+                className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full"
               >
-                <FaCalendarCheck className="text-xl text-gray-600 dark:text-gray-400" />
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Reservations
+                <div className="relative">
+                  <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7 text-gray-600 dark:text-gray-400" />
+                  {unreadStats && (unreadStats.byType["inquiry"] || 0) > 0 && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white dark:border-gray-900" />
+                  )}
+                </div>
+                <span className="text-[11px] sm:text-xs font-medium text-gray-600 dark:text-gray-400 leading-tight">
+                  Inquiry
                 </span>
               </button>
 
-              {/* Become a Host */}
-              <Modal>
-                <Modal.Trigger name="host-application">
-                  <button
-                    type="button"
-                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <FaHotel className="text-xl text-gray-600 dark:text-gray-400" />
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                      Host
-                    </span>
-                  </button>
-                </Modal.Trigger>
-
-                <Modal.Window name="host-application" size="xl">
-                  <HostApplicationModal />
-                </Modal.Window>
-              </Modal>
-
-              {/* Profile */}
+              {/* Reservation */}
               <button
                 type="button"
-                onClick={() => redirect("/profile")}
-                className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                onClick={() => redirect("/reservations")}
+                className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full"
               >
                 <div className="relative">
-                  <Avatar src={user?.image} />
+                  <CalendarCheck className="w-6 h-6 sm:w-7 sm:h-7 text-gray-600 dark:text-gray-400" />
+                  {unreadStats && (unreadStats.byType["reservation"] || 0) > 0 && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white dark:border-gray-900" />
+                  )}
                 </div>
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Profile
+                <span className="text-[11px] sm:text-xs font-medium text-gray-600 dark:text-gray-400 leading-tight">
+                  Reservation
+                </span>
+              </button>
+
+              {/* Reviews */}
+              <button
+                type="button"
+                onClick={() => redirect("/my-reviews")}
+                className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full"
+              >
+                <div className="relative">
+                  <Star className="w-6 h-6 sm:w-7 sm:h-7 text-gray-600 dark:text-gray-400" />
+                  {unreadStats && (unreadStats.byType["review"] || 0) > 0 && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white dark:border-gray-900" />
+                  )}
+                </div>
+                <span className="text-[11px] sm:text-xs font-medium text-gray-600 dark:text-gray-400 leading-tight">
+                  Reviews
                 </span>
               </button>
             </>

@@ -1,7 +1,9 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
-import { Eye, Calendar, Home, Trash2, MapPin, User } from "lucide-react";
+import { Eye, Calendar, Home, Trash2, MapPin, User, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface InquiryListing {
   id: string;
@@ -40,6 +42,7 @@ interface Inquiry {
   isApproved: boolean;
   createdAt: string;
   updatedAt: string;
+  rejectionReason?: string;
   listing: InquiryListing;
   room: InquiryRoom;
 }
@@ -48,13 +51,25 @@ interface InquiryCardProps {
   inquiry: Inquiry;
   onViewDetails: () => void;
   onCancel?: () => void;
+  hasNotification?: boolean;
 }
 
 const InquiryCard: React.FC<InquiryCardProps> = ({
   inquiry,
   onViewDetails,
   onCancel,
+  hasNotification,
 }) => {
+  const router = useRouter();
+  const [isReservationClicked, setIsReservationClicked] = useState(false);
+
+  // Load seen state from localStorage
+  React.useEffect(() => {
+    const seen = localStorage.getItem(`inquiry_seen_${inquiry.id}`);
+    if (seen === "true") {
+      setIsReservationClicked(true);
+    }
+  }, [inquiry.id]);
   // Status badge colors
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -106,12 +121,28 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
           alt={inquiry.room.name}
           className="w-full h-full object-cover"
         />
+        <div className="absolute top-3 left-3 z-20">
+          {hasNotification && (
+            <motion.div
+              animate={{ 
+                scale: [1, 1.05, 1],
+                boxShadow: ["0 0 0px rgba(16, 185, 129, 0)", "0 0 15px rgba(16, 185, 129, 0.5)", "0 0 0px rgba(16, 185, 129, 0)"]
+              }}
+              transition={{ repeat: Infinity, duration: 2.5 }}
+              className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg border border-white/20 flex items-center justify-center"
+            >
+              NEW UPDATE
+            </motion.div>
+          )}
+        </div>
+
         <div className="absolute top-3 right-3 z-20">
           <span
-            className={`px-3 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm backdrop-blur-md ${getStatusColor(
+            className={`px-3 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm backdrop-blur-md flex items-center gap-1.5 ${getStatusColor(
               inquiry.status
             )}`}
           >
+            {inquiry.status === "APPROVED" && <ArrowRight size={10} className="text-green-600 dark:text-green-400" />}
             {inquiry.status}
           </span>
         </div>
@@ -154,6 +185,11 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
               {inquiry.occupantsCount} {inquiry.occupantsCount === 1 ? "person" : "people"}
             </span>
           </div>
+          {inquiry.status === "REJECTED" && inquiry.rejectionReason && (
+            <div className="mt-2 text-[10px] font-bold text-rose-500 bg-rose-50 dark:bg-rose-900/20 px-2 py-1.5 rounded-lg border border-rose-100 dark:border-rose-800/50 italic line-clamp-1">
+              Feedback: {inquiry.rejectionReason}
+            </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -165,7 +201,21 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
             <Eye size={14} className="text-primary group-hover/btn:scale-110 transition-transform" />
             Details
           </button>
-          {onCancel && (
+
+          {inquiry.status === "APPROVED" && !isReservationClicked ? (
+             <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  localStorage.setItem(`inquiry_seen_${inquiry.id}`, "true");
+                  setIsReservationClicked(true);
+                  router.push("/reservations");
+                }}
+                className="flex-[1.5] py-2.5 px-2 sm:px-4 font-black text-[9px] sm:text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-md bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center gap-1.5 sm:gap-2 group/res"
+             >
+                <ArrowRight size={14} className="group-hover/res:translate-x-1 transition-transform" />
+                View Reservation
+             </button>
+          ) : onCancel && (
             <button
               onClick={(e) => {
                 e.stopPropagation();

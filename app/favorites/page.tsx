@@ -1,4 +1,5 @@
 import React from "react";
+import { redirect } from "next/navigation";
 
 import EmptyState from "@/components/common/EmptyState";
 import Heading from "@/components/common/Heading";
@@ -12,6 +13,15 @@ const FavoritesPage = async () => {
 
   if (!user) {
     return <EmptyState title="Unauthorized" subtitle="Please login" />;
+  }
+
+  // Security: If user is a LANDLORD, redirect to their landlord dashboard
+  if (user.role === "LANDLORD") {
+    return redirect("/landlord/properties"); // Favorites don't really apply to landlord management, send to properties
+  }
+
+  if (user.role === "ADMIN") {
+    return redirect("/admin");
   }
 
   const favorites = await getFavoriteListings();

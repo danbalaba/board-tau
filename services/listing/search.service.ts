@@ -152,12 +152,29 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
 
     const rawResults = await prisma.listing.aggregateRaw({ pipeline });
 
+    // Helper to unwrap MongoDB extended JSON number types (e.g. { '$numberDouble': 3.8 })
+    const unwrapMongoNumber = (val: any): number | null => {
+      if (val == null) return null;
+      if (typeof val === 'number') return val;
+      if (typeof val === 'object') {
+        if ('$numberDouble' in val) return parseFloat(val['$numberDouble']);
+        if ('$numberInt' in val) return parseInt(val['$numberInt']);
+        if ('$numberLong' in val) return parseInt(val['$numberLong']);
+        if ('$numberDecimal' in val) return parseFloat(val['$numberDecimal']);
+      }
+      return null;
+    };
+
     const data = (rawResults as unknown as any[]).map((doc: any) => ({
       ...doc,
       id: doc._id['$oid'] || doc._id.toString(),
       _id: undefined,
       rooms: doc.rooms_list || [],
-      categories: (doc.category || []).map((c: string) => ({ name: c, label: c }))
+      categories: (doc.category || []).map((c: string) => ({ name: c, label: c })),
+      // Explicitly unwrap MongoDB extended JSON for numeric fields shown in UI
+      rating: unwrapMongoNumber(doc.rating),
+      reviewCount: unwrapMongoNumber(doc.reviewCount) ?? 0,
+      price: unwrapMongoNumber(doc.price) ?? doc.price,
     }));
 
     return { data, relaxed: isRelaxed };

@@ -102,8 +102,6 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              whileHover={{ scale: 1.05, opacity: 0.9 }}
-              whileTap={{ scale: 0.95 }}
             >
               <ThemeToggle />
             </motion.div>
@@ -111,8 +109,6 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              whileHover={{ scale: 1.05, opacity: 0.9 }}
-              whileTap={{ scale: 0.95 }}
             >
               <UserMenu user={user} />
             </motion.div>

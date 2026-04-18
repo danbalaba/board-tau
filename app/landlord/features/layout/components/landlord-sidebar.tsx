@@ -184,7 +184,7 @@ export default function LandlordSidebar() {
                         isActive ? "bg-white/20" : "bg-gray-100/50 dark:bg-white/5 group-hover:bg-primary/10",
                         state === 'collapsed' && "p-1.5"
                       )}>
-                        <Icon 
+                        <Icon
                           size={18}
                           data-slot="sidebar-menu-button-icon"
                           className={cn(
@@ -280,7 +280,7 @@ export default function LandlordSidebar() {
           </div>
         )}
       </SidebarFooter>
-      
+
       <SidebarRail />
     </Sidebar>
   );

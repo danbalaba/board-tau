@@ -16,8 +16,17 @@ const ReservationPage = async () => {
     redirect("/");
   }
 
+  // Security: If user is a LANDLORD, redirect to their landlord dashboard
+  if (user.role === "LANDLORD") {
+    redirect("/landlord/reservations");
+  }
+
+  if (user.role === "ADMIN") {
+    redirect("/admin");
+  }
+
   // Get user reservations
-  const reservations = await db.reservation.findMany({
+  const reservations = (await db.reservation.findMany({
     where: {
       userId: user.id,
     },
@@ -25,11 +34,12 @@ const ReservationPage = async () => {
       listing: true, // Includes all fields including region/country
       room: true,
       inquiry: true,
+      reviews: true,
     },
     orderBy: {
       createdAt: "desc",
     },
-  });
+  })) as any[];
 
   // Transform to match client component interface
   const transformedReservations = reservations.map((reservation) => ({
@@ -41,12 +51,14 @@ const ReservationPage = async () => {
     endDate: reservation.endDate.toISOString(),
     durationInDays: reservation.durationInDays,
     totalPrice: reservation.totalPrice,
+    occupantsCount: reservation.occupantsCount,
     status: reservation.status as string,
     paymentStatus: reservation.paymentStatus as string,
     paymentMethod: reservation.paymentMethod || undefined,
     preferredPaymentMethod: reservation.inquiry?.paymentMethod || undefined,
     paymentReference: reservation.paymentReference || undefined,
     createdAt: reservation.createdAt.toISOString(),
+    hasReview: (reservation as any).reviews.length > 0,
     listing: {
       id: reservation.listing.id,
       title: reservation.listing.title,
@@ -59,6 +71,7 @@ const ReservationPage = async () => {
       id: reservation.room.id,
       name: reservation.room.name,
       price: reservation.room.price,
+      reservationFee: reservation.room.reservationFee,
       roomType: reservation.room.roomType as string,
       images: [],
     },

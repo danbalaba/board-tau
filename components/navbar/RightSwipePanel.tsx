@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaHeart, FaCalendarCheck, FaHome, FaUser, FaSignOutAlt } from "react-icons/fa";
+import { Heart, CalendarCheck, Home, User as UserIcon, LogOut, MessageCircle, Star, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { User } from "next-auth";
+import { getUnreadNotificationStats } from "@/services/notification";
 
 import Modal from "@/components/modals/Modal";
 import AuthModal from "@/components/modals/AuthModal";
@@ -19,6 +20,18 @@ interface RightSwipePanelProps {
 const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [unreadStats, setUnreadStats] = useState<{ total: number; byType: Record<string, number> } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchStats = async () => {
+      const stats = await getUnreadNotificationStats();
+      if (stats) setUnreadStats(stats);
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 10000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const redirect = (url: string) => {
     setIsOpen(false);
@@ -111,7 +124,7 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
                           onClick={() => setIsOpen(false)}
                           className="flex items-center gap-3 w-full bg-primary hover:bg-primary-hover text-white px-4 py-3 rounded-xl font-semibold transition-colors"
                         >
-                          <FaUser className="text-sm" />
+                          <UserIcon className="text-sm" />
                           <span>Login</span>
                         </button>
                       </Modal.Trigger>
@@ -122,7 +135,7 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
                           onClick={() => setIsOpen(false)}
                           className="flex items-center gap-3 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-4 py-3 rounded-xl font-semibold transition-colors"
                         >
-                          <FaHome className="text-sm" />
+                          <UserPlus className="text-sm" />
                           <span>Signup</span>
                         </button>
                       </Modal.Trigger>
@@ -145,7 +158,7 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
                         onClick={() => redirect("/favorites")}
                         className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
                       >
-                        <FaHeart className="text-sm" />
+                        <Heart className="text-sm" />
                         <span>My favorites</span>
                       </button>
 
@@ -154,8 +167,41 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
                         onClick={() => redirect("/reservations")}
                         className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
                       >
-                        <FaCalendarCheck className="text-sm" />
+                        <div className="relative">
+                          <CalendarCheck className="text-sm" />
+                          {unreadStats && (unreadStats.byType["reservation"] || 0) > 0 && (
+                            <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+                          )}
+                        </div>
                         <span>My reservations</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => redirect("/inquiries")}
+                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
+                      >
+                        <div className="relative">
+                          <MessageCircle className="text-sm" />
+                          {unreadStats && (unreadStats.byType["inquiry"] || 0) > 0 && (
+                            <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+                          )}
+                        </div>
+                        <span>My inquiries</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => redirect("/my-reviews")}
+                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
+                      >
+                        <div className="relative">
+                          <Star className="text-sm" />
+                          {unreadStats && (unreadStats.byType["review"] || 0) > 0 && (
+                            <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+                          )}
+                        </div>
+                        <span>My reviews</span>
                       </button>
 
                       <Modal.Trigger name="host-application">
@@ -163,7 +209,7 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
                           type="button"
                           className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
                         >
-                          <FaHome className="text-sm" />
+                          <Home className="text-sm" />
                           <span>Become a host</span>
                         </button>
                       </Modal.Trigger>
@@ -173,8 +219,8 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
                         onClick={() => redirect("/profile")}
                         className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
                       >
-                        <FaUser className="text-sm" />
-                        <span>Profile</span>
+                        <UserIcon className="text-sm" />
+                        <span>My profile</span>
                       </button>
 
                       <hr className="my-2" />
@@ -184,7 +230,7 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
                         onClick={handleLogout}
                         className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
                       >
-                        <FaSignOutAlt className="text-sm" />
+                        <LogOut className="text-sm" />
                         <span>Logout</span>
                       </button>
                     </div>

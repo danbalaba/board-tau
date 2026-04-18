@@ -1,6 +1,8 @@
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
+import { sendReservationNotificationEmail } from "@/services/email/notifications";
+import { createNotification } from "@/services/notification";
 
 export const createStripeCheckoutSession = async (inquiryId: string) => {
   // Check if Stripe is configured
@@ -118,13 +120,69 @@ export const handleStripeWebhook = async (session: any) => {
   }
 
   // Update the existing reservation record
-  await db.reservation.update({
+  const updatedReservation = await db.reservation.update({
     where: { inquiryId: inquiryId },
     data: {
       status: "RESERVED",
       paymentStatus: "PAID",
     },
+    include: {
+      listing: true,
+      user: true,
+    }
   });
+
+  // 4. Trigger Email Notifications
+  try {
+    // Get Landlord
+    const landlord = await db.user.findUnique({
+      where: { id: updatedReservation.listing.userId },
+      select: { email: true, name: true }
+    });
+
+    // Notify Tenant Email & In-app
+    if (updatedReservation.user.email) {
+      await sendReservationNotificationEmail(
+        updatedReservation.user,
+        updatedReservation.listing,
+        "RESERVED",
+        "Booking Confirmed!",
+        `Success! Your reservation for ${updatedReservation.listing.title} is now confirmed. We look forward to your stay!`
+      );
+
+      // In-app for Tenant
+      await createNotification({
+        userId: updatedReservation.userId,
+        type: 'reservation',
+        title: 'Booking Confirmed!',
+        description: `Your reservation for ${updatedReservation.listing.title} is now secured and confirmed.`,
+        link: `/reservations?id=${updatedReservation.id}`
+      });
+    }
+
+    // Notify Landlord Email & In-app
+    if (landlord && landlord.email) {
+      await sendReservationNotificationEmail(
+        landlord,
+        updatedReservation.listing,
+        "RESERVED",
+        "New Confirmed Reservation",
+        `${updatedReservation.user.name} has paid the reservation fee for ${updatedReservation.listing.title}. The room is now officially reserved.`,
+        true
+      );
+
+      // In-app for Landlord
+      await createNotification({
+        userId: updatedReservation.listing.userId,
+        type: 'reservation',
+        title: 'New Confirmed Reservation',
+        description: `${updatedReservation.user.name} has secured their reservation for ${updatedReservation.listing.title} via Stripe.`,
+        link: `/landlord/reservations`
+      });
+    }
+  } catch (emailError) {
+    console.error("Failed to send reservation confirmation emails:", emailError);
+  }
 
   return { success: true };
 };

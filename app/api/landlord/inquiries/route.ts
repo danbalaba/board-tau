@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import validator from "validator";
 import {
   getLandlordInquiries,
   getInquiryDetails,
@@ -11,8 +12,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const cursor = searchParams.get("cursor") || undefined;
     const status = searchParams.get("status") || undefined;
+    const includeArchived = searchParams.get("isArchived") === "true";
 
-    const result = await getLandlordInquiries({ cursor, status });
+    const result = await getLandlordInquiries({ cursor, status, includeArchived });
 
     return NextResponse.json({
       success: true,
@@ -47,6 +49,14 @@ export async function PUT(request: NextRequest) {
 
     const { status, message } = await request.json();
 
+    // Sanitize using validator.escape() — fully trusted HTML entity encoding
+    // This converts all HTML special characters to safe entities,
+    // preventing both XSS and the incomplete multi-char sanitization CodeQL warning
+    // that a regex-based approach (e.g. /&lt;[^&gt;]*&gt;?/gm) produces.
+    const sanitizedMessage = typeof message === 'string'
+      ? validator.escape(message.trim())
+      : undefined;
+
     if (!status || !["APPROVED", "REJECTED"].includes(status)) {
       return NextResponse.json(
         {
@@ -57,7 +67,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const result = await respondToInquiry(inquiryId, status, message);
+    const result = await respondToInquiry(inquiryId, status, sanitizedMessage);
 
     return NextResponse.json({
       success: true,

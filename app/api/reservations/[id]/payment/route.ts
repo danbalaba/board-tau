@@ -53,16 +53,19 @@ export async function POST(
     }
 
     // Get payment method from request
-    const data = await request.json();
-    const { paymentMethod } = data;
+    let paymentMethod;
+    try {
+      const data = await request.json();
+      paymentMethod = data.paymentMethod;
+    } catch (e) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
 
     // Handle different payment methods
     if (paymentMethod === "STRIPE" || !paymentMethod) {
-      // Use Stripe for payment
-      // For this, we need to find the associated inquiry
       if (!reservation.inquiryId) {
         return NextResponse.json(
-          { message: "No associated inquiry found" },
+          { message: "No associated inquiry found for this reservation" },
           { status: 400 }
         );
       }
@@ -72,13 +75,20 @@ export async function POST(
 
       return NextResponse.json(stripeSession);
     } else if (paymentMethod === "GCASH" || paymentMethod === "MAYA") {
+      if (!reservation.inquiryId) {
+        return NextResponse.json(
+          { message: "No associated inquiry found for this reservation" },
+          { status: 400 }
+        );
+      }
+
       // Create PayMongo checkout session
       const paymongoSession = await createPayMongoCheckoutSession({
         amount: reservation.totalPrice,
         description: `Reservation for ${reservation.listing.title} - ${reservation.room.name}`,
         name: user.name || "BoardTAU User",
         email: user.email || "",
-        inquiryId: reservation.inquiryId!,
+        inquiryId: reservation.inquiryId,
         paymentMethod: paymentMethod as "GCASH" | "MAYA",
       });
 

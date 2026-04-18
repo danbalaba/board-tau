@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
+import { sendInquiryStatusEmail } from "@/services/email/notifications";
+import { createNotification } from "@/services/notification";
 
 export async function POST(
   request: Request,
@@ -23,6 +25,7 @@ export async function POST(
       include: {
         listing: true,
         room: true,
+        user: true,
       },
     });
 
@@ -85,6 +88,29 @@ export async function POST(
         paymentStatus: "PENDING" as any,
       },
     });
+
+    // 3. Send Notifications
+    try {
+      // Create Persistent Notification
+      await createNotification({
+        userId: inquiry.userId,
+        type: "inquiry",
+        title: "Inquiry Approved",
+        description: `Your inquiry for ${inquiry.listing.title} has been approved. You can now proceed to pay.`,
+        link: `/inquiries?id=${inquiry.id}`,
+      });
+
+      // Send Email Notification
+      if (inquiry.user && inquiry.user.email) {
+        await sendInquiryStatusEmail(
+          inquiry.user,
+          inquiry.listing,
+          "APPROVED"
+        );
+      }
+    } catch (notifError) {
+      console.error("Failed to process approval notifications:", notifError);
+    }
 
     return NextResponse.json({
       inquiry: updatedInquiry,

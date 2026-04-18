@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { generateTablePDF } from '@/utils/pdfGenerator';
+import toast from 'react-hot-toast';
 
 export interface Booking {
   id: string;
@@ -15,12 +16,14 @@ export interface Booking {
     id: string;
     name: string | null;
     email: string;
+    image?: string | null;
   };
   status: string;
   paymentStatus: string;
   totalPrice: number;
   startDate: Date | string;
   endDate: Date | string;
+  isArchived: boolean;
   createdAt: Date | string;
 }
 
@@ -34,9 +37,21 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
   const [sortBy, setSortBy] = useState<string>('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isArchived, setIsArchived] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  useEffect(() => {
+    setListings(initialBookings);
+    setNextCursor(initialCursor);
+  }, [initialBookings, initialCursor]);
 
   const filteredBookings = useMemo(() => {
+    // For bookings page, we only show: CHECKED_IN, COMPLETED
+    const stayStatuses = ['checked_in', 'completed'];
     let result = listings.filter(booking => {
+      const isStayStatus = stayStatuses.includes(booking.status?.toLowerCase());
+      if (!isStayStatus) return false;
+
       const statusMatch = selectedStatus === 'all' || booking.status?.toLowerCase() === selectedStatus.toLowerCase();
       const paymentMatch = selectedPaymentStatus === 'all' || booking.paymentStatus?.toLowerCase() === selectedPaymentStatus.toLowerCase();
       
@@ -69,7 +84,9 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     return result;
   }, [selectedStatus, selectedPaymentStatus, listings, sortBy]);
 
-  const handleUpdateStatus = useCallback(async (bookingId: string, status: 'pending' | 'confirmed' | 'cancelled') => {
+  const handleUpdateStatus = useCallback(async (bookingId: string, status: string) => {
+    setIsUpdatingStatus(true);
+    console.log(`🔄 Updating booking ${bookingId} to status: ${status}`);
     try {
       const response = await fetch(`/api/landlord/bookings?id=${bookingId}`, {
         method: 'PUT',
@@ -84,9 +101,16 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
           booking.id === bookingId ? { ...booking, status } : booking
         ));
         router.refresh();
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update status');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating booking status:', error);
+      toast.error(error.message || 'Error updating status');
+      throw error;
+    } finally {
+      setIsUpdatingStatus(false);
     }
   }, [router]);
 
@@ -132,6 +156,41 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     );
   };
 
+  const handleToggleArchivedView = useCallback(async () => {
+    const newArchivedState = !isArchived;
+    setIsArchived(newArchivedState);
+    setIsLoadingMore(true);
+    try {
+      const response = await fetch(`/api/landlord/bookings?isArchived=${newArchivedState}`);
+      const data = await response.json();
+      if (data.success && data.data && data.data.bookings) {
+        setListings(data.data.bookings);
+        setNextCursor(data.data.nextCursor);
+      }
+    } catch (error) {
+      toast.error('Failed to fetch bookings');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isArchived]);
+
+  const handleToggleArchiveRecord = useCallback(async (id: string, currentArchived: boolean) => {
+    try {
+      const response = await fetch(`/api/landlord/bookings?id=${id}`, {
+        method: 'PATCH',
+      });
+      if (response.ok) {
+        setListings(prev => prev.filter(b => b.id !== id));
+        toast.success(`Booking ${currentArchived ? 'unarchived' : 'archived'} successfully.`);
+        router.refresh();
+      } else {
+        toast.error('Failed to update archive status.');
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred.');
+    }
+  }, [router]);
+
   return {
     listings,
     nextCursor,
@@ -148,8 +207,12 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     searchQuery,
     setSearchQuery,
     rawBookings: listings,
+    isArchived,
+    handleToggleArchivedView,
+    handleToggleArchiveRecord,
     handleUpdateStatus,
     handleLoadMore,
-    handleGenerateReport
+    handleGenerateReport,
+    isUpdatingStatus
   };
 }

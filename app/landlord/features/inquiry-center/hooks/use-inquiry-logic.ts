@@ -7,6 +7,21 @@ import { generateTablePDF } from '@/utils/pdfGenerator';
 
 export interface Inquiry {
   id: string;
+  listingId: string;
+  roomId: string;
+  userId: string;
+  moveInDate: string | Date;
+  checkOutDate: string | Date;
+  occupantsCount: number;
+  role: string;
+  message?: string | null;
+  profilePhotoUrl?: string | null;
+  idAttachmentUrl?: string | null;
+  paymentMethod?: string | null;
+  status: string;
+  rejectionReason?: string | null;
+  isArchived: boolean;
+  createdAt: string | Date;
   listing: {
     id: string;
     title: string;
@@ -16,14 +31,13 @@ export interface Inquiry {
     id: string;
     name: string | null;
     email: string;
+    image?: string | null;
   };
   room?: {
     id: string;
     name: string;
     price: number;
   };
-  status: string;
-  createdAt: string | Date;
 }
 
 export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCursor: string | null }) {
@@ -38,7 +52,35 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isResponding, setIsResponding] = useState(false);
+  const [isArchived, setIsArchived] = useState(false);
+
+  useEffect(() => {
+    // When isArchived toggles, we should probably refetch, 
+    // but the current structure relies on initialInquiries and handleLoadMore.
+    // For now, I'll just clear the local listings to force a fresh view if needed,
+    // though the best way would be to refetch from server.
+  }, [isArchived]);
+
+  const handleToggleArchived = useCallback(async () => {
+    const newArchivedState = !isArchived;
+    setIsArchived(newArchivedState);
+    setIsLoadingMore(true);
+    try {
+      const response = await fetch(`/api/landlord/inquiries?isArchived=${newArchivedState}`);
+      const data = await response.json();
+      if (data.success && data.data) {
+        setListings(data.data.inquiries);
+        setNextCursor(data.data.nextCursor);
+      }
+    } catch (error) {
+      toast.error("Failed to fetch inquiries");
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isArchived]);
 
   useEffect(() => {
     setListings(initialInquiries.inquiries);
@@ -84,13 +126,14 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     }
   }, [selectedInquiry, router]);
 
-  const handleRespond = useCallback(async (inquiryId: string, status: "APPROVED" | "REJECTED") => {
-    const loadingToast = toast.loading(`Marking inquiry as ${status.toLowerCase()}...`);
+  const handleRespond = useCallback(async (inquiryId: string, status: "APPROVED" | "REJECTED", message?: string) => {
+    setIsResponding(true);
+    const loadingToast = toast.loading(`${status === "APPROVED" ? "Approving" : "Rejecting"} inquiry...`);
     try {
       const response = await fetch(`/api/landlord/inquiries?id=${inquiryId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, message }),
       });
       if (response.ok) {
         setListings(prev => prev.map(i => i.id === inquiryId ? { ...i, status } : i));
@@ -101,14 +144,21 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
       }
     } catch (error) {
       toast.error("An error occurred.", { id: loadingToast });
+    } finally {
+      setIsResponding(false);
     }
   }, [router]);
+
+  const handleConfirmReject = useCallback(async (inquiryId: string, reason: string) => {
+    await handleRespond(inquiryId, "REJECTED", reason);
+    setRejectModalOpen(false);
+  }, [handleRespond]);
 
   const handleLoadMore = useCallback(async () => {
     if (!nextCursor || isLoadingMore) return;
     setIsLoadingMore(true);
     try {
-      const response = await fetch(`/api/landlord/inquiries?cursor=${nextCursor}`);
+      const response = await fetch(`/api/landlord/inquiries?cursor=${nextCursor}&isArchived=${isArchived}`);
       const data = await response.json();
       if (data.success && data.data) {
         setListings(prev => [...prev, ...data.data.inquiries]);
@@ -152,13 +202,19 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     setViewModalOpen,
     deleteModalOpen,
     setDeleteModalOpen,
+    rejectModalOpen,
+    setRejectModalOpen,
     isDeleting,
+    isResponding,
     isLoadingMore,
     nextCursor,
     handleConfirmDelete,
     handleRespond,
+    handleConfirmReject,
     handleLoadMore,
     handleGenerateReport,
+    isArchived,
+    handleToggleArchived,
     rawInquiries: listings
   };
 }

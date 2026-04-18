@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
@@ -21,11 +21,13 @@ export interface ReservationRequest {
     id: string;
     name: string | null;
     email: string;
+    image?: string | null;
   };
   status: string;
   paymentStatus?: string;
   moveInDate: Date;
   stayDuration: number;
+  isArchived: boolean;
   createdAt: Date;
 }
 
@@ -37,9 +39,22 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
   const [sortBy, setSortBy] = useState<string>('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [isArchived, setIsArchived] = useState(false);
+  const [reservations, setReservations] = useState(initialReservations);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Sync with incoming server data changes (e.g., after router.refresh())
+  useEffect(() => {
+    setReservations(initialReservations);
+  }, [initialReservations]);
 
   const filteredReservations = useMemo(() => {
-    let result = [...initialReservations];
+    // For reservations page, we only show: PENDING_PAYMENT, RESERVED, CANCELLED
+    const preStayStatuses = ['pending_payment', 'reserved', 'confirmed', 'cancelled', 'checked_in'];
+    let result = reservations.filter(r => 
+      preStayStatuses.includes(r.status.toLowerCase())
+    );
     
     if (selectedStatus !== 'all') {
       result = result.filter(r => r.status?.toLowerCase() === selectedStatus.toLowerCase());
@@ -61,25 +76,66 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
     });
 
     return result;
-  }, [selectedStatus, initialReservations, sortBy, searchQuery]);
+  }, [selectedStatus, reservations, sortBy, searchQuery]);
 
-  const handleRespond = useCallback(async (inquiryId: string, status: 'approved' | 'rejected') => {
+  const handleToggleArchivedView = useCallback(async () => {
+    const newArchivedState = !isArchived;
+    setIsArchived(newArchivedState);
     try {
-      const response = await fetch(`/api/inquiries?id=${inquiryId}`, {
+      const response = await fetch(`/api/landlord/bookings?isArchived=${newArchivedState}`);
+      const data = await response.json();
+      if (data.success && data.data && data.data.bookings) {
+        setReservations(data.data.bookings);
+      }
+    } catch (error) {
+      toastError("Failed to fetch reservations.");
+    }
+  }, [isArchived, toastError]);
+
+  const handleToggleArchiveRecord = useCallback(async (id: string, currentArchived: boolean) => {
+    try {
+      const response = await fetch(`/api/landlord/bookings?id=${id}`, {
+        method: 'PATCH',
+      });
+      if (response.ok) {
+        setReservations(prev => prev.filter(r => r.id !== id));
+        success(`Reservation ${currentArchived ? 'unarchived' : 'archived'} successfully.`);
+        router.refresh();
+      } else {
+        toastError(`Failed to update archive status.`);
+      }
+    } catch (error) {
+      toastError("An unexpected error occurred.");
+    }
+  }, [router, success, toastError]);
+
+  const handleUpdateStatus = useCallback(async (bookingId: string, status: string) => {
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`/api/landlord/bookings?id=${bookingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
 
       if (response.ok) {
-        router.refresh();
-        success(`Reservation has been ${status}.`);
+        setReservations(prev => prev.map(r => r.id === bookingId ? { ...r, status } : r));
+        success(`Reservation status updated to ${status.replace('_', ' ')}.`);
+        
+        if (status === 'CHECKED_IN') {
+          router.push('/landlord/bookings');
+        } else {
+          router.refresh();
+        }
       } else {
-        toastError(`Failed to ${status} reservation.`);
+        const data = await response.json();
+        toastError(data.error || `Failed to update status.`);
       }
     } catch (error) {
-      console.error('Error responding:', error);
+      console.error('Error updating status:', error);
       toastError('An unexpected error occurred.');
+    } finally {
+      setIsUpdating(false);
     }
   }, [router, success, toastError]);
 
@@ -110,8 +166,12 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
     setViewMode,
     searchQuery,
     setSearchQuery,
-    rawReservations: initialReservations,
-    handleRespond,
-    handleGenerateReport
+    rawReservations: reservations,
+    isArchived,
+    handleToggleArchivedView,
+    handleToggleArchiveRecord,
+    handleUpdateStatus,
+    handleGenerateReport,
+    isUpdating
   };
 }

@@ -17,6 +17,8 @@ export interface Review {
   };
   rating: number;
   comment: string | null;
+  images: string[];
+  videos?: string[];
   response: string | null;
   status: string;
   createdAt: Date | string;

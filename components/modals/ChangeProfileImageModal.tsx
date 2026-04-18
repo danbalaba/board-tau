@@ -113,14 +113,74 @@ const ChangeProfileImageModal: React.FC<ChangeProfileImageModalProps> = ({
                 </motion.div>
               </AnimatePresence>
 
-              {isUploading && (
-                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white z-20 backdrop-blur-sm">
-                  <div className="relative w-16 h-16 flex items-center justify-center">
-                    <Loader2 className="w-12 h-12 animate-spin-slow text-primary opacity-80" />
-                    <span className="absolute text-[10px] font-bold">{Math.round(progress)}%</span>
-                  </div>
-                </div>
-              )}
+              {/* Modern Liquid Fill Upload Overlay */}
+              <AnimatePresence>
+                {isUploading && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 z-20 overflow-hidden"
+                  >
+                    {/* Background Blur */}
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
+                    
+                    {/* Rising Liquid Overlay */}
+                    <motion.div 
+                      className="absolute bottom-0 left-0 right-0 bg-primary/40 backdrop-blur-none border-t border-white/20"
+                      initial={{ height: "0%" }}
+                      animate={{ height: `${progress}%` }}
+                      transition={{ type: "spring", damping: 20, stiffness: 60 }}
+                    >
+                       {/* Subtle Wave Effect */}
+                       <motion.div 
+                        animate={{ 
+                          x: [-20, 0, -20],
+                        }}
+                        transition={{ 
+                          repeat: Infinity, 
+                          duration: 2, 
+                          ease: "easeInOut" 
+                        }}
+                        className="absolute -top-4 left-0 w-[200%] h-8 bg-primary/30 blur-sm rounded-[100%]"
+                       />
+                    </motion.div>
+
+                    {/* Accurate Center Progress */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
+                      <div className="relative w-16 h-16 flex items-center justify-center">
+                         <svg className="w-full h-full -rotate-90">
+                            <circle
+                              cx="32"
+                              cy="32"
+                              r="28"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                              fill="transparent"
+                              className="text-white/10"
+                            />
+                            <motion.circle
+                              cx="32"
+                              cy="32"
+                              r="28"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                              fill="transparent"
+                              strokeDasharray="175.929"
+                              initial={{ strokeDashoffset: 175.929 }}
+                              animate={{ strokeDashoffset: 175.929 - (175.929 * progress) / 100 }}
+                              className="text-primary"
+                            />
+                         </svg>
+                         <span className="absolute text-xs font-black tracking-tighter">
+                            {Math.round(progress)}%
+                         </span>
+                      </div>
+                      <p className="text-[8px] font-black uppercase tracking-widest mt-2 opacity-80">Uploading...</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <label className="absolute -bottom-1 -right-1 w-10 h-10 bg-primary hover:bg-primary-dark text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-all hover:scale-110 active:scale-95 z-30 ring-4 ring-white dark:ring-gray-900">

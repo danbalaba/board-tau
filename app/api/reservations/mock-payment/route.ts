@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
+import { sendReservationNotificationEmail } from "@/services/email/notifications";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -27,13 +28,48 @@ export async function GET(req: Request) {
       });
 
       // Update reservation
-      await db.reservation.update({
+      const updatedReservation = await db.reservation.update({
         where: { inquiryId: inquiryId },
         data: {
           status: "RESERVED",
           paymentStatus: "PAID",
         },
+        include: {
+          listing: true,
+          user: true,
+        }
       });
+
+      // 🔥 Trigger Email Notifications
+      try {
+        const landlord = await db.user.findUnique({
+          where: { id: updatedReservation.listing.userId },
+          select: { email: true, name: true }
+        });
+
+        if (updatedReservation.user.email) {
+          await sendReservationNotificationEmail(
+            updatedReservation.user,
+            updatedReservation.listing,
+            "RESERVED",
+            "Booking Confirmed!",
+            `Success! Your simulated payment was accepted. Your reservation for ${updatedReservation.listing.title} is now confirmed.`
+          );
+        }
+
+        if (landlord && landlord.email) {
+          await sendReservationNotificationEmail(
+            landlord,
+            updatedReservation.listing,
+            "RESERVED",
+            "New Confirmed Reservation (Mock)",
+            `${updatedReservation.user.name} has paid the reservation fee for ${updatedReservation.listing.title} using ${method}.`,
+            true
+          );
+        }
+      } catch (e) {
+        console.error("Mock notification error:", e);
+      }
 
       // Update room availability
       if (inquiry.roomId) {
