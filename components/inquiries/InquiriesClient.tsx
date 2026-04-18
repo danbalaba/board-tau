@@ -6,12 +6,31 @@ import Heading from "@/components/common/Heading";
 import InquiryCard from "@/components/inquiries/InquiryCard";
 import InquiryDetailsModal from "@/components/inquiries/InquiryDetailsModal";
 import Button from "@/components/common/Button";
-import { Search, Filter, ArrowUpDown, Clock, DollarSign } from "lucide-react";
-import { motion } from "framer-motion";
+import { 
+  Search, 
+  Filter, 
+  ArrowUpDown, 
+  Clock, 
+  DollarSign, 
+  Home, 
+  MapPin, 
+  AlertCircle, 
+  FileText, 
+  Calendar, 
+  MoreHorizontal,
+  Info,
+  HeartPulse,
+  Building2,
+  Truck,
+  GraduationCap
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import ModernSelect from "@/components/common/ModernSelect";
 import ModernLoader from "@/components/common/ModernLoader";
 import Modal from "@/components/modals/Modal";
 import ConfirmModal from "@/components/common/ConfirmModal";
+import { getUnreadNotifications } from "@/services/notification";
+import { Notification } from "@prisma/client";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -60,6 +79,7 @@ interface Inquiry {
   reservationFee: number;
   createdAt: string;
   updatedAt: string;
+  rejectionReason?: string;
   listing: InquiryListing;
   room: InquiryRoom;
 }
@@ -98,8 +118,19 @@ export default function InquiriesClient({ initialInquiries }: InquiriesClientPro
 
   // Cancellation state
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showCancelReason, setShowCancelReason] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const [inquiryToCancel, setInquiryToCancel] = useState<Inquiry | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      const data = await getUnreadNotifications();
+      setUnreadNotifications(data);
+    };
+    fetchNotifications();
+  }, []);
 
   useEffect(() => {
     // Air-gap buffer (800ms) to ensure root dots loader is completely gone
@@ -134,7 +165,12 @@ export default function InquiriesClient({ initialInquiries }: InquiriesClientPro
     setShowCancelConfirm(true);
   };
 
-  const handleConfirmCancel = async () => {
+  const handleConfirmCancel = () => {
+    setShowCancelConfirm(false);
+    setShowCancelReason(true);
+  };
+
+  const handleFinalCancel = async () => {
     if (!inquiryToCancel) return;
 
     setIsCancelling(true);
@@ -146,6 +182,7 @@ export default function InquiriesClient({ initialInquiries }: InquiriesClientPro
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ reason: cancelReason || "No reason specified" }),
       });
 
       if (!response.ok) {
@@ -160,7 +197,9 @@ export default function InquiriesClient({ initialInquiries }: InquiriesClientPro
       );
       
       setShowCancelConfirm(false);
+      setShowCancelReason(false);
       setInquiryToCancel(null);
+      setCancelReason("");
       setSelectedInquiry(null);
       router.refresh();
     } catch (err: any) {
@@ -268,14 +307,20 @@ export default function InquiriesClient({ initialInquiries }: InquiriesClientPro
 
           {/* Inquiries Grid */}
           {filteredInquiries.length === 0 ? (
-            <div className="text-center py-12">
-              <h3 className="text-xl font-bold text-text-primary dark:text-gray-100 mb-2">
+            <div className="text-center py-20 bg-gray-50/50 dark:bg-gray-900/20 rounded-[3rem] border-2 border-dashed border-gray-200 dark:border-gray-800">
+              <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                <Search className="h-8 w-8 text-gray-300" />
+              </div>
+              <h3 className="text-xl font-black text-gray-900 dark:text-gray-100 mb-2">
                 No Inquiries Found
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-8 max-w-xs mx-auto">
                 You haven't sent any inquiries yet. Start exploring boarding houses to find your perfect room.
               </p>
-              <Button onClick={() => router.push("/")}>
+              <Button 
+                onClick={() => router.push("/")}
+                className="rounded-xl px-10 py-3 text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20"
+              >
                 Explore Listings
               </Button>
             </div>
@@ -286,19 +331,26 @@ export default function InquiriesClient({ initialInquiries }: InquiriesClientPro
               animate="show"
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >
-              {filteredInquiries.map((inquiry) => (
-                <motion.div key={inquiry.id} variants={{ hidden: { opacity: 0, scale: 0.95 }, show: { opacity: 1, scale: 1 } }}>
-                  <InquiryCard
-                    inquiry={inquiry}
-                    onViewDetails={() => setSelectedInquiry(inquiry)}
-                    onCancel={
-                      inquiry.status === "PENDING"
-                        ? () => handleCancelClick(inquiry)
-                        : undefined
-                    }
-                  />
-                </motion.div>
-              ))}
+              {filteredInquiries.map((inquiry) => {
+                const hasNotification = unreadNotifications.some(n => 
+                  n.link.includes(inquiry.id) && !n.isRead
+                );
+                
+                return (
+                  <motion.div key={inquiry.id} variants={{ hidden: { opacity: 0, scale: 0.95 }, show: { opacity: 1, scale: 1 } }}>
+                    <InquiryCard
+                      inquiry={inquiry}
+                      hasNotification={hasNotification}
+                      onViewDetails={() => setSelectedInquiry(inquiry)}
+                      onCancel={
+                        inquiry.status === "PENDING"
+                          ? () => handleCancelClick(inquiry)
+                          : undefined
+                      }
+                    />
+                  </motion.div>
+                );
+              })}
             </motion.div>
           )}
 
@@ -307,7 +359,13 @@ export default function InquiriesClient({ initialInquiries }: InquiriesClientPro
             <InquiryDetailsModal
               inquiry={selectedInquiry}
               isOpen={!!selectedInquiry}
-              onClose={() => setSelectedInquiry(null)}
+              notification={unreadNotifications.find(n => n.link.includes(selectedInquiry.id))}
+              onClose={() => {
+                // Optimistically clear the notification for this specific inquiry
+                setUnreadNotifications(prev => prev.filter(n => !n.link.includes(selectedInquiry.id)));
+                setSelectedInquiry(null);
+                router.refresh();
+              }}
               onCancel={
                 selectedInquiry.status === "PENDING"
                   ? () => handleCancelClick(selectedInquiry)
@@ -333,6 +391,104 @@ export default function InquiriesClient({ initialInquiries }: InquiriesClientPro
               isLoading={isCancelling}
               variant="danger"
             />
+          </Modal>
+
+          {/* Inquiry Cancellation Reason Modal */}
+          <Modal 
+            isOpen={showCancelReason} 
+            onClose={() => setShowCancelReason(false)} 
+            width="md"
+            title=""
+          >
+            <div className="overflow-hidden rounded-3xl">
+              {/* Premium Header Banner */}
+              <div className="bg-amber-500/10 p-6 border-b border-amber-500/10 flex items-start gap-4">
+                <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20">
+                  <Info size={24} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Withdrawal Reason</h3>
+                  <p className="text-xs font-bold text-amber-600/70 uppercase tracking-widest leading-relaxed">
+                    Help the host manage their room better
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-8">
+                <p className="text-sm text-gray-400 mb-8 font-medium leading-relaxed">
+                  Please select why you are withdrawing this inquiry. This helps in record keeping and keeps the platform fair for others.
+                </p>
+                
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 gap-3">
+                    {[
+                      { label: "Found another room already", icon: <Home size={18} /> },
+                      { label: "Changed my mind about the location", icon: <MapPin size={18} /> },
+                      { label: "Inquired by mistake", icon: <AlertCircle size={18} /> },
+                      { label: "Room details don't fit my needs", icon: <FileText size={18} /> },
+                      { label: "Stay dates no longer fit my schedule", icon: <Calendar size={18} /> },
+                      { label: "Other", icon: <MoreHorizontal size={18} /> }
+                    ].map((item, index) => (
+                      <motion.button
+                        key={item.label}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        onClick={() => setCancelReason(item.label)}
+                        className={`group flex items-center gap-4 px-5 py-4 rounded-[22px] border-2 transition-all duration-300 ${
+                          cancelReason === item.label 
+                            ? "border-primary bg-primary/5 text-primary shadow-xl shadow-primary/10 ring-4 ring-primary/5" 
+                            : "border-gray-50 hover:border-gray-200 bg-gray-50/50 dark:bg-gray-900/50 dark:border-gray-800 dark:hover:border-gray-700 text-gray-600 dark:text-gray-300"
+                        }`}
+                      >
+                        <div className={`p-2.5 rounded-xl transition-colors ${
+                          cancelReason === item.label 
+                            ? "bg-primary text-white" 
+                            : "bg-white dark:bg-gray-800 text-gray-400 group-hover:text-primary"
+                        }`}>
+                          {item.icon}
+                        </div>
+                        <span className="text-sm font-black tracking-tight">{item.label}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+
+                  <AnimatePresence>
+                    {cancelReason === "Other" && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                      >
+                        <textarea
+                          placeholder="Please specify your reason here..."
+                          className="w-full p-5 border-2 border-gray-100 dark:border-gray-800 dark:bg-gray-900 rounded-[22px] focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none text-sm font-medium transition-all min-h-[120px] dark:text-white"
+                          onChange={(e) => setCancelReason(e.target.value)}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="flex items-center gap-4 mt-10">
+                  <Button
+                    outline
+                    onClick={() => setShowCancelReason(false)}
+                    className="flex-1 rounded-2xl py-4 h-auto text-[11px] font-black uppercase tracking-widest border-2"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleFinalCancel}
+                    isLoading={isCancelling}
+                    disabled={!cancelReason}
+                    className="flex-[2] rounded-2xl py-4 h-auto text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-primary/30"
+                  >
+                    Confirm Withdrawal
+                  </Button>
+                </div>
+              </div>
+            </div>
           </Modal>
         </>
       )}

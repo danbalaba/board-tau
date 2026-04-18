@@ -11,18 +11,26 @@ import {
   IconMail,
   IconClock,
   IconCircleCheck,
-  IconCircleX
+  IconCircleX,
+  IconArchive,
+  IconRestore,
+  IconTrash,
+  IconEye
 } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
 import Button from '@/components/common/Button';
-import { useRouter } from 'next/navigation';
 import { Inquiry } from '../hooks/use-inquiry-logic';
+import Avatar from '@/components/common/Avatar';
 
 interface LandlordInquiryCardProps {
   inquiry: Inquiry;
   idx: number;
   viewMode: 'grid' | 'list';
   handleRespond: (id: string, status: "APPROVED" | "REJECTED") => void;
+  isResponding?: boolean;
+  onArchive: (id: string) => void;
+  onReject: (id: string) => void;
+  onViewDetails: () => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -41,9 +49,12 @@ export function LandlordInquiryCard({
   inquiry,
   idx,
   viewMode,
-  handleRespond
+  handleRespond,
+  isResponding,
+  onArchive,
+  onReject,
+  onViewDetails
 }: LandlordInquiryCardProps) {
-  const router = useRouter();
   const StatusIcon = statusIcons[inquiry.status] || IconClock;
 
   return (
@@ -81,6 +92,7 @@ export function LandlordInquiryCard({
             {inquiry.status}
           </span>
         </div>
+
       </div>
 
       <div className="flex-1 min-w-0 w-full z-10">
@@ -94,9 +106,11 @@ export function LandlordInquiryCard({
             </h3>
 
             <div className="flex items-center gap-3 mb-6 bg-gray-50 dark:bg-gray-800/50 p-2.5 rounded-2xl border border-gray-100/50 dark:border-gray-800 w-fit">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center text-white font-black text-xs uppercase shadow-lg shadow-primary/20">
-                {inquiry.user.name?.charAt(0) || <IconUser size={14} />}
-              </div>
+              <Avatar 
+                src={inquiry.user.image} 
+                name={inquiry.user.name} 
+                className="w-10 h-10 rounded-xl" 
+              />
               <div>
                 <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5 leading-none">Perspective Tenant</p>
                 <p className="text-sm font-black text-gray-900 dark:text-gray-100 max-w-[150px] sm:max-w-[200px] truncate leading-none">{inquiry.user.name || 'Anonymous User'}</p>
@@ -128,12 +142,12 @@ export function LandlordInquiryCard({
         <div className="flex flex-wrap items-center gap-3 pt-6 border-t border-gray-100 dark:border-gray-800">
           <Button
             outline
-            onClick={() => router.push(`/landlord/inquiries/${inquiry.id}`)}
+            onClick={onViewDetails}
             className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-50 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700"
           >
             <span className="flex items-center justify-center gap-2">
-              <IconMessage size={14} />
-              Message
+              <IconEye size={14} />
+              Details
             </span>
           </Button>
 
@@ -141,6 +155,7 @@ export function LandlordInquiryCard({
             <div className="flex gap-3 basis-[100%] sm:basis-auto flex-1">
               <Button
                 onClick={() => handleRespond(inquiry.id, "APPROVED")}
+                isLoading={isResponding}
                 className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white shadow-xl shadow-emerald-500/20 group/btn"
               >
                 <span className="flex items-center justify-center gap-2">
@@ -150,7 +165,8 @@ export function LandlordInquiryCard({
               </Button>
               <Button
                 outline
-                onClick={() => handleRespond(inquiry.id, "REJECTED")}
+                onClick={() => onReject(inquiry.id)}
+                isLoading={isResponding}
                 className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-widest border-rose-100 text-rose-500 hover:bg-rose-50 dark:border-rose-900/30 group/btn"
               >
                 <span className="flex items-center justify-center gap-2">
@@ -163,6 +179,31 @@ export function LandlordInquiryCard({
         </div>
       </div>
 
+      <ArchiveButton inquiry={inquiry} onArchive={onArchive} />
     </motion.div>
+  );
+}
+
+function ArchiveButton({ inquiry, onArchive }: { inquiry: Inquiry, onArchive: (id: string) => void }) {
+  return (
+    <button 
+      onClick={(e) => {
+        e.stopPropagation();
+        onArchive(inquiry.id);
+      }}
+      className={cn(
+        "absolute top-6 right-6 z-[60] p-2 rounded-xl backdrop-blur-md transition-all duration-300 shadow-lg border",
+        inquiry.isArchived 
+          ? "bg-emerald-500/80 text-white border-emerald-400/50 hover:bg-emerald-600" 
+          : "bg-white/80 dark:bg-gray-900/80 text-gray-500 hover:text-rose-500 border-gray-100 dark:border-gray-800 hover:border-rose-100"
+      )}
+      title={inquiry.isArchived ? "Restore Inquiry" : "Archive Inquiry"}
+    >
+      {inquiry.isArchived ? (
+        <IconRestore size={16} strokeWidth={2.5} />
+      ) : (
+        <IconArchive size={16} strokeWidth={2.5} />
+      )}
+    </button>
   );
 }

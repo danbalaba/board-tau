@@ -8,6 +8,7 @@ import ListingReviews from "@/components/listings/detail/ListingReviews";
 
 import { getCurrentUser } from "@/services/user";
 import { getListingById } from "@/services/user/listings";
+import { getFavorites } from "@/services/user/favorites/favorite";
 import { categories } from "@/utils/constants";
 import { db } from "@/lib/db";
 
@@ -19,6 +20,7 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
   const { listingId } = await params;
   const listing = await getListingById(listingId);
   const currentUser = await getCurrentUser();
+  const favoriteIds = currentUser ? await getFavorites() : [];
 
   if (!listing) return <EmptyState />;
 
@@ -69,36 +71,57 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
       }
     : null;
 
+  // Always compute from actual fetched reviews (filtered to approved-only by getListingById).
+  // This guarantees the detail page always shows the true correct average.
+  // Fall back to stored listing.rating only when there are zero reviews yet.
+  let actualRating = 0;
+  if (listing.reviews && listing.reviews.length > 0) {
+    const total = listing.reviews.reduce((acc: number, r: any) => acc + (r.rating || 0), 0);
+    actualRating = total / listing.reviews.length;
+  } else {
+    actualRating = listing.rating || 0;
+  }
+
   return (
     <div className="bg-white dark:bg-gray-900 transition-colors duration-300">
       {/* Gallery Section - Full Width */}
-      <ListingGallery title={title} images={normalizedImages} listingId={id} />
+      <ListingGallery title={title} images={normalizedImages} listingId={id} hasFavorited={favoriteIds.includes(id)} />
 
       {/* Main Content - Centered Container */}
       <div className="max-w-6xl mx-auto px-4 md:px-8 lg:px-12 py-8 md:py-12">
         {/* Header Section */}
-        <ListingHeader title={title} region={region} country={country} rating={rating || 4.8} reviewCount={reviewCount || 0} />
+        <ListingHeader
+          title={title}
+          region={region}
+          country={country}
+          rating={actualRating > 0 ? actualRating : 4.8}
+          reviewCount={listing.reviews?.length || 0}
+          listingId={id}
+          hasFavorited={favoriteIds.includes(id)}
+        />
 
         {/* Main Content Grid */}
           <ListingDetailsClient
-           id={id}
-           price={price}
-           reservations={reservations}
-           user={currentUser}
-           title={title}
-           owner={owner}
-           category={categoryData}
-           description={description}
-           roomCount={roomCount}
-           bathroomCount={bathroomCount}
-           latlng={[listing.latitude || 0, listing.longitude || 0]}
-           amenities={amenities}
-           rating={rating ?? undefined}
-           reviewCount={reviewCount}
-           images={normalizedImages}
-           reviews={listing.reviews}
-           rooms={rooms}
-         />
+            id={id}
+            price={price}
+            reservations={reservations}
+            user={currentUser}
+            title={title}
+            owner={owner}
+            category={categoryData}
+            description={description}
+            roomCount={roomCount}
+            bathroomCount={bathroomCount}
+            latlng={[listing.latitude || 0, listing.longitude || 0]}
+            amenities={amenities}
+            rating={actualRating > 0 ? actualRating : undefined}
+            reviewCount={listing.reviews?.length || 0}
+            images={normalizedImages}
+            reviews={listing.reviews}
+            rooms={rooms}
+            region={region}
+            country={country}
+          />
       </div>
     </div>
   );

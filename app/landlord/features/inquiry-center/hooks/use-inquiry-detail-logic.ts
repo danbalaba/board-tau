@@ -8,14 +8,14 @@ export function useInquiryDetailLogic(inquiry: any) {
   const router = useRouter();
   const [isResponding, setIsResponding] = useState(false);
 
-  const handleRespond = async (status: 'APPROVED' | 'REJECTED') => {
+  const handleRespond = async (status: 'APPROVED' | 'REJECTED', message?: string) => {
     setIsResponding(true);
     const toastId = toast.loading(`Marking inquiry as ${status.toLowerCase()}...`);
     try {
       const response = await fetch(`/api/landlord/inquiries?id=${inquiry.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, message }),
       });
 
       if (response.ok) {

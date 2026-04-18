@@ -467,7 +467,25 @@ export const getListingById = async (id: string) => {
         },
       },
       reviews: {
-        include: {
+        where: {
+          status: "approved",
+        },
+        select: {
+          id: true,
+          rating: true,
+          comment: true,
+          images: true,
+          videos: true,
+          likedIds: true,
+          response: true,
+          respondedAt: true,
+          createdAt: true,
+          cleanliness: true,
+          accuracy: true,
+          communication: true,
+          location: true,
+          value: true,
+          reservationId: true,
           user: {
             select: {
               name: true,

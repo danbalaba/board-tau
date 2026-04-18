@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { 
-  IconStar, 
-  IconInbox, 
-  IconClock, 
-  IconCircleCheck, 
-  IconLayoutGrid, 
+import {
+  IconStar,
+  IconInbox,
+  IconClock,
+  IconCircleCheck,
+  IconLayoutGrid,
   IconList,
   IconStarFilled,
   IconFilter,
@@ -76,7 +76,7 @@ export function LandlordReviewHeader({
 
         <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto lg:justify-end">
           <div className="w-full sm:w-auto lg:min-w-[320px]">
-            <LandlordReviewSearch 
+            <LandlordReviewSearch
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               reviews={rawReviews}
@@ -143,7 +143,7 @@ export function LandlordReviewHeader({
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
-            
+
             <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm shrink-0">
               <button
                 onClick={() => setViewMode('grid')}
@@ -164,7 +164,7 @@ export function LandlordReviewHeader({
                 <IconList size={18} />
               </button>
             </div>
-            
+
             <GenerateReportButton onGeneratePDF={handleGenerateReport} />
           </div>
       </div>

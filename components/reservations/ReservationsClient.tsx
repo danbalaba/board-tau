@@ -8,10 +8,24 @@ import Button from "@/components/common/Button";
 import ReservationCard from "@/components/reservations/ReservationCard";
 import ReservationDetailsModal from "@/components/reservations/ReservationDetailsModal";
 import PaymentModal from "@/components/reservations/PaymentModal";
+import ReviewModal from "@/components/modals/ReviewModal";
 import { Search, Filter, Loader2, ArrowUpDown, Clock, DollarSign, CheckCircle, RefreshCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ModernSelect from "@/components/common/ModernSelect";
 import ConfirmModal from "@/components/common/ConfirmModal";
+import { 
+  Home,
+  MapPin,
+  AlertCircle,
+  FileText,
+  Calendar,
+  MoreHorizontal,
+  Info,
+  HeartPulse,
+  Building2,
+  Truck,
+  GraduationCap
+} from "lucide-react";
 import Modal from "@/components/modals/Modal";
 import ModernLoader from "@/components/common/ModernLoader";
 import { useSearchParams } from "next/navigation";
@@ -40,6 +54,7 @@ interface ReservationRoom {
   id: string;
   name: string;
   price: number;
+  reservationFee: number;
   roomType: string;
   images: Array<{
     id: string;
@@ -56,12 +71,14 @@ interface Reservation {
   endDate: string;
   durationInDays: number;
   totalPrice: number;
+  occupantsCount: number;
   status: string;
   paymentStatus: string;
   paymentMethod?: string;
   preferredPaymentMethod?: string;
   paymentReference?: string;
   createdAt: string;
+  hasReview?: boolean;
   listing: ReservationListing;
   room: ReservationRoom;
 }
@@ -70,6 +87,9 @@ interface ReservationsClientProps {
   initialReservations: Reservation[];
   userId: string;
 }
+
+import { getUnreadNotifications } from "@/services/notification";
+import { Notification } from "@prisma/client";
 
 const ReservationsClient: React.FC<ReservationsClientProps> = ({
   initialReservations,
@@ -80,6 +100,20 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
 
   const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
   const [filteredReservations, setFilteredReservations] = useState<Reservation[]>(initialReservations);
+  const [unreadNotifications, setUnreadNotifications] = useState<Notification[]>([]);
+
+  // Sync state with server props when router.refresh() is called
+  useEffect(() => {
+    setReservations(initialReservations);
+  }, [initialReservations]);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      const data = await getUnreadNotifications();
+      setUnreadNotifications(data);
+    };
+    fetchNotifications();
+  }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("newest");
@@ -87,9 +121,12 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [reservationToCancel, setReservationToCancel] = useState<Reservation | null>(null);
+  const [showCancelReason, setShowCancelReason] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -132,10 +169,14 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
             toast.success("Payment Received! Your room is now RESERVED.", { id: toastId, duration: 5000 });
             // 3. Force a refresh to show the "RESERVED" badge instantly
             router.refresh();
+            
+            // 4. ALSO manually refetch notifications so the red dot updates show!
+            getUnreadNotifications().then(data => setUnreadNotifications(data));
           } else {
              // Already sync-ed or no pending found, just refresh
              router.refresh();
              toast.dismiss(toastId);
+             getUnreadNotifications().then(data => setUnreadNotifications(data));
           }
         } catch (error) {
           console.error("Sync error:", error);
@@ -150,6 +191,18 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
        toast.error("Payment was cancelled or failed. Please try again.");
     }
   }, [statusParam, isMounted, router]);
+  
+  // Auto-open modal if ID param exists (for notifications)
+  useEffect(() => {
+    const id = searchParams.get("id");
+    if (id && reservations.length > 0 && isMounted) {
+      const reservation = reservations.find(r => r.id === id);
+      if (reservation && !showDetailsModal) {
+        setSelectedReservation(reservation);
+        setShowDetailsModal(true);
+      }
+    }
+  }, [searchParams, reservations, showDetailsModal, isMounted]);
 
   // Handle Loading state during filtering/sorting/searching
   useEffect(() => {
@@ -216,7 +269,12 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
     setShowCancelConfirm(true);
   };
 
-  const handleConfirmCancel = async () => {
+  const handleConfirmCancel = () => {
+    setShowCancelConfirm(false);
+    setShowCancelReason(true);
+  };
+
+  const handleFinalCancel = async () => {
     if (!reservationToCancel) return;
 
     setIsCancelling(true);
@@ -226,6 +284,7 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ reason: cancelReason || "No reason provided" }),
       });
 
       if (!response.ok) {
@@ -243,7 +302,9 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
       );
       setShowDetailsModal(false);
       setShowCancelConfirm(false);
+      setShowCancelReason(false);
       setReservationToCancel(null);
+      setCancelReason("");
     } catch (error: any) {
       alert(error.message || "An error occurred");
     } finally {
@@ -256,10 +317,17 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
     router.refresh();
   };
 
+  const handleReview = (reservation: Reservation) => {
+    setSelectedReservation(reservation);
+    setShowReviewModal(true);
+  };
+
   const statusOptions = [
     { value: "ALL", label: "All", color: "bg-gray-400" },
-    { value: "PENDING_PAYMENT", label: "Pending", color: "bg-amber-500" },
+    { value: "PENDING_PAYMENT", label: "Pending Payment", color: "bg-amber-500" },
     { value: "RESERVED", label: "Reserved", color: "bg-emerald-500" },
+    { value: "CHECKED_IN", label: "Checked In", color: "bg-blue-500" },
+    { value: "COMPLETED", label: "Completed", color: "bg-purple-500" },
     { value: "CANCELLED", label: "Cancelled", color: "bg-rose-500" },
     { value: "EXPIRED", label: "Expired", color: "bg-gray-500" },
   ];
@@ -328,37 +396,60 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
         <>
           {/* Reservations Grid */}
           {filteredReservations.length === 0 ? (
-            <div className="text-center py-12">
-              <h3 className="text-xl font-bold text-text-primary dark:text-gray-100 mb-2">
+            <div className="text-center py-20 bg-gray-50/50 dark:bg-gray-900/20 rounded-[3rem] border-2 border-dashed border-gray-200 dark:border-gray-800">
+              <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                <Search className="h-8 w-8 text-gray-300" />
+              </div>
+              <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">
                 No Reservations Found
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-8 max-w-xs mx-auto">
                 You haven't made any reservations yet. Start by sending an inquiry to find your perfect room.
               </p>
-              <Button onClick={() => router.push("/inquiries")}>
-                View My Inquiries
+              <Button 
+                onClick={() => router.push("/")}
+                className="rounded-xl px-10 py-3 text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20"
+              >
+                Explore Listings
               </Button>
             </div>
           ) : (
-            <motion.div 
-              variants={containerVariants}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mt-8"
-            >
-              {filteredReservations.map((reservation) => (
-                <motion.div key={reservation.id} variants={{ hidden: { opacity: 0, scale: 0.95 }, show: { opacity: 1, scale: 1 } }}>
-                  <ReservationCard
-                    reservation={reservation}
-                    onViewDetails={() => handleViewDetails(reservation)}
-                    onPayNow={() => handlePayNow(reservation)}
-                    onCancel={() => handleCancelClick(reservation)}
-                  />
-                </motion.div>
-              ))}
+             <motion.div 
+               variants={containerVariants}
+               initial="hidden"
+               animate="show"
+               className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mt-8"
+             >
+              {filteredReservations.map((reservation) => {
+                const hasNotification = unreadNotifications.some(n => 
+                  n.link.includes(reservation.id) && !n.isRead
+                );
+
+                return (
+                  <motion.div key={reservation.id} variants={{ hidden: { opacity: 0, scale: 0.95 }, show: { opacity: 1, scale: 1 } }}>
+                    <ReservationCard
+                      reservation={reservation}
+                      hasNotification={hasNotification}
+                      onViewDetails={() => handleViewDetails(reservation)}
+                      onPayNow={() => handlePayNow(reservation)}
+                      onCancel={() => handleCancelClick(reservation)}
+                      onReview={() => handleReview(reservation)}
+                    />
+                  </motion.div>
+                );
+              })}
             </motion.div>
           )}
         </>
+      )}
+
+      {/* Review Modal */}
+      {selectedReservation && (
+        <ReviewModal
+          reservation={selectedReservation}
+          isOpen={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+        />
       )}
 
       {/* Reservation Details Modal */}
@@ -366,7 +457,13 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
         <ReservationDetailsModal
           reservation={selectedReservation}
           isOpen={showDetailsModal}
-          onClose={() => setShowDetailsModal(false)}
+          notification={unreadNotifications.find(n => n.link.includes(selectedReservation.id))}
+          onClose={() => {
+            // Optimistically clear the notification for this specific reservation
+            setUnreadNotifications(prev => prev.filter(n => !n.link.includes(selectedReservation.id)));
+            setShowDetailsModal(false);
+            router.refresh();
+          }}
           onPayNow={() => {
             setShowDetailsModal(false);
             setShowPaymentModal(true);
@@ -392,6 +489,104 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
           isLoading={isCancelling}
           variant="danger"
         />
+      </Modal>
+ 
+      {/* Cancel Reason Modal */}
+      <Modal 
+        isOpen={showCancelReason} 
+        onClose={() => setShowCancelReason(false)} 
+        width="md"
+        title=""
+      >
+        <div className="overflow-hidden rounded-[32px]">
+          {/* Premium Header Banner */}
+          <div className="bg-primary/10 p-7 border-b border-primary/10 flex items-start gap-5">
+            <div className="p-3 bg-primary text-white rounded-2xl shadow-xl shadow-primary/20">
+              <AlertCircle size={26} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter">Cancellation Details</h3>
+              <p className="text-[10px] font-black text-primary/70 uppercase tracking-[0.2em] leading-tight">
+                Help us improve the community
+              </p>
+            </div>
+          </div>
+
+          <div className="p-8">
+            <p className="text-sm text-gray-400 mb-8 font-medium leading-relaxed">
+              We're sorry to see you go. Please let the landlord know the reason for your cancellation to finalize the record.
+            </p>
+            
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-3">
+                {[
+                  { label: "Financial constraints", icon: <DollarSign size={18} /> },
+                  { label: "Family emergency / Health reasons", icon: <HeartPulse size={18} /> },
+                  { label: "Found a better boarding house", icon: <Building2 size={18} /> },
+                  { label: "Change of residence plan (Relocation)", icon: <Truck size={18} /> },
+                  { label: "School/Work schedule changed", icon: <GraduationCap size={18} /> },
+                  { label: "Other", icon: <MoreHorizontal size={18} /> }
+                ].map((item, index) => (
+                  <motion.button
+                    key={item.label}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => setCancelReason(item.label)}
+                    className={`group flex items-center gap-4 px-5 py-4 rounded-[22px] border-2 transition-all duration-300 ${
+                      cancelReason === item.label 
+                        ? "border-primary bg-primary/5 text-primary shadow-xl shadow-primary/10 ring-8 ring-primary/5" 
+                        : "border-gray-50 hover:border-gray-200 bg-gray-50/50 dark:bg-gray-900/50 dark:border-gray-800 dark:hover:border-gray-700 text-gray-600 dark:text-gray-300"
+                    }`}
+                  >
+                    <div className={`p-2.5 rounded-xl transition-colors ${
+                      cancelReason === item.label 
+                        ? "bg-primary text-white" 
+                        : "bg-white dark:bg-gray-800 text-gray-400 group-hover:text-primary"
+                    }`}>
+                      {item.icon}
+                    </div>
+                    <span className="text-sm font-black tracking-tight">{item.label}</span>
+                  </motion.button>
+                ))}
+              </div>
+
+              <AnimatePresence>
+                {cancelReason === "Other" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <textarea
+                      placeholder="Please specify your reason here..."
+                      className="w-full p-5 border-2 border-gray-100 dark:border-gray-800 dark:bg-gray-900 rounded-[22px] focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none text-sm font-medium transition-all min-h-[120px] dark:text-white"
+                      onChange={(e) => setCancelReason(e.target.value)}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className="flex items-center gap-4 mt-10">
+              <Button
+                outline
+                onClick={() => setShowCancelReason(false)}
+                className="flex-1 rounded-[20px] py-4 h-auto text-[11px] font-black uppercase tracking-widest border-2"
+              >
+                Go Back
+              </Button>
+              <Button
+                onClick={handleFinalCancel}
+                isLoading={isCancelling}
+                disabled={!cancelReason}
+                className="flex-[2] rounded-[20px] py-4 h-auto text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-primary/30"
+              >
+                Submit Cancellation
+              </Button>
+            </div>
+          </div>
+        </div>
       </Modal>
 
       {/* Payment Modal */}

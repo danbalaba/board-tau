@@ -13,6 +13,15 @@ const InquiriesPage = async () => {
     redirect("/");
   }
 
+  // Security: If user is a LANDLORD, redirect to their landlord dashboard
+  if (user.role === "LANDLORD") {
+    redirect("/landlord/inquiries");
+  }
+
+  if (user.role === "ADMIN") {
+    redirect("/admin");
+  }
+
   // Get user inquiries
   const inquiries = await db.inquiry.findMany({
     where: {
@@ -38,6 +47,7 @@ const InquiriesPage = async () => {
           images: true,
         },
       },
+      reservation: true,
     },
     orderBy: {
       createdAt: "desc",

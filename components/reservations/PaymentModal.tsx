@@ -12,12 +12,14 @@ interface ReservationListing {
 interface ReservationRoom {
   id: string;
   name: string;
+  reservationFee: number;
 }
 
 interface Reservation {
   id: string;
   totalPrice: number;
   durationInDays: number;
+  occupantsCount?: number;
   status: string;
   preferredPaymentMethod?: string;
   listing: ReservationListing;
@@ -46,8 +48,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   onPaymentSuccess,
 }) => {
   // Auto-select the preferred method from inquiry (mapping gcash -> GCASH, etc)
-  const defaultMethod = reservation.preferredPaymentMethod 
-    ? reservation.preferredPaymentMethod.toUpperCase() 
+  const defaultMethod = reservation.preferredPaymentMethod
+    ? reservation.preferredPaymentMethod.toUpperCase()
     : "STRIPE";
 
   const [selectedMethod, setSelectedMethod] = useState<string>(defaultMethod);
@@ -57,14 +59,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const paymentMethods: PaymentMethod[] = [
     {
       id: "STRIPE",
-      name: "Credit/Debit Card (Stripe)",
+      name: "Credit/Debit Card",
       icon: <CreditCard className="text-primary" />,
       enabled: true,
     },
     {
       id: "GCASH",
       name: "GCash",
-      icon: <Smartphone className="text-primary" />, 
+      icon: <Smartphone className="text-primary" />,
       enabled: true,
     },
     {
@@ -90,11 +92,21 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         }),
       });
 
-      const data = await response.json();
-
+      // 1. First check if the response is actually OK
       if (!response.ok) {
-        throw new Error(data.message || "Payment failed");
+        let errorMsg = "Payment session creation failed.";
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || errorMsg;
+        } catch (jsonErr) {
+          // If response isn't JSON, it's likely an HTML error page (e.g. 404 or 500)
+          errorMsg = `Server error (${response.status}). Please check your connection or contact support.`;
+        }
+        throw new Error(errorMsg);
       }
+
+      // 2. Parse the successful JSON response
+      const data = await response.json();
 
       if (data.url) {
         window.location.href = data.url;
@@ -152,12 +164,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   {reservation.durationInDays} days
                 </span>
               </div>
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
-                <div className="flex justify-between items-center bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800">
-                   <div className="w-8 h-8 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary-light">
-                    <CreditCard size={16} />
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-primary/5 dark:bg-primary/20 p-4 rounded-2xl border border-primary/10">
+                  <div className="flex flex-col mb-2 sm:mb-0">
+                    <span className="text-[10px] font-black text-primary uppercase tracking-widest leading-none mb-1">Reservation Fee</span>
+                    <span className="text-xs font-bold text-gray-500">
+                      {(reservation as any).occupantsCount || 1} {(reservation as any).occupantsCount === 1 ? 'Person' : 'People'} × ₱{(reservation.room.reservationFee || ((reservation.totalPrice || 0) / ((reservation as any).occupantsCount || 1))).toLocaleString()}
+                    </span>
                   </div>
-                  <span className="text-xl font-black text-primary">
+                  <span className="text-2xl font-black text-primary">
                     ₱{reservation.totalPrice.toLocaleString()}
                   </span>
                 </div>

@@ -2,16 +2,20 @@
 
 import { db } from "@/lib/db";
 import { requireLandlord } from "@/lib/landlord";
+import { createNotification } from "@/services/notification";
+import { sendInquiryStatusEmail } from "@/services/email/notifications";
 
 export const getLandlordInquiries = async (args?: {
   cursor?: string;
   status?: string;
+  includeArchived?: boolean;
 }) => {
   const landlord = await requireLandlord();
 
-  const { cursor, status } = args || {};
+  const { cursor, status, includeArchived = false } = args || {};
 
   const where: any = {
+    isArchived: includeArchived,
     listing: {
       userId: landlord.id,
     },
@@ -32,6 +36,7 @@ export const getLandlordInquiries = async (args?: {
           id: true,
           name: true,
           email: true,
+          image: true,
         },
       },
       listing: {
@@ -46,6 +51,7 @@ export const getLandlordInquiries = async (args?: {
           id: true,
           name: true,
           price: true,
+          reservationFee: true,
         },
       },
     },
@@ -73,6 +79,7 @@ export const getInquiryDetails = async (inquiryId: string) => {
           id: true,
           name: true,
           email: true,
+          image: true,
         },
       },
       listing: {
@@ -119,6 +126,7 @@ export const respondToInquiry = async (
     },
     include: {
       room: true,
+      user: true,
     }
   });
 
@@ -130,8 +138,12 @@ export const respondToInquiry = async (
     where: { id: inquiryId },
     data: {
       status,
-    },
-  });
+      rejectionReason: status === "REJECTED" ? message : null,
+    } as any,
+    include: {
+      listing: { select: { title: true } }
+    }
+  }) as any;
 
   // If approved, dynamically spawn the reservation record!
   if (status === "APPROVED" && inquiry.room) {
@@ -154,13 +166,42 @@ export const respondToInquiry = async (
         endDate: checkOut,
         durationInDays,
         totalPrice,
+        occupantsCount: (inquiry as any).occupantsCount || 1,
         status: "PENDING_PAYMENT",
         paymentStatus: "PENDING",
-      }
+      } as any
     });
   }
 
-  // TODO: Send notification to user
+  // Notify the user about the landlord's response (Inquiry Thread)
+  const statusLabel = status === "APPROVED" ? "approved" : "rejected";
+  
+  // Truncate message for notification feed safety
+  const displayMessage = (message && message.length > 150) ? `${message.substring(0, 150)}...` : message;
+  const reasonText = status === "REJECTED" && displayMessage ? ` Reason: ${displayMessage}` : "";
+
+  await createNotification({
+    userId: inquiry.userId,
+    type: "inquiry",
+    title: `Inquiry ${statusLabel}`,
+    description: `Your inquiry for ${updatedInquiry.listing.title} has been ${statusLabel}.${reasonText}`,
+    link: `/inquiries?id=${updatedInquiry.id}`, // Matching the student dashboard path with ID
+  });
+
+  // 3. Send Email Notification to Tenant
+  try {
+    if (inquiry.user && inquiry.user.email) {
+      await sendInquiryStatusEmail(
+        inquiry.user,
+        updatedInquiry.listing,
+        status,
+        message,
+        inquiry
+      );
+    }
+  } catch (emailError) {
+    console.error("Failed to send inquiry status email:", emailError);
+  }
 
   return updatedInquiry;
 };
@@ -181,7 +222,8 @@ export const deleteInquiry = async (inquiryId: string) => {
     throw new Error("Inquiry not found");
   }
 
-  return await db.inquiry.delete({
+  return await db.inquiry.update({
     where: { id: inquiryId },
+    data: { isArchived: !inquiry.isArchived }
   });
 };

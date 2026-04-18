@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { handleStripeWebhook } from "@/services/payments/stripe";
+import { sendReservationNotificationEmail } from "@/services/email/notifications";
+import { createNotification } from "@/services/notification";
 
 export async function POST(req: Request) {
   try {
@@ -37,13 +39,68 @@ export async function POST(req: Request) {
           });
 
           // Update reservation
-          await db.reservation.update({
+          const updatedReservation = await db.reservation.update({
             where: { inquiryId: inquiryId },
             data: {
               status: "RESERVED",
               paymentStatus: "PAID",
             },
+            include: {
+              listing: true,
+              user: true,
+            }
           });
+
+          // Trigger Notifications
+          try {
+            const landlord = await db.user.findUnique({
+              where: { id: updatedReservation.listing.userId },
+              select: { email: true, name: true }
+            });
+
+            // Tenant Email & In-app
+            if (updatedReservation.user.email) {
+              await sendReservationNotificationEmail(
+                updatedReservation.user,
+                updatedReservation.listing,
+                "RESERVED",
+                "Booking Confirmed!",
+                `Your payment was successful! Your reservation for ${updatedReservation.listing.title} is now secured.`
+              );
+
+              // In-app for Tenant
+              await createNotification({
+                userId: updatedReservation.userId,
+                type: 'reservation',
+                title: 'Booking Confirmed!',
+                description: `Payment successful! Your reservation for ${updatedReservation.listing.title} is now secured.`,
+                link: `/reservations?id=${updatedReservation.id}`
+              });
+            }
+
+            // Landlord Email & In-app
+            if (landlord && landlord.email) {
+              await sendReservationNotificationEmail(
+                landlord,
+                updatedReservation.listing,
+                "RESERVED",
+                "New Confirmed Reservation",
+                `${updatedReservation.user.name} has successfully paid the reservation via PayMongo for ${updatedReservation.listing.title}.`,
+                true
+              );
+
+              // In-app for Landlord
+              await createNotification({
+                userId: updatedReservation.listing.userId,
+                type: 'reservation',
+                title: 'New Confirmed Reservation',
+                description: `${updatedReservation.user.name} has secured their reservation for ${updatedReservation.listing.title} via PayMongo.`,
+                link: `/landlord/reservations`
+              });
+            }
+          } catch (notifErr) {
+            console.error("Failed PayMongo notifications:", notifErr);
+          }
 
           // Update room available slots
           if (inquiry.roomId) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
+import { sendReservationNotificationEmail } from "@/services/email/notifications";
 
 export async function PUT(
   request: Request,
@@ -20,6 +21,10 @@ export async function PUT(
     // Find the inquiry
     const inquiry = await db.inquiry.findUnique({
       where: { id: inquiryId },
+      include: {
+        listing: { select: { title: true, userId: true } },
+        user: { select: { name: true } }
+      }
     });
 
     if (!inquiry) {
@@ -45,13 +50,56 @@ export async function PUT(
       );
     }
 
+    // Extract reason
+    const body = await request.json();
+    const { reason } = body;
+
     // Update the inquiry status to CANCELLED
     const updatedInquiry = await db.inquiry.update({
       where: { id: inquiryId },
       data: {
-        status: "CANCELLED" as any,
+        status: "CANCELLED",
+        cancellationReason: reason || "No reason specified"
       },
     });
+
+    // Notify Landlord of cancellation
+    try {
+      const landlord = await db.user.findUnique({
+        where: { id: inquiry.listing.userId },
+        select: { email: true, name: true }
+      });
+
+      if (landlord && landlord.email) {
+         await sendReservationNotificationEmail(
+            landlord,
+            inquiry.listing,
+            "CANCELLED",
+            "Inquiry Withdrawn",
+            `${inquiry.user.name || 'A student'} has withdrawn their inquiry for ${inquiry.listing.title}. Reason: ${reason || 'No reason specified'}`,
+            true
+         );
+      }
+
+      // Notify Tenant (Receipt)
+      const tenant = await db.user.findUnique({
+        where: { id: inquiry.userId },
+        select: { email: true }
+      });
+
+      if (tenant && tenant.email) {
+        await sendReservationNotificationEmail(
+            tenant,
+            inquiry.listing,
+            "CANCELLED",
+            "Inquiry Withdrawal Receipt", // More clear
+            `This email confirms that you have successfully withdrawn your inquiry for ${inquiry.listing.title}. No further action is required.`,
+            false
+         );
+      }
+    } catch (emailError) {
+      console.error("Failed to notify landlord of cancellation:", emailError);
+    }
 
     return NextResponse.json(updatedInquiry);
   } catch (error) {

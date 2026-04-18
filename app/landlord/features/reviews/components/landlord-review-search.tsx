@@ -25,9 +25,9 @@ export function LandlordReviewSearch({
     if (searchQuery.length >= 2 && reviews) {
       const q = searchQuery.toLowerCase();
       const filtered = reviews
-        .filter(r => 
-          r.listing.title.toLowerCase().includes(q) || 
-          (r.user.name?.toLowerCase() || '').includes(q) || 
+        .filter(r =>
+          r.listing.title.toLowerCase().includes(q) ||
+          (r.user.name?.toLowerCase() || '').includes(q) ||
           r.user.email.toLowerCase().includes(q) ||
           (r.comment?.toLowerCase() || '').includes(q)
         )

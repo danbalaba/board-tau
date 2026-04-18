@@ -33,7 +33,7 @@ const CustomOption = (props: OptionProps<Option, false>) => {
           {props.data.icon && <span className="shrink-0 text-primary opacity-80 scale-100">{props.data.icon}</span>}
           {props.data.color && (
             <div className="relative flex items-center justify-center">
-              <span className={cn("w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-950", props.data.color)} />
+              <span className={cn("w-2 h-2 rounded-full shrink-0", props.data.color)} />
             </div>
           )}
           <span className="truncate font-black tracking-tight text-[12px] sm:text-[14px]">{props.data.label}</span>
@@ -66,10 +66,10 @@ const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => {
       <div className={cn(
         "w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-300",
         props.selectProps.menuIsOpen 
-          ? "bg-primary text-white rotate-180 shadow-md shadow-primary/20" 
-          : "bg-gray-100 dark:bg-gray-800/50 text-gray-400 hover:text-primary dark:hover:text-primary"
+          ? "bg-primary/20 text-primary rotate-180" 
+          : "bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-primary dark:hover:text-primary"
       )}>
-        <ChevronDown size={12} strokeWidth={4} />
+        <ChevronDown size={12} strokeWidth={3} />
       </div>
     </components.DropdownIndicator>
   );
@@ -109,6 +109,29 @@ const ModernSelect: React.FC<ModernSelectProps> = ({
 }) => {
   const selectedOption = options.find((opt) => opt.value === value) || null;
   const isSmall = size === 'sm';
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return (
+      <div className={cn("relative w-full sm:w-auto", className)}>
+         {label && (
+          <label className="block text-[9px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 mb-2 ml-1 opacity-0">
+            {label}
+          </label>
+        )}
+        <div className={cn(
+          "flex items-center gap-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm opacity-50",
+          isSmall ? "rounded-xl pr-2 pl-3.5 py-1.5" : "rounded-2xl pr-3 pl-4.5 py-2.5",
+          isSmall ? "min-w-[160px]" : "min-w-[220px]"
+        )}>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("relative w-full sm:w-auto", className)}>
@@ -118,7 +141,7 @@ const ModernSelect: React.FC<ModernSelectProps> = ({
         </label>
       )}
       <div className={cn(
-        "flex items-center gap-3 bg-white dark:bg-gray-950 border-2 border-gray-100 dark:border-gray-900 hover:border-primary/30 dark:hover:border-primary/30 focus-within:border-primary dark:focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/5 transition-all duration-300 shadow-sm",
+        "flex items-center gap-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary/40 dark:hover:border-primary/40 focus-within:border-primary dark:focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/5 transition-all duration-300 shadow-sm",
         isSmall ? "rounded-xl pr-2 pl-3.5 py-0" : "rounded-2xl pr-3 pl-4.5 py-0",
         isSmall ? "min-w-[160px]" : "min-w-[220px]",
         disabled && "opacity-50 pointer-events-none",
@@ -164,17 +187,17 @@ const ModernSelect: React.FC<ModernSelectProps> = ({
               input: () => "m-0 p-0",
               indicatorsContainer: () => "shrink-0 ml-2",
               menu: () => cn(
-                "bg-white/98 dark:bg-gray-950/98 backdrop-blur-xl border-2 border-gray-100 dark:border-gray-800 shadow-2xl overflow-hidden",
+                "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl overflow-hidden",
                 isSmall ? "rounded-xl" : "rounded-2xl",
               ),
               option: ({ isFocused, isSelected }) => cn(
-                "cursor-pointer transition-all duration-200 rounded-lg mb-0.5 last:mb-0",
-                isSmall ? "px-3.5 py-2.5" : "px-4.5 py-3",
+                "cursor-pointer transition-all duration-150 rounded-lg mb-0.5 last:mb-0",
+                isSmall ? "px-3.5 py-2" : "px-4.5 py-2.5",
                 isFocused && !isSelected
-                  ? "bg-primary/5 text-primary dark:bg-primary/10"
-                  : "text-gray-700 dark:text-gray-200",
-                isSelected && "bg-primary text-white font-bold",
-                !isFocused && !isSelected && "hover:bg-primary/5 dark:hover:bg-primary/10"
+                  ? "bg-primary/5 text-primary"
+                  : "text-gray-600 dark:text-gray-300",
+                isSelected && "bg-primary/10 text-primary font-bold",
+                !isFocused && !isSelected && "hover:bg-primary/5"
               ),
               placeholder: () => "text-gray-300 dark:text-gray-700 truncate font-black tracking-widest uppercase text-[10px]",
               menuList: () => cn(

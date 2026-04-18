@@ -3,7 +3,7 @@ import React, { useState, useMemo } from "react";
 import Button from "@/components/common/Button";
 import Modal from "../../modals/Modal";
 import { toast } from "react-hot-toast";
-import { X, Eye, Filter, SortDesc, Info, ArrowUpDown, Clock, DollarSign } from "lucide-react";
+import { X, Eye, Filter, ArrowUpDown, DollarSign, Users, Layers, DoorOpen, CheckCircle2, XCircle, Info } from "lucide-react";
 import ModernSelect from "@/components/common/ModernSelect";
 import { ModernSlider } from "@/components/common/ModernSlider";
 
@@ -42,12 +42,11 @@ interface AllRoomsModalProps {
 }
 
 type RoomTypeFilter = "all" | "SOLO" | "BEDSPACE";
-type SortOption = "price-asc" | "price-desc" | "type-asc" | "capacity-desc";
+type SortOption = "price-asc" | "price-desc" | "capacity-desc";
 
 const sortOptions = [
   { value: "price-asc", label: "Price: Low to High", icon: <DollarSign size={16} className="opacity-50" /> },
   { value: "price-desc", label: "Price: High to Low", icon: <DollarSign size={16} /> },
-  { value: "type-asc", label: "Room Type", icon: <Filter size={16} /> },
   { value: "capacity-desc", label: "Capacity: High to Low", icon: <Info size={16} /> },
 ];
 
@@ -96,9 +95,6 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
       case "price-desc":
         result.sort((a, b) => b.price - a.price);
         break;
-      case "type-asc":
-        result.sort((a, b) => a.roomType.localeCompare(b.roomType));
-        break;
       case "capacity-desc":
         result.sort((a, b) => b.capacity - a.capacity);
         break;
@@ -122,7 +118,7 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true}>
-      <div className="max-h-[85vh] flex flex-col overflow-hidden">
+      <div className="max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 shrink-0">
           <div className="flex items-center justify-between mb-2">
@@ -241,73 +237,77 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
               {filteredRooms.map((room) => (
                 <div
                   key={room.id}
-                  className="bg-white dark:bg-gray-800 rounded-card shadow-soft overflow-hidden border border-border dark:border-gray-700 transition-all duration-300 hover:shadow-lg"
+                  className="group bg-white dark:bg-gray-800 rounded-[1.5rem] overflow-hidden border border-gray-100 dark:border-gray-700/50 hover:border-primary/30 transition-all duration-300 hover:shadow-xl relative flex flex-col"
                 >
                   {/* Room Image */}
-                  <div className="h-40 w-full bg-gray-200 dark:bg-gray-700 relative">
+                  <div className="h-40 w-full relative overflow-hidden">
                     <img
                       src={(room.images && room.images.length > 0) ? room.images[0].url : "/images/placeholder.jpg"}
                       alt={room.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
-                    <div className="absolute top-3 right-3">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                    
+                    {/* Status Badge */}
+                    <div className="absolute top-3 right-3 z-10">
+                      <div
+                        className={`px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest backdrop-blur-md border border-white/20 shadow-lg flex items-center gap-1 ${
                           room.status === "AVAILABLE"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                            ? "bg-emerald-500/90 text-white"
+                            : "bg-rose-500/90 text-white"
                         }`}
                       >
+                        {room.status === "AVAILABLE" ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
                         {room.status === "AVAILABLE" ? "Available" : "Full"}
-                      </span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Room Info */}
-                  <div className="p-4">
-                    <h3 className="font-bold text-text-primary dark:text-gray-100 mb-1 truncate">
+                  <div className="p-4 flex flex-col flex-1">
+                    <h3 className="font-bold text-[14px] text-gray-900 dark:text-gray-100 mb-1 truncate">
                       {room.name}
                     </h3>
-                    <p className="text-xl font-bold text-primary dark:text-primary-light mb-2">
-                      ₱ {room.price.toLocaleString()}
-                      <span className="text-sm font-medium text-gray-500 ml-1">/mo</span>
-                    </p>
+                    
+                    <div className="flex items-baseline gap-1 mb-3">
+                      <span className="text-lg font-black text-primary dark:text-primary">
+                        ₱{room.price.toLocaleString()}
+                      </span>
+                      <span className="text-[11px] font-medium text-gray-500">/mo</span>
+                    </div>
 
-                    {/* Key Amenities */}
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {room.amenities?.slice(0, 3).map((amenity, index) => (
-                        <span
-                          key={index}
-                          className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded"
-                        >
-                          {amenity}
-                        </span>
-                      ))}
-                      {(room.amenities?.length || 0) > 3 && (
-                        <span className="text-xs px-2 py-0.5 text-gray-500">
-                          +{room.amenities!.length - 3} more
-                        </span>
-                      )}
+                    {/* Stats Icons */}
+                    <div className="grid grid-cols-2 gap-2 mb-4 pt-3 border-t border-gray-50 dark:border-gray-700/50">
+                       <div className="flex items-center gap-1.5">
+                         <Layers size={13} className="text-primary/60" />
+                         <span className="text-[11px] font-bold text-gray-600 dark:text-gray-400">{room.roomType}</span>
+                       </div>
+                       <div className="flex items-center gap-1.5">
+                         <Users size={13} className="text-primary/60" />
+                         <span className="text-[11px] font-bold text-gray-600 dark:text-gray-400">{room.capacity} Pax</span>
+                       </div>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-2">
+                    <div className="mt-auto flex gap-2">
                       <button
                         onClick={() => onViewDetails(room)}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                        className="flex-1 py-2 text-[11px] font-bold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 rounded-xl transition-colors border border-gray-100 dark:border-gray-600/50 flex items-center justify-center gap-1.5"
                       >
-                        <Eye size={14} />
-                        View Details
+                        <Eye size={13} />
+                        Details
                       </button>
 
-                      <Button
-                        size="small"
+                      <button
                         onClick={() => handleInquireClick(room)}
                         disabled={room.status !== "AVAILABLE"}
-                        className="flex-1"
+                        className={`flex-1 py-2 rounded-xl text-[11px] font-bold transition-all ${
+                          room.status === "AVAILABLE"
+                            ? "bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/10"
+                            : "bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed"
+                        }`}
                       >
                         {room.status === "AVAILABLE" ? "Inquire" : "Full"}
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </div>

@@ -1,3 +1,5 @@
+import path from 'path';
+import fs from 'fs';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import { db } from '@/lib/db';
@@ -8,7 +10,7 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
+    pass: process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD,
   },
 });
 
@@ -19,6 +21,11 @@ export const generateOTP = () => {
 
 // Send OTP email
 export const sendOTPEmail = async (email: string, otp: string) => {
+  // Use your Vercel URL in production, fallback to localhost for development
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://board-tau-rho.vercel.app';
+  const lightLogoUrl = `${baseUrl}/images/TauBOARD-Light.png`;
+  const darkLogoUrl = `${baseUrl}/images/TauBOARD-Dark.png`;
+
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
@@ -55,12 +62,6 @@ export const sendOTPEmail = async (email: string, otp: string) => {
             padding: 30px 40px;
             text-align: center;
           }
-          .logo {
-            font-size: 28px;
-            font-weight: 800;
-            color: #ffffff;
-            letter-spacing: -0.5px;
-          }
           .email-body {
             padding: 40px;
           }
@@ -69,19 +70,21 @@ export const sendOTPEmail = async (email: string, otp: string) => {
             font-weight: 600;
             color: #1e293b;
             margin-bottom: 16px;
+            text-align: center;
           }
           .intro {
             font-size: 16px;
             color: #64748b;
             margin-bottom: 30px;
             line-height: 1.7;
+            text-align: center;
           }
           .otp-container {
             background: #f8fafc;
             border-radius: 12px;
             padding: 30px;
             text-align: center;
-            margin: 30px 0;
+            margin: 20px 0;
             border: 2px solid #e2e8f0;
           }
           .otp-code {
@@ -113,14 +116,12 @@ export const sendOTPEmail = async (email: string, otp: string) => {
             color: #15803d;
             margin: 0;
           }
-          .info-text strong {
-            font-weight: 600;
-          }
           .security-note {
             font-size: 14px;
             color: #64748b;
             margin-top: 24px;
             line-height: 1.6;
+            text-align: center;
           }
           .email-footer {
             background-color: #f8fafc;
@@ -140,38 +141,12 @@ export const sendOTPEmail = async (email: string, otp: string) => {
             padding-top: 12px;
             border-top: 1px solid #e2e8f0;
           }
-          .social-links {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-          }
-          .social-link {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background-color: #e2e8f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #64748b;
-            text-decoration: none;
-            font-size: 16px;
-            transition: all 0.3s ease;
-          }
-          .social-link:hover {
-            background-color: #2F7D6D;
-            color: #ffffff;
-          }
           @media (max-width: 600px) {
             .email-body {
               padding: 30px 20px;
             }
             .email-header {
               padding: 25px 20px;
-            }
-            .greeting {
-              font-size: 18px;
             }
             .otp-code {
               font-size: 32px;
@@ -183,42 +158,51 @@ export const sendOTPEmail = async (email: string, otp: string) => {
       <body>
         <div class="email-container">
           <div class="email-header">
-            <div class="logo">BoardTAU</div>
+            <img src="${lightLogoUrl}" alt="BoardTAU Logo" style="height: 45px; width: auto; display: block; margin: 0 auto;">
           </div>
           <div class="email-body">
-            <h1 class="greeting">Email Verification</h1>
-            <p class="intro">
-              Thank you for joining BoardTAU! To complete your account setup, please verify your email address using the
-              verification code below.
-            </p>
-
+            <h1 class="greeting">Your One-Time Password (OTP) is</h1>
+            
             <div class="otp-container">
               <p class="otp-code">${otp}</p>
               <p class="otp-label">Verification Code</p>
             </div>
 
+            <p class="intro">
+              Hi there, you attempted to log in to your BoardTAU account. Please enter the OTP to verify the request before you can access your account.
+            </p>
+
             <div class="info-section">
-              <p class="info-text">
+              <p class="info-text" style="text-align: center;">
                 <strong>Code Expires In:</strong> 10 minutes
               </p>
             </div>
 
             <p class="security-note">
-              If you didn't request this verification code, please ignore this email. Your account security is important to us,
-              and we recommend that you never share your verification codes with anyone.
+              If you didn't request this verification code, please ignore this email or contact 
+              <a href="mailto:support@boardtau.com" style="color: #2F7D6D; text-decoration: none;">support@boardtau.com</a>.
             </p>
+
+            <!-- Branded Divider -->
+            <div style="text-align: center; margin: 40px 0 20px;">
+              <div style="border-top: 1px solid #e2e8f0; position: relative; margin-bottom: 20px;">
+                <img src="${darkLogoUrl}" alt="BoardTAU" style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: white; padding: 0 15px; width: 25px;">
+              </div>
+            </div>
+
+            <!-- Visit Us Button -->
+            <div style="text-align: center; margin-bottom: 10px;">
+              <a href="${baseUrl}" style="display: inline-block; border: 1.5px solid #2F7D6D; color: #2F7D6D; padding: 10px 25px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+                Visit us at BoardTAU.com
+              </a>
+            </div>
           </div>
+
           <div class="email-footer">
             <p class="footer-text">
-              Need help? Contact our support team at support@boardtau.com or visit our
-              <a href="${process.env.NEXTAUTH_URL}/help" style="color: #2F7D6D; text-decoration: none; font-weight: 600;">Help Center</a>
+              Need help? visit our
+              <a href="${baseUrl}/help" style="color: #2F7D6D; text-decoration: none; font-weight: 600;">Help Center</a>
             </p>
-            <div class="social-links">
-              <a href="#" class="social-link">L</a>
-              <a href="#" class="social-link">T</a>
-              <a href="#" class="social-link">F</a>
-              <a href="#" class="social-link">I</a>
-            </div>
             <div class="company-info">
               <p>© 2026 BoardTAU. All rights reserved.</p>
               <p>Macalampa, Camiling Tarlac</p>

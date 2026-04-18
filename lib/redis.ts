@@ -1,15 +1,18 @@
 import Redis from 'ioredis';
 
-// Create Redis connection
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+// Create Redis connection with serverless-optimized settings
+const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+  maxRetriesPerRequest: 0, // Best for serverless
+  connectTimeout: 10000,   // Fail quickly if connection is down
+});
 
 // Handle connection events
 redis.on('connect', () => {
-  console.log('Connected to Redis');
+  console.log('✅ Connected to Cloud Redis (Upstash)');
 });
 
 redis.on('error', (error) => {
-  console.error('Redis connection error:', error);
+  console.error('❌ Redis connection error:', error);
 });
 
 // Date reviver for JSON.parse to handle ISO date strings

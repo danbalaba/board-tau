@@ -46,6 +46,8 @@ interface LandlordBookingHeaderProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   rawBookings: Booking[];
+  isArchived: boolean;
+  onToggleArchived: () => void;
 }
 
 export function LandlordBookingHeader({
@@ -60,14 +62,15 @@ export function LandlordBookingHeader({
   handleGenerateReport,
   searchQuery,
   setSearchQuery,
-  rawBookings
+  rawBookings,
+  isArchived,
+  onToggleArchived
 }: LandlordBookingHeaderProps) {
 
   const statusOptions = useMemo(() => [
-    { value: 'all', label: 'All', icon: IconInbox },
-    { value: 'pending', label: 'Pending', icon: IconClock },
-    { value: 'confirmed', label: 'Confirmed', icon: IconCircleCheck },
-    { value: 'cancelled', label: 'Cancelled', icon: IconCircleX },
+    { value: 'all', label: 'All Stays', icon: IconInbox },
+    { value: 'CHECKED_IN', label: 'Active (Checked In)', icon: IconCircleCheck },
+    { value: 'COMPLETED', label: 'Completed', icon: IconHistory },
   ], []);
 
   const paymentOptions = useMemo(() => [
@@ -199,6 +202,20 @@ export function LandlordBookingHeader({
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Archived Toggle */}
+            <button
+              onClick={onToggleArchived}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all backdrop-blur-sm shadow-sm",
+                isArchived 
+                  ? "bg-amber-500/10 border-amber-500/20 text-amber-600 hover:bg-amber-500/20" 
+                  : "bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700 text-gray-500 hover:text-primary"
+              )}
+            >
+              <IconHistory size={14} className={isArchived ? "animate-spin-slow" : ""} />
+              <span>{isArchived ? "Viewing Archived" : "View Archived"}</span>
+            </button>
 
             <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm shadow-sm shrink-0">
               <button onClick={() => setViewMode('grid')} className={cn("p-2.5 rounded-xl transition-all duration-300", viewMode === 'grid' ? "bg-primary text-white shadow-lg shadow-primary/30" : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white")} title="Grid View"><IconLayoutGrid size={18} /></button>

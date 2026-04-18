@@ -12,6 +12,7 @@ import { useReviewLogic, Review } from './hooks/use-review-logic';
 import { LandlordReviewHeader } from './components/landlord-review-header';
 import { LandlordReviewCard } from './components/landlord-review-card';
 import { LandlordReviewRespondModal } from './components/landlord-review-respond-modal';
+import { LandlordReviewDetailsModal } from './components/landlord-review-details-modal';
 import { useLoadMore } from '@/hooks/useLoadMore';
 
 interface LandlordReviewsProps {
@@ -41,6 +42,11 @@ export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
     setRespondModal,
     updateReviewResponse
   } = useReviewLogic(reviews.reviews, reviews.nextCursor);
+
+  const [detailsModal, setDetailsModal] = React.useState<{
+    isOpen: boolean;
+    reviewId: string | null;
+  }>({ isOpen: false, reviewId: null });
 
   const { ref: loadMoreRef } = useLoadMore(
     handleLoadMore,
@@ -121,6 +127,7 @@ export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
               idx={idx}
               viewMode={viewMode}
               setRespondModal={setRespondModal}
+              onViewDetails={(id) => setDetailsModal({ isOpen: true, reviewId: id })}
             />
           ))}
           {/* Scroll Sentinel */}
@@ -160,6 +167,13 @@ export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
         reviewId={respondModal.reviewId}
         reviewTitle={respondModal.reviewTitle}
         onClose={() => setRespondModal({ ...respondModal, isOpen: false })}
+        onSuccess={updateReviewResponse}
+      />
+
+      <LandlordReviewDetailsModal 
+        isOpen={detailsModal.isOpen}
+        reviewId={detailsModal.reviewId}
+        onClose={() => setDetailsModal({ ...detailsModal, isOpen: false })}
         onSuccess={updateReviewResponse}
       />
     </div>

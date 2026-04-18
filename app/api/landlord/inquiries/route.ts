@@ -11,8 +11,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const cursor = searchParams.get("cursor") || undefined;
     const status = searchParams.get("status") || undefined;
+    const includeArchived = searchParams.get("isArchived") === "true";
 
-    const result = await getLandlordInquiries({ cursor, status });
+    const result = await getLandlordInquiries({ cursor, status, includeArchived });
 
     return NextResponse.json({
       success: true,
@@ -47,6 +48,11 @@ export async function PUT(request: NextRequest) {
 
     const { status, message } = await request.json();
 
+    // Sanitize input to prevent XSS
+    const sanitizedMessage = typeof message === 'string' 
+      ? message.replace(/<[^>]*>?/gm, '').trim() 
+      : undefined;
+
     if (!status || !["APPROVED", "REJECTED"].includes(status)) {
       return NextResponse.json(
         {
@@ -57,7 +63,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const result = await respondToInquiry(inquiryId, status, message);
+    const result = await respondToInquiry(inquiryId, status, sanitizedMessage);
 
     return NextResponse.json({
       success: true,

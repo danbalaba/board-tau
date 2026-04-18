@@ -19,6 +19,11 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
   const pathname = usePathname();
   const isAdmin = pathname.startsWith('/admin');
   const isLandlord = pathname.startsWith('/landlord');
+  const isListingDetail = pathname.startsWith('/listings/') && pathname.split('/').length > 2;
+  const isDashboardPage = ['/inquiries', '/favorites', '/reservations', '/my-reviews', '/profile'].some(path => pathname.startsWith(path));
+  
+  const hideNavbarOnMobile = isListingDetail || isDashboardPage;
+  const mobilePaddingTop = isListingDetail ? 'pt-0' : (isDashboardPage ? 'pt-6' : 'pt-24');
 
   if (isAdmin || isLandlord) {
     return <>{children}</>;
@@ -27,13 +32,15 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
   return (
     <>
       <AuthErrorHandler />
-      <Navbar user={user} />
+      <div className={hideNavbarOnMobile ? "hidden md:block" : ""}>
+        <Navbar user={user} />
+      </div>
       <EmailVerificationNotice />
-      <main className="pb-24 md:pt-28 pt-24 bg-[#F8FAF9] dark:bg-[#0f1419] transition-colors duration-300">
+      <main className={`md:pt-28 ${mobilePaddingTop} bg-[#F8FAF9] dark:bg-[#0f1419] transition-colors duration-300 ${!isListingDetail ? 'pb-24' : ''}`}>
         {children}
       </main>
       <Footer />
-      <MobileBottomBar user={user} />
+      {!isListingDetail && <MobileBottomBar user={user} />}
       <RightSwipePanel user={user} />
     </>
   );

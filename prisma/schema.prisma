@@ -66,6 +66,8 @@ enum ContactMethod {
 enum ReservationStatus {
   PENDING_PAYMENT
   RESERVED
+  CHECKED_IN
+  COMPLETED
   CANCELLED
   EXPIRED
 }
@@ -133,6 +135,7 @@ model User {
   inquiries    Inquiry[]
   hostApplication HostApplication?
   emailOTPs    EmailOTP[]
+  notifications Notification[]
 }
 
 model Account {
@@ -346,6 +349,9 @@ model Inquiry {
   isApproved        Boolean   @default(false)
   approvedBy        String?   @db.ObjectId
   approvedAt        DateTime?
+  isArchived        Boolean   @default(false)
+  rejectionReason   String?
+  cancellationReason String? // Added for student-side cancellation reasons
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -369,6 +375,9 @@ model Reservation {
   paymentStatus     PaymentStatus @default(PENDING)
   paymentMethod     PaymentMethod?
   paymentReference  String?
+  occupantsCount    Int      @default(1) // Added to track group size across the lifecycle
+  cancellationReason String? // Added for professional record keeping
+  isArchived        Boolean   @default(false)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -376,6 +385,7 @@ model Reservation {
   listing           Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
   room              Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
   inquiry           Inquiry?  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  reviews           Review[]
   @@unique([inquiryId])
 }
 
@@ -395,8 +405,11 @@ model Review {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
   userId         String   @db.ObjectId
   listingId      String   @db.ObjectId
+  reservationId  String?  @db.ObjectId
   rating         Int      // 1-5
   comment        String?
+  images         String[] // Photos of the stay
+  videos         String[] // Videos of the stay
   cleanliness    Int?     // 1-5
   accuracy       Int?     // 1-5
   communication  Int?     // 1-5
@@ -406,9 +419,14 @@ model Review {
   createdAt      DateTime @default(now())
   response       String?
   respondedAt    DateTime?
+  likedIds       String[] @default([]) @db.ObjectId
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing     Listing      @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reservation Reservation? @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt(sort: Desc)])
+  @@index([listingId, createdAt(sort: Desc)])
 }
 
 model Message {
@@ -474,4 +492,18 @@ model HostApplication {
   updatedAt       DateTime  @updatedAt
 
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  type        String   // inquiry, reservation, review, message
+  title       String
+  description String
+  link        String
+  isRead      Boolean  @default(false)
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -24,6 +24,7 @@ export const menuItems = [
   { label: "My favorites", path: "/favorites" },
   { label: "My inquiries", path: "/inquiries" },
   { label: "My reservations", path: "/reservations" },
+  { label: "My reviews", path: "/my-reviews" },
   { label: "My profile", path: "/profile" },
 ];
 

@@ -172,17 +172,23 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
         <>
           {/* Favorites Grid */}
           {filteredFavorites.length === 0 ? (
-            <div className="text-center py-20">
-              <h3 className="text-xl font-bold text-text-primary dark:text-gray-100 mb-2">
+            <div className="text-center py-20 bg-gray-50/50 dark:bg-gray-900/20 rounded-[3rem] border-2 border-dashed border-gray-200 dark:border-gray-800">
+              <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                <Search className="h-8 w-8 text-gray-300" />
+              </div>
+              <h3 className="text-xl font-black text-gray-900 dark:text-gray-100 mb-2">
                 {initialFavorites.length === 0 ? "No Favorites Found" : "No Matches Found"}
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-8 max-w-xs mx-auto">
                 {initialFavorites.length === 0 
                   ? "Looks like you have no favorite listings. Start exploring boarding houses to find your favorites." 
                   : "Try adjusting your filters to find what you're looking for."}
               </p>
               {initialFavorites.length === 0 && (
-                <Button onClick={() => router.push("/")}>
+                <Button 
+                  onClick={() => router.push("/")}
+                  className="rounded-xl px-10 py-3 text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20"
+                >
                   Explore Listings
                 </Button>
               )}

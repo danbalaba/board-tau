@@ -39,19 +39,13 @@ const Home: FC<HomeProps> = async ({ searchParams }) => {
     : {};
 
   // Show loading state while fetching data
-  // Note: In Next.js, async components will automatically show loading.tsx
-  // But we'll add a placeholder here if needed
-
-  // Wrap data fetching in try-catch for error handling
   let result, favorites, isRelaxed = false;
   try {
-    // If there are search parameters, trigger the Enterprise Heuristic Backend Engine
     if (searchParamsObj && Object.keys(searchParamsObj).length > 0) {
       const searchResponse = await executeComplexSearch(searchParamsObj as any);
       result = { listings: searchResponse.data, nextCursor: null };
       isRelaxed = searchResponse.relaxed;
     } else {
-      // Default Feed behavior
       result = await getListings(resolved);
     }
     

@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
-import { motion } from "framer-motion";
-import { Home, Calendar, CreditCard, Check, ArrowRight, Eye, X, MapPin } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Home, Calendar, CreditCard, Check, ArrowRight, Eye, X, MapPin, Star } from "lucide-react";
 
 interface ReservationListing {
   id: string;
@@ -30,8 +30,9 @@ interface Reservation {
   totalPrice: number;
   status: string;
   paymentStatus: string;
-  paymentMethod?: string;
+  paymentReference?: string;
   createdAt: string;
+  hasReview?: boolean;
   listing: ReservationListing;
   room: ReservationRoom;
 }
@@ -41,6 +42,8 @@ interface ReservationCardProps {
   onViewDetails: () => void;
   onPayNow?: () => void;
   onCancel?: () => void;
+  onReview?: () => void;
+  hasNotification?: boolean;
 }
 
 const ReservationCard: React.FC<ReservationCardProps> = ({
@@ -48,6 +51,8 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
   onViewDetails,
   onPayNow,
   onCancel,
+  onReview,
+  hasNotification,
 }) => {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -69,6 +74,18 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
         return (
           <span className="px-3 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-emerald-100/90 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 border border-emerald-200/50 dark:border-emerald-800/50">
             Reserved
+          </span>
+        );
+      case "CHECKED_IN":
+        return (
+          <span className="px-3 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-blue-100/90 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 border border-blue-200/50 dark:border-blue-800/50">
+            Checked In
+          </span>
+        );
+      case "COMPLETED":
+        return (
+          <span className="px-3 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-purple-100/90 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200 border border-purple-200/50 dark:border-purple-800/50">
+            Completed
           </span>
         );
       case "CANCELLED":
@@ -108,10 +125,8 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
       transition={{ duration: 0.3, ease: "easeOut" }}
       className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-700/50 relative group flex flex-col h-full"
     >
-      {/* Background Glow */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
 
-      {/* Room Image */}
       <div className="relative h-48 overflow-hidden z-10">
         <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300 z-10" />
         <motion.img
@@ -121,14 +136,42 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
           alt={reservation.room.name}
           className="w-full h-full object-cover"
         />
-        <div className="absolute top-3 right-3 z-20">
+        <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
+          <AnimatePresence>
+            {hasNotification && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ 
+                  opacity: 1, 
+                  x: 0,
+                  scale: [1, 1.05, 1],
+                  boxShadow: ["0 0 0px rgba(16, 185, 129, 0)", "0 0 15px rgba(16, 185, 129, 0.4)", "0 0 0px rgba(16, 185, 129, 0)"]
+                }}
+                transition={{ 
+                  opacity: { duration: 0.2 },
+                  x: { duration: 0.2 },
+                  scale: { repeat: Infinity, duration: 2 },
+                  boxShadow: { repeat: Infinity, duration: 2 }
+                }}
+                exit={{ opacity: 0, x: -10 }}
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg border border-white/20 flex items-center justify-center"
+              >
+                STATUS UPDATE
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        <div className="absolute top-3 right-3 z-20 flex flex-col items-end gap-2">
           {getStatusBadge()}
+          {reservation.hasReview && (
+             <span className="px-3 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-purple-100/90 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200 border border-purple-200/50 dark:border-purple-800/50">
+                Reviewed
+             </span>
+          )}
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-5 flex-1 flex flex-col z-10 relative">
-        {/* Room & Listing Info */}
         <div className="mb-4">
           <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 truncate drop-shadow-sm mb-1">
             {reservation.room.name}
@@ -143,7 +186,6 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
           </div>
         </div>
 
-        {/* Dates Section */}
         <div className="flex items-center gap-3 mb-6 text-xs font-bold bg-gray-50/80 dark:bg-gray-900/40 p-3 rounded-2xl border border-gray-100 dark:border-gray-800/50">
           <div className="flex flex-col gap-0.5">
             <span className="text-[9px] uppercase tracking-widest text-gray-400 font-black">Arrive</span>
@@ -156,7 +198,6 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
           </div>
         </div>
 
-        {/* Price & Duration */}
         <div className="flex items-center justify-between mb-8 mt-auto px-1">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-2xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary-light border border-primary/10">
@@ -176,7 +217,6 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
           </div>
         </div>
 
-        {/* Actions - Synchronized with InquiryCard behavior */}
         <div className="flex gap-3 mt-auto">
           <button
             onClick={onViewDetails}
@@ -195,7 +235,26 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
             </button>
           )}
 
-          {!canPay && canCancel && onCancel && (
+          {reservation.status === "COMPLETED" && (
+            reservation.hasReview ? (
+              <div className="flex-[1.5] py-2.5 px-4 font-bold text-xs text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800/30 flex justify-center items-center gap-2">
+                <Check size={14} />
+                Experience Rated
+              </div>
+            ) : (
+              onReview && (
+                <button
+                  onClick={onReview}
+                  className="flex-[1.5] py-2.5 px-4 font-bold text-sm text-white bg-purple-600 rounded-xl hover:bg-purple-700 shadow-xl shadow-purple-600/20 transition-all flex justify-center items-center gap-2 active:scale-[0.98] group/rate"
+                >
+                  <Star size={14} className="fill-white group-hover/rate:rotate-[360deg] transition-transform duration-700" />
+                  Rate Experience
+                </button>
+              )
+            )
+          )}
+
+          {!canPay && reservation.status !== "COMPLETED" && canCancel && onCancel && (
             <button
               onClick={onCancel}
               className="py-2.5 px-4 font-bold text-sm text-rose-600 bg-rose-50 dark:bg-rose-900/20 dark:text-rose-400 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors flex justify-center items-center gap-2 border border-rose-100 dark:border-rose-900/30 group/cancel"

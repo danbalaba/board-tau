@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IconInbox, IconChevronDown, IconMessage } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
@@ -31,18 +32,25 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
     sortBy,
     setSortBy,
     selectedInquiry,
+    setSelectedInquiry,
     viewModalOpen,
     setViewModalOpen,
     deleteModalOpen,
     setDeleteModalOpen,
+    rejectModalOpen,
+    setRejectModalOpen,
     isDeleting,
     isLoadingMore,
     nextCursor,
     handleConfirmDelete,
     handleRespond,
+    handleConfirmReject,
     handleLoadMore,
     handleGenerateReport,
-    rawInquiries
+    isArchived,
+    handleToggleArchived,
+    rawInquiries,
+    isResponding
   } = useInquiryLogic(inquiries);
 
   const { ref: loadMoreRef } = useLoadMore(
@@ -52,17 +60,27 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
     false
   );
 
+  const searchParams = useSearchParams();
+
+  React.useEffect(() => {
+    const id = searchParams?.get('id');
+    if (id && rawInquiries.length > 0) {
+      const target = rawInquiries.find(i => i.id === id);
+      if (target && !viewModalOpen) {
+        setSelectedInquiry(target);
+        setViewModalOpen(true);
+      }
+    }
+  }, [searchParams, rawInquiries, viewModalOpen, setSelectedInquiry, setViewModalOpen]);
+
   useRegisterActions(
-    rawInquiries.map((inquiry) => ({
+    rawInquiries.map((inquiry: Inquiry) => ({
       id: `inquiry-${inquiry.id}`,
       name: `Inquiry from ${inquiry.user.name || 'Anonymous Tenant'}`,
       subtitle: `Property: ${inquiry.listing.title}`,
       keywords: `inquiry tenant message ${inquiry.user.name} ${inquiry.listing.title}`,
       section: 'Inquiries',
       perform: () => {
-        // We don't have a direct "view details" function exported from useInquiryLogic that we can call
-        // But we can trigger the same logic as the card's response button or just navigate
-        // For now, let's navigate to the inquiries page to ensure it's filtered
         setSearchQuery(inquiry.user.name || inquiry.user.email);
       },
       icon: <IconMessage size={18} />
@@ -72,16 +90,6 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
 
   return (
     <div className="space-y-6">
-      <LandlordInquiryModals 
-        deleteModalOpen={deleteModalOpen}
-        setDeleteModalOpen={setDeleteModalOpen}
-        viewModalOpen={viewModalOpen}
-        setViewModalOpen={setViewModalOpen}
-        selectedInquiry={selectedInquiry}
-        isDeleting={isDeleting}
-        handleConfirmDelete={handleConfirmDelete}
-      />
-
       <LandlordInquiryHeader 
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -93,6 +101,8 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
         setViewMode={setViewMode}
         handleGenerateReport={handleGenerateReport}
         rawInquiries={rawInquiries}
+        isArchived={isArchived}
+        onToggleArchived={handleToggleArchived}
       />
 
       <AnimatePresence mode="wait">
@@ -133,6 +143,19 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
                 idx={idx}
                 viewMode={viewMode}
                 handleRespond={handleRespond}
+                isResponding={isResponding}
+                onArchive={() => {
+                  setSelectedInquiry(inquiry);
+                  setDeleteModalOpen(true);
+                }}
+                onReject={() => {
+                  setSelectedInquiry(inquiry);
+                  setRejectModalOpen(true);
+                }}
+                onViewDetails={() => {
+                  setSelectedInquiry(inquiry);
+                  setViewModalOpen(true);
+                }}
               />
             ))}
             {/* Scroll Sentinel */}
@@ -167,6 +190,21 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
           </Button>
         </div>
       )}
+
+      <LandlordInquiryModals 
+        deleteModalOpen={deleteModalOpen}
+        setDeleteModalOpen={setDeleteModalOpen}
+        viewModalOpen={viewModalOpen}
+        setViewModalOpen={setViewModalOpen}
+        rejectModalOpen={rejectModalOpen}
+        setRejectModalOpen={setRejectModalOpen}
+        selectedInquiry={selectedInquiry}
+        isDeleting={isDeleting}
+        isResponding={isResponding}
+        handleConfirmDelete={handleConfirmDelete}
+        handleConfirmReject={handleConfirmReject}
+        handleRespond={handleRespond}
+      />
     </div>
   );
 }

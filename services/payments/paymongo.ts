@@ -27,7 +27,7 @@ export const createPayMongoCheckoutSession = async ({
   if (!PAYMONGO_SECRET_KEY) {
     // Return a mock URL for testing if no key is provided
     console.warn("PayMongo Secret Key not found. Using Mock simulation.");
-    return { 
+    return {
       url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/reservations/mock-payment?inquiryId=${inquiryId}&status=success&method=${paymentMethod}`
     };
   }
@@ -81,7 +81,7 @@ export const createPayMongoCheckoutSession = async ({
 export const verifyPayMongoSignature = (
   payload: string,
   signature: string,
-  webhookSecret: string
+  PAYMONGO_WEBHOOK_SECRET: string
 ) => {
   // In a real implementation, you'd use crypto to verify the signature
   // For the capstone, we will simplify or use a library

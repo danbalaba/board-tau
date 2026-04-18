@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
-import { IconCalendarCheck, IconChevronDown, IconCalendarStats } from '@tabler/icons-react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { IconCalendarCheck, IconChevronDown, IconCalendarStats, IconAlertTriangle, IconRestore } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import { useRegisterActions } from 'kbar';
@@ -9,7 +10,9 @@ import Button from '@/components/common/Button';
 import { useBookingLogic, Booking } from './hooks/use-booking-logic';
 import { LandlordBookingHeader } from './components/landlord-booking-header';
 import { LandlordBookingCard } from './components/landlord-booking-card';
+import { LandlordBookingDetailsModal } from './components/landlord-booking-details-modal';
 import { useLoadMore } from '@/hooks/useLoadMore';
+import { useSearchParams } from 'next/navigation';
 
 interface LandlordBookingsProps {
   bookings: {
@@ -19,9 +22,11 @@ interface LandlordBookingsProps {
 }
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-  confirmed: 'bg-green-500/10 text-green-600 border-green-500/20',
-  cancelled: 'bg-red-500/10 text-red-600 border-red-500/20',
+  PENDING_PAYMENT: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  RESERVED: 'bg-green-500/10 text-green-600 border-green-500/20',
+  CANCELLED: 'bg-red-500/10 text-red-600 border-red-500/20',
+  CHECKED_IN: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  COMPLETED: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
 };
 
 const paymentStatusColors: Record<string, string> = {
@@ -46,10 +51,48 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
     searchQuery,
     setSearchQuery,
     rawBookings,
+    isArchived,
+    handleToggleArchivedView,
+    handleToggleArchiveRecord,
     handleUpdateStatus,
     handleLoadMore,
-    handleGenerateReport
+    handleGenerateReport,
+    isUpdatingStatus
   } = useBookingLogic(bookings.bookings, bookings.nextCursor);
+
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [recordToArchive, setRecordToArchive] = useState<Booking | null>(null);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    setMounted(true);
+    const id = searchParams?.get('id');
+    if (id && rawBookings.length > 0) {
+      const target = rawBookings.find(b => b.id === id);
+      if (target && !isModalOpen) {
+        setSelectedBooking(target);
+        setIsModalOpen(true);
+      }
+    }
+  }, [searchParams, rawBookings, isModalOpen]);
+
+  const handleOpenDetails = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmArchive = async () => {
+    if (!recordToArchive) return;
+    setIsArchiving(true);
+    await handleToggleArchiveRecord(recordToArchive.id, recordToArchive.isArchived);
+    setIsArchiving(false);
+    setIsArchiveModalOpen(false);
+    setRecordToArchive(null);
+  };
 
   const { ref: loadMoreRef } = useLoadMore(
     handleLoadMore,
@@ -88,6 +131,8 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         rawBookings={rawBookings}
+        isArchived={isArchived}
+        onToggleArchived={handleToggleArchivedView}
       />
 
       <AnimatePresence mode="popLayout">
@@ -108,6 +153,12 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
                 statusColors={statusColors}
                 paymentStatusColors={paymentStatusColors}
                 onUpdateStatus={handleUpdateStatus}
+                isUpdatingStatus={isUpdatingStatus}
+                onViewDetails={handleOpenDetails}
+                onArchive={() => {
+                  setRecordToArchive(booking);
+                  setIsArchiveModalOpen(true);
+                }}
               />
             ))}
             {/* Scroll Sentinel */}
@@ -141,6 +192,82 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
             </span>
           </Button>
         </div>
+      )}
+      {mounted && createPortal(
+        <>
+          {isModalOpen && selectedBooking && (
+            <LandlordBookingDetailsModal
+              booking={selectedBooking}
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              onUpdateStatus={handleUpdateStatus}
+              isUpdatingStatus={isUpdatingStatus}
+            />
+          )}
+
+          <AnimatePresence>
+            {isArchiveModalOpen && recordToArchive && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setIsArchiveModalOpen(false)}
+                  className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  className="relative bg-white dark:bg-gray-900 rounded-[32px] border border-gray-100 dark:border-gray-800 p-8 max-w-sm w-full shadow-2xl overflow-hidden"
+                >
+                  <div className={cn(
+                    "absolute top-0 left-0 w-full h-1.5",
+                    recordToArchive.isArchived ? "bg-gradient-to-r from-emerald-500 to-green-500" : "bg-gradient-to-r from-red-500 to-rose-500"
+                  )} />
+                  <div className="flex flex-col items-center text-center">
+                    <div className={cn(
+                      "w-16 h-16 rounded-2xl flex items-center justify-center mb-6 animate-pulse",
+                      recordToArchive.isArchived ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500" : "bg-red-50 dark:bg-red-900/20 text-red-500"
+                    )}>
+                      {recordToArchive.isArchived ? <IconRestore size={32} /> : <IconAlertTriangle size={32} />}
+                    </div>
+                    <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">
+                       {recordToArchive.isArchived ? 'Restore Booking?' : 'Archive Booking?'}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed font-medium">
+                      {recordToArchive.isArchived 
+                        ? `Are you sure you want to restore the booking for "${recordToArchive.user.name || recordToArchive.user.email}"? This will move it back to your active list.`
+                        : `Are you sure you want to archive the booking for "${recordToArchive.user.name || recordToArchive.user.email}"? This will hide it from your active list but keep it in your records.`
+                      }
+                    </p>
+                    <div className="flex flex-col w-full gap-2.5">
+                      <Button
+                        variant={recordToArchive.isArchived ? "primary" : "danger"}
+                        isLoading={isArchiving}
+                        onClick={handleConfirmArchive}
+                        className={cn(
+                          "rounded-xl py-3 shadow-lg text-xs font-black uppercase tracking-widest",
+                          recordToArchive.isArchived ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/10" : "shadow-red-500/10"
+                        )}
+                      >
+                        {recordToArchive.isArchived ? 'Confirm Restoration' : 'Confirm Archiving'}
+                      </Button>
+                      <Button
+                        outline
+                        onClick={() => setIsArchiveModalOpen(false)}
+                        className="rounded-xl py-3 border-gray-100 dark:border-gray-800 text-xs font-black uppercase tracking-widest"
+                      >
+                        {recordToArchive.isArchived ? 'Keep Archived' : 'Keep Active'}
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+        </>,
+        document.body
       )}
     </div>
   );
