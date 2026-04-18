@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import validator from "validator";
 import {
   getLandlordInquiries,
   getInquiryDetails,
@@ -48,9 +49,12 @@ export async function PUT(request: NextRequest) {
 
     const { status, message } = await request.json();
 
-    // Sanitize input to prevent XSS
-    const sanitizedMessage = typeof message === 'string' 
-      ? message.replace(/<[^>]*>?/gm, '').trim() 
+    // Sanitize using validator.escape() — fully trusted HTML entity encoding
+    // This converts all HTML special characters to safe entities,
+    // preventing both XSS and the incomplete multi-char sanitization CodeQL warning
+    // that a regex-based approach (e.g. /&lt;[^&gt;]*&gt;?/gm) produces.
+    const sanitizedMessage = typeof message === 'string'
+      ? validator.escape(message.trim())
       : undefined;
 
     if (!status || !["APPROVED", "REJECTED"].includes(status)) {

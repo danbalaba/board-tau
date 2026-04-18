@@ -16,9 +16,19 @@ export const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
 const lightLogoUrl = `${baseUrl}/images/TauBOARD-Light.png`;
 const darkLogoUrl = `${baseUrl}/images/TauBOARD-Dark.png`;
 
-const safe = (str: any) => {
+const safe = (str: any): string => {
     if (!str) return '';
     return validator.escape(String(str));
+};
+
+/**
+ * Clamps a rating to a valid integer between 0 and 5.
+ * Prevents resource exhaustion from user-controlled .repeat() calls.
+ */
+const clampRating = (rating: any): number => {
+    const n = Math.floor(Number(rating));
+    if (!isFinite(n)) return 0;
+    return Math.max(0, Math.min(5, n));
 };
 
 /**
@@ -460,14 +470,15 @@ export const sendInquiryReceiptEmail = async (tenant: any, listing: any, room: a
  */
 export const sendNewReviewEmail = async (landlord: any, tenant: any, listing: any, rating: number, comment?: string) => {
   const reviewsLink = `${baseUrl}/landlord/reviews`;
-  const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+  const safeRating = clampRating(rating);
+  const stars = '★'.repeat(safeRating) + '☆'.repeat(5 - safeRating);
 
   const content = `
     <h1 class="greeting">New Rating Received</h1>
     
     <div style="text-align: center; margin: 30px 0;">
         <div style="color: #fbbf24; font-size: 40px; line-height: 1; margin-bottom: 10px;">${stars}</div>
-        <p style="font-size: 14px; color: #64748b;">${rating} out of 5 Stars</p>
+        <p style="font-size: 14px; color: #64748b;">${safeRating} out of 5 Stars</p>
     </div>
 
     <div class="info-section">
@@ -534,7 +545,8 @@ export const sendReviewResponseEmail = async (tenant: any, listing: any, respons
  */
 export const sendReviewReceiptEmail = async (tenant: any, listing: any, rating: number) => {
   const reviewsLink = `${baseUrl}/my-reviews`;
-  const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+  const safeRating = clampRating(rating);
+  const stars = '★'.repeat(safeRating) + '☆'.repeat(5 - safeRating);
 
   const content = `
     <h1 class="greeting">Review Successfully Logged!</h1>
