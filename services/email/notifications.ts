@@ -14,10 +14,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-export const getBaseUrl = () => baseUrl;
-const lightLogoUrl = `${baseUrl}/images/TauBOARD-Light.png`;
-const darkLogoUrl = `${baseUrl}/images/TauBOARD-Dark.png`;
+import { baseUrl, lightLogoUrl, darkLogoUrl } from './constants';
 
 const safe = (str: any): string => {
   if (str === null || str === undefined) return '';

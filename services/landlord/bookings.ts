@@ -3,7 +3,8 @@
 import { db } from "@/lib/db";
 import { requireLandlord } from "@/lib/landlord";
 import { createNotification } from "@/services/notification";
-import { sendReservationNotificationEmail, getBaseUrl } from "@/services/email/notifications";
+import { sendReservationNotificationEmail } from "@/services/email/notifications";
+import { baseUrl } from "@/services/email/constants";
 import { revalidatePath } from "next/cache";
 import { cache } from "@/lib/redis";
 
@@ -266,7 +267,7 @@ export const updateBookingStatus = async (
           "Check-in Successful",
           `${updatedBooking.user.name || 'A guest'} has been successfully checked in to your property.`,
           true,
-          `${getBaseUrl()}/landlord/bookings`
+          `${baseUrl}/landlord/bookings`
         );
       }
     }
