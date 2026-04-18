@@ -17,24 +17,27 @@ const lightLogoUrl = `${baseUrl}/images/TauBOARD-Light.png`;
 const darkLogoUrl = `${baseUrl}/images/TauBOARD-Dark.png`;
 
 const safe = (str: any): string => {
-    if (!str) return '';
+    if (str === null || str === undefined) return '';
     return validator.escape(String(str));
 };
 
 /**
- * Clamps a rating to a valid integer between 0 and 5.
- * Prevents resource exhaustion from user-controlled .repeat() calls.
+ * Returns a star rating string using a constant lookup array.
+ * This satisfies CodeQL's 'Resource exhaustion' check by avoiding variable-length String.repeat() calls.
  */
-const clampRating = (rating: any): number => {
+const getStars = (rating: any): string => {
     const n = Math.floor(Number(rating));
-    if (!isFinite(n)) return 0;
-    return Math.max(0, Math.min(5, n));
+    const safeIndex = isFinite(n) ? Math.max(0, Math.min(5, n)) : 0;
+    const starModels = ["☆☆☆☆☆", "★☆☆☆☆", "★★☆☆☆", "★★★☆☆", "★★★★☆", "★★★★★"];
+    return starModels[safeIndex];
 };
 
 /**
  * Common BoardTAU Premium Layout
+ * @param {string} title - The email title, will be auto-escaped.
+ * @param {string} safeHtmlContent - Pre-sanitized HTML content.
  */
-const wrapLayout = (title: string, content: string) => `
+const wrapLayout = (title: string, safeHtmlContent: string) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -64,7 +67,7 @@ const wrapLayout = (title: string, content: string) => `
             <img src="${lightLogoUrl}" alt="BoardTAU" style="height: 40px; width: auto; display: block; margin: 0 auto;">
         </div>
         <div class="email-body">
-            ${content}
+            ${safeHtmlContent}
         </div>
         <div class="email-footer">
             <p class="footer-text">Need help? Visit our <a href="${baseUrl}/help" style="color: #2F7D6D; text-decoration: none; font-weight: 600;">Help Center</a></p>
@@ -470,8 +473,8 @@ export const sendInquiryReceiptEmail = async (tenant: any, listing: any, room: a
  */
 export const sendNewReviewEmail = async (landlord: any, tenant: any, listing: any, rating: number, comment?: string) => {
   const reviewsLink = `${baseUrl}/landlord/reviews`;
-  const safeRating = clampRating(rating);
-  const stars = '★'.repeat(safeRating) + '☆'.repeat(5 - safeRating);
+  const safeRating = Math.floor(Number(rating) || 0);
+  const stars = getStars(safeRating);
 
   const content = `
     <h1 class="greeting">New Rating Received</h1>
@@ -545,8 +548,8 @@ export const sendReviewResponseEmail = async (tenant: any, listing: any, respons
  */
 export const sendReviewReceiptEmail = async (tenant: any, listing: any, rating: number) => {
   const reviewsLink = `${baseUrl}/my-reviews`;
-  const safeRating = clampRating(rating);
-  const stars = '★'.repeat(safeRating) + '☆'.repeat(5 - safeRating);
+  const safeRating = Math.floor(Number(rating) || 0);
+  const stars = getStars(safeRating);
 
   const content = `
     <h1 class="greeting">Review Successfully Logged!</h1>
