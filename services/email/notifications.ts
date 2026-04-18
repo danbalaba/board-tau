@@ -1,6 +1,8 @@
 import nodemailer from 'nodemailer';
 import validator from 'validator';
 
+"use server";
+
 // Email configuration using Nodemailer
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
@@ -17,33 +19,35 @@ const lightLogoUrl = `${baseUrl}/images/TauBOARD-Light.png`;
 const darkLogoUrl = `${baseUrl}/images/TauBOARD-Dark.png`;
 
 const safe = (str: any): string => {
-    if (str === null || str === undefined) return '';
-    return validator.escape(String(str));
+  if (str === null || str === undefined) return '';
+  const val = String(str).trim();
+  return validator.escape(val);
 };
 
 /**
  * Returns a star rating string using a constant lookup array.
- * This satisfies CodeQL's 'Resource exhaustion' check by avoiding variable-length String.repeat() calls.
  */
 const getStars = (rating: any): string => {
-    const n = Math.floor(Number(rating));
-    const safeIndex = isFinite(n) ? Math.max(0, Math.min(5, n)) : 0;
-    const starModels = ["☆☆☆☆☆", "★☆☆☆☆", "★★☆☆☆", "★★★☆☆", "★★★★☆", "★★★★★"];
-    return starModels[safeIndex];
+  const n = Math.floor(Number(rating));
+  const safeIndex = (isFinite(n) && n >= 0 && n <= 5) ? n : 0;
+  return ["☆☆☆☆☆", "★☆☆☆☆", "★★☆☆☆", "★★★☆☆", "★★★★☆", "★★★★★"][safeIndex];
 };
 
 /**
  * Common BoardTAU Premium Layout
- * @param {string} title - The email title, will be auto-escaped.
- * @param {string} safeHtmlContent - Pre-sanitized HTML content.
+ * This function is explicitly marked to handle server-side HTML generation.
  */
-const wrapLayout = (title: string, safeHtmlContent: string) => `
+const wrapLayout = (title: string, htmlBody: string): string => {
+  // Ensure the title is safe before it enters the template
+  const escapedTitle = safe(title);
+  
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${safe(title)}</title>
+    <title>${escapedTitle}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #1e293b; line-height: 1.6; }
@@ -67,7 +71,7 @@ const wrapLayout = (title: string, safeHtmlContent: string) => `
             <img src="${lightLogoUrl}" alt="BoardTAU" style="height: 40px; width: auto; display: block; margin: 0 auto;">
         </div>
         <div class="email-body">
-            ${safeHtmlContent}
+            ${htmlBody}
         </div>
         <div class="email-footer">
             <p class="footer-text">Need help? Visit our <a href="${baseUrl}/help" style="color: #2F7D6D; text-decoration: none; font-weight: 600;">Help Center</a></p>
@@ -80,7 +84,8 @@ const wrapLayout = (title: string, safeHtmlContent: string) => `
     </div>
 </body>
 </html>
-`;
+`.trim();
+};
 
 export interface EmailOptions {
   to: string;
