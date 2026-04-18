@@ -1,7 +1,7 @@
+"use server";
+
 import nodemailer from 'nodemailer';
 import validator from 'validator';
-
-"use server";
 
 // Email configuration using Nodemailer
 const transporter = nodemailer.createTransport({
@@ -20,34 +20,22 @@ const darkLogoUrl = `${baseUrl}/images/TauBOARD-Dark.png`;
 
 const safe = (str: any): string => {
   if (str === null || str === undefined) return '';
-  const val = String(str).trim();
-  return validator.escape(val);
+  return validator.escape(String(str).trim());
 };
 
-/**
- * Returns a star rating string using a constant lookup array.
- */
 const getStars = (rating: any): string => {
   const n = Math.floor(Number(rating));
-  const safeIndex = (isFinite(n) && n >= 0 && n <= 5) ? n : 0;
-  return ["☆☆☆☆☆", "★☆☆☆☆", "★★☆☆☆", "★★★☆☆", "★★★★☆", "★★★★★"][safeIndex];
+  const idx = (isFinite(n) && n >= 0 && n <= 5) ? n : 0;
+  return ["☆☆☆☆☆", "★☆☆☆☆", "★★☆☆☆", "★★★☆☆", "★★★★☆", "★★★★★"][idx];
 };
 
-/**
- * Common BoardTAU Premium Layout
- * This function is explicitly marked to handle server-side HTML generation.
- */
-const wrapLayout = (title: string, htmlBody: string): string => {
-  // Ensure the title is safe before it enters the template
-  const escapedTitle = safe(title);
-  
-  return `
+const EMAIL_HEADER = (title: string) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${escapedTitle}</title>
+    <title>${safe(title)}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #1e293b; line-height: 1.6; }
@@ -70,8 +58,9 @@ const wrapLayout = (title: string, htmlBody: string): string => {
         <div class="email-header">
             <img src="${lightLogoUrl}" alt="BoardTAU" style="height: 40px; width: auto; display: block; margin: 0 auto;">
         </div>
-        <div class="email-body">
-            ${htmlBody}
+        <div class="email-body">`;
+
+const EMAIL_FOOTER = `
         </div>
         <div class="email-footer">
             <p class="footer-text">Need help? Visit our <a href="${baseUrl}/help" style="color: #2F7D6D; text-decoration: none; font-weight: 600;">Help Center</a></p>
@@ -83,9 +72,7 @@ const wrapLayout = (title: string, htmlBody: string): string => {
         </div>
     </div>
 </body>
-</html>
-`.trim();
-};
+</html>`;
 
 export interface EmailOptions {
   to: string;
@@ -115,7 +102,7 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
 
 // Application submission confirmation email
 export const sendApplicationConfirmationEmail = async (user: any, application: any) => {
-  const emailTemplate = `
+  const html = EMAIL_HEADER('Application Submitted') + `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <h2 style="color: #2F7D6D;">Application Submitted Successfully!</h2>
       <p>Dear ${safe(user.name)},</p>
@@ -133,21 +120,19 @@ export const sendApplicationConfirmationEmail = async (user: any, application: a
 
       <p>Best regards,</p>
       <p>The BoardTAU Team</p>
-    </div>
-  `;
+    </div>` + EMAIL_FOOTER;
 
   return await sendEmail({
     to: user.email,
     subject: 'BoardTAU Landlord Application Submitted',
-    html: emailTemplate
+    html
   });
 };
 
 // Application approval email
 export const sendApplicationApprovalEmail = async (user: any, application: any) => {
-  const dashboardLink = `${process.env.NEXTAUTH_URL}/landlord`;
-
-  const emailTemplate = `
+  const dashboardLink = `${baseUrl}/landlord`;
+  const html = EMAIL_HEADER('Application Approved') + `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <h2 style="color: #2F7D6D;">Congratulations! Your Application is Approved!</h2>
       <p>Dear ${safe(user.name)},</p>
@@ -169,19 +154,18 @@ export const sendApplicationApprovalEmail = async (user: any, application: any) 
 
       <p>Best regards,</p>
       <p>The BoardTAU Team</p>
-    </div>
-  `;
+    </div>` + EMAIL_FOOTER;
 
   return await sendEmail({
     to: user.email,
     subject: 'BoardTAU Landlord Application Approved',
-    html: emailTemplate
+    html
   });
 };
 
 // Application rejection email
 export const sendApplicationRejectionEmail = async (user: any, application: any, reason: string) => {
-  const emailTemplate = `
+  const html = EMAIL_HEADER('Application Update') + `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <h2 style="color: #dc2626;">Application Review Update</h2>
       <p>Dear ${safe(user.name)},</p>
@@ -197,21 +181,19 @@ export const sendApplicationRejectionEmail = async (user: any, application: any,
 
       <p>Best regards,</p>
       <p>The BoardTAU Team</p>
-    </div>
-  `;
+    </div>` + EMAIL_FOOTER;
 
   return await sendEmail({
     to: user.email,
     subject: 'BoardTAU Landlord Application Update',
-    html: emailTemplate
+    html
   });
 };
 
 // Admin notification email
 export const sendAdminApplicationNotification = async (admin: any, application: any) => {
-  const adminDashboardLink = `${process.env.NEXTAUTH_URL}/admin/applications`;
-
-  const emailTemplate = `
+  const adminDashboardLink = `${baseUrl}/admin/applications`;
+  const html = EMAIL_HEADER('New Application') + `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <h2 style="color: #2F7D6D;">New Landlord Application Received</h2>
       <p>Dear ${safe(admin.name)},</p>
@@ -232,20 +214,19 @@ export const sendAdminApplicationNotification = async (admin: any, application: 
 
       <p>Best regards,</p>
       <p>The BoardTAU System</p>
-    </div>
-  `;
+    </div>` + EMAIL_FOOTER;
 
   return await sendEmail({
     to: admin.email,
     subject: 'New Landlord Application - BoardTAU',
-    html: emailTemplate
+    html
   });
 };
 // Inquiry Submission Notification (to Landlord)
 export const sendInquirySubmissionEmail = async (landlord: any, tenant: any, listing: any, room: any, inquiryData: any) => {
   const inquiryLink = `${baseUrl}/landlord/inquiries`;
   
-  const content = `
+  const html = EMAIL_HEADER('New Inquiry Received') + `
     <h1 class="greeting">New Inquiry Received</h1>
     <p style="text-align: center; color: #64748b; margin-bottom: 30px;">A student is interested in your property</p>
     
@@ -285,13 +266,12 @@ export const sendInquirySubmissionEmail = async (landlord: any, tenant: any, lis
 
     <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px dashed #e2e8f0;">
         Timely responses improve your performance score and search visibility.
-    </p>
-  `;
+    </p>` + EMAIL_FOOTER;
 
   return await sendEmail({
     to: landlord.email,
     subject: `New Inquiry: ${listing.title}`,
-    html: wrapLayout('New Inquiry Received', content)
+    html
   });
 };
 
@@ -304,7 +284,7 @@ export const sendInquiryStatusEmail = async (tenant: any, listing: any, status: 
   const statusText = isApproved ? "APPROVED" : "DECLINED";
   const inquiryLink = `${baseUrl}/inquiries`;
 
-  const content = `
+  const html = EMAIL_HEADER('Inquiry Status Update') + `
     <h1 class="greeting">Inquiry Update</h1>
     <p style="text-align: center; color: #64748b; margin-bottom: 30px;">
         The landlord of <strong>${safe(listing.title)}</strong> has ${isApproved ? 'accepted' : 'declined'} your inquiry.
@@ -312,7 +292,7 @@ export const sendInquiryStatusEmail = async (tenant: any, listing: any, status: 
     
     <div style="margin: 30px 0; padding: 30px; border-radius: 12px; background: #f8fafc; border: 2px solid ${color}; text-align: center;">
         <p style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Current Status</p>
-        <h1 style="color: ${color}; margin: 0; font-size: 36px; letter-spacing: -1px;">${statusText}</h1>
+        <h1 style="color: ${color}; margin: 0; font-size: 36px; letter-spacing: -1px;">${safe(statusText)}</h1>
     </div>
 
     ${isApproved && inquiryData ? `
@@ -339,13 +319,12 @@ export const sendInquiryStatusEmail = async (tenant: any, listing: any, status: 
         <a href="${safe(inquiryLink)}" class="cta-button" style="background-color: ${isApproved ? '#2F7D6D' : '#64748b'}">
             ${isApproved ? 'Proceed to Inquiry' : 'View Inquiry History'}
         </a>
-    </div>
-  `;
+    </div>` + EMAIL_FOOTER;
 
   return await sendEmail({
     to: tenant.email,
     subject: `Inquiry Update: ${listing.title}`,
-    html: wrapLayout('Inquiry Status Update', content)
+    html
   });
 };
 
@@ -365,7 +344,7 @@ export const sendReservationNotificationEmail = async (
   const isConfirmed = status === "RESERVED" || status === "PAID" || status === "CHECKED_IN";
   const color = isConfirmed ? "#2F7D6D" : "#64748b";
   
-  const content = `
+  const html = EMAIL_HEADER(title) + `
     <h1 class="greeting">${safe(title)}</h1>
     <p style="text-align: center; color: #64748b; margin-bottom: 30px;">
         ${isLandlord ? 'Updates for your property at BoardTAU' : 'Quick update on your stay at BoardTAU'}
@@ -388,13 +367,12 @@ export const sendReservationNotificationEmail = async (
         <a href="${safe(bookingLink)}" class="cta-button">
             ${isLandlord ? 'Manage Reservations' : 'My Reservations'}
         </a>
-    </div>
-  `;
+    </div>` + EMAIL_FOOTER;
 
   return await sendEmail({
     to: user.email,
     subject: `${safe(title)}: ${listing.title}`,
-    html: wrapLayout(title, content)
+    html
   });
 };
 
@@ -466,10 +444,12 @@ export const sendInquiryReceiptEmail = async (tenant: any, listing: any, room: a
     </div>
   `;
 
+  const html = EMAIL_HEADER('Inquiry Received') + content + EMAIL_FOOTER;
+
   return await sendEmail({
     to: tenant.email,
     subject: `Receipt: Inquiry for ${listing.title}`,
-    html: wrapLayout('Inquiry Received', content)
+    html
   });
 };
 
@@ -481,7 +461,7 @@ export const sendNewReviewEmail = async (landlord: any, tenant: any, listing: an
   const safeRating = Math.floor(Number(rating) || 0);
   const stars = getStars(safeRating);
 
-  const content = `
+  const html = EMAIL_HEADER('New Guest Review') + `
     <h1 class="greeting">New Rating Received</h1>
     
     <div style="text-align: center; margin: 30px 0;">
@@ -511,13 +491,12 @@ export const sendNewReviewEmail = async (landlord: any, tenant: any, listing: an
 
     <div style="text-align: center;">
         <a href="${safe(reviewsLink)}" class="cta-button">Manage Review</a>
-    </div>
-  `;
+    </div>` + EMAIL_FOOTER;
 
   return await sendEmail({
     to: landlord.email,
     subject: `New Review for ${listing.title}`,
-    html: wrapLayout('New Guest Review', content)
+    html
   });
 };
 
@@ -527,7 +506,7 @@ export const sendNewReviewEmail = async (landlord: any, tenant: any, listing: an
 export const sendReviewResponseEmail = async (tenant: any, listing: any, response: string) => {
   const reviewsLink = `${baseUrl}/my-reviews`;
 
-  const content = `
+  const html = EMAIL_HEADER('New Review Response') + `
     <h1 class="greeting">Landlord Responded!</h1>
     <p style="text-align: center; color: #64748b; margin-bottom: 30px;">The landlord of <strong>${safe(listing.title)}</strong> has replied to your review.</p>
     
@@ -538,13 +517,12 @@ export const sendReviewResponseEmail = async (tenant: any, listing: any, respons
 
     <div style="text-align: center;">
         <a href="${safe(reviewsLink)}" class="cta-button">See My Reviews</a>
-    </div>
-  `;
+    </div>` + EMAIL_FOOTER;
 
   return await sendEmail({
     to: tenant.email,
     subject: `Response to your review of ${listing.title}`,
-    html: wrapLayout('New Review Response', content)
+    html
   });
 };
 
@@ -556,7 +534,7 @@ export const sendReviewReceiptEmail = async (tenant: any, listing: any, rating: 
   const safeRating = Math.floor(Number(rating) || 0);
   const stars = getStars(safeRating);
 
-  const content = `
+  const html = EMAIL_HEADER('Review Received') + `
     <h1 class="greeting">Review Successfully Logged!</h1>
     <p style="text-align: center; color: #64748b; margin-bottom: 20px;">
         Hi ${safe(tenant.name)}, thank you for sharing your experience at <strong>${safe(listing.title)}</strong>.
@@ -565,7 +543,7 @@ export const sendReviewReceiptEmail = async (tenant: any, listing: any, rating: 
     <div style="margin: 30px 0; padding: 25px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
         <p style="font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Your Official Rating</p>
         <div style="color: #fbbf24; font-size: 32px; line-height: 1; margin-bottom: 5px;">${stars}</div>
-        <p style="font-size: 13px; color: #1e293b; font-weight: 700;">${rating} / 5.0 Rating</p>
+        <p style="font-size: 13px; color: #1e293b; font-weight: 700;">${safe(rating)} / 5.0 Rating</p>
     </div>
 
     <div class="info-section" style="border-left-color: #2F7D6D;">
@@ -580,13 +558,12 @@ export const sendReviewReceiptEmail = async (tenant: any, listing: any, rating: 
 
     <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px dashed #e2e8f0;">
         Thank you for helping us maintain the high standards of BoardTAU accommodations.
-    </p>
-  `;
+    </p>` + EMAIL_FOOTER;
 
   return await sendEmail({
     to: tenant.email,
     subject: `Receipt: Your review of ${listing.title}`,
-    html: wrapLayout('Review Received', content)
+    html
   });
 };
 
