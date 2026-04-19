@@ -43,7 +43,7 @@ const Home: FC<HomeProps> = async ({ searchParams }) => {
   try {
     if (searchParamsObj && Object.keys(searchParamsObj).length > 0) {
       const searchResponse = await executeComplexSearch(searchParamsObj as any);
-      result = { listings: searchResponse.data, nextCursor: null };
+      result = { listings: searchResponse.data, nextCursor: searchResponse.nextCursor };
       isRelaxed = searchResponse.relaxed;
     } else {
       result = await getListings(resolved);

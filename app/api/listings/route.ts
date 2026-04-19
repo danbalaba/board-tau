@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getListings } from "@/services/user/listings";
+import { executeComplexSearch } from "@/services/listing/search.service";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,8 +22,24 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // The service now handles its own Redis caching and stable key generation
-    const result = await getListings(query);
+    // Logic to determine if we should use the Complex Search Engine (Heuristic)
+    const isComplexSearch = !!(query.cctv || query.security24h || query.originLat || query.category);
+
+    let result;
+    if (isComplexSearch) {
+      const cursorStr = query.cursor as string;
+      if (cursorStr && cursorStr.startsWith("page:")) {
+        query.page = cursorStr.split(":")[1];
+      }
+      
+      const searchResponse = await executeComplexSearch(query as any);
+      result = {
+        listings: searchResponse.data,
+        nextCursor: searchResponse.nextCursor
+      };
+    } else {
+      result = await getListings(query);
+    }
 
     return NextResponse.json(result);
   } catch (error) {

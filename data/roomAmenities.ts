@@ -1,12 +1,12 @@
 export const ROOM_AMENITIES = {
-  AC: "AC",
-  DESK: "DESK",
-  CABINET: "CABINET",
-  FOAM: "FOAM",
-  FAN: "FAN",
-  SUBMETER_ELEC: "SUBMETER_ELEC",
-  SUBMETER_WATER: "SUBMETER_WATER",
-  WIFI: "WIFI",
+  AC: "ac",
+  DESK: "desk",
+  CABINET: "locker",
+  FOAM: "foam",
+  FAN: "fan",
+  SUBMETER_ELEC: "submeter",
+  SUBMETER_WATER: "submeter_water",
+  WIFI: "wifi",
 } as const;
 
 export const ROOM_AMENITY_LABELS: Record<string, string> = {

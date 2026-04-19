@@ -305,6 +305,13 @@ model Listing {
   reviews           Review[]
   reservations      Reservation[]
   inquiries         Inquiry[]
+
+  @@index([location], name: "location_2dsphere")
+  @@index([status])
+  @@index([price])
+  @@index([category])
+  @@index([status, price])
+  @@index([status, createdAt(sort: Desc)])
 }
 
 model Room {

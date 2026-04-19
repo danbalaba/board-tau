@@ -31,7 +31,11 @@ export default function ListingsGrid({
         const hasFavorited = favorites.includes(listing.id);
         return (
           <motion.div key={listing.id} variants={staggerItem}>
-            <ListingCard data={listing} hasFavorited={hasFavorited} />
+          <ListingCard
+              data={listing}
+              hasFavorited={hasFavorited}
+              aiHighlight={(listing as any).aiHighlight ?? undefined}
+            />
           </motion.div>
         );
       })}

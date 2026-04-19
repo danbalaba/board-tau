@@ -277,7 +277,7 @@ export const getListings = async (query?: {
           },
         },
       },
-      take: 200,
+      take: 1000,
       orderBy: { createdAt: "desc" },
       include: {
         rooms: {

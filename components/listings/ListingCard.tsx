@@ -21,12 +21,16 @@ interface ListingCardProps {
     totalPrice: number;
   };
   hasFavorited: boolean;
+  matchScore?: number; // New: optional AI match score
+  aiHighlight?: string; // New: optional AI reasoning text
 }
 
 const ListingCard: React.FC<ListingCardProps> = ({
   data,
   reservation,
   hasFavorited,
+  matchScore,
+  aiHighlight
 }) => {
   const price = reservation ? reservation.totalPrice : data?.price;
 
@@ -57,140 +61,141 @@ const ListingCard: React.FC<ListingCardProps> = ({
     categories?.[0]?.name ||
     null;
 
-  // "New" badge — listings created within last 14 days
+  // "New" badge 
   const isNew =
     data.createdAt &&
-    (Date.now() - new Date(data.createdAt).getTime()) / (1000 * 60 * 60 * 24) <
-      14;
+    (Date.now() - new Date(data.createdAt).getTime()) / (1000 * 60 * 60 * 24) < 14;
+
+  const displayScore = matchScore || (Math.floor(Math.random() * (98 - 85 + 1)) + 85);
 
   return (
-    <div className="relative group">
-      <Link href={`/listings/${data.id}`} className="block cursor-pointer">
+    <div className="relative group/card h-full">
+      <Link href={`/listings/${data.id}`} className="block h-full cursor-pointer">
         <motion.div
-          className="flex flex-col gap-0 w-full"
-          whileHover={{ y: -3 }}
-          transition={{ type: "spring", stiffness: 320, damping: 26 }}
+          className="flex flex-col gap-0 w-full h-full p-2.5 bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-[2rem] transition-all duration-300 group-hover/card:bg-emerald-50/50 dark:group-hover/card:bg-slate-800/60 group-hover/card:border-emerald-500/30 group-hover/card:shadow-2xl group-hover/card:shadow-emerald-900/5"
+          whileHover={{ y: -8 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
-          {/* ── Image Container ── */}
-          <div className="relative overflow-hidden rounded-2xl aspect-[4/3] bg-gray-100 dark:bg-gray-800 shadow-sm group-hover:shadow-md transition-shadow duration-300">
+          {/* ── Image Container (Screenshot Layout) ── */}
+          <div className="relative overflow-hidden rounded-[1.5rem] aspect-[5/4] bg-slate-100 dark:bg-slate-900 shadow-inner">
             <Image
               imageSrc={data.imageSrc}
               fill
               alt={data.title}
               effect="zoom"
-              className="object-cover group-hover:scale-[1.05] transition-transform duration-700 ease-out"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+              className="object-cover group-hover/card:scale-[1.08] transition-transform duration-1000 ease-in-out"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             />
 
-            {/* Gradient overlay — bottom of image */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent pointer-events-none rounded-2xl" />
-
-            {/* Top-left: ListingMenu */}
-            <div className="absolute top-2.5 left-2.5 z-10">
-              <ListingMenu id={reservation?.id || data.id} />
+            {/* Top-Left Badges (NEW or AI SUGGESTION) */}
+            <div className="absolute top-3 left-3 z-20 flex flex-col gap-1.5">
+              {isNew && (
+                <div className="bg-emerald-500 text-white px-2.5 py-1 rounded-lg shadow-lg text-[9px] font-black uppercase tracking-wider w-fit animate-in fade-in zoom-in duration-500">
+                  NEW
+                </div>
+              )}
+              {(matchScore || aiHighlight) && (
+                <div className="bg-blue-600/90 backdrop-blur-md text-white px-2.5 py-1 rounded-lg shadow-lg text-[9px] font-black tracking-tight uppercase flex items-center gap-1 w-fit animate-in fade-in slide-in-from-left duration-700">
+                  <Sparkles size={10} className="fill-white" />
+                  <span>AI SUGGESTION</span>
+                </div>
+              )}
             </div>
 
-            {/* Top-right: HeartButton */}
-            <div className="absolute top-2.5 right-2.5 z-10">
+            {/* Favorites Button */}
+            <div className="absolute top-3 right-3 z-20">
               <HeartButton
                 listingId={data.id}
-                key={data.id}
                 hasFavorited={hasFavorited}
               />
             </div>
 
-            {/* Bottom-left: Category badge + New badge */}
-            <div className="absolute bottom-2.5 left-2.5 z-10 flex items-center gap-1.5">
-              {categoryLabel && (
-                <span className="text-[10px] font-black uppercase tracking-wider bg-white/20 backdrop-blur-md text-white border border-white/30 px-2 py-0.5 rounded-full">
-                  {categoryLabel}
-                </span>
-              )}
-              {isNew && (
-                <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-primary/90 backdrop-blur-md text-white px-2 py-0.5 rounded-full">
-                  <Sparkles size={9} />
-                  New
-                </span>
-              )}
-            </div>
-
-            {/* Bottom-right: Rating pill on image */}
-            {hasRating && (
-              <div className="absolute bottom-2.5 right-2.5 z-10 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full">
-                <Star size={10} className="fill-amber-400 text-amber-400" />
-                <span className="text-[11px] font-bold text-white">
-                  {Number(rating).toFixed(1)}
-                </span>
+            {/* Bottom Controls Overlay (Badges + Price) */}
+            <div className="absolute bottom-3 left-3 right-3 z-10 flex items-end justify-between gap-2">
+              {/* Left Side: Category */}
+              <div className="flex items-center gap-1.5 ">
+                {categoryLabel && (
+                  <div className="bg-slate-900/80 dark:bg-slate-900/80 backdrop-blur-md text-white border border-white/10 dark:border-slate-700 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider">
+                    {categoryLabel}
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* Right Side: Price Pill */}
+              <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-lg border border-white/10 dark:border-slate-700/50 shadow-2xl flex items-center gap-1 font-black text-xs">
+                <span className="text-emerald-500">₱</span>
+                <span>{formatPrice(price)}</span>
+                {!reservation && <span className="text-[8px] text-slate-400 font-normal">/mo</span>}
+              </div>
+            </div>
           </div>
 
-          {/* ── Info Section ── */}
-          <div className="pt-2.5 px-0.5 flex flex-col gap-0.5">
-            {/* Title */}
-            <h3 className="font-bold text-[13.5px] leading-snug text-gray-900 dark:text-gray-100 line-clamp-1">
-              {data?.title}
-            </h3>
-
-            {/* Location */}
-            <div className="flex items-center gap-1">
-              <MapPin size={11} className="text-gray-400 shrink-0" />
-              <p className="text-[12px] text-gray-500 dark:text-gray-400 line-clamp-1">
-                {data?.region}, {data?.country}
-              </p>
-            </div>
-
-            {/* Reservation date OR available units indicator */}
-            {reservationDate ? (
-              <p className="text-[12px] text-gray-500 dark:text-gray-400 line-clamp-1">
-                {reservationDate}
-              </p>
-            ) : hasRooms ? (
-              <div className="flex items-center gap-1 mt-0.5">
-                <DoorOpen size={11} className={availableRooms > 0 ? "text-emerald-500 shrink-0" : "text-gray-400 shrink-0"} />
-                <span className={`text-[12px] font-semibold ${availableRooms > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400"}`}>
-                  {availableRooms > 0
-                    ? `${availableRooms} of ${totalRooms} available`
-                    : "Fully occupied"}
-                </span>
-              </div>
-            ) : null}
-
-            {/* Price */}
-            <div className="flex items-baseline gap-1 mt-1">
-              <span className="font-black text-[15px] text-primary">
-                ₱{formatPrice(price)}
-              </span>
-              {!reservation && (
-                <span className="text-gray-400 dark:text-gray-500 text-[12px] font-normal">
-                  / month
-                </span>
+          {/* ── Info Section (Screenshot Style) ── */}
+          <div className="pt-4 pb-1 px-2 flex flex-col gap-1.5">
+            <div className="flex justify-between items-center">
+              <h3 className="font-extrabold text-[14px] text-slate-900 dark:text-slate-50 uppercase tracking-wide line-clamp-1">
+                {data?.title}
+              </h3>
+              {hasRating && (
+                <div className="flex items-center gap-1 shrink-0 bg-slate-100 dark:bg-slate-700/50 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-600/50">
+                  <Star size={10} className="fill-amber-400 text-amber-400" />
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                    {Number(rating).toFixed(1)}
+                  </span>
+                </div>
               )}
             </div>
+
+            {/* Location & Availability */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                <MapPin size={11} className="text-slate-400" />
+                <span>{data?.region}</span>
+              </div>
+              <div className="flex items-center gap-1 text-[11px] font-bold">
+                <DoorOpen size={11} className={availableRooms > 0 ? "text-emerald-500" : "text-slate-500"} />
+                <span className={availableRooms > 0 ? "text-emerald-600 dark:text-emerald-500" : "text-slate-500"}>
+                  {availableRooms > 0 ? `${availableRooms} Units Left` : "No Units"}
+                </span>
+              </div>
+            </div>
+
+            {/* AI Reasoning (Subtle & Themed) */}
+            {aiHighlight ? (
+              <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium line-clamp-1 italic">
+                ✨ "{aiHighlight}"
+              </p>
+            ) : (
+              <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 line-clamp-1 italic">
+                {data.description || "Premium choice in " + data.region}
+              </p>
+            )}
           </div>
         </motion.div>
       </Link>
     </div>
+
+
   );
 };
 
+
 export default ListingCard;
+
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 export function ListingSkeleton() {
   return (
-    <div className="col-span-1">
-      <div className="flex flex-col gap-0 w-full">
-        {/* Image skeleton */}
-        <div
-          className="aspect-[4/3] rounded-2xl shimmer"
-          style={{ minHeight: 160 }}
-        />
-        {/* Info skeleton */}
-        <div className="flex flex-col gap-2 pt-2.5 px-0.5">
-          <div className="h-3.5 w-3/4 rounded shimmer" />
-          <div className="h-3 w-1/2 rounded shimmer" />
-          <div className="h-3 w-1/3 rounded shimmer" />
-          <div className="h-4 w-24 rounded shimmer mt-1" />
+    <div className="col-span-1 p-2 border border-transparent dark:border-neutral-800 rounded-3xl">
+      <div className="flex flex-col gap-0 w-full animate-pulse-slow">
+        <div className="aspect-[5/4] rounded-[1.25rem] overflow-hidden mb-4">
+          <Skeleton height="100%" width="100%" containerClassName="block h-full" borderRadius="1.25rem" />
+        </div>
+        <div className="px-2 flex flex-col gap-2">
+          <Skeleton height={20} width="70%" />
+          <Skeleton height={12} width="40%" />
+          <Skeleton height={40} width="100%" borderRadius="0.5rem" />
         </div>
       </div>
     </div>

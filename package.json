@@ -29,6 +29,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@edgestore/react": "^0.7.0",
     "@edgestore/server": "^0.7.0",
+    "@google/generative-ai": "0.24.1",
     "@hookform/resolvers": "^5.2.1",
     "@mediapipe/tasks-vision": "0.10.34",
     "@next-auth/prisma-adapter": "^1.0.7",

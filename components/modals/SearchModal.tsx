@@ -458,109 +458,102 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
 
       case STEPS.SUMMARY: {
         const coLabel = colleges.find((c) => c.value === college)?.label ?? "—";
-        const catLabels = (categoriesSelected as string[]).length
-          ? (categoriesSelected as string[]).map((v) => categories.find((c) => c.value === v)?.label ?? v).join(", ")
-          : "Any";
-        const advLabels = (advancedSelected as string[]).length
-          ? (advancedSelected as string[]).map((v) => advancedFilters.find((a) => a.value === v)?.label ?? v).join(", ")
-          : "None";
-        const ruleLabels = (rulesSelected as string[]).length
-          ? (rulesSelected as string[]).map((v) => rulesPreferences.find((r) => r.value === v)?.label ?? v).join(", ")
-          : "None";
-        const roomLabel = roomTypeOptions.find((r) => r.value === roomType)?.label ?? "Any";
+        const roomLabel = roomTypeOptions.find((r) => r.value === roomType)?.label ?? "Any room type";
+
+        const SummaryRow = ({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
+          <div className="flex items-start gap-3 py-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
+            <div className="p-1.5 bg-primary/10 rounded-lg text-primary mt-0.5 shrink-0">{icon}</div>
+            <div className="flex flex-col gap-1 min-w-0">
+              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{label}</span>
+              <div className="text-sm text-gray-700 dark:text-gray-200">{children}</div>
+            </div>
+          </div>
+        );
 
         return (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
             <Heading title="Ready to search?" subtitle="Here's a summary of the boarding house you are looking for." />
-            
-            <div className="flex flex-col gap-4">
-              
-              {/* Primary Requirements Card */}
-              <div className="p-5 border border-primary/20 bg-primary/5 rounded-2xl flex flex-col gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-primary/10 rounded-full text-primary mt-1">
-                    <FaMapMarkerAlt className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h5 className="font-semibold text-gray-900 dark:text-gray-100 text-[15px]">Location & Proximity</h5>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mt-0.5">
-                      {isUnlimitedDistance ? "Show all boarding houses in Tarlac" : `Within ${distance} km of ${coLabel}`}
-                    </p>
-                  </div>
-                </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-primary/10 rounded-full text-primary mt-1">
-                    <FaMoneyBillWave className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h5 className="font-semibold text-gray-900 dark:text-gray-100 text-[15px]">Budget</h5>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mt-0.5">
-                      {minPrice && maxPrice ? `₱${minPrice.toLocaleString()} – ₱${maxPrice.toLocaleString()} / month` : "Any budget"}
-                    </p>
-                  </div>
-                </div>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden">
 
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-primary/10 rounded-full text-primary mt-1">
-                    <FaBed className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h5 className="font-semibold text-gray-900 dark:text-gray-100 text-[15px]">Room Requirements</h5>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mt-0.5">
-                      {roomLabel} {bedType ? `(${bedType})` : ""}
-                      {capacity > 1 && ` • ${capacity} Occupants`}
-                      {availableSlots > 1 && ` • ${availableSlots} Slots`}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              {/* Location */}
+              <SummaryRow icon={<FaMapMarkerAlt className="w-3.5 h-3.5" />} label="Location">
+                {isUnlimitedDistance ? "Show all boarding houses in Tarlac" : `Within ${distance} km of ${coLabel}`}
+              </SummaryRow>
 
-              {/* Secondary Preferences Card */}
-              {((categoriesSelected as string[]).length > 0 || (amenitiesSelected as string[]).length > 0) && (
-              <div className="p-5 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl flex flex-col gap-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <FaListUl className="w-4 h-4 text-gray-400" />
-                  <h5 className="font-semibold text-gray-900 dark:text-gray-100 text-[15px]">Amenities & Categories</h5>
+              {/* Budget */}
+              <SummaryRow icon={<FaMoneyBillWave className="w-3.5 h-3.5" />} label="Budget">
+                {minPrice || maxPrice
+                  ? `${minPrice ? `₱${Number(minPrice).toLocaleString()}` : "₱0"} – ₱${Number(maxPrice || 0).toLocaleString()} / month`
+                  : "Any budget"}
+              </SummaryRow>
+
+              {/* Room */}
+              <SummaryRow icon={<FaBed className="w-3.5 h-3.5" />} label="Room Requirements">
+                <div className="flex flex-col gap-1.5">
+                  <span>{roomLabel}{bedType ? ` • ${bedType} Bed` : ""}{capacity > 0 ? ` • Capacity: ${capacity}` : ""}</span>
+                  {(roomAmenitiesSelected as string[]).length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {(roomAmenitiesSelected as string[]).map(v => (
+                        <span key={v} className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded font-semibold border border-primary/20">
+                          IN-ROOM: {v}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {(categoriesSelected as string[]).map(v => {
-                    const label = categories.find((c) => c.value === v)?.label ?? v;
-                    return <span key={v} className="text-xs font-semibold px-2.5 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300">{label}</span>
-                  })}
-                  {(amenitiesSelected as string[]).map(v => (
-                    <span key={v} className="text-xs font-semibold px-2.5 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300">{v}</span>
-                  ))}
-                </div>
-              </div>
+              </SummaryRow>
+
+              {/* Categories */}
+              {(categoriesSelected as string[]).length > 0 && (
+                <SummaryRow icon={<FaListUl className="w-3.5 h-3.5" />} label="Property Type">
+                  <div className="flex flex-wrap gap-1.5">
+                    {(categoriesSelected as string[]).map(v => (
+                      <span key={v} className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg font-medium">
+                        {categories.find(c => c.value === v)?.label ?? v}
+                      </span>
+                    ))}
+                  </div>
+                </SummaryRow>
               )}
 
-              {/* Rules & Scoring Card */}
-              {((rulesSelected as string[]).length > 0 || (advancedSelected as string[]).length > 0) && (
-              <div className="p-5 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl flex flex-col gap-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <FaShieldAlt className="w-4 h-4 text-gray-400" />
-                  <h5 className="font-semibold text-gray-900 dark:text-gray-100 text-[15px]">Rules & Highlights</h5>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                   {(rulesSelected as string[]).map(v => {
-                    const label = rulesPreferences.find((r) => r.value === v)?.label ?? v;
-                    return (
-                      <div key={v} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <Check className="w-3.5 h-3.5 text-primary" /> <span>{label}</span>
-                      </div>
-                    )
-                  })}
-                  {(advancedSelected as string[]).map(v => {
-                    const label = advancedFilters.find((a) => a.value === v)?.label ?? v;
-                    return (
-                      <div key={v} className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-500">
-                        <Check className="w-3.5 h-3.5 text-amber-500" /> <span>{label}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
+              {/* Amenities */}
+              {(amenitiesSelected as string[]).length > 0 && (
+                <SummaryRow icon={<Check className="w-3.5 h-3.5" />} label="House Amenities">
+                  <div className="flex flex-wrap gap-1.5">
+                    {(amenitiesSelected as string[]).map(v => (
+                      <span key={v} className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg font-medium">
+                        {v}
+                      </span>
+                    ))}
+                  </div>
+                </SummaryRow>
+              )}
+
+              {/* Rules */}
+              {(rulesSelected as string[]).length > 0 && (
+                <SummaryRow icon={<FaShieldAlt className="w-3.5 h-3.5" />} label="House Rules">
+                  <div className="flex flex-wrap gap-1.5">
+                    {(rulesSelected as string[]).map(v => (
+                      <span key={v} className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg font-medium">
+                        {rulesPreferences.find(r => r.value === v)?.label ?? v}
+                      </span>
+                    ))}
+                  </div>
+                </SummaryRow>
+              )}
+
+              {/* Advanced / Priority */}
+              {(advancedSelected as string[]).length > 0 && (
+                <SummaryRow icon={<Check className="w-3.5 h-3.5" />} label="Priority Features (Scored)">
+                  <div className="flex flex-wrap gap-1.5">
+                    {(advancedSelected as string[]).map(v => (
+                      <span key={v} className="text-xs px-2 py-0.5 bg-primary text-white rounded-lg font-semibold">
+                        ★ {advancedFilters.find(a => a.value === v)?.label ?? v}
+                      </span>
+                    ))}
+                  </div>
+                </SummaryRow>
               )}
 
             </div>

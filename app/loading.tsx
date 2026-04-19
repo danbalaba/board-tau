@@ -1,10 +1,23 @@
-import LoadingAnimation from "@/components/common/LoadingAnimation";
+import React from "react";
+import HeroSection from "@/components/home/HeroSection";
+import Categories from "@/components/navbar/Categories";
+import LoadingGrid from "@/components/listings/LoadingGrid";
 
 const LoadingPage = () => {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <LoadingAnimation text="Loading BoardTAU..." size="large" />
-    </div>
+    <main className="flex flex-col min-h-screen">
+      {/* Replicate the Home Page Layout */}
+      <HeroSection />
+
+      <section className="container mx-auto px-4 mb-12 mt-12 bg-white dark:bg-[#020817]">
+        <Categories />
+      </section>
+
+      {/* The Skeleton Grid */}
+      <section className="pb-20">
+        <LoadingGrid count={10} />
+      </section>
+    </main>
   );
 };
 

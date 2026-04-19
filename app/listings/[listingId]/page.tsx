@@ -45,16 +45,26 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
     rating,
     reviewCount,
     rooms,
+    features,
   } = listing;
 
   // Convert new amenities object to string array for backward compatibility
-  const amenities = [];
-  if (listingAmenities?.wifi) amenities.push("WiFi");
-  if (listingAmenities?.parking) amenities.push("Parking");
-  if (listingAmenities?.pool) amenities.push("Pool");
-  if (listingAmenities?.gym) amenities.push("Gym");
-  if (listingAmenities?.airConditioning) amenities.push("Air conditioning");
-  if (listingAmenities?.laundry) amenities.push("Laundry area");
+  const amenities = [...(listing.amenities_list || [])];
+  if (listingAmenities?.wifi) if (!amenities.includes("WiFi")) amenities.push("WiFi");
+  if (listingAmenities?.parking) if (!amenities.includes("Parking")) amenities.push("Parking");
+  if (listingAmenities?.pool) if (!amenities.includes("Pool")) amenities.push("Pool");
+  if (listingAmenities?.gym) if (!amenities.includes("Gym")) amenities.push("Gym");
+  if (listingAmenities?.airConditioning) if (!amenities.includes("Air conditioning")) amenities.push("Air conditioning");
+  if (listingAmenities?.laundry) if (!amenities.includes("Laundry area")) amenities.push("Laundry area");
+
+  // Add features to amenities array for display
+  if (features?.cctv) if (!amenities.includes("CCTV")) amenities.push("CCTV");
+  if (features?.security24h) if (!amenities.includes("Security guard")) amenities.push("Security guard");
+  if (features?.nearTransport) if (!amenities.includes("Near transport")) amenities.push("Near transport");
+  if (features?.studyFriendly) if (!amenities.includes("Study friendly")) amenities.push("Study friendly");
+  if (features?.fireSafety) if (!amenities.includes("Fire safety")) amenities.push("Fire safety");
+  if (features?.quietEnvironment) if (!amenities.includes("Quiet environment")) amenities.push("Quiet environment");
+  if (features?.flexibleLease) if (!amenities.includes("Flexible lease")) amenities.push("Flexible lease");
 
   const normalizedImages = (images && images.length > 0)
     ? images.map((img: any) => ({ url: img.url, caption: img.caption ?? undefined, order: img.order ?? 0 }))
