@@ -117,26 +117,29 @@ export function PerformanceMetrics() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpis.map((kpi, i) => (
-          <motion.div key={i} variants={itemVariants}>
-            <Card className="overflow-hidden relative">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <kpi.icon className="w-12 h-12" />
-              </div>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-                <kpi.icon className={cn("w-4 h-4", kpi.color)} />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{kpi.value}</div>
-                <div className="flex items-center mt-1">
-                  <ArrowUpRight className={cn("w-3 h-3 mr-1", kpi.trendColor)} />
-                  <p className={cn("text-xs font-medium", kpi.trendColor)}>{kpi.trend} from last month</p>
+        {kpis.map((kpi: any, i: number) => {
+          const Icon = kpi.icon;
+          return (
+            <motion.div key={i} variants={itemVariants}>
+              <Card className="overflow-hidden relative">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <Icon className="w-12 h-12" />
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                  <Icon className={cn("w-4 h-4", kpi.color)} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{kpi.value}</div>
+                  <div className="flex items-center mt-1">
+                    <ArrowUpRight className={cn("w-3 h-3 mr-1", kpi.trendColor)} />
+                    <p className={cn("text-xs font-medium", kpi.trendColor)}>{kpi.trend} from last month</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -43,14 +43,14 @@ export function PricingOptimization() {
   if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
 
   const avgPrice = propertiesPricing.length > 0 
-    ? propertiesPricing.reduce((sum, p) => sum + p.currentPrice, 0) / propertiesPricing.length 
+    ? propertiesPricing.reduce((sum: number, p: any) => sum + p.currentPrice, 0) / propertiesPricing.length 
     : 0;
   
   const avgOccupancy = propertiesPricing.length > 0
-    ? propertiesPricing.reduce((sum, p) => sum + p.occupancyRate, 0) / propertiesPricing.length
+    ? propertiesPricing.reduce((sum: number, p: any) => sum + p.occupancyRate, 0) / propertiesPricing.length
     : 0;
 
-  const toAdjustCount = propertiesPricing.filter(p => p.currentPrice !== p.suggestedPrice).length;
+  const toAdjustCount = propertiesPricing.filter((p: any) => p.currentPrice !== p.suggestedPrice).length;
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -132,7 +132,7 @@ export function PricingOptimization() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {propertiesPricing.map((pricing) => (
+              {propertiesPricing.map((pricing: any) => (
                 <TableRow key={pricing.id}>
                   <TableCell className="font-medium">{pricing.property}</TableCell>
                   <TableCell>${pricing.currentPrice.toFixed(2)}</TableCell>
@@ -145,8 +145,8 @@ export function PricingOptimization() {
                   </TableCell>
                   <TableCell>{pricing.occupancyRate}%</TableCell>
                   <TableCell>
-                    <Badge variant={demandColors[pricing.demandLevel] as any}>
-                      {demandLabels[pricing.demandLevel]}
+                    <Badge variant={(demandColors as any)[pricing.demandLevel] || 'secondary'}>
+                      {(demandLabels as any)[pricing.demandLevel] || pricing.demandLevel}
                     </Badge>
                   </TableCell>
                   <TableCell>${pricing.competitorPrice.toFixed(2)}</TableCell>

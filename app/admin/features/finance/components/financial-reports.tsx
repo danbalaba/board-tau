@@ -15,9 +15,8 @@ import { useFinancialReports } from '@/app/admin/hooks/use-financial-reports';
 
 export function FinancialReports() {
   const { data: apiResponse, isLoading, error } = useFinancialReports('list');
-  const reportsData = apiResponse?.data || { reports: [], stats: { total: 0, pdf: 0, excel: 0, csv: 0 } };
-  const reports = reportsData.reports;
-  const stats = reportsData.stats;
+  const reports = apiResponse?.data?.reports || [];
+  const stats = apiResponse?.data?.stats || { total: 0, pdf: 0, excel: 0, csv: 0 };
 
   if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading reports...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
@@ -89,7 +88,7 @@ export function FinancialReports() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {reports.map((report) => (
+            {reports.map((report: any) => (
               <div key={report.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center space-x-4">
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">

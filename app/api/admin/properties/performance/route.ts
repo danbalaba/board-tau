@@ -4,6 +4,7 @@ import { ApiResponseFormatter } from '@/lib/api-response';
 import { PrismaErrorHandler } from '@/lib/prisma-error-handler';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { ReservationStatus } from '@prisma/client';
 
 export async function GET(req: NextRequest) {
   try {
@@ -133,11 +134,11 @@ export async function GET(req: NextRequest) {
     const occupancyRate = totalRoomsCount > 0 ? (totalOccupiedCount / totalRoomsCount) * 100 : 0;
 
     // Calculate occupancy statistics
-    const confirmedCount = reservations.filter(r => r.status === 'RESERVED').length;
-    const checkedInCount = reservations.filter(r => r.status === 'CHECKED_IN').length;
-    const completedCount = reservations.filter(r => r.status === 'COMPLETED').length;
-    const pendingCount = reservations.filter(r => r.status === 'PENDING').length;
-    const cancelledCount = reservations.filter(r => r.status === 'CANCELLED').length;
+    const confirmedCount = reservations.filter(r => r.status === ReservationStatus.RESERVED).length;
+    const checkedInCount = reservations.filter(r => r.status === ReservationStatus.CHECKED_IN).length;
+    const completedCount = reservations.filter(r => r.status === ReservationStatus.COMPLETED).length;
+    const pendingCount = reservations.filter(r => r.status === ReservationStatus.PENDING_PAYMENT).length;
+    const cancelledCount = reservations.filter(r => r.status === ReservationStatus.CANCELLED).length;
 
     const totalDays = reservations.reduce((sum, r) => sum + (r.durationInDays || 0), 0);
     const averageStay = reservations.length > 0 ? Math.round(totalDays / reservations.length) : 0;

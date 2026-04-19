@@ -235,7 +235,7 @@ export function BarGraph({ data: propData }: { data?: any[] }) {
               content={
                 <ChartTooltipContent
                   className='w-[150px]'
-                  labelFormatter={(value) => value}
+                  labelFormatter={(value: any) => value}
                 />
               }
             />

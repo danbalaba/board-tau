@@ -9,12 +9,24 @@ interface ApiResponse<T = any> {
 }
 
 export interface FinancialReport {
-  totalRevenue: number;
-  totalReservations: number;
-  averageOccupancy: number;
-  topProperties: Array<{ listingId: string; listingTitle: string; revenue: number }>;
+  // Overview fields
+  totalRevenue?: number;
+  totalReservations?: number;
+  averageOccupancy?: number;
+  topProperties?: Array<{ listingId: string; listingTitle: string; revenue: number }>;
+  
+  // Revenue fields
   dailyRevenue?: Array<{ date: string; revenue: number }>;
   monthlyRevenue?: Array<{ month: string; revenue: number }>;
+
+  // List fields
+  reports?: Array<any>;
+  stats?: {
+    total: number;
+    pdf: number;
+    excel: number;
+    csv: number;
+  };
 }
 
 export function useFinancialReports(type: string = 'overview', range: string = '30d') {

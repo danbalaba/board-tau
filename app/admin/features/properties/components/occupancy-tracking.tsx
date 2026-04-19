@@ -46,9 +46,9 @@ export function OccupancyTracking() {
   if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading occupancy data...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
 
-  const highDemandCount = occupancyData.filter(p => p.occupancy > 90).length;
-  const goodPerfCount = occupancyData.filter(p => p.occupancy >= 70 && p.occupancy <= 90).length;
-  const needsAttentionCount = occupancyData.filter(p => p.occupancy < 70).length;
+  const highDemandCount = occupancyData.filter((p: any) => p.occupancy > 90).length;
+  const goodPerfCount = occupancyData.filter((p: any) => p.occupancy >= 70 && p.occupancy <= 90).length;
+  const needsAttentionCount = occupancyData.filter((p: any) => p.occupancy < 70).length;
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -129,15 +129,15 @@ export function OccupancyTracking() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {bookings.map((booking) => (
+              {bookings.map((booking: any) => (
                 <TableRow key={booking.id}>
                   <TableCell>{booking.guest}</TableCell>
                   <TableCell className="max-w-[200px] truncate">{booking.property}</TableCell>
                   <TableCell>{booking.checkIn}</TableCell>
                   <TableCell>{booking.checkOut}</TableCell>
                   <TableCell>
-                    <Badge variant={statusColors[booking.status] || 'default'}>
-                      {statusLabels[booking.status] || booking.status}
+                    <Badge variant={(statusColors as any)[booking.status] || 'default'}>
+                      {(statusLabels as any)[booking.status] || booking.status}
                     </Badge>
                   </TableCell>
                   <TableCell>${booking.totalAmount.toLocaleString()}</TableCell>

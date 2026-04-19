@@ -147,7 +147,7 @@ export function BookingManagement() {
                     No bookings found in this period.
                   </TableCell>
                 </TableRow>
-              ) : bookings.map((booking) => (
+              ) : bookings.map((booking: any) => (
                 <TableRow key={booking.id}>
                   <TableCell>
                     <div>
@@ -166,8 +166,8 @@ export function BookingManagement() {
                   <TableCell>{booking.checkIn}</TableCell>
                   <TableCell>{booking.checkOut}</TableCell>
                   <TableCell>
-                    <Badge variant={statusColors[booking.status] || 'default'}>
-                      {statusLabels[booking.status] || booking.status}
+                    <Badge variant={(statusColors as any)[booking.status] || 'default'}>
+                      {(statusLabels as any)[booking.status] || booking.status}
                     </Badge>
                   </TableCell>
                   <TableCell>${booking.totalAmount.toLocaleString()}</TableCell>
@@ -199,10 +199,10 @@ export function BookingManagement() {
           <CardContent>
             <div className="space-y-4">
               {bookings
-                .filter(booking => (booking.status === 'reserved' || booking.status === 'confirmed') && new Date(booking.checkIn) >= new Date())
-                .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime())
+                .filter((booking: any) => (booking.status === 'reserved' || booking.status === 'confirmed') && new Date(booking.checkIn) >= new Date())
+                .sort((a: any, b: any) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime())
                 .slice(0, 3)
-                .map((booking) => (
+                .map((booking: any) => (
                   <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <div className="font-medium">{booking.guest}</div>
@@ -219,7 +219,7 @@ export function BookingManagement() {
                     </Button>
                   </div>
                 ))}
-              {bookings.filter(booking => (booking.status === 'reserved' || booking.status === 'confirmed') && new Date(booking.checkIn) >= new Date()).length === 0 && (
+              {bookings.filter((booking: any) => (booking.status === 'reserved' || booking.status === 'confirmed') && new Date(booking.checkIn) >= new Date()).length === 0 && (
                 <p className="text-sm text-center text-muted-foreground py-4">No upcoming check-ins.</p>
               )}
             </div>
@@ -234,10 +234,10 @@ export function BookingManagement() {
           <CardContent>
             <div className="space-y-4">
               {bookings
-                .filter(booking => booking.status === 'cancelled')
-                .sort((a, b) => new Date(b.checkIn).getTime() - new Date(a.checkIn).getTime())
+                .filter((booking: any) => booking.status === 'cancelled')
+                .sort((a: any, b: any) => new Date(b.checkIn).getTime() - new Date(a.checkIn).getTime())
                 .slice(0, 3)
-                .map((booking) => (
+                .map((booking: any) => (
                   <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <div className="font-medium">{booking.guest}</div>
@@ -254,7 +254,7 @@ export function BookingManagement() {
                     </Button>
                   </div>
                 ))}
-              {bookings.filter(booking => booking.status === 'cancelled').length === 0 && (
+              {bookings.filter((booking: any) => booking.status === 'cancelled').length === 0 && (
                 <p className="text-sm text-center text-muted-foreground py-4">No recent cancellations.</p>
               )}
             </div>
