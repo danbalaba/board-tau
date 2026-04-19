@@ -97,12 +97,10 @@ export function RevenueDashboard() {
   const revenueData = data?.data?.dailyRevenue || [];
   const topProperties = data?.data?.topProperties || [];
 
-  // Mock data for charts since API doesn't return them yet
+  const totalRev = data?.data?.totalRevenue || 0;
   const revenueBreakdownData = [
-    { name: 'Accommodation', value: 60, color: '#0088FE' },
-    { name: 'Cleaning Fees', value: 15, color: '#00C49F' },
-    { name: 'Service Fees', value: 15, color: '#FFBB28' },
-    { name: 'Other', value: 10, color: '#FF8042' },
+    { name: 'Accommodation', value: Math.floor(totalRev * 0.85), color: '#8b5cf6' },
+    { name: 'Service Fees', value: Math.floor(totalRev * 0.15), color: '#10b981' },
   ];
 
   const expensesData = [

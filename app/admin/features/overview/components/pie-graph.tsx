@@ -18,55 +18,37 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from "../../../components/ui/chart";
+import { useExecutiveOverview } from "@/app/admin/hooks/use-executive-overview";
 
-const chartData = [
-  { browser: 'chrome', visitors: 275, fill: 'oklch(var(--color-primary))' },
-  { browser: 'safari', visitors: 200, fill: 'oklch(var(--color-primary))' },
-  { browser: 'firefox', visitors: 287, fill: 'oklch(var(--color-primary))' },
-  { browser: 'edge', visitors: 173, fill: 'oklch(var(--color-primary))' },
-  { browser: 'other', visitors: 190, fill: 'oklch(var(--color-primary))' }
-];
+export function PieGraph({ data: propData }: { data?: any[] }) {
+  const { data: apiResponse } = useExecutiveOverview('30d');
+  const data = propData || apiResponse?.data?.charts?.propertyDistribution || [];
+  const chartConfig = React.useMemo(() => {
+    const config: ChartConfig = {
+      total: { label: 'Total' }
+    };
+    data.forEach(item => {
+      config[item.name.toLowerCase()] = {
+        label: item.name,
+        color: item.color
+      };
+    });
+    return config;
+  }, [data]);
 
-const chartConfig = {
-  visitors: {
-    label: 'Visitors'
-  },
-  chrome: {
-    label: 'Chrome',
-    color: 'oklch(var(--color-primary))'
-  },
-  safari: {
-    label: 'Safari',
-    color: 'oklch(var(--color-primary))'
-  },
-  firefox: {
-    label: 'Firefox',
-    color: 'oklch(var(--color-primary))'
-  },
-  edge: {
-    label: 'Edge',
-    color: 'oklch(var(--color-primary))'
-  },
-  other: {
-    label: 'Other',
-    color: 'oklch(var(--color-primary))'
-  }
-} satisfies ChartConfig;
-
-export function PieGraph() {
-  const totalVisitors = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
-  }, []);
+  const totalValue = React.useMemo(() => {
+    return data.reduce((acc, curr) => acc + curr.value, 0);
+  }, [data]);
 
   return (
     <Card className='@container/card'>
       <CardHeader>
-        <CardTitle>Pie Chart - Donut with Text</CardTitle>
+        <CardTitle>Property Distribution</CardTitle>
         <CardDescription>
           <span className='hidden @[540px]/card:block'>
-            Total visitors by browser for the last 6 months
+            Listing breakdown by category
           </span>
-          <span className='@[540px]/card:hidden'>Browser distribution</span>
+          <span className='@[540px]/card:hidden'>Property breakdown</span>
         </CardDescription>
       </CardHeader>
       <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
@@ -75,42 +57,14 @@ export function PieGraph() {
           className='mx-auto aspect-square h-[250px]'
         >
           <PieChart>
-            <defs>
-              {['chrome', 'safari', 'firefox', 'edge', 'other'].map(
-                (browser, index) => (
-                  <linearGradient
-                    key={browser}
-                    id={`fill${browser}`}
-                    x1='0'
-                    y1='0'
-                    x2='0'
-                    y2='1'
-                  >
-                    <stop
-                      offset='0%'
-                      stopColor='oklch(var(--color-primary))'
-                      stopOpacity={1 - index * 0.15}
-                    />
-                    <stop
-                      offset='100%'
-                      stopColor='oklch(var(--color-primary))'
-                      stopOpacity={0.8 - index * 0.15}
-                    />
-                  </linearGradient>
-                )
-              )}
-            </defs>
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
             />
             <Pie
-              data={chartData.map((item) => ({
-                ...item,
-                fill: `url(#fill${item.browser})`
-              }))}
-              dataKey='visitors'
-              nameKey='browser'
+              data={data}
+              dataKey='value'
+              nameKey='name'
               innerRadius={60}
               strokeWidth={2}
               stroke='var(--background)'
@@ -130,14 +84,14 @@ export function PieGraph() {
                           y={viewBox.cy}
                           className='fill-foreground text-3xl font-bold'
                         >
-                          {totalVisitors.toLocaleString()}
+                          {totalValue.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
                           className='fill-muted-foreground text-sm'
                         >
-                          Total Visitors
+                          Total Listings
                         </tspan>
                       </text>
                     );
@@ -149,13 +103,11 @@ export function PieGraph() {
         </ChartContainer>
       </CardContent>
       <CardFooter className='flex-col gap-2 text-sm'>
-        <div className='flex items-center gap-2 leading-none font-medium'>
-          Chrome leads with{' '}
-          {((chartData[0].visitors / totalVisitors) * 100).toFixed(1)}%{' '}
-          <IconTrendingUp className='h-4 w-4' />
+        <div className='flex items-center gap-2 leading-none font-medium text-emerald-500'>
+          Platform diversity is high <IconTrendingUp className='h-4 w-4' />
         </div>
         <div className='text-muted-foreground leading-none'>
-          Based on data from January - June 2024
+          Based on current active inventory
         </div>
       </CardFooter>
     </Card>

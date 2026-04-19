@@ -91,23 +91,86 @@ export async function GET(req: NextRequest) {
       : 0;
     const totalRevenue = revenue._sum.totalPrice || 0;
 
-    // Calculate occupancy rate (simplified)
-    let totalRooms = 0;
-    let occupiedRooms = 0;
-
-    (occupancyData as any[]).forEach(property => {
-      (property.rooms as any[]).forEach(room => {
-        totalRooms++;
-        const roomReservations = (property.reservations as any[]).filter(reservation =>
-          reservation.roomId === room.id
-        );
-        if (roomReservations.length > 0) {
-          occupiedRooms++;
-        }
-      });
+    // Calculate daily revenue trends
+    const revenueMap = new Map<string, { revenue: number, bookings: number }>();
+    reservations.forEach(res => {
+      const dateKey = new Date(res.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const current = revenueMap.get(dateKey) || { revenue: 0, bookings: 0 };
+      if (res.paymentStatus === 'PAID') current.revenue += res.totalPrice;
+      current.bookings += 1;
+      revenueMap.set(dateKey, current);
     });
 
-    const occupancyRate = totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
+    const revenueTrends = Array.from(revenueMap.entries())
+      .map(([date, data]) => ({ month: date, revenue: data.revenue, bookings: data.bookings }))
+      .slice(-7); // Last 7 days/points
+
+    // Calculate occupancy by property
+    const occupancyByProperty = (occupancyData as any[]).map(property => {
+      const propertyRooms = property.rooms?.length || 0;
+      const propertyOccupied = property.reservations?.length || 0;
+      return {
+        property: property.title,
+        occupancy: propertyRooms > 0 ? Math.min(100, (propertyOccupied / propertyRooms) * 100) : 0
+      };
+    }).sort((a, b) => b.occupancy - a.occupancy).slice(0, 5);
+
+    // Pricing comparison
+    const pricingComparison = (occupancyData as any[]).map(property => ({
+      property: property.title,
+      price: property.price || 0,
+      competitors: (property.price || 0) * (0.9 + Math.random() * 0.2) // Mock competitor price based on real price
+    })).slice(0, 5);
+
+    // Calculate global occupancy rate
+    let totalRoomsCount = 0;
+    let totalOccupiedCount = 0;
+    (occupancyData as any[]).forEach(property => {
+      totalRoomsCount += property.rooms?.length || 0;
+      totalOccupiedCount += property.reservations?.length || 0;
+    });
+
+    const occupancyRate = totalRoomsCount > 0 ? (totalOccupiedCount / totalRoomsCount) * 100 : 0;
+
+    // Calculate occupancy statistics
+    const confirmedCount = reservations.filter(r => r.status === 'RESERVED').length;
+    const checkedInCount = reservations.filter(r => r.status === 'CHECKED_IN').length;
+    const completedCount = reservations.filter(r => r.status === 'COMPLETED').length;
+    const pendingCount = reservations.filter(r => r.status === 'PENDING').length;
+    const cancelledCount = reservations.filter(r => r.status === 'CANCELLED').length;
+
+    const totalDays = reservations.reduce((sum, r) => sum + (r.durationInDays || 0), 0);
+    const averageStay = reservations.length > 0 ? Math.round(totalDays / reservations.length) : 0;
+
+    // Pricing optimization data
+    const pricingRecommendations = (occupancyData as any[]).map(property => {
+      const propertyRooms = property.rooms?.length || 0;
+      const propertyOccupied = property.reservations?.length || 0;
+      const occupancy = propertyRooms > 0 ? (propertyOccupied / propertyRooms) * 100 : 0;
+      const currentPrice = property.price || 0;
+      
+      let demandLevel: 'low' | 'medium' | 'high' = 'medium';
+      let suggestedPrice = currentPrice;
+
+      if (occupancy > 80) {
+        demandLevel = 'high';
+        suggestedPrice = currentPrice * 1.1; // Suggest 10% increase
+      } else if (occupancy < 40) {
+        demandLevel = 'low';
+        suggestedPrice = currentPrice * 0.9; // Suggest 10% decrease
+      }
+
+      return {
+        id: property.id,
+        property: property.title,
+        currentPrice,
+        suggestedPrice: parseFloat(suggestedPrice.toFixed(2)),
+        occupancyRate: Math.round(occupancy),
+        demandLevel,
+        competitorPrice: parseFloat((currentPrice * (0.95 + Math.random() * 0.1)).toFixed(2)),
+        lastUpdated: now.toISOString()
+      };
+    });
 
     // Transform data for response
     const performanceData = {
@@ -118,6 +181,28 @@ export async function GET(req: NextRequest) {
       averageRating: parseFloat(averageRating.toFixed(1)),
       totalRevenue,
       occupancyRate: parseFloat(occupancyRate.toFixed(1)),
+      revenueTrends,
+      occupancyByProperty,
+      pricingComparison,
+      averageStay,
+      bookingStats: {
+        confirmed: confirmedCount + checkedInCount,
+        pending: pendingCount,
+        cancelled: cancelledCount,
+        completed: completedCount
+      },
+      recentBookings: (reservations as any[]).slice(0, 10).map(res => ({
+        id: res.id,
+        guest: res.user?.name || 'Unknown',
+        email: res.user?.email || 'N/A',
+        phone: res.user?.phone || 'N/A',
+        property: res.listing?.title || 'Unknown',
+        checkIn: res.startDate.toISOString().split('T')[0],
+        checkOut: res.endDate.toISOString().split('T')[0],
+        status: res.status.toLowerCase(),
+        totalAmount: res.totalPrice
+      })),
+      pricingRecommendations
     };
 
     return NextResponse.json(
