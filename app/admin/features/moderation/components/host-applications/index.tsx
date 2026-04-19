@@ -12,81 +12,45 @@ import {
   ShieldAlert,
   ArrowRight
 } from 'lucide-react';
+import { useHostApplications, useModerationDecision } from '@/app/admin/hooks/use-moderation';
 import { Button } from '@/app/admin/components/ui/button';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ApplicationKPICards } from './application-kpi-cards';
 import { ApplicationTable } from './application-table';
 
-// Mock data (Preserving your original data values)
-const mockApplications: any[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    experience: '3 years in property management',
-    motivation: 'I want to share my knowledge and help people find great accommodation',
-    documentsVerified: true,
-    status: 'pending',
-    submittedAt: '2024-01-09T16:45:00Z',
-    lastUpdated: '2024-01-09T16:45:00Z'
-  },
-  {
-    id: '2',
-    name: 'Sarah Williams',
-    email: 'sarah.w@example.com',
-    phone: '+1 (555) 234-5678',
-    experience: '1 year hosting on other platforms',
-    motivation: 'I love meeting new people and providing comfortable stays',
-    documentsVerified: true,
-    status: 'pending',
-    submittedAt: '2024-01-08T14:20:00Z',
-    lastUpdated: '2024-01-08T14:20:00Z'
-  },
-  {
-    id: '3',
-    name: 'Michael Chen',
-    email: 'michael.c@example.com',
-    phone: '+1 (555) 345-6789',
-    experience: 'First time hosting',
-    motivation: 'I have a spare room and want to earn extra income',
-    documentsVerified: false,
-    status: 'pending',
-    submittedAt: '2024-01-07T11:30:00Z',
-    lastUpdated: '2024-01-07T11:30:00Z'
-  }
-];
-
 export function HostApplicationsDashboard() {
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [applications, setApplications] = useState(mockApplications);
+  const { data: apiResponse, isLoading, refetch, isFetching } = useHostApplications();
+  const { mutate: decide } = useModerationDecision();
 
   const handleSync = async () => {
-    setIsSyncing(true);
-    // Simulate API fetch delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    setIsSyncing(false);
+    await refetch();
     toast.success('Moderation queue synchronized with latest submissions.');
   };
 
-  const handleApprove = (id: string) => {
-    setApplications(apps => apps.map(app => 
-      app.id === id ? { ...app, status: 'approved' } : app
-    ));
-    toast.success('Application approved successfully.');
+  const handleAction = (id: string, action: 'approve' | 'reject') => {
+    decide({ id, entityType: 'hostApplication', action }, {
+      onSuccess: () => {
+        toast.success(`Application ${action === 'approve' ? 'authorized' : 'rejected'} successfully.`);
+      },
+      onError: (err: any) => {
+        toast.error(`Database Error: ${err.message}`);
+      }
+    });
   };
 
-  const handleReject = (id: string) => {
-    setApplications(apps => apps.map(app => 
-      app.id === id ? { ...app, status: 'rejected' } : app
-    ));
-    toast.warning('Application rejected.');
-  };
+  const applications = apiResponse?.data || [];
+  const pendingCount = apiResponse?.meta?.stats?.pending || 0;
+  const approvedCount = apiResponse?.meta?.stats?.approved || 0;
+  const rejectedCount = apiResponse?.meta?.stats?.rejected || 0;
 
-  const pendingCount = applications.filter(a => a.status === 'pending').length;
-  const approvedCount = applications.filter(a => a.status === 'approved').length;
-  const rejectedCount = applications.filter(a => a.status === 'rejected').length;
+  if (isLoading) {
+    return (
+      <div className="p-6 lg:p-10 text-center">
+        <h2 className="text-2xl font-bold italic animate-pulse">Initializing Security Clearance...</h2>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-10 space-y-10">
@@ -102,7 +66,7 @@ export function HostApplicationsDashboard() {
             {pendingCount > 0 && (
               <span className="flex items-center gap-1.5 bg-amber-500/10 px-3 py-1.5 rounded-2xl border border-amber-500/10 text-amber-500 text-[10px] tracking-[0.2em] font-black">
                 <ShieldAlert className="w-3 h-3" />
-                ACTION REQUIRED
+                {pendingCount} ACTION REQUIRED
               </span>
             )}
           </motion.h1>
@@ -122,7 +86,7 @@ export function HostApplicationsDashboard() {
             variant="outline"
             size="icon"
             onClick={handleSync}
-            className={cn("h-11 w-11 rounded-xl border-border/60", isSyncing && "animate-spin")}
+            className={cn("h-11 w-11 rounded-xl border-border/60", isFetching && "animate-spin")}
           >
             <RefreshCcw className="w-4 h-4" />
           </Button>
@@ -139,7 +103,7 @@ export function HostApplicationsDashboard() {
 
       {/* KPI Section */}
       <ApplicationKPICards 
-        total={applications.length} 
+        total={pendingCount} 
         pending={pendingCount} 
         approved={approvedCount} 
         rejected={rejectedCount} 
@@ -158,10 +122,21 @@ export function HostApplicationsDashboard() {
           transition={{ delay: 0.2 }}
         >
           <ApplicationTable 
-            applications={applications}
+            applications={applications.map((app: any) => ({
+              id: app.id,
+              name: app.user.name,
+              email: app.user.email,
+              phone: app.contactInfo?.phoneNumber || 'N/A',
+              experience: app.businessInfo?.experience || 'N/A',
+              motivation: app.businessInfo?.motivation || 'N/A',
+              documentsVerified: !!app.documents,
+              status: app.status,
+              submittedAt: app.createdAt,
+              lastUpdated: app.updatedAt
+            }))}
             onView={(id) => toast.info(`Viewing application detail: ${id}`)}
-            onApprove={handleApprove}
-            onReject={handleReject}
+            onApprove={(id) => handleAction(id, 'approve')}
+            onReject={(id) => handleAction(id, 'reject')}
           />
         </motion.div>
       </div>

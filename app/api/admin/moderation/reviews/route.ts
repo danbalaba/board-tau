@@ -25,8 +25,8 @@ export async function GET(req: NextRequest) {
     // Calculate pagination
     const skip = (page - 1) * perPage;
 
-    // Fetch reviews to moderate
-    const [reviews, total] = await Promise.all([
+    // Fetch reviews to moderate with status counts
+    const [reviews, total, approvedCount] = await Promise.all([
       db.review.findMany({
         where: { status },
         include: {
@@ -37,7 +37,8 @@ export async function GET(req: NextRequest) {
         skip,
         take: perPage,
       }),
-      db.review.count({ where: { status } }),
+      db.review.count({ where: { status: 'pending' } }),
+      db.review.count({ where: { status: 'approved' } }),
     ]);
 
     // Transform data for response
@@ -76,6 +77,10 @@ export async function GET(req: NextRequest) {
         page,
         perPage,
         totalPages: Math.ceil(total / perPage),
+        stats: {
+          pending: total,
+          approved: approvedCount,
+        }
       })
     );
   } catch (error) {

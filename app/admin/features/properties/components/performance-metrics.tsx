@@ -41,30 +41,7 @@ import {
   ChartLegendContent,
 } from '@/app/admin/components/ui/chart';
 
-// Sample data for performance metrics
-const revenueData = [
-  { month: 'Jan', revenue: 4000, bookings: 24 },
-  { month: 'Feb', revenue: 3500, bookings: 21 },
-  { month: 'Mar', revenue: 4500, bookings: 27 },
-  { month: 'Apr', revenue: 5000, bookings: 30 },
-  { month: 'May', revenue: 5500, bookings: 33 },
-  { month: 'Jun', revenue: 6000, bookings: 36 },
-  { month: 'Jul', revenue: 6500, bookings: 39 }
-];
-
-const occupancyData = [
-  { property: 'Cozy Studio', occupancy: 85 },
-  { property: 'Beach Villa', occupancy: 90 },
-  { property: 'Luxury Apartment', occupancy: 88 },
-  { property: 'Downtown Loft', occupancy: 82 }
-];
-
-const pricingData = [
-  { property: 'Cozy Studio', price: 150, competitors: 140 },
-  { property: 'Beach Villa', price: 250, competitors: 240 },
-  { property: 'Luxury Apartment', price: 300, competitors: 280 },
-  { property: 'Downtown Loft', price: 200, competitors: 190 }
-];
+import { usePropertyPerformance } from '@/app/admin/hooks/use-property-performance';
 
 const chartConfig = {
   revenue: {
@@ -108,6 +85,23 @@ const itemVariants = {
 };
 
 export function PerformanceMetrics() {
+  const { data: apiResponse, isLoading, error } = usePropertyPerformance('30d');
+  const data = apiResponse?.data;
+
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading performance metrics...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
+
+  const revenueData = data?.revenueTrends || [];
+  const occupancyData = data?.occupancyByProperty || [];
+  const pricingData = data?.pricingComparison || [];
+
+  const kpis = [
+    { title: "Total Bookings", value: data?.totalReservations || 0, trend: "+12.5%", icon: Zap, color: "text-amber-500", trendColor: "text-emerald-500" },
+    { title: "Avg Occupancy", value: `${data?.occupancyRate || 0}%`, trend: "+2.1%", icon: Activity, color: "text-primary", trendColor: "text-emerald-500" },
+    { title: "Total Revenue", value: `$${data?.totalRevenue?.toLocaleString() || 0}`, trend: "+15.2%", icon: TrendingUp, color: "text-emerald-500", trendColor: "text-emerald-500" },
+    { title: "Avg Rating", value: data?.averageRating || 0, trend: "+0.1", icon: Star, color: "text-amber-500 fill-amber-500", trendColor: "text-emerald-500" },
+  ];
+
   return (
     <motion.div
       className="space-y-6"
@@ -123,31 +117,29 @@ export function PerformanceMetrics() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { title: "Total Bookings", value: "1,245", trend: "+12.5%", icon: Zap, color: "text-amber-500", trendColor: "text-emerald-500" },
-          { title: "Avg Occupancy", value: "86.3%", trend: "+2.1%", icon: Activity, color: "text-primary", trendColor: "text-emerald-500" },
-          { title: "Total Revenue", value: "$186,750", trend: "+15.2%", icon: TrendingUp, color: "text-emerald-500", trendColor: "text-emerald-500" },
-          { title: "Avg Rating", value: "4.8", trend: "+0.1", icon: Star, color: "text-amber-500 fill-amber-500", trendColor: "text-emerald-500" },
-        ].map((kpi, i) => (
-          <motion.div key={i} variants={itemVariants}>
-            <Card className="overflow-hidden relative">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <kpi.icon className="w-12 h-12" />
-              </div>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-                <kpi.icon className={cn("w-4 h-4", kpi.color)} />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{kpi.value}</div>
-                <div className="flex items-center mt-1">
-                  <ArrowUpRight className={cn("w-3 h-3 mr-1", kpi.trendColor)} />
-                  <p className={cn("text-xs font-medium", kpi.trendColor)}>{kpi.trend} from last month</p>
+        {kpis.map((kpi: any, i: number) => {
+          const Icon = kpi.icon;
+          return (
+            <motion.div key={i} variants={itemVariants}>
+              <Card className="overflow-hidden relative">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <Icon className="w-12 h-12" />
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                  <Icon className={cn("w-4 h-4", kpi.color)} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{kpi.value}</div>
+                  <div className="flex items-center mt-1">
+                    <ArrowUpRight className={cn("w-3 h-3 mr-1", kpi.trendColor)} />
+                    <p className={cn("text-xs font-medium", kpi.trendColor)}>{kpi.trend} from last month</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

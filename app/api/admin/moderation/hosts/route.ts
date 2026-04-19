@@ -25,8 +25,8 @@ export async function GET(req: NextRequest) {
     // Calculate pagination
     const skip = (page - 1) * perPage;
 
-    // Fetch host applications
-    const [hostApplications, total] = await Promise.all([
+    // Fetch host applications with status counts
+    const [hostApplications, total, approvedCount, rejectedCount] = await Promise.all([
       db.hostApplication.findMany({
         where: { status },
         include: { user: true },
@@ -34,7 +34,9 @@ export async function GET(req: NextRequest) {
         skip,
         take: perPage,
       }),
-      db.hostApplication.count({ where: { status } }),
+      db.hostApplication.count({ where: { status: 'pending' } }),
+      db.hostApplication.count({ where: { status: 'approved' } }),
+      db.hostApplication.count({ where: { status: 'rejected' } }),
     ]);
 
     // Transform data for response
@@ -67,6 +69,11 @@ export async function GET(req: NextRequest) {
         page,
         perPage,
         totalPages: Math.ceil(total / perPage),
+        stats: {
+          pending: total,
+          approved: approvedCount,
+          rejected: rejectedCount,
+        }
       })
     );
   } catch (error) {

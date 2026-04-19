@@ -20,68 +20,35 @@ import { Badge } from '@/app/admin/components/ui/badge';
 import { Button } from '@/app/admin/components/ui/button';
 import { Eye, Calendar } from 'lucide-react';
 
-interface Booking {
-  id: string;
-  guest: string;
-  property: string;
-  checkIn: string;
-  checkOut: string;
-  status: 'confirmed' | 'pending' | 'cancelled';
-  totalAmount: number;
-}
-
-const bookings: Booking[] = [
-  {
-    id: '1',
-    guest: 'Jane Smith',
-    property: 'Cozy Studio',
-    checkIn: '2024-01-15',
-    checkOut: '2024-01-20',
-    status: 'confirmed',
-    totalAmount: 750
-  },
-  {
-    id: '2',
-    guest: 'Mike Johnson',
-    property: 'Beach Villa',
-    checkIn: '2024-01-18',
-    checkOut: '2024-01-25',
-    status: 'pending',
-    totalAmount: 1750
-  },
-  {
-    id: '3',
-    guest: 'Tom Brown',
-    property: 'Luxury Apartment',
-    checkIn: '2024-01-20',
-    checkOut: '2024-01-27',
-    status: 'confirmed',
-    totalAmount: 2100
-  },
-  {
-    id: '4',
-    guest: 'Sarah Williams',
-    property: 'Downtown Loft',
-    checkIn: '2024-01-22',
-    checkOut: '2024-01-24',
-    status: 'cancelled',
-    totalAmount: 400
-  }
-];
+import { usePropertyPerformance } from '@/app/admin/hooks/use-property-performance';
 
 const statusColors = {
-  confirmed: 'default',
+  reserved: 'default',
   pending: 'secondary',
-  cancelled: 'destructive'
+  cancelled: 'destructive',
+  completed: 'outline'
 };
 
 const statusLabels = {
-  confirmed: 'Confirmed',
+  reserved: 'Confirmed',
   pending: 'Pending',
-  cancelled: 'Cancelled'
+  cancelled: 'Cancelled',
+  completed: 'Completed'
 };
 
 export function OccupancyTracking() {
+  const { data: apiResponse, isLoading, error } = usePropertyPerformance('30d');
+  const data = apiResponse?.data;
+  const bookings = data?.recentBookings || [];
+  const stats = data?.bookingStats || { confirmed: 0, pending: 0, cancelled: 0 };
+  const occupancyData = data?.occupancyByProperty || [];
+
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading occupancy data...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
+
+  const highDemandCount = occupancyData.filter((p: any) => p.occupancy > 90).length;
+  const goodPerfCount = occupancyData.filter((p: any) => p.occupancy >= 70 && p.occupancy <= 90).length;
+  const needsAttentionCount = occupancyData.filter((p: any) => p.occupancy < 70).length;
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -99,7 +66,7 @@ export function OccupancyTracking() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {bookings.filter(booking => booking.status === 'confirmed').length}
+              {stats.confirmed}
             </div>
             <p className="text-sm text-muted-foreground">Confirmed bookings</p>
           </CardContent>
@@ -112,7 +79,7 @@ export function OccupancyTracking() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {bookings.filter(booking => booking.status === 'pending').length}
+              {stats.pending}
             </div>
             <p className="text-sm text-muted-foreground">Pending bookings</p>
           </CardContent>
@@ -125,7 +92,7 @@ export function OccupancyTracking() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {bookings.filter(booking => booking.status === 'cancelled').length}
+              {stats.cancelled}
             </div>
             <p className="text-sm text-muted-foreground">Cancelled bookings</p>
           </CardContent>
@@ -134,10 +101,10 @@ export function OccupancyTracking() {
         <Card>
           <CardHeader>
             <CardTitle>Average Stay</CardTitle>
-            <CardDescription>Average number of night per stay</CardDescription>
+            <CardDescription>Average number of nights per stay</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">5 nights</div>
+            <div className="text-3xl font-bold">{data?.averageStay || 0} nights</div>
             <p className="text-sm text-muted-foreground">Average stay duration</p>
           </CardContent>
         </Card>
@@ -162,18 +129,18 @@ export function OccupancyTracking() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {bookings.map((booking) => (
+              {bookings.map((booking: any) => (
                 <TableRow key={booking.id}>
                   <TableCell>{booking.guest}</TableCell>
-                  <TableCell>{booking.property}</TableCell>
+                  <TableCell className="max-w-[200px] truncate">{booking.property}</TableCell>
                   <TableCell>{booking.checkIn}</TableCell>
                   <TableCell>{booking.checkOut}</TableCell>
                   <TableCell>
-                    <Badge variant={statusColors[booking.status] as any}>
-                      {statusLabels[booking.status]}
+                    <Badge variant={(statusColors as any)[booking.status] || 'default'}>
+                      {(statusLabels as any)[booking.status] || booking.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>${booking.totalAmount.toFixed(2)}</TableCell>
+                  <TableCell>${booking.totalAmount.toLocaleString()}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
                       <Button
@@ -183,14 +150,6 @@ export function OccupancyTracking() {
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         View
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => console.log('Calendar', booking.id)}
-                      >
-                        <Calendar className="h-4 w-4 mr-1" />
-                        Calendar
                       </Button>
                     </div>
                   </TableCell>
@@ -210,17 +169,17 @@ export function OccupancyTracking() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-blue-50 rounded-lg">
               <h3 className="font-medium text-blue-900">High Demand</h3>
-              <p className="text-2xl font-bold text-blue-900">3 properties</p>
+              <p className="text-2xl font-bold text-blue-900">{highDemandCount} properties</p>
               <p className="text-sm text-blue-700">Occupancy {'>'} 90%</p>
             </div>
             <div className="p-4 bg-green-50 rounded-lg">
               <h3 className="font-medium text-green-900">Good Performance</h3>
-              <p className="text-2xl font-bold text-green-900">5 properties</p>
+              <p className="text-2xl font-bold text-green-900">{goodPerfCount} properties</p>
               <p className="text-sm text-green-700">Occupancy 70-90%</p>
             </div>
             <div className="p-4 bg-yellow-50 rounded-lg">
               <h3 className="font-medium text-yellow-900">Needs Attention</h3>
-              <p className="text-2xl font-bold text-yellow-900">2 properties</p>
+              <p className="text-2xl font-bold text-yellow-900">{needsAttentionCount} properties</p>
               <p className="text-sm text-yellow-700">Occupancy {'<'} 70%</p>
             </div>
           </div>

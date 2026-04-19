@@ -11,56 +11,15 @@ import {
 import { Button } from '@/app/admin/components/ui/button';
 import { Download, Eye } from 'lucide-react';
 
-interface Report {
-  id: string;
-  name: string;
-  date: string;
-  type: string;
-  format: string;
-  status: 'generated' | 'generating' | 'failed';
-  size: string;
-}
-
-const reports: Report[] = [
-  {
-    id: '1',
-    name: 'Monthly Revenue Report',
-    date: '2024-01-10T10:30:00Z',
-    type: 'Financial',
-    format: 'PDF',
-    status: 'generated',
-    size: '2.5 MB'
-  },
-  {
-    id: '2',
-    name: 'Quarterly Tax Report',
-    date: '2024-01-09T09:15:00Z',
-    type: 'Tax',
-    format: 'Excel',
-    status: 'generated',
-    size: '1.8 MB'
-  },
-  {
-    id: '3',
-    name: 'Annual Financial Summary',
-    date: '2024-01-08T16:45:00Z',
-    type: 'Financial',
-    format: 'PDF',
-    status: 'generated',
-    size: '4.2 MB'
-  },
-  {
-    id: '4',
-    name: 'Host Earnings Report',
-    date: '2024-01-07T14:20:00Z',
-    type: 'Financial',
-    format: 'CSV',
-    status: 'generated',
-    size: '850 KB'
-  }
-];
+import { useFinancialReports } from '@/app/admin/hooks/use-financial-reports';
 
 export function FinancialReports() {
+  const { data: apiResponse, isLoading, error } = useFinancialReports('list');
+  const reports = apiResponse?.data?.reports || [];
+  const stats = apiResponse?.data?.stats || { total: 0, pdf: 0, excel: 0, csv: 0 };
+
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading reports...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -77,7 +36,7 @@ export function FinancialReports() {
             <CardDescription>All generated reports</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{reports.length}</div>
+            <div className="text-3xl font-bold">{stats.total}</div>
             <p className="text-sm text-muted-foreground">Generated reports</p>
           </CardContent>
         </Card>
@@ -89,7 +48,7 @@ export function FinancialReports() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {reports.filter(report => report.format === 'PDF').length}
+              {stats.pdf}
             </div>
             <p className="text-sm text-muted-foreground">PDF reports</p>
           </CardContent>
@@ -102,7 +61,7 @@ export function FinancialReports() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {reports.filter(report => report.format === 'Excel').length}
+              {stats.excel}
             </div>
             <p className="text-sm text-muted-foreground">Excel reports</p>
           </CardContent>
@@ -115,7 +74,7 @@ export function FinancialReports() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {reports.filter(report => report.format === 'CSV').length}
+              {stats.csv}
             </div>
             <p className="text-sm text-muted-foreground">CSV reports</p>
           </CardContent>
@@ -129,7 +88,7 @@ export function FinancialReports() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {reports.map((report) => (
+            {reports.map((report: any) => (
               <div key={report.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center space-x-4">
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">

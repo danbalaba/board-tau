@@ -16,6 +16,7 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from "../../../components/ui/chart";
+import { useExecutiveOverview } from "@/app/admin/hooks/use-executive-overview";
 
 export const description = 'An interactive bar chart';
 
@@ -114,33 +115,38 @@ const chartData = [
 ];
 
 const chartConfig = {
-  views: {
-    label: 'Page Views'
-  },
-  desktop: {
-    label: 'Desktop',
+  revenue: {
+    label: 'Revenue',
     color: 'oklch(var(--color-primary))'
   },
-  mobile: {
-    label: 'Mobile',
-    color: 'oklch(var(--color-primary))'
-  },
-  error: {
-    label: 'Error',
+  bookings: {
+    label: 'Bookings',
     color: 'oklch(var(--color-primary))'
   }
 } satisfies ChartConfig;
 
-export function BarGraph() {
+export function BarGraph({ data: propData }: { data?: any[] }) {
+  const { data: apiResponse } = useExecutiveOverview('30d');
+  const data = propData || apiResponse?.data?.charts?.revenue || [];
+
+  const chartData = React.useMemo(() => {
+    if (!data || data.length === 0) return [];
+    return data.map((item: any) => ({
+      date: item.month, // month label from API
+      revenue: item.revenue,
+      bookings: item.bookings
+    }));
+  }, [data]);
+
   const [activeChart, setActiveChart] =
-    React.useState<keyof typeof chartConfig>('desktop');
+    React.useState<'revenue' | 'bookings'>('revenue');
 
   const total = React.useMemo(
     () => ({
-      desktop: chartData.reduce((acc, curr) => acc + curr.desktop, 0),
-      mobile: chartData.reduce((acc, curr) => acc + curr.mobile, 0)
+      revenue: chartData.reduce((acc, curr) => acc + curr.revenue, 0),
+      bookings: chartData.reduce((acc, curr) => acc + curr.bookings, 0)
     }),
-    []
+    [chartData]
   );
 
   const [isClient, setIsClient] = React.useState(false);
@@ -149,44 +155,41 @@ export function BarGraph() {
     setIsClient(true);
   }, []);
 
-  React.useEffect(() => {
-    if (activeChart === 'error') {
-      throw new Error('Mocking Error');
-    }
-  }, [activeChart]);
-
   if (!isClient) {
     return null;
   }
+
+  const activeChartConfig = {
+    revenue: { label: 'Revenue', color: 'oklch(var(--color-primary))' },
+    bookings: { label: 'Bookings', color: 'oklch(var(--color-primary))' }
+  };
 
   return (
     <Card className='@container/card !pt-3'>
       <CardHeader className='flex flex-col items-stretch space-y-0 border-b !p-0 sm:flex-row'>
         <div className='flex flex-1 flex-col justify-center gap-1 px-6 !py-0'>
-          <CardTitle>Bar Chart - Interactive</CardTitle>
+          <CardTitle>Platform Performance</CardTitle>
           <CardDescription>
             <span className='hidden @[540px]/card:block'>
-              Total for the last 3 months
+              Trends for the selected period
             </span>
-            <span className='@[540px]/card:hidden'>Last 3 months</span>
+            <span className='@[540px]/card:hidden'>Platform trends</span>
           </CardDescription>
         </div>
         <div className='flex'>
-          {['desktop', 'mobile', 'error'].map((key) => {
-            const chart = key as keyof typeof chartConfig;
-            if (!chart || total[key as keyof typeof total] === 0) return null;
+          {(['revenue', 'bookings'] as const).map((key) => {
             return (
               <button
-                key={chart}
-                data-active={activeChart === chart}
+                key={key}
+                data-active={activeChart === key}
                 className='data-[active=true]:bg-primary/5 hover:bg-primary/5 relative flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left transition-colors duration-200 even:border-l sm:border-t-0 sm:border-l sm:px-8 sm:py-6'
-                onClick={() => setActiveChart(chart)}
+                onClick={() => setActiveChart(key)}
               >
                 <span className='text-muted-foreground text-xs'>
-                  {chartConfig[chart].label}
+                  {activeChartConfig[key].label}
                 </span>
                 <span className='text-lg leading-none font-bold sm:text-3xl'>
-                  {total[key as keyof typeof total]?.toLocaleString()}
+                  {key === 'revenue' ? `$${total[key]?.toLocaleString()}` : total[key]?.toLocaleString()}
                 </span>
               </button>
             );
@@ -226,27 +229,13 @@ export function BarGraph() {
               axisLine={false}
               tickMargin={8}
               minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value);
-                return date.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric'
-                });
-              }}
             />
             <ChartTooltip
               cursor={{ fill: 'oklch(var(--color-primary))', opacity: 0.1 }}
               content={
                 <ChartTooltipContent
                   className='w-[150px]'
-                  nameKey='views'
-                  labelFormatter={(value: string | number) => {
-                    return new Date(value).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    });
-                  }}
+                  labelFormatter={(value: any) => value}
                 />
               }
             />

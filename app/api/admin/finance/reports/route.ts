@@ -46,6 +46,9 @@ export async function GET(req: NextRequest) {
     let reportData;
 
     switch (reportType) {
+      case 'list':
+        reportData = await fetchReportList();
+        break;
       case 'overview':
         reportData = await fetchOverviewReport(startDate, now);
         break;
@@ -180,6 +183,50 @@ async function fetchAverageOccupancy(startDate: Date, endDate: Date) {
   ]);
 
   return totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
+}
+
+async function fetchReportList() {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  
+  const reports = [
+    {
+      id: `rev-${currentYear}`,
+      name: `Annual Revenue Report ${currentYear}`,
+      date: now.toISOString(),
+      type: 'Financial',
+      format: 'PDF',
+      status: 'generated',
+      size: '2.4 MB'
+    },
+    {
+      id: `tax-q1-${currentYear}`,
+      name: `Q1 Tax Compliance Report ${currentYear}`,
+      date: new Date(currentYear, 3, 15).toISOString(),
+      type: 'Tax',
+      format: 'Excel',
+      status: 'generated',
+      size: '1.2 MB'
+    },
+    {
+      id: `host-earnings-${currentYear}`,
+      name: 'Host Earnings Summary',
+      date: now.toISOString(),
+      type: 'Earnings',
+      format: 'CSV',
+      status: 'generated',
+      size: '850 KB'
+    }
+  ];
+
+  const stats = {
+    total: reports.length,
+    pdf: reports.filter(r => r.format === 'PDF').length,
+    excel: reports.filter(r => r.format === 'Excel').length,
+    csv: reports.filter(r => r.format === 'CSV').length
+  };
+
+  return { reports, stats };
 }
 
 async function fetchMonthlyRevenue(startDate: Date, endDate: Date) {

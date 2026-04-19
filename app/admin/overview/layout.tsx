@@ -1,3 +1,5 @@
+'use client';
+
 import PageContainer from "../components/layout/page-container";
 import { Badge } from "../components/ui/badge";
 import {
@@ -10,6 +12,7 @@ import {
 } from "../components/ui/card";
 import { IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
 import React from 'react';
+import { useExecutiveOverview } from "@/app/admin/hooks/use-executive-overview";
 
 export default function OverViewLayout({
   sales,
@@ -22,6 +25,10 @@ export default function OverViewLayout({
   bar_stats: React.ReactNode;
   area_stats: React.ReactNode;
 }) {
+  const { data: apiResponse, isLoading } = useExecutiveOverview('30d');
+  const data = apiResponse?.data;
+  const metrics = data?.metrics;
+
   return (
     <PageContainer>
       <div className='flex flex-1 flex-col space-y-2'>
@@ -36,21 +43,22 @@ export default function OverViewLayout({
             <CardHeader>
               <CardDescription>Total Revenue</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                $1,250.00
+                {isLoading ? '...' : `$${metrics?.totalRevenue?.toLocaleString() || '0.00'}`}
               </CardTitle>
               <CardAction>
                 <Badge variant='outline'>
-                  <IconTrendingUp />
-                  +12.5%
+                  {metrics?.revenueGrowthPercentage && metrics.revenueGrowthPercentage >= 0 ? <IconTrendingUp className="text-emerald-500" /> : <IconTrendingDown className="text-rose-500" />}
+                  {metrics?.revenueGrowthPercentage || 0}%
                 </Badge>
               </CardAction>
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
               <div className='line-clamp-1 flex gap-2 font-medium'>
-                Trending up this month <IconTrendingUp className='size-4' />
+                {metrics?.revenueGrowthPercentage && metrics.revenueGrowthPercentage >= 0 ? 'Trending up' : 'Trending down'} this month 
+                {metrics?.revenueGrowthPercentage && metrics.revenueGrowthPercentage >= 0 ? <IconTrendingUp className='size-4 text-emerald-500' /> : <IconTrendingDown className='size-4 text-rose-500' />}
               </div>
               <div className='text-muted-foreground'>
-                Visitors for the last 6 months
+                Revenue for the last 30 days
               </div>
             </CardFooter>
           </Card>
@@ -58,21 +66,22 @@ export default function OverViewLayout({
             <CardHeader>
               <CardDescription>New Customers</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                1,234
+                {isLoading ? '...' : (metrics?.newUsers?.toLocaleString() || '0')}
               </CardTitle>
               <CardAction>
                 <Badge variant='outline'>
-                  <IconTrendingDown />
-                  -20%
+                  {metrics?.userGrowthPercentage && metrics.userGrowthPercentage >= 0 ? <IconTrendingUp className="text-emerald-500" /> : <IconTrendingDown className="text-rose-500" />}
+                  {metrics?.userGrowthPercentage || 0}%
                 </Badge>
               </CardAction>
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
               <div className='line-clamp-1 flex gap-2 font-medium'>
-                Down 20% this period <IconTrendingDown className='size-4' />
+                {metrics?.userGrowthPercentage && metrics.userGrowthPercentage >= 0 ? 'Growing' : 'Slowing'} this period 
+                {metrics?.userGrowthPercentage && metrics.userGrowthPercentage >= 0 ? <IconTrendingUp className='size-4 text-emerald-500' /> : <IconTrendingDown className='size-4 text-rose-500' />}
               </div>
               <div className='text-muted-foreground'>
-                Acquisition needs attention
+                New users this month
               </div>
             </CardFooter>
           </Card>
@@ -80,44 +89,44 @@ export default function OverViewLayout({
             <CardHeader>
               <CardDescription>Active Accounts</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                45,678
+                {isLoading ? '...' : (metrics?.activeUsers?.toLocaleString() || '0')}
               </CardTitle>
               <CardAction>
                 <Badge variant='outline'>
-                  <IconTrendingUp />
-                  +12.5%
+                  <IconTrendingUp className="text-emerald-500" />
+                  Active
                 </Badge>
               </CardAction>
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
               <div className='line-clamp-1 flex gap-2 font-medium'>
-                Strong user retention <IconTrendingUp className='size-4' />
+                Strong user retention <IconTrendingUp className='size-4 text-emerald-500' />
               </div>
               <div className='text-muted-foreground'>
-                Engagement exceed targets
+                Accounts active in last 30 days
               </div>
             </CardFooter>
           </Card>
           <Card className='@container/card'>
             <CardHeader>
-              <CardDescription>Growth Rate</CardDescription>
+              <CardDescription>Active Properties</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                4.5%
+                {isLoading ? '...' : (metrics?.totalListings?.toLocaleString() || '0')}
               </CardTitle>
               <CardAction>
                 <Badge variant='outline'>
-                  <IconTrendingUp />
-                  +4.5%
+                  <IconTrendingUp className="text-emerald-500" />
+                  +{metrics?.newListings || 0}
                 </Badge>
               </CardAction>
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
               <div className='line-clamp-1 flex gap-2 font-medium'>
-                Steady performance increase{' '}
-                <IconTrendingUp className='size-4' />
+                Steady inventory growth{' '}
+                <IconTrendingUp className='size-4 text-emerald-500' />
               </div>
               <div className='text-muted-foreground'>
-                Meets growth projections
+                Total active listings on platform
               </div>
             </CardFooter>
           </Card>

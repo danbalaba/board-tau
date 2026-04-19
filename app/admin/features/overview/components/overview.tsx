@@ -1,3 +1,5 @@
+'use client';
+
 import PageContainer from "../../../components/layout/page-container";
 import { Button } from "../../../components/ui/button";
 import {
@@ -15,8 +17,35 @@ import { PieGraph } from './pie-graph';
 import { RecentSales } from './recent-sales';
 import { IconTrendingUp, IconTrendingDown } from '@tabler/icons-react';
 import { Badge } from "../../../components/ui/badge";
+import { useExecutiveOverview } from "@/app/admin/hooks/use-executive-overview";
 
 export default function OverViewPage() {
+  const { data: apiResponse, isLoading, error } = useExecutiveOverview('30d');
+  const data = apiResponse?.data;
+
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <div className='flex flex-1 flex-col space-y-2'>
+          <h2 className='text-2xl font-bold tracking-tight'>Loading Dashboard...</h2>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer>
+        <div className='flex flex-1 flex-col space-y-2 text-red-500'>
+          <h2 className='text-2xl font-bold tracking-tight'>Error Loading Dashboard</h2>
+          <p>{error.message}</p>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  const metrics = data?.metrics;
+
   return (
     <PageContainer>
       <div className='flex flex-1 flex-col space-y-2'>
@@ -41,21 +70,26 @@ export default function OverViewPage() {
                 <CardHeader>
                   <CardDescription>Total Revenue</CardDescription>
                   <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                    $1,250.00
+                    ${metrics?.totalRevenue?.toLocaleString() || '0.00'}
                   </CardTitle>
                   <CardAction>
                     <Badge variant='outline'>
-                      <IconTrendingUp />
-                      +12.5%
+                      {metrics?.revenueGrowthPercentage && metrics.revenueGrowthPercentage >= 0 ? (
+                        <IconTrendingUp className="text-emerald-500" />
+                      ) : (
+                        <IconTrendingDown className="text-rose-500" />
+                      )}
+                      {metrics?.revenueGrowthPercentage || 0}%
                     </Badge>
                   </CardAction>
                 </CardHeader>
                 <CardFooter className='flex-col items-start gap-1.5 text-sm'>
                   <div className='line-clamp-1 flex gap-2 font-medium'>
-                    Trending up this month <IconTrendingUp className='size-4' />
+                    {metrics?.revenueGrowthPercentage && metrics.revenueGrowthPercentage >= 0 ? 'Trending up' : 'Trending down'} this month 
+                    {metrics?.revenueGrowthPercentage && metrics.revenueGrowthPercentage >= 0 ? <IconTrendingUp className='size-4 text-emerald-500' /> : <IconTrendingDown className='size-4 text-rose-500' />}
                   </div>
                   <div className='text-muted-foreground'>
-                    Visitors for the last 6 months
+                    Revenue for the last 30 days
                   </div>
                 </CardFooter>
               </Card>
@@ -63,21 +97,26 @@ export default function OverViewPage() {
                 <CardHeader>
                   <CardDescription>New Customers</CardDescription>
                   <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                    1,234
+                    {metrics?.newUsers?.toLocaleString() || '0'}
                   </CardTitle>
                   <CardAction>
                     <Badge variant='outline'>
-                      <IconTrendingDown />
-                      -20%
+                      {metrics?.userGrowthPercentage && metrics.userGrowthPercentage >= 0 ? (
+                        <IconTrendingUp className="text-emerald-500" />
+                      ) : (
+                        <IconTrendingDown className="text-rose-500" />
+                      )}
+                      {metrics?.userGrowthPercentage || 0}%
                     </Badge>
                   </CardAction>
                 </CardHeader>
                 <CardFooter className='flex-col items-start gap-1.5 text-sm'>
                   <div className='line-clamp-1 flex gap-2 font-medium'>
-                    Down 20% this period <IconTrendingDown className='size-4' />
+                    {metrics?.userGrowthPercentage && metrics.userGrowthPercentage >= 0 ? 'Growing' : 'Slowing'} this period 
+                    {metrics?.userGrowthPercentage && metrics.userGrowthPercentage >= 0 ? <IconTrendingUp className='size-4 text-emerald-500' /> : <IconTrendingDown className='size-4 text-rose-500' />}
                   </div>
                   <div className='text-muted-foreground'>
-                    Acquisition needs attention
+                    New users this month
                   </div>
                 </CardFooter>
               </Card>
@@ -85,60 +124,60 @@ export default function OverViewPage() {
                 <CardHeader>
                   <CardDescription>Active Accounts</CardDescription>
                   <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                    45,678
+                    {metrics?.activeUsers?.toLocaleString() || '0'}
                   </CardTitle>
                   <CardAction>
                     <Badge variant='outline'>
-                      <IconTrendingUp />
-                      +12.5%
+                      <IconTrendingUp className="text-emerald-500" />
+                      Active
                     </Badge>
                   </CardAction>
                 </CardHeader>
                 <CardFooter className='flex-col items-start gap-1.5 text-sm'>
                   <div className='line-clamp-1 flex gap-2 font-medium'>
-                    Strong user retention <IconTrendingUp className='size-4' />
+                    Strong user retention <IconTrendingUp className='size-4 text-emerald-500' />
                   </div>
                   <div className='text-muted-foreground'>
-                    Engagement exceed targets
+                    Accounts active in last 30 days
                   </div>
                 </CardFooter>
               </Card>
               <Card className='@container/card'>
                 <CardHeader>
-                  <CardDescription>Growth Rate</CardDescription>
+                  <CardDescription>Active Properties</CardDescription>
                   <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                    4.5%
+                    {metrics?.totalListings?.toLocaleString() || '0'}
                   </CardTitle>
                   <CardAction>
                     <Badge variant='outline'>
-                      <IconTrendingUp />
-                      +4.5%
+                      <IconTrendingUp className="text-emerald-500" />
+                      +{metrics?.newListings || 0}
                     </Badge>
                   </CardAction>
                 </CardHeader>
                 <CardFooter className='flex-col items-start gap-1.5 text-sm'>
                   <div className='line-clamp-1 flex gap-2 font-medium'>
-                    Steady performance increase{' '}
-                    <IconTrendingUp className='size-4' />
+                    Steady inventory growth{' '}
+                    <IconTrendingUp className='size-4 text-emerald-500' />
                   </div>
                   <div className='text-muted-foreground'>
-                    Meets growth projections
+                    Total active listings on platform
                   </div>
                 </CardFooter>
               </Card>
             </div>
             <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
               <div className='col-span-4'>
-                <BarGraph />
+                <BarGraph data={data?.charts?.revenue} />
               </div>
               <Card className='col-span-4 md:col-span-3'>
-                <RecentSales />
+                <RecentSales data={data?.recentSales} />
               </Card>
               <div className='col-span-4'>
-                <AreaGraph />
+                <AreaGraph data={data?.charts?.revenue} />
               </div>
               <div className='col-span-4 md:col-span-3'>
-                <PieGraph />
+                <PieGraph data={data?.charts?.propertyDistribution} />
               </div>
             </div>
           </TabsContent>

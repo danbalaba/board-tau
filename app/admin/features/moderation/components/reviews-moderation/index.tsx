@@ -14,72 +14,46 @@ import {
 } from 'lucide-react';
 import { Button } from '@/app/admin/components/ui/button';
 import { toast } from 'sonner';
+import { useReviewsModeration, useModerationDecision } from '@/app/admin/hooks/use-moderation';
 import { ReviewKPICards } from './review-kpi-cards';
 import { ReviewTable } from './review-table';
 import { cn } from '@/lib/utils';
 
-// Original sample data
-const initialReviews: any[] = [
-  {
-    id: '1',
-    listing: 'Cozy Studio in Downtown',
-    user: 'Jane Smith',
-    rating: 5,
-    comment: 'Great experience! The studio was clean and well-equipped.',
-    status: 'pending',
-    submittedAt: '2024-01-10T08:15:00Z',
-    lastUpdated: '2024-01-10T08:15:00Z'
-  },
-  {
-    id: '2',
-    listing: 'Beach Villa',
-    user: 'Mike Johnson',
-    rating: 4,
-    comment: 'Beautiful location but a bit noisy at night. The service was excellent though.',
-    status: 'pending',
-    submittedAt: '2024-01-09T14:20:00Z',
-    lastUpdated: '2024-01-09T14:20:00Z'
-  },
-  {
-    id: '3',
-    listing: 'Luxury Apartment',
-    user: 'Tom Brown',
-    rating: 1,
-    comment: 'Terrible experience! The apartment was dirty and smelly. Not what was advertised.',
-    status: 'pending',
-    submittedAt: '2024-01-08T11:30:00Z',
-    lastUpdated: '2024-01-08T11:30:00Z'
-  },
-  {
-    id: '4',
-    listing: 'City Center Apartment',
-    user: 'Sarah Williams',
-    rating: 3,
-    comment: 'Average experience. The location was great but the apartment was very small for the price.',
-    status: 'pending',
-    submittedAt: '2024-01-07T09:15:00Z',
-    lastUpdated: '2024-01-07T09:15:00Z'
-  }
-];
-
 export function ReviewsModerationDashboard() {
-  const [reviews, setReviews] = useState(initialReviews);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { data: apiResponse, isLoading, refetch, isFetching } = useReviewsModeration();
+  const { mutate: decide } = useModerationDecision();
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await new Promise(r => setTimeout(r, 800));
-    setIsRefreshing(false);
+    await refetch();
     toast.success('Reputation feed synchronized successfully.');
   };
 
-  const handleAction = (id: string, status: string) => {
-    setReviews(rs => rs.map(r => r.id === id ? { ...r, status } : r));
-    toast.success(`Feedback ${status} successfully.`);
+  const handleAction = (id: string, action: 'approve' | 'reject') => {
+    decide({ id, entityType: 'review', action }, {
+      onSuccess: () => {
+        toast.success(`Feedback ${action === 'approve' ? 'authorized' : 'rejected'} successfully.`);
+      },
+      onError: (err: any) => {
+        toast.error(`Database Error: ${err.message}`);
+      }
+    });
   };
 
-  const pendingCount = reviews.filter(r => r.status === 'pending').length;
-  const avgRating = (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1);
+  const reviews = apiResponse?.data || [];
+  const pendingCount = apiResponse?.meta?.stats?.pending || 0;
+  const approvedCount = apiResponse?.meta?.stats?.approved || 0;
+  
+  const avgRating = reviews.length > 0 
+    ? (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    : '4.8'; // Default rating if no pending reviews
+
+  if (isLoading) {
+    return (
+      <div className="p-6 lg:p-10 text-center">
+        <h2 className="text-2xl font-bold italic animate-pulse">Monitoring Platform Sentiment...</h2>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-10 space-y-12">
@@ -94,7 +68,7 @@ export function ReviewsModerationDashboard() {
             Review Moderation
             <span className="flex items-center gap-1.5 bg-amber-500/10 px-3 py-1.5 rounded-2xl border border-amber-500/10 text-amber-500 text-[10px] tracking-[0.2em] font-black uppercase shadow-sm">
               <Star className="w-3 h-3 fill-amber-500" />
-              SENSITIVE CONTENT
+              {pendingCount} SENSITIVE CONTENT
             </span>
           </motion.h1>
           <motion.p
@@ -113,7 +87,7 @@ export function ReviewsModerationDashboard() {
             variant="outline"
             size="icon"
             onClick={handleRefresh}
-            className={cn("h-11 w-11 rounded-xl border-border/60 bg-background/50", isRefreshing && "animate-spin")}
+            className={cn("h-11 w-11 rounded-xl border-border/60 bg-background/50", isFetching && "animate-spin")}
           >
             <RefreshCcw className="w-4 h-4 text-primary" />
           </Button>
@@ -130,7 +104,7 @@ export function ReviewsModerationDashboard() {
 
       {/* KPI Section */}
       <ReviewKPICards 
-        total={reviews.length} 
+        total={pendingCount + approvedCount} 
         pending={pendingCount} 
         averageRating={avgRating} 
       />
@@ -148,10 +122,19 @@ export function ReviewsModerationDashboard() {
           transition={{ delay: 0.2 }}
         >
           <ReviewTable 
-            reviews={reviews}
+            reviews={reviews.map((r: any) => ({
+              id: r.id,
+              listing: r.listing?.title || 'Unknown Listing',
+              user: r.user?.name || 'Anonymous',
+              rating: r.rating,
+              comment: r.comment,
+              status: r.status,
+              submittedAt: r.createdAt,
+              lastUpdated: r.createdAt
+            }))}
             onView={(id) => toast.info(`Viewing details for review: ${id}`)}
-            onApprove={(id) => handleAction(id, 'approved')}
-            onReject={(id) => handleAction(id, 'rejected')}
+            onApprove={(id) => handleAction(id, 'approve')}
+            onReject={(id) => handleAction(id, 'reject')}
           />
         </motion.div>
       </div>

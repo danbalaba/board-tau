@@ -33,84 +33,32 @@ interface Booking {
   paymentMethod: string;
 }
 
-const bookings: Booking[] = [
-  {
-    id: '1',
-    guest: 'Jane Smith',
-    email: 'jane.smith@example.com',
-    phone: '+1 (555) 123-4567',
-    property: 'Cozy Studio',
-    checkIn: '2024-01-15',
-    checkOut: '2024-01-20',
-    status: 'confirmed',
-    totalAmount: 750,
-    paymentMethod: 'Credit Card'
-  },
-  {
-    id: '2',
-    guest: 'Mike Johnson',
-    email: 'mike.johnson@example.com',
-    phone: '+1 (555) 234-5678',
-    property: 'Beach Villa',
-    checkIn: '2024-01-18',
-    checkOut: '2024-01-25',
-    status: 'pending',
-    totalAmount: 1750,
-    paymentMethod: 'PayPal'
-  },
-  {
-    id: '3',
-    guest: 'Tom Brown',
-    email: 'tom.brown@example.com',
-    phone: '+1 (555) 345-6789',
-    property: 'Luxury Apartment',
-    checkIn: '2024-01-20',
-    checkOut: '2024-01-27',
-    status: 'confirmed',
-    totalAmount: 2100,
-    paymentMethod: 'Credit Card'
-  },
-  {
-    id: '4',
-    guest: 'Sarah Williams',
-    email: 'sarah.williams@example.com',
-    phone: '+1 (555) 456-7890',
-    property: 'Downtown Loft',
-    checkIn: '2024-01-22',
-    checkOut: '2024-01-24',
-    status: 'cancelled',
-    totalAmount: 400,
-    paymentMethod: 'Credit Card'
-  },
-  {
-    id: '5',
-    guest: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 567-8901',
-    property: 'Cozy Studio',
-    checkIn: '2024-01-25',
-    checkOut: '2024-01-30',
-    status: 'completed',
-    totalAmount: 750,
-    paymentMethod: 'Debit Card'
-  }
-];
+import { usePropertyPerformance } from '@/app/admin/hooks/use-property-performance';
 
 const statusColors = {
-  confirmed: 'default',
+  reserved: 'default',
+  checked_in: 'default',
   pending: 'secondary',
   cancelled: 'destructive',
   completed: 'outline'
 };
 
 const statusLabels = {
-  confirmed: 'Confirmed',
+  reserved: 'Confirmed',
+  checked_in: 'Checked In',
   pending: 'Pending',
   cancelled: 'Cancelled',
   completed: 'Completed'
 };
 
 export function BookingManagement() {
+  const { data: apiResponse, isLoading, error } = usePropertyPerformance('30d');
+  const data = apiResponse?.data;
+  const bookings = data?.recentBookings || [];
+  const stats = data?.bookingStats || { confirmed: 0, pending: 0, completed: 0, cancelled: 0 };
+
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading bookings...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -128,7 +76,7 @@ export function BookingManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {bookings.filter(booking => booking.status === 'confirmed').length}
+              {stats.confirmed}
             </div>
             <p className="text-sm text-muted-foreground">Confirmed bookings</p>
           </CardContent>
@@ -141,7 +89,7 @@ export function BookingManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {bookings.filter(booking => booking.status === 'pending').length}
+              {stats.pending}
             </div>
             <p className="text-sm text-muted-foreground">Pending bookings</p>
           </CardContent>
@@ -154,7 +102,7 @@ export function BookingManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {bookings.filter(booking => booking.status === 'completed').length}
+              {stats.completed}
             </div>
             <p className="text-sm text-muted-foreground">Completed bookings</p>
           </CardContent>
@@ -167,7 +115,7 @@ export function BookingManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              ${bookings.reduce((sum, booking) => sum + booking.totalAmount, 0).toFixed(2)}
+              ${data?.totalRevenue?.toLocaleString() || '0'}
             </div>
             <p className="text-sm text-muted-foreground">Total revenue</p>
           </CardContent>
@@ -193,7 +141,13 @@ export function BookingManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {bookings.map((booking) => (
+              {bookings.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                    No bookings found in this period.
+                  </TableCell>
+                </TableRow>
+              ) : bookings.map((booking: any) => (
                 <TableRow key={booking.id}>
                   <TableCell>
                     <div>
@@ -208,15 +162,15 @@ export function BookingManagement() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{booking.property}</TableCell>
+                  <TableCell className="max-w-[200px] truncate">{booking.property}</TableCell>
                   <TableCell>{booking.checkIn}</TableCell>
                   <TableCell>{booking.checkOut}</TableCell>
                   <TableCell>
-                    <Badge variant={statusColors[booking.status] as any}>
-                      {statusLabels[booking.status]}
+                    <Badge variant={(statusColors as any)[booking.status] || 'default'}>
+                      {(statusLabels as any)[booking.status] || booking.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>${booking.totalAmount.toFixed(2)}</TableCell>
+                  <TableCell>${booking.totalAmount.toLocaleString()}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
                       <Button
@@ -226,14 +180,6 @@ export function BookingManagement() {
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         View
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => console.log('Calendar', booking.id)}
-                      >
-                        <Calendar className="h-4 w-4 mr-1" />
-                        Calendar
                       </Button>
                     </div>
                   </TableCell>
@@ -253,14 +199,14 @@ export function BookingManagement() {
           <CardContent>
             <div className="space-y-4">
               {bookings
-                .filter(booking => booking.status === 'confirmed' && new Date(booking.checkIn) > new Date())
-                .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime())
+                .filter((booking: any) => (booking.status === 'reserved' || booking.status === 'confirmed') && new Date(booking.checkIn) >= new Date())
+                .sort((a: any, b: any) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime())
                 .slice(0, 3)
-                .map((booking) => (
+                .map((booking: any) => (
                   <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <div className="font-medium">{booking.guest}</div>
-                      <div className="text-sm text-muted-foreground">{booking.property}</div>
+                      <div className="text-sm text-muted-foreground truncate max-w-[150px]">{booking.property}</div>
                       <div className="text-xs text-muted-foreground">{booking.checkIn}</div>
                     </div>
                     <Button
@@ -273,6 +219,9 @@ export function BookingManagement() {
                     </Button>
                   </div>
                 ))}
+              {bookings.filter((booking: any) => (booking.status === 'reserved' || booking.status === 'confirmed') && new Date(booking.checkIn) >= new Date()).length === 0 && (
+                <p className="text-sm text-center text-muted-foreground py-4">No upcoming check-ins.</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -285,14 +234,14 @@ export function BookingManagement() {
           <CardContent>
             <div className="space-y-4">
               {bookings
-                .filter(booking => booking.status === 'cancelled')
-                .sort((a, b) => new Date(b.checkIn).getTime() - new Date(a.checkIn).getTime())
+                .filter((booking: any) => booking.status === 'cancelled')
+                .sort((a: any, b: any) => new Date(b.checkIn).getTime() - new Date(a.checkIn).getTime())
                 .slice(0, 3)
-                .map((booking) => (
+                .map((booking: any) => (
                   <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <div className="font-medium">{booking.guest}</div>
-                      <div className="text-sm text-muted-foreground">{booking.property}</div>
+                      <div className="text-sm text-muted-foreground truncate max-w-[150px]">{booking.property}</div>
                       <div className="text-xs text-muted-foreground">{booking.checkIn}</div>
                     </div>
                     <Button
@@ -305,6 +254,9 @@ export function BookingManagement() {
                     </Button>
                   </div>
                 ))}
+              {bookings.filter((booking: any) => booking.status === 'cancelled').length === 0 && (
+                <p className="text-sm text-center text-muted-foreground py-4">No recent cancellations.</p>
+              )}
             </div>
           </CardContent>
         </Card>

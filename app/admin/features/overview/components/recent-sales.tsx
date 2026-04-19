@@ -1,3 +1,5 @@
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from "../../../components/ui/avatar";
 import {
   Card,
@@ -6,55 +8,20 @@ import {
   CardTitle,
   CardDescription
 } from "../../../components/ui/card";
+import { useExecutiveOverview } from "@/app/admin/hooks/use-executive-overview";
 
-const salesData = [
-  {
-    name: 'Olivia Martin',
-    email: 'olivia.martin@email.com',
-    avatar: 'https://api.slingacademy.com/public/sample-users/1.png',
-    fallback: 'OM',
-    amount: '+$1,999.00'
-  },
-  {
-    name: 'Jackson Lee',
-    email: 'jackson.lee@email.com',
-    avatar: 'https://api.slingacademy.com/public/sample-users/2.png',
-    fallback: 'JL',
-    amount: '+$39.00'
-  },
-  {
-    name: 'Isabella Nguyen',
-    email: 'isabella.nguyen@email.com',
-    avatar: 'https://api.slingacademy.com/public/sample-users/3.png',
-    fallback: 'IN',
-    amount: '+$299.00'
-  },
-  {
-    name: 'William Kim',
-    email: 'will@email.com',
-    avatar: 'https://api.slingacademy.com/public/sample-users/4.png',
-    fallback: 'WK',
-    amount: '+$99.00'
-  },
-  {
-    name: 'Sofia Davis',
-    email: 'sofia.davis@email.com',
-    avatar: 'https://api.slingacademy.com/public/sample-users/5.png',
-    fallback: 'SD',
-    amount: '+$39.00'
-  }
-];
-
-export function RecentSales() {
+export function RecentSales({ data: propData }: { data?: any[] }) {
+  const { data: apiResponse } = useExecutiveOverview('30d');
+  const data = propData || apiResponse?.data?.recentSales || [];
   return (
     <Card className='h-full'>
       <CardHeader>
         <CardTitle>Recent Sales</CardTitle>
-        <CardDescription>You made 265 sales this month.</CardDescription>
+        <CardDescription>Latest successful transactions</CardDescription>
       </CardHeader>
       <CardContent>
         <div className='space-y-8'>
-          {salesData.map((sale, index) => (
+          {data && data.length > 0 ? data.map((sale, index) => (
             <div key={index} className='flex items-center'>
               <Avatar className='h-9 w-9'>
                 <AvatarImage src={sale.avatar} alt='Avatar' />
@@ -66,7 +33,11 @@ export function RecentSales() {
               </div>
               <div className='ml-auto font-medium'>{sale.amount}</div>
             </div>
-          ))}
+          )) : (
+            <div className='text-center py-10 text-muted-foreground'>
+              No recent sales recorded.
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

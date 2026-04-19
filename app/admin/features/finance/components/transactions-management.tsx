@@ -20,79 +20,30 @@ import { Badge } from '@/app/admin/components/ui/badge';
 import { Button } from '@/app/admin/components/ui/button';
 import { Eye } from 'lucide-react';
 
-interface Transaction {
-  id: string;
-  date: string;
-  user: string;
-  listing: string;
-  amount: number;
-  status: 'completed' | 'pending' | 'failed' | 'refunded';
-  paymentMethod: string;
-}
+import { useTransactions } from '@/app/admin/hooks/use-transactions';
 
-const transactions: Transaction[] = [
-  {
-    id: '1',
-    date: '2024-01-10T10:30:00Z',
-    user: 'Jane Smith',
-    listing: 'Cozy Studio in Downtown',
-    amount: 150.00,
-    status: 'completed',
-    paymentMethod: 'Credit Card'
-  },
-  {
-    id: '2',
-    date: '2024-01-10T09:15:00Z',
-    user: 'Mike Johnson',
-    listing: 'Beach Villa',
-    amount: 250.00,
-    status: 'pending',
-    paymentMethod: 'PayPal'
-  },
-  {
-    id: '3',
-    date: '2024-01-09T16:45:00Z',
-    user: 'Tom Brown',
-    listing: 'Luxury Apartment',
-    amount: 300.00,
-    status: 'completed',
-    paymentMethod: 'Credit Card'
-  },
-  {
-    id: '4',
-    date: '2024-01-09T14:20:00Z',
-    user: 'Sarah Williams',
-    listing: 'City Center Apartment',
-    amount: 180.00,
-    status: 'failed',
-    paymentMethod: 'Debit Card'
-  },
-  {
-    id: '5',
-    date: '2024-01-08T11:30:00Z',
-    user: 'John Doe',
-    listing: 'Beach Villa',
-    amount: 250.00,
-    status: 'refunded',
-    paymentMethod: 'Credit Card'
-  }
-];
-
-const statusColors = {
-  completed: 'default',
-  pending: 'secondary',
-  failed: 'destructive',
-  refunded: 'outline'
+const statusColors: Record<string, any> = {
+  PAID: 'default',
+  PENDING: 'secondary',
+  FAILED: 'destructive',
+  UNPAID: 'outline'
 };
 
-const statusLabels = {
-  completed: 'Completed',
-  pending: 'Pending',
-  failed: 'Failed',
-  refunded: 'Refunded'
+const statusLabels: Record<string, string> = {
+  PAID: 'Completed',
+  PENDING: 'Pending',
+  FAILED: 'Failed',
+  UNPAID: 'Unpaid'
 };
 
 export function TransactionsManagement() {
+  const { data: apiResponse, isLoading, error } = useTransactions();
+  const transactions = apiResponse?.data || [];
+  const stats = apiResponse?.meta?.stats || { totalAmount: 0, completedCount: 0, failedCount: 0 };
+  const total = apiResponse?.meta?.total || 0;
+
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading transactions...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -126,17 +77,17 @@ export function TransactionsManagement() {
               {transactions.map((transaction) => (
                 <TableRow key={transaction.id}>
                   <TableCell>
-                    {new Date(transaction.date).toLocaleString()}
+                    {new Date(transaction.createdAt).toLocaleString()}
                   </TableCell>
-                  <TableCell>{transaction.user}</TableCell>
-                  <TableCell>{transaction.listing}</TableCell>
-                  <TableCell>${transaction.amount.toFixed(2)}</TableCell>
+                  <TableCell>{transaction.user?.name || 'Unknown'}</TableCell>
+                  <TableCell>{transaction.listing?.title || 'Unknown'}</TableCell>
+                  <TableCell>${transaction.totalPrice.toFixed(2)}</TableCell>
                   <TableCell>
-                    <Badge variant={statusColors[transaction.status] as any}>
-                      {statusLabels[transaction.status]}
+                    <Badge variant={statusColors[transaction.paymentStatus] || 'outline'}>
+                      {statusLabels[transaction.paymentStatus] || transaction.paymentStatus}
                     </Badge>
                   </TableCell>
-                  <TableCell>{transaction.paymentMethod}</TableCell>
+                  <TableCell>{transaction.paymentMethod || 'N/A'}</TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
@@ -161,7 +112,7 @@ export function TransactionsManagement() {
             <CardDescription>All time transactions</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{transactions.length}</div>
+            <div className="text-3xl font-bold">{total}</div>
             <p className="text-sm text-muted-foreground">Total transactions</p>
           </CardContent>
         </Card>
@@ -173,7 +124,7 @@ export function TransactionsManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              ${transactions.reduce((sum, tx) => sum + tx.amount, 0).toFixed(2)}
+              ${stats.totalAmount.toFixed(2)}
             </div>
             <p className="text-sm text-muted-foreground">Total amount</p>
           </CardContent>
@@ -186,7 +137,7 @@ export function TransactionsManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {transactions.filter(tx => tx.status === 'completed').length}
+              {stats.completedCount}
             </div>
             <p className="text-sm text-muted-foreground">Completed</p>
           </CardContent>
@@ -199,7 +150,7 @@ export function TransactionsManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {transactions.filter(tx => tx.status === 'failed').length}
+              {stats.failedCount}
             </div>
             <p className="text-sm text-muted-foreground">Failed</p>
           </CardContent>

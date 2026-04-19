@@ -20,69 +20,7 @@ import { Badge } from '@/app/admin/components/ui/badge';
 import { Button } from '@/app/admin/components/ui/button';
 import { Edit, Eye } from 'lucide-react';
 
-interface Commission {
-  id: string;
-  host: string;
-  listing: string;
-  amount: number;
-  commissionRate: number;
-  commissionAmount: number;
-  date: string;
-  status: 'pending' | 'paid' | 'failed';
-}
-
-const commissions: Commission[] = [
-  {
-    id: '1',
-    host: 'Jane Smith',
-    listing: 'Cozy Studio in Downtown',
-    amount: 150.00,
-    commissionRate: 10,
-    commissionAmount: 15.00,
-    date: '2024-01-10T10:30:00Z',
-    status: 'paid'
-  },
-  {
-    id: '2',
-    host: 'Mike Johnson',
-    listing: 'Beach Villa',
-    amount: 250.00,
-    commissionRate: 10,
-    commissionAmount: 25.00,
-    date: '2024-01-10T09:15:00Z',
-    status: 'pending'
-  },
-  {
-    id: '3',
-    host: 'Tom Brown',
-    listing: 'Luxury Apartment',
-    amount: 300.00,
-    commissionRate: 8,
-    commissionAmount: 24.00,
-    date: '2024-01-09T16:45:00Z',
-    status: 'paid'
-  },
-  {
-    id: '4',
-    host: 'Sarah Williams',
-    listing: 'City Center Apartment',
-    amount: 180.00,
-    commissionRate: 10,
-    commissionAmount: 18.00,
-    date: '2024-01-09T14:20:00Z',
-    status: 'failed'
-  },
-  {
-    id: '5',
-    host: 'John Doe',
-    listing: 'Beach Villa',
-    amount: 250.00,
-    commissionRate: 10,
-    commissionAmount: 25.00,
-    date: '2024-01-08T11:30:00Z',
-    status: 'paid'
-  }
-];
+import { useCommissions } from '@/app/admin/hooks/use-commissions';
 
 const statusColors = {
   pending: 'secondary',
@@ -97,6 +35,12 @@ const statusLabels = {
 };
 
 export function CommissionsManagement() {
+  const { data: apiResponse, isLoading, error } = useCommissions();
+  const commissions = apiResponse?.data || [];
+  const stats = apiResponse?.meta?.stats || { totalCommissions: 0, paidCommissions: 0, pendingCommissions: 0, currentRate: 15 };
+
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading commissions...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -113,8 +57,8 @@ export function CommissionsManagement() {
             <CardDescription>Default commission percentage</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">10%</div>
-            <p className="text-sm text-muted-foreground">Standard commission rate</p>
+            <div className="text-3xl font-bold">{stats.currentRate}%</div>
+            <p className="text-sm text-muted-foreground">Standard platform fee</p>
           </CardContent>
         </Card>
 
@@ -125,9 +69,9 @@ export function CommissionsManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              ${commissions.reduce((sum, commission) => sum + commission.commissionAmount, 0).toFixed(2)}
+              ${stats.totalCommissions.toFixed(2)}
             </div>
-            <p className="text-sm text-muted-foreground">Total commission revenue</p>
+            <p className="text-sm text-muted-foreground">Total platform earnings</p>
           </CardContent>
         </Card>
 
@@ -138,12 +82,9 @@ export function CommissionsManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              ${commissions
-                .filter(commission => commission.status === 'pending')
-                .reduce((sum, commission) => sum + commission.commissionAmount, 0)
-                .toFixed(2)}
+              ${stats.pendingCommissions.toFixed(2)}
             </div>
-            <p className="text-sm text-muted-foreground">Pending commission payments</p>
+            <p className="text-sm text-muted-foreground">Awaiting reservation payout</p>
           </CardContent>
         </Card>
       </div>

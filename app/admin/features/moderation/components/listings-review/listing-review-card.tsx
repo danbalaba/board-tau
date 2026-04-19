@@ -27,9 +27,9 @@ import { motion } from 'framer-motion';
 
 interface ListingReviewCardProps {
   listing: any;
-  onApprove: (id: number) => void;
-  onReject: (id: number) => void;
-  onModify: (id: number) => void;
+  onApprove: (id: string) => void;
+  onReject: (id: string) => void;
+  onModify: (id: string) => void;
 }
 
 export function ListingReviewCard({ listing, onApprove, onReject, onModify }: ListingReviewCardProps) {

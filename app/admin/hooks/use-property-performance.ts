@@ -16,6 +16,18 @@ export interface PropertyPerformance {
   averageRating: number;
   totalRevenue: number;
   occupancyRate: number;
+  revenueTrends: any[];
+  occupancyByProperty: any[];
+  pricingComparison: any[];
+  averageStay: number;
+  bookingStats: {
+    confirmed: number;
+    pending: number;
+    cancelled: number;
+    completed: number;
+  };
+  recentBookings: any[];
+  pricingRecommendations: any[];
 }
 
 export function usePropertyPerformance(range: string = '30d', propertyId?: string) {

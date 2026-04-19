@@ -20,55 +20,7 @@ import { Badge } from '@/app/admin/components/ui/badge';
 import { Button } from '@/app/admin/components/ui/button';
 import { Eye, Download } from 'lucide-react';
 
-interface TaxRecord {
-  id: string;
-  period: string;
-  taxType: string;
-  amount: number;
-  status: 'filed' | 'pending' | 'failed';
-  filingDate: string;
-  dueDate: string;
-  notes?: string;
-}
-
-const taxRecords: TaxRecord[] = [
-  {
-    id: '1',
-    period: 'Q4 2023',
-    taxType: 'Sales Tax',
-    amount: 1250.00,
-    status: 'filed',
-    filingDate: '2023-10-15T10:30:00Z',
-    dueDate: '2023-10-15T23:59:59Z'
-  },
-  {
-    id: '2',
-    period: 'Q4 2023',
-    taxType: 'Income Tax',
-    amount: 3500.00,
-    status: 'filed',
-    filingDate: '2023-10-15T09:15:00Z',
-    dueDate: '2023-10-15T23:59:59Z'
-  },
-  {
-    id: '3',
-    period: 'Q1 2024',
-    taxType: 'Sales Tax',
-    amount: 1800.00,
-    status: 'pending',
-    filingDate: '',
-    dueDate: '2024-04-15T23:59:59Z'
-  },
-  {
-    id: '4',
-    period: 'Q1 2024',
-    taxType: 'Income Tax',
-    amount: 4200.00,
-    status: 'pending',
-    filingDate: '',
-    dueDate: '2024-04-15T23:59:59Z'
-  }
-];
+import { useTaxCompliance } from '@/app/admin/hooks/use-tax-compliance';
 
 const statusColors = {
   filed: 'default',
@@ -83,6 +35,12 @@ const statusLabels = {
 };
 
 export function TaxCompliance() {
+  const { data: apiResponse, isLoading, error } = useTaxCompliance();
+  const taxRecords = apiResponse?.data || [];
+  const stats = apiResponse?.meta?.stats || { totalTaxesPaid: 0, pendingTaxes: 0, complianceRate: 0, totalRecords: 0 };
+
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading tax records...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -100,10 +58,7 @@ export function TaxCompliance() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              ${taxRecords
-                .filter(record => record.status === 'filed')
-                .reduce((sum, record) => sum + record.amount, 0)
-                .toFixed(2)}
+              ${stats.totalTaxesPaid.toFixed(2)}
             </div>
             <p className="text-sm text-muted-foreground">Total taxes paid</p>
           </CardContent>
@@ -116,10 +71,7 @@ export function TaxCompliance() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              ${taxRecords
-                .filter(record => record.status === 'pending')
-                .reduce((sum, record) => sum + record.amount, 0)
-                .toFixed(2)}
+              ${stats.pendingTaxes.toFixed(2)}
             </div>
             <p className="text-sm text-muted-foreground">Pending taxes</p>
           </CardContent>
@@ -131,7 +83,7 @@ export function TaxCompliance() {
             <CardDescription>Number of tax records</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{taxRecords.length}</div>
+            <div className="text-3xl font-bold">{stats.totalRecords}</div>
             <p className="text-sm text-muted-foreground">Total tax records</p>
           </CardContent>
         </Card>
@@ -142,7 +94,7 @@ export function TaxCompliance() {
             <CardDescription>Tax filing compliance rate</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">50%</div>
+            <div className="text-3xl font-bold">{stats.complianceRate.toFixed(1)}%</div>
             <p className="text-sm text-muted-foreground">Compliance rate</p>
           </CardContent>
         </Card>

@@ -20,59 +20,7 @@ import { Badge } from '@/app/admin/components/ui/badge';
 import { Button } from '@/app/admin/components/ui/button';
 import { Eye, Edit } from 'lucide-react';
 
-interface PropertyPricing {
-  id: string;
-  property: string;
-  currentPrice: number;
-  suggestedPrice: number;
-  occupancyRate: number;
-  demandLevel: 'low' | 'medium' | 'high';
-  lastUpdated: string;
-  competitorPrice: number;
-}
-
-const propertiesPricing: PropertyPricing[] = [
-  {
-    id: '1',
-    property: 'Cozy Studio',
-    currentPrice: 150,
-    suggestedPrice: 160,
-    occupancyRate: 85,
-    demandLevel: 'high',
-    lastUpdated: '2024-01-10',
-    competitorPrice: 140
-  },
-  {
-    id: '2',
-    property: 'Beach Villa',
-    currentPrice: 250,
-    suggestedPrice: 270,
-    occupancyRate: 90,
-    demandLevel: 'high',
-    lastUpdated: '2024-01-09',
-    competitorPrice: 240
-  },
-  {
-    id: '3',
-    property: 'Luxury Apartment',
-    currentPrice: 300,
-    suggestedPrice: 280,
-    occupancyRate: 65,
-    demandLevel: 'medium',
-    lastUpdated: '2024-01-08',
-    competitorPrice: 280
-  },
-  {
-    id: '4',
-    property: 'Downtown Loft',
-    currentPrice: 200,
-    suggestedPrice: 180,
-    occupancyRate: 55,
-    demandLevel: 'low',
-    lastUpdated: '2024-01-07',
-    competitorPrice: 190
-  }
-];
+import { usePropertyPerformance } from '@/app/admin/hooks/use-property-performance';
 
 const demandColors = {
   low: 'destructive',
@@ -87,6 +35,22 @@ const demandLabels = {
 };
 
 export function PricingOptimization() {
+  const { data: apiResponse, isLoading, error } = usePropertyPerformance('30d');
+  const data = apiResponse?.data;
+  const propertiesPricing = data?.pricingRecommendations || [];
+
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading pricing data...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
+
+  const avgPrice = propertiesPricing.length > 0 
+    ? propertiesPricing.reduce((sum: number, p: any) => sum + p.currentPrice, 0) / propertiesPricing.length 
+    : 0;
+  
+  const avgOccupancy = propertiesPricing.length > 0
+    ? propertiesPricing.reduce((sum: number, p: any) => sum + p.occupancyRate, 0) / propertiesPricing.length
+    : 0;
+
+  const toAdjustCount = propertiesPricing.filter((p: any) => p.currentPrice !== p.suggestedPrice).length;
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -104,7 +68,7 @@ export function PricingOptimization() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              ${(propertiesPricing.reduce((sum, prop) => sum + prop.currentPrice, 0) / propertiesPricing.length).toFixed(0)}
+              ${avgPrice.toFixed(0)}
             </div>
             <p className="text-sm text-muted-foreground">Average price</p>
           </CardContent>
@@ -117,7 +81,7 @@ export function PricingOptimization() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {Math.round(propertiesPricing.reduce((sum, prop) => sum + prop.occupancyRate, 0) / propertiesPricing.length)}%
+              {Math.round(avgOccupancy)}%
             </div>
             <p className="text-sm text-muted-foreground">Average occupancy</p>
           </CardContent>
@@ -130,7 +94,7 @@ export function PricingOptimization() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {propertiesPricing.filter(prop => prop.currentPrice !== prop.suggestedPrice).length}
+              {toAdjustCount}
             </div>
             <p className="text-sm text-muted-foreground">Properties to adjust</p>
           </CardContent>
@@ -168,7 +132,7 @@ export function PricingOptimization() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {propertiesPricing.map((pricing) => (
+              {propertiesPricing.map((pricing: any) => (
                 <TableRow key={pricing.id}>
                   <TableCell className="font-medium">{pricing.property}</TableCell>
                   <TableCell>${pricing.currentPrice.toFixed(2)}</TableCell>
@@ -181,8 +145,8 @@ export function PricingOptimization() {
                   </TableCell>
                   <TableCell>{pricing.occupancyRate}%</TableCell>
                   <TableCell>
-                    <Badge variant={demandColors[pricing.demandLevel] as any}>
-                      {demandLabels[pricing.demandLevel]}
+                    <Badge variant={(demandColors as any)[pricing.demandLevel] || 'secondary'}>
+                      {(demandLabels as any)[pricing.demandLevel] || pricing.demandLevel}
                     </Badge>
                   </TableCell>
                   <TableCell>${pricing.competitorPrice.toFixed(2)}</TableCell>
