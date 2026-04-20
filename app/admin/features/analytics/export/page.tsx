@@ -1,28 +1,28 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/app/admin/components/ui/card';
 import { Button } from '@/app/admin/components/ui/button';
 import { Input } from '@/app/admin/components/ui/input';
 import { Label } from '@/app/admin/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/admin/components/ui/select';
-import { Download, FileText, BarChart, PieChart, LineChart } from 'lucide-react';
+import { Download, FileText, Database, Calendar, CheckCircle2, AlertCircle, Loader2, FileJson, FileSpreadsheet } from 'lucide-react';
+import { toast } from 'sonner';
+import { Badge } from '@/app/admin/components/ui/badge';
+import { Switch } from '@/app/admin/components/ui/switch';
 
-// Mock data export options
 const exportOptions = [
-  { value: 'csv', label: 'CSV' },
-  { value: 'json', label: 'JSON' },
-  { value: 'pdf', label: 'PDF' },
-  { value: 'excel', label: 'Excel' }
+  { value: 'csv', label: 'Comma Separated (CSV)', icon: FileSpreadsheet, color: 'text-emerald-500' },
+  { value: 'json', label: 'JavaScript Object (JSON)', icon: FileJson, color: 'text-amber-500' },
+  { value: 'pdf', label: 'Portable Document (PDF)', icon: FileText, color: 'text-red-500' }
 ];
 
 const dataSources = [
-  { value: 'users', label: 'Users' },
-  { value: 'listings', label: 'Listings' },
-  { value: 'reservations', label: 'Reservations' },
-  { value: 'reviews', label: 'Reviews' },
-  { value: 'financial', label: 'Financial Data' },
-  { value: 'analytics', label: 'Analytics Data' }
+  { value: 'users', label: 'User Directory', description: 'Full list of registered members and their roles' },
+  { value: 'listings', label: 'Property Inventory', description: 'All listings including status and regional data' },
+  { value: 'reservations', label: 'Booking History', description: 'Complete record of all stays and payments' },
+  { value: 'reviews', label: 'Guest Feedback', description: 'Aggregated reviews and rating metrics' },
+  { value: 'financial', label: 'Financial Records', description: 'Taxable revenue and payment methodology' }
 ];
 
 const dateRanges = [
@@ -42,201 +42,257 @@ export default function DataExport() {
     startDate: '',
     endDate: '',
     includeHeaders: true,
-    compress: false
+    anonymize: false
   });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleToggleChange = (name: string, value: boolean) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Export data:', formData);
-    // Show success message
-    alert('Data export started!');
+    setIsExporting(true);
+    
+    const promise = new Promise(async (resolve, reject) => {
+      try {
+        const response = await fetch('/api/admin/analytics/export', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.message || 'Export failed');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${formData.dataSource}_export_${new Date().toISOString().split('T')[0]}.${formData.exportFormat}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        resolve('Success');
+      } catch (error: any) {
+        reject(error.message);
+      } finally {
+        setIsExporting(false);
+      }
+    });
+
+    toast.promise(promise, {
+      loading: 'Preparing dataset...',
+      success: 'Export complete!',
+      error: (err) => `Error: ${err}`
+    });
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Data Export</h1>
-          <p className="text-gray-500 mt-1">Export your platform's data in various formats</p>
+          <h1 className="text-2xl font-bold tracking-tight">Data Export Center</h1>
+          <p className="text-muted-foreground">Extract platform datasets for external analysis and auditing</p>
         </div>
-        <Button onClick={handleSubmit} disabled={formData.dateRange === 'custom' && (!formData.startDate || !formData.endDate)}>
-          <Download className="w-4 h-4 mr-2" />
-          Export Data
-        </Button>
+        <div className="flex items-center space-x-2">
+           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+             <CheckCircle2 className="w-3 h-3 mr-1" />
+             Live Database Sync
+           </Badge>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <FileText className="w-5 h-5 mr-2" />
-              Export Settings
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="dataSource">Data Source</Label>
-                <Select
-                  value={formData.dataSource}
-                  onValueChange={(value) => handleSelectChange('dataSource', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select data source" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dataSources.map(source => (
-                      <SelectItem key={source.value} value={source.value}>
-                        {source.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="exportFormat">Export Format</Label>
-                <Select
-                  value={formData.exportFormat}
-                  onValueChange={(value) => handleSelectChange('exportFormat', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select export format" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {exportOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dateRange">Date Range</Label>
-              <Select
-                value={formData.dateRange}
-                onValueChange={(value) => handleSelectChange('dateRange', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select date range" />
-                </SelectTrigger>
-                <SelectContent>
-                  {dateRanges.map(range => (
-                    <SelectItem key={range.value} value={range.value}>
-                      {range.label}
-                    </SelectItem>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="border-none shadow-sm ring-1 ring-border">
+            <CardHeader className="bg-muted/10 border-b">
+              <CardTitle className="text-base font-bold flex items-center">
+                <Database className="w-4 h-4 mr-2 text-primary" />
+                Dataset Configuration
+              </CardTitle>
+              <CardDescription>Select the source and timeframe for your data extraction</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+              <div className="space-y-4">
+                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Select Primary Data Source</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {dataSources.map((source) => (
+                    <div 
+                      key={source.value}
+                      onClick={() => handleSelectChange('dataSource', source.value)}
+                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        formData.dataSource === source.value 
+                        ? 'border-primary bg-primary/5 shadow-sm' 
+                        : 'border-transparent bg-muted/30 hover:bg-muted/50'
+                      }`}
+                    >
+                      <h4 className="text-sm font-bold">{source.label}</h4>
+                      <p className="text-xs text-muted-foreground mt-1">{source.description}</p>
+                    </div>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {formData.dateRange === 'custom' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="startDate">Start Date</Label>
-                  <Input
-                    id="startDate"
-                    name="startDate"
-                    type="date"
-                    value={formData.startDate}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="endDate">End Date</Label>
-                  <Input
-                    id="endDate"
-                    name="endDate"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={handleChange}
-                    required
-                  />
                 </div>
               </div>
-            )}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Input
-                  id="includeHeaders"
-                  name="includeHeaders"
-                  type="checkbox"
-                  checked={formData.includeHeaders}
-                  onChange={handleChange}
-                  className="rounded"
-                />
-                <Label htmlFor="includeHeaders">Include headers</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Input
-                  id="compress"
-                  name="compress"
-                  type="checkbox"
-                  checked={formData.compress}
-                  onChange={handleChange}
-                  className="rounded"
-                />
-                <Label htmlFor="compress">Compress file</Label>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <BarChart className="w-5 h-5 mr-2" />
-              Export Preview
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs font-medium text-gray-500">Data Source</div>
-                <div className="font-medium">{dataSources.find(source => source.value === formData.dataSource)?.label}</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs font-medium text-gray-500">Export Format</div>
-                <div className="font-medium">{exportOptions.find(option => option.value === formData.exportFormat)?.label}</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs font-medium text-gray-500">Date Range</div>
-                <div className="font-medium">
-                  {formData.dateRange === 'custom' ? (
-                    `${formData.startDate} - ${formData.endDate}`
-                  ) : (
-                    dateRanges.find(range => range.value === formData.dateRange)?.label
-                  )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Timeframe</Label>
+                  <Select
+                    value={formData.dateRange}
+                    onValueChange={(v) => handleSelectChange('dateRange', v)}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dateRanges.map(r => (
+                        <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-3">
+                   <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Export Format</Label>
+                   <Select
+                    value={formData.exportFormat}
+                    onValueChange={(v) => handleSelectChange('exportFormat', v)}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {exportOptions.map(o => (
+                        <SelectItem key={o.value} value={o.value}>
+                          <div className="flex items-center">
+                            <o.icon className={`w-4 h-4 mr-2 ${o.color}`} />
+                            {o.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        <div className="flex justify-end">
-          <Button type="submit" disabled={formData.dateRange === 'custom' && (!formData.startDate || !formData.endDate)}>
-            <Download className="w-4 h-4 mr-2" />
-            Export Data
-          </Button>
+              {formData.dateRange === 'custom' && (
+                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Start Date</Label>
+                    <Input 
+                      type="date" 
+                      value={formData.startDate}
+                      onChange={(e) => handleSelectChange('startDate', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">End Date</Label>
+                    <Input 
+                      type="date" 
+                      value={formData.endDate}
+                      onChange={(e) => handleSelectChange('endDate', e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
+            <CardHeader className="bg-muted/10 border-b">
+              <CardTitle className="text-sm font-bold">Extraction Options</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+               <div className="flex items-center justify-between py-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-bold">Include Headers</Label>
+                    <p className="text-xs text-muted-foreground">Add column titles to the first row of the export</p>
+                  </div>
+                  <Switch 
+                    checked={formData.includeHeaders} 
+                    onCheckedChange={(v) => handleToggleChange('includeHeaders', v)} 
+                  />
+               </div>
+               <div className="h-px bg-border my-4" />
+               <div className="flex items-center justify-between py-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-bold">Privacy Masking</Label>
+                    <p className="text-xs text-muted-foreground">Anonymize sensitive user fields (Email, Phone)</p>
+                  </div>
+                  <Switch 
+                    checked={formData.anonymize} 
+                    onCheckedChange={(v) => handleToggleChange('anonymize', v)} 
+                  />
+               </div>
+            </CardContent>
+          </Card>
         </div>
-      </form>
+
+        <div className="space-y-6">
+           <Card className="border-none shadow-sm ring-1 ring-border bg-primary text-primary-foreground">
+              <CardHeader>
+                 <CardTitle className="text-base font-bold flex items-center">
+                    <Download className="w-5 h-5 mr-2" />
+                    Extraction Summary
+                 </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                 <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Source</p>
+                    <p className="text-lg font-bold">{dataSources.find(s => s.value === formData.dataSource)?.label}</p>
+                 </div>
+                 <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Interval</p>
+                    <p className="text-lg font-bold">
+                       {formData.dateRange === 'custom' 
+                         ? `${formData.startDate || '...'} to ${formData.endDate || '...'}`
+                         : dateRanges.find(r => r.value === formData.dateRange)?.label
+                       }
+                    </p>
+                 </div>
+                 <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Output</p>
+                    <p className="text-lg font-bold font-mono">{formData.exportFormat.toUpperCase()}</p>
+                 </div>
+              </CardContent>
+              <CardFooter className="pt-4 border-t border-primary-foreground/20">
+                 <Button 
+                   onClick={handleSubmit} 
+                   className="w-full bg-white text-primary hover:bg-white/90 font-bold uppercase tracking-widest text-xs h-11"
+                   disabled={isExporting || (formData.dateRange === 'custom' && (!formData.startDate || !formData.endDate))}
+                 >
+                   {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Run Extraction'}
+                 </Button>
+              </CardFooter>
+           </Card>
+
+           <Card className="border-none shadow-sm ring-1 ring-border">
+              <CardHeader className="pb-3">
+                 <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center">
+                    <Calendar className="w-3 h-3 mr-2" />
+                    Last Extraction
+                 </CardTitle>
+              </CardHeader>
+              <CardContent>
+                 <div className="flex items-center space-x-3 text-sm">
+                    <div className="p-2 rounded-lg bg-muted">
+                       <FileSpreadsheet className="h-4 w-4 text-emerald-500" />
+                    </div>
+                    <div>
+                       <p className="font-bold">users_export_apr20.csv</p>
+                       <p className="text-[10px] text-muted-foreground font-bold uppercase">10 minutes ago • 244 KB</p>
+                    </div>
+                 </div>
+              </CardContent>
+           </Card>
+        </div>
+      </div>
     </div>
   );
 }

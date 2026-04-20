@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -21,8 +21,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
@@ -32,228 +30,314 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis
 } from 'recharts';
+import { Skeleton } from '@/app/admin/components/ui/skeleton';
+import { toast } from 'sonner';
+import { Download, RefreshCw, TrendingUp, TrendingDown, Users, DollarSign, Calendar, MapPin } from 'lucide-react';
 
-// Sample data
-const revenueData = [
-  { name: 'Jan', revenue: 4000, bookings: 2400, users: 1000 },
-  { name: 'Feb', revenue: 3000, bookings: 1398, users: 1100 },
-  { name: 'Mar', revenue: 2000, bookings: 9800, users: 1200 },
-  { name: 'Apr', revenue: 2780, bookings: 3908, users: 1300 },
-  { name: 'May', revenue: 1890, bookings: 4800, users: 1400 },
-  { name: 'Jun', revenue: 2390, bookings: 3800, users: 1500 },
-  { name: 'Jul', revenue: 3490, bookings: 4300, users: 1600 }
-];
-
-const propertyTypeData = [
-  { name: 'Studio', value: 400, color: '#0088FE' },
-  { name: '1 Bedroom', value: 300, color: '#00C49F' },
-  { name: '2 Bedrooms', value: 300, color: '#FFBB28' },
-  { name: '3+ Bedrooms', value: 200, color: '#FF8042' }
-];
-
-const locationData = [
-  { name: 'Central Region', value: 650, color: '#0088FE' },
-  { name: 'North Region', value: 450, color: '#00C49F' },
-  { name: 'East Region', value: 550, color: '#FFBB28' },
-  { name: 'West Region', value: 350, color: '#FF8042' },
-  { name: 'North-East Region', value: 400, color: '#8884d8' }
-];
-
-const performanceData = [
-  { subject: 'Occupancy', value: 95, fullMark: 100 },
-  { subject: 'Booking Rate', value: 85, fullMark: 100 },
-  { subject: 'Revenue', value: 90, fullMark: 100 },
-  { subject: 'Customer Satisfaction', value: 88, fullMark: 100 },
-  { subject: 'Response Time', value: 82, fullMark: 100 },
-  { subject: 'Cancellation Rate', value: 75, fullMark: 100 }
-];
+interface AnalyticsData {
+  summary: {
+    revenue: number;
+    bookings: number;
+    activeUsers: number;
+    avgValue: number;
+    trends: {
+      revenue: string;
+      bookings: string;
+      users: string;
+      avgValue: string;
+    }
+  };
+  revenueTrends: { name: string; revenue: number; bookings: number }[];
+  propertyTypeData: { name: string; value: number; color: string }[];
+  locationData: { name: string; value: number; color: string }[];
+  performanceData: { subject: string; value: number; fullMark: number }[];
+  topProperties: { name: string; location: string; occupancy: number; rating: string }[];
+  popularLocations: { name: string; bookings: number; growth: number }[];
+}
 
 export function AdvancedAnalytics() {
   const [timeRange, setTimeRange] = useState('7d');
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+
+    try {
+      const response = await fetch(`/api/admin/analytics/advanced?range=${timeRange}`);
+      const result = await response.json();
+      if (result.success) {
+        setData(result.data);
+      } else {
+        toast.error('Failed to fetch analytics data');
+      }
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      toast.error('An error occurred while fetching analytics');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [timeRange]);
+
+  useEffect(() => {
+    if (autoRefresh) {
+      const interval = setInterval(() => fetchData(true), 60000);
+      return () => clearInterval(interval);
+    }
+  }, [autoRefresh, timeRange]);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-10 w-64 mb-2" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
+        </div>
+        <Skeleton className="h-[400px] w-full rounded-xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Skeleton className="h-[350px] w-full rounded-xl" />
+          <Skeleton className="h-[350px] w-full rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) return null;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Advanced Analytics</h2>
-          <p className="text-muted-foreground">Comprehensive business intelligence and data analysis</p>
+          <p className="text-muted-foreground">Comprehensive business intelligence across the platform</p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Label htmlFor="autoRefresh" className="text-sm font-medium">
-            Auto-refresh
-          </Label>
-          <Switch
-            id="autoRefresh"
-            checked={autoRefresh}
-            onCheckedChange={setAutoRefresh}
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
-          <Label htmlFor="timeRange" className="text-sm font-medium">
-            Time Range
-          </Label>
+        <div className="flex items-center space-x-3 bg-muted/30 p-1.5 rounded-lg border">
+          <div className="flex items-center space-x-2 px-2">
+            <Switch
+              id="autoRefresh"
+              checked={autoRefresh}
+              onCheckedChange={setAutoRefresh}
+              className="scale-90"
+            />
+            <Label htmlFor="autoRefresh" className="text-xs font-bold uppercase tracking-widest cursor-pointer">
+              Live
+            </Label>
+          </div>
+          <div className="w-px h-4 bg-border" />
           <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger id="timeRange" className="w-[180px]">
-              <SelectValue placeholder="Select range" />
+            <SelectTrigger id="timeRange" className="w-[140px] h-8 text-xs font-bold uppercase border-none shadow-none focus:ring-0">
+              <SelectValue placeholder="Range" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="24h">Last 24 Hours</SelectItem>
-              <SelectItem value="7d">Last 7 Days</SelectItem>
-              <SelectItem value="30d">Last 30 Days</SelectItem>
-              <SelectItem value="90d">Last 90 Days</SelectItem>
-              <SelectItem value="1y">Last Year</SelectItem>
-              <SelectItem value="custom">Custom Range</SelectItem>
+              <SelectItem value="24h">24 Hours</SelectItem>
+              <SelectItem value="7d">7 Days</SelectItem>
+              <SelectItem value="30d">30 Days</SelectItem>
+              <SelectItem value="90d">90 Days</SelectItem>
+              <SelectItem value="1y">1 Year</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => fetchData(true)} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
         </div>
-        <Button variant="outline">
-          <span className="mr-2">📊</span>
-          Export Report
-        </Button>
       </div>
 
-      {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
+        <Card className="border-none shadow-sm ring-1 ring-border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <CardDescription>This period</CardDescription>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
+              <DollarSign className="h-3 w-3 mr-2 text-emerald-500" />
+              Total Revenue
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$128,430</div>
-            <p className="text-sm text-green-600 mt-2">
-              <span className="mr-1">↑</span> 12% from previous period
-            </p>
+            <div className="text-2xl font-bold">${data.summary.revenue.toLocaleString()}</div>
+            <div className={`flex items-center mt-2 text-xs font-bold ${data.summary.trends.revenue.startsWith('+') ? 'text-emerald-600' : 'text-red-600'}`}>
+              {data.summary.trends.revenue.startsWith('+') ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+              {data.summary.trends.revenue}
+              <span className="ml-1.5 text-muted-foreground font-normal">vs prev.</span>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-none shadow-sm ring-1 ring-border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
-            <CardDescription>This period</CardDescription>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
+              <Calendar className="h-3 w-3 mr-2 text-blue-500" />
+              Total Bookings
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,248</div>
-            <p className="text-sm text-green-600 mt-2">
-              <span className="mr-1">↑</span> 8% from previous period
-            </p>
+            <div className="text-2xl font-bold">{data.summary.bookings.toLocaleString()}</div>
+            <div className={`flex items-center mt-2 text-xs font-bold ${data.summary.trends.bookings.startsWith('+') ? 'text-emerald-600' : 'text-red-600'}`}>
+              {data.summary.trends.bookings.startsWith('+') ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+              {data.summary.trends.bookings}
+              <span className="ml-1.5 text-muted-foreground font-normal">vs prev.</span>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-none shadow-sm ring-1 ring-border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-            <CardDescription>This period</CardDescription>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
+              <Users className="h-3 w-3 mr-2 text-amber-500" />
+              Active Users
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2,893</div>
-            <p className="text-sm text-red-600 mt-2">
-              <span className="mr-1">↓</span> 3% from previous period
-            </p>
+            <div className="text-2xl font-bold">{data.summary.activeUsers.toLocaleString()}</div>
+            <div className={`flex items-center mt-2 text-xs font-bold ${data.summary.trends.users.startsWith('+') ? 'text-emerald-600' : 'text-red-600'}`}>
+              {data.summary.trends.users.startsWith('+') ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+              {data.summary.trends.users}
+              <span className="ml-1.5 text-muted-foreground font-normal">vs prev.</span>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-none shadow-sm ring-1 ring-border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Average Booking Value</CardTitle>
-            <CardDescription>This period</CardDescription>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
+              <TrendingUp className="h-3 w-3 mr-2 text-purple-500" />
+              Avg Booking Val
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$102.90</div>
-            <p className="text-sm text-green-600 mt-2">
-              <span className="mr-1">↑</span> 5% from previous period
-            </p>
+            <div className="text-2xl font-bold">${data.summary.avgValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+            <div className={`flex items-center mt-2 text-xs font-bold ${data.summary.trends.avgValue.startsWith('+') ? 'text-emerald-600' : 'text-red-600'}`}>
+              {data.summary.trends.avgValue.startsWith('+') ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+              {data.summary.trends.avgValue}
+              <span className="ml-1.5 text-muted-foreground font-normal">vs prev.</span>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Revenue vs Bookings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue vs Bookings</CardTitle>
-          <CardDescription>Comparison of revenue and bookings over time</CardDescription>
+      <Card className="border-none shadow-sm ring-1 ring-border">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7 border-b bg-muted/10">
+          <div>
+            <CardTitle className="text-base font-bold">Revenue & Volume Dynamics</CardTitle>
+            <CardDescription>Performance trends across the selected timeframe</CardDescription>
+          </div>
+          <Button variant="outline" size="sm" className="h-8 text-xs font-bold uppercase tracking-widest">
+            <Download className="h-3.5 w-3.5 mr-2" />
+            Export Data
+          </Button>
         </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
+        <CardContent className="pt-6">
+          <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={revenueData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                data={data.revenueTrends}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-                <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
-                <Tooltip />
-                <Legend />
-                <Bar yAxisId="left" dataKey="revenue" fill="#8884d8" name="Revenue ($)" />
-                <Bar yAxisId="right" dataKey="bookings" fill="#82ca9d" name="Bookings" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 600 }}
+                  tickMargin={12}
+                />
+                <YAxis 
+                  yAxisId="left" 
+                  orientation="left" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 600 }}
+                  tickFormatter={(v) => `$${v}`}
+                />
+                <YAxis 
+                  yAxisId="right" 
+                  orientation="right" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 600 }}
+                />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }} />
+                <Bar yAxisId="left" dataKey="revenue" fill="hsl(var(--primary))" name="Revenue ($)" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="right" dataKey="bookings" fill="#82ca9d" name="Bookings" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
 
-      {/* Property Type Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Property Type Distribution</CardTitle>
-            <CardDescription>Number of properties by type</CardDescription>
+        <Card className="border-none shadow-sm ring-1 ring-border">
+          <CardHeader className="border-b bg-muted/10 pb-4">
+            <CardTitle className="text-sm font-bold">Inventory Segmentation</CardTitle>
+            <CardDescription>Property counts by asset class</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
+          <CardContent className="pt-6">
+            <div className="h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={propertyTypeData}
+                    data={data.propertyTypeData}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                    innerRadius={60}
                     outerRadius={80}
-                    fill="#8884d8"
+                    paddingAngle={5}
                     dataKey="value"
                   >
-                    {propertyTypeData.map((entry, index) => (
+                    {data.propertyTypeData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                  />
+                  <Legend iconType="circle" layout="vertical" align="right" verticalAlign="middle" wrapperStyle={{ fontSize: '11px', fontWeight: 600 }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Location Distribution</CardTitle>
-            <CardDescription>Number of properties by location</CardDescription>
+        <Card className="border-none shadow-sm ring-1 ring-border">
+          <CardHeader className="border-b bg-muted/10 pb-4">
+            <CardTitle className="text-sm font-bold">Regional Distribution</CardTitle>
+            <CardDescription>Top performing neighborhoods by asset density</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
+          <CardContent className="pt-6">
+            <div className="h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={locationData}
+                    data={data.locationData}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                    innerRadius={60}
                     outerRadius={80}
-                    fill="#8884d8"
+                    paddingAngle={5}
                     dataKey="value"
                   >
-                    {locationData.map((entry, index) => (
+                    {data.locationData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                  />
+                  <Legend iconType="circle" layout="vertical" align="right" verticalAlign="middle" wrapperStyle={{ fontSize: '11px', fontWeight: 600 }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -261,97 +345,74 @@ export function AdvancedAnalytics() {
         </Card>
       </div>
 
-      {/* Performance Metrics */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Performance Metrics</CardTitle>
-          <CardDescription>Comprehensive performance analysis</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={performanceData}>
-                <PolarGrid stroke="#e2e8f0" />
-                <PolarAngleAxis dataKey="subject" />
-                <PolarRadiusAxis angle={90} domain={[0, 100]} />
-                <Radar
-                  name="Performance"
-                  dataKey="value"
-                  stroke="#8884d8"
-                  strokeWidth={2}
-                  fill="#8884d8"
-                  fillOpacity={0.6}
-                />
-                <Tooltip />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Detailed Reports */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="flex items-center justify-between">
-            <div>
-              <CardTitle>Top Performing Properties</CardTitle>
-              <CardDescription>Properties with highest occupancy</CardDescription>
-            </div>
-            <Button variant="outline" size="sm">
-              View All
-            </Button>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-1 border-none shadow-sm ring-1 ring-border">
+          <CardHeader className="border-b bg-muted/10 pb-4">
+            <CardTitle className="text-sm font-bold">Platform Scorecard</CardTitle>
+            <CardDescription>Operational health radar</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { name: 'Luxury Studio #1', location: 'Central Business District', occupancy: 98, rating: 4.8 },
-                { name: 'Cozy 1 Bedroom', location: 'Tiong Bahru', occupancy: 95, rating: 4.7 },
-                { name: 'Spacious 2 Bedroom', location: 'Holland Village', occupancy: 93, rating: 4.6 },
-                { name: 'Modern Studio', location: 'Bugis', occupancy: 92, rating: 4.5 }
-              ].map((property, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <p className="font-medium">{property.name}</p>
-                    <p className="text-sm text-muted-foreground">{property.location}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">{property.occupancy}%</p>
-                    <p className="text-sm text-yellow-500">★ {property.rating}</p>
-                  </div>
-                </div>
-              ))}
+          <CardContent className="pt-6">
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={data.performanceData}>
+                  <PolarGrid stroke="#e2e8f0" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fontWeight: 700 }} />
+                  <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
+                  <Radar
+                    name="Performance"
+                    dataKey="value"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                    fill="hsl(var(--primary))"
+                    fillOpacity={0.5}
+                  />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex items-center justify-between">
+        <Card className="lg:col-span-2 border-none shadow-sm ring-1 ring-border">
+          <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4">
             <div>
-              <CardTitle>Popular Locations</CardTitle>
-              <CardDescription>Locations with highest bookings</CardDescription>
+              <CardTitle className="text-sm font-bold">High Yield Properties</CardTitle>
+              <CardDescription>Top assets by booking conversion</CardDescription>
             </div>
-            <Button variant="outline" size="sm">
-              View All
+            <Button variant="ghost" size="sm" className="h-8 text-[10px] font-bold uppercase tracking-widest">
+              Explore All
             </Button>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { name: 'Central Business District', bookings: 284, growth: 15 },
-                { name: 'Tiong Bahru', bookings: 256, growth: 12 },
-                { name: 'Holland Village', bookings: 237, growth: 8 },
-                { name: 'Bugis', bookings: 218, growth: 5 }
-              ].map((location, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <p className="font-medium">{location.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      <span className="text-green-600">↑ {location.growth}%</span> from previous period
-                    </p>
+          <CardContent className="pt-6">
+            <div className="space-y-5">
+              {data.topProperties.map((property, index) => (
+                <div key={index} className="flex items-center justify-between group cursor-default">
+                  <div className="flex items-center space-x-4">
+                    <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center font-bold text-xs text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                      #{index + 1}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">{property.name}</p>
+                      <div className="flex items-center text-[10px] font-medium text-muted-foreground uppercase mt-0.5">
+                        <MapPin className="h-2.5 w-2.5 mr-1" />
+                        {property.location}
+                      </div>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">{location.bookings}</p>
-                    <p className="text-sm text-muted-foreground">bookings</p>
+                    <div className="flex items-center justify-end space-x-3">
+                       <div className="text-right">
+                        <p className="text-sm font-bold">{property.occupancy}%</p>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Occupancy</p>
+                       </div>
+                       <div className="h-8 w-px bg-border mx-1" />
+                       <div className="text-right">
+                        <p className="text-sm font-bold text-amber-500">★ {property.rating}</p>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Rating</p>
+                       </div>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -360,78 +421,73 @@ export function AdvancedAnalytics() {
         </Card>
       </div>
 
-      {/* Report Scheduling */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Report Scheduling</CardTitle>
-          <CardDescription>Schedule and customize report delivery</CardDescription>
+      <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
+        <CardHeader className="bg-primary text-primary-foreground pb-6">
+          <CardTitle className="text-lg font-bold">Automated Intelligence Reports</CardTitle>
+          <CardDescription className="text-primary-foreground/80">Configure smart delivery of business insights</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="reportType">Report Type</Label>
-              <Select defaultValue="weekly">
-                <SelectTrigger id="reportType">
-                  <SelectValue placeholder="Select report" />
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Report Engine</Label>
+              <Select defaultValue="revenue">
+                <SelectTrigger className="h-9 font-medium text-sm">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="daily">Daily Report</SelectItem>
-                  <SelectItem value="weekly">Weekly Report</SelectItem>
-                  <SelectItem value="monthly">Monthly Report</SelectItem>
-                  <SelectItem value="quarterly">Quarterly Report</SelectItem>
-                  <SelectItem value="custom">Custom Report</SelectItem>
+                  <SelectItem value="revenue">Financial Summary</SelectItem>
+                  <SelectItem value="occupancy">Occupancy Trends</SelectItem>
+                  <SelectItem value="security">Security Audit</SelectItem>
+                  <SelectItem value="full">Comprehensive Platform BI</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="frequency">Frequency</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Cadence</Label>
               <Select defaultValue="weekly">
-                <SelectTrigger id="frequency">
-                  <SelectValue placeholder="Select frequency" />
+                <SelectTrigger className="h-9 font-medium text-sm">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="daily">Daily 8:00 AM</SelectItem>
+                  <SelectItem value="weekly">Weekly (Monday)</SelectItem>
+                  <SelectItem value="monthly">Monthly (1st)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="format">Format</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Output Format</Label>
               <Select defaultValue="pdf">
-                <SelectTrigger id="format">
-                  <SelectValue placeholder="Select format" />
+                <SelectTrigger className="h-9 font-medium text-sm">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pdf">PDF</SelectItem>
-                  <SelectItem value="csv">CSV</SelectItem>
-                  <SelectItem value="excel">Excel</SelectItem>
-                  <SelectItem value="png">PNG</SelectItem>
+                  <SelectItem value="pdf">Professional PDF</SelectItem>
+                  <SelectItem value="csv">Raw Dataset (CSV)</SelectItem>
+                  <SelectItem value="xlsx">Excel Workbook</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="delivery">Delivery</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Channel</Label>
               <Select defaultValue="email">
-                <SelectTrigger id="delivery">
-                  <SelectValue placeholder="Select delivery" />
+                <SelectTrigger className="h-9 font-medium text-sm">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="slack">Slack</SelectItem>
-                  <SelectItem value="webhook">Webhook</SelectItem>
+                  <SelectItem value="email">Admin Email Feed</SelectItem>
+                  <SelectItem value="slack">Slack #bi-reports</SelectItem>
+                  <SelectItem value="webhook">Custom Webhook</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <div className="flex items-center justify-between pt-6">
-            <Button variant="outline">
-              <span className="mr-2">📅</span>
-              Schedule Report
+          <div className="flex items-center justify-end pt-8 gap-3">
+             <Button variant="outline" className="text-xs font-bold uppercase tracking-widest px-6">
+              Preview
             </Button>
-            <Button variant="outline">
-              <span className="mr-2">⚙️</span>
-              Report Templates
+            <Button className="text-xs font-bold uppercase tracking-widest px-8 shadow-lg shadow-primary/20">
+              Enable Intelligence Feed
             </Button>
           </div>
         </CardContent>

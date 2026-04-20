@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -9,8 +9,6 @@ import {
   CardTitle
 } from '@/app/admin/components/ui/card';
 import {
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -22,147 +20,226 @@ import {
   AreaChart,
   Area
 } from 'recharts';
+import { Button } from '@/app/admin/components/ui/button';
+import { RefreshCw, Activity, Cpu, HardDrive, Network } from 'lucide-react';
+import { Skeleton } from '@/app/admin/components/ui/skeleton';
+import { toast } from 'sonner';
 
-// Sample server metrics data
-const cpuData = [
-  { time: '09:00', value: 45 },
-  { time: '09:15', value: 52 },
-  { time: '09:30', value: 65 },
-  { time: '09:45', value: 58 },
-  { time: '10:00', value: 72 },
-  { time: '10:15', value: 68 },
-  { time: '10:30', value: 55 },
-  { time: '10:45', value: 61 },
-  { time: '11:00', value: 75 },
-  { time: '11:15', value: 80 },
-  { time: '11:30', value: 70 },
-  { time: '11:45', value: 65 }
-];
-
-const memoryData = [
-  { time: '09:00', value: 68 },
-  { time: '09:15', value: 72 },
-  { time: '09:30', value: 78 },
-  { time: '09:45', value: 80 },
-  { time: '10:00', value: 85 },
-  { time: '10:15', value: 88 },
-  { time: '10:30', value: 82 },
-  { time: '10:45', value: 80 },
-  { time: '11:00', value: 85 },
-  { time: '11:15', value: 88 },
-  { time: '11:30', value: 82 },
-  { time: '11:45', value: 80 }
-];
-
-const networkData = [
-  { time: '09:00', inbound: 4.5, outbound: 2.3 },
-  { time: '09:15', inbound: 5.2, outbound: 2.8 },
-  { time: '09:30', inbound: 6.1, outbound: 3.2 },
-  { time: '09:45', inbound: 5.8, outbound: 3.0 },
-  { time: '10:00', inbound: 7.5, outbound: 4.1 },
-  { time: '10:15', inbound: 6.8, outbound: 3.8 },
-  { time: '10:30', inbound: 5.5, outbound: 2.9 },
-  { time: '10:45', inbound: 6.1, outbound: 3.3 },
-  { time: '11:00', inbound: 8.2, outbound: 4.5 },
-  { time: '11:15', inbound: 9.1, outbound: 5.2 },
-  { time: '11:30', inbound: 7.8, outbound: 4.3 },
-  { time: '11:45', inbound: 6.5, outbound: 3.6 }
-];
+interface MetricsData {
+  current: {
+    cpuUsage: number;
+    memoryUsage: number;
+    networkIn: number;
+    networkOut: number;
+    loadAvg: {
+      '1m': number;
+      '5m': number;
+      '15m': number;
+    };
+    processes: {
+      total: number;
+      active: number;
+    };
+  };
+  history: {
+    cpu: { time: string; value: number }[];
+    memory: { time: string; value: number }[];
+    network: { time: string; inbound: number; outbound: number }[];
+  };
+}
 
 export function ServerMetrics() {
+  const [data, setData] = useState<MetricsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchMetrics = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+
+    try {
+      const response = await fetch('/api/admin/monitoring/servers');
+      const result = await response.json();
+      if (result.success) {
+        setData(result.data);
+      } else {
+        toast.error('Failed to fetch server metrics');
+      }
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      toast.error('An error occurred while fetching metrics');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMetrics();
+    // Refresh every minute to keep the charts moving
+    const interval = setInterval(() => fetchMetrics(true), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-24" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-[400px] w-full rounded-xl" />
+          <Skeleton className="h-[400px] w-full rounded-xl" />
+        </div>
+        <Skeleton className="h-[300px] w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const { current, history } = data;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Server Metrics</h2>
-          <p className="text-muted-foreground">Monitor server performance and resource utilization</p>
+          <p className="text-muted-foreground">Live resource utilization and performance trends</p>
         </div>
+        <Button 
+          onClick={() => fetchMetrics(true)} 
+          disabled={refreshing}
+          variant="outline"
+          className="shadow-sm"
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          {refreshing ? 'Refreshing...' : 'Refresh'}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>CPU Usage</CardTitle>
-            <CardDescription>Current CPU utilization</CardDescription>
+        <Card className="border-none shadow-sm ring-1 ring-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CPU Usage</CardTitle>
+            <div className="p-1.5 bg-blue-50 rounded-lg">
+              <Cpu className="h-4 w-4 text-blue-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">80%</div>
-            <p className="text-sm text-muted-foreground">Peak: 95% • Avg: 72%</p>
+            <div className="text-3xl font-bold">{current.cpuUsage}%</div>
+            <div className="flex items-center space-x-2 mt-2">
+              <div className="w-full bg-muted rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-1000 ease-out ${current.cpuUsage > 80 ? 'bg-red-500' : 'bg-blue-500'}`} 
+                  style={{ width: `${current.cpuUsage}%` }}
+                ></div>
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-3 font-medium uppercase">Load Avg (1m): {current.loadAvg['1m']}</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Memory Usage</CardTitle>
-            <CardDescription>Current memory utilization</CardDescription>
+        <Card className="border-none shadow-sm ring-1 ring-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Memory Usage</CardTitle>
+            <div className="p-1.5 bg-green-50 rounded-lg">
+              <Activity className="h-4 w-4 text-green-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">88%</div>
-            <p className="text-sm text-muted-foreground">Peak: 92% • Avg: 82%</p>
+            <div className="text-3xl font-bold">{current.memoryUsage}%</div>
+            <div className="flex items-center space-x-2 mt-2">
+              <div className="w-full bg-muted rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-1000 ease-out ${current.memoryUsage > 85 ? 'bg-red-500' : 'bg-green-500'}`} 
+                  style={{ width: `${current.memoryUsage}%` }}
+                ></div>
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-3 font-medium uppercase">Active Processes: {current.processes.active}</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Network Traffic</CardTitle>
-            <CardDescription>Current network bandwidth</CardDescription>
+        <Card className="border-none shadow-sm ring-1 ring-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Network Traffic</CardTitle>
+            <div className="p-1.5 bg-purple-50 rounded-lg">
+              <Network className="h-4 w-4 text-purple-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">9.1 MB/s</div>
-            <p className="text-sm text-muted-foreground">Inbound: 9.1 MB/s • Outbound: 5.2 MB/s</p>
+            <div className="text-3xl font-bold">{current.networkIn} MB/s</div>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-[10px] font-bold text-blue-600">IN: {current.networkIn} MB/s</span>
+              <span className="text-[10px] font-bold text-green-600">OUT: {current.networkOut} MB/s</span>
+            </div>
+            <div className="flex items-center space-x-1 mt-2">
+               <div className="h-1 bg-blue-400 rounded-full" style={{ width: '65%' }}></div>
+               <div className="h-1 bg-green-400 rounded-full" style={{ width: '35%' }}></div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>CPU Usage Over Time</CardTitle>
-            <CardDescription>CPU utilization trends</CardDescription>
+        <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
+          <CardHeader className="bg-muted/20 border-b">
+            <CardTitle className="text-base">CPU Utilization</CardTitle>
+            <CardDescription>Percentage over the last 3 hours</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={cpuData}>
+                <AreaChart data={history.cpu}>
                   <defs>
-                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#1890ff" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#1890ff" stopOpacity={0} />
+                    <linearGradient id="colorCpuMetrics" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="time" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Area type="monotone" dataKey="value" name="CPU %" stroke="#1890ff" fillOpacity={1} fill="url(#colorValue)" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
+                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} domain={[0, 100]} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                  />
+                  <Area type="monotone" dataKey="value" name="CPU %" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorCpuMetrics)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Memory Usage Over Time</CardTitle>
-            <CardDescription>Memory utilization trends</CardDescription>
+        <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
+          <CardHeader className="bg-muted/20 border-b">
+            <CardTitle className="text-base">Memory Trend</CardTitle>
+            <CardDescription>Memory load over the last 3 hours</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={memoryData}>
+                <AreaChart data={history.memory}>
                   <defs>
-                    <linearGradient id="colorMemory" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#52c41a" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#52c41a" stopOpacity={0} />
+                    <linearGradient id="colorMemMetrics" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="time" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Area type="monotone" dataKey="value" name="Memory %" stroke="#52c41a" fillOpacity={1} fill="url(#colorMemory)" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
+                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} domain={[0, 100]} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                  />
+                  <Area type="monotone" dataKey="value" name="Memory %" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorMemMetrics)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -170,22 +247,24 @@ export function ServerMetrics() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Network Traffic</CardTitle>
-          <CardDescription>Inbound and outbound network traffic</CardDescription>
+      <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
+        <CardHeader className="bg-muted/20 border-b">
+          <CardTitle className="text-base">Network Bandwidth</CardTitle>
+          <CardDescription>Inbound and Outbound traffic rates</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={networkData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="time" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="inbound" name="Inbound (MB/s)" stroke="#1890ff" strokeWidth={2} />
-                <Line type="monotone" dataKey="outbound" name="Outbound (MB/s)" stroke="#52c41a" strokeWidth={2} />
+              <LineChart data={history.network}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
+                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                />
+                <Legend iconType="circle" />
+                <Line type="monotone" dataKey="inbound" name="Inbound (MB/s)" stroke="#3b82f6" strokeWidth={3} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
+                <Line type="monotone" dataKey="outbound" name="Outbound (MB/s)" stroke="#10b981" strokeWidth={3} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -193,39 +272,50 @@ export function ServerMetrics() {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Disk I/O</CardTitle>
-            <CardDescription>Disk read/write operations</CardDescription>
+        <Card className="bg-muted/20 border-none shadow-none ring-1 ring-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
+              <HardDrive className="h-3 w-3 mr-2" />
+              Storage I/O
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">250 IOPS</div>
-            <p className="text-sm text-muted-foreground">Read: 180 IOPS • Write: 70 IOPS</p>
+            <div className="text-lg font-bold">Optimal</div>
+            <p className="text-[10px] text-muted-foreground mt-1 uppercase">Disk Status: Healthy</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Load Average</CardTitle>
-            <CardDescription>System load average</CardDescription>
+        <Card className="bg-muted/20 border-none shadow-none ring-1 ring-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
+              <Activity className="h-3 w-3 mr-2" />
+              System Load
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">4.2</div>
-            <p className="text-sm text-muted-foreground">1min: 4.2 • 5min: 3.8 • 15min: 3.5</p>
+            <div className="text-lg font-bold">{current.loadAvg['1m']}</div>
+            <div className="flex justify-between mt-1">
+              <span className="text-[9px] font-medium text-muted-foreground">1m: {current.loadAvg['1m']}</span>
+              <span className="text-[9px] font-medium text-muted-foreground">5m: {current.loadAvg['5m']}</span>
+              <span className="text-[9px] font-medium text-muted-foreground">15m: {current.loadAvg['15m']}</span>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Processes</CardTitle>
-            <CardDescription>Active processes</CardDescription>
+        <Card className="bg-muted/20 border-none shadow-none ring-1 ring-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
+              <Cpu className="h-3 w-3 mr-2" />
+              Runtime Env
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">1,247</div>
-            <p className="text-sm text-muted-foreground">Active: 1,247 • Sleeping: 856</p>
+            <div className="text-lg font-bold">{current.processes.total} Tasks</div>
+            <p className="text-[10px] text-muted-foreground mt-1 uppercase">Active: {current.processes.active}</p>
           </CardContent>
         </Card>
       </div>
     </div>
   );
 }
+

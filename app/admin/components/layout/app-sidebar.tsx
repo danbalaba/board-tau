@@ -85,14 +85,14 @@ export default function AppSidebar() {
                 <Collapsible
                   key={item.title}
                   asChild
-                  defaultOpen={item.isActive}
+                  defaultOpen={item.isActive || item.items?.some(sub => pathname === sub.url)}
                   className='group/collapsible'
                 >
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                   <SidebarMenuButton
                     tooltip={item.title}
-                    isActive={pathname === item.url}
+                    isActive={item.items && item.items.length > 0 ? false : pathname === item.url}
                   >
                     {item.icon && <Icon data-slot="sidebar-menu-button-icon" />}
                     <span>{item.title}</span>
@@ -107,9 +107,18 @@ export default function AppSidebar() {
                               asChild
                               isActive={pathname === subItem.url}
                             >
-                              <Link href={subItem.url}>
-                                <span>{subItem.title}</span>
-                              </Link>
+                              {subItem.url === '#logout' ? (
+                                <button 
+                                  onClick={() => signOut({ callbackUrl: '/' })}
+                                  className="w-full flex items-center"
+                                >
+                                  <span>{subItem.title}</span>
+                                </button>
+                              ) : (
+                                <Link href={subItem.url}>
+                                  <span>{subItem.title}</span>
+                                </Link>
+                              )}
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                         ))}

@@ -136,6 +136,7 @@ model User {
   hostApplication HostApplication?
   emailOTPs    EmailOTP[]
   notifications Notification[]
+  customDashboards CustomDashboard[]
 }
 
 model Account {
@@ -506,4 +507,43 @@ model Notification {
   createdAt   DateTime @default(now())
 
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CustomDashboard {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  userId      String   @db.ObjectId
+  widgets     Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SiteSettings {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  siteName         String   @default("BoardTAU")
+  siteDescription  String   @default("Your Ultimate Destination Connection")
+  contactEmail     String   @default("contact@boardtau.com")
+  contactPhone     String?
+  address          String?
+  
+  // Feature toggles
+  enableEmailNotifications Boolean @default(true)
+  enablePushNotifications  Boolean @default(false)
+  enableAnalytics          Boolean @default(true)
+  enableCookies            Boolean @default(true)
+  
+  updatedAt        DateTime @updatedAt
+}
+
+model FeatureFlag {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  description String
+  enabled     Boolean  @default(false)
+  environment String   @default("production") // development, staging, production
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

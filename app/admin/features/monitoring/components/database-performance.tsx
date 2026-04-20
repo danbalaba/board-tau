@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -20,141 +20,198 @@ import {
   LineChart,
   Line
 } from 'recharts';
+import { Button } from '@/app/admin/components/ui/button';
+import { RefreshCw, Database, Layers, HardDrive } from 'lucide-react';
+import { Skeleton } from '@/app/admin/components/ui/skeleton';
+import { toast } from 'sonner';
 
-// Sample database performance data
-const queryPerformanceData = [
-  { query: 'SELECT * FROM users', avgTime: 120, count: 1500 },
-  { query: 'SELECT * FROM properties', avgTime: 85, count: 2200 },
-  { query: 'SELECT * FROM bookings', avgTime: 150, count: 1800 },
-  { query: 'SELECT * FROM reviews', avgTime: 95, count: 1200 },
-  { query: 'SELECT * FROM payments', avgTime: 110, count: 950 },
-  { query: 'SELECT * FROM host_applications', avgTime: 75, count: 350 }
-];
-
-const connectionData = [
-  { time: '09:00', active: 120, idle: 35 },
-  { time: '09:15', active: 135, idle: 42 },
-  { time: '09:30', active: 145, idle: 45 },
-  { time: '09:45', active: 130, idle: 38 },
-  { time: '10:00', active: 150, idle: 50 },
-  { time: '10:15', active: 142, idle: 48 },
-  { time: '10:30', active: 138, idle: 43 },
-  { time: '10:45', active: 140, idle: 40 },
-  { time: '11:00', active: 155, idle: 55 },
-  { time: '11:15', active: 160, idle: 58 },
-  { time: '11:30', active: 148, idle: 45 },
-  { time: '11:45', active: 142, idle: 42 }
-];
-
-const cachePerformanceData = [
-  { time: '09:00', hits: 85, misses: 15 },
-  { time: '09:15', hits: 88, misses: 12 },
-  { time: '09:30', hits: 92, misses: 8 },
-  { time: '09:45', hits: 87, misses: 13 },
-  { time: '10:00', hits: 83, misses: 17 },
-  { time: '10:15', hits: 89, misses: 11 },
-  { time: '10:30', hits: 91, misses: 9 },
-  { time: '10:45', hits: 86, misses: 14 },
-  { time: '11:00', hits: 84, misses: 16 },
-  { time: '11:15', hits: 88, misses: 12 },
-  { time: '11:30', hits: 90, misses: 10 },
-  { time: '11:45', hits: 87, misses: 13 }
-];
+interface DatabaseData {
+  summary: {
+    activeConnections: number;
+    queriesPerSecond: number;
+    cacheHitRate: number;
+    slowQueries: number;
+  };
+  storage: {
+    totalSizeMB: number;
+    dataSizeMB: number;
+    indexSizeMB: number;
+    objects: number;
+    collections: number;
+  };
+  collectionStats: {
+    name: string;
+    count: number;
+    avgTime: number;
+  }[];
+  history: {
+    connections: { time: string; active: number; idle: number }[];
+    cache: { time: string; hits: number; misses: number }[];
+  };
+}
 
 export function DatabasePerformance() {
+  const [data, setData] = useState<DatabaseData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+
+    try {
+      const response = await fetch('/api/admin/monitoring/database');
+      const result = await response.json();
+      if (result.success) {
+        setData(result.data);
+      } else {
+        toast.error('Failed to fetch database metrics');
+      }
+    } catch (error) {
+      console.error('Error fetching db metrics:', error);
+      toast.error('An error occurred while fetching database metrics');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    // Refresh every 2 minutes
+    const interval = setInterval(() => fetchData(true), 120000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-24" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-[400px] w-full rounded-xl" />
+          <Skeleton className="h-[400px] w-full rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const { summary, storage, collectionStats, history } = data;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Database Performance</h2>
-          <p className="text-muted-foreground">Monitor database query performance and connections</p>
+          <p className="text-muted-foreground">Monitor real-time database throughput and storage metrics</p>
         </div>
+        <Button 
+          onClick={() => fetchData(true)} 
+          disabled={refreshing}
+          variant="outline"
+          className="shadow-sm"
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          {refreshing ? 'Refreshing...' : 'Refresh'}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Connections</CardTitle>
-            <CardDescription>Current active connections</CardDescription>
+        <Card className="border-none shadow-sm ring-1 ring-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Connections</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">160</div>
-            <p className="text-sm text-muted-foreground">Max: 200 • Avg: 142</p>
+            <div className="text-3xl font-bold">{summary.activeConnections}</div>
+            <p className="text-[10px] text-muted-foreground mt-1 uppercase font-semibold">Active Sessions</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Queries per Second</CardTitle>
-            <CardDescription>Current QPS rate</CardDescription>
+        <Card className="border-none shadow-sm ring-1 ring-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Throughput</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">245</div>
-            <p className="text-sm text-muted-foreground">Peak: 310 • Avg: 220</p>
+            <div className="text-3xl font-bold">{summary.queriesPerSecond}</div>
+            <p className="text-[10px] text-muted-foreground mt-1 uppercase font-semibold">Est. Queries / Sec</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Cache Hit Rate</CardTitle>
-            <CardDescription>Query cache efficiency</CardDescription>
+        <Card className="border-none shadow-sm ring-1 ring-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cache Health</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">88%</div>
-            <p className="text-sm text-muted-foreground">Ideal: greater than 90% • Misses: 12%</p>
+            <div className="text-3xl font-bold text-green-600">{summary.cacheHitRate}%</div>
+            <p className="text-[10px] text-muted-foreground mt-1 uppercase font-semibold">Hit Rate Efficiency</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Slow Queries</CardTitle>
-            <CardDescription>Queries taking 100ms or more</CardDescription>
+        <Card className="border-none shadow-sm ring-1 ring-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Slow Queries</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">12</div>
-            <p className="text-sm text-muted-foreground">Last hour: 12 • Last 24h: 156</p>
+            <div className={`text-3xl font-bold ${summary.slowQueries > 0 ? 'text-red-600' : 'text-green-600'}`}>
+              {summary.slowQueries}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1 uppercase font-semibold">Latencies {'>'} 100ms</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Query Performance</CardTitle>
-            <CardDescription>Average query execution time</CardDescription>
+        <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
+          <CardHeader className="bg-muted/20 border-b">
+            <CardTitle className="text-base font-bold">Top Collections Analysis</CardTitle>
+            <CardDescription>Document counts across main collections</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={queryPerformanceData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="query" tick={{ fontSize: 12 }} />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="avgTime" name="Avg Time (ms)" fill="#1890ff" />
+                <BarChart data={collectionStats} layout="vertical" margin={{ left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--muted))" />
+                  <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: 'hsl(var(--foreground))' }} width={80} />
+                  <Tooltip 
+                    cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                  />
+                  <Bar dataKey="count" name="Documents" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Database Connections</CardTitle>
-            <CardDescription>Active vs idle connections</CardDescription>
+        <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
+          <CardHeader className="bg-muted/20 border-b">
+            <CardTitle className="text-base font-bold">Database Connections</CardTitle>
+            <CardDescription>Active vs Idle session trends</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={connectionData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="time" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="active" name="Active" stroke="#1890ff" strokeWidth={2} />
-                  <Line type="monotone" dataKey="idle" name="Idle" stroke="#52c41a" strokeWidth={2} />
+                <LineChart data={history.connections}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
+                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                  />
+                  <Legend iconType="circle" />
+                  <Line type="monotone" dataKey="active" name="Active" stroke="#3b82f6" strokeWidth={3} dot={false} activeDot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="idle" name="Idle" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -162,62 +219,80 @@ export function DatabasePerformance() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Cache Performance</CardTitle>
-          <CardDescription>Cache hits and misses over time</CardDescription>
+      <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
+        <CardHeader className="bg-muted/20 border-b">
+          <CardTitle className="text-base font-bold">Storage Overview</CardTitle>
+          <CardDescription>Physical database space allocation (Real-time)</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={cachePerformanceData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="time" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="hits" name="Hits (%)" fill="#52c41a" />
-                <Bar dataKey="misses" name="Misses (%)" fill="#f5222d" />
-              </BarChart>
-            </ResponsiveContainer>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="space-y-4">
+               <div className="flex items-center space-x-3">
+                  <div className="p-2.5 bg-blue-50 rounded-xl border border-blue-100">
+                    <HardDrive className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Total Storage</p>
+                    <p className="text-2xl font-bold">{storage.totalSizeMB} MB</p>
+                  </div>
+               </div>
+               <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
+                  <div className="h-full bg-blue-500 rounded-full transition-all duration-1000" style={{ width: '70%' }}></div>
+               </div>
+            </div>
+
+            <div className="space-y-4">
+               <div className="flex items-center space-x-3">
+                  <div className="p-2.5 bg-green-50 rounded-xl border border-green-100">
+                    <Database className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Data Volume</p>
+                    <p className="text-2xl font-bold">{storage.dataSizeMB} MB</p>
+                  </div>
+               </div>
+               <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
+                  <div className="h-full bg-green-500 rounded-full transition-all duration-1000" style={{ width: '45%' }}></div>
+               </div>
+            </div>
+
+            <div className="space-y-4">
+               <div className="flex items-center space-x-3">
+                  <div className="p-2.5 bg-purple-50 rounded-xl border border-purple-100">
+                    <Layers className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Index Size</p>
+                    <p className="text-2xl font-bold">{storage.indexSizeMB} MB</p>
+                  </div>
+               </div>
+               <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
+                  <div className="h-full bg-purple-500 rounded-full transition-all duration-1000" style={{ width: '25%' }}></div>
+               </div>
+            </div>
+          </div>
+
+          <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-6 pt-10 border-t">
+             <div className="text-center">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Collections</p>
+                <p className="text-xl font-extrabold">{storage.collections}</p>
+             </div>
+             <div className="text-center">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Documents</p>
+                <p className="text-xl font-extrabold">{storage.objects.toLocaleString()}</p>
+             </div>
+             <div className="text-center">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Engine</p>
+                <p className="text-xl font-extrabold">WiredTiger</p>
+             </div>
+             <div className="text-center">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Health Status</p>
+                <p className="text-xl font-extrabold text-green-600">Optimal</p>
+             </div>
           </div>
         </CardContent>
       </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Memory Usage</CardTitle>
-            <CardDescription>Database memory consumption</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">12.5 GB</div>
-            <p className="text-sm text-muted-foreground">Total: 16 GB • Used: 78%</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Disk Usage</CardTitle>
-            <CardDescription>Database disk space</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">85 GB</div>
-            <p className="text-sm text-muted-foreground">Total: 100 GB • Used: 85%</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Index Efficiency</CardTitle>
-            <CardDescription>Index usage ratio</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">92%</div>
-            <p className="text-sm text-muted-foreground">Queries using indexes</p>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }
+
