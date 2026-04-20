@@ -18,7 +18,22 @@ import {
 } from '@/app/admin/components/ui/table';
 import { Badge } from '@/app/admin/components/ui/badge';
 import { Button } from '@/app/admin/components/ui/button';
-import { Eye, Edit } from 'lucide-react';
+import { 
+  IconEye, 
+  IconEdit, 
+  IconTrendingUp, 
+  IconUsers, 
+  IconTarget, 
+  IconArrowUpRight,
+  IconDotsVertical,
+  IconAdjustmentsHorizontal,
+  IconChartBar,
+  IconBulb,
+  IconPremiumRights
+} from '@tabler/icons-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from "@/lib/utils";
+import PageContainer from '@/app/admin/components/layout/page-container';
 
 import { usePropertyPerformance } from '@/app/admin/hooks/use-property-performance';
 
@@ -51,168 +66,167 @@ export function PricingOptimization() {
     : 0;
 
   const toAdjustCount = propertiesPricing.filter((p: any) => p.currentPrice !== p.suggestedPrice).length;
+
+  const summaryKpis = [
+    { label: 'Market Average Rate', value: `$${avgPrice.toFixed(0)}`, icon: IconPremiumRights, color: 'text-primary', bg: 'bg-primary/10', desc: 'Baseline occupancy' },
+    { label: 'Aggregated Engagement', value: `${Math.round(avgOccupancy)}%`, icon: IconUsers, color: 'text-blue-500', bg: 'bg-blue-500/10', desc: 'Network span' },
+    { label: 'Optimization Buffer', value: toAdjustCount, icon: IconAdjustmentsHorizontal, color: 'text-amber-500', bg: 'bg-amber-500/10', desc: 'Awaiting calibration' },
+    { label: 'Potential Yield', value: '+12.5%', icon: IconTrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-500/10', desc: 'Projected uplift' },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Pricing Optimization</h2>
-          <p className="text-muted-foreground">Optimize pricing based on market trends and occupancy</p>
+    <PageContainer>
+      <div className="space-y-8 pb-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <h2 className="text-3xl font-bold tracking-tight">Market Intelligence</h2>
+            <p className="text-muted-foreground text-sm mt-1">Optimize global pricing strategy based on real-time market trends and occupancy telemetry.</p>
+          </motion.div>
+          <Button variant="outline" size="sm" className="h-9 gap-2 shadow-sm bg-card/50 backdrop-blur-sm border-border/40">
+            <IconChartBar className="h-4 w-4" /> Export Report
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {summaryKpis.map((kpi, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+            >
+              <Card className="group relative overflow-hidden border-none bg-card/50 backdrop-blur-sm shadow-md hover:shadow-xl transition-all">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 text-muted-foreground">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-widest">{kpi.label}</CardTitle>
+                  <div className={cn("p-2 rounded-lg", kpi.bg)}>
+                    <kpi.icon className={cn("h-4 w-4", kpi.color)} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-black tabular-nums tracking-tighter">{kpi.value}</div>
+                  <div className="flex items-center mt-1 space-x-1">
+                    <IconArrowUpRight className={cn("w-3 h-3 text-emerald-500")} />
+                    <span className="text-[10px] font-bold text-emerald-500 uppercase">{kpi.desc}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.div
+           initial={{ opacity: 0, y: 30 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ delay: 0.4 }}
+        >
+          <Card className="border-border/40 bg-card/30 backdrop-blur-md shadow-xl overflow-hidden">
+            <CardHeader className="border-b border-border/20 bg-muted/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg font-black uppercase tracking-tight">Yield Recommendations</CardTitle>
+                  <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 mt-0.5">Optimal pricing vectors for active assets</CardDescription>
+                </div>
+                <IconTarget className="w-4 h-4 text-primary" />
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader className="bg-muted/30">
+                  <TableRow className="hover:bg-transparent border-border/20">
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest h-10">Asset</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest h-10">Live Rate</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest h-10">Suggested</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest h-10">Delta</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest h-10 text-center">Engagement</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest h-10">Demand</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest h-10">Benchmark</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest h-10 text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {propertiesPricing.map((pricing: any) => (
+                    <TableRow key={pricing.id} className="group hover:bg-muted/20 border-border/10 transition-colors">
+                      <TableCell className="py-4">
+                        <div className="font-bold text-sm tracking-tight">{pricing.property}</div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="font-black tabular-nums text-sm">${pricing.currentPrice.toFixed(0)}</div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="font-black tabular-nums text-sm text-emerald-500">${pricing.suggestedPrice.toFixed(0)}</div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <Badge variant="outline" className={cn(
+                          "text-[9px] h-5 px-1.5 font-black uppercase border-none",
+                          pricing.suggestedPrice > pricing.currentPrice ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
+                        )}>
+                          {pricing.suggestedPrice > pricing.currentPrice ? '+' : ''}
+                          {((pricing.suggestedPrice - pricing.currentPrice) / pricing.currentPrice * 100).toFixed(1)}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-4 text-center">
+                         <div className="text-[10px] font-black tabular-nums">{pricing.occupancyRate}%</div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <Badge variant="outline" className={cn(
+                          "text-[9px] h-5 px-1.5 font-black uppercase border-none",
+                          pricing.demandLevel === 'high' ? "bg-primary/10 text-primary" : 
+                          pricing.demandLevel === 'medium' ? "bg-blue-500/10 text-blue-500" : "bg-muted text-muted-foreground"
+                        )}>
+                          {(demandLabels as any)[pricing.demandLevel] || pricing.demandLevel}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-4 text-muted-foreground font-medium text-[11px]">
+                         ${pricing.competitorPrice.toFixed(0)}
+                      </TableCell>
+                      <TableCell className="py-4 text-right">
+                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary">
+                            <IconEdit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <IconDotsVertical className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+          {[
+            { title: 'Velocity Assets', color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20', desc: 'Optimize for max yield with +5-10% calibration.' },
+            { title: 'Stagnant Stock', color: 'text-amber-500', bg: 'bg-amber-500/5', border: 'border-amber-500/20', desc: 'Initiate -10% corrections to stimulate bookings.' },
+            { title: 'Marker Index', color: 'text-emerald-500', bg: 'bg-emerald-500/5', border: 'border-emerald-500/20', desc: 'Maintain competitive alignment within ±2%.' },
+            { title: 'Dynamic Shift', color: 'text-blue-500', bg: 'bg-blue-500/5', border: 'border-blue-500/20', desc: 'Real-time seasonal adjustment index active.' },
+          ].map((tip, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 + i * 0.1 }}
+              className={cn("group relative p-5 rounded-2xl border backdrop-blur-sm shadow-lg overflow-hidden", tip.bg, tip.border)}
+            >
+              <div className="relative">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className={cn("text-[10px] font-black uppercase tracking-widest", tip.color)}>{tip.title}</h3>
+                  <IconBulb className={cn("w-4 h-4", tip.color)} />
+                </div>
+                <p className={cn("text-[11px] font-bold uppercase leading-relaxed", tip.color, "opacity-70")}>
+                  {tip.desc}
+                </p>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Average Price</CardTitle>
-            <CardDescription>Current average nightly price</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              ${avgPrice.toFixed(0)}
-            </div>
-            <p className="text-sm text-muted-foreground">Average price</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Average Occupancy</CardTitle>
-            <CardDescription>Average occupancy rate</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {Math.round(avgOccupancy)}%
-            </div>
-            <p className="text-sm text-muted-foreground">Average occupancy</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Properties to Adjust</CardTitle>
-            <CardDescription>Properties with pricing recommendations</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {toAdjustCount}
-            </div>
-            <p className="text-sm text-muted-foreground">Properties to adjust</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Potential Revenue Increase</CardTitle>
-            <CardDescription>Estimated revenue improvement</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">+12.5%</div>
-            <p className="text-sm text-muted-foreground">Projected increase</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Pricing Recommendations</CardTitle>
-          <CardDescription>Optimal pricing for each property</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Property</TableHead>
-                <TableHead>Current Price</TableHead>
-                <TableHead>Suggested Price</TableHead>
-                <TableHead>Difference</TableHead>
-                <TableHead>Occupancy</TableHead>
-                <TableHead>Demand</TableHead>
-                <TableHead>Competitor Price</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {propertiesPricing.map((pricing: any) => (
-                <TableRow key={pricing.id}>
-                  <TableCell className="font-medium">{pricing.property}</TableCell>
-                  <TableCell>${pricing.currentPrice.toFixed(2)}</TableCell>
-                  <TableCell>${pricing.suggestedPrice.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <Badge variant={pricing.suggestedPrice > pricing.currentPrice ? 'default' : 'destructive'}>
-                      {pricing.suggestedPrice > pricing.currentPrice ? '+' : ''}
-                      {((pricing.suggestedPrice - pricing.currentPrice) / pricing.currentPrice * 100).toFixed(1)}%
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{pricing.occupancyRate}%</TableCell>
-                  <TableCell>
-                    <Badge variant={(demandColors as any)[pricing.demandLevel] || 'secondary'}>
-                      {(demandLabels as any)[pricing.demandLevel] || pricing.demandLevel}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>${pricing.competitorPrice.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => console.log('View', pricing.id)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                      {pricing.currentPrice !== pricing.suggestedPrice && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => console.log('Edit', pricing.id)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Adjust
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Pricing Strategy Tips</CardTitle>
-          <CardDescription>Recommendations for pricing optimization</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h3 className="font-medium text-blue-900">High Demand Properties</h3>
-              <p className="text-sm text-blue-700">
-                Consider increasing prices by 5-10% to maximize revenue without significantly affecting occupancy.
-              </p>
-            </div>
-            <div className="p-4 bg-yellow-50 rounded-lg">
-              <h3 className="font-medium text-yellow-900">Low Occupancy Properties</h3>
-              <p className="text-sm text-yellow-700">
-                Consider decreasing prices by 10-15% or offering promotions to increase bookings.
-              </p>
-            </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h3 className="font-medium text-green-900">Competitor Analysis</h3>
-              <p className="text-sm text-green-700">
-                Monitor competitor pricing and adjust your rates to stay competitive in the market.
-              </p>
-            </div>
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <h3 className="font-medium text-purple-900">Dynamic Pricing</h3>
-              <p className="text-sm text-purple-700">
-                Implement dynamic pricing based on seasonal demand, events, and market conditions.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    </PageContainer>
   );
 }

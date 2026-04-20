@@ -22,15 +22,17 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 import {
-  TrendingUp,
-  BarChart3,
-  Activity,
-  Star,
-  ArrowUpRight,
-  ArrowDownRight,
-  Target,
-  Zap,
-} from 'lucide-react';
+  IconTrendingUp,
+  IconChartBar,
+  IconActivity,
+  IconStar,
+  IconArrowUpRight,
+  IconArrowDownRight,
+  IconTarget,
+  IconBolt,
+  IconRefresh
+} from '@tabler/icons-react';
+import { Button } from '@/app/admin/components/ui/button';
 import { cn } from "@/lib/utils";
 import {
   ChartConfig,
@@ -96,24 +98,27 @@ export function PerformanceMetrics() {
   const pricingData = data?.pricingComparison || [];
 
   const kpis = [
-    { title: "Total Bookings", value: data?.totalReservations || 0, trend: "+12.5%", icon: Zap, color: "text-amber-500", trendColor: "text-emerald-500" },
-    { title: "Avg Occupancy", value: `${data?.occupancyRate || 0}%`, trend: "+2.1%", icon: Activity, color: "text-primary", trendColor: "text-emerald-500" },
-    { title: "Total Revenue", value: `$${data?.totalRevenue?.toLocaleString() || 0}`, trend: "+15.2%", icon: TrendingUp, color: "text-emerald-500", trendColor: "text-emerald-500" },
-    { title: "Avg Rating", value: data?.averageRating || 0, trend: "+0.1", icon: Star, color: "text-amber-500 fill-amber-500", trendColor: "text-emerald-500" },
+    { title: "Network Reservations", value: data?.totalReservations || 0, trend: "+12.5%", icon: IconBolt, color: "text-amber-500", bg: "bg-amber-500/10" },
+    { title: "Aggregated Occupancy", value: `${data?.occupancyRate || 0}%`, trend: "+2.1%", icon: IconActivity, color: "text-primary", bg: "bg-primary/10" },
+    { title: "Global Revenue", value: `$${data?.totalRevenue?.toLocaleString() || 0}`, trend: "+15.2%", icon: IconTrendingUp, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+    { title: "Institutional Rating", value: data?.averageRating || 4.8, trend: "Target Reach", icon: IconStar, color: "text-blue-500", bg: "bg-blue-500/10" },
   ];
 
   return (
     <motion.div
-      className="space-y-6"
+      className="space-y-8 pb-10"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Performance Analytics</h2>
-          <p className="text-muted-foreground">Detailed metrics across all properties and listings</p>
+          <h2 className="text-3xl font-bold tracking-tight">Performance Analytics</h2>
+          <p className="text-muted-foreground text-sm mt-1">Detailed telemetric data across global property indices and listing clusters.</p>
         </div>
+        <Button variant="outline" size="sm" className="h-9 gap-2 shadow-sm bg-card/50 backdrop-blur-sm border-border/40">
+          <IconRefresh className="h-4 w-4" /> Sync Metrics
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -121,19 +126,19 @@ export function PerformanceMetrics() {
           const Icon = kpi.icon;
           return (
             <motion.div key={i} variants={itemVariants}>
-              <Card className="overflow-hidden relative">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <Icon className="w-12 h-12" />
-                </div>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-                  <Icon className={cn("w-4 h-4", kpi.color)} />
+              <Card className="group relative overflow-hidden border-none bg-card/50 backdrop-blur-sm shadow-md hover:shadow-xl transition-all">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 text-muted-foreground">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-widest">{kpi.title}</CardTitle>
+                  <div className={cn("p-2 rounded-lg", kpi.bg)}>
+                    <Icon className={cn("h-4 w-4", kpi.color)} />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{kpi.value}</div>
-                  <div className="flex items-center mt-1">
-                    <ArrowUpRight className={cn("w-3 h-3 mr-1", kpi.trendColor)} />
-                    <p className={cn("text-xs font-medium", kpi.trendColor)}>{kpi.trend} from last month</p>
+                  <div className="text-3xl font-black tabular-nums tracking-tighter">{kpi.value}</div>
+                  <div className="flex items-center mt-1 space-x-1">
+                    <IconArrowUpRight className={cn("w-3 h-3 text-emerald-500")} />
+                    <p className={cn("text-[10px] font-bold text-emerald-500 uppercase")}>{kpi.trend}</p>
+                    <span className="text-[10px] text-muted-foreground ml-1">vs index</span>
                   </div>
                 </CardContent>
               </Card>
@@ -144,14 +149,14 @@ export function PerformanceMetrics() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div variants={itemVariants}>
-          <Card>
+          <Card className="border-border/40 bg-card/30 backdrop-blur-md shadow-xl">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Revenue & Bookings</CardTitle>
-                  <CardDescription>Performance trends over time</CardDescription>
+                  <CardTitle className="text-lg font-black uppercase tracking-tight">Revenue & Bookings</CardTitle>
+                  <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 mt-1">Operational trends distribution</CardDescription>
                 </div>
-                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                <IconTrendingUp className="w-4 h-4 text-primary" />
               </div>
             </CardHeader>
             <CardContent>
@@ -171,14 +176,14 @@ export function PerformanceMetrics() {
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card>
+          <Card className="border-border/40 bg-card/30 backdrop-blur-md shadow-xl">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Occupancy Rate</CardTitle>
-                  <CardDescription>Conversion by top properties</CardDescription>
+                  <CardTitle className="text-lg font-black uppercase tracking-tight">Occupancy Rate</CardTitle>
+                  <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 mt-1">Institutional conversion by asset</CardDescription>
                 </div>
-                <Target className="w-4 h-4 text-muted-foreground" />
+                <IconTarget className="w-4 h-4 text-emerald-500" />
               </div>
             </CardHeader>
             <CardContent>
@@ -208,14 +213,14 @@ export function PerformanceMetrics() {
       </div>
 
       <motion.div variants={itemVariants}>
-        <Card>
+        <Card className="border-border/40 bg-card/30 backdrop-blur-md shadow-xl mt-6">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Pricing Strategy</CardTitle>
-                <CardDescription>Competitive pricing analysis</CardDescription>
+                <CardTitle className="text-lg font-black uppercase tracking-tight">Pricing Strategy</CardTitle>
+                <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 mt-1">Competitive index and market analysis</CardDescription>
               </div>
-              <BarChart3 className="w-4 h-4 text-muted-foreground" />
+              <IconChartBar className="w-4 h-4 text-amber-500" />
             </div>
           </CardHeader>
           <CardContent>

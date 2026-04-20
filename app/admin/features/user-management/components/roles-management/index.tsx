@@ -6,18 +6,21 @@ import { RoleFormModal } from './role-form-modal';
 import { RoleDeleteDialog } from './role-delete-dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui/card';
 import { Button } from '@/app/admin/components/ui/button';
-import { motion } from 'framer-motion';
-import { 
-  Shield, 
-  Layers, 
-  Activity, 
-  FileText,
-  Plus,
-  ArrowUpRight,
-  ShieldCheck
-} from 'lucide-react';
+import { Badge } from '@/app/admin/components/ui/badge';
+import {
+  IconShield,
+  IconActivity,
+  IconPlus,
+  IconShieldCheck,
+  IconLock,
+  IconAdjustmentsHorizontal,
+  IconArrowUpRight,
+  IconKeyframe,
+} from '@tabler/icons-react';
+import PageContainer from '@/app/admin/components/layout/page-container';
 
 export function RolesManagement() {
   const { data: rolesData, isLoading: rolesLoading } = useRoles();
@@ -35,19 +38,47 @@ export function RolesManagement() {
   const permissions = permissionsData?.data || [];
 
   const kpis = [
-    { label: 'Total Permissions', value: permissions.length, icon: ShieldCheck, color: 'text-primary', description: 'Available actions' },
-    { label: 'Active Roles', value: roles.length, icon: Shield, color: 'text-emerald-500', description: 'Configured groups' },
-    { label: 'Role Coverage', value: '100%', icon: Layers, color: 'text-amber-500', description: 'System span' },
-    { label: 'System Status', value: 'Healthy', icon: Activity, color: 'text-rose-500', description: 'RBAC integrity' },
+    {
+      label: 'Total Permissions',
+      value: permissions.length,
+      icon: IconShieldCheck,
+      color: 'text-primary',
+      bg: 'bg-primary/10',
+      description: 'Defined access points'
+    },
+    {
+      label: 'Governance Groups',
+      value: roles.length,
+      icon: IconShield,
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-500/10',
+      description: 'Configured role classes'
+    },
+    {
+      label: 'RBAC Coverage',
+      value: '100%',
+      icon: IconLock,
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10',
+      description: 'Security span integrity'
+    },
+    {
+      label: 'Posture Status',
+      value: 'Optimal',
+      icon: IconActivity,
+      color: 'text-rose-500',
+      bg: 'bg-rose-500/10',
+      description: 'Identity vault health'
+    },
   ];
 
   const handleCreateRole = async (data: any) => {
     try {
       await createRole.mutateAsync(data);
-      toast.success('Role created successfully');
+      toast.success('Role provisioned successfully.');
       setIsCreateModalOpen(false);
-    } catch (error) {
-      toast.error('Failed to create role');
+    } catch {
+      toast.error('Failed to create role.');
     }
   };
 
@@ -55,10 +86,10 @@ export function RolesManagement() {
     try {
       if (!selectedRole) return;
       await updateRole.mutateAsync({ id: selectedRole.id, roleData: data });
-      toast.success('Role updated successfully');
+      toast.success('Role configuration updated.');
       setIsEditModalOpen(false);
-    } catch (error) {
-      toast.error('Failed to update role');
+    } catch {
+      toast.error('Failed to update role.');
     }
   };
 
@@ -66,113 +97,123 @@ export function RolesManagement() {
     try {
       if (!selectedRole) return;
       await deleteRole.mutateAsync(selectedRole.id);
-      toast.success('Role deleted successfully');
+      toast.success('Role decommissioned.');
       setIsDeleteDialogOpen(false);
-    } catch (error) {
-      toast.error('Failed to delete role');
+    } catch {
+      toast.error('Failed to delete role.');
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1 },
-  };
-
   return (
-    <motion.div
-      className="space-y-6 pb-10"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
+    <PageContainer
+      pageTitle="Security Governance"
+      pageDescription="Manage institutional access levels, RBAC policies, and multi-tenant privilege delegation"
+      pageHeaderAction={
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="h-9 gap-2 hover:bg-white/5 border-border/40 font-black uppercase text-[10px] tracking-widest">
+            <IconAdjustmentsHorizontal className="w-4 h-4" />
+            Policy Audit
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="h-9 gap-2 shadow-lg shadow-primary/20 font-black uppercase text-[10px] tracking-widest"
+          >
+            <IconPlus className="w-4 h-4" />
+            Define Role
+          </Button>
+        </div>
+      }
     >
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Roles & Permissions</h1>
-          <p className="text-muted-foreground">
-            Manage institutional access levels and security protocols.
-          </p>
+      <div className="space-y-8">
+        {/* KPI Matrix */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {kpis.map((kpi, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+            >
+              <Card className="group relative overflow-hidden border-none bg-card/30 backdrop-blur-md shadow-xl transition-all hover:bg-card/40">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    {kpi.label}
+                  </CardTitle>
+                  <div className={cn('p-2 rounded-xl transition-transform group-hover:scale-110', kpi.bg)}>
+                    <kpi.icon className={cn('w-4 h-4', kpi.color)} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-black tabular-nums">{kpi.value}</div>
+                  <div className="flex items-center mt-1.5 gap-1">
+                    <IconArrowUpRight className="w-3 h-3 text-emerald-500" />
+                    <p className="text-[10px] font-bold text-emerald-500/80">{kpi.description}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
         </div>
 
-        <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Create New Role
-        </Button>
+        {/* Role Cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+        >
+          <RoleCardList
+            roles={roles}
+            loading={rolesLoading}
+            onEdit={(role) => { setSelectedRole(role); setIsEditModalOpen(true); }}
+            onDelete={(role) => { setSelectedRole(role); setIsDeleteDialogOpen(true); }}
+            onCreate={() => setIsCreateModalOpen(true)}
+          />
+        </motion.div>
+
+        {/* Permission Matrix */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          {/* Section divider */}
+          <div className="flex items-center gap-3 mb-6 pl-4 border-l-[3px] border-primary/60">
+            <IconKeyframe className="w-4 h-4 text-primary/60" />
+            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/70">
+              Permission Authority Matrix
+            </h3>
+          </div>
+          <PermissionMatrix
+            permissions={permissions}
+            roles={roles}
+            loading={permissionsLoading}
+          />
+        </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpis.map((kpi, index) => (
-          <motion.div key={index} variants={itemVariants}>
-            <Card className="overflow-hidden relative">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <kpi.icon className="w-12 h-12" />
-              </div>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">{kpi.label}</CardTitle>
-                <kpi.icon className={cn("w-4 h-4", kpi.color)} />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{kpi.value}</div>
-                <div className="flex items-center mt-1">
-                  <ArrowUpRight className="w-3 h-3 text-emerald-500 mr-1" />
-                  <p className="text-xs text-emerald-500">
-                    System Verified
-                  </p>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">{kpi.description}</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
-
-      <RoleCardList 
-        roles={roles} 
-        loading={rolesLoading}
-        onEdit={(role) => {
-          setSelectedRole(role);
-          setIsEditModalOpen(true);
-        }}
-        onDelete={(role) => {
-          setSelectedRole(role);
-          setIsDeleteDialogOpen(true);
-        }}
-        onCreate={() => setIsCreateModalOpen(true)}
-      />
-
-      <PermissionMatrix 
-        permissions={permissions} 
-        roles={roles}
-        loading={permissionsLoading}
-      />
-
-      <RoleFormModal 
-        open={isCreateModalOpen} 
+      {/* Modals */}
+      <RoleFormModal
+        open={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}
         onSubmit={handleCreateRole}
-        title="Create Role"
-        description="Define a new role and its associated permissions."
+        title="Provision New Role"
+        description="Define a new governance role and assign access permissions."
       />
-
-      <RoleFormModal 
-        open={isEditModalOpen} 
+      <RoleFormModal
+        open={isEditModalOpen}
         onOpenChange={setIsEditModalOpen}
         onSubmit={handleUpdateRole}
         initialData={selectedRole}
-        title="Edit Role"
-        description={`Modify the configuration for ${selectedRole?.name}`}
+        title="Edit Role Configuration"
+        description={`Modify the access policy for ${selectedRole?.name}`}
       />
-
-      <RoleDeleteDialog 
+      <RoleDeleteDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDeleteRole}
         roleName={selectedRole?.name}
       />
-    </motion.div>
+    </PageContainer>
   );
 }

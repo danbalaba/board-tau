@@ -12,7 +12,6 @@ const useThemeSwitching = () => {
     {
       id: 'toggleTheme',
       name: 'Toggle Theme',
-      shortcut: ['t', 't'],
       section: 'Theme',
       perform: toggleTheme
     },

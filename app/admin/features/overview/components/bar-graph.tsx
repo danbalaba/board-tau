@@ -16,6 +16,8 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from "../../../components/ui/chart";
+import { IconTrendingUp, IconTrendingDown } from '@tabler/icons-react';
+import { Badge } from "../../../components/ui/badge";
 import { useExecutiveOverview } from "@/app/admin/hooks/use-executive-overview";
 
 export const description = 'An interactive bar chart';
@@ -117,11 +119,11 @@ const chartData = [
 const chartConfig = {
   revenue: {
     label: 'Revenue',
-    color: 'oklch(var(--color-primary))'
+    color: 'var(--chart-1)'
   },
   bookings: {
     label: 'Bookings',
-    color: 'oklch(var(--color-primary))'
+    color: 'var(--chart-2)'
   }
 } satisfies ChartConfig;
 
@@ -138,17 +140,6 @@ export function BarGraph({ data: propData }: { data?: any[] }) {
     }));
   }, [data]);
 
-  const [activeChart, setActiveChart] =
-    React.useState<'revenue' | 'bookings'>('revenue');
-
-  const total = React.useMemo(
-    () => ({
-      revenue: chartData.reduce((acc, curr) => acc + curr.revenue, 0),
-      bookings: chartData.reduce((acc, curr) => acc + curr.bookings, 0)
-    }),
-    [chartData]
-  );
-
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
@@ -159,90 +150,53 @@ export function BarGraph({ data: propData }: { data?: any[] }) {
     return null;
   }
 
-  const activeChartConfig = {
-    revenue: { label: 'Revenue', color: 'oklch(var(--color-primary))' },
-    bookings: { label: 'Bookings', color: 'oklch(var(--color-primary))' }
-  };
-
   return (
-    <Card className='@container/card !pt-3'>
-      <CardHeader className='flex flex-col items-stretch space-y-0 border-b !p-0 sm:flex-row'>
-        <div className='flex flex-1 flex-col justify-center gap-1 px-6 !py-0'>
-          <CardTitle>Platform Performance</CardTitle>
-          <CardDescription>
-            <span className='hidden @[540px]/card:block'>
-              Trends for the selected period
-            </span>
-            <span className='@[540px]/card:hidden'>Platform trends</span>
-          </CardDescription>
+    <Card className="border-none bg-card/30 backdrop-blur-md shadow-xl">
+      <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-white/5">
+        <div>
+          <CardTitle className="text-base font-black tracking-tight">Revenue Performance</CardTitle>
+          <CardDescription className="text-[10px] uppercase font-bold tracking-widest mt-1">Bookings vs Revenue by month</CardDescription>
         </div>
-        <div className='flex'>
-          {(['revenue', 'bookings'] as const).map((key) => {
-            return (
-              <button
-                key={key}
-                data-active={activeChart === key}
-                className='data-[active=true]:bg-primary/5 hover:bg-primary/5 relative flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left transition-colors duration-200 even:border-l sm:border-t-0 sm:border-l sm:px-8 sm:py-6'
-                onClick={() => setActiveChart(key)}
-              >
-                <span className='text-muted-foreground text-xs'>
-                  {activeChartConfig[key].label}
-                </span>
-                <span className='text-lg leading-none font-bold sm:text-3xl'>
-                  {key === 'revenue' ? `$${total[key]?.toLocaleString()}` : total[key]?.toLocaleString()}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <Badge variant='outline' className="bg-primary/10 text-primary border-none font-black uppercase text-[9px] h-5 px-2">
+          <IconTrendingUp className="size-3 mr-1" />
+          Live
+        </Badge>
       </CardHeader>
-      <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
-        <ChartContainer
-          config={chartConfig}
-          className='aspect-auto h-[250px] w-full'
-        >
-          <BarChart
-            data={chartData}
-            margin={{
-              left: 12,
-              right: 12
-            }}
-          >
+      <CardContent className="pt-4">
+        <ChartContainer config={chartConfig} className='aspect-auto h-[350px] w-full'>
+          <BarChart accessibilityLayer data={chartData}>
+            <rect
+              x='0'
+              y='0'
+              width='100%'
+              height='85%'
+              fill='url(#default-multiple-pattern-dots)'
+            />
             <defs>
-              <linearGradient id='fillBar' x1='0' y1='0' x2='0' y2='1'>
-                <stop
-                  offset='0%'
-                  stopColor='oklch(var(--color-primary))'
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset='100%'
-                  stopColor='oklch(var(--color-primary))'
-                  stopOpacity={0.2}
-                />
-              </linearGradient>
+              <DottedBackgroundPattern />
             </defs>
-            <CartesianGrid vertical={false} />
             <XAxis
               dataKey='date'
               tickLine={false}
+              tickMargin={10}
               axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
+              tickFormatter={(value) => value.slice(0, 3)}
             />
             <ChartTooltip
-              cursor={{ fill: 'oklch(var(--color-primary))', opacity: 0.1 }}
-              content={
-                <ChartTooltipContent
-                  className='w-[150px]'
-                  labelFormatter={(value: any) => value}
-                />
-              }
+              cursor={false}
+              content={<ChartTooltipContent indicator='dashed' hideLabel />}
             />
             <Bar
-              dataKey={activeChart}
-              fill='url(#fillBar)'
-              radius={[4, 4, 0, 0]}
+              dataKey='revenue'
+              fill='var(--chart-1)'
+              shape={<CustomHatchedBar isHatched={false} dataKey="revenue" />}
+              radius={4}
+            />
+            <Bar
+              dataKey='bookings'
+              fill='var(--chart-2)'
+              shape={<CustomHatchedBar dataKey="bookings" />}
+              radius={4}
             />
           </BarChart>
         </ChartContainer>
@@ -250,3 +204,55 @@ export function BarGraph({ data: propData }: { data?: any[] }) {
     </Card>
   );
 }
+
+const CustomHatchedBar = (
+  props: any
+) => {
+  const { fill, x, y, width, height, dataKey } = props;
+
+  const isHatched = props.isHatched ?? true;
+
+  return (
+    <>
+      <rect
+        rx={4}
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        stroke='none'
+        fill={isHatched ? `url(#hatched-bar-pattern-${dataKey})` : fill}
+      />
+      <defs>
+        <pattern
+          key={dataKey}
+          id={`hatched-bar-pattern-${dataKey}`}
+          x='0'
+          y='0'
+          width='5'
+          height='5'
+          patternUnits='userSpaceOnUse'
+          patternTransform='rotate(-45)'
+        >
+          <rect width='10' height='10' opacity={0.5} fill={fill}></rect>
+          <rect width='1' height='10' fill={fill}></rect>
+        </pattern>
+      </defs>
+    </>
+  );
+};
+
+const DottedBackgroundPattern = () => {
+  return (
+    <pattern
+      id='default-multiple-pattern-dots'
+      x='0'
+      y='0'
+      width='10'
+      height='10'
+      patternUnits='userSpaceOnUse'
+    >
+      <circle className='dark:text-muted/40 text-muted' cx='2' cy='2' r='1' fill='currentColor' />
+    </pattern>
+  );
+};
