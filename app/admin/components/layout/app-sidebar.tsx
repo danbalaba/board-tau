@@ -48,6 +48,9 @@ import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
 import { signOut } from 'next-auth/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { NavItem } from '@/types';
+import { cn } from "@/lib/utils";
 
 export default function AppSidebar() {
   const { state } = useSidebar();
@@ -79,59 +82,9 @@ export default function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Overview</SidebarGroupLabel>
           <SidebarMenu>
-            {filteredItems.map((item) => {
-              const Icon = item.icon ? Icons[item.icon] : Icons.logo;
-              return item?.items && item?.items?.length > 0 ? (
-                <Collapsible
-                  key={item.title}
-                  asChild
-                  defaultOpen={item.isActive}
-                  className='group/collapsible'
-                >
-                  <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                  <SidebarMenuButton
-                    tooltip={item.title}
-                    isActive={pathname === item.url}
-                  >
-                    {item.icon && <Icon data-slot="sidebar-menu-button-icon" />}
-                    <span>{item.title}</span>
-                    <IconChevronRight className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
-                  </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {item.items?.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={pathname === subItem.url}
-                            >
-                              <Link href={subItem.url}>
-                                <span>{subItem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </SidebarMenuItem>
-                </Collapsible>
-              ) : (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    tooltip={item.title}
-                    isActive={pathname === item.url}
-                  >
-                    <Link href={item.url}>
-                      <Icon data-slot="sidebar-menu-button-icon" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              );
-            })}
+            {filteredItems.map((item) => (
+              <SidebarItem key={item.title} item={item} pathname={pathname} />
+            ))}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
@@ -206,5 +159,89 @@ export default function AppSidebar() {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+  );
+}
+
+function SidebarItem({ item, pathname }: { item: NavItem; pathname: string }) {
+  const [isOpen, setIsOpen] = React.useState(item.isActive);
+  const Icon = item.icon ? Icons[item.icon] : Icons.logo;
+
+  // Update isOpen when pathname changes if item or its children are active
+  React.useEffect(() => {
+    const isChildActive = item.items?.some(sub => sub.url === pathname);
+    if (isChildActive || item.url === pathname) {
+      setIsOpen(true);
+    }
+  }, [pathname, item.items, item.url]);
+
+  if (item.items && item.items.length > 0) {
+    return (
+      <Collapsible
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        className='group/collapsible'
+      >
+        <SidebarMenuItem>
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton
+              tooltip={item.title}
+              isActive={pathname === item.url}
+            >
+              {item.icon && <Icon data-slot="sidebar-menu-button-icon" />}
+              <span>{item.title}</span>
+              <IconChevronRight 
+                className={cn(
+                  'ml-auto transition-transform duration-300',
+                  isOpen && 'rotate-90'
+                )} 
+              />
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
+          <AnimatePresence initial={false}>
+            {isOpen && (
+              <CollapsibleContent forceMount asChild>
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                  className="overflow-hidden"
+                >
+                  <SidebarMenuSub>
+                    {item.items.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        <SidebarMenuSubButton
+                          asChild
+                          isActive={pathname === subItem.url}
+                        >
+                          <Link href={subItem.url}>
+                            <span>{subItem.title}</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </motion.div>
+              </CollapsibleContent>
+            )}
+          </AnimatePresence>
+        </SidebarMenuItem>
+      </Collapsible>
+    );
+  }
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        tooltip={item.title}
+        isActive={pathname === item.url}
+      >
+        <Link href={item.url}>
+          <Icon data-slot="sidebar-menu-button-icon" />
+          <span>{item.title}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }

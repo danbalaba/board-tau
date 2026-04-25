@@ -14,89 +14,60 @@ import {
 } from 'lucide-react';
 import { Button } from '@/app/admin/components/ui/button';
 import { toast } from 'sonner';
+import { useListingsReview, useModerationDecision } from '@/app/admin/hooks/use-moderation';
 import { ListingKPICards } from './listing-kpi-cards';
 import { ListingQueue } from './listing-queue';
 import { ListingReviewCard } from './listing-review-card';
 import { cn } from '@/lib/utils';
 
-// Original sample data
-const initialListings = [
-  {
-    id: 1,
-    title: 'Cozy Studio Apartment in CBD',
-    location: 'Central Business District, Singapore',
-    price: 1200,
-    rooms: 1,
-    bathrooms: 1,
-    description: 'A beautifully furnished studio apartment located in the heart of Singapore\'s CBD. Perfect for young professionals looking for convenient living. High-speed internet included.',
-    images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200', 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800', 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800'],
-    status: 'pending',
-    host: {
-      name: 'Jane Doe',
-      avatar: 'https://i.pravatar.cc/150?u=jane',
-      email: 'jane.doe@example.com'
-    },
-    submittedAt: '2024-01-15T09:30:00'
-  },
-  {
-    id: 2,
-    title: 'Spacious 2-Bedroom in Tiong Bahru',
-    location: 'Tiong Bahru, Singapore',
-    price: 2800,
-    rooms: 2,
-    bathrooms: 2,
-    description: 'A spacious 2-bedroom apartment with modern amenities in the trendy Tiong Bahru area. Close to cafes, shops, and public transport. Fully renovated kitchen.',
-    images: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200', 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800'],
-    status: 'pending',
-    host: {
-      name: 'John Smith',
-      avatar: 'https://i.pravatar.cc/150?u=john',
-      email: 'john.smith@example.com'
-    },
-    submittedAt: '2024-01-14T14:45:00'
-  },
-  {
-    id: 3,
-    title: 'Modern Condo in Sentosa Cove',
-    location: 'Sentosa Cove, Singapore',
-    price: 4500,
-    rooms: 3,
-    bathrooms: 3,
-    description: 'Luxury living at its finest in Sentosa Cove. This modern condo offers stunning sea views and access to premium amenities. Infinity pool and private gym included.',
-    images: ['https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=1200', 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800'],
-    status: 'pending',
-    host: {
-      name: 'Michael Johnson',
-      avatar: 'https://i.pravatar.cc/150?u=michael',
-      email: 'michael.johnson@example.com'
-    },
-    submittedAt: '2024-01-13T11:20:00'
-  }
-];
-
 export function ListingsReviewDashboard() {
-  const [listings, setListings] = useState(initialListings);
-  const [selectedListing, setSelectedListing] = useState(initialListings[0]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { data: apiResponse, isLoading, refetch, isFetching } = useListingsReview();
+  const { mutate: decide } = useModerationDecision();
+
+  const listings = apiResponse?.data || [];
+  const [selectedListing, setSelectedListing] = React.useState<any>(null);
+
+  // Set initial selected listing when data loads
+  React.useEffect(() => {
+    if (listings.length > 0 && !selectedListing) {
+      setSelectedListing(listings[0]);
+    }
+  }, [listings, selectedListing]);
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await new Promise(r => setTimeout(r, 800));
-    setIsRefreshing(false);
+    await refetch();
     toast.success('Market inventory synchronized.');
   };
 
-  const handleAction = (id: number, status: string) => {
-    setListings(ls => ls.map(l => l.id === id ? { ...l, status } : l));
-    toast.success(`Listing ${status} successfully.`);
-    // Automatically move to the next pending listing
-    const nextItem = listings.find(l => l.id !== id && l.status === 'pending');
-    if (nextItem) setSelectedListing(nextItem);
+  const handleAction = (id: string, action: 'approve' | 'reject') => {
+    decide({ id, entityType: 'listing', action }, {
+      onSuccess: () => {
+        toast.success(`Listing ${action === 'approve' ? 'authorized' : 'rejected'} successfully.`);
+        // Move to next listing or clear if none left
+        const remainingListings = listings.filter((l: any) => l.id !== id);
+        if (remainingListings.length > 0) {
+          setSelectedListing(remainingListings[0]);
+        } else {
+          setSelectedListing(null);
+        }
+      },
+      onError: (err: any) => {
+        toast.error(`Database Error: ${err.message}`);
+      }
+    });
   };
 
-  const pendingCount = listings.filter(l => l.status === 'pending').length;
-  const approvedCount = listings.filter(l => l.status === 'approved').length;
-  const rejectedCount = listings.filter(l => l.status === 'rejected').length;
+  const pendingCount = apiResponse?.meta?.stats?.pending || 0;
+  const approvedCount = apiResponse?.meta?.stats?.active || 0;
+  const rejectedCount = apiResponse?.meta?.stats?.rejected || 0;
+
+  if (isLoading) {
+    return (
+      <div className="p-6 lg:p-10 text-center">
+        <h2 className="text-2xl font-bold italic animate-pulse">Scanning Platform Assets...</h2>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-10 space-y-12">
@@ -110,7 +81,7 @@ export function ListingsReviewDashboard() {
           >
             Listing Assets
             <span className="flex items-center gap-1.5 bg-primary/10 px-3 py-1.5 rounded-2xl border border-primary/10 text-primary text-[10px] tracking-[0.2em] font-black italic">
-              INSPECTION REQUIRED
+              {pendingCount} INSPECTION REQUIRED
             </span>
           </motion.h1>
           <motion.p
@@ -129,7 +100,7 @@ export function ListingsReviewDashboard() {
             variant="outline"
             size="icon"
             onClick={handleRefresh}
-            className={cn("h-11 w-11 rounded-xl border-border/60", isRefreshing && "animate-spin")}
+            className={cn("h-11 w-11 rounded-xl border-border/60", isFetching && "animate-spin")}
           >
             <RefreshCcw className="w-4 h-4 text-primary" />
           </Button>
@@ -146,46 +117,64 @@ export function ListingsReviewDashboard() {
 
       {/* KPI Section */}
       <ListingKPICards 
-        total={listings.length} 
+        total={pendingCount} 
         pending={pendingCount} 
         approved={approvedCount} 
         rejected={rejectedCount} 
       />
 
       {/* Main Grid: List + Details */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-        <div className="xl:col-span-1 space-y-6">
-          <div className="flex items-center gap-3 pl-4 border-l-[3px] border-emerald-500">
-            <LayoutGrid className="w-5 h-5 text-emerald-500" />
-            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/70">Review Stack</h2>
-          </div>
-          <ListingQueue 
-            listings={listings} 
-            selectedId={selectedListing.id} 
-            onSelect={setSelectedListing} 
-          />
-        </div>
-
-        <div className="xl:col-span-3 space-y-6">
-          <div className="flex items-center gap-3 pl-4 border-l-[3px] border-amber-500">
-            <Building2 className="w-5 h-5 text-amber-500" />
-            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/70">Property Inspector</h2>
-          </div>
-          <motion.div
-            key={selectedListing.id}
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", stiffness: 100 }}
-          >
-            <ListingReviewCard 
-              listing={selectedListing} 
-              onApprove={(id) => handleAction(id, 'approved')}
-              onReject={(id) => handleAction(id, 'rejected')}
-              onModify={(id) => handleAction(id, 'modification')}
+      {listings.length > 0 ? (
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+          <div className="xl:col-span-1 space-y-6">
+            <div className="flex items-center gap-3 pl-4 border-l-[3px] border-emerald-500">
+              <LayoutGrid className="w-5 h-5 text-emerald-500" />
+              <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/70">Review Stack</h2>
+            </div>
+            <ListingQueue 
+              listings={listings} 
+              selectedId={selectedListing?.id} 
+              onSelect={setSelectedListing} 
             />
-          </motion.div>
+          </div>
+
+          <div className="xl:col-span-3 space-y-6">
+            <div className="flex items-center gap-3 pl-4 border-l-[3px] border-amber-500">
+              <Building2 className="w-5 h-5 text-amber-500" />
+              <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/70">Property Inspector</h2>
+            </div>
+            {selectedListing && (
+              <motion.div
+                key={selectedListing.id}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", stiffness: 100 }}
+              >
+                <ListingReviewCard 
+                  listing={{
+                    ...selectedListing,
+                    images: selectedListing.images || [selectedListing.imageSrc],
+                    host: selectedListing.user ? {
+                      name: selectedListing.user.name,
+                      avatar: selectedListing.user.image,
+                      email: selectedListing.user.email
+                    } : { name: 'Unknown Host', avatar: '', email: '' }
+                  }} 
+                  onApprove={(id) => handleAction(id, 'approve')}
+                  onReject={(id) => handleAction(id, 'reject')}
+                  onModify={(id) => toast.info('Modification requested (Functionality coming soon)')}
+                />
+              </motion.div>
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 bg-muted/20 rounded-[40px] border border-dashed border-border/50">
+          <ShieldCheck className="w-16 h-16 text-emerald-500/20 mb-6" />
+          <h3 className="text-xl font-bold uppercase tracking-tighter">Queue is Clear</h3>
+          <p className="text-muted-foreground text-sm font-medium">All platform assets have been successfully vetted.</p>
+        </div>
+      )}
     </div>
   );
 }

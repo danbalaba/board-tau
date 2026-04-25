@@ -1,0 +1,55 @@
+/* ============================================================
+ * Admin Dark Mode Override
+ * Loaded via admin/layout.tsx -> extra-themes.css
+ * Overrides the globals.css html[data-theme].dark block
+ * with a pitch-black aesthetic matching next-shadcn-dashboard-starter
+ * ============================================================ */
+
+/* Use higher specificity [data-theme][data-theme] trick to win over
+   globals.css html[data-theme].dark which has the same (0,2,1) specificity
+   but loads earlier in the stylesheet cascade. */
+html.dark[data-theme][data-theme] {
+  --color-background: 0.0 0 0;       /* Pure black #000 */
+  --color-foreground: 0.98 0 0;
+  --color-card: 0.12 0 0;            /* Very dark cards */
+  --color-card-foreground: 0.98 0 0;
+  --color-popover: 0.12 0 0;         /* Dark popover panels */
+  --color-popover-foreground: 0.98 0 0;
+  --color-primary: 0.47 0.35 148;    /* BoardTAU Green kept */
+  --color-primary-foreground: 0.98 0 0;
+  --color-secondary: 0.18 0 0;
+  --color-secondary-foreground: 0.98 0 0;
+  --color-muted: 0.16 0 0;
+  --color-muted-foreground: 0.62 0 0;
+  --color-accent: 0.20 0 0;
+  --color-accent-foreground: 0.98 0 0;
+  --color-destructive: 0.69 0.2 23.91;
+  --color-destructive-foreground: 0.0 0 0;
+  --color-border: 0.18 0 0;          /* Very subtle border */
+  --color-input: 0.22 0 0;
+  --color-ring: 0.47 0.35 148;
+  --color-sidebar: 0.0 0 0;          /* Seamless with background */
+  --color-sidebar-foreground: 0.98 0 0;
+  --color-sidebar-primary: 0.47 0.35 148;
+  --color-sidebar-primary-foreground: 0.98 0 0;
+  --color-sidebar-accent: 0.20 0 0;
+  --color-sidebar-accent-foreground: 0.98 0 0;
+  --color-sidebar-border: 0.18 0 0;  /* Hairline sidebar border */
+  --color-sidebar-ring: 0.47 0.35 148;
+  --color-chart-1: 0.47 0.35 148;
+  --color-chart-2: 0.58 0.21 260.84;
+  --color-chart-3: 0.81 0.17 75.35;
+  --color-chart-4: 0.44 0 0;
+  --color-chart-5: 0.56 0 0;
+}
+
+/* Global border thinning for admin dark mode only */
+html.dark[data-theme] * {
+  border-color: oklch(0.18 0 0 / 1);
+}
+
+/* Preserve destructive elements */
+html.dark[data-theme] [data-variant="destructive"],
+html.dark[data-theme] [data-state="destructive"] {
+  border-color: oklch(0.69 0.2 23.91 / 0.5);
+}

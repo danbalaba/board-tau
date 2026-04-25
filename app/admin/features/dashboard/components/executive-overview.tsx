@@ -82,32 +82,10 @@ export function ExecutiveOverview() {
   // Transform data for charts
   const metrics = data?.data?.metrics;
   const topProperties = data?.data?.topProperties || [];
-
-  // Mock data for charts since API doesn't return them yet
-  const revenueData = [
-    { month: 'Jan', revenue: 4000, bookings: 24 },
-    { month: 'Feb', revenue: 3000, bookings: 18 },
-    { month: 'Mar', revenue: 5000, bookings: 32 },
-    { month: 'Apr', revenue: 4500, bookings: 28 },
-    { month: 'May', revenue: 6000, bookings: 35 },
-  ];
-
-  const propertyTypeData = [
-    { name: 'Apartments', value: 400, color: '#0088FE' },
-    { name: 'Houses', value: 300, color: '#00C49F' },
-    { name: 'Condos', value: 200, color: '#FFBB28' },
-    { name: 'Studios', value: 150, color: '#FF8042' },
-  ];
-
-  const occupancyData = [
-    { day: 'Mon', occupancy: 85 },
-    { day: 'Tue', occupancy: 90 },
-    { day: 'Wed', occupancy: 75 },
-    { day: 'Thu', occupancy: 88 },
-    { day: 'Fri', occupancy: 92 },
-    { day: 'Sat', occupancy: 95 },
-    { day: 'Sun', occupancy: 88 },
-  ];
+  const revenueData = data?.data?.charts?.revenue || [];
+  const propertyTypeData = data?.data?.charts?.propertyDistribution || [];
+  const occupancyData = data?.data?.charts?.occupancy || [];
+  const activities = data?.data?.activities || [];
 
   const chartConfig = {
     revenue: {
@@ -156,6 +134,24 @@ export function ExecutiveOverview() {
       y: 0,
       opacity: 1,
     },
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'host': return Users;
+      case 'property': return Home;
+      case 'booking': return Calendar;
+      default: return Activity;
+    }
+  };
+
+  const getActivityColor = (type: string) => {
+    switch (type) {
+      case 'host': return 'bg-blue-100 text-blue-600';
+      case 'property': return 'bg-green-100 text-green-600';
+      case 'booking': return 'bg-amber-100 text-amber-600';
+      default: return 'bg-gray-100 text-gray-600';
+    }
   };
 
   return (
@@ -256,7 +252,7 @@ export function ExecutiveOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Revenue & Bookings</CardTitle>
-                <CardDescription>Monthly revenue and booking trends</CardDescription>
+                <CardDescription>Trend over the selected period</CardDescription>
               </div>
               <Activity className="w-4 h-4 text-muted-foreground" />
             </div>
@@ -332,7 +328,7 @@ export function ExecutiveOverview() {
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {propertyTypeData.map((entry, index) => (
+                    {propertyTypeData.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -350,7 +346,7 @@ export function ExecutiveOverview() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Occupancy Rate</CardTitle>
-                  <CardDescription>Daily occupancy trends</CardDescription>
+                  <CardDescription>Recent occupancy trends</CardDescription>
                 </div>
                 <TrendingUp className="w-4 h-4 text-muted-foreground" />
               </div>
@@ -401,24 +397,27 @@ export function ExecutiveOverview() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { type: 'host', title: 'New Host Application', desc: 'John Doe submitted application', time: '2 hours ago', icon: Users, color: 'bg-blue-100 text-blue-600' },
-                { type: 'property', title: 'New Property Listed', desc: 'Cozy Studio in Downtown', time: '5 hours ago', icon: Home, color: 'bg-green-100 text-green-600' },
-                { type: 'booking', title: 'Booking Completed', desc: 'Booking for 2 weeks at Beach Villa', time: '1 day ago', icon: Calendar, color: 'bg-amber-100 text-amber-600' },
-              ].map((activity, i) => (
-                <div key={i} className="flex items-center justify-between group cursor-pointer hover:bg-muted/50 p-2 rounded-lg transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110", activity.color)}>
-                      <activity.icon className="w-5 h-5" />
+              {activities.length > 0 ? activities.map((activity: any, i: number) => {
+                const Icon = getActivityIcon(activity.type);
+                return (
+                  <div key={i} className="flex items-center justify-between group cursor-pointer hover:bg-muted/50 p-2 rounded-lg transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110", getActivityColor(activity.type))}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{activity.title}</p>
+                        <p className="text-sm text-muted-foreground">{activity.description}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{activity.title}</p>
-                      <p className="text-sm text-muted-foreground">{activity.desc}</p>
-                    </div>
+                    <div className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">{activity.time}</div>
                   </div>
-                  <div className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">{activity.time}</div>
+                );
+              }) : (
+                <div className="text-center py-6 text-muted-foreground">
+                  No recent activity found.
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>

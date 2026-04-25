@@ -48,8 +48,8 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Fetch transactions
-    const [transactions, total] = await Promise.all([
+    // Fetch transactions and stats
+    const [transactions, total, totalAmount, completedCount, failedCount] = await Promise.all([
       db.reservation.findMany({
         where,
         include: {
@@ -62,6 +62,16 @@ export async function GET(req: NextRequest) {
         take: perPage,
       }),
       db.reservation.count({ where }),
+      db.reservation.aggregate({
+        where: { ...where, paymentStatus: 'PAID' },
+        _sum: { totalPrice: true },
+      }),
+      db.reservation.count({
+        where: { ...where, paymentStatus: 'PAID' },
+      }),
+      db.reservation.count({
+        where: { ...where, paymentStatus: 'FAILED' },
+      }),
     ]);
 
     // Transform data for response
@@ -101,6 +111,11 @@ export async function GET(req: NextRequest) {
         page,
         perPage,
         totalPages: Math.ceil(total / perPage),
+        stats: {
+          totalAmount: totalAmount._sum.totalPrice || 0,
+          completedCount,
+          failedCount,
+        }
       })
     );
   } catch (error) {

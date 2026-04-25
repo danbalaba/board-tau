@@ -2,9 +2,23 @@
 
 import React from 'react';
 import { UserTable } from './user-tables';
-import { columns, User, ROLE_OPTIONS, STATUS_OPTIONS } from './user-tables/columns';
+import { columns } from './user-tables/columns';
 import { useUsers } from '@/app/admin/hooks/use-users';
 import { parseAsString, useQueryState } from 'nuqs';
+import {
+  IconUsers,
+  IconUserPlus,
+  IconRefresh,
+  IconAlertCircle,
+  IconShieldLock,
+  IconChartBar,
+  IconArrowUpRight
+} from '@tabler/icons-react';
+import PageContainer from '@/app/admin/components/layout/page-container';
+import { Button } from '@/app/admin/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui/card';
+import { motion } from 'framer-motion';
+import { cn } from "@/lib/utils";
 
 export function UserDirectory() {
   const [pageSize] = useQueryState('perPage', parseAsString.withDefault('10'));
@@ -14,8 +28,7 @@ export function UserDirectory() {
   const [role] = useQueryState('role', parseAsString.withDefault(''));
   const [status] = useQueryState('status', parseAsString.withDefault(''));
 
-  // Fetch real data from the API
-  const { data, isLoading, error } = useUsers({
+  const { data, isLoading, error, refetch } = useUsers({
     page: parseInt(page),
     perPage: parseInt(pageSize),
     name: name || undefined,
@@ -24,63 +37,78 @@ export function UserDirectory() {
     status: status || undefined,
   });
 
-  // Debug logs to see what's happening
-  console.log('API Response:', data);
-  console.log('Data?.data:', data?.data);
-  console.log('Data type:', typeof data?.data);
-  if (data?.data) {
-    console.log('Data length:', data?.data.length);
-    console.log('First user:', data?.data[0]);
-  }
+  const totalUsers = data?.meta?.total || 0;
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">User Directory</h2>
-            <p className="text-muted-foreground">Manage user accounts and permissions</p>
-          </div>
-        </div>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg text-muted-foreground">Loading users...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">User Directory</h2>
-            <p className="text-muted-foreground">Manage user accounts and permissions</p>
-          </div>
-        </div>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg text-red-500">
-            Error loading users: {error.message}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const kpis = [
+    { label: 'Total Identities', value: totalUsers, trend: '+4.2%', icon: IconUsers, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Active Admins', value: '12', trend: 'Stable', icon: IconShieldLock, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'New This Week', value: '+42', trend: '+12%', icon: IconChartBar, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { label: 'Pending Verification', value: '8', trend: 'Priority', icon: IconAlertCircle, color: 'text-amber-500', bg: 'bg-amber-500/10' }
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">User Directory</h2>
-          <p className="text-muted-foreground">Manage user accounts and permissions</p>
+    <PageContainer
+      pageTitle="Identity Management"
+      pageDescription="Orchestrate user accounts, access levels and security profiles globally"
+      pageHeaderAction={
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="h-9 gap-2 hover:bg-white/5 border-border/40 font-black uppercase text-[10px] tracking-widest" onClick={() => refetch()}>
+            <IconRefresh className="h-4 w-4" />
+            Sync
+          </Button>
+          <Button size="sm" className="h-9 gap-2 shadow-lg shadow-primary/20 font-black uppercase text-[10px] tracking-widest">
+            <IconUserPlus className="h-4 w-4" />
+            Provision User
+          </Button>
         </div>
-      </div>
+      }
+    >
+      <div className="space-y-6">
+        {/* KPI Strip */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {kpis.map((stat, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+            >
+              <Card className="group relative overflow-hidden border-none bg-card/30 backdrop-blur-md shadow-xl transition-all hover:bg-card/40">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 text-muted-foreground">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-widest">{stat.label}</CardTitle>
+                  <div className={cn("p-2 rounded-xl transition-transform group-hover:scale-110", stat.bg)}>
+                    <stat.icon className={cn("h-4 w-4", stat.color)} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-black tabular-nums">{stat.value}</div>
+                  <div className="flex items-center mt-1 space-x-1">
+                    <IconArrowUpRight className={cn("w-3 h-3 text-emerald-500", stat.trend === 'Stable' && 'text-blue-500')} />
+                    <span className={cn("text-[10px] font-medium", stat.trend.includes('+') ? 'text-emerald-500' : 'text-blue-500')}>
+                      {stat.trend}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground/50 ml-1">vs target</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
 
-      <UserTable
-        data={data?.data || []}
-        totalItems={data?.meta?.total || 0}
-        columns={columns as any}
-      />
-    </div>
+        {/* Table */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="rounded-2xl border border-border/40 bg-card/30 p-2 shadow-xl backdrop-blur-md overflow-hidden"
+        >
+          <UserTable
+            data={data?.data || []}
+            totalItems={totalUsers}
+            columns={columns as any}
+          />
+        </motion.div>
+      </div>
+    </PageContainer>
   );
 }

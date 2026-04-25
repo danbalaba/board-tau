@@ -23,6 +23,27 @@ export interface ExecutiveOverview {
     revenueGrowthPercentage: number;
   };
   topProperties: Array<{ listingId: string; listingTitle: string; revenue: number }>;
+  charts: {
+    revenue: Array<{ month: string; revenue: number; bookings: number }>;
+    propertyDistribution: Array<{ name: string; value: number; color: string }>;
+    occupancy: Array<{ day: string; occupancy: number }>;
+  };
+  activities: Array<{
+    id: string;
+    type: 'host' | 'property' | 'booking';
+    title: string;
+    description: string;
+    time: string;
+    createdAt: string;
+  }>;
+  recentSales: Array<{
+    id: string;
+    name: string;
+    email: string;
+    avatar: string;
+    amount: string;
+    fallback: string;
+  }>;
 }
 
 export function useExecutiveOverview(range: string = '30d') {

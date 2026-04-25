@@ -1,9 +1,9 @@
 import { Metadata } from 'next';
-import { PaymentSettings } from '@/app/admin/features/settings/components/payment-settings';
+import { PaymentSettings } from '@/app/admin/features/settings/components/platform-payments';
 
 export const metadata: Metadata = {
-  title: 'Payment & Tax Settings - BoardTAU Admin',
-  description: 'Configure payment gateways and tax settings',
+  title: 'Payments & Taxes - BoardTAU Admin',
+  description: 'Configure payment gateways, tax compliance, and commission structures',
 };
 
 export default function PaymentSettingsPage() {

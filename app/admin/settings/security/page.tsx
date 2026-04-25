@@ -1,9 +1,9 @@
 import { Metadata } from 'next';
-import { SecuritySettings } from '@/app/admin/features/settings/components/security-settings';
+import { SecuritySettings } from '@/app/admin/features/settings/components/platform-security';
 
 export const metadata: Metadata = {
   title: 'Security Settings - BoardTAU Admin',
-  description: 'Configure security and compliance settings',
+  description: 'Configure security, compliance, and authentication policies',
 };
 
 export default function SecuritySettingsPage() {

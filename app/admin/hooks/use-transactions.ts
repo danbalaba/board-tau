@@ -11,6 +11,11 @@ interface ApiResponse<T = any> {
     page?: number;
     perPage?: number;
     totalPages?: number;
+    stats?: {
+      totalAmount: number;
+      completedCount: number;
+      failedCount: number;
+    };
   };
 }
 

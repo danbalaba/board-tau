@@ -11,6 +11,7 @@ interface ApiResponse<T = any> {
     page?: number;
     perPage?: number;
     totalPages?: number;
+    stats?: Record<string, any>;
   };
 }
 
@@ -63,6 +64,69 @@ export function useModerationQueue(params?: ModerationQueryParams) {
       return data;
     },
     refetchInterval: 30000, // Refetch every 30 seconds
+  });
+}
+
+export function useHostApplications(params?: ModerationQueryParams) {
+  const { page = 1, perPage = 10, entityType = '' } = params || {};
+
+  const queryString = new URLSearchParams({
+    page: page.toString(),
+    perPage: perPage.toString(),
+    status: 'pending',
+  }).toString();
+
+  return useQuery({
+    queryKey: ['host-applications', params],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/moderation/hosts?${queryString}`);
+      if (!response.ok) throw new Error('Failed to fetch host applications');
+      const data: ApiResponse = await response.json();
+      if (!data.success) throw new Error(data.message || 'Failed to fetch host applications');
+      return data;
+    },
+  });
+}
+
+export function useListingsReview(params?: ModerationQueryParams) {
+  const { page = 1, perPage = 10 } = params || {};
+
+  const queryString = new URLSearchParams({
+    page: page.toString(),
+    perPage: perPage.toString(),
+    status: 'pending',
+  }).toString();
+
+  return useQuery({
+    queryKey: ['listings-review', params],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/moderation/listings?${queryString}`);
+      if (!response.ok) throw new Error('Failed to fetch listings for review');
+      const data: ApiResponse = await response.json();
+      if (!data.success) throw new Error(data.message || 'Failed to fetch listings for review');
+      return data;
+    },
+  });
+}
+
+export function useReviewsModeration(params?: ModerationQueryParams) {
+  const { page = 1, perPage = 10 } = params || {};
+
+  const queryString = new URLSearchParams({
+    page: page.toString(),
+    perPage: perPage.toString(),
+    status: 'pending',
+  }).toString();
+
+  return useQuery({
+    queryKey: ['reviews-moderation', params],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/moderation/reviews?${queryString}`);
+      if (!response.ok) throw new Error('Failed to fetch reviews for moderation');
+      const data: ApiResponse = await response.json();
+      if (!data.success) throw new Error(data.message || 'Failed to fetch reviews for moderation');
+      return data;
+    },
   });
 }
 

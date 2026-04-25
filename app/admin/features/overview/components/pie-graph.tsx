@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import { IconTrendingUp } from '@tabler/icons-react';
-import { Label, Pie, PieChart } from 'recharts';
+import { LabelList, Pie, PieChart } from 'recharts';
+import { Badge } from "../../../components/ui/badge";
 
 import {
   Card,
@@ -18,146 +19,71 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from "../../../components/ui/chart";
+import { useExecutiveOverview } from "@/app/admin/hooks/use-executive-overview";
 
-const chartData = [
-  { browser: 'chrome', visitors: 275, fill: 'oklch(var(--color-primary))' },
-  { browser: 'safari', visitors: 200, fill: 'oklch(var(--color-primary))' },
-  { browser: 'firefox', visitors: 287, fill: 'oklch(var(--color-primary))' },
-  { browser: 'edge', visitors: 173, fill: 'oklch(var(--color-primary))' },
-  { browser: 'other', visitors: 190, fill: 'oklch(var(--color-primary))' }
-];
+export function PieGraph({ data: propData }: { data?: any[] }) {
+  const { data: apiResponse } = useExecutiveOverview('30d');
+  const data = propData || apiResponse?.data?.charts?.propertyDistribution || [];
+  const chartConfig = React.useMemo(() => {
+    const config: ChartConfig = {
+      total: { label: 'Total' }
+    };
+    data.forEach(item => {
+      config[item.name.toLowerCase()] = {
+        label: item.name,
+        color: item.color
+      };
+    });
+    return config;
+  }, [data]);
 
-const chartConfig = {
-  visitors: {
-    label: 'Visitors'
-  },
-  chrome: {
-    label: 'Chrome',
-    color: 'oklch(var(--color-primary))'
-  },
-  safari: {
-    label: 'Safari',
-    color: 'oklch(var(--color-primary))'
-  },
-  firefox: {
-    label: 'Firefox',
-    color: 'oklch(var(--color-primary))'
-  },
-  edge: {
-    label: 'Edge',
-    color: 'oklch(var(--color-primary))'
-  },
-  other: {
-    label: 'Other',
-    color: 'oklch(var(--color-primary))'
-  }
-} satisfies ChartConfig;
-
-export function PieGraph() {
-  const totalVisitors = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
-  }, []);
+  const chartData = React.useMemo(() => {
+    return data.map((item: any) => ({
+      ...item,
+      fill: item.color || `var(--chart-${(data.indexOf(item) % 5) + 1})`
+    }));
+  }, [data]);
 
   return (
-    <Card className='@container/card'>
-      <CardHeader>
-        <CardTitle>Pie Chart - Donut with Text</CardTitle>
-        <CardDescription>
-          <span className='hidden @[540px]/card:block'>
-            Total visitors by browser for the last 6 months
-          </span>
-          <span className='@[540px]/card:hidden'>Browser distribution</span>
-        </CardDescription>
+    <Card className='flex h-full flex-col border-none bg-card/30 backdrop-blur-md shadow-xl'>
+      <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-white/5">
+        <div>
+          <CardTitle className="text-base font-black tracking-tight">Property Split</CardTitle>
+          <CardDescription className="text-[10px] uppercase font-bold tracking-widest mt-1">Active inventory by type</CardDescription>
+        </div>
+        <Badge variant='outline' className="bg-blue-500/10 text-blue-500 border-none font-black uppercase text-[9px] h-5 px-2">
+          <IconTrendingUp className="size-3 mr-1" />
+          +5.2%
+        </Badge>
       </CardHeader>
-      <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
+      <CardContent className='flex flex-1 items-center justify-center pb-0'>
         <ChartContainer
           config={chartConfig}
-          className='mx-auto aspect-square h-[250px]'
+          className='[&_.recharts-text]:fill-background mx-auto aspect-square max-h-[350px] min-h-[300px]'
         >
           <PieChart>
-            <defs>
-              {['chrome', 'safari', 'firefox', 'edge', 'other'].map(
-                (browser, index) => (
-                  <linearGradient
-                    key={browser}
-                    id={`fill${browser}`}
-                    x1='0'
-                    y1='0'
-                    x2='0'
-                    y2='1'
-                  >
-                    <stop
-                      offset='0%'
-                      stopColor='oklch(var(--color-primary))'
-                      stopOpacity={1 - index * 0.15}
-                    />
-                    <stop
-                      offset='100%'
-                      stopColor='oklch(var(--color-primary))'
-                      stopOpacity={0.8 - index * 0.15}
-                    />
-                  </linearGradient>
-                )
-              )}
-            </defs>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
+            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
             <Pie
-              data={chartData.map((item) => ({
-                ...item,
-                fill: `url(#fill${item.browser})`
-              }))}
-              dataKey='visitors'
-              nameKey='browser'
-              innerRadius={60}
-              strokeWidth={2}
-              stroke='var(--background)'
+              data={chartData}
+              innerRadius={30}
+              dataKey='value'
+              nameKey='name'
+              radius={10}
+              cornerRadius={8}
+              paddingAngle={4}
             >
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
-                    return (
-                      <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        textAnchor='middle'
-                        dominantBaseline='middle'
-                      >
-                        <tspan
-                          x={viewBox.cx}
-                          y={viewBox.cy}
-                          className='fill-foreground text-3xl font-bold'
-                        >
-                          {totalVisitors.toLocaleString()}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className='fill-muted-foreground text-sm'
-                        >
-                          Total Visitors
-                        </tspan>
-                      </text>
-                    );
-                  }
-                }}
+              <LabelList
+                dataKey='value'
+                stroke='none'
+                fontSize={12}
+                fontWeight={500}
+                fill='currentColor'
+                formatter={(value: any) => value.toString()}
               />
             </Pie>
           </PieChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className='flex-col gap-2 text-sm'>
-        <div className='flex items-center gap-2 leading-none font-medium'>
-          Chrome leads with{' '}
-          {((chartData[0].visitors / totalVisitors) * 100).toFixed(1)}%{' '}
-          <IconTrendingUp className='h-4 w-4' />
-        </div>
-        <div className='text-muted-foreground leading-none'>
-          Based on data from January - June 2024
-        </div>
-      </CardFooter>
     </Card>
   );
 }

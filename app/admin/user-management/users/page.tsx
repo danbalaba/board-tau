@@ -1,18 +1,11 @@
 import { Metadata } from 'next';
 import { UserDirectory } from '@/app/admin/features/user-management/components/user-directory';
-import PageContainer from '@/app/admin/components/layout/page-container';
 
 export const metadata: Metadata = {
-  title: 'User Management - BoardTAU Admin',
-  description: 'Manage institutional assets and user privileges',
+  title: 'User Directory - BoardTAU Admin',
+  description: 'Manage user accounts, roles and system permissions',
 };
 
 export default function UserManagementPage() {
-  return (
-    <PageContainer scrollable>
-      <div className="space-y-6">
-        <UserDirectory />
-      </div>
-    </PageContainer>
-  );
+  return <UserDirectory />;
 }

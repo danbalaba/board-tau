@@ -9,6 +9,7 @@ export interface ApiResponse<T = any> {
     page?: number;
     perPage?: number;
     totalPages?: number;
+    stats?: Record<string, any>;
   };
 }
 

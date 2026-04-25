@@ -34,7 +34,7 @@ import { NavItem } from '@/types';
  */
 export const navItems: NavItem[] = [
   {
-    title: 'Executive Overview',
+    title: 'Dashboard',
     url: '/admin/overview',
     icon: 'dashboard',
     isActive: false,
@@ -226,7 +226,7 @@ export const navItems: NavItem[] = [
   },
     {
       title: 'Advanced Analytics',
-      url: '/admin/analytics',
+      url: '#',
       icon: 'chartBar',
       isActive: false,
       shortcut: ['a', 'a'],
@@ -259,14 +259,14 @@ export const navItems: NavItem[] = [
     },
     {
       title: 'Platform Configuration',
-      url: '/admin/settings',
+      url: '#',
       icon: 'settings',
       isActive: false,
       shortcut: ['s', 's'],
       items: [
         {
           title: 'General Settings',
-          url: '/admin/settings',
+          url: '/admin/settings/general',
           icon: 'settings',
           shortcut: ['g', 's']
         },
@@ -300,7 +300,7 @@ export const navItems: NavItem[] = [
     title: 'Account',
     url: '#',
     icon: 'account',
-    isActive: true,
+    isActive: false,
     items: [
       {
         title: 'Profile',

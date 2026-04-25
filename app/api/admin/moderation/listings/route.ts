@@ -25,8 +25,8 @@ export async function GET(req: NextRequest) {
     // Calculate pagination
     const skip = (page - 1) * perPage;
 
-    // Fetch listings to review
-    const [listings, total] = await Promise.all([
+    // Fetch listings to review with status counts
+    const [listings, total, approvedCount, rejectedCount] = await Promise.all([
       db.listing.findMany({
         where: { status },
         include: {
@@ -41,8 +41,16 @@ export async function GET(req: NextRequest) {
         skip,
         take: perPage,
       }),
-      db.listing.count({ where: { status } }),
+      db.listing.count({ where: { status: 'pending' } }),
+      db.listing.count({ where: { status: 'active' } }),
+      db.listing.count({ where: { status: 'rejected' } }),
     ]);
+
+    console.log('Listings API Debug:', {
+      total,
+      approvedCount,
+      rejectedCount,
+    });
 
     // Transform data for response
     const transformedListings = listings.map(listing => ({
@@ -80,6 +88,11 @@ export async function GET(req: NextRequest) {
         page,
         perPage,
         totalPages: Math.ceil(total / perPage),
+        stats: {
+          pending: total,
+          active: approvedCount,
+          rejected: rejectedCount,
+        }
       })
     );
   } catch (error) {
