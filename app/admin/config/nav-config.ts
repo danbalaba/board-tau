@@ -5,7 +5,7 @@ import { NavItem } from '@/types';
  */
 export const navItems: NavItem[] = [
   {
-    title: 'Executive Overview',
+    title: 'Dashboard',
     url: '/admin/overview',
     icon: 'dashboard',
     isActive: false,
@@ -271,7 +271,7 @@ export const navItems: NavItem[] = [
     title: 'Account',
     url: '#',
     icon: 'account',
-    isActive: true,
+    isActive: false,
     items: [
       {
         title: 'Profile',

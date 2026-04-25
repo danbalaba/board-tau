@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   Card,
   CardContent,
@@ -10,8 +11,23 @@ import {
 } from '@/app/admin/components/ui/card';
 import { Badge } from '@/app/admin/components/ui/badge';
 import { Button } from '@/app/admin/components/ui/button';
-import { Eye, RefreshCw, AlertTriangle, CheckCircle2, XCircle, Info } from 'lucide-react';
-import { Skeleton } from '@/app/admin/components/ui/skeleton';
+import {
+  IconEye,
+  IconRefresh,
+  IconAlertTriangle,
+  IconCircleCheck,
+  IconActivity,
+  IconCpu,
+  IconDatabase,
+  IconMail,
+  IconBolt,
+  IconServer,
+  IconLayoutDashboard,
+  IconCircleX,
+  IconInfoCircle
+} from '@tabler/icons-react';
+import PageContainer from '@/app/admin/components/layout/page-container';
+import { cn } from '@/app/admin/lib/utils';
 import { toast } from 'sonner';
 
 interface Service {
@@ -41,25 +57,59 @@ interface HealthData {
   alerts: Alert[];
 }
 
-const statusColors = {
-  healthy: 'default',
-  warning: 'secondary',
-  critical: 'destructive',
-  info: 'outline'
+const statusStyles = {
+  healthy: {
+    badge: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+    icon: 'text-emerald-500',
+    bg: 'bg-emerald-500/5',
+    pill: 'bg-emerald-500',
+    Icon: IconCircleCheck
+  },
+  warning: {
+    badge: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+    icon: 'text-amber-500',
+    bg: 'bg-amber-500/5',
+    pill: 'bg-amber-500',
+    Icon: IconAlertTriangle
+  },
+  critical: {
+    badge: 'bg-red-500/10 text-red-500 border-red-500/20',
+    icon: 'text-red-500',
+    bg: 'bg-red-500/5',
+    pill: 'bg-red-500',
+    Icon: IconCircleX
+  },
+  info: {
+    badge: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+    icon: 'text-blue-500',
+    bg: 'bg-blue-500/5',
+    pill: 'bg-blue-500',
+    Icon: IconInfoCircle
+  }
 };
 
-const statusLabels = {
-  healthy: 'Healthy',
-  warning: 'Warning',
-  critical: 'Critical',
-  info: 'Info'
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
 };
 
-const statusIcons = {
-  healthy: <CheckCircle2 className="h-5 w-5 text-green-500" />,
-  warning: <AlertTriangle className="h-5 w-5 text-yellow-500" />,
-  critical: <XCircle className="h-5 w-5 text-red-500" />,
-  info: <Info className="h-5 w-5 text-blue-500" />
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+};
+
+const getServiceIcon = (name: string) => {
+  const lower = name.toLowerCase();
+  if (lower.includes('api') || lower.includes('gateway')) return IconActivity;
+  if (lower.includes('database') || lower.includes('postgres') || lower.includes('mongo')) return IconDatabase;
+  if (lower.includes('cache') || lower.includes('redis')) return IconBolt;
+  if (lower.includes('email') || lower.includes('smtp')) return IconMail;
+  return IconServer;
 };
 
 export function SystemHealth() {
@@ -90,31 +140,15 @@ export function SystemHealth() {
 
   useEffect(() => {
     fetchHealthData();
-    // Auto refresh every 5 minutes to keep it updated without too much load
     const interval = setInterval(() => fetchHealthData(true), 300000); 
     return () => clearInterval(interval);
   }, []);
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-          <Skeleton className="h-10 w-24" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-28 w-full" />
-          ))}
-        </div>
-        <Skeleton className="h-64 w-full" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-64 w-full" />
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-muted-foreground animate-pulse font-black uppercase tracking-widest text-[10px]">Synchronizing Sentinel Telemetry...</p>
       </div>
     );
   }
@@ -123,251 +157,235 @@ export function SystemHealth() {
   const performance = data?.performance || { cpuUsage: 0, memoryUsage: 0, diskSpace: 0 };
   const alerts = data?.alerts || [];
 
+  const kpis = [
+    {
+      label: "Total Services",
+      value: services.length.toString(),
+      trend: "All Connected",
+      trendColor: "text-emerald-500",
+      icon: IconServer,
+      bg: "bg-blue-500/10",
+      color: "text-blue-500"
+    },
+    {
+      label: "Healthy Nodes",
+      value: services.filter(s => s.status === 'healthy').length.toString(),
+      trend: "Optimal",
+      trendColor: "text-emerald-500",
+      icon: IconCircleCheck,
+      bg: "bg-emerald-500/10",
+      color: "text-emerald-500"
+    },
+    {
+      label: "System Load",
+      value: `${performance.cpuUsage}%`,
+      trend: performance.cpuUsage > 80 ? "Critical" : "Stable",
+      trendColor: performance.cpuUsage > 80 ? "text-red-500" : "text-muted-foreground",
+      icon: IconCpu,
+      bg: "bg-purple-500/10",
+      color: "text-purple-500"
+    },
+    {
+      label: "Active Alerts",
+      value: alerts.length.toString(),
+      trend: alerts.some(a => a.severity === 'critical') ? "Action Required" : "No Critical Incidents",
+      trendColor: alerts.some(a => a.severity === 'critical') ? "text-red-500" : "text-amber-500",
+      icon: IconAlertTriangle,
+      bg: "bg-amber-500/10",
+      color: "text-amber-500"
+    }
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">System Health</h2>
-          <p className="text-muted-foreground">Real-time status of services and platform infrastructure</p>
+    <PageContainer
+      pageTitle="Sentinel System Health"
+      pageDescription="Real-time infrastructure telemetry and autonomous system monitoring"
+      pageHeaderAction={
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="h-9 gap-2 font-black uppercase text-[10px] tracking-widest">
+            <IconLayoutDashboard className="h-4 w-4" /> Export Logs
+          </Button>
+          <Button 
+            size="sm" 
+            className="h-9 gap-2 shadow-lg shadow-primary/20 font-black uppercase text-[10px] tracking-widest" 
+            onClick={() => fetchHealthData(true)}
+            disabled={refreshing}
+          >
+            <IconRefresh className={cn("h-4 w-4", refreshing && "animate-spin")} /> Force Sync
+          </Button>
         </div>
-        <Button 
-          onClick={() => fetchHealthData(true)} 
-          disabled={refreshing}
-          variant="outline"
-          className="shadow-sm"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          {refreshing ? 'Refreshing...' : 'Refresh'}
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-blue-50/30 border-blue-100 shadow-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-blue-600">Total Services</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-900">{services.length}</div>
-            <p className="text-xs text-blue-600/70 font-medium mt-1">Platform modules</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-green-50/30 border-green-100 shadow-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-green-600">Healthy</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-900">
-              {services.filter(s => s.status === 'healthy').length}
-            </div>
-            <p className="text-xs text-green-600/70 font-medium mt-1">Operational now</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-yellow-50/30 border-yellow-100 shadow-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-yellow-600">Warnings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-yellow-900">
-              {services.filter(s => s.status === 'warning').length}
-            </div>
-            <p className="text-xs text-yellow-600/70 font-medium mt-1">Attention needed</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-red-50/30 border-red-100 shadow-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-red-600">Critical</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-red-900">
-              {services.filter(s => s.status === 'critical').length}
-            </div>
-            <p className="text-xs text-red-600/70 font-medium mt-1">System outages</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-none shadow-sm ring-1 ring-border">
-        <CardHeader className="border-b bg-muted/30">
-          <CardTitle>Service Status</CardTitle>
-          <CardDescription>Live health checks for all platform dependencies</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x border-b">
-            {services.map((service, index) => (
-              <div 
-                key={service.id} 
-                className={`flex items-center justify-between p-6 hover:bg-muted/10 transition-colors ${index % 2 === 0 ? 'border-r' : ''}`}
-              >
-                <div className="flex items-center space-x-4">
-                  <div className={`p-3 rounded-xl border ${
-                    service.status === 'healthy' ? 'bg-green-50 border-green-100' : 
-                    service.status === 'warning' ? 'bg-yellow-50 border-yellow-100' : 
-                    'bg-red-50 border-red-100'
-                  }`}>
-                    {statusIcons[service.status as keyof typeof statusIcons]}
+      }
+    >
+      <motion.div 
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="space-y-6"
+      >
+        {/* Telemetry Grid */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {kpis.map((stat, i) => (
+            <motion.div key={i} variants={item}>
+              <Card className="group relative overflow-hidden border-none bg-card/30 backdrop-blur-md shadow-xl transition-all hover:bg-card/40">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{stat.label}</CardTitle>
+                  <div className={cn("rounded-lg p-2 transition-transform group-hover:scale-110", stat.bg)}>
+                    <stat.icon className={cn("h-4 w-4", stat.color)} />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-sm">{service.name}</h3>
-                    <div className="flex flex-col space-y-1 mt-0.5">
-                      <p className="text-[11px] text-muted-foreground font-medium">
-                        Uptime: <span className="text-foreground">{service.uptime}</span>
-                      </p>
-                      {service.responseTime > 0 && (
-                        <p className="text-[11px] text-muted-foreground font-medium">
-                          Latency: <span className="text-foreground">{service.responseTime}ms</span>
-                        </p>
-                      )}
-                    </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-black tracking-tight tabular-nums">{stat.value}</div>
+                  <div className="mt-1 flex items-center space-x-1">
+                    <span className={cn("text-[10px] font-bold uppercase", stat.trendColor)}>{stat.trend}</span>
+                    <span className="text-[10px] text-muted-foreground/60 tracking-tighter">Current Status</span>
                   </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Badge 
-                    variant={statusColors[service.status as keyof typeof statusColors] as any} 
-                    className="capitalize px-3 py-0.5"
-                  >
-                    {statusLabels[service.status as keyof typeof statusLabels]}
-                  </Badge>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="p-4 bg-muted/10 flex justify-between items-center text-[10px] text-muted-foreground font-medium uppercase tracking-widest px-6">
-            <span>Last global check: {new Date().toLocaleTimeString()}</span>
-            <span>All checks verified by BoardTAU Monitor</span>
-          </div>
-        </CardContent>
-      </Card>
+                </CardContent>
+                <div className={cn("absolute bottom-0 left-0 h-1 w-full opacity-30", stat.bg.replace('/10', ''))} />
+              </Card>
+            </motion.div>
+          ))}
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="border-b bg-muted/30">
-            <CardTitle className="text-lg">System Performance</CardTitle>
-            <CardDescription>Server resource utilization metrics</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-8 p-6">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-semibold">CPU Utilization</span>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Infrastructure Core */}
+          <motion.div variants={item} className="lg:col-span-2">
+            <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-black">Infrastructure Core</CardTitle>
+                  <CardDescription className="text-xs uppercase tracking-wider font-medium text-muted-foreground">Live heartbeat of critical system components</CardDescription>
                 </div>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                  performance.cpuUsage > 80 ? 'bg-red-100 text-red-700' : 
-                  performance.cpuUsage > 60 ? 'bg-yellow-100 text-yellow-700' : 
-                  'bg-blue-100 text-blue-700'
-                }`}>
-                  {performance.cpuUsage}%
-                </span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-3">
-                <div 
-                  className={`h-3 rounded-full transition-all duration-1000 ease-out ${
-                    performance.cpuUsage > 80 ? 'bg-red-500' : 
-                    performance.cpuUsage > 60 ? 'bg-yellow-500' : 
-                    'bg-blue-500'
-                  }`}
-                  style={{ width: `${performance.cpuUsage}%` }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-semibold">Memory Load</span>
-                </div>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                  performance.memoryUsage > 85 ? 'bg-red-100 text-red-700' : 
-                  performance.memoryUsage > 70 ? 'bg-yellow-100 text-yellow-700' : 
-                  'bg-green-100 text-green-700'
-                }`}>
-                  {performance.memoryUsage}%
-                </span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-3">
-                <div 
-                  className={`h-3 rounded-full transition-all duration-1000 ease-out ${
-                    performance.memoryUsage > 85 ? 'bg-red-500' : 
-                    performance.memoryUsage > 70 ? 'bg-yellow-500' : 
-                    'bg-green-500'
-                  }`}
-                  style={{ width: `${performance.memoryUsage}%` }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-semibold">Storage Capacity</span>
-                </div>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
-                  {performance.diskSpace}%
-                </span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-3">
-                <div 
-                  className={`h-3 rounded-full transition-all duration-1000 ease-out ${
-                    performance.diskSpace > 90 ? 'bg-red-500' : 'bg-indigo-500'
-                  }`}
-                  style={{ width: `${performance.diskSpace}%` }}
-                ></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="border-b bg-muted/30">
-            <CardTitle className="text-lg">Recent Health Alerts</CardTitle>
-            <CardDescription>Infrastructure & security events</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              {alerts.length > 0 ? (
-                alerts.map((alert) => (
-                  <div 
-                    key={alert.id} 
-                    className={`flex items-start space-x-4 p-4 rounded-2xl border transition-all ${
-                      alert.severity === 'critical' ? 'bg-red-50/50 border-red-100' : 
-                      alert.severity === 'warning' ? 'bg-yellow-50/50 border-yellow-100' : 
-                      alert.severity === 'info' ? 'bg-blue-50/50 border-blue-100' :
-                      'bg-green-50/50 border-green-100'
-                    }`}
-                  >
-                    <div className="mt-1">
-                      {statusIcons[alert.severity as keyof typeof statusIcons] || statusIcons.info}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-bold text-sm">{alert.title}</h4>
-                        <span className="text-[10px] font-bold opacity-60 uppercase tracking-tighter">
-                          {new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                <Badge variant="outline" className={cn(
+                  "font-black uppercase tracking-widest text-[9px]",
+                  services.every(s => s.status === 'healthy') 
+                    ? "bg-emerald-500/5 text-emerald-500 border-emerald-500/20" 
+                    : "bg-amber-500/5 text-amber-500 border-amber-500/20"
+                )}>
+                  {services.every(s => s.status === 'healthy') ? 'All Systems Operational' : 'Degraded Performance Detected'}
+                </Badge>
+              </CardHeader>
+              <CardContent className="px-0">
+                <div className="divide-y divide-border/20">
+                  {services.map((service) => {
+                    const style = statusStyles[service.status] || statusStyles.info;
+                    const IconComp = getServiceIcon(service.name);
+                    return (
+                      <div key={service.id} className="group relative flex flex-col gap-4 p-6 transition-all hover:bg-white/5 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className={cn("flex h-12 w-12 items-center justify-center rounded-2xl shadow-inner transition-transform group-hover:scale-110", style.bg)}>
+                            <IconComp className={cn("h-6 w-6", style.icon)} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold tracking-tight text-base">{service.name}</h3>
+                              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-border/20 bg-muted/20">
+                                <div className={cn("h-1.5 w-1.5 rounded-full animate-pulse", style.pill)} />
+                                <span className={cn("text-[9px] font-black uppercase tracking-wider", style.icon)}>{service.status}</span>
+                              </div>
+                            </div>
+                            <div className="mt-1 flex items-center gap-3 text-[11px] font-medium text-muted-foreground">
+                              <span className="flex items-center gap-1"><IconActivity className="h-3 w-3" /> {service.uptime} uptime</span>
+                              <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+                              <span className="flex items-center gap-1 font-mono">{service.responseTime}ms ping</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-6 sm:justify-end">
+                           <div className="hidden text-right sm:block">
+                              <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Last Synced</p>
+                              <p className="text-xs font-mono font-bold">{new Date(service.lastChecked).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
+                           </div>
+                           <Button variant="outline" size="sm" className="h-9 border-border/40 hover:bg-white/10 gap-2 font-black uppercase text-[10px] tracking-widest">
+                             <IconEye className="h-4 w-4" /> Telemetry
+                           </Button>
+                        </div>
                       </div>
-                      <p className="text-xs mt-1 text-muted-foreground leading-relaxed">{alert.description}</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
-                    <CheckCircle2 className="h-8 w-8 text-green-600" />
-                  </div>
-                  <h4 className="font-bold text-lg text-foreground">Systems Nominal</h4>
-                  <p className="text-sm text-muted-foreground max-w-[200px] mt-2">All platform components are operating within normal parameters.</p>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <div className="space-y-6">
+            {/* System Performance Progress */}
+            <motion.div variants={item}>
+              <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between pb-4">
+                   <div>
+                      <CardTitle className="text-base font-black">Performance</CardTitle>
+                      <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Global Resource Allocation</CardDescription>
+                   </div>
+                   <IconServer className="h-5 w-5 text-muted-foreground" />
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {[
+                    { label: 'CPU Cluster', value: performance.cpuUsage, color: 'bg-blue-500', icon: IconCpu },
+                    { label: 'Memory Load', value: performance.memoryUsage, color: 'bg-emerald-500', icon: IconServer },
+                    { label: 'Storage Cap', value: performance.diskSpace, color: 'bg-amber-500', icon: IconDatabase }
+                  ].map((metric) => (
+                    <div key={metric.label} className="space-y-2">
+                      <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider">
+                        <span className="flex items-center gap-2"><metric.icon className="h-3 w-3" /> {metric.label}</span>
+                        <span className="font-mono text-muted-foreground">{metric.value}%</span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5 border border-white/5">
+                        <motion.div 
+                          className={cn("h-full", metric.color)}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${metric.value}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Incident Ledger */}
+            <motion.div variants={item}>
+              <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+                <CardHeader className="flex flex-row items-center justify-between">
+                   <div>
+                      <CardTitle className="text-base font-black">Incident Ledger</CardTitle>
+                      <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Recent detected anomalies</CardDescription>
+                   </div>
+                   <IconAlertTriangle className="h-5 w-5 text-muted-foreground" />
+                </CardHeader>
+                <CardContent className="px-3">
+                  <div className="space-y-3 pb-3">
+                     {alerts.length > 0 ? alerts.map((alert, i) => {
+                       const style = statusStyles[alert.severity as keyof typeof statusStyles] || statusStyles.info;
+                       return (
+                        <div key={alert.id} className="flex gap-3 rounded-2xl border border-white/5 bg-white/5 p-3 transition-all hover:bg-white/10">
+                           <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg shadow-inner", style.bg)}>
+                              <style.Icon className={cn("h-4 w-4", style.icon)} />
+                           </div>
+                           <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-0.5">
+                                 <h4 className="text-[11px] font-black uppercase truncate">{alert.title}</h4>
+                                 <span className="text-[9px] font-mono text-muted-foreground shrink-0">
+                                   {new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                 </span>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground line-clamp-1">{alert.description}</p>
+                           </div>
+                        </div>
+                       );
+                     }) : (
+                       <div className="text-center py-6">
+                         <IconCircleCheck className="w-8 h-8 text-emerald-500/20 mx-auto mb-2" />
+                         <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">No anomalies detected in the last 24h</p>
+                       </div>
+                     )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+      </motion.div>
+    </PageContainer>
   );
 }
-

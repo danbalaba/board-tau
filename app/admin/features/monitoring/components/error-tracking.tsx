@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   Card,
   CardContent,
@@ -10,7 +11,6 @@ import {
 } from '@/app/admin/components/ui/card';
 import { Badge } from '@/app/admin/components/ui/badge';
 import { Button } from '@/app/admin/components/ui/button';
-import { Eye, RefreshCw, AlertTriangle, ShieldX, Activity, CheckCircle2 } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -24,7 +24,21 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { Skeleton } from '@/app/admin/components/ui/skeleton';
+import {
+  IconAlertTriangle,
+  IconRefresh,
+  IconEye,
+  IconFlame,
+  IconBug,
+  IconActivity,
+  IconChartPie,
+  IconFileReport,
+  IconChecklist,
+  IconLayoutDashboard,
+  IconBolt
+} from '@tabler/icons-react';
+import { cn } from '@/app/admin/lib/utils';
+import PageContainer from '@/app/admin/components/layout/page-container';
 import { toast } from 'sonner';
 
 interface ErrorData {
@@ -47,17 +61,59 @@ interface ErrorData {
   }[];
 }
 
-const severityColors: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  critical: 'destructive',
-  high: 'destructive',
-  medium: 'secondary',
-  low: 'default'
+const severityStyles: Record<string, { badge: string; color: string; bg: string; icon: any }> = {
+  critical: {
+    badge: 'bg-red-500/10 text-red-500 border-red-500/20',
+    color: 'text-red-500',
+    bg: 'bg-red-500/10',
+    icon: IconFlame
+  },
+  high: {
+    badge: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+    color: 'text-orange-500',
+    bg: 'bg-orange-500/10',
+    icon: IconAlertTriangle
+  },
+  medium: {
+    badge: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+    color: 'text-amber-500',
+    bg: 'bg-amber-500/10',
+    icon: IconBug
+  },
+  low: {
+    badge: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+    color: 'text-emerald-500',
+    bg: 'bg-emerald-500/10',
+    icon: IconActivity
+  },
+  info: {
+    badge: 'bg-slate-500/10 text-slate-500 border-slate-500/20',
+    color: 'text-slate-500',
+    bg: 'bg-slate-500/10',
+    icon: IconFileReport
+  }
+};
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+};
+
+const item = {
+  hidden: { opacity: 0, scale: 0.95 },
+  show: { opacity: 1, scale: 1 }
 };
 
 export function ErrorTracking() {
   const [data, setData] = useState<ErrorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const fetchData = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -81,29 +137,17 @@ export function ErrorTracking() {
   };
 
   useEffect(() => {
+    setMounted(true);
     fetchData();
-    // Refresh every minute to stay updated on new incidents
     const interval = setInterval(() => fetchData(true), 60000);
     return () => clearInterval(interval);
   }, []);
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-          <Skeleton className="h-10 w-24" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Skeleton className="h-[400px] w-full rounded-xl" />
-          <Skeleton className="h-[400px] w-full rounded-xl" />
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-muted-foreground animate-pulse font-black uppercase tracking-widest text-[10px]">Scanning System Diagnostic Tracks...</p>
       </div>
     );
   }
@@ -112,192 +156,169 @@ export function ErrorTracking() {
 
   const { summary, trends, distribution, recent } = data;
 
+  const kpis = [
+    { label: 'Total Exceptions', value: summary.totalErrors.toString(), trend: 'Last 24h', icon: IconBug, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Critical Paths', value: summary.criticalErrors.toString(), trend: 'Priority Triage', icon: IconFlame, color: 'text-red-500', bg: 'bg-red-500/10' },
+    { label: 'Global Error %', value: `${summary.errorRate}%`, trend: 'Healthy < 1%', icon: IconActivity, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: 'Resolution Rate', value: `${summary.resolutionRate}%`, trend: 'Last 7 days', icon: IconChecklist, color: 'text-emerald-500', bg: 'bg-emerald-500/10' }
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Error Tracking</h2>
-          <p className="text-muted-foreground">Monitor system anomalies and exception trends</p>
+    <PageContainer
+      pageTitle="Diagnostic Tracks"
+      pageDescription="Automated anomaly detection and application-wide error tracking"
+      pageHeaderAction={
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="h-9 gap-2 font-black uppercase text-[10px] tracking-widest">
+            <IconLayoutDashboard className="h-4 w-4" /> Error Config
+          </Button>
+          <Button size="sm" className="h-9 gap-2 shadow-lg shadow-primary/20 font-black uppercase text-[10px] tracking-widest" onClick={() => fetchData(true)} disabled={refreshing}>
+            <IconRefresh className={cn("h-4 w-4", refreshing && "animate-spin")} /> Re-Scan
+          </Button>
         </div>
-        <Button 
-          onClick={() => fetchData(true)} 
-          disabled={refreshing}
-          variant="outline"
-          className="shadow-sm"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          {refreshing ? 'Refreshing...' : 'Refresh'}
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-              <Activity className="h-3 w-3 mr-2 text-red-500" />
-              Total Errors
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{summary.totalErrors}</div>
-            <p className="text-[10px] text-muted-foreground mt-1 font-medium uppercase">Last 24 Hours</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-              <ShieldX className="h-3 w-3 mr-2 text-red-600" />
-              Critical Issues
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-red-600">{summary.criticalErrors}</div>
-            <p className="text-[10px] text-muted-foreground mt-1 font-medium uppercase">Immediate Action Req.</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-              <AlertTriangle className="h-3 w-3 mr-2 text-amber-500" />
-              Error Rate
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{summary.errorRate}%</div>
-            <p className="text-[10px] text-muted-foreground mt-1 font-medium uppercase">Threshold: 1.0%</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-              <CheckCircle2 className="h-3 w-3 mr-2 text-green-500" />
-              Resolution
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-600">{summary.resolutionRate}%</div>
-            <p className="text-[10px] text-muted-foreground mt-1 font-medium uppercase">Solved by dev team</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
-          <CardHeader className="bg-muted/20 border-b">
-            <CardTitle className="text-base font-bold">Exception Trends</CardTitle>
-            <CardDescription>Error volume over the last 3 hours</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={trends}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                  <Tooltip 
-                    cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                  />
-                  <Bar dataKey="count" name="Total Errors" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={16} />
-                  <Bar dataKey="highSeverity" name="High Severity" fill="#991b1b" radius={[4, 4, 0, 0]} barSize={16} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
-          <CardHeader className="bg-muted/20 border-b">
-            <CardTitle className="text-base font-bold">Error Distribution</CardTitle>
-            <CardDescription>Breakdown by failure category</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={distribution}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {distribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                  />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
-        <CardHeader className="bg-muted/20 border-b">
-          <CardTitle className="text-base font-bold">Recent Incident Log</CardTitle>
-          <CardDescription>Latest unique errors captured by the system</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="divide-y divide-border">
-            {recent.map((error) => (
-              <div key={error.id} className="p-5 hover:bg-muted/5 transition-colors group">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4">
-                    <div className={`p-2 rounded-lg mt-0.5 ${
-                      error.severity === 'critical' || error.severity === 'high' ? 'bg-red-100' : 'bg-amber-100'
-                    }`}>
-                      <AlertTriangle className={`h-4 w-4 ${
-                        error.severity === 'critical' || error.severity === 'high' ? 'text-red-700' : 'text-amber-700'
-                      }`} />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-3">
-                        <h4 className="text-sm font-bold text-foreground group-hover:text-blue-600 transition-colors">
-                          {error.errorType}
-                        </h4>
-                        <Badge variant={severityColors[error.severity]} className="text-[9px] px-1.5 h-4 uppercase tracking-tighter">
-                          {error.severity}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground font-medium">{error.message}</p>
-                      <code className="block text-[10px] bg-muted px-2 py-1 rounded mt-2 border text-muted-foreground overflow-x-auto whitespace-nowrap">
-                        {error.stackTrace}
-                      </code>
-                    </div>
+      }
+    >
+      <motion.div 
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="space-y-6"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {kpis.map((stat, i) => (
+            <motion.div key={i} variants={item}>
+              <Card className="group relative overflow-hidden border-none bg-card/30 backdrop-blur-md shadow-xl transition-all hover:bg-card/40">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{stat.label}</CardTitle>
+                  <div className={cn("rounded-lg p-2 transition-transform group-hover:scale-110", stat.bg)}>
+                    <stat.icon className={cn("h-4 w-4", stat.color)} />
                   </div>
-                  <div className="text-right flex flex-col items-end space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className="text-[10px] font-bold">
-                        {error.occurrences} EVENTS
-                      </Badge>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Eye className="h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-black tracking-tight tabular-nums">{stat.value}</div>
+                  <p className="text-[10px] font-bold text-muted-foreground/60 uppercase mt-1">{stat.trend}</p>
+                </CardContent>
+                <div className={cn("absolute bottom-0 left-0 h-1 w-full opacity-30", stat.bg.replace('/10', ''))} />
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <motion.div variants={item}>
+            <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-base font-black">Anomaly Trend</CardTitle>
+                  <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Exception frequency per T-Interval</CardDescription>
+                </div>
+                <IconActivity className="h-5 w-5 text-red-500 opacity-50" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={trends}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
+                      <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '12px', fontSize: '10px' }} />
+                      <Bar dataKey="count" name="Interval Errors" fill="var(--chart-2)" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div variants={item}>
+            <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-base font-black">Classification Spectrum</CardTitle>
+                  <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Error distribution by failure category</CardDescription>
+                </div>
+                <IconChartPie className="h-5 w-5 text-emerald-500 opacity-50" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px] flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={distribution}
+                        cx="55%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {distribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '12px', fontSize: '10px' }} />
+                      <Legend layout="vertical" align="left" verticalAlign="middle" iconType="circle" wrapperStyle={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        <motion.div variants={item}>
+          <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+            <CardHeader>
+              <CardTitle className="text-xl font-black">Active Incident Ledger</CardTitle>
+              <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Real-time trace of unique system exceptions</CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+              <div className="divide-y divide-border/20">
+                {recent.length > 0 ? recent.map((error) => {
+                  const style = severityStyles[error.severity] || severityStyles.medium;
+                  const IconComp = style.icon;
+                  return (
+                    <div key={error.id} className="group relative flex items-start gap-4 p-6 transition-all hover:bg-white/5">
+                      <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-inner transition-transform group-hover:scale-110", style.bg)}>
+                        <IconComp className={cn("h-6 w-6", style.color)} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                             <h4 className="text-base font-black tracking-tight font-mono">{error.errorType}</h4>
+                             <Badge variant="outline" className={cn("text-[9px] font-black uppercase px-2", style.badge)}>
+                               {error.severity}
+                             </Badge>
+                             <Badge variant="outline" className="text-[9px] font-black uppercase px-2 bg-white/5 border-white/10">{error.occurrences}x Count</Badge>
+                          </div>
+                          <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">{error.lastOccurred}</span>
+                        </div>
+                        <p className="text-sm font-semibold text-foreground/90 mt-1">{error.message}</p>
+                        <div className="mt-2 text-[10px] font-mono text-muted-foreground/80 bg-black/20 p-2 rounded-lg border border-border/20 line-clamp-1 group-hover:line-clamp-none transition-all">
+                          {error.stackTrace}
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 border-border/20 hover:bg-white/10 gap-2 px-4 shrink-0 font-black uppercase text-[10px] tracking-widest"
+                      >
+                        <IconEye className="h-4 w-4" />
+                        Trace
                       </Button>
                     </div>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase">{error.lastOccurred}</span>
+                  );
+                }) : (
+                  <div className="text-center py-10 bg-white/5 rounded-2xl border border-dashed border-white/10 mx-6">
+                     <IconBolt className="w-8 h-8 text-white/10 mx-auto mb-2" />
+                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">No active incidents captured</p>
                   </div>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
-          <div className="p-4 bg-muted/10 border-t flex justify-center">
-            <Button variant="link" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              View Extended Error Audit Log
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
+    </PageContainer>
   );
 }
-

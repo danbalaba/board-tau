@@ -13,6 +13,8 @@ import RenderResults from './render-result';
 import useThemeSwitching from './use-theme-switching';
 import { useFilteredNavItems } from "../../hooks/use-nav";
 
+import { Icons } from '../icons';
+
 export default function KBar({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const filteredItems = useFilteredNavItems(navItems);
@@ -24,40 +26,47 @@ export default function KBar({ children }: { children: React.ReactNode }) {
       router.push(url);
     };
 
-    return filteredItems.flatMap((navItem) => {
-      // Only include base action if the navItem has a real URL and is not just a container
-      const baseAction =
-        navItem.url !== '#'
-          ? {
-              id: `${navItem.title.toLowerCase()}Action`,
-              name: navItem.title,
-              shortcut: navItem.shortcut,
-              keywords: navItem.title.toLowerCase(),
-              section: 'Navigation',
-              subtitle: `Go to ${navItem.title}`,
-              perform: () => navigateTo(navItem.url)
-            }
-          : null;
+    return filteredItems.flatMap((navItem, index) => {
+      // Use index to ensure absolute uniqueness for IDs
+      const parentId = `nav-parent-${index}-${navItem.title.toLowerCase()}`;
+      const hasChildren = navItem.items && navItem.items.length > 0;
+      const Icon = navItem.icon ? (Icons[navItem.icon] as any) : Icons.logo;
 
-      // Map child items into actions
-      const childActions =
-        navItem.items?.map((childItem) => ({
-          id: `${childItem.title.toLowerCase()}Action`,
+      // The primary action for this navigation item
+      const topLevelAction = {
+        id: parentId,
+        name: navItem.title,
+        keywords: navItem.title.toLowerCase(),
+        section: 'Navigation',
+        subtitle: hasChildren ? `${navItem.items?.length} sub-sections` : `Go to ${navItem.title}`,
+        icon: Icon ? <Icon className='h-4 w-4' /> : null,
+        // If it has children, perform MUST be undefined for kbar to drill down correctly
+        perform: hasChildren ? undefined : () => navigateTo(navItem.url)
+      };
+
+      // If no children, just return the leaf node
+      if (!hasChildren) return [topLevelAction];
+
+      // Map child items and link them to the parent ID
+      const childActions = navItem.items!.map((childItem, childIndex) => {
+        const ChildIcon = childItem.icon ? (Icons[childItem.icon] as any) : Icons.logo;
+        return {
+          id: `${parentId}-child-${childIndex}-${childItem.title.toLowerCase()}`,
           name: childItem.title,
-          shortcut: childItem.shortcut,
           keywords: childItem.title.toLowerCase(),
-          section: navItem.title,
+          parent: parentId,
           subtitle: `Go to ${childItem.title}`,
+          icon: ChildIcon ? <ChildIcon className='h-4 w-4' /> : null,
           perform: () => navigateTo(childItem.url)
-        })) ?? [];
+        };
+      });
 
-      // Return only valid actions (ignoring null base actions for containers)
-      return baseAction ? [baseAction, ...childActions] : childActions;
+      return [topLevelAction, ...childActions];
     });
   }, [router, filteredItems]);
 
   return (
-    <KBarProvider actions={actions}>
+    <KBarProvider actions={actions} options={{ toggleShortcut: '' }}>
       <KBarComponent>{children}</KBarComponent>
     </KBarProvider>
   );
@@ -68,12 +77,12 @@ const KBarComponent = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <KBarPortal>
-        <KBarPositioner className='bg-black/40 fixed inset-0 z-[100000] p-0! backdrop-blur-sm'>
-          <KBarAnimator className='bg-card text-card-foreground relative mt-64! w-full max-w-[600px] -translate-y-12! overflow-hidden rounded-lg border shadow-xl'>
-            <div className='bg-card border-border sticky top-0 z-10 border-b'>
-              <KBarSearch className='bg-card w-full border-none px-6 py-4 text-lg outline-hidden focus:ring-0 focus:ring-offset-0 focus:outline-hidden' />
+        <KBarPositioner className='bg-black/60 fixed inset-0 z-[100000] p-4 backdrop-blur-[2px] animate-in fade-in duration-300'>
+          <KBarAnimator className='bg-card text-card-foreground relative flex w-full max-w-[600px] flex-col overflow-hidden rounded-xl border border-border shadow-2xl animate-in zoom-in-95 slide-in-from-top-4 duration-300'>
+            <div className='bg-card border-border sticky top-0 z-10 border-b shrink-0'>
+              <KBarSearch className='bg-card w-full border-none px-6 py-4 text-lg outline-hidden focus:ring-0 focus:ring-offset-0' />
             </div>
-            <div className='max-h-[400px]'>
+            <div className='max-h-[450px] overflow-auto'>
               <RenderResults />
             </div>
           </KBarAnimator>

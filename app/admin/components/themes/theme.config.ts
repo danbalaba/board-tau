@@ -2,13 +2,9 @@
  * Default theme that loads when no user preference is set
  * Change this value to set a different default theme
  */
-export const DEFAULT_THEME = 'boardtau';
+export const DEFAULT_THEME = 'vercel';
 
 export const THEMES = [
-  {
-    name: 'BoardTAU (Default)',
-    value: 'boardtau'
-  },
   {
     name: 'Claude',
     value: 'claude'
@@ -32,5 +28,21 @@ export const THEMES = [
   {
     name: 'Notebook',
     value: 'notebook'
+  },
+  {
+    name: 'Light Green',
+    value: 'light-green'
+  },
+  {
+    name: 'Zen',
+    value: 'zen'
+  },
+  {
+    name: 'Astro Vista',
+    value: 'astro-vista'
+  },
+  {
+    name: "What's Up",
+    value: 'whatsapp'
   }
 ];

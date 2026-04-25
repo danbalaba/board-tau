@@ -56,7 +56,11 @@ import {
   IconList,
   IconFlag,
   IconMail,
-  IconUserCheck
+  IconUserCheck,
+  IconBell,
+  IconClock,
+  IconAlertCircle,
+  IconExternalLink
 } from '@tabler/icons-react';
 
 export type Icon = React.ComponentType<IconProps>;
@@ -122,5 +126,9 @@ export const Icons: Record<string, Icon> = {
   list: IconList,
   flag: IconFlag,
   mail: IconMail,
-  userCheck: IconUserCheck
+  userCheck: IconUserCheck,
+  notification: IconBell,
+  clock: IconClock,
+  alertCircle: IconAlertCircle,
+  externalLink: IconExternalLink
 };

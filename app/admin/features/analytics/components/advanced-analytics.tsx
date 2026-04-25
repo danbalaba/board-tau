@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   Card,
   CardContent,
@@ -30,9 +31,32 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis
 } from 'recharts';
-import { Skeleton } from '@/app/admin/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Download, RefreshCw, TrendingUp, TrendingDown, Users, DollarSign, Calendar, MapPin } from 'lucide-react';
+import {
+  IconActivity,
+  IconRefresh,
+  IconCalendarStats,
+  IconDownload,
+  IconCreditCard,
+  IconUsers,
+  IconChartBar,
+  IconTrophy,
+  IconLayoutDashboard,
+  IconDatabase,
+  IconCloud,
+  IconSearch,
+  IconBolt,
+  IconLayersIntersect,
+  IconAlertTriangle,
+  IconEye,
+  IconMapPin,
+  IconStar,
+  IconTrendingUp,
+  IconTrendingDown
+} from '@tabler/icons-react';
+import { cn } from '@/app/admin/lib/utils';
+import PageContainer from '@/app/admin/components/layout/page-container';
+import { Badge } from '@/app/admin/components/ui/badge';
 
 interface AnalyticsData {
   summary: {
@@ -61,6 +85,7 @@ export function AdvancedAnalytics() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const fetchData = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -84,6 +109,7 @@ export function AdvancedAnalytics() {
   };
 
   useEffect(() => {
+    setMounted(true);
     fetchData();
   }, [timeRange]);
 
@@ -96,402 +122,399 @@ export function AdvancedAnalytics() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <Skeleton className="h-10 w-64 mb-2" />
-            <Skeleton className="h-4 w-96" />
-          </div>
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
-        </div>
-        <Skeleton className="h-[400px] w-full rounded-xl" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Skeleton className="h-[350px] w-full rounded-xl" />
-          <Skeleton className="h-[350px] w-full rounded-xl" />
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-muted-foreground animate-pulse font-black uppercase tracking-widest text-[10px]">Assembling Business Intelligence Pack...</p>
       </div>
     );
   }
 
   if (!data) return null;
 
+  const kpis = [
+    { 
+      label: 'Gross Platform Volume', 
+      value: `$${data.summary.revenue.toLocaleString()}`, 
+      trend: data.summary.trends.revenue, 
+      icon: IconCreditCard, 
+      color: 'text-blue-500', 
+      bg: 'bg-blue-500/10' 
+    },
+    { 
+      label: 'Confirmed Bookings', 
+      value: data.summary.bookings.toLocaleString(), 
+      trend: data.summary.trends.bookings, 
+      icon: IconChartBar, 
+      color: 'text-emerald-500', 
+      bg: 'bg-emerald-500/10' 
+    },
+    { 
+      label: 'Active Edge Users', 
+      value: data.summary.activeUsers.toLocaleString(), 
+      trend: data.summary.trends.users, 
+      icon: IconUsers, 
+      color: 'text-amber-500', 
+      bg: 'bg-amber-500/10' 
+    },
+    { 
+      label: 'Market Share Index', 
+      value: `$${data.summary.avgValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, 
+      trend: data.summary.trends.avgValue, 
+      icon: IconTrophy, 
+      color: 'text-purple-500', 
+      bg: 'bg-purple-500/10' 
+    }
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Advanced Analytics</h2>
-          <p className="text-muted-foreground">Comprehensive business intelligence across the platform</p>
-        </div>
-        <div className="flex items-center space-x-3 bg-muted/30 p-1.5 rounded-lg border">
-          <div className="flex items-center space-x-2 px-2">
+    <PageContainer
+      pageTitle="Business Intelligence"
+      pageDescription="Advanced platform telemetry and predictive analytics dashboard"
+      pageHeaderAction={
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-card/30 px-3 py-1.5 backdrop-blur-md shadow-inner">
+            <Label htmlFor="autoRefresh" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+              Live Feed
+            </Label>
             <Switch
               id="autoRefresh"
               checked={autoRefresh}
               onCheckedChange={setAutoRefresh}
-              className="scale-90"
+              className="data-[state=checked]:bg-emerald-500"
             />
-            <Label htmlFor="autoRefresh" className="text-xs font-bold uppercase tracking-widest cursor-pointer">
-              Live
-            </Label>
           </div>
-          <div className="w-px h-4 bg-border" />
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger id="timeRange" className="w-[140px] h-8 text-xs font-bold uppercase border-none shadow-none focus:ring-0">
-              <SelectValue placeholder="Range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="24h">24 Hours</SelectItem>
-              <SelectItem value="7d">7 Days</SelectItem>
-              <SelectItem value="30d">30 Days</SelectItem>
-              <SelectItem value="90d">90 Days</SelectItem>
-              <SelectItem value="1y">1 Year</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => fetchData(true)} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          <Button variant="outline" size="sm" className="h-9 gap-2 shadow-lg hover:bg-white/5 border-border/40">
+            <IconDownload className="h-4 w-4" /> Export Ledger
+          </Button>
+          <Button size="sm" className="h-9 gap-2 shadow-lg shadow-primary/20" onClick={() => fetchData(true)} disabled={refreshing}>
+            <IconRefresh className={cn("h-4 w-4", refreshing && "animate-spin")} /> Re-Sync
           </Button>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-              <DollarSign className="h-3 w-3 mr-2 text-emerald-500" />
-              Total Revenue
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${data.summary.revenue.toLocaleString()}</div>
-            <div className={`flex items-center mt-2 text-xs font-bold ${data.summary.trends.revenue.startsWith('+') ? 'text-emerald-600' : 'text-red-600'}`}>
-              {data.summary.trends.revenue.startsWith('+') ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-              {data.summary.trends.revenue}
-              <span className="ml-1.5 text-muted-foreground font-normal">vs prev.</span>
+      }
+    >
+      <div className="space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/10 pb-6">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500/80">Intelligence Nominal</p>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-              <Calendar className="h-3 w-3 mr-2 text-blue-500" />
-              Total Bookings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.summary.bookings.toLocaleString()}</div>
-            <div className={`flex items-center mt-2 text-xs font-bold ${data.summary.trends.bookings.startsWith('+') ? 'text-emerald-600' : 'text-red-600'}`}>
-              {data.summary.trends.bookings.startsWith('+') ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-              {data.summary.trends.bookings}
-              <span className="ml-1.5 text-muted-foreground font-normal">vs prev.</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-              <Users className="h-3 w-3 mr-2 text-amber-500" />
-              Active Users
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.summary.activeUsers.toLocaleString()}</div>
-            <div className={`flex items-center mt-2 text-xs font-bold ${data.summary.trends.users.startsWith('+') ? 'text-emerald-600' : 'text-red-600'}`}>
-              {data.summary.trends.users.startsWith('+') ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-              {data.summary.trends.users}
-              <span className="ml-1.5 text-muted-foreground font-normal">vs prev.</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-              <TrendingUp className="h-3 w-3 mr-2 text-purple-500" />
-              Avg Booking Val
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${data.summary.avgValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-            <div className={`flex items-center mt-2 text-xs font-bold ${data.summary.trends.avgValue.startsWith('+') ? 'text-emerald-600' : 'text-red-600'}`}>
-              {data.summary.trends.avgValue.startsWith('+') ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-              {data.summary.trends.avgValue}
-              <span className="ml-1.5 text-muted-foreground font-normal">vs prev.</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-none shadow-sm ring-1 ring-border">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7 border-b bg-muted/10">
-          <div>
-            <CardTitle className="text-base font-bold">Revenue & Volume Dynamics</CardTitle>
-            <CardDescription>Performance trends across the selected timeframe</CardDescription>
+            <p className="text-xs font-bold text-muted-foreground/60 uppercase tracking-tighter">
+              Last calculated: {mounted ? new Date().toLocaleTimeString() : '--:--:--'}
+            </p>
           </div>
-          <Button variant="outline" size="sm" className="h-8 text-xs font-bold uppercase tracking-widest">
-            <Download className="h-3.5 w-3.5 mr-2" />
-            Export Data
-          </Button>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={data.revenueTrends}
-                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 10, fontWeight: 600 }}
-                  tickMargin={12}
-                />
-                <YAxis 
-                  yAxisId="left" 
-                  orientation="left" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 10, fontWeight: 600 }}
-                  tickFormatter={(v) => `$${v}`}
-                />
-                <YAxis 
-                  yAxisId="right" 
-                  orientation="right" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 10, fontWeight: 600 }}
-                />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
-                />
-                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }} />
-                <Bar yAxisId="left" dataKey="revenue" fill="hsl(var(--primary))" name="Revenue ($)" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="right" dataKey="bookings" fill="#82ca9d" name="Bookings" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="flex items-center gap-2">
+            <IconCalendarStats className="h-4 w-4 text-muted-foreground/40" />
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger id="timeRange" className="w-[200px] h-9 bg-card/30 border-border/40 shadow-xl backdrop-blur-md font-bold text-xs uppercase tracking-tight">
+                <SelectValue placeholder="Time Horizon" />
+              </SelectTrigger>
+              <SelectContent className="bg-background/95 backdrop-blur-xl border-border/40">
+                <SelectItem value="24h" className="text-xs uppercase font-bold">Horizon: T-24 Hours</SelectItem>
+                <SelectItem value="7d" className="text-xs uppercase font-bold">Horizon: T-7 Days</SelectItem>
+                <SelectItem value="30d" className="text-xs uppercase font-bold">Horizon: T-30 Days</SelectItem>
+                <SelectItem value="90d" className="text-xs uppercase font-bold">Horizon: T-90 Days</SelectItem>
+                <SelectItem value="1y" className="text-xs uppercase font-bold">Horizon: T-1 Year</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="border-b bg-muted/10 pb-4">
-            <CardTitle className="text-sm font-bold">Inventory Segmentation</CardTitle>
-            <CardDescription>Property counts by asset class</CardDescription>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {kpis.map((stat, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+              <Card className="group relative overflow-hidden border-none bg-card/30 backdrop-blur-md shadow-xl transition-all hover:bg-card/40">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{stat.label}</CardTitle>
+                  <div className={cn("rounded-lg p-2 transition-transform group-hover:scale-110", stat.bg)}>
+                    <stat.icon className={cn("h-4 w-4", stat.color)} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-black tracking-tight tabular-nums">{stat.value}</div>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <Badge variant="outline" className={cn("text-[9px] font-black uppercase border-none px-1.5 h-4", stat.trend.startsWith('+') ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500')}>
+                      {stat.trend}
+                    </Badge>
+                    <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest">vs prev period</span>
+                  </div>
+                </CardContent>
+                <div className={cn("absolute bottom-0 left-0 h-1 w-full opacity-30", stat.bg.replace('/10', ''))} />
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Revenue vs Bookings */}
+        <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xl font-black tracking-tight">Revenue Dynamics</CardTitle>
+              <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Comparison of gross platform volume vs booking velocity</CardDescription>
+            </div>
+            <IconChartBar className="h-5 w-5 text-blue-500 opacity-50" />
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="h-[280px]">
+            <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={data.propertyTypeData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {data.propertyTypeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
-                  />
-                  <Legend iconType="circle" layout="vertical" align="right" verticalAlign="middle" wrapperStyle={{ fontSize: '11px', fontWeight: 600 }} />
-                </PieChart>
+                <BarChart
+                  data={data.revenueTrends}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 700 }} />
+                  <YAxis yAxisId="left" orientation="left" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 700 }} />
+                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 700 }} />
+                  <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '12px', fontSize: '10px' }} />
+                  <Bar yAxisId="left" dataKey="revenue" fill="var(--chart-1)" radius={[4, 4, 0, 0]} name="Revenue ($)" />
+                  <Bar yAxisId="right" dataKey="bookings" fill="var(--chart-2)" radius={[4, 4, 0, 0]} name="Bookings" />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="border-b bg-muted/10 pb-4">
-            <CardTitle className="text-sm font-bold">Regional Distribution</CardTitle>
-            <CardDescription>Top performing neighborhoods by asset density</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={data.locationData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {data.locationData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
-                  />
-                  <Legend iconType="circle" layout="vertical" align="right" verticalAlign="middle" wrapperStyle={{ fontSize: '11px', fontWeight: 600 }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-black tracking-tight">Portfolio Allocation</CardTitle>
+                <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Inventory distribution by unit typology</CardDescription>
+              </div>
+              <IconLayoutDashboard className="h-5 w-5 text-emerald-500 opacity-50" />
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={data.propertyTypeData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {data.propertyTypeData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '12px', fontSize: '10px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1 border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="border-b bg-muted/10 pb-4">
-            <CardTitle className="text-sm font-bold">Platform Scorecard</CardTitle>
-            <CardDescription>Operational health radar</CardDescription>
+          <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-black tracking-tight">Regional Density</CardTitle>
+                <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Geographical distribution of active listings</CardDescription>
+              </div>
+              <IconMapPin className="h-5 w-5 text-amber-500 opacity-50" />
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={data.locationData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {data.locationData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '12px', fontSize: '10px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-lg font-black tracking-tight">Platform Performance Metrics</CardTitle>
+              <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Comprehensive platform health and satisfaction analysis</CardDescription>
+            </div>
+            <IconActivity className="h-5 w-5 text-purple-500 opacity-50" />
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="h-[300px]">
+          <CardContent>
+            <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart data={data.performanceData}>
-                  <PolarGrid stroke="#e2e8f0" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fontWeight: 700 }} />
-                  <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
+                  <PolarGrid stroke="rgba(255,255,255,0.05)" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 700 }} />
+                  <PolarRadiusAxis angle={90} domain={[0, 100]} axisLine={false} tick={false} />
                   <Radar
-                    name="Performance"
+                    name="Performance Score"
                     dataKey="value"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    fill="hsl(var(--primary))"
-                    fillOpacity={0.5}
+                    stroke="var(--chart-1)"
+                    strokeWidth={3}
+                    fill="var(--chart-1)"
+                    fillOpacity={0.3}
                   />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
-                  />
+                  <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '12px', fontSize: '10px' }} />
                 </RadarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4">
-            <div>
-              <CardTitle className="text-sm font-bold">High Yield Properties</CardTitle>
-              <CardDescription>Top assets by booking conversion</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" className="h-8 text-[10px] font-bold uppercase tracking-widest">
-              Explore All
-            </Button>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="space-y-5">
-              {data.topProperties.map((property, index) => (
-                <div key={index} className="flex items-center justify-between group cursor-default">
-                  <div className="flex items-center space-x-4">
-                    <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center font-bold text-xs text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                      #{index + 1}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+            <CardHeader className="flex flex-row items-center justify-between pb-4">
+              <div>
+                <CardTitle className="text-lg font-black tracking-tight">Alpha Properties</CardTitle>
+                <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Highest occupancy assets by region</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest hover:bg-white/5 border-border/40">
+                Full Audit
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {data.topProperties.map((property, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 transition-all hover:bg-white/10">
+                    <div className="space-y-1">
+                      <p className="text-sm font-black tracking-tight uppercase">{property.name}</p>
+                      <div className="flex items-center gap-1.5 opacity-60">
+                        <IconMapPin className="h-3 w-3" />
+                        <p className="text-[10px] font-bold uppercase tracking-tight">{property.location}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold">{property.name}</p>
-                      <div className="flex items-center text-[10px] font-medium text-muted-foreground uppercase mt-0.5">
-                        <MapPin className="h-2.5 w-2.5 mr-1" />
-                        {property.location}
+                    <div className="text-right">
+                      <p className="text-sm font-black text-emerald-500 tabular-nums">{property.occupancy}%</p>
+                      <div className="flex items-center justify-end gap-1 text-[10px] font-black text-amber-500">
+                        <IconStar className="h-3 w-3 fill-amber-500" />
+                        {property.rating}
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center justify-end space-x-3">
-                       <div className="text-right">
-                        <p className="text-sm font-bold">{property.occupancy}%</p>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Occupancy</p>
-                       </div>
-                       <div className="h-8 w-px bg-border mx-1" />
-                       <div className="text-right">
-                        <p className="text-sm font-bold text-amber-500">★ {property.rating}</p>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Rating</p>
-                       </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+            <CardHeader className="flex flex-row items-center justify-between pb-4">
+              <div>
+                <CardTitle className="text-lg font-black tracking-tight">Regional Momentum</CardTitle>
+                <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Global locations with highest booking velocity</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest hover:bg-white/5 border-border/40">
+                View All
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {data.popularLocations.map((location, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 transition-all hover:bg-white/10">
+                    <div className="space-y-1">
+                      <p className="text-sm font-black tracking-tight uppercase">{location.name}</p>
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="outline" className="text-[9px] font-black uppercase border-none bg-emerald-500/10 text-emerald-500 h-4 px-1.5">
+                          ↑ {location.growth}% Growth
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="text-right font-black">
+                      <p className="text-sm tabular-nums">{location.bookings}</p>
+                      <p className="text-[9px] text-muted-foreground/40 uppercase tracking-widest">Total Bookings</p>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+          <CardHeader className="flex flex-row items-center justify-between pb-8">
+            <div>
+              <CardTitle className="text-xl font-black tracking-tight">Intelligence Scheduling</CardTitle>
+              <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Automated report generation and multi-channel dissemination</CardDescription>
+            </div>
+            <IconCloud className="h-6 w-6 text-emerald-500 opacity-50" />
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="reportType" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Intelligence Pack</Label>
+                <Select defaultValue="revenue">
+                  <SelectTrigger id="reportType" className="bg-white/5 border-white/10 h-10 font-bold text-xs uppercase">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background/95 backdrop-blur-xl border-border/40">
+                    <SelectItem value="revenue" className="text-xs uppercase font-bold">Protocol: Financial Summary</SelectItem>
+                    <SelectItem value="occupancy" className="text-xs uppercase font-bold">Protocol: Occupancy Audit</SelectItem>
+                    <SelectItem value="security" className="text-xs uppercase font-bold">Protocol: Security Recon</SelectItem>
+                    <SelectItem value="full" className="text-xs uppercase font-bold">Protocol: Platform BI</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="frequency" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Transmission Frequency</Label>
+                <Select defaultValue="weekly">
+                  <SelectTrigger id="frequency" className="bg-white/5 border-white/10 h-10 font-bold text-xs uppercase">
+                    <SelectValue placeholder="Select period" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background/95 backdrop-blur-xl border-border/40">
+                    <SelectItem value="daily" className="text-xs uppercase font-bold">Cycle: T-24H</SelectItem>
+                    <SelectItem value="weekly" className="text-xs uppercase font-bold">Cycle: T-7D</SelectItem>
+                    <SelectItem value="monthly" className="text-xs uppercase font-bold">Cycle: T-30D</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="format" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Output Compression</Label>
+                <Select defaultValue="pdf">
+                  <SelectTrigger id="format" className="bg-white/5 border-white/10 h-10 font-bold text-xs uppercase">
+                    <SelectValue placeholder="Select format" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background/95 backdrop-blur-xl border-border/40">
+                    <SelectItem value="pdf" className="text-xs uppercase font-bold">Format: Secure PDF</SelectItem>
+                    <SelectItem value="csv" className="text-xs uppercase font-bold">Format: RAW Dataset</SelectItem>
+                    <SelectItem value="xlsx" className="text-xs uppercase font-bold">Format: Excel Workbook</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="delivery" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Dissemination Edge</Label>
+                <Select defaultValue="email">
+                  <SelectTrigger id="delivery" className="bg-white/5 border-white/10 h-10 font-bold text-xs uppercase">
+                    <SelectValue placeholder="Select channel" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background/95 backdrop-blur-xl border-border/40">
+                    <SelectItem value="email" className="text-xs uppercase font-bold">Channel: Encrypted Mail</SelectItem>
+                    <SelectItem value="slack" className="text-xs uppercase font-bold">Channel: Secure Slack</SelectItem>
+                    <SelectItem value="webhook" className="text-xs uppercase font-bold">Channel: Custom Webhook</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 pt-8 mt-4 border-t border-white/5">
+              <Button className="h-10 px-6 gap-2 shadow-lg shadow-primary/20 font-black uppercase text-[10px] tracking-widest">
+                <IconCloud className="h-4 w-4" />
+                Initialize Schedule
+              </Button>
+              <Button variant="outline" className="h-10 px-6 gap-2 hover:bg-white/5 border-border/40 font-black uppercase text-[10px] tracking-widest">
+                <IconDatabase className="h-4 w-4" />
+                Global Templates
+              </Button>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
-        <CardHeader className="bg-primary text-primary-foreground pb-6">
-          <CardTitle className="text-lg font-bold">Automated Intelligence Reports</CardTitle>
-          <CardDescription className="text-primary-foreground/80">Configure smart delivery of business insights</CardDescription>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Report Engine</Label>
-              <Select defaultValue="revenue">
-                <SelectTrigger className="h-9 font-medium text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="revenue">Financial Summary</SelectItem>
-                  <SelectItem value="occupancy">Occupancy Trends</SelectItem>
-                  <SelectItem value="security">Security Audit</SelectItem>
-                  <SelectItem value="full">Comprehensive Platform BI</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Cadence</Label>
-              <Select defaultValue="weekly">
-                <SelectTrigger className="h-9 font-medium text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily 8:00 AM</SelectItem>
-                  <SelectItem value="weekly">Weekly (Monday)</SelectItem>
-                  <SelectItem value="monthly">Monthly (1st)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Output Format</Label>
-              <Select defaultValue="pdf">
-                <SelectTrigger className="h-9 font-medium text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pdf">Professional PDF</SelectItem>
-                  <SelectItem value="csv">Raw Dataset (CSV)</SelectItem>
-                  <SelectItem value="xlsx">Excel Workbook</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Channel</Label>
-              <Select defaultValue="email">
-                <SelectTrigger className="h-9 font-medium text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="email">Admin Email Feed</SelectItem>
-                  <SelectItem value="slack">Slack #bi-reports</SelectItem>
-                  <SelectItem value="webhook">Custom Webhook</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex items-center justify-end pt-8 gap-3">
-             <Button variant="outline" className="text-xs font-bold uppercase tracking-widest px-6">
-              Preview
-            </Button>
-            <Button className="text-xs font-bold uppercase tracking-widest px-8 shadow-lg shadow-primary/20">
-              Enable Intelligence Feed
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    </PageContainer>
   );
 }

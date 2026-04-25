@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   Card,
   CardContent,
@@ -9,21 +10,55 @@ import {
   CardTitle
 } from '@/app/admin/components/ui/card';
 import {
+  AreaChart,
+  Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  AreaChart,
-  Area
+  ResponsiveContainer
 } from 'recharts';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig
+} from '@/app/admin/components/ui/chart';
+import {
+  IconCpu,
+  IconActivity,
+  IconArrowUpRight,
+  IconArrowDownRight,
+  IconCloud,
+  IconNetwork,
+  IconRefresh,
+  IconLayoutDashboard,
+  IconServer,
+  IconDatabase,
+  IconCircleCheck
+} from '@tabler/icons-react';
 import { Button } from '@/app/admin/components/ui/button';
-import { RefreshCw, Activity, Cpu, HardDrive, Network } from 'lucide-react';
-import { Skeleton } from '@/app/admin/components/ui/skeleton';
+import PageContainer from '@/app/admin/components/layout/page-container';
+import { cn } from '@/app/admin/lib/utils';
 import { toast } from 'sonner';
+
+const chartConfig = {
+  value: {
+    label: 'Utilization',
+    color: 'var(--chart-1)'
+  },
+  inbound: {
+    label: 'Inbound',
+    color: 'var(--chart-1)'
+  },
+  outbound: {
+    label: 'Outbound',
+    color: 'var(--chart-2)'
+  }
+} satisfies ChartConfig;
 
 interface MetricsData {
   current: {
@@ -48,10 +83,26 @@ interface MetricsData {
   };
 }
 
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+};
+
 export function ServerMetrics() {
   const [data, setData] = useState<MetricsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const fetchMetrics = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -75,30 +126,17 @@ export function ServerMetrics() {
   };
 
   useEffect(() => {
+    setMounted(true);
     fetchMetrics();
-    // Refresh every minute to keep the charts moving
     const interval = setInterval(() => fetchMetrics(true), 60000);
     return () => clearInterval(interval);
   }, []);
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-          <Skeleton className="h-10 w-24" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Skeleton className="h-[400px] w-full rounded-xl" />
-          <Skeleton className="h-[400px] w-full rounded-xl" />
-        </div>
-        <Skeleton className="h-[300px] w-full rounded-xl" />
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-muted-foreground animate-pulse font-black uppercase tracking-widest text-[10px]">Syncing Node Telemetry...</p>
       </div>
     );
   }
@@ -107,215 +145,175 @@ export function ServerMetrics() {
 
   const { current, history } = data;
 
+  const kpis = [
+    { label: 'CPU Cluster Usage', value: `${current.cpuUsage}%`, peak: `${Math.max(...history.cpu.map(h => h.value))}%`, avg: `${Math.round(history.cpu.reduce((a, b) => a + b.value, 0) / history.cpu.length)}%`, icon: IconCpu, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Memory Allocation', value: `${current.memoryUsage}%`, peak: `${Math.max(...history.memory.map(h => h.value))}%`, avg: `${Math.round(history.memory.reduce((a, b) => a + b.value, 0) / history.memory.length)}%`, icon: IconServer, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { label: 'Network Inbound', value: `${current.networkIn} MB/s`, peak: `${Math.max(...history.network.map(h => h.inbound))} MB/s`, avg: `${Math.round(history.network.reduce((a, b) => a + b.inbound, 0) / history.network.length)} MB/s`, icon: IconNetwork, color: 'text-amber-500', bg: 'bg-amber-500/10' }
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Server Metrics</h2>
-          <p className="text-muted-foreground">Live resource utilization and performance trends</p>
+    <PageContainer
+      pageTitle="Telemetric Performance"
+      pageDescription="Hyper-V infrastructure load and compute allocation analytics"
+      pageHeaderAction={
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="h-9 gap-2 font-black uppercase text-[10px] tracking-widest">
+            <IconLayoutDashboard className="h-4 w-4" /> Cluster View
+          </Button>
+          <Button size="sm" className="h-9 gap-2 shadow-lg shadow-primary/20 font-black uppercase text-[10px] tracking-widest" onClick={() => fetchMetrics(true)} disabled={refreshing}>
+            <IconRefresh className={cn("h-4 w-4", refreshing && "animate-spin")} /> Sync Node
+          </Button>
         </div>
-        <Button 
-          onClick={() => fetchMetrics(true)} 
-          disabled={refreshing}
-          variant="outline"
-          className="shadow-sm"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          {refreshing ? 'Refreshing...' : 'Refresh'}
-        </Button>
-      </div>
+      }
+    >
+      <motion.div 
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="space-y-6"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {kpis.map((stat, i) => (
+            <motion.div key={i} variants={item}>
+              <Card className="group relative overflow-hidden border-none bg-card/30 backdrop-blur-md shadow-xl transition-all hover:bg-card/40">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{stat.label}</CardTitle>
+                  <div className={cn("rounded-lg p-2 transition-transform group-hover:scale-110", stat.bg)}>
+                    <stat.icon className={cn("h-4 w-4", stat.color)} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-black tracking-tight tabular-nums">{stat.value}</div>
+                  <div className="mt-1 flex items-center justify-between text-[10px] font-medium text-muted-foreground/60 uppercase tracking-tight">
+                    <span>Peak: {stat.peak}</span>
+                    <span className="h-1 w-1 rounded-full bg-border" />
+                    <span>Avg: {stat.avg}</span>
+                  </div>
+                </CardContent>
+                <div className={cn("absolute bottom-0 left-0 h-1 w-full opacity-30", stat.bg.replace('/10', ''))} />
+              </Card>
+            </motion.div>
+          ))}
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CPU Usage</CardTitle>
-            <div className="p-1.5 bg-blue-50 rounded-lg">
-              <Cpu className="h-4 w-4 text-blue-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{current.cpuUsage}%</div>
-            <div className="flex items-center space-x-2 mt-2">
-              <div className="w-full bg-muted rounded-full h-2">
-                <div 
-                  className={`h-2 rounded-full transition-all duration-1000 ease-out ${current.cpuUsage > 80 ? 'bg-red-500' : 'bg-blue-500'}`} 
-                  style={{ width: `${current.cpuUsage}%` }}
-                ></div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <motion.div variants={item}>
+            <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base font-black">CPU Telemetry</CardTitle>
+                    <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Active Core Utilization Trends</CardDescription>
+                  </div>
+                  <IconCpu className="h-5 w-5 text-blue-500 opacity-50" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[240px] w-full">
+                  <AreaChart data={history.cpu}>
+                    <defs>
+                      <linearGradient id="colorCpu" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} domain={[0, 100]} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Area type="monotone" dataKey="value" name="CPU %" stroke="var(--chart-1)" fillOpacity={1} fill="url(#colorCpu)" strokeWidth={3} />
+                  </AreaChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div variants={item}>
+            <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base font-black">Memory Allocation</CardTitle>
+                    <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">RAM Consumption Metrics</CardDescription>
+                  </div>
+                  <IconServer className="h-5 w-5 text-emerald-500 opacity-50" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[240px] w-full">
+                  <AreaChart data={history.memory}>
+                    <defs>
+                      <linearGradient id="colorMemory" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--chart-2)" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="var(--chart-2)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} domain={[0, 100]} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Area type="monotone" dataKey="value" name="Memory %" stroke="var(--chart-2)" fillOpacity={1} fill="url(#colorMemory)" strokeWidth={3} />
+                  </AreaChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        <motion.div variants={item}>
+          <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-base font-black">Network Throughput</CardTitle>
+                  <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Inbound vs Outbound Data Transmission</CardDescription>
+                </div>
+                <IconNetwork className="h-5 w-5 text-purple-500 opacity-50" />
               </div>
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-3 font-medium uppercase">Load Avg (1m): {current.loadAvg['1m']}</p>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[280px] w-full">
+                <LineChart data={history.network}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Line type="monotone" dataKey="inbound" name="Inbound (MB/s)" stroke="var(--chart-1)" strokeWidth={4} dot={false} strokeLinecap="round" />
+                  <Line type="monotone" dataKey="outbound" name="Outbound (MB/s)" stroke="var(--chart-2)" strokeWidth={4} dot={false} strokeLinecap="round" />
+                </LineChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Memory Usage</CardTitle>
-            <div className="p-1.5 bg-green-50 rounded-lg">
-              <Activity className="h-4 w-4 text-green-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{current.memoryUsage}%</div>
-            <div className="flex items-center space-x-2 mt-2">
-              <div className="w-full bg-muted rounded-full h-2">
-                <div 
-                  className={`h-2 rounded-full transition-all duration-1000 ease-out ${current.memoryUsage > 85 ? 'bg-red-500' : 'bg-green-500'}`} 
-                  style={{ width: `${current.memoryUsage}%` }}
-                ></div>
-              </div>
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-3 font-medium uppercase">Active Processes: {current.processes.active}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm ring-1 ring-border">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Network Traffic</CardTitle>
-            <div className="p-1.5 bg-purple-50 rounded-lg">
-              <Network className="h-4 w-4 text-purple-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{current.networkIn} MB/s</div>
-            <div className="flex items-center justify-between mt-2">
-              <span className="text-[10px] font-bold text-blue-600">IN: {current.networkIn} MB/s</span>
-              <span className="text-[10px] font-bold text-green-600">OUT: {current.networkOut} MB/s</span>
-            </div>
-            <div className="flex items-center space-x-1 mt-2">
-               <div className="h-1 bg-blue-400 rounded-full" style={{ width: '65%' }}></div>
-               <div className="h-1 bg-green-400 rounded-full" style={{ width: '35%' }}></div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
-          <CardHeader className="bg-muted/20 border-b">
-            <CardTitle className="text-base">CPU Utilization</CardTitle>
-            <CardDescription>Percentage over the last 3 hours</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={history.cpu}>
-                  <defs>
-                    <linearGradient id="colorCpuMetrics" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} domain={[0, 100]} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                  />
-                  <Area type="monotone" dataKey="value" name="CPU %" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorCpuMetrics)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
-          <CardHeader className="bg-muted/20 border-b">
-            <CardTitle className="text-base">Memory Trend</CardTitle>
-            <CardDescription>Memory load over the last 3 hours</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={history.memory}>
-                  <defs>
-                    <linearGradient id="colorMemMetrics" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} domain={[0, 100]} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                  />
-                  <Area type="monotone" dataKey="value" name="Memory %" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorMemMetrics)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-none shadow-sm ring-1 ring-border overflow-hidden">
-        <CardHeader className="bg-muted/20 border-b">
-          <CardTitle className="text-base">Network Bandwidth</CardTitle>
-          <CardDescription>Inbound and Outbound traffic rates</CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={history.network}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                />
-                <Legend iconType="circle" />
-                <Line type="monotone" dataKey="inbound" name="Inbound (MB/s)" stroke="#3b82f6" strokeWidth={3} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
-                <Line type="monotone" dataKey="outbound" name="Outbound (MB/s)" stroke="#10b981" strokeWidth={3} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-muted/20 border-none shadow-none ring-1 ring-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-              <HardDrive className="h-3 w-3 mr-2" />
-              Storage I/O
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold">Optimal</div>
-            <p className="text-[10px] text-muted-foreground mt-1 uppercase">Disk Status: Healthy</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-muted/20 border-none shadow-none ring-1 ring-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-              <Activity className="h-3 w-3 mr-2" />
-              System Load
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold">{current.loadAvg['1m']}</div>
-            <div className="flex justify-between mt-1">
-              <span className="text-[9px] font-medium text-muted-foreground">1m: {current.loadAvg['1m']}</span>
-              <span className="text-[9px] font-medium text-muted-foreground">5m: {current.loadAvg['5m']}</span>
-              <span className="text-[9px] font-medium text-muted-foreground">15m: {current.loadAvg['15m']}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-muted/20 border-none shadow-none ring-1 ring-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-              <Cpu className="h-3 w-3 mr-2" />
-              Runtime Env
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold">{current.processes.total} Tasks</div>
-            <p className="text-[10px] text-muted-foreground mt-1 uppercase">Active: {current.processes.active}</p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { label: 'Engine Load', value: `${current.loadAvg['1m']}`, peak: `${current.loadAvg['15m']}`, icon: IconActivity, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+            { label: 'Active Tasks', value: current.processes.active.toString(), peak: current.processes.total.toString(), icon: IconActivity, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+            { label: 'Pool Health', value: '99.9%', peak: '100%', icon: IconCloud, color: 'text-purple-500', bg: 'bg-purple-500/10' }
+          ].map((stat, i) => (
+            <motion.div key={i} variants={item}>
+              <Card className="group relative overflow-hidden border-none bg-card/30 backdrop-blur-md shadow-xl transition-all hover:bg-card/40">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{stat.label}</CardTitle>
+                  <div className={cn("rounded-lg p-2 transition-transform group-hover:scale-110", stat.bg)}>
+                    <stat.icon className={cn("h-4 w-4", stat.color)} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-black tracking-tight tabular-nums">{stat.value}</div>
+                  <div className="mt-1 flex items-center space-x-1">
+                    <span className={cn("text-[9px] font-black uppercase tracking-wider", stat.color)}>Peak: {stat.peak}</span>
+                    <span className="text-[9px] text-muted-foreground/60 tracking-tighter uppercase font-bold">Health Level</span>
+                  </div>
+                </CardContent>
+                <div className={cn("absolute bottom-0 left-0 h-1 w-full opacity-30", stat.bg.replace('/10', ''))} />
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </PageContainer>
   );
 }
-

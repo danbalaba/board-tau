@@ -1,9 +1,9 @@
 import { Metadata } from 'next';
-import { EmailTemplates } from '@/app/admin/features/settings/components/email-templates';
+import { EmailTemplates } from '@/app/admin/features/settings/components/platform-email';
 
 export const metadata: Metadata = {
   title: 'Email Templates - BoardTAU Admin',
-  description: 'Manage email templates for notifications and communications',
+  description: 'Manage email notifications and communication templates',
 };
 
 export default function EmailTemplatesPage() {

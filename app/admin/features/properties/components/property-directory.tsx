@@ -8,271 +8,277 @@ import {
   CardHeader,
   CardTitle
 } from '@/app/admin/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/app/admin/components/ui/table';
-import { Badge } from '@/app/admin/components/ui/badge';
 import { Button } from '@/app/admin/components/ui/button';
+import { Input } from '@/app/admin/components/ui/input';
+import { Badge } from '@/app/admin/components/ui/badge';
 import {
-  Eye,
-  Edit,
-  Trash2,
-  Building2,
-  MapPin,
-  TrendingUp,
-  Search,
-  RefreshCw,
-  MoreHorizontal,
-  Home,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-} from 'lucide-react';
-import { useProperties, useDeleteProperty, type Property } from '@/app/admin/hooks/use-properties';
+  IconSearch,
+  IconFilter,
+  IconPlus,
+  IconBuildingCommunity,
+  IconMapPin,
+  IconStar,
+  IconUsers,
+  IconDotsVertical,
+  IconLayoutGrid,
+  IconList,
+  IconHomeHeart,
+  IconCircleCheckFilled,
+  IconChartBar,
+  IconArrowUpRight
+} from '@tabler/icons-react';
+import PageContainer from '@/app/admin/components/layout/page-container';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from "@/lib/utils";
-import { toast } from 'sonner';
-import { Input } from "@/app/admin/components/ui/input";
 
-const statusColors = {
-  active: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  pending: 'bg-amber-100 text-amber-700 border-amber-200',
-  inactive: 'bg-slate-100 text-slate-700 border-slate-200',
-  rejected: 'bg-rose-100 text-rose-700 border-rose-200',
+interface Property {
+  id: string;
+  name: string;
+  location: string;
+  type: string;
+  status: 'available' | 'occupied' | 'maintenance';
+  price: number;
+  rating: number;
+  occupancy: number;
+  image: string;
+}
+
+const properties: Property[] = [
+  {
+    id: '1',
+    name: 'Luxury Sky Studio',
+    location: 'Central Business District, Singapore',
+    type: 'Studio',
+    status: 'available',
+    price: 3200,
+    rating: 4.9,
+    occupancy: 95,
+    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=400&h=250'
+  },
+  {
+    id: '2',
+    name: 'Garden View Suite',
+    location: 'Tiong Bahru, Singapore',
+    type: '1 Bedroom',
+    status: 'occupied',
+    price: 4500,
+    rating: 4.7,
+    occupancy: 100,
+    image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=400&h=250'
+  },
+  {
+    id: '3',
+    name: 'Modern Loft',
+    location: 'Holland Village, Singapore',
+    type: '2 Bedrooms',
+    status: 'maintenance',
+    price: 5800,
+    rating: 4.5,
+    occupancy: 0,
+    image: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&q=80&w=400&h=250'
+  },
+  {
+    id: '4',
+    name: 'Urban Penthouse',
+    location: 'Marina Bay, Singapore',
+    type: '3+ Bedrooms',
+    status: 'available',
+    price: 12000,
+    rating: 5.0,
+    occupancy: 88,
+    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=400&h=250'
+  }
+];
+
+const statusStyles = {
+  available: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+  occupied: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  maintenance: 'bg-amber-500/10 text-amber-600 border-amber-500/20'
 };
 
 export function PropertyDirectory() {
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<string>('');
+  const [view, setView] = useState<'grid' | 'list'>('grid');
 
-  const { data, isLoading, isError, error, refetch } = useProperties({
-    page,
-    search: search || undefined,
-    status: status || undefined,
-  });
+  const kpis = [
+    { label: 'Total Units', value: '1,428', trend: '+12%', icon: IconBuildingCommunity, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Global Occupancy', value: '94.2%', trend: '+2.1%', icon: IconUsers, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Avg Rating', value: '4.85', trend: 'Top 1%', icon: IconStar, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: 'RevPAR (Daily)', value: '$240', trend: '+15.2%', icon: IconHomeHeart, color: 'text-emerald-500', bg: 'bg-emerald-500/10' }
+  ];
 
-  const { mutate: deleteProperty } = useDeleteProperty();
-
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this property? This action is irreversible.')) {
-      deleteProperty(id, {
-        onSuccess: () => toast.success('Property deleted successfully'),
-        onError: (err: any) => toast.error(`Failed to delete: ${err.message}`),
-      });
-    }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1 }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[400px] gap-4">
-        <Building2 className="w-10 h-10 text-primary animate-pulse" />
-        <p className="text-sm text-muted-foreground animate-pulse">Syncing property records...</p>
-      </div>
-    );
-  }
-
-  const properties = data?.data || [];
-  const total = data?.meta?.total || 0;
-  const activeCount = properties.filter(p => p.status === 'active').length;
-  const pendingCount = properties.filter(p => p.status === 'pending').length;
-  const avgPrice = total > 0 ? (properties.reduce((sum, p) => sum + p.price, 0) / properties.length) : 0;
   return (
-    <motion.div
-      className="space-y-6"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Building2 className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Property Asset Registry</h2>
-            <p className="text-muted-foreground">Comprehensive inventory of all platform listings</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Reload
-          </Button>
-          <Button size="sm">
-            Configure Assets
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { title: "Total Units", value: total, desc: "Global inventory", icon: Home },
-          { title: "Live Assets", value: activeCount, desc: "Currently active", icon: CheckCircle2 },
-          { title: "Approval Desk", value: pendingCount, desc: "Pending review", icon: Clock },
-          { title: "Avg Real Estate", value: `$${avgPrice.toFixed(0)}`, desc: "Market average", icon: TrendingUp },
-        ].map((stat, i) => (
-          <motion.div key={i} variants={itemVariants}>
-            <Card className="hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{stat.title}</CardTitle>
-                <stat.icon className="w-4 h-4 text-primary opacity-70" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-[10px] text-muted-foreground mt-1 font-medium">{stat.desc}</p>
-              </CardContent>
-            </Card>
+    <PageContainer>
+      <div className="space-y-8 pb-10">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <h2 className="text-3xl font-bold tracking-tight">Asset Command Center</h2>
+            <p className="text-muted-foreground text-sm mt-1">Orchestrate global property inventory, performance tracking and listing control.</p>
           </motion.div>
-        ))}
-      </div>
-
-      <motion.div variants={itemVariants}>
-        <Card className="overflow-hidden">
-          <CardHeader className="border-b bg-muted/20 pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Asset Inventory</CardTitle>
-                <CardDescription>Managed listings and property details</CardDescription>
-              </div>
-              <div className="flex gap-2 items-center">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search registry..."
-                    className="pl-9 w-[250px] h-9"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                </div>
-                <div className="flex gap-1 bg-muted p-1 rounded-md">
-                  {[
-                    { label: 'All', value: '' },
-                    { label: 'Active', value: 'active' },
-                    { label: 'Pending', value: 'pending' },
-                  ].map((tab) => (
-                    <button
-                      key={tab.label}
-                      onClick={() => setStatus(tab.value)}
-                      className={cn(
-                        "px-3 py-1 text-xs font-medium rounded-sm transition-all",
-                        status === tab.value ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          
+          <motion.div 
+            className="flex items-center gap-3"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <div className="flex rounded-lg border bg-card/50 backdrop-blur-md p-1 shadow-sm">
+              <Button 
+                variant={view === 'grid' ? 'secondary' : 'ghost'} 
+                size="icon" 
+                className="h-8 w-8" 
+                onClick={() => setView('grid')}
+              >
+                <IconLayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant={view === 'list' ? 'secondary' : 'ghost'} 
+                size="icon" 
+                className="h-8 w-8" 
+                onClick={() => setView('list')}
+              >
+                <IconList className="h-4 w-4" />
+              </Button>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/30">
-                  <TableHead className="w-[300px]">Property Details</TableHead>
-                  <TableHead>Host Management</TableHead>
-                  <TableHead>Asset Type</TableHead>
-                  <TableHead>Valuation</TableHead>
-                  <TableHead>Operational Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <AnimatePresence mode="popLayout">
-                  {properties.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic">
-                        No property assets matched your current filters.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    properties.map((property) => (
-                      <motion.tr
-                        layout
-                        key={property.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="group hover:bg-muted/30 transition-colors"
-                      >
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-semibold text-foreground">{property.title}</span>
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                              <MapPin className="w-3 h-3" />
-                              {property.region || 'Undefined Region'}
-                            </div>
+            <Button className="h-10 gap-2 font-bold uppercase tracking-tighter shadow-lg shadow-primary/20">
+              <IconPlus className="h-4 w-4" /> Register Property
+            </Button>
+          </motion.div>
+        </div>
+
+        {/* Global summary banner */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {kpis.map((stat, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+            >
+              <Card className="group relative overflow-hidden border-none bg-card/50 backdrop-blur-sm shadow-md hover:shadow-xl transition-all">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 text-muted-foreground">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-widest">{stat.label}</CardTitle>
+                  <div className={cn("p-2 rounded-lg", stat.bg)}>
+                    <stat.icon className={cn("h-4 w-4", stat.color)} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-black tabular-nums tracking-tighter">{stat.value}</div>
+                  <div className="flex items-center mt-1 space-x-1">
+                    <IconArrowUpRight className="w-3 h-3 text-emerald-500" />
+                    <span className="text-[10px] font-bold text-emerald-500">{stat.trend}</span>
+                    <span className="text-[10px] text-muted-foreground ml-1">growth index</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Search & Filtering */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="flex flex-col gap-4 sm:flex-row sm:items-center"
+        >
+          <div className="relative flex-1">
+            <IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input 
+              placeholder="Search by name, location or asset ID..." 
+              className="h-12 pl-10 bg-card/30 backdrop-blur-md border-border/40 shadow-sm transition-all focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+          <Button variant="outline" className="h-12 gap-2 shadow-sm font-semibold border-border/40 bg-card/30 backdrop-blur-md">
+            <IconFilter className="h-4 w-4" /> Advanced Filters
+          </Button>
+        </motion.div>
+
+        {/* Property Grid/List */}
+        <div className={view === 'grid' ? "grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4" : "flex flex-col gap-4"}>
+          <AnimatePresence mode="popLayout">
+            {properties.map((property, idx) => (
+              <motion.div
+                key={property.id}
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ delay: idx * 0.05 }}
+              >
+                <Card className={cn(
+                  "group relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm shadow-md hover:shadow-2xl hover:border-primary/20 transition-all duration-300",
+                  view === 'list' && 'flex flex-row items-center p-2'
+                )}>
+                  <div className={cn(
+                    "relative overflow-hidden",
+                    view === 'grid' ? 'aspect-[4/3]' : 'h-32 w-48 rounded-xl shrink-0'
+                  )}>
+                    <img 
+                      src={property.image} 
+                      alt={property.name} 
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                      <Button size="sm" variant="secondary" className="w-full gap-2 font-black uppercase text-[9px] h-8 bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/20">
+                        <IconChartBar className="h-3 w-3" /> Management Portal
+                      </Button>
+                    </div>
+                    <Badge className={cn(
+                      "absolute left-3 top-3 border-none shadow-lg uppercase font-black text-[8px] px-2 h-5",
+                      statusStyles[property.status]
+                    )}>
+                      {property.status}
+                    </Badge>
+                  </div>
+                  
+                  <div className={cn("flex-1", view === 'grid' ? 'p-5' : 'px-6')}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <h3 className="font-black text-sm tracking-tight leading-tight truncate">{property.name}</h3>
+                          {property.rating >= 4.9 && <IconCircleCheckFilled className="h-3.5 w-3.5 text-blue-500 shrink-0" />}
+                        </div>
+                        <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground uppercase font-black tracking-tighter truncate">
+                          <IconMapPin className="h-2.5 w-2.5" /> {property.location}
+                        </p>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <IconDotsVertical className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="mt-4 grid grid-cols-2 gap-4 border-t border-border/20 pt-4">
+                      <div>
+                        <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest opacity-60">Base Rate</p>
+                        <div className="flex items-baseline gap-0.5">
+                          <span className="text-sm font-black">$</span>
+                          <span className="text-lg font-black tabular-nums">{property.price.toLocaleString()}</span>
+                          <span className="text-[10px] font-bold text-muted-foreground">/mo</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest opacity-60">Occupancy</p>
+                        <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                          <div className="h-1.5 w-12 bg-muted rounded-full overflow-hidden hidden sm:block">
+                            <div 
+                              className={cn("h-full rounded-full transition-all duration-1000", property.occupancy > 90 ? 'bg-emerald-500' : 'bg-primary')} 
+                              style={{ width: `${property.occupancy}%` }} 
+                            />
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-sm bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
-                              {property.owner?.name?.substring(0, 2).toUpperCase()}
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-xs font-medium">{property.owner?.name}</span>
-                              <span className="text-[10px] text-muted-foreground">{property.owner?.email}</span>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="font-normal text-[10px] px-1.5 py-0">
-                            {property.roomsCount} Rooms
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="font-mono text-sm font-semibold text-emerald-600">
-                            ${property.price}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={cn("text-[10px] font-semibold border-solid shadow-none px-2", statusColors[property.status as keyof typeof statusColors])}>
-                            {property.status.toUpperCase()}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-amber-100 hover:text-amber-600">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 hover:bg-rose-100 hover:text-rose-600"
-                              onClick={() => handleDelete(property.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </motion.tr>
-                    ))
-                  )}
-                </AnimatePresence>
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </motion.div>
-    </motion.div>
+                          <p className="text-lg font-black tabular-nums leading-none">{property.occupancy}%</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
+    </PageContainer>
   );
 }
