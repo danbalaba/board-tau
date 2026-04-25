@@ -22,8 +22,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
@@ -33,6 +31,7 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis
 } from 'recharts';
+import { toast } from 'sonner';
 import {
   IconActivity,
   IconRefresh,
@@ -51,55 +50,121 @@ import {
   IconAlertTriangle,
   IconEye,
   IconMapPin,
-  IconStar
+  IconStar,
+  IconTrendingUp,
+  IconTrendingDown
 } from '@tabler/icons-react';
 import { cn } from '@/app/admin/lib/utils';
 import PageContainer from '@/app/admin/components/layout/page-container';
 import { Badge } from '@/app/admin/components/ui/badge';
 
-// Sample data
-const revenueData = [
-  { name: 'Jan', revenue: 4000, bookings: 2400, users: 1000 },
-  { name: 'Feb', revenue: 3000, bookings: 1398, users: 1100 },
-  { name: 'Mar', revenue: 2000, bookings: 9800, users: 1200 },
-  { name: 'Apr', revenue: 2780, bookings: 3908, users: 1300 },
-  { name: 'May', revenue: 1890, bookings: 4800, users: 1400 },
-  { name: 'Jun', revenue: 2390, bookings: 3800, users: 1500 },
-  { name: 'Jul', revenue: 3490, bookings: 4300, users: 1600 }
-];
-
-const propertyTypeData = [
-  { name: 'Studio', value: 400, color: 'var(--chart-1)' },
-  { name: '1 Bedroom', value: 300, color: 'var(--chart-2)' },
-  { name: '2 Bedrooms', value: 300, color: 'var(--chart-3)' },
-  { name: '3+ Bedrooms', value: 200, color: 'var(--chart-4)' }
-];
-
-const locationData = [
-  { name: 'Central Region', value: 650, color: 'var(--chart-1)' },
-  { name: 'North Region', value: 450, color: 'var(--chart-2)' },
-  { name: 'East Region', value: 550, color: 'var(--chart-3)' },
-  { name: 'West Region', value: 350, color: 'var(--chart-4)' },
-  { name: 'North-East Region', value: 400, color: 'var(--chart-5)' }
-];
-
-const performanceData = [
-  { subject: 'Occupancy', value: 95, fullMark: 100 },
-  { subject: 'Booking Rate', value: 85, fullMark: 100 },
-  { subject: 'Revenue', value: 90, fullMark: 100 },
-  { subject: 'Customer Satisfaction', value: 88, fullMark: 100 },
-  { subject: 'Response Time', value: 82, fullMark: 100 },
-  { subject: 'Cancellation Rate', value: 75, fullMark: 100 }
-];
+interface AnalyticsData {
+  summary: {
+    revenue: number;
+    bookings: number;
+    activeUsers: number;
+    avgValue: number;
+    trends: {
+      revenue: string;
+      bookings: string;
+      users: string;
+      avgValue: string;
+    }
+  };
+  revenueTrends: { name: string; revenue: number; bookings: number }[];
+  propertyTypeData: { name: string; value: number; color: string }[];
+  locationData: { name: string; value: number; color: string }[];
+  performanceData: { subject: string; value: number; fullMark: number }[];
+  topProperties: { name: string; location: string; occupancy: number; rating: string }[];
+  popularLocations: { name: string; bookings: number; growth: number }[];
+}
 
 export function AdvancedAnalytics() {
   const [timeRange, setTimeRange] = useState('7d');
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  const fetchData = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+
+    try {
+      const response = await fetch(`/api/admin/analytics/advanced?range=${timeRange}`);
+      const result = await response.json();
+      if (result.success) {
+        setData(result.data);
+      } else {
+        toast.error('Failed to fetch analytics data');
+      }
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      toast.error('An error occurred while fetching analytics');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    fetchData();
+  }, [timeRange]);
+
+  useEffect(() => {
+    if (autoRefresh) {
+      const interval = setInterval(() => fetchData(true), 60000);
+      return () => clearInterval(interval);
+    }
+  }, [autoRefresh, timeRange]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-muted-foreground animate-pulse font-black uppercase tracking-widest text-[10px]">Assembling Business Intelligence Pack...</p>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const kpis = [
+    { 
+      label: 'Gross Platform Volume', 
+      value: `$${data.summary.revenue.toLocaleString()}`, 
+      trend: data.summary.trends.revenue, 
+      icon: IconCreditCard, 
+      color: 'text-blue-500', 
+      bg: 'bg-blue-500/10' 
+    },
+    { 
+      label: 'Confirmed Bookings', 
+      value: data.summary.bookings.toLocaleString(), 
+      trend: data.summary.trends.bookings, 
+      icon: IconChartBar, 
+      color: 'text-emerald-500', 
+      bg: 'bg-emerald-500/10' 
+    },
+    { 
+      label: 'Active Edge Users', 
+      value: data.summary.activeUsers.toLocaleString(), 
+      trend: data.summary.trends.users, 
+      icon: IconUsers, 
+      color: 'text-amber-500', 
+      bg: 'bg-amber-500/10' 
+    },
+    { 
+      label: 'Market Share Index', 
+      value: `$${data.summary.avgValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, 
+      trend: data.summary.trends.avgValue, 
+      icon: IconTrophy, 
+      color: 'text-purple-500', 
+      bg: 'bg-purple-500/10' 
+    }
+  ];
 
   return (
     <PageContainer
@@ -121,8 +186,8 @@ export function AdvancedAnalytics() {
           <Button variant="outline" size="sm" className="h-9 gap-2 shadow-lg hover:bg-white/5 border-border/40">
             <IconDownload className="h-4 w-4" /> Export Ledger
           </Button>
-          <Button size="sm" className="h-9 gap-2 shadow-lg shadow-primary/20" onClick={() => window.location.reload()}>
-            <IconRefresh className="h-4 w-4" /> Re-Sync
+          <Button size="sm" className="h-9 gap-2 shadow-lg shadow-primary/20" onClick={() => fetchData(true)} disabled={refreshing}>
+            <IconRefresh className={cn("h-4 w-4", refreshing && "animate-spin")} /> Re-Sync
           </Button>
         </div>
       }
@@ -132,7 +197,7 @@ export function AdvancedAnalytics() {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500/80">System Nominal</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500/80">Intelligence Nominal</p>
             </div>
             <p className="text-xs font-bold text-muted-foreground/60 uppercase tracking-tighter">
               Last calculated: {mounted ? new Date().toLocaleTimeString() : '--:--:--'}
@@ -149,18 +214,14 @@ export function AdvancedAnalytics() {
                 <SelectItem value="7d" className="text-xs uppercase font-bold">Horizon: T-7 Days</SelectItem>
                 <SelectItem value="30d" className="text-xs uppercase font-bold">Horizon: T-30 Days</SelectItem>
                 <SelectItem value="90d" className="text-xs uppercase font-bold">Horizon: T-90 Days</SelectItem>
+                <SelectItem value="1y" className="text-xs uppercase font-bold">Horizon: T-1 Year</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[
-            { label: 'Gross Platform Volume', value: '$128,430', trend: '+12%', icon: IconCreditCard, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-            { label: 'Confirmed Bookings', value: '1,248', trend: '+8%', icon: IconChartBar, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-            { label: 'Active Edge Users', value: '2,893', trend: '-3%', icon: IconUsers, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-            { label: 'Market Share Index', value: '94.2', trend: '+0.4%', icon: IconTrophy, color: 'text-purple-500', bg: 'bg-purple-500/10' }
-          ].map((stat, i) => (
+          {kpis.map((stat, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
               <Card className="group relative overflow-hidden border-none bg-card/30 backdrop-blur-md shadow-xl transition-all hover:bg-card/40">
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
@@ -172,7 +233,7 @@ export function AdvancedAnalytics() {
                 <CardContent>
                   <div className="text-3xl font-black tracking-tight tabular-nums">{stat.value}</div>
                   <div className="mt-1 flex items-center gap-1.5">
-                    <Badge variant="outline" className={cn("text-[9px] font-black uppercase border-none px-1.5 h-4", stat.trend.includes('+') ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500')}>
+                    <Badge variant="outline" className={cn("text-[9px] font-black uppercase border-none px-1.5 h-4", stat.trend.startsWith('+') ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500')}>
                       {stat.trend}
                     </Badge>
                     <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest">vs prev period</span>
@@ -184,34 +245,34 @@ export function AdvancedAnalytics() {
           ))}
         </div>
 
-      {/* Revenue vs Bookings */}
-      <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-xl font-black tracking-tight">Revenue Dynamics</CardTitle>
-            <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Comparison of gross platform volume vs booking velocity</CardDescription>
-          </div>
-          <IconChartBar className="h-5 w-5 text-blue-500 opacity-50" />
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={revenueData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 700 }} />
-                <YAxis yAxisId="left" orientation="left" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 700 }} />
-                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 700 }} />
-                <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '12px', fontSize: '10px' }} />
-                <Bar yAxisId="left" dataKey="revenue" fill="var(--chart-1)" radius={[4, 4, 0, 0]} name="Revenue ($)" />
-                <Bar yAxisId="right" dataKey="bookings" fill="var(--chart-2)" radius={[4, 4, 0, 0]} name="Bookings" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Revenue vs Bookings */}
+        <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xl font-black tracking-tight">Revenue Dynamics</CardTitle>
+              <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Comparison of gross platform volume vs booking velocity</CardDescription>
+            </div>
+            <IconChartBar className="h-5 w-5 text-blue-500 opacity-50" />
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={data.revenueTrends}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 700 }} />
+                  <YAxis yAxisId="left" orientation="left" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 700 }} />
+                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 700 }} />
+                  <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '12px', fontSize: '10px' }} />
+                  <Bar yAxisId="left" dataKey="revenue" fill="var(--chart-1)" radius={[4, 4, 0, 0]} name="Revenue ($)" />
+                  <Bar yAxisId="right" dataKey="bookings" fill="var(--chart-2)" radius={[4, 4, 0, 0]} name="Bookings" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
@@ -227,7 +288,7 @@ export function AdvancedAnalytics() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={propertyTypeData}
+                      data={data.propertyTypeData}
                       cx="50%"
                       cy="50%"
                       innerRadius={60}
@@ -235,7 +296,7 @@ export function AdvancedAnalytics() {
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {propertyTypeData.map((entry, index) => (
+                      {data.propertyTypeData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                       ))}
                     </Pie>
@@ -259,7 +320,7 @@ export function AdvancedAnalytics() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={locationData}
+                      data={data.locationData}
                       cx="50%"
                       cy="50%"
                       innerRadius={60}
@@ -267,7 +328,7 @@ export function AdvancedAnalytics() {
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {locationData.map((entry, index) => (
+                      {data.locationData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                       ))}
                     </Pie>
@@ -282,7 +343,7 @@ export function AdvancedAnalytics() {
         <Card className="border-none bg-card/30 shadow-xl backdrop-blur-md">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-lg font-black tracking-tight">System Performance Metrics</CardTitle>
+              <CardTitle className="text-lg font-black tracking-tight">Platform Performance Metrics</CardTitle>
               <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Comprehensive platform health and satisfaction analysis</CardDescription>
             </div>
             <IconActivity className="h-5 w-5 text-purple-500 opacity-50" />
@@ -290,7 +351,7 @@ export function AdvancedAnalytics() {
           <CardContent>
             <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={performanceData}>
+                <RadarChart data={data.performanceData}>
                   <PolarGrid stroke="rgba(255,255,255,0.05)" />
                   <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 700 }} />
                   <PolarRadiusAxis angle={90} domain={[0, 100]} axisLine={false} tick={false} />
@@ -322,12 +383,7 @@ export function AdvancedAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {[
-                  { name: 'Luxury Studio #1', location: 'Central Business District', occupancy: 98, rating: 4.8 },
-                  { name: 'Cozy 1 Bedroom', location: 'Tiong Bahru', occupancy: 95, rating: 4.7 },
-                  { name: 'Spacious 2 Bedroom', location: 'Holland Village', occupancy: 93, rating: 4.6 },
-                  { name: 'Modern Studio', location: 'Bugis', occupancy: 92, rating: 4.5 }
-                ].map((property, index) => (
+                {data.topProperties.map((property, index) => (
                   <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 transition-all hover:bg-white/10">
                     <div className="space-y-1">
                       <p className="text-sm font-black tracking-tight uppercase">{property.name}</p>
@@ -361,12 +417,7 @@ export function AdvancedAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {[
-                  { name: 'Central Business District', bookings: 284, growth: 15 },
-                  { name: 'Tiong Bahru', bookings: 256, growth: 12 },
-                  { name: 'Holland Village', bookings: 237, growth: 8 },
-                  { name: 'Bugis', bookings: 218, growth: 5 }
-                ].map((location, index) => (
+                {data.popularLocations.map((location, index) => (
                   <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 transition-all hover:bg-white/10">
                     <div className="space-y-1">
                       <p className="text-sm font-black tracking-tight uppercase">{location.name}</p>
@@ -399,14 +450,15 @@ export function AdvancedAnalytics() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="space-y-3">
                 <Label htmlFor="reportType" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Intelligence Pack</Label>
-                <Select defaultValue="weekly">
+                <Select defaultValue="revenue">
                   <SelectTrigger id="reportType" className="bg-white/5 border-white/10 h-10 font-bold text-xs uppercase">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent className="bg-background/95 backdrop-blur-xl border-border/40">
-                    <SelectItem value="daily" className="text-xs uppercase font-bold">Protocol: Daily Brief</SelectItem>
-                    <SelectItem value="weekly" className="text-xs uppercase font-bold">Protocol: Weekly Audit</SelectItem>
-                    <SelectItem value="monthly" className="text-xs uppercase font-bold">Protocol: Monthly Recon</SelectItem>
+                    <SelectItem value="revenue" className="text-xs uppercase font-bold">Protocol: Financial Summary</SelectItem>
+                    <SelectItem value="occupancy" className="text-xs uppercase font-bold">Protocol: Occupancy Audit</SelectItem>
+                    <SelectItem value="security" className="text-xs uppercase font-bold">Protocol: Security Recon</SelectItem>
+                    <SelectItem value="full" className="text-xs uppercase font-bold">Protocol: Platform BI</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -419,6 +471,7 @@ export function AdvancedAnalytics() {
                   <SelectContent className="bg-background/95 backdrop-blur-xl border-border/40">
                     <SelectItem value="daily" className="text-xs uppercase font-bold">Cycle: T-24H</SelectItem>
                     <SelectItem value="weekly" className="text-xs uppercase font-bold">Cycle: T-7D</SelectItem>
+                    <SelectItem value="monthly" className="text-xs uppercase font-bold">Cycle: T-30D</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -431,6 +484,7 @@ export function AdvancedAnalytics() {
                   <SelectContent className="bg-background/95 backdrop-blur-xl border-border/40">
                     <SelectItem value="pdf" className="text-xs uppercase font-bold">Format: Secure PDF</SelectItem>
                     <SelectItem value="csv" className="text-xs uppercase font-bold">Format: RAW Dataset</SelectItem>
+                    <SelectItem value="xlsx" className="text-xs uppercase font-bold">Format: Excel Workbook</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -443,6 +497,7 @@ export function AdvancedAnalytics() {
                   <SelectContent className="bg-background/95 backdrop-blur-xl border-border/40">
                     <SelectItem value="email" className="text-xs uppercase font-bold">Channel: Encrypted Mail</SelectItem>
                     <SelectItem value="slack" className="text-xs uppercase font-bold">Channel: Secure Slack</SelectItem>
+                    <SelectItem value="webhook" className="text-xs uppercase font-bold">Channel: Custom Webhook</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -8,6 +8,8 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import Providers from "./components/layout/providers";
 import { DEFAULT_THEME } from "./components/themes/theme.config";
+import { Toaster } from "@/app/admin/components/ui/sonner";
+import { InfobarProvider } from "./components/ui/infobar";
 
 export const metadata: Metadata = {
   title: 'BoardTAU Admin Dashboard',
@@ -35,15 +37,18 @@ export default async function DashboardLayout({
     <Providers activeThemeValue={activeTheme || DEFAULT_THEME}>
       <KBar>
         <SidebarProvider defaultOpen={defaultOpen}>
-          <AppSidebar />
-          <SidebarInset>
-            <Header />
-            {/* page main content */}
-            {children}
-            {/* page main content ends */}
-          </SidebarInset>
+          <InfobarProvider>
+            <AppSidebar />
+            <SidebarInset>
+              <Header />
+              {/* page main content */}
+              {children}
+              {/* page main content ends */}
+            </SidebarInset>
+          </InfobarProvider>
         </SidebarProvider>
       </KBar>
+      <Toaster />
     </Providers>
   );
 }

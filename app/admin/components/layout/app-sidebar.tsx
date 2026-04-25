@@ -214,9 +214,18 @@ function SidebarItem({ item, pathname }: { item: NavItem; pathname: string }) {
                           asChild
                           isActive={pathname === subItem.url}
                         >
-                          <Link href={subItem.url}>
-                            <span>{subItem.title}</span>
-                          </Link>
+                          {subItem.url === '#logout' ? (
+                            <button 
+                              onClick={() => signOut({ callbackUrl: '/' })}
+                              className="w-full flex items-center"
+                            >
+                              <span>{subItem.title}</span>
+                            </button>
+                          ) : (
+                            <Link href={subItem.url}>
+                              <span>{subItem.title}</span>
+                            </Link>
+                          )}
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}

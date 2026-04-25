@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Card,
@@ -22,12 +22,13 @@ import {
   IconMail,
   IconBolt,
   IconServer,
-  IconArrowUpRight,
-  IconArrowDownRight,
-  IconLayoutDashboard
+  IconLayoutDashboard,
+  IconCircleX,
+  IconInfoCircle
 } from '@tabler/icons-react';
 import PageContainer from '@/app/admin/components/layout/page-container';
 import { cn } from '@/app/admin/lib/utils';
+import { toast } from 'sonner';
 
 interface Service {
   id: string;
@@ -36,105 +37,54 @@ interface Service {
   uptime: string;
   responseTime: number;
   lastChecked: string;
-  icon: any;
 }
 
-const services: Service[] = [
-  {
-    id: '1',
-    name: 'Main API Gateway',
-    status: 'healthy',
-    uptime: '15d 8h',
-    responseTime: 120,
-    lastChecked: new Date().toISOString(),
-    icon: IconActivity
-  },
-  {
-    id: '2',
-    name: 'Primary Database (Postgres)',
-    status: 'healthy',
-    uptime: '22d 5h',
-    responseTime: 85,
-    lastChecked: new Date().toISOString(),
-    icon: IconDatabase
-  },
-  {
-    id: '3',
-    name: 'Redis Cache Layer',
-    status: 'warning',
-    uptime: '10d 2h',
-    responseTime: 450,
-    lastChecked: new Date().toISOString(),
-    icon: IconBolt
-  },
-  {
-    id: '4',
-    name: 'SMTP Email Service',
-    status: 'healthy',
-    uptime: '8d 12h',
-    responseTime: 250,
-    lastChecked: new Date().toISOString(),
-    icon: IconMail
-  }
-];
+interface Alert {
+  id: string;
+  title: string;
+  description: string;
+  severity: 'healthy' | 'warning' | 'critical' | 'info';
+  timestamp: string;
+}
 
-const kpis = [
-  {
-    label: "Network Latency",
-    value: "124ms",
-    trend: "Optimal",
-    trendColor: "text-emerald-500",
-    icon: IconActivity,
-    bg: "bg-emerald-500/10",
-    color: "text-emerald-500"
-  },
-  {
-    label: "Uptime Score",
-    value: "99.98%",
-    trend: "+0.02%",
-    trendColor: "text-emerald-500",
-    icon: IconCircleCheck,
-    bg: "bg-blue-500/10",
-    color: "text-blue-500"
-  },
-  {
-    label: "Active Load",
-    value: "42.5%",
-    trend: "Stable",
-    trendColor: "text-muted-foreground",
-    icon: IconCpu,
-    bg: "bg-purple-500/10",
-    color: "text-purple-500"
-  },
-  {
-    label: "Alerts (24h)",
-    value: "3",
-    trend: "1 Pending",
-    trendColor: "text-amber-500",
-    icon: IconAlertTriangle,
-    bg: "bg-amber-500/10",
-    color: "text-amber-500"
-  }
-];
+interface HealthData {
+  services: Service[];
+  performance: {
+    cpuUsage: number;
+    memoryUsage: number;
+    diskSpace: number;
+  };
+  alerts: Alert[];
+}
 
 const statusStyles = {
   healthy: {
     badge: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
     icon: 'text-emerald-500',
     bg: 'bg-emerald-500/5',
-    pill: 'bg-emerald-500'
+    pill: 'bg-emerald-500',
+    Icon: IconCircleCheck
   },
   warning: {
     badge: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
     icon: 'text-amber-500',
     bg: 'bg-amber-500/5',
-    pill: 'bg-amber-500'
+    pill: 'bg-amber-500',
+    Icon: IconAlertTriangle
   },
   critical: {
     badge: 'bg-red-500/10 text-red-500 border-red-500/20',
     icon: 'text-red-500',
     bg: 'bg-red-500/5',
-    pill: 'bg-red-500'
+    pill: 'bg-red-500',
+    Icon: IconCircleX
+  },
+  info: {
+    badge: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+    icon: 'text-blue-500',
+    bg: 'bg-blue-500/5',
+    pill: 'bg-blue-500',
+    Icon: IconInfoCircle
   }
 };
 
@@ -153,18 +103,115 @@ const item = {
   show: { opacity: 1, y: 0 }
 };
 
+const getServiceIcon = (name: string) => {
+  const lower = name.toLowerCase();
+  if (lower.includes('api') || lower.includes('gateway')) return IconActivity;
+  if (lower.includes('database') || lower.includes('postgres') || lower.includes('mongo')) return IconDatabase;
+  if (lower.includes('cache') || lower.includes('redis')) return IconBolt;
+  if (lower.includes('email') || lower.includes('smtp')) return IconMail;
+  return IconServer;
+};
+
 export function SystemHealth() {
+  const [data, setData] = useState<HealthData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchHealthData = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+
+    try {
+      const response = await fetch('/api/admin/monitoring/health');
+      const result = await response.json();
+      if (result.success) {
+        setData(result.data);
+      } else {
+        toast.error('Failed to fetch system health');
+      }
+    } catch (error) {
+      console.error('Error fetching health data:', error);
+      toast.error('An error occurred while fetching system health');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHealthData();
+    const interval = setInterval(() => fetchHealthData(true), 300000); 
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-muted-foreground animate-pulse font-black uppercase tracking-widest text-[10px]">Synchronizing Sentinel Telemetry...</p>
+      </div>
+    );
+  }
+
+  const services = data?.services || [];
+  const performance = data?.performance || { cpuUsage: 0, memoryUsage: 0, diskSpace: 0 };
+  const alerts = data?.alerts || [];
+
+  const kpis = [
+    {
+      label: "Total Services",
+      value: services.length.toString(),
+      trend: "All Connected",
+      trendColor: "text-emerald-500",
+      icon: IconServer,
+      bg: "bg-blue-500/10",
+      color: "text-blue-500"
+    },
+    {
+      label: "Healthy Nodes",
+      value: services.filter(s => s.status === 'healthy').length.toString(),
+      trend: "Optimal",
+      trendColor: "text-emerald-500",
+      icon: IconCircleCheck,
+      bg: "bg-emerald-500/10",
+      color: "text-emerald-500"
+    },
+    {
+      label: "System Load",
+      value: `${performance.cpuUsage}%`,
+      trend: performance.cpuUsage > 80 ? "Critical" : "Stable",
+      trendColor: performance.cpuUsage > 80 ? "text-red-500" : "text-muted-foreground",
+      icon: IconCpu,
+      bg: "bg-purple-500/10",
+      color: "text-purple-500"
+    },
+    {
+      label: "Active Alerts",
+      value: alerts.length.toString(),
+      trend: alerts.some(a => a.severity === 'critical') ? "Action Required" : "No Critical Incidents",
+      trendColor: alerts.some(a => a.severity === 'critical') ? "text-red-500" : "text-amber-500",
+      icon: IconAlertTriangle,
+      bg: "bg-amber-500/10",
+      color: "text-amber-500"
+    }
+  ];
+
   return (
     <PageContainer
       pageTitle="Sentinel System Health"
       pageDescription="Real-time infrastructure telemetry and autonomous system monitoring"
       pageHeaderAction={
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-9 gap-2">
+          <Button variant="outline" size="sm" className="h-9 gap-2 font-black uppercase text-[10px] tracking-widest">
             <IconLayoutDashboard className="h-4 w-4" /> Export Logs
           </Button>
-          <Button size="sm" className="h-9 gap-2 shadow-lg shadow-primary/20" onClick={() => window.location.reload()}>
-            <IconRefresh className="h-4 w-4" /> Force Sync
+          <Button 
+            size="sm" 
+            className="h-9 gap-2 shadow-lg shadow-primary/20 font-black uppercase text-[10px] tracking-widest" 
+            onClick={() => fetchHealthData(true)}
+            disabled={refreshing}
+          >
+            <IconRefresh className={cn("h-4 w-4", refreshing && "animate-spin")} /> Force Sync
           </Button>
         </div>
       }
@@ -208,15 +255,20 @@ export function SystemHealth() {
                   <CardTitle className="text-xl font-black">Infrastructure Core</CardTitle>
                   <CardDescription className="text-xs uppercase tracking-wider font-medium text-muted-foreground">Live heartbeat of critical system components</CardDescription>
                 </div>
-                <Badge variant="outline" className="bg-emerald-500/5 text-emerald-500 border-emerald-500/20 font-black uppercase tracking-widest text-[9px]">
-                  All Systems Operational
+                <Badge variant="outline" className={cn(
+                  "font-black uppercase tracking-widest text-[9px]",
+                  services.every(s => s.status === 'healthy') 
+                    ? "bg-emerald-500/5 text-emerald-500 border-emerald-500/20" 
+                    : "bg-amber-500/5 text-amber-500 border-amber-500/20"
+                )}>
+                  {services.every(s => s.status === 'healthy') ? 'All Systems Operational' : 'Degraded Performance Detected'}
                 </Badge>
               </CardHeader>
               <CardContent className="px-0">
                 <div className="divide-y divide-border/20">
                   {services.map((service) => {
-                    const style = statusStyles[service.status];
-                    const IconComp = service.icon;
+                    const style = statusStyles[service.status] || statusStyles.info;
+                    const IconComp = getServiceIcon(service.name);
                     return (
                       <div key={service.id} className="group relative flex flex-col gap-4 p-6 transition-all hover:bg-white/5 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-4">
@@ -243,7 +295,7 @@ export function SystemHealth() {
                               <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Last Synced</p>
                               <p className="text-xs font-mono font-bold">{new Date(service.lastChecked).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
                            </div>
-                           <Button variant="outline" size="sm" className="h-9 border-border/40 hover:bg-white/10 gap-2">
+                           <Button variant="outline" size="sm" className="h-9 border-border/40 hover:bg-white/10 gap-2 font-black uppercase text-[10px] tracking-widest">
                              <IconEye className="h-4 w-4" /> Telemetry
                            </Button>
                         </div>
@@ -268,9 +320,9 @@ export function SystemHealth() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {[
-                    { label: 'CPU Cluster', value: 65, color: 'bg-blue-500', icon: IconCpu },
-                    { label: 'Memory', value: 82, color: 'bg-emerald-500', icon: IconServer },
-                    { label: 'Disk I/O', value: 45, color: 'bg-amber-500', icon: IconDatabase }
+                    { label: 'CPU Cluster', value: performance.cpuUsage, color: 'bg-blue-500', icon: IconCpu },
+                    { label: 'Memory Load', value: performance.memoryUsage, color: 'bg-emerald-500', icon: IconServer },
+                    { label: 'Storage Cap', value: performance.diskSpace, color: 'bg-amber-500', icon: IconDatabase }
                   ].map((metric) => (
                     <div key={metric.label} className="space-y-2">
                       <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider">
@@ -302,25 +354,31 @@ export function SystemHealth() {
                    <IconAlertTriangle className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent className="px-3">
-                  <div className="space-y-3">
-                     {[
-                       { title: 'Cluster Memory Peak', time: '12m ago', desc: 'Node 04 reached 89% peak', color: 'text-red-500', bg: 'bg-red-500/10' },
-                       { title: 'Partial CDN Latency', time: '45m ago', desc: 'SEA nodes reporting +150ms delta', color: 'text-amber-500', bg: 'bg-amber-500/10' },
-                       { title: 'Database Cold Boot', time: '1h ago', desc: 'Replica instance successfully rotated', color: 'text-blue-500', bg: 'bg-blue-500/10' }
-                     ].map((alert, i) => (
-                       <div key={i} className="flex gap-3 rounded-2xl border border-white/5 bg-white/5 p-3 transition-all hover:bg-white/10">
-                          <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg shadow-inner", alert.bg)}>
-                             <IconAlertTriangle className={cn("h-4 w-4", alert.color)} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                             <div className="flex items-center justify-between mb-0.5">
-                                <h4 className="text-[11px] font-black uppercase truncate">{alert.title}</h4>
-                                <span className="text-[9px] font-mono text-muted-foreground shrink-0">{alert.time}</span>
-                             </div>
-                             <p className="text-[10px] text-muted-foreground line-clamp-1">{alert.desc}</p>
-                          </div>
+                  <div className="space-y-3 pb-3">
+                     {alerts.length > 0 ? alerts.map((alert, i) => {
+                       const style = statusStyles[alert.severity as keyof typeof statusStyles] || statusStyles.info;
+                       return (
+                        <div key={alert.id} className="flex gap-3 rounded-2xl border border-white/5 bg-white/5 p-3 transition-all hover:bg-white/10">
+                           <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg shadow-inner", style.bg)}>
+                              <style.Icon className={cn("h-4 w-4", style.icon)} />
+                           </div>
+                           <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-0.5">
+                                 <h4 className="text-[11px] font-black uppercase truncate">{alert.title}</h4>
+                                 <span className="text-[9px] font-mono text-muted-foreground shrink-0">
+                                   {new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                 </span>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground line-clamp-1">{alert.description}</p>
+                           </div>
+                        </div>
+                       );
+                     }) : (
+                       <div className="text-center py-6">
+                         <IconCircleCheck className="w-8 h-8 text-emerald-500/20 mx-auto mb-2" />
+                         <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">No anomalies detected in the last 24h</p>
                        </div>
-                     ))}
+                     )}
                   </div>
                 </CardContent>
               </Card>
