@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/app/admin/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/app/admin/components/ui/card';
 import { Button } from '@/app/admin/components/ui/button';
 import { Input } from '@/app/admin/components/ui/input';
 import { Label } from '@/app/admin/components/ui/label';
@@ -34,8 +34,8 @@ const exportOptions = [
 const dataSources = [
   { value: 'users', label: 'User Directory', description: 'Full list of registered members and their roles', icon: IconUserSearch },
   { value: 'listings', label: 'Property Inventory', description: 'All listings including status and regional data', icon: IconWorld },
-  { value: 'reservations', label: 'Booking History', description: 'Complete record of all stays and payments', icon: IconCalendar },
-  { value: 'reviews', label: 'Guest Feedback', description: 'Aggregated reviews and rating metrics', icon: IconFileText },
+  { value: 'reservations', label: 'Booking History', description: 'Complete record of all stays and payments', icon: Calendar },
+  { value: 'reviews', label: 'Guest Feedback', description: 'Aggregated reviews and rating metrics', icon: FileText },
   { value: 'financial', label: 'Financial Records', description: 'Taxable revenue and payment methodology', icon: Database }
 ];
 
