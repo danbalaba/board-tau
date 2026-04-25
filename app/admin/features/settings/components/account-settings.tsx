@@ -14,283 +14,196 @@ import { Label } from '@/app/admin/components/ui/label';
 import { Textarea } from '@/app/admin/components/ui/textarea';
 import { Switch } from '@/app/admin/components/ui/switch';
 import { Avatar, AvatarImage, AvatarFallback } from '@/app/admin/components/ui/avatar';
+import {
+  IconUser,
+  IconLock,
+  IconBell,
+  IconWorld,
+  IconPhotoEdit,
+  IconDeviceFloppy,
+  IconKey,
+  IconMail,
+  IconCheck
+} from '@tabler/icons-react';
+import PageContainer from '@/app/admin/components/layout/page-container';
+import { toast } from 'sonner';
 
 export function AccountSettings() {
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [passwordChanged, setPasswordChanged] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Simulate save operation
+  const handleAction = (label: string) => {
+    setIsSaving(true);
     setTimeout(() => {
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2000);
-    }, 500);
-  };
-
-  const handlePasswordChange = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Simulate password change
-    setTimeout(() => {
-      setPasswordChanged(true);
-      setTimeout(() => setPasswordChanged(false), 2000);
-    }, 500);
+      setIsSaving(false);
+      toast.success(`${label} updated successfully.`);
+    }, 1000);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Account Settings</h2>
-          <p className="text-muted-foreground">Manage your account preferences and profile</p>
+    <PageContainer
+      pageTitle="Account Preferences"
+      pageDescription="Personalize your administrative profile and security protocols"
+    >
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {/* Left Column: Profile & Security */}
+        <div className="space-y-8 lg:col-span-7">
+          {/* Profile Identity */}
+          <Card className="border-none bg-card shadow-md">
+            <CardHeader className="flex flex-row items-center gap-4 border-b pb-6 space-y-0">
+               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                 <IconUser className="h-6 w-6" />
+               </div>
+               <div>
+                 <CardTitle>Profile Identity</CardTitle>
+                 <CardDescription>Personal information and bio</CardDescription>
+               </div>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+               <div className="flex items-center gap-6 p-4 rounded-2xl bg-muted/20 border border-border/50">
+                  <Avatar className="h-24 w-24 border-4 border-background shadow-xl">
+                    <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" />
+                    <AvatarFallback>AD</AvatarFallback>
+                  </Avatar>
+                  <div className="space-y-2">
+                    <Button size="sm" variant="outline" className="h-9 gap-2 shadow-sm font-bold uppercase text-[10px]">
+                       <IconPhotoEdit className="h-4 w-4" /> Change Avatar
+                    </Button>
+                    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">
+                       Optimal: 800x800px • WebP / PNG
+                    </p>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Full Name</Label>
+                    <Input defaultValue="Administrator User" className="h-11 bg-muted/30" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Phone</Label>
+                    <Input defaultValue="+65 1234 5678" className="h-11 bg-muted/30" />
+                  </div>
+               </div>
+
+               <div className="space-y-2">
+                 <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Bio / Mission Statement</Label>
+                 <Textarea 
+                    defaultValue="I'm an administrator for BoardTAU, managing the platform and ensuring everything runs smoothly."
+                    rows={4}
+                    className="bg-muted/30 resize-none italic"
+                 />
+               </div>
+
+               <Button onClick={() => handleAction('Profile')} className="w-full h-12 gap-2 font-black uppercase tracking-widest shadow-lg">
+                 <IconDeviceFloppy className="h-5 w-5" /> Commit Changes
+               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Security & Access */}
+          <Card className="border-none bg-card shadow-md overflow-hidden">
+            <CardHeader className="flex flex-row items-center gap-4 bg-rose-500/5 border-b border-rose-500/10 pb-6 space-y-0 text-rose-500">
+               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/20">
+                 <IconLock className="h-6 w-6" />
+               </div>
+               <div>
+                 <CardTitle className="text-rose-500">Access Control</CardTitle>
+                 <CardDescription className="text-rose-500/60">Update passwords and auth tokens</CardDescription>
+               </div>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+               <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Current Signature</Label>
+                  <Input type="password" placeholder="••••••••••••" className="h-11 bg-muted/30" />
+               </div>
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">New Passphrase</Label>
+                    <Input type="password" placeholder="••••••••••••" className="h-11 bg-muted/30" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Confirm Passphrase</Label>
+                    <Input type="password" placeholder="••••••••••••" className="h-11 bg-muted/30" />
+                  </div>
+               </div>
+               <Button onClick={() => handleAction('Password')} variant="secondary" className="w-full h-12 gap-2 font-black uppercase tracking-widest border border-rose-500/20 text-rose-600 bg-rose-500/5 hover:bg-rose-500/10">
+                  <IconKey className="h-5 w-5" /> Rotate Password
+               </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column: Preferences & Notifications */}
+        <div className="space-y-8 lg:col-span-5">
+           {/* Notification Routing */}
+           <Card className="border-none bg-card shadow-md">
+             <CardHeader className="flex flex-row items-center gap-4 border-b pb-6 space-y-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/10 text-sky-500">
+                  <IconBell className="h-6 w-6" />
+                </div>
+                <div>
+                  <CardTitle>Global Alerts</CardTitle>
+                  <CardDescription>Event-driven notification protocols</CardDescription>
+                </div>
+             </CardHeader>
+             <CardContent className="pt-4 divide-y">
+                {[
+                  { id: 'email', label: 'Email Dispatch', desc: 'Sync with primary inbox', icon: IconMail },
+                  { id: 'push', label: 'Push Relays', desc: 'Active browser sockets', icon: IconCheck },
+                  { id: 'sec', label: 'Security Breaches', desc: 'Priority anomaly reports', icon: IconLock }
+                ].map((item) => (
+                   <div key={item.id} className="flex items-center justify-between py-4">
+                      <div className="flex gap-4">
+                         <div className="mt-0.5 text-muted-foreground"><item.icon className="h-4 w-4" /></div>
+                         <div className="space-y-0.5">
+                            <p className="text-sm font-bold tracking-tight leading-none">{item.label}</p>
+                            <p className="text-[10px] text-muted-foreground italic">{item.desc}</p>
+                         </div>
+                      </div>
+                      <Switch defaultChecked />
+                   </div>
+                ))}
+             </CardContent>
+           </Card>
+
+           {/* Localization & Sync */}
+           <Card className="border-none bg-card shadow-md">
+             <CardHeader className="flex flex-row items-center gap-4 border-b pb-6 space-y-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
+                  <IconWorld className="h-6 w-6" />
+                </div>
+                <div>
+                  <CardTitle>Regional Sync</CardTitle>
+                  <CardDescription>Temporal and linguistic defaults</CardDescription>
+                </div>
+             </CardHeader>
+             <CardContent className="pt-6 space-y-6">
+                <div className="space-y-2">
+                   <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Interface Language</Label>
+                   <select className="w-full rounded-xl border border-input bg-muted/30 px-4 py-3 text-sm font-bold shadow-inner focus:ring-2 focus:ring-primary/20 appearance-none outline-none">
+                      <option value="en">English (US/UK) • Default</option>
+                      <option value="zh">中文 (Mandarin) • Optimized</option>
+                      <option value="ms">Bahasa Melayu</option>
+                   </select>
+                </div>
+                <div className="space-y-2">
+                   <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">System Timezone</Label>
+                   <select className="w-full rounded-xl border border-input bg-muted/30 px-4 py-3 text-sm font-bold shadow-inner focus:ring-2 focus:ring-primary/20 appearance-none outline-none">
+                      <option value="sg">Asia / Singapore (GMT+8)</option>
+                      <option value="id">Asia / Jakarta (GMT+7)</option>
+                   </select>
+                </div>
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/20 border border-border/50 transition-all hover:bg-muted/30">
+                   <div className="space-y-0.5">
+                      <p className="text-sm font-bold">Auto-Sync Health</p>
+                      <p className="text-[10px] text-muted-foreground italic">Keep telemetry data active in background</p>
+                   </div>
+                   <Switch defaultChecked />
+                </div>
+             </CardContent>
+           </Card>
         </div>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Profile Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile Settings</CardTitle>
-            <CardDescription>Update your personal information</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSave} className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" />
-                  <AvatarFallback>AD</AvatarFallback>
-                </Avatar>
-                <div className="space-y-2">
-                  <Button type="button" variant="outline" size="sm">
-                    Change Avatar
-                  </Button>
-                  <p className="text-xs text-muted-foreground">
-                    JPG, GIF or PNG. Max size 800K
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  defaultValue="Administrator User"
-                  placeholder="Enter your full name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  defaultValue="admin@boardtau.com"
-                  placeholder="Enter your email"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  defaultValue="+65 1234 5678"
-                  placeholder="Enter your phone number"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  placeholder="Tell us a little about yourself"
-                  className="min-h-[100px]"
-                  defaultValue="I'm an administrator for BoardTAU, managing the platform and ensuring everything runs smoothly."
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-4">
-                <div>
-                  {saveSuccess && (
-                    <p className="text-sm text-green-600">Profile updated successfully!</p>
-                  )}
-                </div>
-                <Button type="submit" disabled={saveSuccess}>
-                  {saveSuccess ? 'Saved' : 'Save Profile'}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Notification Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Notification Settings</CardTitle>
-            <CardDescription>Manage your notification preferences</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="emailNotifications">Email Notifications</Label>
-                <p className="text-sm text-muted-foreground">Receive notifications via email</p>
-              </div>
-              <Switch id="emailNotifications" defaultChecked />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="pushNotifications">Push Notifications</Label>
-                <p className="text-sm text-muted-foreground">Receive notifications on your device</p>
-              </div>
-              <Switch id="pushNotifications" defaultChecked />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="smsNotifications">SMS Notifications</Label>
-                <p className="text-sm text-muted-foreground">Receive notifications via SMS</p>
-              </div>
-              <Switch id="smsNotifications" />
-            </div>
-
-            <div className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label>Notification Types</Label>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="securityAlerts" className="text-sm font-normal">Security Alerts</Label>
-                    <Switch id="securityAlerts" defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="systemUpdates" className="text-sm font-normal">System Updates</Label>
-                    <Switch id="systemUpdates" defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="userActivity" className="text-sm font-normal">User Activity</Label>
-                    <Switch id="userActivity" defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="paymentNotifications" className="text-sm font-normal">Payment Notifications</Label>
-                    <Switch id="paymentNotifications" defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="marketingEmails" className="text-sm font-normal">Marketing Emails</Label>
-                    <Switch id="marketingEmails" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Password Change */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Change Password</CardTitle>
-            <CardDescription>Update your password</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handlePasswordChange} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="currentPassword">Current Password</Label>
-                <Input
-                  id="currentPassword"
-                  type="password"
-                  placeholder="Enter your current password"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">New Password</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  placeholder="Enter your new password"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Confirm your new password"
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-4">
-                <div>
-                  {passwordChanged && (
-                    <p className="text-sm text-green-600">Password changed successfully!</p>
-                  )}
-                </div>
-                <Button type="submit" disabled={passwordChanged}>
-                  {passwordChanged ? 'Changed' : 'Change Password'}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Preferences */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Preferences</CardTitle>
-            <CardDescription>Customize your experience</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="language">Language</Label>
-              <select
-                id="language"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                defaultValue="en"
-              >
-                <option value="en">English</option>
-                <option value="zh">中文 (Chinese)</option>
-                <option value="ms">Bahasa Malaysia</option>
-                <option value="id">Bahasa Indonesia</option>
-                <option value="th">ภาษาไทย (Thai)</option>
-                <option value="vi">Tiếng Việt (Vietnamese)</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="timezone">Timezone</Label>
-              <select
-                id="timezone"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                defaultValue="Asia/Singapore"
-              >
-                <option value="Asia/Singapore">(GMT+08:00) Singapore</option>
-                <option value="Asia/Kuala_Lumpur">(GMT+08:00) Kuala Lumpur</option>
-                <option value="Asia/Jakarta">(GMT+07:00) Jakarta</option>
-                <option value="Asia/Bangkok">(GMT+07:00) Bangkok</option>
-                <option value="Asia/Manila">(GMT+08:00) Manila</option>
-                <option value="Asia/Ho_Chi_Minh">(GMT+07:00) Ho Chi Minh City</option>
-              </select>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="darkMode">Dark Mode</Label>
-                <p className="text-sm text-muted-foreground">Use dark theme for the dashboard</p>
-              </div>
-              <Switch id="darkMode" defaultChecked />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="autoRefresh">Auto-Refresh</Label>
-                <p className="text-sm text-muted-foreground">Automatically refresh data</p>
-              </div>
-              <Switch id="autoRefresh" defaultChecked />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </PageContainer>
   );
 }
