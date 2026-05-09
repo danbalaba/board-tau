@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { SystemHealth } from '@/app/admin/features/monitoring/components/system-health';
+import SystemHealth from '@/app/admin/features/monitoring/components/system-health/index';
 
 export const metadata: Metadata = {
   title: 'System Health - BoardTAU Admin',

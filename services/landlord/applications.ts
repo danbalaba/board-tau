@@ -2,30 +2,23 @@
 
 import { db } from "@/lib/db";
 import { getCurrentUser } from "../user/user";
-import { validateEmail, validatePassword, validateName, validatePhoneNumber } from "@/lib/validators";
-import {
-  sendApplicationConfirmationEmail,
-  sendApplicationApprovalEmail,
-  sendApplicationRejectionEmail,
-  sendAdminApplicationNotification
+import { 
+  sendApplicationConfirmationEmail, 
+  sendApplicationApprovalEmail, 
+  sendApplicationRejectionEmail, 
+  sendAdminApplicationNotification 
 } from '../email/notifications';
 
+/**
+ * Interface representing the new 8-step Host Application data.
+ * Focused on Identity and Legitimacy verification.
+ */
 export interface HostApplicationData {
   businessInfo: {
     businessName: string;
     businessType: string;
-    businessRegistrationNumber: string;
-    taxIdentificationNumber: string;
     businessDescription: string;
     yearsExperience: string;
-  };
-  propertyInfo: {
-    propertyName: string;
-    description: string;
-    category: string[];
-    roomType: string;
-    price: number;
-    leaseTerms: string;
   };
   contactInfo: {
     fullName: string;
@@ -37,49 +30,19 @@ export interface HostApplicationData {
       phoneNumber: string;
     };
   };
-  propertyConfig: {
-    totalRooms: number;
-    rooms: Array<{
-      roomType: string;
-      price: number;
-      bedType: string;
-      capacity: number;
-      description?: string;
-      amenities: string[];
-    }>;
-    bathroomCount: number;
-    bathroomType: string;
-    amenities: string[];
-    rules: string[];
-    smokingAllowed: boolean;
-    petsAllowed: boolean;
-    visitorsAllowed: boolean;
-    // Rules / Preferences
-    femaleOnly: boolean;
-    maleOnly: boolean;
-    // Advanced Filters
-    security24h: boolean;
-    cctv: boolean;
-    fireSafety: boolean;
-    nearTransport: boolean;
-    studyFriendly: boolean;
-    quietEnvironment: boolean;
-    flexibleLease: boolean;
-  };
-  propertyImages: {
-    property: string[];
-    rooms: Record<number, string[]>;
-  };
-  documents: {
-    governmentId: string;
-    businessPermit: string;
-    landTitle: string;
-    barangayClearance: string;
-    fireSafetyCertificate: string;
-    otherDocuments?: string;
-  };
+  selfieUrl: string;
+  idCardUrl: string;
+  businessPermitUrl: string;
+  fireSafetyUrl: string;
+  facadePhotoUrl: string;
+  latlng: [number, number];
+  additionalDocsUrl?: string;
 }
 
+/**
+ * Creates a new host application in the database.
+ * Optimized for the new identity-first verification flow.
+ */
 export const createHostApplication = async (data: HostApplicationData) => {
   const user = await getCurrentUser();
   if (!user) {
@@ -95,150 +58,96 @@ export const createHostApplication = async (data: HostApplicationData) => {
     throw new Error("You have already submitted an application");
   }
 
-  // Validate business info
+  // Final Server-side Validation
   if (!data.businessInfo.businessName || data.businessInfo.businessName.length < 3) {
-    throw new Error("Business name must be at least 3 characters");
+    throw new Error("Business name is too short");
   }
 
-  if (!data.businessInfo.businessDescription || data.businessInfo.businessDescription.length < 50) {
-    throw new Error("Business description must be at least 50 characters");
+  if (!data.selfieUrl || !data.idCardUrl) {
+    throw new Error("Biometric verification is required");
   }
 
-  // Validate property info
-  if (!data.propertyInfo.propertyName || data.propertyInfo.propertyName.length < 3) {
-    throw new Error("Property name must be at least 3 characters");
+  if (!data.businessPermitUrl || !data.fireSafetyUrl) {
+    throw new Error("Legal compliance documents are required");
   }
 
-  if (!data.propertyInfo.description || data.propertyInfo.description.length < 50) {
-    throw new Error("Property description must be at least 50 characters");
+  try {
+    // Create application using the new schema fields
+    const application = await db.hostApplication.create({
+      data: {
+        userId: user.id,
+        businessInfo: data.businessInfo,
+        contactInfo: data.contactInfo,
+        selfieUrl: data.selfieUrl,
+        idCardUrl: data.idCardUrl,
+        businessPermitUrl: data.businessPermitUrl,
+        fireSafetyUrl: data.fireSafetyUrl,
+        facadePhotoUrl: data.facadePhotoUrl,
+        latlng: data.latlng,
+        additionalDocsUrl: data.additionalDocsUrl || "",
+        status: 'pending'
+      },
+    });
+
+    // Send confirmation emails (fire and forget)
+    sendApplicationConfirmationEmail(user, application as any);
+    
+    // Notify Admins
+    const adminUsers = await db.user.findMany({
+      where: { role: 'ADMIN' }
+    });
+    
+    adminUsers.forEach(admin => {
+      sendAdminApplicationNotification(admin, application as any);
+    });
+
+    return {
+      success: true,
+      data: application,
+      message: "Application submitted successfully. Please wait for admin review."
+    };
+  } catch (error) {
+    console.error("Submission Error:", error);
+    throw new Error("Internal Server Error: Failed to save application.");
   }
-
-  if (!data.propertyInfo.price || data.propertyInfo.price < 1000 || data.propertyInfo.price > 50000) {
-    throw new Error("Price must be between ₱1,000 and ₱50,000 per month");
-  }
-
-  // Validate contact info
-  const nameError = validateName(data.contactInfo.fullName);
-  if (nameError) {
-    throw new Error(nameError);
-  }
-
-  const phoneError = validatePhoneNumber(data.contactInfo.phoneNumber);
-  if (phoneError) {
-    throw new Error(phoneError);
-  }
-
-  const emailError = validateEmail(data.contactInfo.email);
-  if (emailError) {
-    throw new Error(emailError);
-  }
-
-  // Validate property config
-  if (!data.propertyConfig.totalRooms || data.propertyConfig.totalRooms < 1 || data.propertyConfig.totalRooms > 50) {
-    throw new Error("Total rooms must be between 1 and 50");
-  }
-
-  if (!data.propertyConfig.rooms || data.propertyConfig.rooms.length === 0) {
-    throw new Error("Please add at least one room type");
-  }
-
-  // Validate rooms
-  data.propertyConfig.rooms.forEach((room, index) => {
-    if (!room.roomType) {
-      throw new Error(`Room type is required for room ${index + 1}`);
-    }
-
-    if (!room.price || room.price < 1000 || room.price > 50000) {
-      throw new Error(`Price must be between ₱1,000 and ₱50,000 for room ${index + 1}`);
-    }
-
-    if (!room.capacity || room.capacity < 1 || room.capacity > 10) {
-      throw new Error(`Capacity must be between 1 and 10 for room ${index + 1}`);
-    }
-  });
-
-  // Validate documents
-  const requiredDocuments = ['governmentId', 'businessPermit', 'landTitle', 'barangayClearance', 'fireSafetyCertificate'];
-  for (const doc of requiredDocuments) {
-    const documentValue = data.documents[doc as keyof typeof data.documents];
-    if (!documentValue || !documentValue.startsWith('http')) {
-      throw new Error(`Please upload a valid ${doc} document`);
-    }
-  }
-
-   // Create application
-  const application = await db.hostApplication.create({
-    data: {
-      userId: user.id,
-      businessInfo: data.businessInfo,
-      propertyInfo: data.propertyInfo,
-      contactInfo: data.contactInfo,
-      propertyConfig: data.propertyConfig,
-      propertyImages: data.propertyImages,
-      documents: data.documents,
-      status: 'pending'
-    },
-  });
-
-  // Send confirmation emails (fire and forget)
-  sendApplicationConfirmationEmail(user, application);
-  // Get admin users
-  const adminUsers = await db.user.findMany({
-    where: { role: 'ADMIN' }
-  });
-  adminUsers.forEach(admin => {
-    sendAdminApplicationNotification(admin, application);
-  });
-
-  return {
-    success: true,
-    data: application,
-    message: "Application submitted successfully. Please wait for admin review."
-  };
 };
 
+/**
+ * Get the application for the currently logged-in user.
+ */
 export const getHostApplicationByUser = async () => {
   const user = await getCurrentUser();
-  if (!user) {
-    throw new Error("Unauthorized: Please login to view your application");
-  }
+  if (!user) return null;
 
-  const application = await db.hostApplication.findUnique({
+  return await db.hostApplication.findUnique({
     where: { userId: user.id },
   });
-
-  return application;
 };
 
+/**
+ * Admin: Get all applications with search and status filtering.
+ */
 export const getHostApplications = async (filter: { status?: string; search?: string; page?: number; limit?: number }) => {
   const { status, search, page = 1, limit = 10 } = filter;
 
   const where: any = {};
-
-  if (status) {
-    where.status = status;
-  }
+  if (status) where.status = status;
 
   if (search) {
     where.OR = [
-      { businessInfo: { businessName: { contains: search, mode: 'insensitive' } } },
-      { propertyInfo: { propertyName: { contains: search, mode: 'insensitive' } } },
-      { contactInfo: { fullName: { contains: search, mode: 'insensitive' } } },
-      { contactInfo: { email: { contains: search, mode: 'insensitive' } } }
+      { businessInfo: { path: ['businessName'], equals: search } }, // Note: MongoDB path filtering
+      { contactInfo: { path: ['fullName'], equals: search } },
+      { contactInfo: { path: ['email'], equals: search } }
     ];
   }
 
   const [applications, total] = await Promise.all([
     db.hostApplication.findMany({
       where,
-      include: {
-        user: true
-      },
+      include: { user: true },
       take: limit,
       skip: (page - 1) * limit,
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: { createdAt: 'desc' }
     }),
     db.hostApplication.count({ where })
   ]);
@@ -252,17 +161,17 @@ export const getHostApplications = async (filter: { status?: string; search?: st
   };
 };
 
+/**
+ * Admin: Update application status and grant Landlord role upon approval.
+ */
 export const updateApplicationStatus = async (id: string, status: 'approved' | 'rejected', adminId: string, reason?: string) => {
   const application = await db.hostApplication.findUnique({
     where: { id },
     include: { user: true }
   });
 
-  if (!application) {
-    throw new Error("Application not found");
-  }
+  if (!application) throw new Error("Application not found");
 
-  // Update application status
   const updatedApplication = await db.hostApplication.update({
     where: { id },
     data: {
@@ -273,7 +182,6 @@ export const updateApplicationStatus = async (id: string, status: 'approved' | '
     }
   });
 
-  // If approved, update user role to landlord
   if (status === 'approved') {
     await db.user.update({
       where: { id: application.userId },
@@ -283,11 +191,9 @@ export const updateApplicationStatus = async (id: string, status: 'approved' | '
         landlordApprovedAt: new Date()
       }
     });
-    // Send approval email (fire and forget)
-    sendApplicationApprovalEmail(application.user, updatedApplication);
+    sendApplicationApprovalEmail(application.user, updatedApplication as any);
   } else {
-    // Send rejection email (fire and forget)
-    sendApplicationRejectionEmail(application.user, updatedApplication, reason || 'Application rejected');
+    sendApplicationRejectionEmail(application.user, updatedApplication as any, reason || 'Application rejected');
   }
 
   return updatedApplication;

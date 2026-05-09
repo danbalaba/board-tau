@@ -31,8 +31,10 @@ const InquiriesPage = async () => {
       listing: {
         select: {
           id: true,
+          userId: true,
           title: true,
           imageSrc: true,
+          images: true,
           location: true,
           region: true,
           country: true,
@@ -63,7 +65,7 @@ const InquiriesPage = async () => {
     checkOutDate: (inquiry as any).checkOutDate ? (inquiry as any).checkOutDate.toISOString() : "",
   }));
 
-  return <InquiriesClient initialInquiries={transformedInquiries} />;
+  return <InquiriesClient initialInquiries={transformedInquiries} currentUserId={user.id} />;
 };
 
 export default InquiriesPage;

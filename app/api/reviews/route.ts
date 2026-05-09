@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     } = body;
 
     // 1. Basic Validation
-    if (!listingId || !rating || !cleanliness || !accuracy || !communication || !location || !value) {
+    if (!listingId || rating === undefined || cleanliness === undefined || accuracy === undefined || communication === undefined || location === undefined || value === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -37,9 +37,10 @@ export async function POST(request: Request) {
     const reservation = await db.reservation.findUnique({
       where: { id: reservationId },
       include: {
-        reviews: true
-      } as any
-    });
+        reviews: true,
+        user: { select: { email: true, name: true } }
+      }
+    }) as any;
 
     if (!reservation) {
       return NextResponse.json({ error: "Reservation not found" }, { status: 404 });
@@ -135,10 +136,10 @@ export async function POST(request: Request) {
           );
         }
 
-        // 7. Send Receipt Email to Guest
-        if (currentUser && currentUser.email) {
+        // 7. Send Receipt Email to Guest (using DB user data for reliability)
+        if (reservation.user && reservation.user.email) {
            await sendReviewReceiptEmail(
-              { email: currentUser.email, name: currentUser.name },
+              { email: reservation.user.email, name: reservation.user.name },
               { title: listing.title },
               rating
            );

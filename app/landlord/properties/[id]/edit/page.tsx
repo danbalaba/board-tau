@@ -1,6 +1,6 @@
 import { getLandlordPropertyById } from "@/services/landlord/properties";
 import { notFound, redirect } from "next/navigation";
-import { LandlordPropertyEditor } from "@/app/landlord/features/property-management/landlord-property-editor";
+import LandlordPropertyEditor from "@/app/landlord/features/property-management/landlord-property-editor";
 
 export const metadata = {
   title: 'Edit Property - Landlord Dashboard',
@@ -8,9 +8,9 @@ export const metadata = {
 };
 
 interface EditPropertyPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 const EditPropertyPage = async ({ params }: EditPropertyPageProps) => {

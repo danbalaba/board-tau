@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import SafeImage from '@/components/common/SafeImage';
 
 interface ListingReviewCardProps {
   listing: any;
@@ -90,7 +91,7 @@ export function ListingReviewCard({ listing, onApprove, onReject, onModify }: Li
                 <h3 className="text-[11px] font-black uppercase tracking-widest text-emerald-500">Property Inspection Gallery</h3>
               </div>
               <div className="relative group overflow-hidden rounded-[40px] border-2 border-border/40 bg-muted/20">
-                <img 
+                <SafeImage 
                   src={listing.images[0]} 
                   alt="Primary View" 
                   className="w-full aspect-video object-cover transition-transform duration-700 group-hover:scale-105"
@@ -101,7 +102,12 @@ export function ListingReviewCard({ listing, onApprove, onReject, onModify }: Li
               </div>
               <div className="grid grid-cols-3 gap-3">
                 {listing.images.slice(1, 4).map((img: string, i: number) => (
-                  <img key={i} src={img} className="w-full aspect-square object-cover rounded-3xl border border-border/40 hover:border-primary/40 transition-all cursor-pointer" />
+                  <SafeImage 
+                    key={i} 
+                    src={img} 
+                    alt={`Property Detail View ${i + 1}`} 
+                    className="w-full aspect-square object-cover rounded-3xl border border-border/40 hover:border-primary/40 transition-all cursor-pointer" 
+                  />
                 ))}
               </div>
             </div>

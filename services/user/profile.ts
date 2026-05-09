@@ -3,7 +3,9 @@ import { Role } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sanitizeInput } from "@/lib/validators";
+import { isForbiddenPassword } from "@/lib/password-blacklist";
 import bcrypt from 'bcryptjs';
+import { sendPasswordChangeEmail } from "@/services/email/notifications";
 
 export interface UserProfile {
   id: string;
@@ -155,7 +157,11 @@ export async function changeUserPassword(oldPassword: string, newPassword: strin
     },
     select: {
       id: true,
+      name: true,
       password: true,
+      lastPasswordChangeAt: true,
+      passwordHistory: true,
+      securityVersion: true,
     },
   });
 
@@ -163,8 +169,24 @@ export async function changeUserPassword(oldPassword: string, newPassword: strin
     throw new Error("User not found");
   }
 
+  // Check 30-second cooldown (Temporary for Demo purposes)
+  if (user.lastPasswordChangeAt) {
+    const lastChange = user.lastPasswordChangeAt;
+    if (lastChange && (Date.now() - lastChange.getTime()) < 30 * 1000) {
+      // const nextAvailable = new Date(lastChange.getTime() + 24 * 60 * 60 * 1000); // 24 Hours (Production)
+      const nextAvailable = new Date(lastChange.getTime() + 30 * 1000); // 30 Seconds (Demo)
+      const secondsLeft = Math.ceil((nextAvailable.getTime() - Date.now()) / 1000);
+      throw new Error(`Please wait ${secondsLeft} seconds before changing your password again.`);
+    }
+  }
+
   if (!user.password) {
     throw new Error("User does not have a password set");
+  }
+
+  // 🛡️ Blacklist check on server
+  if (isForbiddenPassword(newPassword)) {
+    throw new Error("This password is too common/easy to guess. Please choose a stronger one.");
   }
 
   // Verify old password
@@ -173,8 +195,21 @@ export async function changeUserPassword(oldPassword: string, newPassword: strin
     throw new Error("Current password is incorrect");
   }
 
+  // Check Password History (Last 3 hashes)
+  // We check the new password against the current and history
+  const isPreviouslyUsed = await Promise.all(
+    [user.password, ...user.passwordHistory].map(hash => bcrypt.compare(newPassword, hash))
+  );
+
+  if (isPreviouslyUsed.some(match => match)) {
+    throw new Error("You cannot reuse a recently used password.");
+  }
+
   // Hash new password
   const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+  // Update password history (keep only last 10)
+  const updatedHistory = [user.password, ...user.passwordHistory].slice(0, 10);
 
   // Update user password
   await db.user.update({
@@ -183,7 +218,16 @@ export async function changeUserPassword(oldPassword: string, newPassword: strin
     },
     data: {
       password: hashedPassword,
+      lastPasswordChangeAt: new Date(),
+      securityVersion: { increment: 1 },
+      passwordHistory: updatedHistory,
     },
+  });
+
+  // Send Security Notification Email
+  await sendPasswordChangeEmail({
+    email: session.user.email,
+    name: user.name,
   });
 }
 

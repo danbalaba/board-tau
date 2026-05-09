@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 
 import { categories } from "@/utils/constants";
 import { Category } from "@/types";
+import { useLoading } from "@/components/loading/LoadingContext";
 
 const Categories = () => {
   const [isActive, setIsActive] = useState(false);
@@ -15,6 +16,7 @@ const Categories = () => {
   const pathname = usePathname();
   const category = params?.get("category");
   const router = useRouter();
+  const { startLoading } = useLoading();
 
   const isMainPage = pathname === "/";
 
@@ -37,13 +39,16 @@ const Categories = () => {
     return null;
   }
 
-  const handleCategoryClick = (categoryLabel: string) => {
+  const handleCategoryClick = (categoryValue: string) => {
+    // Trigger global loading overlay
+    startLoading();
+
     const newParams = new URLSearchParams(params?.toString() || "");
 
-    if (category === categoryLabel) {
+    if (category === categoryValue) {
       newParams.delete("category");
     } else {
-      newParams.set("category", categoryLabel);
+      newParams.set("category", categoryValue);
     }
 
     router.push(`/?${newParams.toString()}`);
@@ -60,10 +65,10 @@ const Categories = () => {
             const Icon = item.icon;
             return (
               <motion.button
-                key={item.label}
-                onClick={() => handleCategoryClick(item.label)}
+                key={item.value}
+                onClick={() => handleCategoryClick(item.value)}
                 className={`px-4 py-2.5 rounded-full text-sm md:text-sm font-medium transition-all duration-300 flex items-center space-x-1.5 group flex-shrink-0 ${
-                  category === item.label
+                  category === item.value
                     ? "bg-primary text-white shadow-lg shadow-primary/30"
                     : "bg-white dark:bg-slate-800 text-text-primary dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700"
                 }`}
@@ -84,7 +89,7 @@ const Categories = () => {
                   whileHover={{ rotate: 10 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Icon className={`text-lg ${category === item.label ? 'text-white' : 'text-primary group-hover:text-primary/80'}`} />
+                  <Icon className={`text-lg ${category === item.value ? 'text-white' : 'text-primary group-hover:text-primary/80'}`} />
                 </motion.div>
                 <span className="tracking-wide">{item.label}</span>
               </motion.button>

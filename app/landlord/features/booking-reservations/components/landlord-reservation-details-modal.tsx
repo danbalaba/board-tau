@@ -20,6 +20,7 @@ import {
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/helper';
+import SafeImage from '@/components/common/SafeImage';
 
 interface LandlordReservationDetailsModalProps {
   reservation: ReservationRequest;
@@ -67,8 +68,8 @@ export function LandlordReservationDetailsModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Reservation Details" width="lg">
-      <div className="p-8 space-y-8 bg-white dark:bg-gray-900 overflow-hidden">
+    <Modal isOpen={isOpen} onClose={onClose} title="Inquiry Details" width="lg" hasFixedFooter>
+      <div className="space-y-8 max-h-[80vh] overflow-y-auto p-8 custom-scrollbar relative">
         
         <AnimatePresence mode="wait">
           {isInitialLoading ? (
@@ -100,7 +101,7 @@ export function LandlordReservationDetailsModal({
             >
               {/* Profile Card Overlay (If Confirming Revoke) */}
               {showRevokeConfirm && (
-                <div className="absolute inset-x-0 bottom-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl p-8 border-t border-rose-100 dark:border-rose-900/30 rounded-b-[32px] animate-in slide-in-from-bottom-full duration-300">
+                <div className="absolute inset-x-0 bottom-0 z-50 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-xl p-8 border-t border-rose-100 dark:border-rose-900/30 rounded-b-[32px] animate-in slide-in-from-bottom-full duration-300">
                   <div className="text-center">
                     <div className="w-16 h-16 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
                       <IconX size={32} />
@@ -179,7 +180,16 @@ export function LandlordReservationDetailsModal({
                   </span>
                   <div className="flex flex-col md:flex-row gap-6">
                     <div className="w-full md:w-1/2 aspect-video rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-800">
-                      <img src={reservation.listing.imageSrc} alt="" className="w-full h-full object-cover" />
+                      <SafeImage
+                        src={(reservation.room?.images && reservation.room.images.length > 0) 
+                          ? reservation.room.images[0].url 
+                          : (reservation.listing?.images && reservation.listing.images.length > 0)
+                            ? reservation.listing.images[0].url
+                            : reservation.listing?.imageSrc || "/images/placeholder.jpg"
+                        }
+                        alt={reservation.listing.title}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
                     </div>
                     <div className="flex-1 flex flex-col justify-center">
                       <h4 className="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2">
@@ -270,38 +280,51 @@ export function LandlordReservationDetailsModal({
                   <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800 mx-6"></div>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {(reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED') && (
-                    <Button 
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-600/20 py-5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] group/act"
-                      onClick={() => handleAction('CHECKED_IN')}
-                      isLoading={isLoading}
-                    >
-                      <span className="flex items-center justify-center gap-2">
-                        <IconPlayerPlay size={18} fill="currentColor" className="group-hover:scale-110 transition-transform" />
-                        Confirm Check-In
-                      </span>
-                    </Button>
-                  )}
+                <div className="flex flex-col gap-4">
+                  {/* Row 1: Primary Actions (Check-in & Cancel) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {(reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED') && (
+                      <Button 
+                        className="w-full bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 py-5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] group/act transition-all active:scale-95"
+                        onClick={() => handleAction('CHECKED_IN')}
+                        isLoading={isLoading}
+                      >
+                        <span className="flex items-center justify-center gap-2">
+                          <IconPlayerPlay size={18} fill="currentColor" className="group-hover:scale-110 transition-transform" />
+                          Confirm Check-In
+                        </span>
+                      </Button>
+                    )}
 
-                  {reservation.status !== 'CANCELLED' && (
-                    <Button 
-                      outline
-                      className={cn(
-                        "rounded-[1.25rem] py-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all group/rev",
-                        (reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED') 
-                          ? "border-rose-100 text-rose-500 hover:bg-rose-50 dark:border-rose-900/30" 
-                          : "sm:col-span-2 border-rose-100 text-rose-500 hover:bg-rose-50 dark:border-rose-900/30"
-                      )}
-                      onClick={() => setShowRevokeConfirm(true)}
-                      isLoading={isLoading}
-                    >
-                      <span className="flex items-center justify-center gap-2">
-                         <IconX size={18} strokeWidth={3} className="group-hover:rotate-90 transition-transform" /> 
-                         Cancel Reservation
-                      </span>
-                    </Button>
-                  )}
+                    {reservation.status !== 'CANCELLED' && (
+                      <Button 
+                        outline
+                        className={cn(
+                          "rounded-[1.25rem] py-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all group/rev active:scale-95",
+                          (reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED') 
+                            ? "border-rose-100 text-rose-500 hover:bg-rose-50 dark:border-rose-900/30" 
+                            : "sm:col-span-2 border-rose-100 text-rose-500 hover:bg-rose-50 dark:border-rose-900/30"
+                        )}
+                        onClick={() => setShowRevokeConfirm(true)}
+                        isLoading={isLoading}
+                      >
+                        <span className="flex items-center justify-center gap-2">
+                           <IconX size={18} strokeWidth={3} className="group-hover:rotate-90 transition-transform" /> 
+                           Cancel Reservation
+                        </span>
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Row 2: Communication (Chat) */}
+                  <Button
+                    outline
+                    className="w-full rounded-[1.25rem] py-5 border-gray-100 dark:border-gray-800 text-[10px] font-black uppercase tracking-[0.2em] group/chat flex items-center justify-center gap-3 transition-all active:scale-[0.98] hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    onClick={() => window.location.href = `/landlord?openChat=true&listingId=${reservation.listing.id}&tenantId=${reservation.user.id}`}
+                  >
+                    <IconMail size={18} className="group-hover/chat:scale-110 transition-transform text-primary" />
+                    Chat with {reservation.user.name || 'Tenant'}
+                  </Button>
                 </div>
                 
                 <div className="mt-6 flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl">

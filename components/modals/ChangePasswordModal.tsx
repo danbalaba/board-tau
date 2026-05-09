@@ -7,7 +7,7 @@ import Input from "@/components/inputs/Input";
 import Button from "@/components/common/Button";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { changeUserPasswordClient } from "@/services/user/profile";
-import { validateChangePasswordForm } from "@/lib/validators";
+import { changePasswordResolver, ChangePasswordFormValues } from "./hooks/use-change-password-validation";
 import Modal from "./Modal";
 import { motion } from "framer-motion";
 
@@ -29,15 +29,17 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     formState: { errors },
     reset,
     watch,
-  } = useForm({
+  } = useForm<ChangePasswordFormValues>({
     defaultValues: {
       oldPassword: "",
       newPassword: "",
       confirmPassword: "",
     },
+    resolver: changePasswordResolver,
+    mode: "onChange",
   });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: ChangePasswordFormValues) => {
     setIsLoading(true);
     try {
       await changeUserPasswordClient(data.oldPassword, data.newPassword);
@@ -79,10 +81,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 watch={watch as any}
                 useStaticLabel={false}
                 icon={Lock as any}
-                {...register("oldPassword", {
-                  required: "Current password is required",
-                  validate: (value) => validateChangePasswordForm(value, "", "").oldPassword === undefined || "Incorrect password",
-                })}
+                {...register("oldPassword")}
               />
             </div>
 
@@ -99,10 +98,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 watch={watch as any}
                 useStaticLabel={false}
                 icon={ShieldCheck as any}
-                {...register("newPassword", {
-                  required: "New password is required",
-                  validate: (value) => validateChangePasswordForm("", value, "").newPassword === undefined || "6+ chars with special sym.",
-                })}
+                {...register("newPassword")}
               />
             </div>
 
@@ -117,13 +113,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 watch={watch as any}
                 useStaticLabel={false}
                 icon={ShieldCheck as any}
-                {...register("confirmPassword", {
-                  required: "Confirm your password",
-                  validate: (value) => {
-                    const passMatch = watch("newPassword") === value;
-                    return passMatch || "Passwords do not match";
-                  }
-                })}
+                {...register("confirmPassword")}
               />
             </div>
           </div>

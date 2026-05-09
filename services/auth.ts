@@ -2,7 +2,8 @@
 import { db } from "@/lib/db";
 import bcrypt from 'bcryptjs';
 import { generateAndStoreOTP, sendOTPEmail } from "@/lib/otp";
-import { validateName, validateEmail, validatePassword, sanitizeInput } from "@/lib/validators";
+import { sanitizeInput } from "@/lib/validators";
+import { signupSchema } from "@/lib/validations/auth";
 
 export const registerUser = async ({
   name,
@@ -17,16 +18,18 @@ export const registerUser = async ({
     // Sanitize inputs to prevent XSS attacks
     const sanitizedName = sanitizeInput(name);
     const sanitizedEmail = sanitizeInput(email);
-    const sanitizedPassword = inputPassword; // Don't sanitize passwords
+    const sanitizedPassword = inputPassword;
 
-    // Validate inputs
-    const nameError = validateName(sanitizedName);
-    const emailError = validateEmail(sanitizedEmail);
-    const passwordError = validatePassword(sanitizedPassword);
+    // 🛡️ Enterprise Validation via Zod
+    const validation = signupSchema.safeParse({
+      name: sanitizedName,
+      email: sanitizedEmail,
+      password: sanitizedPassword,
+    });
 
-    if (nameError) throw new Error(nameError);
-    if (emailError) throw new Error(emailError);
-    if (passwordError) throw new Error(passwordError);
+    if (!validation.success) {
+      throw new Error(validation.error.issues[0].message);
+    }
 
     const hashedPassword = await bcrypt.hash(sanitizedPassword, 12);
 

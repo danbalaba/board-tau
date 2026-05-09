@@ -21,9 +21,15 @@ const HeartButton: React.FC<HeartButtonProps> = ({
   showLabel = false,
 }) => {
   const router = useRouter();
-  const { status } = useSession();
+  const session = useSession();
+  const status = session?.status;
   const { error } = useResponsiveToast();
   const [isPending, startTransition] = useTransition();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Use the prop as the source of truth
   const [hasFavorited, setHasFavorited] = useState(initialValue);
@@ -66,6 +72,15 @@ const HeartButton: React.FC<HeartButtonProps> = ({
       }
     });
   };
+
+  if (!mounted) {
+    return (
+      <div className={cn(
+        "relative opacity-50",
+        showLabel ? "px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 w-24 h-10" : "w-7 h-7"
+      )} />
+    );
+  }
 
   if (showLabel) {
     return (

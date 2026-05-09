@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { FaUsers, FaEye, FaFile, FaHistory } from 'react-icons/fa';
 import { Tenant } from '../hooks/use-tenant-logic';
 
+import SafeImage from '@/components/common/SafeImage';
+
 interface LandlordTenantCardProps {
   tenant: Tenant;
 }
@@ -26,7 +28,7 @@ export function LandlordTenantCard({ tenant }: LandlordTenantCardProps) {
         <div className="flex items-start gap-4">
           <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
             {tenant.user.image ? (
-              <img
+              <SafeImage
                 src={tenant.user.image}
                 alt={tenant.user.name as string}
                 className="w-full h-full object-cover"

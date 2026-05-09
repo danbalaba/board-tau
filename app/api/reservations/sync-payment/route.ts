@@ -39,18 +39,74 @@ export async function GET() {
        we can safely treat it as "Verified" to ensure the UX is immediate.
     */
 
-    // 2. Update the reservation status
-    const updatedReservation = await db.reservation.update({
-      where: { id: pendingReservation.id },
-      data: {
-        status: "RESERVED",
-        paymentStatus: "PAID",
-      },
-      include: {
-        listing: true,
-        user: true,
+    // 1. ATOMIC STATUS UPDATE: Guard against race conditions with webhooks
+    let updatedReservation;
+    try {
+      updatedReservation = await db.reservation.update({
+        where: { 
+          id: pendingReservation.id,
+          status: "PENDING_PAYMENT" 
+        },
+        data: {
+          status: "RESERVED",
+          paymentStatus: "PAID",
+        },
+        include: {
+          listing: true,
+          user: true,
+          room: true
+        }
+      });
+    } catch (error) {
+      console.log("ℹ️ Sync: Reservation already processed by webhook. Skipping redundant update.");
+      return NextResponse.json({ 
+        success: true, 
+        message: "Payment already synchronized via webhook"
+      });
+    }
+
+    // 2. INVENTORY LOCK: Only happens if THIS process was the one to flip the status
+    if (updatedReservation.room) {
+      // CRITICAL: Fetch count from Inquiry to ensure source-of-truth accuracy
+      const sourceInquiry = await db.inquiry.findUnique({
+        where: { id: updatedReservation.inquiryId as string },
+        select: { occupantsCount: true }
+      });
+      
+      const occupantCount = Number(sourceInquiry?.occupantsCount || updatedReservation.occupantsCount) || 1;
+      
+      // 2. HARD FLOOR: Fetch current slots to ensure we don't go negative
+      const currentRoom = await db.room.findUnique({
+        where: { id: updatedReservation.roomId },
+        select: { availableSlots: true }
+      });
+
+      const currentSlots = currentRoom?.availableSlots || 0;
+      const finalSubtraction = Math.min(currentSlots, occupantCount);
+
+      const updatedRoom = await db.room.update({
+        where: { id: updatedReservation.roomId },
+        data: {
+          availableSlots: { decrement: finalSubtraction },
+        },
+      });
+
+      if (updatedRoom.availableSlots <= 0) {
+        await db.room.update({
+          where: { id: updatedReservation.roomId },
+          data: { status: "FULL" },
+        });
       }
-    });
+
+      // CRITICAL: Invalidate Cache
+      const { revalidatePath } = await import("next/cache");
+      const { cache } = await import("@/lib/redis");
+      revalidatePath(`/listings/${pendingReservation.listingId}`);
+      try {
+        await cache.del(`listing:id:${pendingReservation.listingId}`);
+        await cache.delPattern("listings:*");
+      } catch (e) { console.error("Cache clear error in sync-payment:", e); }
+    }
 
     // 3. Update the associated Inquiry to APPROVED/PAID
     await db.inquiry.update({
@@ -60,15 +116,6 @@ export async function GET() {
       },
     });
 
-     // 4. Decrement available slots in the room
-     await db.room.update({
-      where: { id: pendingReservation.roomId },
-      data: {
-        availableSlots: {
-          decrement: 1
-        }
-      }
-    });
 
     // 5. Create Persistent Notification for Landlord
     try {

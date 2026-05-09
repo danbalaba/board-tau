@@ -48,8 +48,18 @@ export const getLandlordReviews = async (args?: {
           id: true,
           title: true,
           imageSrc: true,
+          images: true,
         },
       },
+      reservation: {
+        include: {
+          room: {
+            include: {
+              images: true
+            }
+          }
+        }
+      }
     },
   });
 
@@ -83,8 +93,18 @@ export const getReviewDetails = async (reviewId: string) => {
           id: true,
           title: true,
           imageSrc: true,
+          images: true,
         },
       },
+      reservation: {
+        include: {
+          room: {
+            include: {
+              images: true
+            }
+          }
+        }
+      }
     },
   });
 

@@ -31,7 +31,16 @@ export async function GET(req: NextRequest) {
         where: { status },
         include: {
           user: true,
-          rooms: true,
+          rooms: {
+            include: {
+              images: true,
+              amenities: {
+                include: {
+                  amenityType: true,
+                }
+              }
+            }
+          },
           images: true,
           amenities: true,
           rules: true,
@@ -80,6 +89,8 @@ export async function GET(req: NextRequest) {
       amenities: listing.amenities,
       rules: listing.rules,
       features: listing.features,
+      businessInfo: (listing as any).businessInfo,
+      amenities_list: listing.amenities_list,
     }));
 
     return NextResponse.json(

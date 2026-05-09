@@ -1,4 +1,4 @@
-import { ObjectDetector } from "@mediapipe/tasks-vision";
+import { ObjectDetector, HandLandmarker } from "@mediapipe/tasks-vision";
 import { visionManager } from "./vision-manager";
 
 export interface IDValidationResult {
@@ -12,6 +12,11 @@ export interface IDValidationResult {
  */
 export class IDEngine {
   private detector: ObjectDetector | null = null;
+  private handLandmarker: HandLandmarker | null = null;
+
+  public async warmup() {
+    await Promise.all([this.getDetector(), this.getHandLandmarker()]);
+  }
 
   private async getDetector() {
     if (!this.detector) {
@@ -20,63 +25,85 @@ export class IDEngine {
     return this.detector;
   }
 
+  private async getHandLandmarker() {
+    if (!this.handLandmarker) {
+      this.handLandmarker = await visionManager.createHandLandmarker();
+    }
+    return this.handLandmarker;
+  }
+
   public async validateIDCard(
-    imageElement: HTMLImageElement | HTMLCanvasElement
+    imageElement: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement
   ): Promise<IDValidationResult> {
     const detector = await this.getDetector();
+    const hand = await this.getHandLandmarker();
+
+    // Protection: Ensure the element actually has loaded frame data
+    const width = 'videoWidth' in imageElement ? imageElement.videoWidth : imageElement.width;
+    const height = 'videoHeight' in imageElement ? imageElement.videoHeight : imageElement.height;
+    if (!width || width === 0 || !height || height === 0) {
+        return {
+            isValid: false,
+            score: 0,
+            reason: "Camera stream initializing..."
+        };
+    }
+
+    // 1. HAND DETECTION
+    // We intentionally do NOT block capture if a hand is detected, 
+    // because users naturally hold their ID cards up to the webcam.
+    const handResult = hand.detect(imageElement);
+
     const result = detector.detect(imageElement);
 
-    if (!result.detections || result.detections.length === 0) {
-      return { 
-        isValid: false, 
-        score: 0, 
-        reason: "ID card not detected. Please ensure the card is inside the frame and well-lit." 
-      };
-    }
+    // --- ANTI-SPOOFING: PHONE/SCREEN DETECTION ---
+    const spoofCategories = ["phone", "cell", "laptop", "tv", "monitor", "tablet", "screen", "display"];
+    const spoofDetection = result.detections?.find(d => {
+      const categoryName = d.categories[0].categoryName.toLowerCase();
+      return spoofCategories.some(spoof => categoryName.includes(spoof));
+    });
 
-    // --- ANTI-SPOOFING: PHONE DETECTION ---
-    // EfficientDet Lite models can detect "cell phone" (label index 67 in COCO)
-    // We check if a phone is present in the frame
-    const phoneDetection = result.detections.find(d => 
-      d.categories[0].categoryName.toLowerCase().includes("phone") ||
-      d.categories[0].categoryName.toLowerCase().includes("screen")
-    );
-
-    if (phoneDetection && phoneDetection.categories[0].score > 0.4) {
-      console.log("[KYC Security] Digital Spoofing Detected (Phone in frame).");
+    // 25% threshold: catches digital screens without falsely flagging a glossy ID card as a phone
+    if (spoofDetection && spoofDetection.categories[0].score > 0.25) {
+      console.log("[KYC Security] Digital Spoofing Detected (Device in frame).");
       return {
         isValid: false,
         score: 0,
-        reason: "Digital screens or phones are not allowed. Please use your physical ID card."
+        reason: `Digital screens are not allowed. Please use your physical ID card.`
       };
     }
 
-    // --- ID CARD DETECTION ---
-    // We look for objects that resemble a card/document
-    const cardDetection = result.detections.find(d => 
-      d.categories[0].categoryName.toLowerCase().includes("card") ||
-      d.categories[0].categoryName.toLowerCase().includes("document") ||
-      d.categories[0].categoryName.toLowerCase().includes("book") // Passport often detected as book
+    // --- SELFIE BLOCKER ---
+    // Since we relaxed the ID detection to improve UX, we must ensure users don't 
+    // accidentally capture a selfie in the ID step.
+    const personDetection = result.detections?.find(d => 
+      d.categories[0].categoryName.toLowerCase() === "person"
     );
 
-    if (!cardDetection) {
-      return {
-        isValid: false,
-        score: 0,
-        reason: "ID card not detected. Please ensure the card is clearly visible."
-      };
+    if (personDetection && personDetection.boundingBox) {
+      const box = personDetection.boundingBox;
+      const boxArea = box.width * box.height;
+      const imageArea = width * height;
+      const ratio = boxArea / imageArea;
+
+      // If a person takes up more than 20% of the camera frame, they are likely taking a selfie 
+      // instead of scanning an ID. Lowered from 0.60 to 0.20 to catch zoomed-out faces.
+      if (ratio > 0.20) {
+        return {
+          isValid: false,
+          score: 0,
+          reason: "Selfie detected. Please capture your physical ID card, not your face."
+        };
+      }
     }
 
-    // Check confidence
-    if (cardDetection.categories[0].score < 0.5) {
-      return {
-        isValid: false,
-        score: cardDetection.categories[0].score,
-        reason: "Image too blurry. Please ensure the ID card is in focus."
-      };
-    }
-
-    return { isValid: true, score: cardDetection.categories[0].score };
+    // --- NEGATIVE FILTERING STRATEGY ---
+    // The default AI model (COCO dataset) does NOT have classes for "ID card", "license", or "passport".
+    // It only knows "book" (which is why thick passports work, but plastic cards fail).
+    // Therefore, we cannot strictly require a positive "ID" detection.
+    // Instead, we trust the frame as long as it passes our security checks (no screens, no large faces).
+    
+    return { isValid: true, score: 1.0 };
   }
 }
 

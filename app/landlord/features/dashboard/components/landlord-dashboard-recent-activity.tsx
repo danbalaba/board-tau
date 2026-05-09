@@ -91,8 +91,35 @@ function ActivityCard({ activity }: { activity: typeof recentActivities[0] }) {
   );
 }
 
-export function LandlordDashboardRecentActivity() {
+import Skeleton from '@/components/common/Skeleton';
+
+export function LandlordDashboardRecentActivity({ isLoading }: { isLoading?: boolean }) {
   const [showModal, setShowModal] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="bg-white dark:bg-gray-950 p-6 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="flex flex-row items-center justify-between mb-6 gap-4">
+          <Skeleton className="h-6 w-32" variant="text" />
+          <Skeleton className="h-3 w-16" variant="text" />
+        </div>
+        <div className="space-y-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3 p-3 bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
+              <Skeleton className="w-10 h-10 rounded-lg flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-3 w-24" variant="text" />
+                  <Skeleton className="h-2 w-12" variant="text" />
+                </div>
+                <Skeleton className="h-2 w-32 opacity-60" variant="text" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

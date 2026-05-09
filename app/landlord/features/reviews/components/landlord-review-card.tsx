@@ -18,6 +18,7 @@ import { cn } from '@/utils/helper';
 import Button from "@/components/common/Button";
 import Avatar from '@/components/common/Avatar';
 import { Review } from '../hooks/use-review-logic';
+import SafeImage from '@/components/common/SafeImage';
 
 interface LandlordReviewCardProps {
   review: Review;
@@ -76,17 +77,16 @@ export function LandlordReviewCard({
         "relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 z-10 shadow-inner",
         isGrid ? "h-40 mb-6 w-full" : "w-full sm:w-48 h-40"
       )}>
-        {review.listing.imageSrc ? (
-          <img
-            src={review.listing.imageSrc}
-            alt={review.listing.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 grayscale-[40%] group-hover:grayscale-0 group-hover:opacity-100"
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-50 flex items-center justify-center text-gray-300">
-            <IconStar size={isGrid ? 32 : 24} />
-          </div>
-        )}
+        <SafeImage
+          src={(review.reservation?.room?.images && review.reservation.room.images.length > 0)
+            ? review.reservation.room.images[0].url
+            : (review.listing?.images && review.listing.images.length > 0)
+              ? (typeof review.listing.images[0] === 'string' ? review.listing.images[0] : (review.listing.images[0] as any).url)
+              : review.listing?.imageSrc || "/images/placeholder.jpg"
+          }
+          alt={review.listing.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
         <div className="absolute top-3 left-3 z-20">
           <span className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] uppercase font-black tracking-widest shadow-lg backdrop-blur-md border",
@@ -157,7 +157,7 @@ export function LandlordReviewCard({
                 className="w-14 h-14 rounded-xl overflow-hidden border-2 border-gray-100 dark:border-gray-800 flex-shrink-0 shadow-sm transition-all hover:scale-110 hover:-rotate-3 cursor-zoom-in relative group/thumb"
               >
                 {item.type === 'image' ? (
-                  <img src={item.url} alt="Guest" className="w-full h-full object-cover" />
+                  <SafeImage src={item.url} alt="Guest" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center relative">
                     <video src={item.url} className="w-full h-full object-cover opacity-60" />
@@ -175,24 +175,24 @@ export function LandlordReviewCard({
         )}
 
         {/* Management Actions (Primary Parity) */}
-        <div className="flex items-center gap-3 pt-6 border-t border-gray-100 dark:border-gray-800 mt-auto">
+        <div className="flex items-center gap-2 pt-6 border-t border-gray-100 dark:border-gray-800 mt-auto w-full">
           <Button
             outline
             onClick={() => onViewDetails(review.id)}
-            className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-[0.2em] border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-95"
+            className="flex-1 rounded-2xl py-3 px-1 text-[10px] font-black uppercase tracking-widest border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-95"
           >
-            <span className="flex items-center justify-center gap-2">
+            <span className="flex items-center justify-center gap-1.5">
               <IconEye size={14} />
-              Details
+              <span className="hidden sm:inline">Details</span>
             </span>
           </Button>
           
           {!review.response && (
             <Button
               onClick={() => setRespondModal({ isOpen: true, reviewId: review.id, reviewTitle: review.listing.title })}
-              className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-[0.2em] bg-emerald-500 hover:bg-emerald-600 text-white shadow-xl shadow-emerald-500/20 group/btn transition-all active:scale-95"
+              className="flex-1 rounded-2xl py-3 px-1 text-[10px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 group/btn transition-all active:scale-95"
             >
-              <span className="flex items-center justify-center gap-2">
+              <span className="flex items-center justify-center gap-1.5">
                 <IconMessage size={14} className="group-hover/btn:scale-110 transition-transform" />
                 Respond
               </span>
@@ -200,9 +200,9 @@ export function LandlordReviewCard({
           )}
 
           {review.response && (
-             <div className="flex-1 flex items-center justify-center gap-1.5 px-3 py-3 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/30">
-                <IconMessage size={14} className="text-blue-500" />
-                <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Responded</span>
+             <div className="flex-1 flex items-center justify-center gap-1.5 px-1 py-3 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/30">
+                <IconMessage size={14} className="text-blue-500 hidden sm:block" />
+                <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center leading-none">Responded</span>
              </div>
           )}
         </div>
@@ -253,7 +253,7 @@ export function LandlordReviewCard({
               onClick={(e) => e.stopPropagation()}
             >
               {allMedia[selectedMediaIdx].type === 'image' ? (
-                <img
+                <SafeImage
                   src={allMedia[selectedMediaIdx].url}
                   alt="Enlarged review photo"
                   className="max-w-full max-h-[90vh] object-contain rounded-3xl shadow-[0_0_100px_rgba(0,0,0,0.8)] border border-white/5"

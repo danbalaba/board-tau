@@ -5,6 +5,7 @@ import { IconSearch, IconX, IconMail, IconUser } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Inquiry } from '../hooks/use-inquiry-logic';
+import SafeImage from '@/components/common/SafeImage';
 
 interface LandlordInquirySearchProps {
   searchQuery: string;
@@ -91,7 +92,7 @@ export function LandlordInquirySearch({
                 >
                   <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 group-hover/item:text-primary transition-colors overflow-hidden">
                     {inquiry.listing.imageSrc ? (
-                      <img src={inquiry.listing.imageSrc} alt="" className="w-full h-full object-cover" />
+                      <SafeImage src={inquiry.listing.imageSrc} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <IconMail size={16} />
                     )}

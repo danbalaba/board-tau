@@ -1,13 +1,32 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { faceEngine } from '@/lib/mediapipe/face-engine';
 import { idEngine } from '@/lib/mediapipe/id-engine';
-import toast from 'react-hot-toast';
+import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 
 export type KYCStep = 'SELFIE' | 'ID';
 
 export const useKYC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const responsiveToast = useResponsiveToast();
+
+  // Warm up the engines when hook is mounted
+  useEffect(() => {
+      const warmup = async () => {
+        try {
+          // Properly warm up without passing 0-pixel images
+          await Promise.all([
+             faceEngine.warmup(), 
+             idEngine.warmup()
+          ]);
+        } catch (e) {
+          console.warn("AI Warmup behavior:", e);
+        } finally {
+          setIsInitializing(false);
+        }
+      };
+    warmup();
+  }, []);
   
   /**
    * Validates a Selfie capture
@@ -22,15 +41,15 @@ export const useKYC = () => {
       const result = await faceEngine.validateFace(img);
       
       if (!result.isValid) {
-        toast.error(result.reason || "Selfie verification failed");
+        responsiveToast.error(result.reason || "Selfie verification failed");
         return false;
       }
 
-      toast.success("Face verified successfully!");
+      responsiveToast.success("Face verified successfully!");
       return true;
     } catch (error) {
       console.error("KYC Error:", error);
-      toast.error("Error during face verification");
+      responsiveToast.error("Error during face verification");
       return false;
     } finally {
       setIsProcessing(false);
@@ -50,18 +69,18 @@ export const useKYC = () => {
       // 1. Detect ID Card Presence
       const idResult = await idEngine.validateIDCard(img);
       if (!idResult.isValid) {
-        toast.error(idResult.reason || "ID card not detected");
+        responsiveToast.error(idResult.reason || "ID card not detected");
         return false;
       }
 
       // 2. OCR Check (Optional: You can still use Tesseract here, but now 
       // we know there is actually a card in the frame)
       
-      toast.success("ID card detected!");
+      responsiveToast.success("ID card detected!");
       return true;
     } catch (error) {
       console.error("KYC Error:", error);
-      toast.error("Error during ID verification");
+      responsiveToast.error("Error during ID verification");
       return false;
     } finally {
       setIsProcessing(false);
@@ -70,8 +89,7 @@ export const useKYC = () => {
 
   return {
     isInitializing,
-    setIsInitializing,
-    isProcessing,
+    isProcessing: isProcessing || isInitializing,
     validateSelfie,
     validateID,
     faceEngine,

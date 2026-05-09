@@ -32,10 +32,15 @@ const sortOptions = [
   { value: "price-low", label: "Price: Low", icon: <DollarSign size={16} className="opacity-50" /> },
 ];
 
+import { useSearchParams } from "next/navigation";
+
 const FavoritesClient: React.FC<FavoritesClientProps> = ({
   initialFavorites,
 }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const highlightedId = searchParams.get("id");
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [regionFilter, setRegionFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
@@ -129,7 +134,7 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-8 mb-10 flex flex-col md:flex-row items-center gap-4 bg-white/50 dark:bg-gray-800/50 p-4 rounded-2xl backdrop-blur-md border border-gray-100 dark:border-gray-700/50 shadow-sm"
+        className="mt-8 mb-10 flex flex-col md:flex-row items-center gap-4 bg-white/50 dark:bg-gray-800/50 p-4 rounded-2xl backdrop-blur-md border border-gray-100 dark:border-gray-700/50 shadow-sm relative z-20"
       >
         {/* Search */}
         <div className="relative flex-[5]">
@@ -194,9 +199,16 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-6 xl:gap-5 mt-8">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-8 xl:gap-6 mt-8">
               {filteredFavorites.map((listing) => {
-                   return <ListingCard key={listing.id} data={listing} hasFavorited />;
+                   return (
+                    <ListingCard 
+                      key={listing.id} 
+                      data={listing} 
+                      hasFavorited 
+                      isHighlighted={listing.id === highlightedId}
+                    />
+                   );
               })}
             </div>
           )}

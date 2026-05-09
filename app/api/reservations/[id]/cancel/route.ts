@@ -64,16 +64,19 @@ export async function PUT(
       }
     });
 
-    // IMPORTANT: Release the room slots!
-    // Since this is a student cancel, we must add the occupants back.
-    const occupants = (updatedReservation as any).occupantsCount || 1;
-    await db.room.update({
-      where: { id: updatedReservation.roomId },
-      data: {
-        availableSlots: { increment: occupants },
-        status: "AVAILABLE"
-      }
-    });
+    // CRITICAL: Restore the room slot if it was in a reserved state
+    if (reservation.status === "RESERVED" || reservation.status === "CHECKED_IN") {
+      const occupantCount = (reservation as any).occupantsCount || 1;
+      
+      await db.room.update({
+        where: { id: reservation.roomId },
+        data: {
+          availableSlots: { increment: occupantCount },
+          status: "AVAILABLE"
+        }
+      });
+    }
+
 
     // Notify Landlord
     try {

@@ -18,6 +18,7 @@ import {
 import { motion } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
+import { prepareDataForExport, exportToCSV, exportToExcel } from '@/utils/export-utils';
 import { LandlordReservationSearch } from './landlord-reservation-search';
 import { ReservationRequest } from '../hooks/use-reservation-logic';
 import {
@@ -57,6 +58,38 @@ export function LandlordReservationHeader({
   isArchived,
   onToggleArchived
 }: LandlordReservationHeaderProps) {
+  const handleGenerateCSV = async () => {
+    const reportData = prepareDataForExport(rawReservations, 'reservation');
+    const totalRequests = rawReservations.length;
+    const reservedCount = rawReservations.filter(r => r.status?.toLowerCase() === 'reserved').length;
+    const metadata = {
+      reportTitle: 'Reservation Requests Business Report',
+      reportId: `BTAU-RES-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Total Requests', value: `${totalRequests}` },
+        { label: 'Confirmed Volume', value: `${reservedCount} Paid` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToCSV(reportData, `Reservation_Report_${new Date().toLocaleDateString()}`, metadata);
+  };
+
+  const handleGenerateExcel = async () => {
+    const reportData = prepareDataForExport(rawReservations, 'reservation');
+    const totalRequests = rawReservations.length;
+    const reservedCount = rawReservations.filter(r => r.status?.toLowerCase() === 'reserved').length;
+    const metadata = {
+      reportTitle: 'Reservation Requests Business Report',
+      reportId: `BTAU-RES-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Total Requests', value: `${totalRequests}` },
+        { label: 'Confirmed Volume', value: `${reservedCount} Paid` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToExcel(reportData, `Reservation_Report_${new Date().toLocaleDateString()}`, 'Reservations', metadata);
+  };
+
   const statusOptions = [
     { value: 'all', label: 'All Pre-Stay', icon: IconInbox },
     { value: 'PENDING_PAYMENT', label: 'Pending Payment', icon: IconClock },
@@ -152,7 +185,7 @@ export function LandlordReservationHeader({
                         onClick={() => setSelectedStatus(option.value)}
                         className={cn(
                           "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
-                          selectedStatus === option.value ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          selectedStatus === option.value ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                         )}
                       >
                         <Icon size={14} />
@@ -199,8 +232,14 @@ export function LandlordReservationHeader({
                 <IconList size={18} />
               </button>
             </div>
-
-            <GenerateReportButton onGeneratePDF={handleGenerateReport} />
+ 
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport}
+              onGenerateCSV={handleGenerateCSV}
+              onGenerateExcel={handleGenerateExcel}
+              label="Generate Report"
+              className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hidden sm:flex items-center gap-2"
+            />
           </div>
         </div>
       </div>

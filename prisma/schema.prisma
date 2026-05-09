@@ -60,7 +60,6 @@ enum PaymentStatus {
 enum ContactMethod {
   PHONE
   EMAIL
-  SMS
 }
 
 enum ReservationStatus {
@@ -119,6 +118,11 @@ model User {
   city         String?
   region       String?
   bio          String?
+  lastPasswordChangeAt DateTime?
+  securityVersion      Int       @default(1)
+  passwordHistory      String[]  @default([])
+  failedLoginAttempts  Int       @default(0)
+  loginLockoutUntil    DateTime?
 
   roleRelation UserRole?    @relation(fields: [roleId], references: [id])
 
@@ -175,6 +179,7 @@ model ListingAmenity {
   gated           Boolean   @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  customAmenities String[]  @default([])
 
   listing         Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
   @@unique([listingId])
@@ -188,8 +193,10 @@ model ListingRule {
   visitorsAllowed Boolean   @default(true)
   petsAllowed     Boolean   @default(false)
   smokingAllowed  Boolean   @default(false)
+  noCurfew        Boolean   @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  customRules     String[]  @default([])
 
   listing         Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
   @@unique([listingId])
@@ -202,10 +209,10 @@ model ListingFeature {
   cctv            Boolean   @default(false)
   fireSafety      Boolean   @default(false)
   nearTransport   Boolean   @default(false)
-  studyFriendly   Boolean   @default(false)
-  quietEnvironment Boolean  @default(false)
-  flexibleLease   Boolean   @default(false)
+  floodFree       Boolean   @default(false)
+  backupPower     Boolean   @default(false)
   createdAt       DateTime  @default(now())
+  customFeatures  String[]  @default([])
   updatedAt       DateTime  @updatedAt
 
   listing         Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
@@ -295,6 +302,8 @@ model Listing {
   category          String[]  @default([])
   amenities_list    String[]  @default([])
   amenities_tags    String[]  @default([])
+  isArchived        Boolean   @default(false)
+  businessInfo      Json?     // Supporting data for Admin Review (businessName, businessType, experience, mission)
 
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   amenities         ListingAmenity?
@@ -306,20 +315,33 @@ model Listing {
   reviews           Review[]
   reservations      Reservation[]
   inquiries         Inquiry[]
+  messages          Message[]
+
+  @@index([location], name: "location_2dsphere")
+  @@index([status])
+  @@index([price])
+  @@index([category])
+  @@index([status, price])
+  @@index([status, createdAt(sort: Desc)])
 }
 
 model Room {
   id                String    @id @default(auto()) @map("_id") @db.ObjectId
   listingId         String    @db.ObjectId
   name              String
+  description       String?
   price             Int
   capacity          Int
   availableSlots    Int
   roomType          RoomType
+  bathroomArrangement String?
   bedType           BedType?
+  bedCount          Int        @default(1)
   size              Float?
   status            RoomStatus @default(AVAILABLE)
   reservationFee    Int       @default(0)
+  isArchived        Boolean   @default(false)
+  amenityNames      String[]  @default([])
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -343,6 +365,7 @@ model Inquiry {
   profilePhotoUrl   String?
   idAttachmentUrl   String?
   paymentMethod     String?
+  contactInfo       String?
   reservationFee    Int       @default(0)
   stayDuration      Int       @default(1)
   status            InquiryStatus @default(PENDING)
@@ -360,6 +383,9 @@ model Inquiry {
   room              Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   reservation       Reservation?
+
+  @@index([listingId, status, createdAt])
+  @@index([listingId, userId])
 }
 
 model Reservation {
@@ -388,6 +414,8 @@ model Reservation {
   inquiry           Inquiry?  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
   reviews           Review[]
   @@unique([inquiryId])
+  @@index([listingId, status, paymentStatus])
+  @@index([roomId, status])
 }
 
 model ListingImage {
@@ -432,14 +460,24 @@ model Review {
 
 model Message {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  listingId  String   @db.ObjectId
   senderId   String   @db.ObjectId
   receiverId String   @db.ObjectId
-  content    String
-  read       Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  content                  String
+  read                     Boolean  @default(false)
+  isArchived               Boolean  @default(false)
+  isMarkedUnreadByTenant   Boolean  @default(false)
+  isMarkedUnreadByLandlord Boolean  @default(false)
+  createdAt                DateTime @default(now())
 
   sender   User @relation("sentMessages", fields: [senderId], references: [id], onDelete: Cascade)
   receiver User @relation("receivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  listing  Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, createdAt(sort: Desc)])
+  @@index([senderId, createdAt(sort: Desc)])
+  @@index([receiverId, createdAt(sort: Desc)])
+  @@index([listingId, senderId, createdAt(sort: Desc)])
 }
 
 model AdminActivityLog {
@@ -454,6 +492,9 @@ model AdminActivityLog {
   createdAt  DateTime @default(now())
 
   admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  // TTL Index Placeholder: Records should auto-expire after 90 days (7776000 seconds)
+  @@index([createdAt(sort: Desc)])
 }
 
 model EmailOTP {
@@ -479,12 +520,21 @@ model HostApplication {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
   userId          String    @db.ObjectId @unique
   status          String    @default("pending") // pending, approved, rejected
-  businessInfo    Json
-  propertyInfo    Json
-  contactInfo     Json
-  propertyConfig  Json
-  propertyImages  Json
-  documents       Json
+  isArchived      Boolean   @default(false)
+  
+  // Business & Contact Identity
+  businessInfo    Json      // { businessName, mission, yearsExperience, businessType }
+  contactInfo     Json      // { fullName, phoneNumber, emergencyContact }
+  
+  // Verification Media (Stored in Private EdgeStore Buckets)
+  selfieUrl           String?   // Biometric Selfie with Liveness
+  idCardUrl           String?   // Government ID Card
+  businessPermitUrl   String?   // Mayor's / Business Permit
+  fireSafetyUrl       String?   // Fire Safety Certificate
+  facadePhotoUrl      String?   // Property Establishment Front
+  latlng              Float[]   // [latitude, longitude] coordinates
+  additionalDocsUrl   String?   // Optional: Sanitary Permit, etc.
+  
   adminNotes      String?
   approvedBy      String?   @db.ObjectId
   rejectedBy      String?   @db.ObjectId
@@ -507,6 +557,11 @@ model Notification {
   createdAt   DateTime @default(now())
 
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // TTL Index Placeholder: Records should auto-expire after 30 days (2592000 seconds)
+  @@index([createdAt])
+  @@index([userId, isRead, createdAt(sort: Desc)])
+  @@index([userId, type, isRead])
 }
 
 model CustomDashboard {

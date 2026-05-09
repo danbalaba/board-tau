@@ -15,7 +15,7 @@ import { ScrollArea } from '@/app/admin/components/ui/scroll-area';
 import { Badge } from '@/app/admin/components/ui/badge';
 import { Separator } from '@/app/admin/components/ui/separator';
 import { usePermissions } from '@/app/admin/hooks/use-roles';
-import { Shield, Info, Loader2 } from 'lucide-react';
+import { IconShield, IconInfoCircle, IconLoader2 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 
 interface RoleFormModalProps {
@@ -49,7 +49,6 @@ export function RoleFormModal({
 
     if (initialData) {
       setFormData(prev => {
-        // Prevent update loop if data is already in sync
         if (prev.name === initialData.name && 
             JSON.stringify(prev.permissions) === JSON.stringify(initialData.permissions || [])) {
           return prev;
@@ -95,72 +94,72 @@ export function RoleFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-2xl rounded-[2.5rem] p-8">
         <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Shield className="w-5 h-5 text-primary" />
+          <DialogHeader className="mb-6">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="p-3 bg-emerald-500/10 rounded-2xl shadow-sm">
+                <IconShield className="w-6 h-6 text-emerald-500" />
               </div>
-              <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
+              <DialogTitle className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">{title}</DialogTitle>
             </div>
-            <DialogDescription>
+            <DialogDescription className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-[3.25rem]">
               {description}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-6 py-6">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium">Role Name</Label>
+          <div className="grid gap-6 py-2">
+            <div className="grid grid-cols-1 gap-5">
+              <div className="space-y-2.5">
+                <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">Role Name</Label>
                 <Input 
                   id="name"
                   name="name"
                   placeholder="e.g. MODERATOR"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="bg-muted/30 focus-visible:ring-primary/20"
+                  className="h-12 rounded-2xl bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 focus-visible:ring-emerald-500/20 text-sm font-bold shadow-sm"
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="description" className="text-sm font-medium">Description</Label>
+              <div className="space-y-2.5">
+                <Label htmlFor="description" className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">Description</Label>
                 <Input 
                   id="description"
                   name="description"
                   placeholder="What this role is responsible for..."
                   value={formData.description}
                   onChange={handleInputChange}
-                  className="bg-muted/30 focus-visible:ring-primary/20"
+                  className="h-12 rounded-2xl bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 focus-visible:ring-emerald-500/20 text-sm font-bold shadow-sm"
                 />
               </div>
             </div>
 
-            <Separator />
+            <Separator className="bg-gray-100 dark:bg-gray-800 my-2" />
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Permissions Matrix</Label>
-                <Badge variant="secondary" className="text-[10px] font-bold">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">Permissions Matrix</Label>
+                <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest h-6 px-3 bg-emerald-500/10 text-emerald-500 border-none rounded-lg">
                   {formData.permissions.length} selected
                 </Badge>
               </div>
               
-              <ScrollArea className="h-[300px] w-full rounded-md border border-input bg-muted/20 p-4">
+              <ScrollArea className="h-[300px] w-full rounded-3xl border border-gray-100 dark:border-gray-800 bg-white/40 dark:bg-gray-800/40 p-5 shadow-inner">
                 {permissionsLoading ? (
                   <div className="flex items-center justify-center h-full">
-                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                    <IconLoader2 className="w-6 h-6 animate-spin text-emerald-500" />
                   </div>
                 ) : (
                   <div className="space-y-6">
                     {modules.map((module: any) => (
                       <div key={module} className="space-y-3">
                         <div className="flex items-center gap-2">
-                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b pb-1 flex-1">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100 dark:border-gray-800 pb-2 flex-1">
                             {module} Operations
                           </h4>
                         </div>
-                        <div className="grid grid-cols-1 gap-2">
+                        <div className="grid grid-cols-1 gap-2.5">
                           {permissions.filter((p: any) => p.module === module).map((permission: any) => {
                             const isSelected = formData.permissions.includes(permission.name);
                             return (
@@ -168,19 +167,20 @@ export function RoleFormModal({
                                 key={permission.id}
                                 onClick={() => togglePermission(permission.name)}
                                 className={cn(
-                                  "flex items-center space-x-3 space-y-0 rounded-lg border p-3 cursor-pointer transition-colors",
-                                  isSelected ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-card hover:bg-muted/50"
+                                  "flex items-center space-x-4 space-y-0 rounded-2xl border p-4 cursor-pointer transition-all duration-300",
+                                  isSelected ? "bg-emerald-500/5 border-emerald-500/30 shadow-md shadow-emerald-500/5" : "bg-white/50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm"
                                 )}
                               >
                                 <Checkbox 
                                   checked={isSelected}
                                   onCheckedChange={() => togglePermission(permission.name)}
                                   onClick={(e) => e.stopPropagation()}
+                                  className={cn("rounded-md border-gray-300 dark:border-gray-600", isSelected && "border-emerald-500 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-white")}
                                 />
-                                <div className="space-y-1">
-                                  <p className="text-xs font-semibold leading-none">{permission.name}</p>
+                                <div className="space-y-1.5">
+                                  <p className={cn("text-xs font-black tracking-tight", isSelected ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300")}>{permission.name}</p>
                                   {permission.description && (
-                                    <p className="text-[10px] text-muted-foreground font-medium">
+                                    <p className="text-[10px] text-gray-500 font-bold leading-relaxed">
                                       {permission.description}
                                     </p>
                                   )}
@@ -194,18 +194,18 @@ export function RoleFormModal({
                   </div>
                 )}
               </ScrollArea>
-              <div className="flex items-start gap-2 text-[10px] text-muted-foreground mt-2">
-                <Info className="w-3 h-3 mt-0.5 shrink-0" />
-                <span>Selected permissions will be applied immediately upon role update. Please ensure proper security auditing.</span>
+              <div className="flex items-start gap-2 text-[10px] text-emerald-600/80 dark:text-emerald-400/80 bg-emerald-500/5 p-3 rounded-xl border border-emerald-500/10 mt-4">
+                <IconInfoCircle className="w-4 h-4 shrink-0" />
+                <span className="font-bold leading-relaxed tracking-widest uppercase">Selected permissions will be applied immediately upon role update. Please ensure proper security auditing.</span>
               </div>
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="ghost" type="button" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="gap-3 sm:gap-0 mt-8">
+            <Button variant="ghost" type="button" onClick={() => onOpenChange(false)} className="rounded-xl font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800">
               Cancel
             </Button>
-            <Button type="submit" className="min-w-[120px]">
+            <Button type="submit" className="min-w-[120px] rounded-xl bg-gray-900 hover:bg-emerald-500 dark:bg-white dark:text-gray-900 dark:hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-[10px] shadow-lg transition-all">
               {initialData ? 'Save Changes' : 'Create Role'}
             </Button>
           </DialogFooter>

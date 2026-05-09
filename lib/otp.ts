@@ -1,221 +1,33 @@
-import path from 'path';
-import fs from 'fs';
+import { Resend } from 'resend';
 import bcrypt from 'bcryptjs';
-import nodemailer from 'nodemailer';
 import { db } from '@/lib/db';
 import { validateEmail, validateOTP, sanitizeInput } from '@/lib/validators';
 
-// Email transporter configuration (using Gmail SMTP)
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD,
-  },
-});
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
 
 // Generate random 6-digit OTP
 export const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+import { render } from '@react-email/render';
+import OTPEmail from '@/emails/OTPEmail';
+import React from 'react';
+
 // Send OTP email
 export const sendOTPEmail = async (email: string, otp: string) => {
-  // Use your Vercel URL in production, fallback to localhost for development
-  const baseUrl = process.env.NEXTAUTH_URL || 'https://board-tau-rho.vercel.app';
-  const lightLogoUrl = `${baseUrl}/images/TauBOARD-Light.png`;
-  const darkLogoUrl = `${baseUrl}/images/TauBOARD-Dark.png`;
+  // Render the React component to HTML string
+  const emailHtml = await render(React.createElement(OTPEmail, { otp }));
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
+  return await resend.emails.send({
+    from: `BoardTAU <${process.env.EMAIL_FROM}>`,
     to: email,
     subject: 'Your BoardTAU Email Verification OTP',
-    html: `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>BoardTAU Email Verification</title>
-        <style>
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-          }
-          body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8fafc;
-            color: #1e293b;
-            line-height: 1.6;
-          }
-          .email-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
-          }
-          .email-header {
-            background: linear-gradient(135deg, #2F7D6D 0%, #1E5F50 100%);
-            padding: 30px 40px;
-            text-align: center;
-          }
-          .email-body {
-            padding: 40px;
-          }
-          .greeting {
-            font-size: 22px;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 16px;
-            text-align: center;
-          }
-          .intro {
-            font-size: 16px;
-            color: #64748b;
-            margin-bottom: 30px;
-            line-height: 1.7;
-            text-align: center;
-          }
-          .otp-container {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            margin: 20px 0;
-            border: 2px solid #e2e8f0;
-          }
-          .otp-code {
-            font-size: 42px;
-            font-weight: 800;
-            letter-spacing: 8px;
-            color: #2F7D6D;
-            font-family: 'Courier New', monospace;
-            margin: 0;
-            text-shadow: 0 2px 4px rgba(47, 125, 109, 0.1);
-          }
-          .otp-label {
-            font-size: 14px;
-            color: #94a3b8;
-            margin-top: 12px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-          }
-          .info-section {
-            background: #f0fdf4;
-            border-left: 4px solid #22c55e;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 30px 0;
-          }
-          .info-text {
-            font-size: 14px;
-            color: #15803d;
-            margin: 0;
-          }
-          .security-note {
-            font-size: 14px;
-            color: #64748b;
-            margin-top: 24px;
-            line-height: 1.6;
-            text-align: center;
-          }
-          .email-footer {
-            background-color: #f8fafc;
-            padding: 30px 40px;
-            border-top: 1px solid #e2e8f0;
-            text-align: center;
-          }
-          .footer-text {
-            font-size: 13px;
-            color: #94a3b8;
-            margin-bottom: 12px;
-          }
-          .company-info {
-            font-size: 12px;
-            color: #cbd5e1;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #e2e8f0;
-          }
-          @media (max-width: 600px) {
-            .email-body {
-              padding: 30px 20px;
-            }
-            .email-header {
-              padding: 25px 20px;
-            }
-            .otp-code {
-              font-size: 32px;
-              letter-spacing: 6px;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="email-container">
-          <div class="email-header">
-            <img src="${lightLogoUrl}" alt="BoardTAU Logo" style="height: 45px; width: auto; display: block; margin: 0 auto;">
-          </div>
-          <div class="email-body">
-            <h1 class="greeting">Your One-Time Password (OTP) is</h1>
-            
-            <div class="otp-container">
-              <p class="otp-code">${otp}</p>
-              <p class="otp-label">Verification Code</p>
-            </div>
-
-            <p class="intro">
-              Hi there, you attempted to log in to your BoardTAU account. Please enter the OTP to verify the request before you can access your account.
-            </p>
-
-            <div class="info-section">
-              <p class="info-text" style="text-align: center;">
-                <strong>Code Expires In:</strong> 10 minutes
-              </p>
-            </div>
-
-            <p class="security-note">
-              If you didn't request this verification code, please ignore this email or contact 
-              <a href="mailto:support@boardtau.com" style="color: #2F7D6D; text-decoration: none;">support@boardtau.com</a>.
-            </p>
-
-            <!-- Branded Divider -->
-            <div style="text-align: center; margin: 40px 0 20px;">
-              <div style="border-top: 1px solid #e2e8f0; position: relative; margin-bottom: 20px;">
-                <img src="${darkLogoUrl}" alt="BoardTAU" style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: white; padding: 0 15px; width: 25px;">
-              </div>
-            </div>
-
-            <!-- Visit Us Button -->
-            <div style="text-align: center; margin-bottom: 10px;">
-              <a href="${baseUrl}" style="display: inline-block; border: 1.5px solid #2F7D6D; color: #2F7D6D; padding: 10px 25px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
-                Visit us at BoardTAU.com
-              </a>
-            </div>
-          </div>
-
-          <div class="email-footer">
-            <p class="footer-text">
-              Need help? visit our
-              <a href="${baseUrl}/help" style="color: #2F7D6D; text-decoration: none; font-weight: 600;">Help Center</a>
-            </p>
-            <div class="company-info">
-              <p>© 2026 BoardTAU. All rights reserved.</p>
-              <p>Macalampa, Camiling Tarlac</p>
-            </div>
-          </div>
-        </div>
-      </body>
-      </html>
-    `,
-  };
-
-  return transporter.sendMail(mailOptions);
+    html: emailHtml,
+  });
 };
+
 
 // Generate and store OTP for a user
 export const generateAndStoreOTP = async (email: string) => {
@@ -262,21 +74,21 @@ export const generateAndStoreOTP = async (email: string) => {
     orderBy: { createdAt: 'desc' },
   });
 
-  // Progressive rate limiting based on phase (TESTING values)
+  // Progressive rate limiting for RESENDING OTP based on phase
   if (existingOTP) {
-    // Calculate cooldown based on current phase
-    let cooldownSeconds: number;
+    // Calculate resend cooldown (usually half of the lockout duration for that phase)
+    let resendCooldownSeconds: number;
     switch (existingOTP.lockoutPhase) {
-      case 1: cooldownSeconds = 5; break; // 5 seconds for phase 1
-      case 2: cooldownSeconds = 10; break; // 10 seconds for phase 2
-      case 3: cooldownSeconds = 15; break; // 15 seconds for phase 3
-      case 4: cooldownSeconds = 30; break; // 30 seconds for phase 4
-      default: cooldownSeconds = 60; break; // 60 seconds for phase 5+
+      case 1: resendCooldownSeconds = 30; break;  // 30s for phase 1
+      case 2: resendCooldownSeconds = 60; break;  // 60s for phase 2
+      case 3: resendCooldownSeconds = 120; break; // 120s for phase 3
+      case 4: resendCooldownSeconds = 240; break; // 240s for phase 4
+      default: resendCooldownSeconds = 300; break; // 5 mins cap
     }
 
     const timeSinceLastRequest = Date.now() - existingOTP.createdAt.getTime();
-    if (timeSinceLastRequest < cooldownSeconds * 1000) {
-      const remainingSeconds = Math.ceil((cooldownSeconds * 1000 - timeSinceLastRequest) / 1000);
+    if (timeSinceLastRequest < resendCooldownSeconds * 1000) {
+      const remainingSeconds = Math.ceil((resendCooldownSeconds * 1000 - timeSinceLastRequest) / 1000);
       throw new Error(`Please wait ${remainingSeconds} seconds before requesting a new OTP.`);
     }
   }
@@ -321,13 +133,12 @@ export const generateAndStoreOTP = async (email: string) => {
   return otp;
 };
 
-// Calculate lockout duration based on phase (TESTING values - lower for testing)
+// Calculate lockout duration based on phase (Standard security policy)
 const getPhaseLockoutDuration = (phase: number): number => {
-  if (phase === 1) return 30; // 30 seconds
-  if (phase === 2) return 60; // 1 minute
-  if (phase === 3) return 120; // 2 minutes
-  if (phase === 4) return 240; // 4 minutes
-  return 86400; // 24 hours (permanent lock)
+  if (phase === 1) return 60;  // 1 minute
+  if (phase === 2) return 120; // 2 minutes
+  if (phase === 3) return 240; // 4 minutes
+  return 86400; // 24 hours
 };
 
 // Verify OTP with phase-based progressive locking
@@ -427,56 +238,56 @@ export const verifyOTP = async (email: string, otp: string) => {
   if (!isOTPValid) {
     const newAttempts = otpRecord.attempts + 1;
     let lockoutUntil: Date | null = null;
-    let newPhase = otpRecord.lockoutPhase;
+    let currentPhase = otpRecord.lockoutPhase;
 
     if (newAttempts >= maxAttemptsPerPhase) {
-      newPhase = otpRecord.lockoutPhase + 1;
+      // Calculate duration for the CURRENT phase before incrementing
+      const lockoutSeconds = getPhaseLockoutDuration(currentPhase);
+      lockoutUntil = new Date(Date.now() + lockoutSeconds * 1000);
+      
+      // Increment phase for the NEXT round
+      const nextPhase = currentPhase + 1;
 
-      if (newPhase >= 5) {
-        const lockoutUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      // Check if this was the final phase (Phase 4 completed)
+      if (currentPhase >= 4) {
         await db.emailOTP.update({
           where: { id: otpRecord.id },
           data: {
             attempts: newAttempts,
             isPermanentlyLocked: true,
-            lockoutUntil: lockoutUntil,
+            lockoutUntil: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
             updatedAt: new Date(),
           },
         });
 
-        const lockoutDate = lockoutUntil.toLocaleString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZoneName: 'short'
-        });
-
-        throw new Error(`Your account has been locked for security reasons. Please try again after ${lockoutDate}.`);
+        throw new Error('Your account has been temporarily locked. Please contact support@boardtau.com');
       }
 
-      const lockoutSeconds = getPhaseLockoutDuration(newPhase);
-      lockoutUntil = new Date(Date.now() + lockoutSeconds * 1000);
+      await db.emailOTP.update({
+        where: { id: otpRecord.id },
+        data: {
+          attempts: newAttempts,
+          lockoutUntil,
+          lockoutPhase: nextPhase,
+          updatedAt: new Date(),
+        },
+      });
+
+      throw new Error(`OTP attempt limit reached. Please try again in ${lockoutSeconds} second(s).`);
     }
 
     await db.emailOTP.update({
       where: { id: otpRecord.id },
       data: {
         attempts: newAttempts,
-        lockoutPhase: newPhase,
-        lockoutUntil,
+        lockoutPhase: currentPhase,
+        lockoutUntil: null, // No lockout yet if attempts < 3
         updatedAt: new Date(),
       },
     });
 
     const remainingAttempts = maxAttemptsPerPhase - newAttempts;
-    if (remainingAttempts > 0) {
-      throw new Error(`Invalid OTP. ${remainingAttempts} attempt(s) remaining.`);
-    } else {
-      const lockoutSeconds = getPhaseLockoutDuration(newPhase);
-      throw new Error(`OTP attempt limit reached. Please try again in ${lockoutSeconds} second(s).`);
-    }
+    throw new Error(`Invalid OTP. ${remainingAttempts} attempt(s) remaining.`);
   }
 
   // Mark OTP as used

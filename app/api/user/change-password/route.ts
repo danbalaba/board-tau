@@ -16,9 +16,25 @@ export async function POST(request: NextRequest) {
     await changeUserPassword(oldPassword, newPassword);
     return NextResponse.json({ message: 'Password updated successfully' });
   } catch (error: any) {
-    console.error('Error changing password:', error);
+    console.error('API Error:', error);
+    
+    // List of safe error messages to expose to the user
+    const safeMessages = [
+      "Current password is incorrect",
+      "User not authenticated",
+      "User not found",
+      "User does not have a password set",
+      "You cannot reuse a recently used password."
+    ];
+
+    let message = 'An unexpected error occurred. Please try again later.';
+    
+    if (safeMessages.includes(error.message) || error.message.includes('Please wait')) {
+      message = error.message;
+    }
+
     return NextResponse.json(
-      { error: error.message || 'Failed to change password' },
+      { error: message },
       { status: 400 }
     );
   }

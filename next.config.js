@@ -1,39 +1,55 @@
+const withPWA = require("@ducanh2912/next-pwa").default({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === "development",
+  fallbacks: {
+    document: "/offline", // Serve our artistic offline page when a route is not cached
+  },
+  workboxOptions: {
+    disableDevLogs: true,
+  },
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-        pathname: "**",
-        port: "",
-      },
-      {
-        protocol: "https",
-        hostname: "lh3.googleusercontent.com",
-        pathname: "**",
-        port: "",
-      },
-      {
-        protocol: "https",
-        hostname: "avatars.githubusercontent.com",
-        pathname: "**",
-        port: "",
-      },
-      {
-        protocol: "https",
-        hostname: "files.edgestore.dev",
-        pathname: "**",
-        port: ""
-      },
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-        pathname: "**",
-        port: ""
-      }
+      { protocol: "https", hostname: "res.cloudinary.com", pathname: "**", port: "" },
+      { protocol: "https", hostname: "lh3.googleusercontent.com", pathname: "**", port: "" },
+      { protocol: "https", hostname: "avatars.githubusercontent.com", pathname: "**", port: "" },
+      { protocol: "https", hostname: "files.edgestore.dev", pathname: "**", port: "" },
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "**", port: "" },
+      { protocol: "https", hostname: "images.pexels.com", pathname: "**", port: "" },
+      { protocol: "https", hostname: "plus.unsplash.com", pathname: "**", port: "" },
+      { protocol: "https", hostname: "api.slingacademy.com", pathname: "**", port: "" },
+      { protocol: "https", hostname: "img.clerk.com", pathname: "**", port: "" },
+      { protocol: "https", hostname: "clerk.com", pathname: "**", port: "" }
     ],
+  },
+  transpilePackages: ['geist'],
+  cacheLife: {
+    layout: {
+      stale: 3600, // 1 hour
+      revalidate: 60, // 1 minute
+      expire: 86400, // 1 day
+    },
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' }
+        ],
+      },
+    ];
   },
 };
 
-module.exports = nextConfig;
+module.exports = withPWA(nextConfig);

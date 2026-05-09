@@ -38,6 +38,8 @@ import { getLandlordTenants } from '@/services/landlord/tenants';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/app/admin/components/ui/badge';
 
+import Skeleton from '@/components/common/Skeleton';
+
 // --- Improved Content Fetching (react-query) ---
 const useLandlordSearchData = () => {
   const propertiesQuery = useQuery({
@@ -70,12 +72,15 @@ const useLandlordSearchData = () => {
     staleTime: 60000,
   });
 
+  const isLoading = propertiesQuery.isLoading || inquiriesQuery.isLoading || bookingsQuery.isLoading || reviewsQuery.isLoading || tenantsQuery.isLoading;
+
   return {
     properties: propertiesQuery.data || [],
     inquiries: inquiriesQuery.data?.inquiries || [],
     bookings: bookingsQuery.data?.bookings || [],
     reviews: reviewsQuery.data?.reviews || [],
     tenants: tenantsQuery.data?.tenants || [],
+    isLoading,
   };
 };
 
@@ -161,21 +166,37 @@ const ResultItem = ({ action, active }: { action: any; active: boolean }) => {
 // --- Custom Result Renderer ---
 const RenderResults = () => {
   const { results } = useMatches();
+  const { isLoading } = useLandlordSearchData();
 
   return (
-    <KBarResults
-      items={results}
-      onRender={({ item, active }) =>
-        typeof item === "string" ? (
-          <div className="px-6 py-2 mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-primary/50 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary/30" />
-            {item}
-          </div>
-        ) : (
-          <ResultItem action={item} active={active} />
-        )
-      }
-    />
+    <>
+      {isLoading && results.length === 0 && (
+        <div className="p-4 space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center gap-4 px-4 py-3">
+              <Skeleton className="w-9 h-9 rounded-xl" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3 w-1/3" />
+                <Skeleton className="h-2 w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <KBarResults
+        items={results}
+        onRender={({ item, active }) =>
+          typeof item === "string" ? (
+            <div className="px-6 py-2 mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-primary/50 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary/30" />
+              {item}
+            </div>
+          ) : (
+            <ResultItem action={item} active={active} />
+          )
+        }
+      />
+    </>
   );
 };
 

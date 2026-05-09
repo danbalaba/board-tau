@@ -1,20 +1,26 @@
 'use client';
 
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/app/admin/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui/table';
 import { Badge } from '@/app/admin/components/ui/badge';
 import { Button } from '@/app/admin/components/ui/button';
 import { Input } from '@/app/admin/components/ui/input';
 import { ScrollArea } from '@/app/admin/components/ui/scroll-area';
 import { 
-  Search, 
-  Filter, 
-  ArrowUpDown, 
-  X, 
-  Lock, 
-  ShieldAlert 
-} from 'lucide-react';
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/app/admin/components/ui/table';
+import { 
+  IconSearch, 
+  IconFilter, 
+  IconArrowsSort, 
+  IconX, 
+  IconLock, 
+  IconShieldExclamation 
+} from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { 
   DropdownMenu, 
@@ -56,157 +62,156 @@ export function PermissionMatrix({ permissions, roles, loading }: PermissionMatr
   }, [permissions, searchTerm, moduleFilter, sortBy]);
 
   if (loading) return (
-    <Card>
-      <div className="h-[400px] animate-pulse bg-muted/20 rounded-xl" />
-    </Card>
+    <div className="rounded-[2rem] border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-lg h-[400px] animate-pulse" />
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <ShieldAlert className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <CardTitle>Permissions Matrix</CardTitle>
-              <CardDescription>Comprehensive registry of system-wide access controls</CardDescription>
-            </div>
+    <div className="rounded-[2rem] border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-lg overflow-hidden">
+      <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-blue-500/10 rounded-2xl">
+            <IconShieldExclamation className="w-6 h-6 text-blue-500" />
           </div>
-
-          <div className="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto">
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search permissions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 h-9 bg-muted/40"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn(
-                    "h-9 gap-2",
-                    moduleFilter.length > 0 && "border-primary text-primary bg-primary/5"
-                  )}>
-                    <Filter className="w-3.5 h-3.5" />
-                    Module
-                    {moduleFilter.length > 0 && (
-                      <Badge variant="secondary" className="ml-1 h-4 text-[10px] px-1 font-bold">
-                        {moduleFilter.length}
-                      </Badge>
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>Filter by Module</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {availableModules.map((module) => (
-                    <DropdownMenuCheckboxItem
-                      key={module}
-                      checked={moduleFilter.includes(module)}
-                      onCheckedChange={(checked: boolean) => {
-                        setModuleFilter(prev =>
-                          checked ? [...prev, module] : prev.filter(m => m !== module)
-                        );
-                      }}
-                    >
-                      {module}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9 gap-2">
-                    <ArrowUpDown className="w-3.5 h-3.5" />
-                    Sort
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>Sort Order</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setSortBy('module')}>
-                    By Module (Default)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy('name-asc')}>
-                    Name A → Z
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy('name-desc')}>
-                    Name Z → A
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {(searchTerm || moduleFilter.length > 0) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => { setSearchTerm(''); setModuleFilter([]); }}
-                  className="h-9 px-3 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  Clear
-                </Button>
-              )}
-            </div>
+          <div>
+            <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">Permissions Matrix</h3>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Comprehensive registry of system-wide access controls</p>
           </div>
         </div>
-      </CardHeader>
 
-      <CardContent className="p-0">
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+          <div className="relative w-full sm:w-64">
+            <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search permissions..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-11 h-12 rounded-2xl bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 focus-visible:ring-blue-500/20 text-sm font-bold"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className={cn(
+                  "h-12 px-4 gap-2 rounded-2xl border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-800/50 text-[10px] font-black uppercase tracking-widest",
+                  moduleFilter.length > 0 && "border-blue-500/30 text-blue-500 bg-blue-500/5"
+                )}>
+                  <IconFilter className="w-4 h-4" />
+                  Module
+                  {moduleFilter.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-5 text-[9px] px-1.5 font-black bg-blue-500/20 text-blue-600 rounded-lg">
+                      {moduleFilter.length}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 rounded-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-100 dark:border-gray-800 p-2 shadow-xl">
+                <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-gray-500 px-2">Filter by Module</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800 my-2" />
+                {availableModules.map((module) => (
+                  <DropdownMenuCheckboxItem
+                    key={module}
+                    checked={moduleFilter.includes(module)}
+                    onCheckedChange={(checked: boolean) => {
+                      setModuleFilter(prev =>
+                        checked ? [...prev, module] : prev.filter(m => m !== module)
+                      );
+                    }}
+                    className="text-xs font-bold rounded-xl"
+                  >
+                    {module}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="h-12 px-4 gap-2 rounded-2xl border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-800/50 text-[10px] font-black uppercase tracking-widest">
+                  <IconArrowsSort className="w-4 h-4" />
+                  Sort
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 rounded-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-100 dark:border-gray-800 p-2 shadow-xl">
+                <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-gray-500 px-2">Sort Order</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800 my-2" />
+                <DropdownMenuItem onClick={() => setSortBy('module')} className="text-xs font-bold rounded-xl">
+                  By Module (Default)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy('name-asc')} className="text-xs font-bold rounded-xl">
+                  Name A → Z
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy('name-desc')} className="text-xs font-bold rounded-xl">
+                  Name Z → A
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {(searchTerm || moduleFilter.length > 0) && (
+              <Button
+                variant="ghost"
+                onClick={() => { setSearchTerm(''); setModuleFilter([]); }}
+                className="h-12 px-4 gap-2 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <IconX className="w-4 h-4" />
+                Clear
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="p-0">
         <ScrollArea className="h-[500px]">
           <Table>
-            <TableHeader className="bg-muted/50 sticky top-0 z-10">
-              <TableRow className="hover:bg-transparent border-border">
-                <TableHead className="py-3 px-6 font-semibold text-xs uppercase tracking-wider text-muted-foreground w-[35%]">Permission</TableHead>
-                <TableHead className="py-3 px-4 font-semibold text-xs uppercase tracking-wider text-muted-foreground">Description</TableHead>
-                <TableHead className="py-3 px-6 font-semibold text-xs uppercase tracking-wider text-muted-foreground text-right">Assigned Roles</TableHead>
+            <TableHeader className="bg-gray-50/80 dark:bg-gray-800/50 sticky top-0 z-10 backdrop-blur-md">
+              <TableRow className="hover:bg-transparent border-gray-100 dark:border-gray-800">
+                <TableHead className="py-4 px-6 font-black text-[10px] uppercase tracking-widest text-gray-500 w-[35%] h-auto">Permission</TableHead>
+                <TableHead className="py-4 px-4 font-black text-[10px] uppercase tracking-widest text-gray-500 h-auto">Description</TableHead>
+                <TableHead className="py-4 px-6 font-black text-[10px] uppercase tracking-widest text-gray-500 text-right h-auto">Assigned Roles</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredPermissions.length > 0 ? (
                 filteredPermissions.map((permission: any) => (
-                  <TableRow key={permission.id} className="group hover:bg-muted/30 transition-colors border-border/50">
-                    <TableCell className="py-4 px-6">
-                      <div className="flex items-center gap-3">
+                  <TableRow key={permission.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors border-gray-100 dark:border-gray-800">
+                    <TableCell className="py-5 px-6">
+                      <div className="flex items-center gap-4">
                         <div className={cn(
-                          "w-2 h-2 rounded-full shrink-0",
-                          permission.action === 'create' && "bg-emerald-500",
-                          permission.action === 'read' && "bg-blue-500",
-                          permission.action === 'update' && "bg-amber-500",
-                          permission.action === 'delete' && "bg-rose-500",
-                          !['create', 'read', 'update', 'delete'].includes(permission.action) && "bg-slate-400"
+                          "w-2.5 h-2.5 rounded-full shrink-0 shadow-sm",
+                          permission.action === 'create' && "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]",
+                          permission.action === 'read' && "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]",
+                          permission.action === 'update' && "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]",
+                          permission.action === 'delete' && "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]",
+                          !['create', 'read', 'update', 'delete'].includes(permission.action) && "bg-gray-400"
                         )} />
                         <div>
-                          <p className="font-semibold text-sm font-mono text-foreground">{permission.name}</p>
-                          <Badge variant="secondary" className="mt-1 h-4 text-[9px] font-bold uppercase tracking-wide px-1.5">
+                          <p className="font-black text-sm text-gray-900 dark:text-white">{permission.name}</p>
+                          <Badge variant="outline" className="mt-1.5 h-5 text-[9px] font-black uppercase tracking-widest px-2 border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 text-gray-500">
                             {permission.module}
                           </Badge>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="py-4 px-4 text-sm text-muted-foreground max-w-sm">
+                    <TableCell className="py-5 px-4 text-xs font-bold text-gray-500 max-w-sm leading-relaxed">
                       {permission.description || 'No description provided.'}
                     </TableCell>
-                    <TableCell className="py-4 px-6 text-right">
-                      <div className="flex flex-wrap gap-1.5 justify-end">
+                    <TableCell className="py-5 px-6 text-right">
+                      <div className="flex flex-wrap gap-2 justify-end">
                         {roles.filter(r => r.permissions?.includes(permission.name)).map((role) => (
                           <Badge
                             key={role.id}
                             variant={role.name === 'ADMIN' ? 'destructive' : 'secondary'}
-                            className="text-[10px] font-bold uppercase tracking-wide h-5 px-2"
+                            className={cn(
+                              "text-[9px] font-black uppercase tracking-widest h-6 px-2.5 rounded-lg border-none",
+                              role.name === 'ADMIN' ? "bg-rose-500/10 text-rose-500" : "bg-blue-500/10 text-blue-500"
+                            )}
                           >
                             {role.name}
                           </Badge>
                         ))}
                         {roles.filter(r => r.permissions?.includes(permission.name)).length === 0 && (
-                          <span className="text-[11px] text-muted-foreground italic">Unassigned</span>
+                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Unassigned</span>
                         )}
                       </div>
                     </TableCell>
@@ -215,10 +220,12 @@ export function PermissionMatrix({ permissions, roles, loading }: PermissionMatr
               ) : (
                 <TableRow>
                   <TableCell colSpan={3} className="py-24 text-center">
-                    <div className="flex flex-col items-center justify-center text-muted-foreground">
-                      <Lock className="w-10 h-10 mb-3 opacity-30" />
-                      <p className="text-sm font-medium">No permissions match your filter</p>
-                      <p className="text-xs mt-1 opacity-70">Try adjusting your search or module filter</p>
+                    <div className="flex flex-col items-center justify-center text-gray-400">
+                      <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
+                        <IconLock className="w-8 h-8 opacity-50" />
+                      </div>
+                      <p className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">No permissions match</p>
+                      <p className="text-xs mt-2 font-bold opacity-70">Try adjusting your search or module filter</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -226,7 +233,7 @@ export function PermissionMatrix({ permissions, roles, loading }: PermissionMatr
             </TableBody>
           </Table>
         </ScrollArea>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

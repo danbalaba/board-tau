@@ -3,6 +3,8 @@ import { useRouter } from 'next/navigation';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { updateUserProfileClient } from '@/services/user/profile';
 import { useEdgeStore } from '@/lib/edgestore';
+import { validateName, validatePhoneNumber } from '@/lib/validators';
+import { useLandlordProfileStore } from './use-landlord-profile-store';
 
 /**
  * Validates and sanitizes image sources using a strict character whitelist.
@@ -24,11 +26,13 @@ export const getSafeImageSrc = (image: string): string => {
   return '';
 };
 
-export function useLandlordSettings(initialTab?: 'notifications' | 'payment' | 'security') {
+export function useLandlordSettings(initialTab?: 'profile' | 'notifications' | 'payment' | 'security') {
   const router = useRouter();
   const { success, error: toastError } = useResponsiveToast();
   const { edgestore } = useEdgeStore();
-  const [activeTab, setActiveTab] = useState<'notifications' | 'payment' | 'security'>(initialTab || 'notifications');
+  const closeSettings = useLandlordProfileStore((state) => state.closeSettings);
+  const updateUser = useLandlordProfileStore((state) => state.updateUser);
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'payment' | 'security'>(initialTab || 'profile');
 
   // Sync activeTab with initialTab when it changes (e.g., when reopening the modal with a specific tab)
   useEffect(() => {
@@ -44,10 +48,16 @@ export function useLandlordSettings(initialTab?: 'notifications' | 'payment' | '
     email: '',
     phone: '',
     address: '',
+    city: '',
+    region: '',
     bio: '',
     profileImage: null as File | null,
     currentImageUrl: '',
   });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Fetch initial data
   useEffect(() => {
@@ -62,6 +72,8 @@ export function useLandlordSettings(initialTab?: 'notifications' | 'payment' | '
             email: data.email || '',
             phone: data.phoneNumber || '',
             address: data.address || '',
+            city: data.city || '',
+            region: data.region || '',
             bio: data.bio || '',
             profileImage: null,
             currentImageUrl: data.image || '',
@@ -82,44 +94,100 @@ export function useLandlordSettings(initialTab?: 'notifications' | 'payment' | '
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (!file.type.startsWith('image/')) {
         toastError('Only valid image files are allowed.');
         return;
       }
-      setFormData((prev) => ({ ...prev, profileImage: file }));
+      
+      setIsUploading(true);
+      setUploadProgress(0);
+
+      try {
+        const res = await edgestore.publicFiles.upload({
+          file,
+          onProgressChange: (progress) => {
+            setUploadProgress(progress);
+          },
+        });
+        
+        setFormData((prev) => ({ 
+          ...prev, 
+          currentImageUrl: res.url,
+          profileImage: null // We've already uploaded it
+        }));
+        success('Profile picture uploaded!');
+      } catch (err) {
+        console.error('Upload error:', err);
+        toastError('Failed to upload image');
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+    const newErrors: Record<string, string> = {};
+
+    // 1. Validation
+    const nameError = validateName(formData.name);
+    if (nameError) {
+      newErrors.name = nameError;
+    }
+
+    if (formData.phone) {
+      const phoneError = validatePhoneNumber(formData.phone);
+      if (phoneError) {
+        newErrors.phone = phoneError;
+      }
+    }
+
+    if (!formData.address || formData.address.length < 5) {
+      newErrors.address = 'Please enter a valid address';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toastError('Please fix the errors before saving');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      let imageUrl = formData.currentImageUrl;
-
-      // 1. Upload new image if exists
-      if (formData.profileImage) {
-        const res = await edgestore.publicFiles.upload({
-          file: formData.profileImage,
-        });
-        imageUrl = res.url;
-      }
-
-      // 2. Update profile in database
+      // Update profile in database
       await updateUserProfileClient({
         name: formData.name,
         phoneNumber: formData.phone,
         address: formData.address,
+        city: formData.city,
+        region: formData.region,
         bio: formData.bio,
-        image: imageUrl,
+        image: formData.currentImageUrl,
       });
 
-      setFormData(prev => ({ ...prev, currentImageUrl: imageUrl, profileImage: null }));
+      // Update global store for instant UI feedback
+      updateUser({
+        name: formData.name,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        province: formData.region,
+        bio: formData.bio,
+        image: formData.currentImageUrl,
+      });
+
       router.refresh();
       success('Settings updated successfully!');
+      
+      // Auto-close modal on success as requested
+      setTimeout(() => {
+        closeSettings();
+      }, 500);
     } catch (error: any) {
       console.error('Error updating settings:', error);
       toastError(error.message || 'Failed to update settings. Please try again.');
@@ -132,8 +200,11 @@ export function useLandlordSettings(initialTab?: 'notifications' | 'payment' | '
     activeTab,
     setActiveTab,
     isLoading: isLoading || isInitialLoad,
+    isUploading,
+    uploadProgress,
     formData,
     setFormData,
+    errors,
     handleInputChange,
     handleImageChange,
     handleSubmit,

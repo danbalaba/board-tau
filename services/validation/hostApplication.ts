@@ -171,9 +171,6 @@ const validatePropertyInfo = (propertyInfo: any, errors: ValidationError[]): voi
      errors.push({ field: 'propertyInfo.price', message: 'Price must be between ₱100 and ₱100,000 per month' });
    }
 
-  if (!propertyInfo.leaseTerms) {
-    errors.push({ field: 'propertyInfo.leaseTerms', message: 'Please select lease terms' });
-  }
 };
 
 const validateLocation = (location: any, errors: ValidationError[]): void => {
@@ -270,26 +267,7 @@ const validatePropertyImages = (propertyImages: any, propertyConfig: any, errors
     errors.push({ field: 'propertyImages.property', message: `At least 3 property images are required (currently: ${pImages.length}).` });
   }
 
-  // Check room images
-  const rooms = propertyConfig?.rooms || [];
-  const rImages = propertyImages?.rooms || {};
-  let roomsMissingImages = 0;
-
-  rooms.forEach((_: any, index: number) => {
-    const images = rImages[index] || [];
-    if (images.length < 1) {
-      roomsMissingImages++;
-      errors.push({ field: `propertyImages.rooms[${index}]`, message: `Please upload at least 1 image for Room ${index + 1}` });
-    }
-  });
-
-  // Add a general error if any room images are missing, for easier toast reporting
-  if (roomsMissingImages > 0) {
-    // Only add this if it's the absolute first error to avoid duplication in toast
-    if (roomsMissingImages === rooms.length) {
-      errors.unshift({ field: 'propertyImages.rooms', message: 'Room images are required for all rooms.' });
-    }
-  }
+  // Room images validation removed for Full Property Listing simplification
 };
 
 const validateDocuments = (documents: any, errors: ValidationError[]): void => {

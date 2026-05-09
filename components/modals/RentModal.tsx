@@ -260,8 +260,9 @@ const RentModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
                     onClick={setCustomValue}
                     watch={watch}
                     label={item.label}
+                    value={item.value}
                     icon={item.icon}
-                    key={item.label}
+                    key={item.value}
                   />
               ))}
             </div>

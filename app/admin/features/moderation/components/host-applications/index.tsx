@@ -1,107 +1,63 @@
 // app/admin/features/moderation/components/host-applications/index.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Users, 
-  ShieldCheck, 
-  RefreshCcw, 
-  Search, 
-  SearchIcon, 
-  ShieldAlert,
-  ArrowRight
-} from 'lucide-react';
-import { useHostApplications, useModerationDecision } from '@/app/admin/hooks/use-moderation';
-import { Button } from '@/app/admin/components/ui/button';
-import { toast } from 'sonner';
+import { Users, AlertTriangle, Trash2, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useHostApplicationsLogic } from '../../hooks/use-host-applications-logic';
+import { AdminApplicationHeader } from './admin-application-header';
+import { AdminApplicationCard } from './admin-application-card';
+import { AdminApplicationReviewModal } from './admin-application-review-modal';
 import { ApplicationKPICards } from './application-kpi-cards';
-import { ApplicationTable } from './application-table';
+import { Button } from '@/app/admin/components/ui/button';
 
 export function HostApplicationsDashboard() {
-  const { data: apiResponse, isLoading, refetch, isFetching } = useHostApplications();
-  const { mutate: decide } = useModerationDecision();
-
-  const handleSync = async () => {
-    await refetch();
-    toast.success('Moderation queue synchronized with latest submissions.');
-  };
-
-  const handleAction = (id: string, action: 'approve' | 'reject') => {
-    decide({ id, entityType: 'hostApplication', action }, {
-      onSuccess: () => {
-        toast.success(`Application ${action === 'approve' ? 'authorized' : 'rejected'} successfully.`);
-      },
-      onError: (err: any) => {
-        toast.error(`Database Error: ${err.message}`);
-      }
-    });
-  };
-
-  const applications = apiResponse?.data || [];
-  const pendingCount = apiResponse?.meta?.stats?.pending || 0;
-  const approvedCount = apiResponse?.meta?.stats?.approved || 0;
-  const rejectedCount = apiResponse?.meta?.stats?.rejected || 0;
-
-  if (isLoading) {
-    return (
-      <div className="p-6 lg:p-10 text-center">
-        <h2 className="text-2xl font-bold italic animate-pulse">Initializing Security Clearance...</h2>
-      </div>
-    );
-  }
+  const {
+    filteredApplications,
+    pendingCount,
+    approvedCount,
+    rejectedCount,
+    isLoading,
+    isDeciding,
+    isArchiving,
+    isDeleting,
+    isArchived,
+    setIsArchived,
+    viewMode,
+    setViewMode,
+    searchQuery,
+    setSearchQuery,
+    sortBy,
+    setSortBy,
+    selectedApplication,
+    setSelectedApplication,
+    viewModalOpen,
+    setViewModalOpen,
+    deleteModalOpen,
+    setDeleteModalOpen,
+    handleRefresh,
+    handleDecision,
+    handleToggleArchive,
+    handleConfirmDelete
+  } = useHostApplicationsLogic();
 
   return (
-    <div className="p-6 lg:p-10 space-y-10">
-      {/* Executive Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-border/50 pb-10">
-        <div className="space-y-1">
-          <motion.h1
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-4xl font-black tracking-tighter text-foreground uppercase flex items-center gap-4"
-          >
-            Host Applications
-            {pendingCount > 0 && (
-              <span className="flex items-center gap-1.5 bg-amber-500/10 px-3 py-1.5 rounded-2xl border border-amber-500/10 text-amber-500 text-[10px] tracking-[0.2em] font-black">
-                <ShieldAlert className="w-3 h-3" />
-                {pendingCount} ACTION REQUIRED
-              </span>
-            )}
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-muted-foreground font-medium text-sm flex items-center gap-2"
-          >
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            Vetting and authorizing new property hosts
-          </motion.p>
-        </div>
+    <div className="p-6 lg:p-10 space-y-6">
+      <AdminApplicationHeader
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        handleRefresh={handleRefresh}
+        pendingCount={pendingCount}
+        isLoading={isLoading}
+        isArchived={isArchived}
+        onToggleArchived={() => setIsArchived(!isArchived)}
+      />
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleSync}
-            className={cn("h-11 w-11 rounded-xl border-border/60", isFetching && "animate-spin")}
-          >
-            <RefreshCcw className="w-4 h-4" />
-          </Button>
-
-          <Button
-            variant="default"
-            className="h-11 px-8 gap-3 rounded-2xl bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all active:scale-95 text-white"
-          >
-            <ArrowRight className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Verification Logs</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* KPI Section */}
       <ApplicationKPICards 
         total={pendingCount} 
         pending={pendingCount} 
@@ -109,37 +65,166 @@ export function HostApplicationsDashboard() {
         rejected={rejectedCount} 
       />
 
-      {/* Main Table Section */}
-      <div className="space-y-6">
-        <div className="flex items-center gap-3 pl-4 border-l-[3px] border-primary">
-          <Users className="w-5 h-5 text-primary" />
-          <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/80 text-primary">Live Moderation List</h2>
-        </div>
+      <div className="min-h-[400px] relative mt-8">
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div 
+              key="loader"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="py-24 flex flex-col items-center justify-center gap-6"
+            >
+              <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin shadow-xl shadow-primary/10" />
+              <p className="text-[11px] font-black uppercase tracking-[0.4em] text-gray-500 animate-pulse">Initializing Security Clearance</p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="content"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.3 }}
+            >
+              {filteredApplications.length > 0 && (
+                <div className="flex items-center gap-2 mb-6">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                    Showing {filteredApplications.length} identit{filteredApplications.length !== 1 ? 'ies' : 'y'}
+                  </span>
+                  <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
+                </div>
+              )}
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <ApplicationTable 
-            applications={applications.map((app: any) => ({
-              id: app.id,
-              name: app.user.name,
-              email: app.user.email,
-              phone: app.contactInfo?.phoneNumber || 'N/A',
-              experience: app.businessInfo?.experience || 'N/A',
-              motivation: app.businessInfo?.motivation || 'N/A',
-              documentsVerified: !!app.documents,
-              status: app.status,
-              submittedAt: app.createdAt,
-              lastUpdated: app.updatedAt
-            }))}
-            onView={(id) => toast.info(`Viewing application detail: ${id}`)}
-            onApprove={(id) => handleAction(id, 'approve')}
-            onReject={(id) => handleAction(id, 'reject')}
-          />
-        </motion.div>
+              <AnimatePresence mode="wait">
+                {filteredApplications.length === 0 ? (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center shadow-sm"
+                  >
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-2xl mb-4 text-primary">
+                      <Users size={24} />
+                    </div>
+                    <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Queue is Clear</h3>
+                    <p className="text-sm font-medium text-gray-400 max-w-sm mx-auto leading-relaxed">
+                      {searchQuery ? `No applications found matching "${searchQuery}"` : "All landlord identities have been successfully verified. No pending applications at this time."}
+                    </p>
+                    {searchQuery && (
+                      <Button variant="outline" onClick={() => setSearchQuery("")} className="mt-8 rounded-xl px-6 py-2.5 text-[10px] font-black uppercase tracking-widest">
+                        Clear Search
+                      </Button>
+                    )}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="list"
+                    className={cn(
+                      viewMode === "grid"
+                        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                        : "space-y-4"
+                    )}
+                  >
+                    {filteredApplications.map((application: any, idx: number) => (
+                      <AdminApplicationCard 
+                        key={`${viewMode}-${application.id}`}
+                        application={application}
+                        idx={idx}
+                        viewMode={viewMode}
+                        handleDecision={handleDecision}
+                        isDeciding={isDeciding}
+                        onViewDetails={() => {
+                          setSelectedApplication(application);
+                          setViewModalOpen(true);
+                        }}
+                        onArchive={handleToggleArchive}
+                        onDelete={(app) => {
+                          setSelectedApplication(app);
+                          setDeleteModalOpen(true);
+                        }}
+                      />
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+
+      <AdminApplicationReviewModal 
+        application={selectedApplication}
+        isOpen={viewModalOpen}
+        onClose={() => setViewModalOpen(false)}
+        onDecision={handleDecision}
+        isDeciding={isDeciding}
+      />
+
+      <AnimatePresence>
+        {deleteModalOpen && selectedApplication && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              onClick={() => setDeleteModalOpen(false)} 
+              className="absolute inset-0 bg-gray-900/80 backdrop-blur-md" 
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.9, y: 20 }} 
+              className="relative bg-[#111827] rounded-[2.5rem] border border-white/10 p-10 max-w-md w-full shadow-2xl overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 via-orange-500 to-red-500" />
+              
+              <button onClick={() => setDeleteModalOpen(false)} className="absolute top-6 right-6 p-2 text-gray-400 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+      
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 bg-red-500/10 rounded-[2rem] flex items-center justify-center mb-8 text-red-500 shadow-inner border border-red-900/30">
+                  <AlertTriangle size={36} className="animate-bounce" />
+                </div>
+                
+                <h3 className="text-2xl font-black text-white mb-3 uppercase tracking-tight">Destroy Sensitive Data</h3>
+                <p className="text-[13px] text-gray-400 mb-10 leading-relaxed font-medium">
+                  You are about to permanently delete the application for <span className="font-black text-white underline decoration-red-500/30 decoration-2 underline-offset-4">"{selectedApplication.user?.name || 'this landlord'}"</span>. 
+                  This will wipe all selfies, government IDs, and legal permits from EdgeStore.
+                </p>
+      
+                <div className="flex flex-col sm:flex-row w-full gap-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setDeleteModalOpen(false)} 
+                    disabled={isDeleting}
+                    className="flex-1 rounded-2xl py-4 border-gray-700 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 order-2 sm:order-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    onClick={handleConfirmDelete} 
+                    disabled={isDeleting}
+                    className="flex-1 rounded-2xl py-4 shadow-xl shadow-red-500/20 text-[10px] font-black uppercase tracking-[0.2em] order-1 sm:order-2"
+                  >
+                    {isDeleting ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 size={14} className="animate-spin" /> Purging...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Trash2 size={14} /> Purge Identity
+                      </span>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { IconSearch, IconX, IconCalendar, IconUser } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ReservationRequest } from '../hooks/use-reservation-logic';
+import SafeImage from '@/components/common/SafeImage';
 
 interface LandlordReservationSearchProps {
   searchQuery: string;
@@ -92,7 +93,7 @@ export function LandlordReservationSearch({
                 >
                   <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 group-hover/item:text-primary transition-colors overflow-hidden">
                     {res.listing.imageSrc ? (
-                      <img src={res.listing.imageSrc} alt="" className="w-full h-full object-cover" />
+                      <SafeImage src={res.listing.imageSrc} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <IconCalendar size={16} />
                     )}

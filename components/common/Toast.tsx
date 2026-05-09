@@ -183,10 +183,11 @@ export const Toaster = () => {
       containerStyle={{
         top: '80px', // Position below navbar
         right: '20px',
-        zIndex: 9999, // Set higher than modal (z-100) to appear above
+        zIndex: 99999, // Must be above Modal backdrop (z-10000)
       }}
     >
       {(t) => <GlassToast toast={t} />}
     </HotToaster>
   );
 };
+

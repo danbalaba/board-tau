@@ -6,6 +6,7 @@ import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import { db } from "./db";
 import { validateEmail, validatePassword, sanitizeInput } from "./validators";
+import { triggerLoginSecurityAlert } from "@/services/auth-security";
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(db),
@@ -13,10 +14,26 @@ export const authOptions: AuthOptions = {
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID as string,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
+      profile(profile) {
+        return {
+          id: profile.id,
+          name: profile.name,
+          email: profile.email || `${profile.id}@facebook.com`,
+          image: profile.picture.data.url,
+        };
+      },
     }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email || `${profile.sub}@google.com`,
+          image: profile.picture,
+        };
+      },
     }),
     CredentialsProvider({
       name: "credentials",
@@ -47,9 +64,29 @@ export const authOptions: AuthOptions = {
           },
         });
 
-        if (!user || !user?.password) throw new Error("Invalid credentials");
+        if (!user) throw new Error("Invalid credentials");
 
-        // Skip email verification for admin users
+        // 1. Check for Login Lockout (Brute-force)
+        if (user.loginLockoutUntil && user.loginLockoutUntil > new Date()) {
+          const remainingMinutes = Math.ceil((user.loginLockoutUntil.getTime() - Date.now()) / (1000 * 60));
+          throw new Error(`Account locked due to multiple failed attempts. Please try again in ${remainingMinutes} minute(s).`);
+        }
+
+        // 2. Check for permanent OTP lock
+        const otpLock = await db.emailOTP.findFirst({
+          where: {
+            email: sanitizedEmail,
+            isPermanentlyLocked: true,
+          },
+        });
+
+        if (otpLock) {
+          throw new Error('AccountLocked');
+        }
+
+        if (!user.password) throw new Error("Invalid credentials");
+
+        // 3. Skip email verification for admin users
         if (!user.emailVerified && user.role !== "ADMIN") {
           throw new Error("Email not verified. Please verify your email first.");
         }
@@ -59,7 +96,35 @@ export const authOptions: AuthOptions = {
           user.password
         );
 
-        if (!isCorrectPassword) throw new Error("Invalid credentials");
+        if (!isCorrectPassword) {
+          // Increment failed attempts
+          const newAttempts = (user.failedLoginAttempts || 0) + 1;
+          let lockoutUntil = null;
+          
+          if (newAttempts >= 5) {
+            // lockoutUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minute lockout (Production)
+            lockoutUntil = new Date(Date.now() + 60 * 1000); // 60 second lockout (Demo)
+          }
+
+          await db.user.update({
+            where: { id: user.id },
+            data: { 
+              failedLoginAttempts: newAttempts,
+              loginLockoutUntil: lockoutUntil
+            }
+          });
+
+          throw new Error("Invalid credentials");
+        }
+
+        // 4. Success - Reset failed attempts
+        await db.user.update({
+          where: { id: user.id },
+          data: { 
+            failedLoginAttempts: 0,
+            loginLockoutUntil: null
+          }
+        });
 
         return user;
       },
@@ -67,8 +132,46 @@ export const authOptions: AuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
+      // 0. Check for permanent OTP lock for ALL providers (Credentials, Google, Facebook)
+      if (user.email) {
+        const otpLock = await db.emailOTP.findFirst({
+          where: {
+            email: user.email,
+            isPermanentlyLocked: true,
+          },
+        });
+
+        if (otpLock) {
+          console.log(`🔐 Blocked sign-in attempt for locked email: ${user.email}`);
+          // Pass the email in the error message for the frontend to handle redirect
+          throw new Error(`AccountLocked:${user.email}`);
+        }
+      }
+
+      // Check for login lockout during OAuth as well
+      if (user.email) {
+        const dbUser = await db.user.findUnique({
+          where: { email: user.email },
+          select: { loginLockoutUntil: true }
+        });
+        
+        if (dbUser?.loginLockoutUntil && dbUser.loginLockoutUntil > new Date()) {
+          throw new Error(`AccountLocked:${user.email}`);
+        }
+      }
+
+      // Trigger New Login Email Notification
+      if (user.email) {
+        // Run in background
+        triggerLoginSecurityAlert({
+          email: user.email,
+          name: user.name,
+        });
+      }
+
       // Update last login timestamp for every sign in event
-      if (user.id) {
+      // Only attempt update if we have a valid MongoDB ObjectID (24 chars)
+      if (user.id && user.id.length === 24) {
         try {
           await db.user.update({
             where: { id: user.id },
@@ -78,6 +181,8 @@ export const authOptions: AuthOptions = {
         } catch (error) {
           console.error("🔐 Failed to update lastLogin:", error);
         }
+      } else {
+        console.log("🔐 Skipping lastLogin update - user.id is not a valid database ID yet");
       }
 
       console.log("🔐 signIn callback - user:", user);
@@ -180,14 +285,24 @@ export const authOptions: AuthOptions = {
     },
 
     async session({ token, session }) {
-      console.log("🔐 Session callback - token role:", token.role); // Debug log
+      // 🔐 If token is marked as invalid (security mismatch), return an empty session
+      // This prevents CLIENT_FETCH_ERROR while still signaling no session
+      if ((token as any).isInvalid) {
+        return {
+          ...session,
+          user: null
+        } as any;
+      }
+
       if (token) {
         session.user.id = token.id;
         session.user.name = token.name;
         session.user.email = token.email;
         session.user.role = token.role;
         session.user.emailVerified = token.emailVerified;
-        session.user.image = (token as any).image; // PERSIST IMAGE IN SESSION
+        session.user.isVerifiedLandlord = token.isVerifiedLandlord;
+        session.user.image = (token as any).image;
+        session.user.securityVersion = (token as any).securityVersion;
       }
 
       return session;
@@ -195,42 +310,45 @@ export const authOptions: AuthOptions = {
 
     async jwt({ token, user, account }) {
       if (user) {
-        console.log("🔐 JWT callback - user role:", (user as any).role); // Debug log
-        // For new users created via OAuth, ensure emailVerified is set
-        const userWithEmailVerified = {
-          ...user,
-          emailVerified: (user as { emailVerified?: Date }).emailVerified || new Date()
-        };
-
-        // If user is new (created via OAuth), update emailVerified in database
-        if (!(user as any).emailVerified && (account?.provider === "google" || account?.provider === "facebook")) {
-          try {
-            await db.user.update({
-              where: { id: user.id },
-              data: { emailVerified: new Date() } as any
-            });
-            console.log("🔐 Updated emailVerified for new OAuth user:", user.id);
-          } catch (error) {
-            console.error("🔐 Failed to update emailVerified for new OAuth user:", error);
-          }
-        }
-
         return {
           ...token,
           id: user.id,
-          role: (user as { role?: string }).role,
-          emailVerified: userWithEmailVerified.emailVerified,
-          image: user.image // PASS IMAGE TO TOKEN
-        } as any; // Type assertion to fix TypeScript error
+          role: (user as any).role || "USER",
+          emailVerified: (user as any).emailVerified || new Date(),
+          isVerifiedLandlord: (user as any).isVerifiedLandlord || false,
+          image: user.image,
+          securityVersion: (user as any).securityVersion || 1,
+        } as any;
       }
 
-      // For OAuth providers, ensure emailVerified is set in JWT
-      if (account?.provider === "google" || account?.provider === "facebook") {
-        return {
-          ...token,
-          emailVerified: new Date(),
-          image: (token as any).picture || (token as any).image // SYNC GOOGLE IMAGE
-        } as any; // Type assertion to fix TypeScript error
+      // 🔐 SECURITY CHECK: Verify securityVersion against DB on every refresh
+      if (token.id) {
+        try {
+          const dbUser = await db.user.findUnique({
+            where: { id: token.id as string },
+            select: { securityVersion: true, role: true }
+          });
+
+          if (!dbUser) return null as any;
+
+          // If DB version is higher than token version, user changed password or security was reset
+          if (dbUser.securityVersion !== (token as any).securityVersion) {
+            console.log(`🔐 Global Logout: securityVersion mismatch for user ${token.id}`);
+            // Return an object that triggers logout in the session callback
+            return { isInvalid: true } as any;
+          }
+          
+          if (!token.role) {
+            token.role = dbUser.role;
+          }
+        } catch (error) {
+          console.error("🔐 Error verifying securityVersion:", error);
+        }
+      }
+
+      // For OAuth providers, ensure emailVerified is set
+      if ((account?.provider === "google" || account?.provider === "facebook") && !token.emailVerified) {
+        (token as any).emailVerified = new Date();
       }
 
       return token;

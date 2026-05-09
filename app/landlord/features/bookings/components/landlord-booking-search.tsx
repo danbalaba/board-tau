@@ -5,6 +5,7 @@ import { IconSearch, IconX, IconCalendarCheck, IconUser } from '@tabler/icons-re
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Booking } from '../hooks/use-booking-logic';
+import SafeImage from '@/components/common/SafeImage';
 
 interface LandlordBookingSearchProps {
   searchQuery: string;
@@ -92,7 +93,7 @@ export function LandlordBookingSearch({
                 >
                   <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 group-hover/item:text-primary transition-colors overflow-hidden">
                     {booking.listing.imageSrc ? (
-                      <img src={booking.listing.imageSrc} alt="" className="w-full h-full object-cover" />
+                      <SafeImage src={booking.listing.imageSrc} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <IconCalendarCheck size={16} />
                     )}

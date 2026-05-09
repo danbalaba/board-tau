@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import { AiOutlineStar, AiFillStar } from "react-icons/ai";
 import { CheckCircle, Play, X, ChevronLeft, ChevronRight, ChevronDown, ThumbsUp } from "lucide-react";
 import { IconHome } from "@tabler/icons-react";
+import SafeImage from "@/components/common/SafeImage";
 import { motion, AnimatePresence } from "framer-motion";
 import Avatar from "@/components/common/Avatar";
 import { cn } from "@/utils/helper";
@@ -105,7 +106,7 @@ const MediaGallery = ({
             className="w-full h-full flex items-center justify-center p-4"
           >
             {media[index].type === 'image' ? (
-              <img src={media[index].url} className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl" alt="Enlarged" />
+              <SafeImage src={media[index].url} alt="Enlarged" priority={true} />
             ) : (
               <video src={media[index].url} className="max-w-full max-h-full rounded-2xl shadow-2xl" controls autoPlay />
             )}
@@ -128,7 +129,7 @@ const MediaGallery = ({
         {media.map((item, i) => (
           <button key={i} onClick={() => setIndex(i)} className={cn("relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all shrink-0", i === index ? "border-primary scale-110" : "border-transparent opacity-50 hover:opacity-100")}>
             {item.type === 'image' ? (
-              <img src={item.url} className="w-full h-full object-cover" />
+              <SafeImage src={item.url} alt="" />
             ) : (
               <div className="w-full h-full bg-gray-800 flex items-center justify-center"><Play size={12} fill="white" /></div>
             )}
@@ -150,7 +151,7 @@ const MediaGrid = ({ media, onMediaClick }: { media: { url: string; type: 'image
         const isLast = idx === 3 && remainingCount > 0;
         return (
           <div key={idx} className="relative w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 cursor-pointer group transition-all shrink-0 shadow-sm hover:shadow-md" onClick={() => onMediaClick(idx)}>
-            {item.type === 'image' ? <img src={item.url} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-700" alt="Review media" /> : (
+            {item.type === 'image' ? <SafeImage src={item.url} alt="Review media" /> : (
               <div className="relative w-full h-full bg-black/10">
                 <video src={item.url} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 flex items-center justify-center">

@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { IconSearch, IconX, IconBuilding } from '@tabler/icons-react';
+import { Search, X, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Property } from '../hooks/use-property-logic';
+import SafeImage from '@/components/common/SafeImage';
 
 interface LandlordPropertySearchProps {
   searchQuery: string;
@@ -48,7 +49,7 @@ export function LandlordPropertySearch({
   return (
     <div ref={containerRef} className="relative w-full lg:w-80 group">
       <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors z-20">
-        <IconSearch size={18} strokeWidth={2.5} />
+        <Search size={18} strokeWidth={2.5} />
       </div>
       <input
         type="text"
@@ -63,7 +64,7 @@ export function LandlordPropertySearch({
           onClick={() => setSearchQuery('')}
           className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-primary transition-colors z-20"
         >
-          <IconX size={16} strokeWidth={3} />
+          <X size={16} strokeWidth={3} />
         </button>
       )}
 
@@ -90,9 +91,9 @@ export function LandlordPropertySearch({
                 >
                   <div className="w-10 h-10 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 group-hover/item:text-primary transition-colors overflow-hidden relative">
                     {property.imageSrc ? (
-                      <img src={property.imageSrc} alt="" className="w-full h-full object-cover" />
+                      <SafeImage src={property.imageSrc} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <IconBuilding size={20} />
+                      <Building2 size={20} />
                     )}
                   </div>
                   <div className="flex flex-col min-w-0">

@@ -5,6 +5,7 @@ import { IconSearch, IconX, IconStar, IconUser, IconMessage } from '@tabler/icon
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Review } from '../hooks/use-review-logic';
+import SafeImage from '@/components/common/SafeImage';
 
 interface LandlordReviewSearchProps {
   searchQuery: string;
@@ -93,7 +94,7 @@ export function LandlordReviewSearch({
                 >
                   <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 group-hover/item:text-primary transition-colors overflow-hidden">
                     {review.listing.imageSrc ? (
-                      <img src={review.listing.imageSrc} alt="" className="w-full h-full object-cover" />
+                      <SafeImage src={review.listing.imageSrc} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <IconStar size={16} />
                     )}
