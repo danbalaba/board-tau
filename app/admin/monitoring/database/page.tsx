@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { DatabasePerformance } from '@/app/admin/features/monitoring/components/database-performance';
+import DatabasePerformance from '@/app/admin/features/monitoring/components/database-performance/index';
 
 export const metadata: Metadata = {
   title: 'Database Performance - BoardTAU Admin',

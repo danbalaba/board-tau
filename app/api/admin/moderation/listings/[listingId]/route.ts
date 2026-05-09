@@ -5,9 +5,10 @@ import { PrismaErrorHandler } from '@/lib/prisma-error-handler';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ listingId: string }> }) {
   try {
-    const { id } = await params;
+    const { listingId: id } = await params;
+    console.log(`🚀 [MODERATION] Processing decision for Listing ID: ${id}`);
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session || session.user?.role !== 'ADMIN') {
@@ -27,17 +28,25 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     // Process the decision
-    const status = action === 'approve' ? 'approved' : 'rejected';
+    const status = action === 'approve' ? 'active' : 'rejected';
 
     const updatedListing = await db.listing.update({
       where: { id },
       data: {
         status,
         updatedAt: new Date(),
-        // Check if there are fields for rejections in the Listing model
-        // If not, we might just store it in notes or similar
+        approvedAt: action === 'approve' ? new Date() : null,
+        approvedBy: action === 'approve' ? session.user.id : null,
       },
     });
+
+    // ⚡ INVALIDATION: Clear all search and listings caches to show the new active property immediately
+    const { cache } = await import('@/lib/redis');
+    await Promise.all([
+      cache.delPattern("search:*"),
+      cache.delPattern("listings:*"),
+      cache.del(`listing:id:${id}`)
+    ]);
 
     return NextResponse.json(
       ApiResponseFormatter.success(updatedListing, `Listing ${status} successfully`)

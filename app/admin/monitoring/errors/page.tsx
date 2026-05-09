@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { ErrorTracking } from '@/app/admin/features/monitoring/components/error-tracking';
+import ErrorTracking from '@/app/admin/features/monitoring/components/error-tracking/index';
 
 export const metadata: Metadata = {
   title: 'Error Tracking - BoardTAU Admin',

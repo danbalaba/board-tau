@@ -8,19 +8,15 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui/card';
-import { Button } from '@/app/admin/components/ui/button';
-import { Badge } from '@/app/admin/components/ui/badge';
 import {
   IconShield,
   IconActivity,
-  IconPlus,
   IconShieldCheck,
   IconLock,
-  IconAdjustmentsHorizontal,
   IconArrowUpRight,
   IconKeyframe,
 } from '@tabler/icons-react';
-import PageContainer from '@/app/admin/components/layout/page-container';
+import { AdminRolesHeader } from './admin-roles-header';
 
 export function RolesManagement() {
   const { data: rolesData, isLoading: rolesLoading } = useRoles();
@@ -42,8 +38,8 @@ export function RolesManagement() {
       label: 'Total Permissions',
       value: permissions.length,
       icon: IconShieldCheck,
-      color: 'text-primary',
-      bg: 'bg-primary/10',
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
       description: 'Defined access points'
     },
     {
@@ -66,8 +62,8 @@ export function RolesManagement() {
       label: 'Posture Status',
       value: 'Optimal',
       icon: IconActivity,
-      color: 'text-rose-500',
-      bg: 'bg-rose-500/10',
+      color: 'text-fuchsia-500',
+      bg: 'bg-fuchsia-500/10',
       description: 'Identity vault health'
     },
   ];
@@ -105,27 +101,10 @@ export function RolesManagement() {
   };
 
   return (
-    <PageContainer
-      pageTitle="Security Governance"
-      pageDescription="Manage institutional access levels, RBAC policies, and multi-tenant privilege delegation"
-      pageHeaderAction={
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-9 gap-2 hover:bg-white/5 border-border/40 font-black uppercase text-[10px] tracking-widest">
-            <IconAdjustmentsHorizontal className="w-4 h-4" />
-            Policy Audit
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="h-9 gap-2 shadow-lg shadow-primary/20 font-black uppercase text-[10px] tracking-widest"
-          >
-            <IconPlus className="w-4 h-4" />
-            Define Role
-          </Button>
-        </div>
-      }
-    >
-      <div className="space-y-8">
+    <div className="p-6 lg:p-10 space-y-6">
+      <AdminRolesHeader onCreate={() => setIsCreateModalOpen(true)} />
+
+      <div className="space-y-6">
         {/* KPI Matrix */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {kpis.map((kpi, i) => (
@@ -135,20 +114,18 @@ export function RolesManagement() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 }}
             >
-              <Card className="group relative overflow-hidden border-none bg-card/30 backdrop-blur-md shadow-xl transition-all hover:bg-card/40">
+              <Card className="border-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl shadow-lg rounded-[2rem] overflow-hidden group h-full">
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                  <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                    {kpi.label}
-                  </CardTitle>
-                  <div className={cn('p-2 rounded-xl transition-transform group-hover:scale-110', kpi.bg)}>
-                    <kpi.icon className={cn('w-4 h-4', kpi.color)} />
+                  <CardTitle className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{kpi.label}</CardTitle>
+                  <div className={cn("p-3 rounded-2xl transition-transform group-hover:scale-110", kpi.bg)}>
+                    <kpi.icon className={cn("w-5 h-5", kpi.color)} />
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-black tabular-nums">{kpi.value}</div>
-                  <div className="flex items-center mt-1.5 gap-1">
-                    <IconArrowUpRight className="w-3 h-3 text-emerald-500" />
-                    <p className="text-[10px] font-bold text-emerald-500/80">{kpi.description}</p>
+                  <div className="text-3xl font-black text-gray-900 dark:text-white tabular-nums tracking-tighter">{kpi.value}</div>
+                  <div className="flex items-center mt-2 gap-1.5 bg-gray-50 dark:bg-gray-800/50 w-fit px-2 py-1 rounded-lg">
+                    <IconArrowUpRight className={cn("w-3 h-3 text-emerald-500")} />
+                    <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">{kpi.description}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -177,10 +154,9 @@ export function RolesManagement() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
-          {/* Section divider */}
-          <div className="flex items-center gap-3 mb-6 pl-4 border-l-[3px] border-primary/60">
-            <IconKeyframe className="w-4 h-4 text-primary/60" />
-            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/70">
+          <div className="flex items-center gap-3 mb-6 pl-4 border-l-[3px] border-emerald-500">
+            <IconKeyframe className="w-5 h-5 text-emerald-500" />
+            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">
               Permission Authority Matrix
             </h3>
           </div>
@@ -214,6 +190,6 @@ export function RolesManagement() {
         onConfirm={handleDeleteRole}
         roleName={selectedRole?.name}
       />
-    </PageContainer>
+    </div>
   );
 }

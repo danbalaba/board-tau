@@ -11,7 +11,7 @@ import {
 import { Button } from '@/app/admin/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/app/admin/components/ui/dialog';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/app/admin/components/ui/alert-dialog';
-import { MoreHorizontal, Eye, Edit, Trash2, ShieldAlert } from 'lucide-react';
+import { IconDots, IconEye, IconEdit, IconTrash, IconShieldLock, IconAlertTriangle } from '@tabler/icons-react';
 import { User } from './columns';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -19,6 +19,7 @@ import { Input } from '@/app/admin/components/ui/input';
 import { Label } from '@/app/admin/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/admin/components/ui/select';
 import { useUpdateUser, useDeleteUser, useSuspendUser } from '@/app/admin/hooks/use-users';
+import { cn } from '@/lib/utils';
 
 interface CellActionProps {
   data: User;
@@ -117,201 +118,219 @@ export function CellAction({ data }: CellActionProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant='ghost' className='h-8 w-8 p-0'>
-            <MoreHorizontal className='h-4 w-4' />
+          <Button variant='ghost' className='h-8 w-8 p-0 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500'>
+            <IconDots className='h-4 w-4' />
             <span className='sr-only'>Open menu</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align='end'>
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuSeparator />
+        <DropdownMenuContent align='end' className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-100 dark:border-gray-800 rounded-2xl p-2 shadow-xl">
+          <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-gray-500 px-2">Actions</DropdownMenuLabel>
+          <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800 my-1" />
           <DropdownMenuItem
             onClick={handleViewUser}
-            className='cursor-pointer'
+            className='cursor-pointer text-xs font-bold uppercase tracking-widest rounded-xl gap-2 py-2 text-gray-700 dark:text-gray-300'
           >
-            <Eye className='mr-2 h-4 w-4' />
+            <IconEye className='h-4 w-4 text-blue-500' />
             View Details
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={handleEditUser}
-            className='cursor-pointer'
+            className='cursor-pointer text-xs font-bold uppercase tracking-widest rounded-xl gap-2 py-2 text-gray-700 dark:text-gray-300'
           >
-            <Edit className='mr-2 h-4 w-4' />
+            <IconEdit className='h-4 w-4 text-amber-500' />
             Edit User
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800 my-1" />
           <DropdownMenuItem
             onClick={handleSuspendUser}
-            className={`cursor-pointer ${data.status === 'suspended' ? 'text-green-600' : 'text-orange-600'}`}
+            className={`cursor-pointer text-xs font-bold uppercase tracking-widest rounded-xl gap-2 py-2 ${data.status === 'suspended' ? 'text-emerald-600 focus:text-emerald-600 focus:bg-emerald-500/10' : 'text-orange-600 focus:text-orange-600 focus:bg-orange-500/10'}`}
           >
-            <ShieldAlert className='mr-2 h-4 w-4' />
+            <IconShieldLock className='h-4 w-4' />
             {data.status === 'suspended' ? 'Unsuspend' : 'Suspend'} User
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={handleDeleteUser}
-            className='cursor-pointer text-red-600'
+            className='cursor-pointer text-xs font-bold uppercase tracking-widest rounded-xl gap-2 py-2 text-rose-600 focus:text-rose-600 focus:bg-rose-500/10'
           >
-            <Trash2 className='mr-2 h-4 w-4' />
+            <IconTrash className='h-4 w-4' />
             Delete User
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* View User Dialog - Enterprise Design */}
+      {/* View User Dialog - Frosted Glass */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className='sm:max-w-lg'>
-          <DialogHeader>
-            <DialogTitle>User Details</DialogTitle>
-            <DialogDescription>
+        <DialogContent className='sm:max-w-lg border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-2xl rounded-[2.5rem] p-8'>
+          <DialogHeader className="mb-6">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="p-3 bg-blue-500/10 rounded-2xl shadow-sm">
+                <IconEye className="w-6 h-6 text-blue-500" />
+              </div>
+              <DialogTitle className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">User Details</DialogTitle>
+            </div>
+            <DialogDescription className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-[3.25rem]">
               Complete profile information for {data.name}
             </DialogDescription>
           </DialogHeader>
           <div className='space-y-6'>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              <div className='space-y-2'>
-                <Label>Full Name</Label>
-                <Input value={data.name} disabled className='bg-gray-50' />
+              <div className='space-y-2.5'>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">Full Name</Label>
+                <Input value={data.name} disabled className='h-12 rounded-2xl bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 text-sm font-bold shadow-sm' />
               </div>
-              <div className='space-y-2'>
-                <Label>Email Address</Label>
-                <Input value={data.email} disabled className='bg-gray-50' />
+              <div className='space-y-2.5'>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">Email Address</Label>
+                <Input value={data.email} disabled className='h-12 rounded-2xl bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 text-sm font-bold shadow-sm' />
               </div>
             </div>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              <div className='space-y-2'>
-                <Label>User Role</Label>
-                <Input value={data.role.toUpperCase()} disabled className='bg-gray-50' />
+              <div className='space-y-2.5'>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">User Role</Label>
+                <Input value={data.role.toUpperCase()} disabled className='h-12 rounded-2xl bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 text-sm font-bold shadow-sm' />
               </div>
-              <div className='space-y-2'>
-                <Label>Account Status</Label>
-                <Input value={data.status.toUpperCase()} disabled className={`bg-gray-50 ${
-                  data.status === 'active' ? 'text-green-600' :
-                  data.status === 'inactive' ? 'text-yellow-600' : 'text-red-600'
+              <div className='space-y-2.5'>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">Account Status</Label>
+                <Input value={data.status.toUpperCase()} disabled className={`h-12 rounded-2xl bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 text-sm font-black tracking-widest shadow-sm ${
+                  data.status === 'active' ? 'text-emerald-500' :
+                  data.status === 'inactive' ? 'text-amber-500' : 'text-rose-500'
                 }`} />
               </div>
             </div>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              <div className='space-y-2'>
-                <Label>Joined Date</Label>
-                <Input value={new Date(data.joinedAt).toLocaleDateString()} disabled className='bg-gray-50' />
+              <div className='space-y-2.5'>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">Joined Date</Label>
+                <Input value={new Date(data.joinedAt).toLocaleDateString()} disabled className='h-12 rounded-2xl bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 text-sm font-bold shadow-sm' />
               </div>
-              <div className='space-y-2'>
-                <Label>Last Login</Label>
-                <Input value={new Date(data.lastLogin).toLocaleDateString()} disabled className='bg-gray-50' />
+              <div className='space-y-2.5'>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">Last Login</Label>
+                <Input value={new Date(data.lastLogin).toLocaleDateString()} disabled className='h-12 rounded-2xl bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 text-sm font-bold shadow-sm' />
               </div>
             </div>
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-              <div className='space-y-2'>
-                <Label>Total Listings</Label>
-                <Input value={data.listingsCount.toString()} disabled className='bg-gray-50 text-center font-medium' />
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-3xl bg-blue-500/5 border border-blue-500/10'>
+              <div className='space-y-1 text-center'>
+                <Label className="text-[9px] font-black uppercase tracking-widest text-blue-500/70">Listings</Label>
+                <p className='text-lg font-black text-gray-900 dark:text-white tabular-nums'>{data.listingsCount}</p>
               </div>
-              <div className='space-y-2'>
-                <Label>Bookings Made</Label>
-                <Input value={data.bookingsCount.toString()} disabled className='bg-gray-50 text-center font-medium' />
+              <div className='space-y-1 text-center'>
+                <Label className="text-[9px] font-black uppercase tracking-widest text-blue-500/70">Bookings</Label>
+                <p className='text-lg font-black text-gray-900 dark:text-white tabular-nums'>{data.bookingsCount}</p>
               </div>
-              <div className='space-y-2'>
-                <Label>Total Spent</Label>
-                <Input value={`$${data.totalSpent.toLocaleString()}`} disabled className='bg-gray-50 text-center font-medium' />
+              <div className='space-y-1 text-center'>
+                <Label className="text-[9px] font-black uppercase tracking-widest text-blue-500/70">Spent</Label>
+                <p className='text-lg font-black text-emerald-500 tabular-nums'>${data.totalSpent.toLocaleString()}</p>
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button onClick={() => setViewDialogOpen(false)}>Close</Button>
+          <DialogFooter className="mt-8">
+            <Button variant="outline" onClick={() => setViewDialogOpen(false)} className="rounded-xl font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 h-12 px-8">Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Edit User Dialog - Enterprise Design */}
+      {/* Edit User Dialog - Frosted Glass */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className='sm:max-w-lg'>
-          <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>
+        <DialogContent className='sm:max-w-lg border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-2xl rounded-[2.5rem] p-8'>
+          <DialogHeader className="mb-6">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="p-3 bg-amber-500/10 rounded-2xl shadow-sm">
+                <IconEdit className="w-6 h-6 text-amber-500" />
+              </div>
+              <DialogTitle className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">Edit User</DialogTitle>
+            </div>
+            <DialogDescription className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-[3.25rem]">
               Update user information for {data.name}
             </DialogDescription>
           </DialogHeader>
           <div className='space-y-6'>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              <div className='space-y-2'>
-                <Label>Full Name</Label>
+              <div className='space-y-2.5'>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">Full Name</Label>
                 <Input
                   name='name'
                   value={formData.name}
                   onChange={handleInputChange}
                   placeholder='Enter full name'
+                  className="h-12 rounded-2xl bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 focus-visible:ring-amber-500/20 text-sm font-bold shadow-sm"
                 />
               </div>
-              <div className='space-y-2'>
-                <Label>Email Address</Label>
+              <div className='space-y-2.5'>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">Email Address</Label>
                 <Input
                   name='email'
                   value={formData.email}
                   type='email'
                   onChange={handleInputChange}
                   placeholder='Enter email address'
+                  className="h-12 rounded-2xl bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 focus-visible:ring-amber-500/20 text-sm font-bold shadow-sm"
                 />
               </div>
             </div>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              <div className='space-y-2'>
-                <Label>User Role</Label>
+              <div className='space-y-2.5'>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">User Role</Label>
                 <Select
                   value={formData.role}
                   onValueChange={(value) => handleSelectChange('role', value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 rounded-2xl bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 text-sm font-bold shadow-sm">
                     <SelectValue placeholder='Select role' />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='admin'>Admin</SelectItem>
-                    <SelectItem value='host'>Host</SelectItem>
-                    <SelectItem value='renter'>Renter</SelectItem>
-                    <SelectItem value='user'>User</SelectItem>
+                  <SelectContent className="rounded-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-100 dark:border-gray-800 shadow-xl">
+                    <SelectItem value='admin' className="font-bold rounded-xl">Admin</SelectItem>
+                    <SelectItem value='host' className="font-bold rounded-xl">Host</SelectItem>
+                    <SelectItem value='renter' className="font-bold rounded-xl">Renter</SelectItem>
+                    <SelectItem value='user' className="font-bold rounded-xl">User</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className='space-y-2'>
-                <Label>Account Status</Label>
+              <div className='space-y-2.5'>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">Account Status</Label>
                 <Select
                   value={formData.status}
                   onValueChange={(value) => handleSelectChange('status', value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 rounded-2xl bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 text-sm font-bold shadow-sm">
                     <SelectValue placeholder='Select status' />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='active'>Active</SelectItem>
-                    <SelectItem value='inactive'>Inactive</SelectItem>
-                    <SelectItem value='suspended'>Suspended</SelectItem>
+                  <SelectContent className="rounded-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-100 dark:border-gray-800 shadow-xl">
+                    <SelectItem value='active' className="font-bold rounded-xl text-emerald-500">Active</SelectItem>
+                    <SelectItem value='inactive' className="font-bold rounded-xl text-amber-500">Inactive</SelectItem>
+                    <SelectItem value='suspended' className="font-bold rounded-xl text-rose-500">Suspended</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant='outline' onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-            <Button onClick={confirmEdit}>Save Changes</Button>
+          <DialogFooter className="gap-3 sm:gap-0 mt-8">
+            <Button variant='ghost' onClick={() => setEditDialogOpen(false)} className="rounded-xl font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 h-12 px-6">Cancel</Button>
+            <Button onClick={confirmEdit} className="rounded-xl bg-gray-900 hover:bg-amber-500 dark:bg-white dark:text-gray-900 dark:hover:bg-amber-500 text-white font-black uppercase tracking-widest text-[10px] shadow-lg transition-all h-12 px-6">Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Suspend/Unsuspend Confirmation - Enterprise Design */}
+      {/* Suspend/Unsuspend Confirmation - Frosted Glass */}
       <AlertDialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className={data.status === 'suspended' ? 'text-green-600' : 'text-orange-600'}>
-              {data.status === 'suspended' ? 'Unsuspend User' : 'Suspend User'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to {data.status === 'suspended' ? 'unsuspend' : 'suspend'} {data.name}?
+        <AlertDialogContent className="max-w-md border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-2xl rounded-[2.5rem] p-8">
+          <AlertDialogHeader className="mb-4">
+            <div className="flex items-center gap-4 mb-2">
+              <div className={cn("p-3 rounded-2xl shadow-sm", data.status === 'suspended' ? 'bg-emerald-500/10' : 'bg-orange-500/10')}>
+                <IconShieldLock className={cn("w-6 h-6", data.status === 'suspended' ? 'text-emerald-500' : 'text-orange-500')} />
+              </div>
+              <AlertDialogTitle className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
+                {data.status === 'suspended' ? 'Unsuspend User' : 'Suspend User'}
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-xs font-bold text-gray-500 leading-relaxed pl-[3.25rem]">
+              Are you sure you want to {data.status === 'suspended' ? 'unsuspend' : 'suspend'}{' '}
+              <span className="font-black text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-md uppercase tracking-widest text-[10px]">{data.name}</span>?
               {data.status === 'suspended' ? ' This will restore their access to all platform features.' : ' This will immediately restrict their access to all platform features.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="gap-3 sm:gap-0 mt-4">
+            <AlertDialogCancel className="rounded-xl font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 border-none bg-transparent h-12 px-6">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmSuspend}
-              className={data.status === 'suspended' ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'}
+              className={cn("rounded-xl text-white font-black uppercase tracking-widest text-[10px] shadow-lg transition-all h-12 px-6", data.status === 'suspended' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20' : 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20')}
             >
               {data.status === 'suspended' ? 'Unsuspend' : 'Suspend'}
             </AlertDialogAction>
@@ -319,20 +338,35 @@ export function CellAction({ data }: CellActionProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete Confirmation - Enterprise Design */}
+      {/* Delete Confirmation - Frosted Glass */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className='text-red-600'>Delete User</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you absolutely sure you want to delete {data.name}? This action is irreversible and will permanently remove all user data, including listings, bookings, and preferences.
+        <AlertDialogContent className="max-w-md border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-2xl rounded-[2.5rem] p-8">
+          <AlertDialogHeader className="mb-4">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="p-3 bg-rose-500/10 rounded-2xl shadow-sm">
+                <IconTrash className="w-6 h-6 text-rose-500" />
+              </div>
+              <AlertDialogTitle className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">Delete User</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-xs font-bold text-gray-500 leading-relaxed pl-[3.25rem]">
+              Are you absolutely sure you want to delete{' '}
+              <span className="font-black text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded-md uppercase tracking-widest text-[10px]">"{data.name}"</span>?{' '}
+              This action is irreversible and will permanently remove all user data, including listings, bookings, and preferences.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-rose-500/5 border border-rose-500/20 mt-4 mb-8">
+            <IconAlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+            <p className="text-[10px] text-rose-600/90 font-black uppercase tracking-widest leading-relaxed">
+              All linked accounts and financial records will also be anonymized.
+            </p>
+          </div>
+
+          <AlertDialogFooter className="gap-3 sm:gap-0">
+            <AlertDialogCancel className="rounded-xl font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 border-none bg-transparent h-12 px-6">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              className='bg-red-600 hover:bg-red-700'
+              className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-rose-500/20 transition-all h-12 px-6"
             >
               Delete User
             </AlertDialogAction>

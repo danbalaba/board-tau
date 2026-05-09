@@ -1,143 +1,149 @@
 // app/admin/features/moderation/components/reviews-moderation/index.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ShieldCheck, 
-  RefreshCcw, 
-  MessageSquare, 
-  Star,
-  Download,
-  AlertCircle,
-  LayoutGrid
-} from 'lucide-react';
-import { Button } from '@/app/admin/components/ui/button';
-import { toast } from 'sonner';
-import { useReviewsModeration, useModerationDecision } from '@/app/admin/hooks/use-moderation';
-import { ReviewKPICards } from './review-kpi-cards';
-import { ReviewTable } from './review-table';
+import { MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useReviewsModerationLogic } from '../../hooks/use-reviews-moderation-logic';
+import { AdminReviewHeader } from './admin-review-header';
+import { AdminReviewCard } from './admin-review-card';
+import { AdminReviewModal } from './admin-review-modal';
+import { ReviewKPICards } from './review-kpi-cards';
+import { Button } from '@/app/admin/components/ui/button';
 
 export function ReviewsModerationDashboard() {
-  const { data: apiResponse, isLoading, refetch, isFetching } = useReviewsModeration();
-  const { mutate: decide } = useModerationDecision();
-
-  const handleRefresh = async () => {
-    await refetch();
-    toast.success('Reputation feed synchronized successfully.');
-  };
-
-  const handleAction = (id: string, action: 'approve' | 'reject') => {
-    decide({ id, entityType: 'review', action }, {
-      onSuccess: () => {
-        toast.success(`Feedback ${action === 'approve' ? 'authorized' : 'rejected'} successfully.`);
-      },
-      onError: (err: any) => {
-        toast.error(`Database Error: ${err.message}`);
-      }
-    });
-  };
-
-  const reviews = apiResponse?.data || [];
-  const pendingCount = apiResponse?.meta?.stats?.pending || 0;
-  const approvedCount = apiResponse?.meta?.stats?.approved || 0;
-  
-  const avgRating = reviews.length > 0 
-    ? (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length).toFixed(1)
-    : '4.8'; // Default rating if no pending reviews
-
-  if (isLoading) {
-    return (
-      <div className="p-6 lg:p-10 text-center">
-        <h2 className="text-2xl font-bold italic animate-pulse">Monitoring Platform Sentiment...</h2>
-      </div>
-    );
-  }
+  const {
+    filteredReviews,
+    pendingCount,
+    approvedCount,
+    avgRating,
+    isLoading,
+    isDeciding,
+    viewMode,
+    setViewMode,
+    searchQuery,
+    setSearchQuery,
+    sortBy,
+    setSortBy,
+    selectedReview,
+    setSelectedReview,
+    viewModalOpen,
+    setViewModalOpen,
+    handleRefresh,
+    handleDecision
+  } = useReviewsModerationLogic();
 
   return (
-    <div className="p-6 lg:p-10 space-y-12">
-      {/* Executive Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-border/50 pb-10">
-        <div className="space-y-1">
-          <motion.h1
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-4xl font-black tracking-tighter text-foreground uppercase flex items-center gap-4"
-          >
-            Review Moderation
-            <span className="flex items-center gap-1.5 bg-amber-500/10 px-3 py-1.5 rounded-2xl border border-amber-500/10 text-amber-500 text-[10px] tracking-[0.2em] font-black uppercase shadow-sm">
-              <Star className="w-3 h-3 fill-amber-500" />
-              {pendingCount} SENSITIVE CONTENT
-            </span>
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-muted-foreground font-medium text-sm flex items-center gap-2"
-          >
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            Vetting and authorizing user reputation feedback
-          </motion.p>
-        </div>
+    <div className="p-6 lg:p-10 space-y-6">
+      <AdminReviewHeader
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        handleRefresh={handleRefresh}
+        pendingCount={pendingCount}
+        isLoading={isLoading}
+      />
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleRefresh}
-            className={cn("h-11 w-11 rounded-xl border-border/60 bg-background/50", isFetching && "animate-spin")}
-          >
-            <RefreshCcw className="w-4 h-4 text-primary" />
-          </Button>
-
-          <Button
-            variant="default"
-            className="h-11 px-8 gap-3 rounded-2xl bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all active:scale-95 text-white"
-          >
-            <Download className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Sentiment Export</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* KPI Section */}
       <ReviewKPICards 
         total={pendingCount + approvedCount} 
         pending={pendingCount} 
         averageRating={avgRating} 
       />
 
-      {/* Table Section */}
-      <div className="space-y-6">
-        <div className="flex items-center gap-3 pl-4 border-l-[3px] border-amber-500">
-          <MessageSquare className="w-5 h-5 text-amber-500" />
-          <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/70">Social Proof Moderation</h2>
-        </div>
+      <div className="min-h-[400px] relative mt-8">
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div 
+              key="loader"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="py-24 flex flex-col items-center justify-center gap-6"
+            >
+              <div className="w-16 h-16 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin shadow-xl shadow-amber-500/10" />
+              <p className="text-[11px] font-black uppercase tracking-[0.4em] text-gray-500 animate-pulse">Monitoring Sentiment</p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="content"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.3 }}
+            >
+              {filteredReviews.length > 0 && (
+                <div className="flex items-center gap-2 mb-6">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                    Showing {filteredReviews.length} user feedback{filteredReviews.length !== 1 ? 's' : ''}
+                  </span>
+                  <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
+                </div>
+              )}
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <ReviewTable 
-            reviews={reviews.map((r: any) => ({
-              id: r.id,
-              listing: r.listing?.title || 'Unknown Listing',
-              user: r.user?.name || 'Anonymous',
-              rating: r.rating,
-              comment: r.comment,
-              status: r.status,
-              submittedAt: r.createdAt,
-              lastUpdated: r.createdAt
-            }))}
-            onView={(id) => toast.info(`Viewing details for review: ${id}`)}
-            onApprove={(id) => handleAction(id, 'approve')}
-            onReject={(id) => handleAction(id, 'reject')}
-          />
-        </motion.div>
+              <AnimatePresence mode="wait">
+                {filteredReviews.length === 0 ? (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center shadow-sm"
+                  >
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-500/10 rounded-2xl mb-4 text-amber-500">
+                      <MessageSquare size={24} />
+                    </div>
+                    <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Queue is Clear</h3>
+                    <p className="text-sm font-medium text-gray-400 max-w-sm mx-auto leading-relaxed">
+                      {searchQuery ? `No reviews found matching "${searchQuery}"` : "All user feedback has been moderated. No pending reviews at this time."}
+                    </p>
+                    {searchQuery && (
+                      <Button variant="outline" onClick={() => setSearchQuery("")} className="mt-8 rounded-xl px-6 py-2.5 text-[10px] font-black uppercase tracking-widest">
+                        Clear Search
+                      </Button>
+                    )}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="list"
+                    className={cn(
+                      viewMode === "grid"
+                        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                        : "space-y-4"
+                    )}
+                  >
+                    {filteredReviews.map((review: any, idx: number) => (
+                      <AdminReviewCard 
+                        key={`${viewMode}-${review.id}`}
+                        review={review}
+                        idx={idx}
+                        viewMode={viewMode}
+                        handleDecision={handleDecision}
+                        isDeciding={isDeciding}
+                        onViewDetails={() => {
+                          setSelectedReview(review);
+                          setViewModalOpen(true);
+                        }}
+                      />
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+
+      <AdminReviewModal 
+        review={selectedReview}
+        isOpen={viewModalOpen}
+        onClose={() => setViewModalOpen(false)}
+        onDecision={handleDecision}
+        isDeciding={isDeciding}
+      />
     </div>
   );
 }
