@@ -1,6 +1,6 @@
 import React from 'react';
-import Input from '../inputs/Input';
-import Textarea from '../inputs/Textarea';
+import Input from '../../inputs/Input';
+import Textarea from '../../inputs/Textarea';
 import { Controller } from 'react-hook-form';
 import ReactSelect from 'react-select';
 import { User, Phone, Mail, Shield, UserCheck, ShieldAlert, Info } from 'lucide-react';
@@ -182,8 +182,54 @@ const LandlordInfoStep: React.FC<LandlordInfoStepProps> = ({ register, errors, w
       >
         <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 mb-8 flex items-center space-x-2">
            <Shield className="w-4 h-4 opacity-40" />
-           <span>Professional Background</span>
+           <span>Business & Experience</span>
         </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+          <Input
+            label="Business/Establishment Name"
+            id="businessInfo.businessName"
+            register={register}
+            errors={errors}
+            watch={watch}
+            required
+            placeholder="e.g. De La Cruz Dormitory"
+            useStaticLabel={true}
+          />
+          <div>
+            <label className="block text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">
+              Property Type <span className="text-red-500">*</span>
+            </label>
+            <Controller
+              name="businessInfo.businessType"
+              control={control}
+              rules={{ required: "Required" }}
+              render={({ field }) => (
+                <ReactSelect
+                  {...field}
+                  options={[
+                    { value: 'boarding-house', label: 'Boarding House' },
+                    { value: 'dormitory', label: 'Dormitory' },
+                    { value: 'apartment', label: 'Apartment' },
+                    { value: 'hostel', label: 'Hostel' },
+                  ]}
+                  value={field.value ? { value: field.value, label: field.value.replace(/-/g, ' ').toUpperCase() } : null}
+                  onChange={(val: any) => field.onChange(val?.value)}
+                  placeholder="Select type..."
+                  classNames={{
+                    control: (state) => `!bg-white dark:!bg-gray-800 !border ${state.isFocused ? '!border-primary !ring-1 !ring-primary shadow-lg shadow-primary/10' : '!border-gray-200 dark:!border-gray-700'} !rounded-2xl !p-[5px] !shadow-sm transition-all text-[15px]`,
+                    singleValue: () => `!text-text-primary dark:!text-gray-100 font-bold`,
+                    menu: () => `!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-700 !shadow-2xl !rounded-2xl !mt-2 z-[60] overflow-hidden`,
+                    menuList: () => `!p-0 !bg-white dark:!bg-gray-800`,
+                    option: (state) => `!cursor-pointer ${state.isSelected ? '!bg-primary/10 !text-primary font-black' : state.isFocused ? '!bg-gray-100 dark:!bg-gray-700 !text-text-primary dark:!text-gray-100' : '!bg-transparent dark:!bg-transparent !text-text-primary dark:!text-gray-100'} !px-4 !py-3 !text-xs uppercase tracking-widest transition-colors`,
+                  }}
+                  menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                  styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                  instanceId="property-type-select"
+                />
+              )}
+            />
+          </div>
+        </div>
         <Textarea
           label="Relevant Landlord Experience"
           id="businessInfo.businessDescription"
