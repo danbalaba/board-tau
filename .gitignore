@@ -163,3 +163,6 @@ dist
 # SEO
 /public/sitemap*.xml
 /public/robots.txt
+
+# Sentry Config File
+.env.sentry-build-plugin
