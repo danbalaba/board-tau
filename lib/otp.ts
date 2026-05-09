@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { validateEmail, validateOTP, sanitizeInput } from '@/lib/validators';
 
 // Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
 
 // Generate random 6-digit OTP
 export const generateOTP = () => {

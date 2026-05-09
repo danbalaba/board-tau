@@ -21,7 +21,7 @@ import PasswordChangedEmail from '@/emails/PasswordChanged';
 import NewLoginAlertEmail from '@/emails/NewLoginAlert';
 
 // Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
 
 import { baseUrl, lightLogoUrl, darkLogoUrl } from './constants';
 
