@@ -34,16 +34,76 @@ import PageContainer from '@/app/admin/components/layout/page-container';
 import { toast } from 'sonner';
 
 export function GeneralSettings() {
+  const [formData, setFormData] = useState({
+    siteName: 'BoardTAU',
+    siteDescription: 'Find your perfect boarding house experience',
+    contactEmail: 'support@boardtau.com',
+    contactPhone: '+1 (555) 123-4567',
+    address: '',
+    enableEmailNotifications: true,
+    enablePushNotifications: false,
+    enableAnalytics: true,
+    enableCookies: true
+  });
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('/api/admin/settings/general');
+        const result = await response.json();
+        if (result.success) {
+          setFormData(result.data);
+        }
+      } catch (error) {
+        toast.error('Failed to load settings from database');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleToggle = (id: string, checked: boolean) => {
+    setFormData(prev => ({ ...prev, [id]: checked }));
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/admin/settings/general', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const result = await response.json();
+      if (result.success) {
+        toast.success('Configuration update deployed successfully.');
+      } else {
+        toast.error(result.message || 'Failed to save settings');
+      }
+    } catch (error) {
+      toast.error('An error occurred during deployment');
+    } finally {
       setIsSaving(false);
-      toast.success('Configuration update deployed successfully.');
-    }, 1200);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-muted-foreground animate-pulse font-medium">Synchronizing platform configuration...</p>
+      </div>
+    );
+  }
 
   return (
     <PageContainer
@@ -65,15 +125,16 @@ export function GeneralSettings() {
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
               <div className="space-y-3">
-                <Label htmlFor="platformName" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">App Handle</Label>
-              <Input id="platformName" placeholder="BoardTAU" defaultValue="BoardTAU" className="h-11 bg-white/5 border-white/10" />
+                <Label htmlFor="siteName" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">App Handle</Label>
+                <Input id="siteName" value={formData.siteName} onChange={handleChange} placeholder="BoardTAU" className="h-11 bg-white/5 border-white/10" />
               </div>
               <div className="space-y-3">
-                <Label htmlFor="platformDescription" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Global Description</Label>
+                <Label htmlFor="siteDescription" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Global Description</Label>
                 <Textarea
-                  id="platformDescription"
+                  id="siteDescription"
+                  value={formData.siteDescription}
+                  onChange={handleChange}
                   placeholder="Platform elevator pitch"
-                  defaultValue="Find your perfect boarding house experience"
                   rows={3}
                   className="bg-white/5 border-white/10 resize-none"
                 />
@@ -81,11 +142,11 @@ export function GeneralSettings() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-3">
                   <Label htmlFor="contactEmail" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Ops Email</Label>
-                  <Input id="contactEmail" type="email" defaultValue="support@boardtau.com" className="h-11 bg-white/5 border-white/10" />
+                  <Input id="contactEmail" type="email" value={formData.contactEmail} onChange={handleChange} className="h-11 bg-white/5 border-white/10" />
                 </div>
                 <div className="space-y-3">
                   <Label htmlFor="contactPhone" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Support Line</Label>
-                  <Input id="contactPhone" type="tel" defaultValue="+1 (555) 123-4567" className="h-11 bg-white/5 border-white/10" />
+                  <Input id="contactPhone" type="tel" value={formData.contactPhone} onChange={handleChange} className="h-11 bg-white/5 border-white/10" />
                 </div>
               </div>
             </CardContent>
@@ -98,95 +159,54 @@ export function GeneralSettings() {
                 <IconSettings className="h-6 w-6" />
               </div>
               <div>
-                <CardTitle className="text-lg">Module Governance</CardTitle>
-                <CardDescription>Runtime feature flags and global accessibility</CardDescription>
+                <CardTitle className="text-lg">Communication & Privacy</CardTitle>
+                <CardDescription>Global notification systems and data policies</CardDescription>
               </div>
             </CardHeader>
             <CardContent className="space-y-1 mt-4">
               {[
-                { id: 'allowNewSignups', label: 'User Registration', desc: 'Enable public account creation' },
-                { id: 'allowHostApplications', label: 'Host Onboarding', desc: 'Accept new partner applications' },
-                { id: 'enableReviews', label: 'Reputation System', desc: 'Allow peer-to- peer reviews' },
-                { id: 'enablePayments', label: 'Commerce Engine', desc: 'Authorize transaction processing' }
+                { id: 'enableEmailNotifications', label: 'Email Alerts', desc: 'Send transaction and account emails' },
+                { id: 'enablePushNotifications', label: 'Push Notifications', desc: 'Enable browser-based push notifications' },
+                { id: 'enableAnalytics', label: 'Usage Analytics', desc: 'Collect anonymous performance metrics' },
+                { id: 'enableCookies', label: 'Cookie Consent', desc: 'Show cookie banner to new visitors' }
               ].map((flag) => (
                 <div key={flag.id} className="flex items-center justify-between p-4 rounded-xl transition-colors hover:bg-muted/30">
                   <div className="space-y-0.5">
                     <Label htmlFor={flag.id} className="text-sm font-bold tracking-tight cursor-pointer">{flag.label}</Label>
                     <p className="text-xs text-muted-foreground italic">{flag.desc}</p>
                   </div>
-                  <Switch id={flag.id} defaultChecked className="data-[state=checked]:bg-emerald-500" />
+                  <Switch 
+                    id={flag.id} 
+                    checked={formData[flag.id as keyof typeof formData] as boolean} 
+                    onCheckedChange={(checked) => handleToggle(flag.id, checked)}
+                    className="data-[state=checked]:bg-emerald-500" 
+                  />
                 </div>
               ))}
             </CardContent>
           </Card>
 
-          {/* Moderation Controls */}
-          <Card className="border-none bg-card/30 backdrop-blur-md shadow-xl">
+          {/* Business Context */}
+          <Card className="border-none bg-card/30 backdrop-blur-md shadow-xl lg:col-span-2">
             <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-6 border-b">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">
                 <IconShieldLock className="h-6 w-6" />
               </div>
               <div>
-                <CardTitle className="text-lg">Security & Moderation</CardTitle>
-                <CardDescription>Threat detection and content gatekeeping</CardDescription>
+                <CardTitle className="text-lg">Business & Compliance</CardTitle>
+                <CardDescription>Legal and operational address information</CardDescription>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6 pt-6">
+            <CardContent className="pt-6">
               <div className="space-y-3">
-                <Label htmlFor="autoApproveListings" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Approval Protocol</Label>
-                <Select defaultValue="manual">
-                  <SelectTrigger id="autoApproveListings" className="h-11 bg-white/5 border-white/10">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="manual">Manual Verification Required</SelectItem>
-                    <SelectItem value="auto">Total Autonomous Approval</SelectItem>
-                    <SelectItem value="verified">Verified Hosts Exclusion</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-3">
-                  <Label htmlFor="reviewThreshold" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Triage Threshold</Label>
-                  <Input id="reviewThreshold" type="number" defaultValue={3} className="h-11 bg-white/5 border-white/10" />
-                </div>
-                <div className="space-y-3">
-                  <Label htmlFor="moderationEmail" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Alert Destination</Label>
-                  <Input id="moderationEmail" type="email" defaultValue="moderation@boardtau.com" className="h-11 bg-white/5 border-white/10" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Support Architecture */}
-          <Card className="border-none bg-card/30 backdrop-blur-md shadow-xl">
-            <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-6 border-b">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/10 text-sky-500">
-                <IconLifebuoy className="h-6 w-6" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Assistance & Support</CardTitle>
-                <CardDescription>End-user success and documentation links</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6 pt-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-3">
-                  <Label htmlFor="supportEmail" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Support Nexus</Label>
-                  <Input id="supportEmail" type="email" defaultValue="support@boardtau.com" className="h-11 bg-white/5 border-white/10" />
-                </div>
-                <div className="space-y-3">
-                  <Label htmlFor="faqUrl" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Knowledge Base</Label>
-                  <Input id="faqUrl" type="url" defaultValue="https://boardtau.com/faq" className="h-11 bg-white/5 border-white/10" />
-                </div>
-              </div>
-              <div className="space-y-3">
-                <Label htmlFor="supportHours" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Service Windows</Label>
+                <Label htmlFor="address" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Physical Address</Label>
                 <Textarea
-                  id="supportHours"
-                  defaultValue="Monday-Friday, 9am-5pm EST"
+                  id="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  placeholder="Enter business address..."
                   rows={2}
-                  className="bg-muted/30 resize-none"
+                  className="bg-white/5 border-white/10 resize-none"
                 />
               </div>
             </CardContent>
@@ -205,7 +225,7 @@ export function GeneralSettings() {
              </div>
           </div>
           <div className="flex gap-4">
-            <Button variant="ghost" type="button" className="font-bold uppercase tracking-widest text-muted-foreground">Cancel</Button>
+            <Button variant="ghost" type="button" onClick={() => window.location.reload()} className="font-bold uppercase tracking-widest text-muted-foreground">Reset</Button>
             <Button type="submit" disabled={isSaving} className="h-12 px-10 gap-2 font-black uppercase tracking-widest shadow-lg shadow-primary/20">
               {isSaving ? <IconCircleCheck className="h-5 w-5 animate-bounce" /> : <IconDeviceFloppy className="h-5 w-5" />}
               {isSaving ? 'Deploying...' : 'Publish Changes'}

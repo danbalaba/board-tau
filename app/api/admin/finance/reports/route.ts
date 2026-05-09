@@ -189,10 +189,17 @@ async function fetchReportList() {
   const now = new Date();
   const currentYear = now.getFullYear();
   
+  // Connect to database to get real context for reports
+  const [paidCount, userCount, listingCount] = await Promise.all([
+    db.reservation.count({ where: { paymentStatus: 'PAID' } }),
+    db.user.count(),
+    db.listing.count()
+  ]);
+
   const reports = [
     {
       id: `rev-${currentYear}`,
-      name: `Annual Revenue Report ${currentYear}`,
+      name: `Platform Revenue Audit - ${currentYear} (${paidCount} Paid)`,
       date: now.toISOString(),
       type: 'Financial',
       format: 'PDF',
@@ -200,19 +207,19 @@ async function fetchReportList() {
       size: '2.4 MB'
     },
     {
-      id: `tax-q1-${currentYear}`,
-      name: `Q1 Tax Compliance Report ${currentYear}`,
+      id: `occupancy-q1-${currentYear}`,
+      name: `Q1 Occupancy Analysis (${listingCount} Listings)`,
       date: new Date(currentYear, 3, 15).toISOString(),
-      type: 'Tax',
+      type: 'Occupancy',
       format: 'Excel',
       status: 'generated',
       size: '1.2 MB'
     },
     {
-      id: `host-earnings-${currentYear}`,
-      name: 'Host Earnings Summary',
+      id: `user-growth-${currentYear}`,
+      name: `User Demographic Study (${userCount} Members)`,
       date: now.toISOString(),
-      type: 'Earnings',
+      type: 'Demographics',
       format: 'CSV',
       status: 'generated',
       size: '850 KB'
