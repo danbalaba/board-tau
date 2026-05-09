@@ -21,6 +21,7 @@ import { cn } from '@/utils/helper';
 import Button from '@/components/common/Button';
 import { Inquiry } from '../hooks/use-inquiry-logic';
 import Avatar from '@/components/common/Avatar';
+import SafeImage from '@/components/common/SafeImage';
 
 interface LandlordInquiryCardProps {
   inquiry: Inquiry;
@@ -30,6 +31,7 @@ interface LandlordInquiryCardProps {
   isResponding?: boolean;
   onArchive: (id: string) => void;
   onReject: (id: string) => void;
+  onDelete: (inquiry: Inquiry) => void;
   onViewDetails: () => void;
 }
 
@@ -53,6 +55,7 @@ export function LandlordInquiryCard({
   isResponding,
   onArchive,
   onReject,
+  onDelete,
   onViewDetails
 }: LandlordInquiryCardProps) {
   const StatusIcon = statusIcons[inquiry.status] || IconClock;
@@ -64,26 +67,27 @@ export function LandlordInquiryCard({
       transition={{ delay: idx * 0.05 }}
       className={cn(
         "group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 transition-all duration-300 shadow-sm",
-        viewMode === "grid" ? "flex flex-col p-6 rounded-3xl hover:shadow-xl hover:-translate-y-1" : "flex flex-col sm:flex-row gap-6 p-6 rounded-2xl hover:shadow-xl"
+        viewMode === "grid" ? "flex flex-col p-6 rounded-[2rem] hover:shadow-xl hover:-translate-y-1" : "flex flex-col lg:flex-row items-center gap-8 p-8 rounded-[2.5rem] hover:shadow-xl"
       )}
     >
-      <div className={cn(
-        "relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 z-10",
-        viewMode === "grid" ? "h-44 mb-6 w-full" : "w-full sm:w-48 h-40"
-      )}>
-        {inquiry.listing.imageSrc ? (
-          <img
-            src={inquiry.listing.imageSrc}
-            alt={inquiry.listing.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300">
-            <IconMail size={40} strokeWidth={1.5} />
-          </div>
-        )}
 
-        <div className="absolute top-3 left-3 z-20">
+
+      <div className={cn(
+        "relative rounded-[2rem] overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 z-10",
+        viewMode === "grid" ? "h-44 mb-6 w-full" : "w-full lg:w-64 h-48"
+      )}>
+        <SafeImage
+          src={(inquiry.room?.images && inquiry.room.images.length > 0) 
+            ? inquiry.room.images[0].url 
+            : (inquiry.listing?.images && inquiry.listing.images.length > 0)
+              ? inquiry.listing.images[0].url
+              : inquiry.listing?.imageSrc || "/images/placeholder.jpg"
+          }
+          alt={inquiry.listing.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+
+        <div className="absolute top-4 left-4 z-20">
           <span className={cn(
             "flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[8px] uppercase font-black tracking-widest shadow-lg backdrop-blur-md",
             statusColors[inquiry.status] || "bg-white text-gray-800 border-gray-200"
@@ -93,6 +97,7 @@ export function LandlordInquiryCard({
           </span>
         </div>
 
+        {viewMode === "grid" && <ArchiveButton inquiry={inquiry} onArchive={onArchive} onDelete={onDelete} />}
       </div>
 
       <div className="flex-1 min-w-0 w-full z-10">
@@ -100,7 +105,7 @@ export function LandlordInquiryCard({
           <div className="min-w-0 pr-4">
             <h3 className={cn(
               "font-black text-gray-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1 truncate",
-              viewMode === "grid" ? "text-xl mb-3" : "text-lg mb-1"
+              viewMode === "grid" ? "text-xl mb-3" : "text-2xl mb-1"
             )}>
               {inquiry.listing.title}
             </h3>
@@ -120,14 +125,14 @@ export function LandlordInquiryCard({
         </div>
 
         {inquiry.room && (
-          <div className="flex items-center gap-3 mb-5 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-2xl border border-gray-100 dark:border-gray-800">
+          <div className="flex items-center gap-4 mb-5 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-[1.5rem] border border-gray-100 dark:border-gray-800">
             <div className="flex-1">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Room Interest</p>
-              <p className="text-xs font-black text-gray-900 dark:text-white truncate">{inquiry.room.name}</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Room Interest</p>
+              <p className="text-sm font-black text-gray-900 dark:text-white truncate">{inquiry.room.name}</p>
             </div>
-            <div className="text-right">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Rate</p>
-              <p className="text-xs font-black text-primary">₱{inquiry.room.price.toLocaleString()}</p>
+            <div className="text-right shrink-0">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Rate</p>
+              <p className="text-lg font-black text-primary leading-none">₱{inquiry.room.price.toLocaleString()}</p>
             </div>
           </div>
         )}
@@ -135,75 +140,141 @@ export function LandlordInquiryCard({
         <div className="flex items-center justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">
           <div className="flex items-center gap-1.5">
             <IconCalendarEvent size={12} className="text-gray-300 dark:text-gray-600" />
-            {new Date(inquiry.createdAt).toLocaleDateString()}
+            Received: {new Date(inquiry.createdAt).toLocaleDateString()}
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 pt-6 border-t border-gray-100 dark:border-gray-800">
+        {viewMode === "grid" && (
+          <div className="flex items-center gap-2 pt-6 border-t border-gray-100 dark:border-gray-800 mt-auto w-full">
+            <Button
+              outline
+              onClick={onViewDetails}
+              className="flex-1 rounded-2xl py-3 px-1 text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700"
+            >
+              <span className="flex items-center justify-center gap-1.5">
+                <IconEye size={14} />
+                <span className="hidden sm:inline">Details</span>
+              </span>
+            </Button>
+
+            {inquiry.status === "PENDING" && (
+              <div className="flex gap-2 flex-[2]">
+                <Button
+                  onClick={() => handleRespond(inquiry.id, "APPROVED")}
+                  isLoading={isResponding}
+                  className="flex-1 rounded-2xl py-3 px-1 text-[10px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 group/btn"
+                >
+                  <span className="flex items-center justify-center gap-1.5">
+                    <IconCheck size={14} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
+                    Approve
+                  </span>
+                </Button>
+                <Button
+                  outline
+                  onClick={() => onReject(inquiry.id)}
+                  isLoading={isResponding}
+                  className="flex-1 rounded-2xl py-3 px-1 text-[10px] font-black uppercase tracking-widest border-rose-100 text-rose-500 hover:bg-rose-50 dark:border-rose-900/30 group/btn"
+                >
+                  <span className="flex items-center justify-center gap-1.5">
+                    <IconX size={14} strokeWidth={3} className="group-hover:rotate-90 transition-transform" />
+                    Reject
+                  </span>
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {viewMode === "list" && (
+        <div className="flex sm:flex-col gap-4 w-full lg:w-44 mt-6 lg:mt-0 pt-8 lg:pt-0 lg:border-l border-gray-100 dark:border-gray-800 lg:pl-8 shrink-0">
           <Button
-            outline
             onClick={onViewDetails}
-            className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-50 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700"
+            className="w-full rounded-2xl h-14 bg-primary hover:bg-primary/90 text-white font-black text-[11px] uppercase tracking-widest shadow-xl shadow-primary/20 group/btn transition-all border-b-4 border-primary/30 active:border-b-0"
           >
-            <span className="flex items-center justify-center gap-2">
-              <IconEye size={14} />
-              Details
+            <span className="flex items-center justify-center gap-3">
+              <IconEye size={16} className="group-hover/btn:scale-110 transition-transform" />
+              Manage
             </span>
           </Button>
 
-          {inquiry.status === "PENDING" && (
-            <div className="flex gap-3 basis-[100%] sm:basis-auto flex-1">
-              <Button
-                onClick={() => handleRespond(inquiry.id, "APPROVED")}
-                isLoading={isResponding}
-                className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white shadow-xl shadow-emerald-500/20 group/btn"
-              >
-                <span className="flex items-center justify-center gap-2">
-                  <IconCheck size={14} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
-                  Approve
-                </span>
-              </Button>
-              <Button
-                outline
-                onClick={() => onReject(inquiry.id)}
-                isLoading={isResponding}
-                className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-widest border-rose-100 text-rose-500 hover:bg-rose-50 dark:border-rose-900/30 group/btn"
-              >
-                <span className="flex items-center justify-center gap-2">
-                  <IconX size={14} strokeWidth={3} className="group-hover:rotate-90 transition-transform" />
-                  Reject
-                </span>
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
+          <div className="flex gap-2 w-full h-12">
+            <button
+              onClick={() => onArchive(inquiry.id)}
+              className={cn(
+                "flex-1 rounded-2xl transition-all flex items-center justify-center group/btn shadow-sm border",
+                inquiry.isArchived 
+                  ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white" 
+                  : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white"
+              )}
+              title={inquiry.isArchived ? "Restore Inquiry" : "Archive Inquiry"}
+            >
+              {inquiry.isArchived ? (
+                <IconRestore size={18} className="group-hover/btn:-rotate-45 transition-transform" />
+              ) : (
+                <IconArchive size={18} className="group-hover/btn:scale-110 transition-transform" />
+              )}
+            </button>
 
-      <ArchiveButton inquiry={inquiry} onArchive={onArchive} />
+            {inquiry.isArchived && (
+              <button
+                onClick={() => onDelete(inquiry)}
+                className="flex-1 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center group/btn shadow-sm border border-rose-100 dark:border-rose-900/30"
+                title="Permanently Delete (Purge Files)"
+              >
+                <IconTrash size={18} className="group-hover/btn:rotate-12 transition-transform" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
 
-function ArchiveButton({ inquiry, onArchive }: { inquiry: Inquiry, onArchive: (id: string) => void }) {
+function ArchiveButton({ 
+  inquiry, 
+  onArchive,
+  onDelete
+}: { 
+  inquiry: Inquiry, 
+  onArchive: (id: string) => void,
+  onDelete: (inquiry: Inquiry) => void 
+}) {
   return (
-    <button 
-      onClick={(e) => {
-        e.stopPropagation();
-        onArchive(inquiry.id);
-      }}
-      className={cn(
-        "absolute top-6 right-6 z-[60] p-2 rounded-xl backdrop-blur-md transition-all duration-300 shadow-lg border",
-        inquiry.isArchived 
-          ? "bg-emerald-500/80 text-white border-emerald-400/50 hover:bg-emerald-600" 
-          : "bg-white/80 dark:bg-gray-900/80 text-gray-500 hover:text-rose-500 border-gray-100 dark:border-gray-800 hover:border-rose-100"
+    <div className="absolute top-3 right-3 z-20 flex flex-col gap-2">
+      <button 
+        onClick={(e) => {
+          e.stopPropagation();
+          onArchive(inquiry.id);
+        }}
+        className={cn(
+          "p-2 rounded-xl backdrop-blur-md transition-all duration-300 shadow-lg border",
+          inquiry.isArchived 
+            ? "bg-emerald-500/80 text-white border-emerald-400/50 hover:bg-emerald-600" 
+            : "bg-white/80 dark:bg-gray-900/80 text-gray-500 hover:text-amber-500 border-gray-100 dark:border-gray-800 hover:border-amber-100"
+        )}
+        title={inquiry.isArchived ? "Restore Inquiry" : "Archive Inquiry"}
+      >
+        {inquiry.isArchived ? (
+          <IconRestore size={14} strokeWidth={2.5} />
+        ) : (
+          <IconArchive size={14} strokeWidth={2.5} />
+        )}
+      </button>
+
+      {inquiry.isArchived && (
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(inquiry);
+          }}
+          className="p-2 rounded-xl bg-rose-500/80 text-white border-rose-400/50 hover:bg-rose-600 backdrop-blur-md transition-all duration-300 shadow-lg border"
+          title="Permanently Delete"
+        >
+          <IconTrash size={14} strokeWidth={2.5} />
+        </button>
       )}
-      title={inquiry.isArchived ? "Restore Inquiry" : "Archive Inquiry"}
-    >
-      {inquiry.isArchived ? (
-        <IconRestore size={16} strokeWidth={2.5} />
-      ) : (
-        <IconArchive size={16} strokeWidth={2.5} />
-      )}
-    </button>
+    </div>
   );
 }

@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
-import toast from 'react-hot-toast';
 
 export interface Booking {
   id: string;
@@ -11,6 +11,13 @@ export interface Booking {
     id: string;
     title: string;
     imageSrc: string;
+    images?: Array<{ url: string }>;
+  };
+  room?: {
+    id: string;
+    name: string;
+    price: number;
+    images?: Array<{ url: string }>;
   };
   user: {
     id: string;
@@ -29,21 +36,28 @@ export interface Booking {
 
 export function useBookingLogic(initialBookings: Booking[], initialCursor: string | null) {
   const router = useRouter();
+  const { success, error: toastError } = useResponsiveToast();
   const [listings, setListings] = useState(initialBookings);
   const [nextCursor, setNextCursor] = useState(initialCursor);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('newest');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [isArchived, setIsArchived] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setListings(initialBookings);
     setNextCursor(initialCursor);
   }, [initialBookings, initialCursor]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setIsLoading(false), 700);
+    return () => clearTimeout(t);
+  }, []);
 
   const filteredBookings = useMemo(() => {
     // For bookings page, we only show: CHECKED_IN, COMPLETED
@@ -100,14 +114,15 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
         setListings(prev => prev.map(booking => 
           booking.id === bookingId ? { ...booking, status } : booking
         ));
+        success(`Booking status updated to ${status.toLowerCase()} successfully.`);
         router.refresh();
       } else {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to update status');
+        toastError(data.error || 'Failed to update status');
       }
     } catch (error: any) {
       console.error('Error updating booking status:', error);
-      toast.error(error.message || 'Error updating status');
+      toastError(error.message || 'Error updating status');
       throw error;
     } finally {
       setIsUpdatingStatus(false);
@@ -134,26 +149,51 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
   }, [nextCursor, isLoadingMore]);
 
   const handleGenerateReport = async () => {
-    const columns = ['Listing', 'Guest', 'Status', 'Payment', 'Total Price', 'Dates'];
-    const data = filteredBookings.map((b: any) => [
-      b.listing.title,
-      b.user.name || b.user.email,
-      b.status.toUpperCase(),
-      b.paymentStatus.toUpperCase(),
-      `PHP ${b.totalPrice.toLocaleString()}`,
-      `${new Date(b.startDate).toLocaleDateString()} - ${new Date(b.endDate).toLocaleDateString()}`
-    ]);
+    try {
+      const totalRevenue = filteredBookings.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+      const totalBookings = filteredBookings.length;
+      const activeStays = filteredBookings.filter(b => b.status?.toLowerCase() === 'checked_in').length;
 
-    await generateTablePDF(
-      'Bookings_Report',
-      columns,
-      data,
-      {
-        title: 'Property Bookings Report',
-        subtitle: `Overview of all ${filteredBookings.length} bookings matching current filters`,
-        author: 'Landlord Dashboard'
-      }
-    );
+      const summaryData = [
+        { 
+          label: 'Total Revenue', 
+          value: `PHP ${totalRevenue.toLocaleString()}`,
+          subValue: 'Confirmed bookings'
+        },
+        { 
+          label: 'Booking Volume', 
+          value: `${totalBookings} Total`,
+          subValue: 'Historical record'
+        },
+        { 
+          label: 'Operational Status', 
+          value: `${activeStays} Checked-In`,
+          subValue: 'Current active stays'
+        }
+      ];
+
+      const columns = ['Listing', 'Guest', 'Status', 'Payment', 'Total Price', 'Dates'];
+      const data = filteredBookings.map((b: any) => [
+        b.listing.title,
+        b.user.name || b.user.email,
+        b.status.toUpperCase(),
+        b.paymentStatus.toUpperCase(),
+        `PHP ${b.totalPrice.toLocaleString()}`,
+        `${new Date(b.startDate).toLocaleDateString()} - ${new Date(b.endDate).toLocaleDateString()}`
+      ]);
+
+      await generateTablePDF('Bookings_Report', columns, data, {
+        title: 'Booking & Revenue Business Report',
+        subtitle: `Financial auditing for ${totalBookings} stay records`,
+        author: 'Landlord Revenue Management',
+        summaryData: summaryData
+      });
+      
+      success(`Generated enterprise report for ${totalBookings} bookings`);
+    } catch (error) {
+      console.error('Failed to generate report:', error);
+      toastError('Failed to generate complete report');
+    }
   };
 
   const handleToggleArchivedView = useCallback(async () => {
@@ -168,7 +208,7 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
         setNextCursor(data.data.nextCursor);
       }
     } catch (error) {
-      toast.error('Failed to fetch bookings');
+      toastError('Failed to fetch bookings');
     } finally {
       setIsLoadingMore(false);
     }
@@ -181,13 +221,12 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
       });
       if (response.ok) {
         setListings(prev => prev.filter(b => b.id !== id));
-        toast.success(`Booking ${currentArchived ? 'unarchived' : 'archived'} successfully.`);
-        router.refresh();
+        success({ title: 'SUCCESS', description: `Booking ${currentArchived ? 'unarchived' : 'archived'} successfully.` });
       } else {
-        toast.error('Failed to update archive status.');
+        toastError({ title: 'ERROR', description: 'Failed to update archive status.' });
       }
     } catch (error) {
-      toast.error('An unexpected error occurred.');
+      toastError({ title: 'ERROR', description: 'An unexpected error occurred.' });
     }
   }, [router]);
 
@@ -213,6 +252,7 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     handleUpdateStatus,
     handleLoadMore,
     handleGenerateReport,
-    isUpdatingStatus
+    isUpdatingStatus,
+    isLoading
   };
 }

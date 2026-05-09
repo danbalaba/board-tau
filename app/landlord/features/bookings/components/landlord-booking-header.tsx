@@ -22,6 +22,7 @@ import {
 import { motion } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
+import { prepareDataForExport, exportToCSV, exportToExcel } from '@/utils/export-utils';
 import { LandlordBookingSearch } from './landlord-booking-search';
 import { Booking } from '../hooks/use-booking-logic';
 import {
@@ -79,6 +80,38 @@ export function LandlordBookingHeader({
     { value: 'paid', label: 'Paid', icon: IconCreditCard },
     { value: 'failed', label: 'Failed', icon: IconAlertCircle },
   ], []);
+
+  const handleGenerateCSV = async () => {
+    const reportData = prepareDataForExport(rawBookings, 'booking');
+    const totalRevenue = rawBookings.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+    const totalBookings = rawBookings.length;
+    const metadata = {
+      reportTitle: 'Booking & Revenue Business Report',
+      reportId: `BTAU-BOOK-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Total Revenue', value: `PHP ${totalRevenue.toLocaleString()}` },
+        { label: 'Total Bookings', value: `${totalBookings}` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToCSV(reportData, `Booking_Report_${new Date().toLocaleDateString()}`, metadata);
+  };
+
+  const handleGenerateExcel = async () => {
+    const reportData = prepareDataForExport(rawBookings, 'booking');
+    const totalRevenue = rawBookings.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+    const totalBookings = rawBookings.length;
+    const metadata = {
+      reportTitle: 'Booking & Revenue Business Report',
+      reportId: `BTAU-BOOK-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Total Revenue', value: `PHP ${totalRevenue.toLocaleString()}` },
+        { label: 'Total Bookings', value: `${totalBookings}` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToExcel(reportData, `Booking_Report_${new Date().toLocaleDateString()}`, 'Bookings', metadata);
+  };
 
   return (
     <motion.div
@@ -191,7 +224,7 @@ export function LandlordBookingHeader({
                       onClick={() => setSelectedPaymentStatus(option.value)}
                       className={cn(
                         "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
-                        selectedPaymentStatus === option.value ? "bg-blue-500/10 text-blue-600" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        selectedPaymentStatus === option.value ? "bg-blue-500/10 text-blue-600" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                       )}
                     >
                       <option.icon size={14} />
@@ -221,8 +254,14 @@ export function LandlordBookingHeader({
               <button onClick={() => setViewMode('grid')} className={cn("p-2.5 rounded-xl transition-all duration-300", viewMode === 'grid' ? "bg-primary text-white shadow-lg shadow-primary/30" : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white")} title="Grid View"><IconLayoutGrid size={18} /></button>
               <button onClick={() => setViewMode('list')} className={cn("p-2.5 rounded-xl transition-all duration-300", viewMode === 'list' ? "bg-primary text-white shadow-lg shadow-primary/30" : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white")} title="List View"><IconList size={18} /></button>
             </div>
-
-            <GenerateReportButton onGeneratePDF={handleGenerateReport} />
+ 
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport}
+              onGenerateCSV={handleGenerateCSV}
+              onGenerateExcel={handleGenerateExcel}
+              label="Generate Report"
+              className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hidden sm:flex items-center gap-2"
+            />
           </div>
         </div>
       </div>

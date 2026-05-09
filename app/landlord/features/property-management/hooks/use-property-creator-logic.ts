@@ -1,20 +1,37 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { validateStep } from '@/services/validation/hostApplication';
+import { validateCreateListingStep } from '../components/creator/validation/create-listing';
 import { useRouter } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useEdgeStore } from '@/lib/edgestore';
-import { toast } from 'sonner';
+import { useResponsiveToast } from '@/components/common/ResponsiveToast';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+export interface RoomType {
+  roomType: string;
+  bathroomArrangement: string;
+  price: string;
+  bedType: string;
+  bedCount: string;
+  capacity: string;
+  size: string;
+  availableSlots: string;
+  reservationFee: string;
+  description: string;
+  amenities: string[];
+}
 
 export function usePropertyCreatorLogic(initialData: any) {
   const router = useRouter();
   const { edgestore } = useEdgeStore();
+  const { success, error: toastError } = useResponsiveToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
+  const [isProcessingNext, setIsProcessingNext] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
-  const [propertyFiles, setPropertyFiles] = useState<File[]>([]);
+  const [propertyFiles, setPropertyFiles] = useState<Record<string, File[]>>({});
   const [roomFiles, setRoomFiles] = useState<Record<number, File[]>>({});
 
   useEffect(() => {
@@ -23,18 +40,17 @@ export function usePropertyCreatorLogic(initialData: any) {
   }, []);
 
   const defaultValues = {
-    businessInfo: {
-      businessName: initialData?.businessInfo?.businessName || '',
-      businessType: initialData?.businessInfo?.businessType || 'boarding-house',
-      businessDescription: initialData?.businessInfo?.businessDescription || '',
-      yearsExperience: initialData?.businessInfo?.yearsExperience || '',
-    },
     propertyInfo: {
       propertyName: initialData?.propertyInfo?.propertyName || '',
       description: initialData?.propertyInfo?.description || '',
       price: initialData?.propertyInfo?.price || '',
-      category: initialData?.propertyInfo?.category || [],
-      leaseTerms: initialData?.propertyInfo?.leaseTerms || 'semester',
+      category: initialData?.propertyInfo?.category || '',
+    },
+    businessInfo: {
+      businessName: initialData?.businessInfo?.businessName || '',
+      businessType: initialData?.businessInfo?.businessType || '',
+      businessDescription: initialData?.businessInfo?.businessDescription || '',
+      yearsExperience: initialData?.businessInfo?.yearsExperience || '',
     },
     location: {
       address: initialData?.location?.address || '',
@@ -59,11 +75,13 @@ export function usePropertyCreatorLogic(initialData: any) {
       quietEnvironment: initialData?.propertyConfig?.quietEnvironment || false,
       flexibleLease: initialData?.propertyConfig?.flexibleLease || false,
       amenities: initialData?.propertyConfig?.amenities || [],
-      rooms: initialData?.propertyConfig?.rooms || [],
+      rules: initialData?.propertyConfig?.rules || [],
+      features: initialData?.propertyConfig?.features || [],
+      rooms: (initialData?.propertyConfig?.rooms || []) as RoomType[], 
     },
     propertyImages: {
-      property: initialData?.propertyImages?.property || [],
-      rooms: initialData?.propertyImages?.rooms || {},
+      property: initialData?.propertyImages?.property || {},
+      rooms: {},
     },
     documents: initialData?.documents || {
       governmentId: '',
@@ -71,16 +89,6 @@ export function usePropertyCreatorLogic(initialData: any) {
       landTitle: '',
       barangayClearance: '',
       fireSafetyCertificate: '',
-    },
-    contactInfo: {
-      fullName: initialData?.contactInfo?.fullName || '',
-      email: initialData?.contactInfo?.email || '',
-      phoneNumber: initialData?.contactInfo?.phoneNumber || '',
-      emergencyContact: {
-        name: initialData?.contactInfo?.emergencyContact?.name || '',
-        relationship: initialData?.contactInfo?.emergencyContact?.relationship || '',
-        phoneNumber: initialData?.contactInfo?.emergencyContact?.phoneNumber || '',
-      },
     },
   };
 
@@ -106,6 +114,43 @@ export function usePropertyCreatorLogic(initialData: any) {
     name: 'propertyConfig.rooms',
   });
 
+  const watchedTotalRooms = watch('propertyConfig.totalRooms');
+
+  // Auto-sync rooms based on totalRooms count
+  useEffect(() => {
+    const totalRooms = parseInt(watchedTotalRooms) || 0;
+    const currentRooms = getValues('propertyConfig.rooms') || [];
+    const currentCount = currentRooms.length;
+    
+    // Kill-switch: Stop generating if the user types > 50 to prevent browser crashes
+    if (totalRooms > 50) return;
+    
+    if (totalRooms === currentCount) return;
+
+    if (totalRooms > currentCount) {
+      const diff = totalRooms - currentCount;
+      const roomsToAdd = Array.from({ length: diff }, () => ({
+        roomType: '',
+        bathroomArrangement: '',
+        price: '',
+        bedType: '',
+        bedCount: '',
+        capacity: '',
+        size: '',
+        availableSlots: '',
+        reservationFee: '',
+        description: '',
+        amenities: [],
+      }));
+      append(roomsToAdd);
+    } else if (totalRooms < currentCount && totalRooms >= 0) {
+      const diff = currentCount - totalRooms;
+      for (let i = 0; i < diff; i++) {
+        remove(currentCount - 1 - i);
+      }
+    }
+  }, [watchedTotalRooms, append, remove, getValues]);
+
   // Self-cleaning effect for legacy placeholders
   useEffect(() => {
     if (isMounted) {
@@ -120,79 +165,33 @@ export function usePropertyCreatorLogic(initialData: any) {
     }
   }, [isMounted, getValues, setValue]);
 
-  // Real-time validation for business mission description
-  const missionDescription = watch('businessInfo.businessDescription');
-  useEffect(() => {
-    if (missionDescription && missionDescription.length >= 100) {
-      clearErrors('businessInfo.businessDescription' as any);
-    }
-  }, [missionDescription, clearErrors]);
-
   const handleNext = async () => {
+    if (isProcessingNext) return;
+    setIsProcessingNext(true);
+    
     try {
+      clearErrors();
       console.log('Validating step:', currentStep);
-      // Perform validation for the current step before proceeding
       const currentValues = getValues();
-      
-      // Mapping Landlord steps (0-7) to Host validation steps (1-8)
-      const validationStep = currentStep + 1;
-      
-      // Create a simplified validation object
-      const validationData = {
-        ...currentValues,
-        businessInfo: {
-          businessName: currentValues.businessInfo?.businessName || '',
-          businessType: currentValues.businessInfo?.businessType || 'boarding-house',
-          businessDescription: currentValues.businessInfo?.businessDescription || '',
-          yearsExperience: currentValues.businessInfo?.yearsExperience || '3+'
-        }
-      };
+      const result = validateCreateListingStep(currentStep, currentValues);
 
-      const result = validateStep(validationStep, validationData);
-
-      // Step 0: Business Info - Tell us your mission
-      if (currentStep === 0) {
-        if (!validationData.businessInfo.businessDescription || validationData.businessInfo.businessDescription.length < 100) {
-          result.valid = false;
-          result.errors.push({ 
-            field: 'businessInfo.businessDescription', 
-            message: 'Mission description must be at least 100 characters (Marketing standard)' 
-          });
-        }
-      }
-
-      // Maintain overrides for higher room counts and bathroom selection
-      if (currentStep === 3) { // Property Configuration (Step 4) - Index 3
-        // Mock bathroomType if missing to pass strict host validation
-        if (!(validationData.propertyConfig as any).bathroomType) {
-          (validationData.propertyConfig as any).bathroomType = 'PRIVATE';
-          // If we added it here, we should check if it was actually invalid before
+      if (currentStep === 2) { 
+        if (!(currentValues.propertyConfig as any).bathroomType) {
+          (currentValues.propertyConfig as any).bathroomType = 'PRIVATE';
           const bathroomErrIndex = result.errors.findIndex(e => e.field === 'propertyConfig.bathroomType');
           if (bathroomErrIndex > -1) {
             result.errors.splice(bathroomErrIndex, 1);
             if (result.errors.length === 0) result.valid = true;
           }
         }
-        
-        // If rooms > 50, we already checked it by setting it to 50 in validationData if needed?
-        // Let's be explicit:
-        if (currentValues.propertyConfig.totalRooms > 50 && currentValues.propertyConfig.totalRooms <= 100) {
-          const roomErrIndex = result.errors.findIndex(e => e.field === 'propertyConfig.totalRooms');
-          if (roomErrIndex > -1) {
-            result.errors.splice(roomErrIndex, 1);
-            if (result.errors.length === 0) result.valid = true;
-          }
-        }
-        // Check if bathroomCount is empty (User requirement)
-        // Note: Number('') is 0, so we must check the raw string or handle null/undefined
+
         const rawBathroomCount = currentValues.propertyConfig.bathroomCount;
         if (rawBathroomCount === '' || rawBathroomCount === null || rawBathroomCount === undefined) {
           result.valid = false;
-          // Check if error already exists for this field to avoid duplicates
           if (!result.errors.some(e => e.field === 'propertyConfig.bathroomCount')) {
-            result.errors.push({ 
-              field: 'propertyConfig.bathroomCount', 
-              message: 'Bathroom count is required' 
+            result.errors.push({
+              field: 'propertyConfig.bathroomCount',
+              message: 'Bathroom count is required'
             });
           }
         }
@@ -201,101 +200,50 @@ export function usePropertyCreatorLogic(initialData: any) {
       if (!result.valid) {
         if (result.errors.length > 0) {
           const firstError = result.errors[0];
-          toast.error(firstError.message, {
-            description: `Field: ${firstError.field}`,
-            duration: 4000
-          });
-          
+          // toast notifications cleared for inline validation preference
+
           result.errors.forEach(err => {
-            setError(err.field as any, { 
-              type: 'manual', 
-              message: err.message 
+            setError(err.field as any, {
+              type: 'manual',
+              message: err.message
             });
           });
 
-          // Scroll to the first error field automatically
           setTimeout(() => {
-            const scrollContainer = document.getElementById('scroll-container');
             let element = document.getElementById(firstError.field);
             if (!element) {
               element = document.querySelector(`[name="${firstError.field}"]`);
             }
-            
-            if (element && scrollContainer) {
-              const elementRect = element.getBoundingClientRect();
-              const containerRect = scrollContainer.getBoundingClientRect();
-              const targetTop = (elementRect.top + scrollContainer.scrollTop) - containerRect.top - 150;
-              
-              // Manual smooth scroll implementation for guaranteed smoothness
-              const startTop = scrollContainer.scrollTop;
-              const distance = targetTop - startTop;
-              const duration = 800; // ms
-              let startTime: number | null = null;
-              
-              const animation = (currentTime: number) => {
-                if (startTime === null) startTime = currentTime;
-                const timeElapsed = currentTime - startTime;
-                const progress = Math.min(timeElapsed / duration, 1);
-                
-                // Ease out cubic function
-                const ease = 1 - Math.pow(1 - progress, 3);
-                
-                scrollContainer.scrollTop = startTop + distance * ease;
-                
-                if (timeElapsed < duration) {
-                  requestAnimationFrame(animation);
-                }
-              };
-              
-              requestAnimationFrame(animation);
 
-              // Add shake and glow animations
+            if (element) {
+              const elementRect = element.getBoundingClientRect();
+              const absoluteElementTop = elementRect.top + window.pageYOffset;
+              const middleOffset = absoluteElementTop - 150;
+
+              window.scrollTo({ top: middleOffset, behavior: 'smooth' });
+
+              const scrollContainer = document.getElementById('scroll-container');
+              if (scrollContainer) {
+                const containerRect = scrollContainer.getBoundingClientRect();
+                const targetTop = (elementRect.top + scrollContainer.scrollTop) - containerRect.top - 150;
+                scrollContainer.scrollTo({ top: targetTop, behavior: 'smooth' });
+              }
+
               element.classList.add('animate-shake', 'animate-glow-error');
               setTimeout(() => {
                 element?.classList.remove('animate-shake', 'animate-glow-error');
               }, 2000);
-              
+
               if (typeof (element as any).focus === 'function') {
                 (element as any).focus();
               }
             }
-          }, 200);
+          }, 100);
         }
         return;
       }
 
-      // Step 3 -> 4: Sync Room Configurations with Total Rooms
-      if (currentStep === 3) {
-        const targetRoomCount = parseInt(currentValues.propertyConfig.totalRooms) || 0;
-        const currentRooms = currentValues.propertyConfig.rooms || [];
-        
-        if (currentRooms.length < targetRoomCount) {
-          // Append missing rooms
-          for (let i = currentRooms.length; i < targetRoomCount; i++) {
-            append({
-              name: `Room ${i + 1}`,
-              roomType: 'SOLO',
-              bathroomArrangement: 'PRIVATE',
-              price: '',
-              bedType: 'Single',
-              capacity: '1',
-              size: '',
-              availableSlots: '1',
-              reservationFee: '500',
-              description: '',
-              amenities: [],
-              images: [],
-            } as any);
-          }
-        } else if (currentRooms.length > targetRoomCount && targetRoomCount > 0) {
-          // Trim extra rooms from the end if the user decreased the count
-          for (let i = currentRooms.length - 1; i >= targetRoomCount; i--) {
-            remove(i);
-          }
-        }
-      }
-
-      if (currentStep < 7) {
+      if (currentStep < 6) {
         setCurrentStep(prev => prev + 1);
         const scrollContainer = document.getElementById('scroll-container');
         if (scrollContainer) {
@@ -306,7 +254,9 @@ export function usePropertyCreatorLogic(initialData: any) {
       }
     } catch (error: any) {
       console.error('Validation error:', error);
-      toast.error('Navigation failed: ' + (error.message || 'unknown error'));
+      toastError('Navigation failed: ' + (error.message || 'unknown error'));
+    } finally {
+      setTimeout(() => setIsProcessingNext(false), 400);
     }
   };
 
@@ -343,7 +293,7 @@ export function usePropertyCreatorLogic(initialData: any) {
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error(`File ${file.name} is too large. Max 5MB.`);
+      toastError(`File ${file.name} is too large. Max 5MB.`);
       return;
     }
 
@@ -354,12 +304,16 @@ export function usePropertyCreatorLogic(initialData: any) {
     clearErrors(`documents.${type}` as any);
   };
 
-  const handlePropertyFilesChange = (files: File[]) => {
+  const handlePropertyFilesChange = (files: Record<string, File[]>) => {
     setPropertyFiles(files);
-    // Use real blob URLs for local browser preview
-    const blobUrls = files.map(f => URL.createObjectURL(f));
-    setValue('propertyImages.property' as any, blobUrls, { shouldValidate: true });
-    if (files.length > 0) {
+    const updatedUrls: Record<string, string[]> = {};
+    Object.entries(files).forEach(([cat, catFiles]) => {
+      updatedUrls[cat] = catFiles.map(f => URL.createObjectURL(f));
+    });
+    setValue('propertyImages.property' as any, updatedUrls, { shouldValidate: true });
+    
+    const totalCount = Object.values(files).flat().length;
+    if (totalCount >= 3) {
       clearErrors('propertyImages.property' as any);
     }
   };
@@ -374,42 +328,102 @@ export function usePropertyCreatorLogic(initialData: any) {
     }
   };
 
+  const queryClient = useQueryClient();
+
+  const createPropertyMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const response = await fetch('/api/landlord/properties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to publish property');
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['landlordProperties'] });
+      success('Property listing published successfully!');
+      window.location.href = '/landlord/properties';
+    },
+    onError: (error: any) => {
+      toastError(error.message || 'Error during publication.');
+    }
+  });
+
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
-    const toastId = toast.loading('Publishing your new property listing...');
-
+    
     try {
       // 1. Upload Documents
       const docUrls: Record<string, string> = {};
       for (const [type, file] of Object.entries(uploadedFiles)) {
-        const res = await edgestore.publicFiles.upload({ file });
-        docUrls[type] = res.url;
+        if (!(file instanceof File)) continue;
+        try {
+          const freshFile = new File([file], file.name, { type: file.type });
+          const res = await edgestore.identityDocs.upload({ 
+            file: freshFile,
+            input: { landlordId: "PENDING", listingId: "PENDING" }
+          });
+          docUrls[type] = res.url;
+          // Small delay to prevent network congestion
+          await new Promise(r => setTimeout(r, 200));
+        } catch (err: any) {
+          throw err;
+        }
       }
 
-      // 2. Upload Property Images
-      const propertyImageUrls: string[] = [];
-      for (const file of propertyFiles) {
-        const res = await edgestore.publicFiles.upload({ file });
-        propertyImageUrls.push(res.url);
+      // 2. Upload Property Images with Categories
+      const propertyImageUrls: { url: string, category: string }[] = [];
+      for (const [category, files] of Object.entries(propertyFiles)) {
+        if (Array.isArray(files)) {
+          for (const file of files) {
+            if (!(file instanceof File)) continue;
+            try {
+              const freshFile = new File([file], file.name, { type: file.type });
+              const res = await edgestore.publicFiles.upload({ file: freshFile });
+              propertyImageUrls.push({ url: res.url, category });
+              await new Promise(r => setTimeout(r, 200));
+            } catch (err: any) {
+              throw err;
+            }
+          }
+        }
       }
 
       // 3. Upload Room Images
-      const roomsWithImages = await Promise.all(data.propertyConfig.rooms.map(async (r: any, idx: number) => {
-        const roomImages: string[] = [];
-        const files = roomFiles[idx] || [];
-        for (const file of files) {
-          const res = await edgestore.publicFiles.upload({ file });
-          roomImages.push(res.url);
+      const roomImageUrlsMap: Record<number, string[]> = {};
+      for (const [roomIndex, files] of Object.entries(roomFiles)) {
+        const urls: string[] = [];
+        for (const file of (files || [])) {
+          if (!(file instanceof File)) continue;
+          try {
+            const freshFile = new File([file], file.name, { type: file.type });
+            const res = await edgestore.publicFiles.upload({ file: freshFile });
+            urls.push(res.url);
+            await new Promise(r => setTimeout(r, 200));
+          } catch (err: any) {
+            throw err;
+          }
         }
-        return {
-          ...r,
-          price: parseInt(r.price),
-          capacity: parseInt(r.capacity),
-          size: parseFloat(r.size) || 0,
-          availableSlots: parseInt(r.availableSlots),
-          reservationFee: parseInt(r.reservationFee),
-          images: roomImages,
-        };
+        roomImageUrlsMap[parseInt(roomIndex)] = urls;
+      }
+
+      // 4. Map Customized Rooms for the Dashboard
+      const finalRooms = (data.propertyConfig.rooms || []).map((room: any, i: number) => ({
+        name: `Room ${i + 1}`,
+        roomType: room.roomType,
+        bathroomArrangement: room.bathroomArrangement,
+        price: parseInt(room.price) || parseInt(data.propertyInfo.price),
+        bedType: room.bedType,
+        bedCount: parseInt(room.bedCount) || 1,
+        capacity: parseInt(room.capacity) || 1,
+        availableSlots: parseInt(room.availableSlots) || 1,
+        size: room.size ? parseFloat(room.size) : null,
+        reservationFee: parseInt(room.reservationFee) || 500,
+        description: room.description || `Customized unit for ${data.propertyInfo.propertyName} - Unit ${i + 1}`,
+        amenities: room.amenities || [],
+        images: roomImageUrlsMap[i] || [] // Use uploaded room images
       }));
 
       // 4. Transform data for API - Flattens the structure to match the existing createProperty service
@@ -417,56 +431,49 @@ export function usePropertyCreatorLogic(initialData: any) {
         title: data.propertyInfo.propertyName,
         description: data.propertyInfo.description,
         price: parseInt(data.propertyInfo.price),
-        roomCount: parseInt(data.propertyConfig.totalRooms),
+        roomCount: finalRooms.length,
         bathroomCount: parseInt(data.propertyConfig.bathroomCount),
-        leaseTerms: data.propertyInfo.leaseTerms,
         region: data.location.province,
         address: data.location.address,
         city: data.location.city,
         zipCode: data.location.zipCode,
         // API expects [lng, lat] for latlng mapping
-        latlng: data.location.coordinates.length === 2 
-          ? [data.location.coordinates[1], data.location.coordinates[0]] 
+        latlng: data.location.coordinates.length === 2
+          ? [data.location.coordinates[1], data.location.coordinates[0]]
           : [120.9842, 14.5995],
         category: data.propertyInfo.category,
         images: propertyImageUrls,
-        amenities: data.propertyConfig.amenities,
+        imageSrc: propertyImageUrls[0]?.url || "",
+        amenities: data.propertyConfig['no-curfew'] 
+          ? [...(data.propertyConfig.amenities || []), "No Curfew"] 
+          : (data.propertyConfig.amenities || []),
         // API expects rules at the top level
-        femaleOnly: data.propertyConfig.femaleOnly,
-        maleOnly: data.propertyConfig.maleOnly,
-        visitorsAllowed: data.propertyConfig.visitorsAllowed,
-        petsAllowed: data.propertyConfig.petsAllowed,
-        smokingAllowed: data.propertyConfig.smokingAllowed,
+        femaleOnly: !!data.propertyConfig['female-only'],
+        maleOnly: !!data.propertyConfig['male-only'],
+        visitorsAllowed: data.propertyConfig['visitors-allowed'] !== false,
+        petsAllowed: !!data.propertyConfig['pets-allowed'],
+        smokingAllowed: !!data.propertyConfig['smoking-allowed'],
+        noCurfew: !!data.propertyConfig['no-curfew'],
         // API expects features at the top level
-        security24h: data.propertyConfig.security24h,
-        cctv: data.propertyConfig.cctv,
-        fireSafety: data.propertyConfig.fireSafety,
-        nearTransport: data.propertyConfig.nearTransport,
-        studyFriendly: data.propertyConfig.studyFriendly,
-        quietEnvironment: data.propertyConfig.quietEnvironment,
-        flexibleLease: data.propertyConfig.flexibleLease,
-        rooms: roomsWithImages,
+        security24h: !!data.propertyConfig.security24h,
+        cctv: !!data.propertyConfig.cctv,
+        fireSafety: !!data.propertyConfig.fireSafety,
+        nearTransport: data.propertyConfig.nearTransport !== false,
+        floodFree: !!data.propertyConfig.floodFree,
+        backupPower: !!data.propertyConfig.backupPower,
+        flexibleLease: !!data.propertyConfig.flexibleLease,
+        customRules: data.propertyConfig.rules || [],
+        customFeatures: data.propertyConfig.features || [],
+        rooms: finalRooms, // Use the customized rooms
         documents: docUrls,
         businessInfo: data.businessInfo,
       };
 
-      const response = await fetch('/api/landlord/properties', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      await createPropertyMutation.mutateAsync(payload);
 
-      const result = await response.json();
-      if (result.success) {
-        toast.success('Property listing published successfully!', { id: toastId });
-        router.push('/landlord/properties');
-        router.refresh();
-      } else {
-        toast.error(result.error || 'Failed to publish property', { id: toastId });
-      }
     } catch (error) {
       console.error(error);
-      toast.error('Error during publication.', { id: toastId });
+      toastError('Error during publication.');
     } finally {
       setIsSubmitting(false);
     }

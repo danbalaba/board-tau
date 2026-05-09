@@ -9,6 +9,8 @@ import {
   IconPercentage,
 } from '@tabler/icons-react';
 
+import Skeleton from '@/components/common/Skeleton';
+
 interface LandlordDashboardStats {
   totalProperties: number;
   activeListings: number;
@@ -21,10 +23,33 @@ interface LandlordDashboardStats {
 }
 
 interface LandlordDashboardStatsCardsProps {
-  stats: LandlordDashboardStats;
+  stats?: LandlordDashboardStats;
+  isLoading?: boolean;
 }
 
-export function LandlordDashboardStatsCards({ stats }: LandlordDashboardStatsCardsProps) {
+export function LandlordDashboardStatsCards({ stats, isLoading }: LandlordDashboardStatsCardsProps) {
+  if (isLoading || !stats) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[...Array(8)].map((_, i) => (
+          <div
+            key={i}
+            className="bg-white dark:bg-gray-900 rounded-[24px] border border-gray-100 dark:border-gray-800 p-6 shadow-sm"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <Skeleton className="w-12 h-12 rounded-[18px]" />
+            </div>
+            <div>
+              <Skeleton className="h-3 w-24 mb-2 opacity-60" variant="text" />
+              <Skeleton className="h-8 w-16 mb-2" variant="text" />
+              <Skeleton className="h-4 w-32" variant="text" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   const statsCards = [
     {
       label: 'Total Properties',

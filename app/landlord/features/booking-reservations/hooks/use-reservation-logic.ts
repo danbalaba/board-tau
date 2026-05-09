@@ -11,11 +11,13 @@ export interface ReservationRequest {
     id: string;
     title: string;
     imageSrc: string;
+    images?: Array<{ url: string }>;
   };
   room?: {
     id: string;
     name: string;
     price: number;
+    images?: Array<{ url: string }>;
   };
   user: {
     id: string;
@@ -37,12 +39,18 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
   
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('newest');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   
   const [isArchived, setIsArchived] = useState(false);
   const [reservations, setReservations] = useState(initialReservations);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setIsLoading(false), 700);
+    return () => clearTimeout(t);
+  }, []);
 
   // Sync with incoming server data changes (e.g., after router.refresh())
   useEffect(() => {
@@ -99,13 +107,12 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
       });
       if (response.ok) {
         setReservations(prev => prev.filter(r => r.id !== id));
-        success(`Reservation ${currentArchived ? 'unarchived' : 'archived'} successfully.`);
-        router.refresh();
+        success({ title: 'SUCCESS', description: `Reservation ${currentArchived ? 'unarchived' : 'archived'} successfully.` });
       } else {
-        toastError(`Failed to update archive status.`);
+        toastError({ title: 'ERROR', description: `Failed to update archive status.` });
       }
     } catch (error) {
-      toastError("An unexpected error occurred.");
+      toastError({ title: 'ERROR', description: "An unexpected error occurred." });
     }
   }, [router, success, toastError]);
 
@@ -122,11 +129,7 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
         setReservations(prev => prev.map(r => r.id === bookingId ? { ...r, status } : r));
         success(`Reservation status updated to ${status.replace('_', ' ')}.`);
         
-        if (status === 'CHECKED_IN') {
-          router.push('/landlord/bookings');
-        } else {
-          router.refresh();
-        }
+        router.refresh();
       } else {
         const data = await response.json();
         toastError(data.error || `Failed to update status.`);
@@ -140,20 +143,50 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
   }, [router, success, toastError]);
 
   const handleGenerateReport = async () => {
-    const columns = ['Listing', 'Tenant', 'Status', 'Move In Date', 'Duration'];
-    const data = filteredReservations.map((r) => [
-      r.listing.title,
-      r.user.name || r.user.email,
-      r.status.toUpperCase(),
-      new Date(r.moveInDate).toLocaleDateString(),
-      `${r.stayDuration} days`
-    ]);
+    try {
+      const totalRequests = filteredReservations.length;
+      const reservedCount = filteredReservations.filter(r => r.status?.toLowerCase() === 'reserved').length;
+      const pendingCount = filteredReservations.filter(r => r.status?.toLowerCase() === 'pending_payment').length;
 
-    await generateTablePDF('Reservations_Report', columns, data, {
-      title: 'Reservation Requests Report',
-      subtitle: `Overview of ${filteredReservations.length} reservation requests`,
-      author: 'Landlord Dashboard'
-    });
+      const summaryData = [
+        { 
+          label: 'Total Requests', 
+          value: `${totalRequests}`,
+          subValue: 'All pre-stay volume'
+        },
+        { 
+          label: 'Confirmed', 
+          value: `${reservedCount} Paid`,
+          subValue: 'Reservations secured'
+        },
+        { 
+          label: 'Pipeline', 
+          value: `${pendingCount} Pending`,
+          subValue: 'Awaiting payment'
+        }
+      ];
+
+      const columns = ['Listing', 'Tenant', 'Status', 'Move In Date', 'Duration'];
+      const data = filteredReservations.map((r) => [
+        r.listing.title,
+        r.user.name || r.user.email,
+        r.status.toUpperCase(),
+        new Date(r.moveInDate).toLocaleDateString(),
+        `${r.stayDuration} days`
+      ]);
+
+      await generateTablePDF('Reservations_Report', columns, data, {
+        title: 'Reservation Requests Business Report',
+        subtitle: `Auditing pre-stay pipeline for ${totalRequests} potential tenants`,
+        author: 'Landlord Booking Management',
+        summaryData: summaryData
+      });
+      
+      success(`Generated enterprise report for ${totalRequests} reservations`);
+    } catch (error) {
+      console.error('Failed to generate report:', error);
+      toastError('Failed to generate complete report');
+    }
   };
 
   return {
@@ -172,6 +205,7 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
     handleToggleArchiveRecord,
     handleUpdateStatus,
     handleGenerateReport,
-    isUpdating
+    isUpdating,
+    isLoading
   };
 }

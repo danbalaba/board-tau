@@ -7,22 +7,22 @@ import LandlordSettingsHub from '../index';
 interface LandlordSettingsModalHubProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultTab?: 'notifications' | 'payment' | 'security';
+  defaultTab?: 'profile' | 'notifications' | 'payment' | 'security';
   mode?: 'account' | 'security' | 'all';
 }
 
 export function LandlordSettingsModalHub({
   isOpen,
   onClose,
-  defaultTab = 'notifications',
+  defaultTab = 'profile',
   mode = 'all'
 }: LandlordSettingsModalHubProps) {
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      width="lg"
-      title={mode === 'security' ? 'Security & Privacy' : 'General Settings'}
+      width="xl"
+      title="Landlord Settings Hub"
       closeOnOutsideClick={false}
     >
       <ScrollArea className="max-h-[85vh] -m-6">

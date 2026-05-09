@@ -20,26 +20,25 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FormProvider } from 'react-hook-form';
 import { cn } from '@/utils/helper';
 import Button from '@/components/common/Button';
+import Skeleton from '@/components/common/Skeleton';
 import LoadingAnimation from '@/components/common/LoadingAnimation';
 
 import { usePropertyCreatorLogic } from './hooks/use-property-creator-logic';
 
 // Wizard Steps
-import LandlordInfoStep from '@/components/host-application/LandlordInfoStep';
-import PropertyBasicStep from '@/components/host-application/PropertyBasicStep';
-import PropertyConfigStep from '@/components/host-application/PropertyConfigStep';
+import PropertyBasicStep from './components/creator/PropertyBasicStep';
+import PropertyConfigStep from './components/creator/PropertyConfigStep';
 import LandlordLocationStep from './components/landlord-location-step';
-import PropertyImagesStep from '@/components/host-application/PropertyImagesStep';
-import RoomConfigStep from '@/components/host-application/RoomConfigStep';
-import DocumentsStep from '@/components/host-application/DocumentsStep';
-import ReviewStep from '@/components/host-application/ReviewStep';
+import PropertyImagesStep from './components/creator/PropertyImagesStep';
+import RoomConfigStep from './components/creator/RoomConfigStep';
+import DocumentsStep from './components/creator/DocumentsStep';
+import ReviewStep from './components/creator/ReviewStep';
 
 const STEPS = [
-  { id: 'landlord', title: 'Landlord Info', icon: User },
   { id: 'identity', title: 'Property Basics', icon: Building2 },
   { id: 'location', title: 'Location', icon: MapPin },
-  { id: 'config', title: 'Configuration', icon: FileText },
-  { id: 'rooms', title: 'Rooms', icon: Bed },
+  { id: 'config', title: 'Property Setup', icon: FileText },
+  { id: 'rooms', title: 'Room Setup', icon: Bed },
   { id: 'images', title: 'Images', icon: Camera },
   { id: 'docs', title: 'Documents', icon: Upload },
   { id: 'review', title: 'Review', icon: CheckCircle },
@@ -80,15 +79,6 @@ export function LandlordPropertyCreator() {
     switch (currentStep) {
       case 0:
         return (
-          <LandlordInfoStep 
-            register={register} 
-            errors={errors} 
-            watch={watch} 
-            control={control} 
-          />
-        );
-      case 1:
-        return (
           <PropertyBasicStep 
             register={register} 
             errors={errors} 
@@ -96,7 +86,7 @@ export function LandlordPropertyCreator() {
             control={control} 
           />
         );
-      case 2:
+      case 1:
         return (
           <LandlordLocationStep 
             register={register} 
@@ -108,7 +98,7 @@ export function LandlordPropertyCreator() {
             onAddressAutoFill={handleAddressAutoFill} 
           />
         );
-      case 3:
+      case 2:
         return (
           <PropertyConfigStep 
             register={register} 
@@ -116,23 +106,24 @@ export function LandlordPropertyCreator() {
             watch={watch} 
             control={control} 
             getValues={getValues}
+            setValue={setValue}
           />
         );
-      case 4:
+      case 3:
         return (
           <RoomConfigStep 
             register={register} 
             errors={errors} 
             watch={watch} 
+            control={control} 
             fields={fields}
             append={append}
             remove={remove}
-            control={control}
             getValues={getValues}
             setValue={setValue}
           />
         );
-      case 5:
+      case 4:
         return (
           <PropertyImagesStep 
             register={register} 
@@ -148,7 +139,7 @@ export function LandlordPropertyCreator() {
             onRoomFilesChange={handleRoomFilesChange}
           />
         );
-      case 6:
+      case 5:
         return (
           <DocumentsStep 
             register={register} 
@@ -159,7 +150,7 @@ export function LandlordPropertyCreator() {
             onFileUpload={handleFileUpload} 
           />
         );
-      case 7:
+      case 6:
         return (
           <ReviewStep 
             watch={watch} 
@@ -172,8 +163,44 @@ export function LandlordPropertyCreator() {
     }
   };
 
+  if (!isMounted) {
+    return (
+      <div className="w-full relative min-h-screen pb-32">
+        <div className="max-w-4xl mx-auto px-4 md:px-8 py-12">
+          {/* Header Skeleton */}
+          <Skeleton className="h-28 w-full rounded-2xl mb-12" />
+          
+          {/* Steps Skeleton */}
+          <div className="flex justify-between items-center mb-12 px-2">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="w-10 h-10 rounded-xl" />
+            ))}
+          </div>
+
+          {/* Form Skeleton */}
+          <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] p-8 border border-gray-100 dark:border-gray-800 shadow-xl space-y-6">
+            <Skeleton className="h-8 w-1/3 rounded-lg" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-14 w-full rounded-xl" />
+            </div>
+            <Skeleton className="h-32 w-full rounded-2xl" />
+          </div>
+
+          {/* Footer Skeleton */}
+          <div className="mt-12 flex justify-between gap-4">
+            <Skeleton className="h-14 w-32 rounded-xl" />
+            <Skeleton className="h-14 w-48 rounded-xl" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full relative min-h-screen pb-32">
+    <div className="w-full relative min-h-screen pb-32" id="scroll-container">
       <div className="max-w-4xl mx-auto px-4 md:px-8 py-12">
             {/* Wizard Header */}
             <div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/10 shadow-sm mb-12">
@@ -191,14 +218,16 @@ export function LandlordPropertyCreator() {
                         </p>
                      </div>
                   </div>
-                  <Button 
-                    outline 
-                    type="button"
-                    onClick={() => router.back()} 
-                    className="rounded-xl px-4 py-2 text-[9px] font-black uppercase tracking-widest h-fit"
-                  >
-                    Discard Draft
-                  </Button>
+                  <div className="flex-none">
+                    <Button 
+                      outline 
+                      type="button"
+                      onClick={() => router.back()} 
+                      className="rounded-xl px-6 py-2.5 text-[10px] font-black uppercase tracking-widest h-fit whitespace-nowrap hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 bg-white/5 dark:bg-gray-800/50"
+                    >
+                      Discard Draft
+                    </Button>
+                  </div>
                </div>
             </div>
 
@@ -219,7 +248,7 @@ export function LandlordPropertyCreator() {
                         isActive 
                           ? "bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105" 
                           : isCompleted 
-                            ? "bg-green-500 border-green-500 text-white" 
+                            ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
                             : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 group-hover:border-primary/40"
                       )}>
                         {isCompleted ? <Check className="w-5 h-5" /> : <step.icon className="w-5 h-5" />}
@@ -279,7 +308,7 @@ export function LandlordPropertyCreator() {
                     </div>
                     
                     <div className="hidden sm:flex flex-col items-center">
-                       <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 mb-0.5">Application Progress</span>
+                       <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 mb-0.5">Creation Progress</span>
                        <span className="text-[11px] font-black text-primary uppercase tracking-widest">
                           Section {currentStep + 1} / {STEPS.length}
                        </span>

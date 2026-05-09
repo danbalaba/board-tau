@@ -19,6 +19,7 @@ import {
 } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
+import { prepareDataForExport, exportToCSV, exportToExcel } from '@/utils/export-utils';
 import { LandlordInquirySearch } from './landlord-inquiry-search';
 import { Inquiry } from '../hooks/use-inquiry-logic';
 import {
@@ -58,6 +59,38 @@ export function LandlordInquiryHeader({
   isArchived,
   onToggleArchived
 }: LandlordInquiryHeaderProps) {
+  const handleGenerateCSV = async () => {
+    const reportData = prepareDataForExport(rawInquiries, 'inquiry');
+    const totalInquiries = rawInquiries.length;
+    const uniqueListings = new Set(rawInquiries.map(i => i.listingId)).size;
+    const metadata = {
+      reportTitle: 'Tenant Inquiry Business Report',
+      reportId: `BTAU-INQ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Total Inquiries', value: `${totalInquiries}` },
+        { label: 'Interested Properties', value: `${uniqueListings}` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToCSV(reportData, `Inquiry_Report_${new Date().toLocaleDateString()}`, metadata);
+  };
+
+  const handleGenerateExcel = async () => {
+    const reportData = prepareDataForExport(rawInquiries, 'inquiry');
+    const totalInquiries = rawInquiries.length;
+    const uniqueListings = new Set(rawInquiries.map(i => i.listingId)).size;
+    const metadata = {
+      reportTitle: 'Tenant Inquiry Business Report',
+      reportId: `BTAU-INQ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Total Inquiries', value: `${totalInquiries}` },
+        { label: 'Interested Properties', value: `${uniqueListings}` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToExcel(reportData, `Inquiry_Report_${new Date().toLocaleDateString()}`, 'Inquiries', metadata);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -174,8 +207,8 @@ export function LandlordInquiryHeader({
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all backdrop-blur-sm shadow-sm",
                 isArchived 
-                  ? "bg-amber-500/10 border-amber-500/20 text-amber-600 hover:bg-amber-500/20" 
-                  : "bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700 text-gray-500 hover:text-primary"
+              ? "bg-amber-500/10 border-amber-500/20 text-amber-600 hover:bg-amber-500/20" 
+              : "bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700 text-gray-500 hover:text-primary"
               )}
             >
               <IconHistory size={14} className={isArchived ? "animate-spin-slow" : ""} />
@@ -204,7 +237,13 @@ export function LandlordInquiryHeader({
               </button>
             </div>
             
-            <GenerateReportButton onGeneratePDF={handleGenerateReport} />
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport}
+              onGenerateCSV={handleGenerateCSV}
+              onGenerateExcel={handleGenerateExcel}
+              label="Generate Report"
+              className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hidden sm:flex items-center gap-2"
+            />
           </div>
         </div>
       </div>

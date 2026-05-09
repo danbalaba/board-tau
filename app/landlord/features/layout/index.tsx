@@ -6,6 +6,8 @@ import LandlordSidebar from './components/landlord-sidebar';
 import LandlordTopbar from './components/landlord-topbar';
 import LandlordKBar from './components/landlord-kbar';
 import { useLandlordProfileStore } from '../settings-hub/hooks/use-landlord-profile-store';
+import BackToTop from '@/components/common/BackToTop';
+import FloatingMessagingWidget from '../messaging-hub/components/floating-messaging-widget';
 
 interface LandlordLayoutClientProps {
   children: React.ReactNode;
@@ -40,6 +42,8 @@ export default function LandlordLayoutClient({
           </SidebarInset>
         </SidebarProvider>
       </LandlordKBar>
+      <BackToTop />
+      <FloatingMessagingWidget />
     </div>
   );
 }

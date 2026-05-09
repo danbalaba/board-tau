@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/app/admin/components/ui/dropdown-menu';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
+import { prepareDataForExport, exportToCSV, exportToExcel } from '@/utils/export-utils';
 import { LandlordReviewSearch } from './landlord-review-search';
 import { Review } from '../hooks/use-review-logic';
 
@@ -52,6 +53,42 @@ export function LandlordReviewHeader({
   setSearchQuery,
   rawReviews
 }: LandlordReviewHeaderProps) {
+  const handleGenerateCSV = async () => {
+    const reportData = prepareDataForExport(rawReviews, 'review');
+    const totalReviews = rawReviews.length;
+    const avgRating = totalReviews > 0 
+      ? rawReviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews 
+      : 0;
+    const metadata = {
+      reportTitle: 'Property Reputation Business Report',
+      reportId: `BTAU-REV-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Average Rating', value: `${avgRating.toFixed(1)} / 5.0` },
+        { label: 'Total Reviews', value: `${totalReviews}` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToCSV(reportData, `Review_Report_${new Date().toLocaleDateString()}`, metadata);
+  };
+
+  const handleGenerateExcel = async () => {
+    const reportData = prepareDataForExport(rawReviews, 'review');
+    const totalReviews = rawReviews.length;
+    const avgRating = totalReviews > 0 
+      ? rawReviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews 
+      : 0;
+    const metadata = {
+      reportTitle: 'Property Reputation Business Report',
+      reportId: `BTAU-REV-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Average Rating', value: `${avgRating.toFixed(1)} / 5.0` },
+        { label: 'Total Reviews', value: `${totalReviews}` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToExcel(reportData, `Review_Report_${new Date().toLocaleDateString()}`, 'Reviews', metadata);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -165,7 +202,13 @@ export function LandlordReviewHeader({
               </button>
             </div>
 
-            <GenerateReportButton onGeneratePDF={handleGenerateReport} />
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport}
+              onGenerateCSV={handleGenerateCSV}
+              onGenerateExcel={handleGenerateExcel}
+              label="Generate Report"
+              className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hidden sm:flex items-center gap-2"
+            />
           </div>
       </div>
     </motion.div>

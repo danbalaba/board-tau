@@ -3,12 +3,8 @@
 import React from 'react';
 import { signOut } from 'next-auth/react';
 import { 
-  IconSettings, 
-  IconUserCircle as IconUser, 
   IconLogout, 
-  IconShieldCheck as IconShield, 
   IconMenu2,
-  IconFingerprint,
   IconSettingsFilled,
   IconChevronRight
 } from '@tabler/icons-react';
@@ -21,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/app/admin/components/ui/dropdown-menu';
+import Skeleton from '@/components/common/Skeleton';
 import Avatar from '@/components/common/Avatar';
 
 interface LandlordTopbarUserMenuProps {
@@ -30,12 +27,24 @@ interface LandlordTopbarUserMenuProps {
     image: string | null;
     profileImage?: string | null;
     role: string;
-  };
-  onOpenSettings: (tab?: 'notifications' | 'payment' | 'security', mode?: 'account' | 'security' | 'all') => void;
-  onViewProfile: () => void;
+  } | null;
+  onOpenSettings: (tab?: 'profile' | 'notifications' | 'payment' | 'security', mode?: 'account' | 'security' | 'all') => void;
+  isLoading?: boolean;
 }
 
-export function LandlordTopbarUserMenu({ user, onOpenSettings, onViewProfile }: LandlordTopbarUserMenuProps) {
+export function LandlordTopbarUserMenu({ user, onOpenSettings, isLoading }: LandlordTopbarUserMenuProps) {
+  if (isLoading || !user) {
+    return (
+      <div className='flex items-center gap-3 p-1.5'>
+        <Skeleton variant="circle" className="w-9 h-9" />
+        <div className='text-left hidden lg:flex flex-col gap-1.5'>
+          <Skeleton className="w-24 h-3.5" />
+          <Skeleton className="w-16 h-2.5" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -83,40 +92,14 @@ export function LandlordTopbarUserMenu({ user, onOpenSettings, onViewProfile }: 
         <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
         <DropdownMenuGroup className="p-1">
           <DropdownMenuItem 
-            onClick={onViewProfile}
-            className='rounded-xl flex items-center justify-between p-2.5 cursor-pointer hover:bg-indigo-50/50 dark:hover:bg-indigo-500/10 transition-all group mt-1'
-          >
-            <div className='flex items-center gap-3'>
-              <div className="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                <IconFingerprint size={20} stroke={2} />
-              </div>
-              <span className="font-bold text-sm text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 transition-colors">Profile Details</span>
-            </div>
-            <IconChevronRight size={14} className="text-gray-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-          </DropdownMenuItem>
-
-          <DropdownMenuItem 
-            onClick={() => onOpenSettings('notifications', 'account')}
+            onClick={() => onOpenSettings('profile')}
             className='rounded-xl flex items-center justify-between p-2.5 cursor-pointer hover:bg-violet-50/50 dark:hover:bg-violet-500/10 transition-all group mt-1'
           >
             <div className='flex items-center gap-3'>
               <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                 <IconSettingsFilled size={20} />
               </div>
-              <span className="font-bold text-sm text-gray-700 dark:text-gray-300 group-hover:text-violet-600 transition-colors">Settings</span>
-            </div>
-            <IconChevronRight size={14} className="text-gray-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-          </DropdownMenuItem>
-
-          <DropdownMenuItem 
-            onClick={() => onOpenSettings('security', 'security')}
-            className='rounded-xl flex items-center justify-between p-2.5 cursor-pointer hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10 transition-all group mt-1'
-          >
-            <div className='flex items-center gap-3'>
-              <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                <IconShield size={20} stroke={2} />
-              </div>
-              <span className="font-bold text-sm text-gray-700 dark:text-gray-300 group-hover:text-emerald-600 transition-colors">Security & Privacy</span>
+              <span className="font-bold text-sm text-gray-700 dark:text-gray-300 group-hover:text-violet-600 transition-colors">Settings Hub</span>
             </div>
             <IconChevronRight size={14} className="text-gray-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
           </DropdownMenuItem>

@@ -12,7 +12,9 @@ import {
   IconCalendarEvent, 
   IconInfoCircle, 
   IconEye,
-  IconRestore 
+  IconRestore,
+  IconTrash,
+  IconLoader2 
 } from '@tabler/icons-react';
 import Button from '@/components/common/Button';
 import { cn } from '@/utils/helper';
@@ -21,6 +23,7 @@ import { Inquiry } from '../hooks/use-inquiry-logic';
 import { createPortal } from 'react-dom';
 import { useIsClient } from '@/hooks/useIsClient';
 import { LandlordInquiryDetailsModal } from './landlord-inquiry-details-modal';
+import LandlordArchiveModal from './landlord-inquiry-archive-modal';
 
 interface LandlordInquiryModalsProps {
   deleteModalOpen: boolean;
@@ -29,10 +32,14 @@ interface LandlordInquiryModalsProps {
   setViewModalOpen: (o: boolean) => void;
   rejectModalOpen: boolean;
   setRejectModalOpen: (o: boolean) => void;
+  archiveModalOpen: boolean;
+  setArchiveModalOpen: (o: boolean) => void;
   selectedInquiry: Inquiry | null;
   isDeleting: boolean;
   isResponding?: boolean;
+  isArchiving?: boolean;
   handleConfirmDelete: () => void;
+  handleConfirmArchive: () => void;
   handleConfirmReject: (id: string, reason: string) => void;
   handleRespond?: (id: string, status: "APPROVED" | "REJECTED", message?: string) => Promise<void>;
 }
@@ -58,10 +65,14 @@ export function LandlordInquiryModals({
   setViewModalOpen,
   rejectModalOpen,
   setRejectModalOpen,
+  archiveModalOpen,
+  setArchiveModalOpen,
   selectedInquiry,
   isDeleting,
   isResponding,
+  isArchiving,
   handleConfirmDelete,
+  handleConfirmArchive,
   handleConfirmReject,
   handleRespond
 }: LandlordInquiryModalsProps) {
@@ -83,58 +94,66 @@ export function LandlordInquiryModals({
 
   return createPortal(
     <>
-      {/* Archive/Restore Modal (Existing) */}
+      {/* New Professional Archive Modal */}
+      <LandlordArchiveModal 
+        isOpen={archiveModalOpen}
+        onClose={() => setArchiveModalOpen(false)}
+        onConfirm={handleConfirmArchive}
+        isArchiving={isArchiving}
+        isRestore={selectedInquiry.isArchived}
+        title={selectedInquiry.isArchived ? 'Restore Inquiry' : 'Archive Inquiry'}
+        description={selectedInquiry.isArchived 
+          ? `This will restore the inquiry from ${selectedInquiry.user.name || selectedInquiry.user.email} to your active inbox.`
+          : `This will move the inquiry from ${selectedInquiry.user.name || selectedInquiry.user.email} to your archive. You can restore it anytime.`
+        }
+      />
+
+      {/* Permanent Delete Modal (Only for Archived items) */}
       <AnimatePresence>
         {deleteModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setDeleteModalOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              className="absolute inset-0 bg-gray-900/80 backdrop-blur-md"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative bg-white dark:bg-gray-900 rounded-[32px] border border-gray-100 dark:border-gray-800 p-8 max-w-sm w-full shadow-2xl overflow-hidden"
+              className="relative bg-[#111827] rounded-[32px] border border-white/10 p-8 max-w-sm w-full shadow-2xl overflow-hidden"
             >
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-rose-500" />
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-rose-500" />
               <div className="flex flex-col items-center text-center">
-                <div className={cn(
-                  "w-16 h-16 rounded-2xl flex items-center justify-center mb-6 animate-pulse",
-                  selectedInquiry.isArchived ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500" : "bg-red-50 dark:bg-red-900/20 text-red-500"
-                )}>
-                  {selectedInquiry.isArchived ? <IconRestore size={32} /> : <IconAlertTriangle size={32} />}
+                <div className="w-20 h-20 rounded-[2rem] bg-rose-500/10 text-rose-500 border border-rose-900/30 flex items-center justify-center mb-8 shadow-inner">
+                   <IconTrash size={36} className="animate-bounce" />
                 </div>
-                <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">
-                   {selectedInquiry.isArchived ? 'Restore Inquiry?' : 'Archive Inquiry?'}
+                
+                <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight leading-none">
+                   Delete Permanently
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed font-medium">
-                  {selectedInquiry.isArchived 
-                    ? `Are you sure you want to restore the inquiry from "${selectedInquiry.user.name || selectedInquiry.user.email}"? This will move it back to your active list.`
-                    : `Are you sure you want to archive the inquiry from "${selectedInquiry.user.name || selectedInquiry.user.email}"? This will hide it from your active list but keep it for your records.`
-                  }
+                
+                <p className="text-sm text-gray-400 mb-8 leading-relaxed font-medium px-4">
+                  You are about to permanently delete all sensitive documents for "{selectedInquiry.user.name || selectedInquiry.user.email}". This action cannot be undone.
                 </p>
-                <div className="flex flex-col w-full gap-2.5">
+
+                <div className="flex flex-col w-full gap-3">
                   <Button
-                    variant={selectedInquiry.isArchived ? "primary" : "danger"}
+                    variant="danger"
                     isLoading={isDeleting}
                     onClick={handleConfirmDelete}
-                    className={cn(
-                      "rounded-xl py-3 shadow-lg text-xs font-black uppercase tracking-widest",
-                      selectedInquiry.isArchived ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/10" : "shadow-red-500/10"
-                    )}
+                    className="rounded-2xl py-4 shadow-xl text-[10px] font-black uppercase tracking-[0.2em] bg-rose-500 hover:bg-rose-600 shadow-rose-500/20"
                   >
-                    {selectedInquiry.isArchived ? 'Confirm Restoration' : 'Confirm Archiving'}
+                    {isDeleting ? 'Purging Files...' : 'Delete Permanently'}
                   </Button>
                   <Button
                     outline
                     onClick={() => setDeleteModalOpen(false)}
-                    className="rounded-xl py-3 border-gray-100 dark:border-gray-800 text-xs font-black uppercase tracking-widest"
+                    className="rounded-2xl py-4 border-gray-800 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500"
                   >
-                    {selectedInquiry.isArchived ? 'Keep Archived' : 'Keep Active'}
+                    Cancel Action
                   </Button>
                 </div>
               </div>
@@ -146,19 +165,19 @@ export function LandlordInquiryModals({
       {/* Rejection Reason Modal (New) */}
       <AnimatePresence>
         {rejectModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setRejectModalOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              className="absolute inset-0 bg-gray-900/80 backdrop-blur-md"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative bg-white dark:bg-gray-900 rounded-[32px] border border-gray-100 dark:border-gray-800 p-8 max-w-md w-full shadow-2xl overflow-hidden"
+              className="relative bg-[#111827] rounded-[32px] border border-white/10 p-8 max-w-md w-full shadow-2xl overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-1.5 bg-rose-500" />
               <div className="flex flex-col">

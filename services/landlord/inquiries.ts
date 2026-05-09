@@ -44,6 +44,11 @@ export const getLandlordInquiries = async (args?: {
           id: true,
           title: true,
           imageSrc: true,
+          images: {
+            select: {
+              url: true
+            }
+          }
         },
       },
       room: {
@@ -52,6 +57,11 @@ export const getLandlordInquiries = async (args?: {
           name: true,
           price: true,
           reservationFee: true,
+          images: {
+            select: {
+              url: true
+            }
+          }
         },
       },
     },
@@ -89,6 +99,11 @@ export const getInquiryDetails = async (inquiryId: string) => {
           imageSrc: true,
           description: true,
           amenities: true,
+          images: {
+            select: {
+              url: true
+            }
+          }
         },
       },
       room: {
@@ -98,6 +113,11 @@ export const getInquiryDetails = async (inquiryId: string) => {
           price: true,
           capacity: true,
           availableSlots: true,
+          images: {
+            select: {
+              url: true
+            }
+          }
         },
       },
     },

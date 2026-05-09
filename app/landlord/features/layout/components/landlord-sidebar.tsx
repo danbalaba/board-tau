@@ -36,7 +36,8 @@ import {
   IconCloudCheck,
   IconServer,
   IconCircleLetterT,
-  IconDeviceFloppy // Corrected import
+  IconDeviceFloppy,
+  IconBed
 } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -59,9 +60,14 @@ const navItems = [
     icon: IconBuilding,
   },
   {
+    href: '/landlord/rooms',
+    label: 'Rooms',
+    icon: IconBed,
+  },
+  {
     href: '/landlord/inquiries',
     label: 'Inquiries',
-    icon: IconMessage,
+    icon: IconMail,
   },
   {
     href: '/landlord/reservations',
@@ -85,6 +91,8 @@ const navItems = [
   },
 ];
 
+import Skeleton from '@/components/common/Skeleton';
+
 export default function LandlordSidebar() {
   const pathname = usePathname();
   const { state } = useSidebar();
@@ -92,7 +100,10 @@ export default function LandlordSidebar() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 1000); // 1s delay for skeleton visibility
+    return () => clearTimeout(timer);
   }, []);
 
   const isDark = theme === "dark";
@@ -101,45 +112,45 @@ export default function LandlordSidebar() {
     <Sidebar
       variant='sidebar'
       collapsible='icon'
-      className='border-r border-gray-200/50 dark:border-gray-800/50 bg-white/70 dark:bg-gray-950/70 backdrop-blur-xl transition-all duration-300'
+      className={cn(
+        'border-r border-gray-200/50 dark:border-gray-800/50 bg-white/70 dark:bg-gray-950/70 backdrop-blur-xl',
+        mounted && 'transition-all duration-500 ease-in-out'
+      )}
     >
-      <SidebarHeader className={cn('pt-8 px-8 pb-4 mb-4 transition-all duration-300', state === 'collapsed' && 'p-2 mb-2')}>
-        {state === 'collapsed' ? (
+      <SidebarHeader className={cn(
+        'pt-8 px-8 pb-4 mb-4 overflow-hidden', 
+        mounted && 'transition-all duration-500 ease-in-out',
+        state === 'collapsed' && 'pt-4 px-2 pb-2 mb-2'
+      )}>
+        {!mounted ? (
+          <div className="flex flex-col items-center justify-center gap-4">
+             <Skeleton className="h-[40px] w-[140px] rounded-xl" />
+          </div>
+        ) : state === 'collapsed' ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             className="flex items-center justify-center w-full"
           >
-            <Link href="/landlord" className="p-2 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary border border-primary/10 shadow-lg shadow-primary/5 hover:scale-110 hover:shadow-primary/10 hover:bg-primary/10 transition-all duration-500 cursor-pointer group/logo relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover/logo:opacity-100 transition-opacity" />
+            <Link href="/landlord" className="p-2 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary border border-primary/10 shadow-lg shadow-primary/5 transition-all duration-500 cursor-pointer relative overflow-hidden">
               <IconHome 
                 size={22} 
                 stroke={2.5} 
                 data-slot="sidebar-menu-button-icon"
-                className="group-hover/logo:rotate-12 transition-transform duration-500 relative z-10"
+                className="relative z-10"
               />
             </Link>
           </motion.div>
         ) : (
           <motion.div
+             layout
              initial={{ opacity: 0, scale: 0.95 }}
              animate={{ opacity: 1, scale: 1 }}
-             transition={{ duration: 0.5, ease: "easeOut" }}
+             transition={{ duration: 0.5, ease: "easeInOut" }}
              className="flex flex-col items-center justify-center gap-4"
           >
-            <Link href="/landlord" className="flex flex-col items-center gap-3 group">
-              <div className="h-[40px] w-[160px] relative transition-all duration-500 group-hover:scale-110 group-hover:filter group-hover:drop-shadow-[0_0_15px_rgba(var(--primary),0.3)]">
-                {!mounted ? (
-                  <Image
-                    src="/images/TauBOARD-Light.png"
-                    alt="BoardTAU Logo"
-                    fill
-                    sizes="160px"
-                    priority
-                    unoptimized
-                    className="object-contain"
-                  />
-                ) : (
+            <Link href="/landlord" className="flex flex-col items-center gap-3">
+              <div className="h-[40px] w-[160px] relative transition-all duration-500">
                   <Image
                     src={isDark ? "/images/TauBOARD-Dark.png" : "/images/TauBOARD-Light.png"}
                     alt="BoardTAU Logo"
@@ -149,83 +160,112 @@ export default function LandlordSidebar() {
                     unoptimized
                     className="object-contain"
                   />
-                )}
               </div>
-              <div className="h-1 w-12 bg-gradient-to-r from-transparent via-primary/40 to-transparent rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
             </Link>
           </motion.div>
         )}
       </SidebarHeader>
 
-      <SidebarContent className={cn('px-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]', state === 'collapsed' && 'px-0')}>
+      <SidebarContent className={cn(
+        'px-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]', 
+        mounted && 'transition-all duration-500 ease-in-out',
+        state === 'collapsed' && 'px-0'
+      )}>
         <SidebarGroup>
           <SidebarMenu className='gap-2.5'>
-            {navItems.map((item, index) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href || (item.href !== '/landlord' && pathname.startsWith(item.href));
-
-              return (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    tooltip={item.label}
-                    isActive={isActive}
-                    className={cn(
-                      "group relative h-12 rounded-2xl transition-all duration-500 border border-transparent",
-                      state === 'collapsed' ? "px-0 justify-center mx-auto w-9" : "px-5 w-full",
-                      isActive 
-                        ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-xl shadow-primary/30 translate-x-1 border-white/10" 
-                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-primary dark:hover:text-primary-hover hover:translate-x-1 hover:border-gray-100 dark:hover:border-white/5"
-                    )}
-                  >
-                    <Link href={item.href} className={cn("flex items-center w-full", state === 'collapsed' ? "justify-center" : "gap-4")}>
-                      <div className={cn(
-                        "p-2 rounded-xl transition-all duration-500 shrink-0",
-                        isActive ? "bg-white/20" : "bg-gray-100/50 dark:bg-white/5 group-hover:bg-primary/10",
-                        state === 'collapsed' && "p-1.5"
-                      )}>
-                        <Icon
-                          size={18}
-                          data-slot="sidebar-menu-button-icon"
-                          className={cn(
-                            "transition-all duration-500",
-                            isActive ? "text-white scale-110" : "group-hover:scale-110 group-hover:rotate-3"
-                          )}
-                        />
-                      </div>
-                      
-                      {state !== 'collapsed' && (
-                        <span className={cn(
-                          "font-black text-[11px] uppercase tracking-[0.08em] transition-all duration-300",
-                          isActive ? "opacity-100" : "opacity-70 group-hover:opacity-100"
-                        )}>
-                          {item.label}
-                        </span>
-                      )}
-                      
-                      {isActive && state !== 'collapsed' && (
-                        <motion.div
-                          layoutId="active-nav-indicator"
-                          className="absolute left-0 w-1 h-5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ duration: 0.3 }}
-                        />
-                      )}
-                    </Link>
-                  </SidebarMenuButton>
+            {!mounted ? (
+              [...Array(8)].map((_, i) => (
+                <SidebarMenuItem key={i}>
+                  <div className="px-2 w-full">
+                    <Skeleton className="h-12 w-full rounded-2xl" />
+                  </div>
                 </SidebarMenuItem>
-              );
-            })}
+              ))
+            ) : (
+              navItems.map((item, index) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href || (item.href !== '/landlord' && pathname.startsWith(item.href));
+
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={item.label}
+                      isActive={isActive}
+                      className={cn(
+                        "group relative h-12 rounded-2xl transition-all duration-500 border border-transparent",
+                        state === 'collapsed' ? "px-0 justify-center mx-auto w-9" : "px-5 w-full",
+                        isActive 
+                          ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-xl shadow-primary/30 translate-x-1 border-white/10" 
+                          : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-primary dark:hover:text-primary-hover hover:translate-x-1 hover:border-gray-100 dark:hover:border-white/5"
+                      )}
+                    >
+                      <Link href={item.href} className={cn("flex items-center w-full", state === 'collapsed' ? "justify-center" : "gap-4")}>
+                        <div className={cn(
+                          "p-2 rounded-xl transition-all duration-500 shrink-0",
+                          isActive ? "bg-white/20" : "bg-gray-100/50 dark:bg-white/5 group-hover:bg-primary/10",
+                          state === 'collapsed' && "p-1.5"
+                        )}>
+                          <Icon
+                            size={18}
+                            data-slot="sidebar-menu-button-icon"
+                            className={cn(
+                              "transition-all duration-500",
+                              isActive ? "text-white scale-110" : "group-hover:scale-110 group-hover:rotate-3"
+                            )}
+                          />
+                        </div>
+                        
+                        <AnimatePresence mode="wait">
+                          {state !== 'collapsed' && (
+                            <motion.span 
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -10 }}
+                              transition={{ duration: 0.3 }}
+                              className={cn(
+                                "font-black text-[11px] uppercase tracking-[0.08em] transition-all duration-300 whitespace-nowrap overflow-hidden",
+                                isActive ? "opacity-100" : "opacity-70 group-hover:opacity-100"
+                              )}
+                            >
+                              {item.label}
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+                        
+                        {isActive && state !== 'collapsed' && (
+                          <motion.div
+                            layoutId="active-nav-indicator"
+                            className="absolute left-0 w-1 h-5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.3 }}
+                          />
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })
+            )}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className={cn(
-        'p-8 mt-auto border-t border-gray-100/50 dark:border-gray-800/50 bg-gray-50/30 dark:bg-white/5 transition-all duration-300',
+        'p-8 mt-auto border-t border-gray-100/50 dark:border-gray-800/50 bg-gray-50/30 dark:bg-white/5 overflow-hidden',
+        mounted && 'transition-all duration-500 ease-in-out',
         state === 'collapsed' && 'p-2'
       )}>
-        {state === 'collapsed' ? (
+        {!mounted ? (
+          <div className="flex flex-col gap-5">
+            <Skeleton className="h-[68px] w-full rounded-2xl" />
+            <div className="flex items-center justify-between px-1">
+              <Skeleton className="h-4 w-20 rounded-lg" />
+              <Skeleton className="h-4 w-10 rounded-lg" />
+            </div>
+          </div>
+        ) : state === 'collapsed' ? (
           <div className="flex flex-col items-center gap-5">
             <TooltipProvider>
               <Tooltip>

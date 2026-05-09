@@ -3,20 +3,47 @@
 import React, { useState } from 'react';
 import { IconChevronRight, IconX } from '@tabler/icons-react';
 
+import Skeleton from '@/components/common/Skeleton';
+
 interface LandlordAnalyticsInsightsProps {
-  propertyPerformanceData: Array<{ name: string; inquiries: number; bookings: number; revenue: number }>;
-  stats: any;
-  occupancy: any;
+  propertyPerformanceData?: Array<{ name: string; inquiries: number; bookings: number; revenue: number }>;
+  stats?: any;
+  occupancy?: any;
+  isLoading?: boolean;
 }
 
 const COLORS = ['#2f7d6d', '#1473E6', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#06B6D4'];
 
 export function LandlordAnalyticsInsights({
-  propertyPerformanceData,
+  propertyPerformanceData = [],
   stats,
-  occupancy
+  occupancy,
+  isLoading
 }: LandlordAnalyticsInsightsProps) {
   const [showAllModal, setShowAllModal] = useState(false);
+
+  if (isLoading || !stats || !occupancy) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className="bg-white dark:bg-gray-950 rounded-xl border border-gray-100 dark:border-gray-800 p-4 shadow-sm">
+            <Skeleton className="h-5 w-40 mb-4" variant="text" />
+            <div className="space-y-2">
+              {[...Array(4)].map((_, j) => (
+                <div key={j} className="flex items-center justify-between p-2.5 px-3 bg-gray-50/50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="w-2 h-2 rounded-full" />
+                    <Skeleton className="h-3 w-32" variant="text" />
+                  </div>
+                  <Skeleton className="h-3 w-16" variant="text" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
   
   const avgDailyRate = stats.monthlyRevenue > 0 && stats.confirmedBookings > 0
     ? Math.round(stats.monthlyRevenue / stats.confirmedBookings)

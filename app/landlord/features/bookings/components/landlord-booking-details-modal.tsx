@@ -22,6 +22,7 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
+import SafeImage from '@/components/common/SafeImage';
 
 interface LandlordBookingDetailsModalProps {
   booking: Booking;
@@ -63,8 +64,8 @@ export function LandlordBookingDetailsModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Booking Details" width="lg">
-      <div className="p-8 space-y-8 bg-white dark:bg-gray-900 overflow-hidden">
+    <Modal isOpen={isOpen} onClose={onClose} title="Booking Details" width="lg" hasFixedFooter>
+      <div className="space-y-8 max-h-[70vh] overflow-y-auto p-8 custom-scrollbar">
         
         <AnimatePresence mode="wait">
           {isInitialLoading ? (
@@ -138,7 +139,16 @@ export function LandlordBookingDetailsModal({
                   </span>
                   <div className="flex flex-col md:flex-row gap-6">
                     <div className="w-full md:w-1/2 aspect-video rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-800">
-                      <img src={booking.listing.imageSrc} alt="" className="w-full h-full object-cover" />
+                      <SafeImage
+                        src={(booking.room?.images && booking.room.images.length > 0) 
+                          ? booking.room.images[0].url 
+                          : (booking.listing?.images && booking.listing.images.length > 0)
+                            ? booking.listing.images[0].url
+                            : booking.listing?.imageSrc || "/images/placeholder.jpg"
+                        }
+                        alt={booking.listing.title}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
                     </div>
                     <div className="flex-1 flex flex-col justify-center">
                       <h4 className="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2">
@@ -216,9 +226,20 @@ export function LandlordBookingDetailsModal({
                 </div>
                 
                 <div className="grid grid-cols-1 gap-4">
+                  <div className="mt-6 flex flex-col gap-4">
+                    <Button
+                      outline
+                      className="w-full rounded-[1.25rem] py-4 border-gray-100 dark:border-gray-800 text-[10px] font-black uppercase tracking-[0.2em] group/chat flex items-center justify-center gap-2"
+                      onClick={() => window.location.href = `/landlord?openChat=true&listingId=${booking.listing.id}&tenantId=${booking.user.id}`}
+                    >
+                      <IconMail size={18} className="group-hover/chat:scale-110 transition-transform text-primary" />
+                      Chat with {booking.user.name || 'Tenant'}
+                    </Button>
+                  </div>
+
                   {booking.status === 'CHECKED_IN' && (
                     <Button 
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white shadow-xl shadow-purple-600/20 py-5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] group/act"
+                      className="w-full bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 py-5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] group/act"
                       onClick={() => handleAction('COMPLETED')}
                       isLoading={isLoading || isUpdatingStatus}
                     >

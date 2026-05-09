@@ -9,7 +9,33 @@ import {
   IconArrowRight,
 } from '@tabler/icons-react';
 
-export function LandlordDashboardQuickActions({ onViewProfile }: { onViewProfile: () => void }) {
+import Skeleton from '@/components/common/Skeleton';
+
+export function LandlordDashboardQuickActions({ 
+  onViewProfile,
+  isLoading 
+}: { 
+  onViewProfile: () => void;
+  isLoading?: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <div
+            key={i}
+            className="bg-white dark:bg-gray-900 rounded-[28px] border border-gray-100 dark:border-gray-800 p-8 shadow-sm"
+          >
+            <Skeleton className="w-14 h-14 rounded-[20px] mb-4" />
+            <Skeleton className="h-6 w-32 mb-1" variant="text" />
+            <Skeleton className="h-3 w-40 mb-4 opacity-60" variant="text" />
+            <Skeleton className="w-10 h-10 rounded-full" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   const quickActions = [
     {
       title: 'Add Property',
