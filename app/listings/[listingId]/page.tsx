@@ -11,6 +11,7 @@ import { getListingById } from "@/services/user/listings";
 import { getFavorites } from "@/services/user/favorites/favorite";
 import { categories } from "@/utils/constants";
 import { db } from "@/lib/db";
+import { calculateAverageRating } from "@/utils/helper";
 
 interface IParams {
   listingId: string;
@@ -67,7 +68,12 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
   if (features?.flexibleLease) if (!amenities.includes("Flexible lease")) amenities.push("Flexible lease");
 
   const normalizedImages = (images && images.length > 0)
-    ? images.map((img: any) => ({ url: img.url, caption: img.caption ?? undefined, order: img.order ?? 0 }))
+    ? images.map((img: any) => ({ 
+        url: img.url, 
+        caption: img.caption ?? undefined, 
+        order: img.order ?? 0,
+        roomType: img.roomType ?? undefined 
+      }))
     : [{ url: imageSrc, caption: title, order: 0 }];
 
   const category = categories.find((cate) =>
@@ -78,19 +84,12 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
     ? {
         label: category.label,
         description: category.description,
+        value: category.value,
       }
     : null;
 
-  // Always compute from actual fetched reviews (filtered to approved-only by getListingById).
-  // This guarantees the detail page always shows the true correct average.
-  // Fall back to stored listing.rating only when there are zero reviews yet.
-  let actualRating = 0;
-  if (listing.reviews && listing.reviews.length > 0) {
-    const total = listing.reviews.reduce((acc: number, r: any) => acc + (r.rating || 0), 0);
-    actualRating = total / listing.reviews.length;
-  } else {
-    actualRating = listing.rating || 0;
-  }
+  // Guaranteed true average based on fetched reviews
+  const actualRating = calculateAverageRating(listing.reviews || [], listing.rating);
 
   return (
     <div className="bg-white dark:bg-gray-900 transition-colors duration-300">
@@ -108,6 +107,7 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
           reviewCount={listing.reviews?.length || 0}
           listingId={id}
           hasFavorited={favoriteIds.includes(id)}
+          category={categoryData}
         />
 
         {/* Main Content Grid */}
@@ -124,6 +124,8 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
             bathroomCount={bathroomCount}
             latlng={[listing.latitude || 0, listing.longitude || 0]}
             amenities={amenities}
+            rules={listing.rules}
+            features={listing.features}
             rating={actualRating > 0 ? actualRating : undefined}
             reviewCount={listing.reviews?.length || 0}
             images={normalizedImages}

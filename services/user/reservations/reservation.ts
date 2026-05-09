@@ -29,7 +29,16 @@ export const getReservations = async (args: Record<string, string>) => {
       where,
       take: LISTINGS_BATCH,
       include: {
-        listing: true,
+        listing: {
+          include: {
+            images: true,
+          },
+        },
+        room: {
+          include: {
+            images: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     };
@@ -139,6 +148,18 @@ export const deleteReservation = async (reservationId: string) => {
       throw new Error("Reservation not found!");
     }
 
+    // CRITICAL: Restore slots if we are deleting an active/locked reservation
+    if (reservation.status === "RESERVED" || reservation.status === "CHECKED_IN") {
+      const occupantCount = (reservation as any).occupantsCount || 1;
+      await db.room.update({
+        where: { id: reservation.roomId },
+        data: {
+          availableSlots: { increment: occupantCount },
+          status: "AVAILABLE"
+        }
+      });
+    }
+
     await db.reservation.deleteMany({
       where: {
         id: reservationId,
@@ -238,3 +259,34 @@ export const createPaymentSession = async ({
     return null; // Indicate reservation created directly
   }
 }
+
+/**
+ * NEW: Fetches the user's most recent active or future confirmed stay.
+ * Used for the "Flexible Mode" overlap check.
+ */
+export const getActiveStay = async (userId: string) => {
+  try {
+    const activeStay = await db.reservation.findFirst({
+      where: {
+        userId,
+        status: { in: ["RESERVED", "CHECKED_IN"] },
+        isArchived: false,
+      },
+      orderBy: {
+        endDate: "desc", // Get the one that ends furthest in the future
+      },
+      select: {
+        endDate: true,
+        status: true,
+        listing: {
+          select: { title: true }
+        }
+      }
+    });
+
+    return activeStay;
+  } catch (error) {
+    console.error("Error fetching active stay:", error);
+    return null;
+  }
+};

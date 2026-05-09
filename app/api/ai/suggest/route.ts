@@ -39,7 +39,7 @@ A student searched for: "${userQuery}".
 No exact matches were found, so we are showing them the closest alternatives.
 
 Here are ${listingSummaries.length} alternatives:
-${listingSummaries.map(l => `${l.index}. ID: "${l.id}" | "${l.title}" | ₱${l.price}/mo | ${l.region} | Amenities: ${l.amenities} | Rooms: ${l.roomTypes}`).join("\n")}
+${listingSummaries.map((l: any) => `${l.index}. ID: "${l.id}" | "${l.title}" | ₱${l.price}/mo | ${l.region} | Amenities: ${l.amenities} | Rooms: ${l.roomTypes}`).join("\n")}
 
 For each listing, write ONE very short sentence (max 10 words) in English that explains why it's a good alternative for this student's needs. Be warm, helpful, and specific to the student's search.
 

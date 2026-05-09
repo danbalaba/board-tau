@@ -1,7 +1,10 @@
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
-import { sendReservationNotificationEmail } from "@/services/email/notifications";
+import { 
+  sendReservationNotificationEmail,
+  sendReservationFeeEmail
+} from "@/services/email/notifications";
 import { createNotification } from "@/services/notification";
 
 export const createStripeCheckoutSession = async (inquiryId: string) => {
@@ -95,6 +98,17 @@ export const handleStripeWebhook = async (session: any) => {
     throw new Error("Invalid session metadata");
   }
 
+  // 1. Idempotency Check: Prevent duplicate processing
+  const existingInquiry = await db.inquiry.findUnique({
+    where: { id: inquiryId },
+    select: { paymentStatus: true }
+  });
+
+  if ((existingInquiry as any)?.paymentStatus === "PAID") {
+    console.log(`ℹ️ Webhook: Payment already processed for Inquiry ${inquiryId}. Skipping...`);
+    return { success: true };
+  }
+
   // Update the inquiry payment status
   await db.inquiry.update({
     where: { id: inquiryId },
@@ -104,33 +118,72 @@ export const handleStripeWebhook = async (session: any) => {
     },
   });
 
-  // Lock the room/bedspace to prevent double booking
-  const room = await db.room.findUnique({ where: { id: roomId } });
-  if (room) {
-    const newAvailableSlots = room.availableSlots - 1;
-    const newStatus = newAvailableSlots <= 0 ? "FULL" : "AVAILABLE";
-
-    await db.room.update({
-      where: { id: roomId },
-      data: {
-        availableSlots: newAvailableSlots,
-        status: newStatus,
+  // 1. ATOMIC STATUS UPDATE: Only proceed if the reservation is still PENDING_PAYMENT
+  let updatedReservation;
+  try {
+    updatedReservation = await db.reservation.update({
+      where: {
+        inquiryId: inquiryId,
+        status: "PENDING_PAYMENT"
       },
+      data: {
+        status: "RESERVED",
+        paymentStatus: "PAID",
+      },
+      include: {
+        listing: true,
+        user: true,
+        room: true
+      }
     });
+  } catch (error) {
+    console.log(`ℹ️ Webhook: Reservation ${inquiryId} already finalized. Skipping inventory update.`);
+    return { success: true };
   }
 
-  // Update the existing reservation record
-  const updatedReservation = await db.reservation.update({
-    where: { inquiryId: inquiryId },
-    data: {
-      status: "RESERVED",
-      paymentStatus: "PAID",
-    },
-    include: {
-      listing: true,
-      user: true,
+  // 2. INVENTORY LOCK: Only happens ONCE because of the atomic status check above
+  if (updatedReservation.room) {
+    // CRITICAL: Fetch count from Inquiry to ensure source-of-truth accuracy
+    const sourceInquiry = await db.inquiry.findUnique({
+      where: { id: updatedReservation.inquiryId as string },
+      select: { occupantsCount: true }
+    });
+
+    const slotsToSubtract = Number(sourceInquiry?.occupantsCount || updatedReservation.occupantsCount) || 1;
+
+    // 2. HARD FLOOR: Fetch current slots to ensure we don't go negative
+    const currentRoom = await db.room.findUnique({
+      where: { id: updatedReservation.roomId },
+      select: { availableSlots: true }
+    });
+
+    const currentSlots = currentRoom?.availableSlots || 0;
+    const finalSubtraction = Math.min(currentSlots, slotsToSubtract);
+
+    const updatedRoom = await db.room.update({
+      where: { id: updatedReservation.roomId },
+      data: {
+        availableSlots: { decrement: finalSubtraction },
+      },
+    });
+
+    // 3. AUTO-CLOSE: If slots hit 0, mark as FULL
+    if (updatedRoom.availableSlots <= 0) {
+      await db.room.update({
+        where: { id: updatedReservation.roomId },
+        data: { status: "FULL" },
+      });
     }
-  });
+
+    // CRITICAL: Invalidate Cache
+    const { revalidatePath } = await import("next/cache");
+    const { cache } = await import("@/lib/redis");
+    revalidatePath(`/listings/${listingId}`);
+    try {
+      await cache.del(`listing:id:${listingId}`);
+      await cache.delPattern("listings:*");
+    } catch (e) { console.error("Cache clear error in Stripe webhook:", e); }
+  }
 
   // 4. Trigger Email Notifications
   try {
@@ -160,15 +213,13 @@ export const handleStripeWebhook = async (session: any) => {
       });
     }
 
-    // Notify Landlord Email & In-app
+    // Notify Landlord Email (Premium Template) & In-app
     if (landlord && landlord.email) {
-      await sendReservationNotificationEmail(
+      await sendReservationFeeEmail(
         landlord,
+        updatedReservation.user,
         updatedReservation.listing,
-        "RESERVED",
-        "New Confirmed Reservation",
-        `${updatedReservation.user.name} has paid the reservation fee for ${updatedReservation.listing.title}. The room is now officially reserved.`,
-        true
+        updatedReservation.totalPrice
       );
 
       // In-app for Landlord

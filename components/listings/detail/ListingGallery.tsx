@@ -5,9 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MdClose } from "react-icons/md";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import { FaFacebook, FaTwitter } from "react-icons/fa";
-import { LayoutGrid, Share, ChevronLeft, X, Copy, Mail, MessageCircle } from "lucide-react";
+import { LayoutGrid, Share, ChevronLeft, X, Copy, Mail, MessageCircle, Maximize2 } from "lucide-react";
 import HeartButton from "@/components/favorites/HeartButton";
 import { useRouter } from "next/navigation";
+import BackToTop from "@/components/common/BackToTop";
+import MediaPreviewOverlay from "@/components/common/MediaPreviewOverlay";
+import SafeImage from "@/components/common/SafeImage";
 
 interface ListingImageData {
   url: string;
@@ -27,7 +30,7 @@ interface CategorizedImages {
   [key: string]: ListingImageData[];
 }
 
-const ROOM_TYPES = ["Bedroom", "Living Room", "Kitchen", "Bathroom", "Exterior", "Common Area"];
+const ROOM_TYPES = ["Bedroom", "Kitchen", "Bathroom", "Exterior", "Common Area"];
 
 const SHARE_BUTTONS: { label: string; icon: React.ElementType; action: string }[] = [
   { label: "Copy Link", icon: Copy, action: "copy" },
@@ -53,6 +56,23 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Preview State
+  const [previewData, setPreviewData] = useState<{ isOpen: boolean; index: number; images: string[]; title: string }>({
+    isOpen: false,
+    index: 0,
+    images: [],
+    title: ''
+  });
+
+  const handleOpenPreview = (imgs: string[], idx: number, categoryTitle: string) => {
+    setPreviewData({
+      isOpen: true,
+      index: idx,
+      images: imgs,
+      title: categoryTitle
+    });
+  };
 
   useEffect(() => {
     if (showShareModal) {
@@ -97,7 +117,6 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
     }
   };
 
-  // Auto-scroll thumbnail strip to current image
   useEffect(() => {
     if (thumbnailScrollRef.current) {
       const thumbnail = thumbnailScrollRef.current.querySelector(
@@ -113,7 +132,6 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
     }
   }, [currentIndex]);
 
-  // Lock body scroll when modal is open to prevent double scrollbar
   useEffect(() => {
     if (showModal) {
       document.body.style.overflow = 'hidden';
@@ -127,33 +145,28 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
 
   const sortedImages = [...images].sort((a, b) => (a.order || 0) - (b.order || 0));
 
-  // Categorize images by room type
   const categorizedImages = useMemo(() => {
     const categories: CategorizedImages = {
       All: sortedImages,
     };
 
     ROOM_TYPES.forEach((room) => {
-      categories[room] = sortedImages.filter(
-        (img) => img.roomType === room || img.caption?.includes(room)
-      );
+      categories[room] = sortedImages.filter((img) => {
+        const type = img.roomType?.toLowerCase();
+        const search = room.toLowerCase();
+
+        if (type === search) return true;
+        if (search === 'common area' && type === 'living room') return true;
+        if (search === 'living room' && type === 'common area') return true;
+
+        return img.caption?.toLowerCase().includes(search);
+      });
     });
 
     return categories;
   }, [sortedImages]);
 
-  // Get images for selected room
   const currentRoomImages = categorizedImages[selectedRoom] || sortedImages;
-
-  const nextImage = () => {
-    setCurrentIndex((prev) => (prev + 1) % currentRoomImages.length);
-  };
-
-  const prevImage = () => {
-    setCurrentIndex((prev) =>
-      prev === 0 ? currentRoomImages.length - 1 : prev - 1
-    );
-  };
 
   if (!sortedImages || sortedImages.length === 0) {
     return <div className="w-full h-96 bg-gray-200 dark:bg-gray-800" />;
@@ -161,10 +174,18 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
 
   return (
     <>
-      {/* Mobile Absolute Header (Back, Share, Heart) */}
+      <MediaPreviewOverlay
+        isOpen={previewData.isOpen}
+        onClose={() => setPreviewData(prev => ({...prev, isOpen: false}))}
+        images={previewData.images}
+        currentIndex={previewData.index}
+        onNavigate={(newIdx) => setPreviewData(prev => ({...prev, index: newIdx}))}
+        title={previewData.title}
+      />
+
       <div className="absolute top-4 left-4 right-4 z-40 md:hidden flex justify-between items-center pointer-events-none">
-        
-        <button 
+
+        <button
           onClick={() => router.back()}
           className="w-10 h-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-full shadow-md border border-gray-200/50 dark:border-gray-700/50 flex items-center justify-center pointer-events-auto active:scale-95 transition-all outline-none"
         >
@@ -172,25 +193,23 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
         </button>
 
         <div className="flex items-center gap-3 pointer-events-auto">
-          <button 
+          <button
             onClick={() => setShowShareModal(true)}
             className="w-10 h-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-full shadow-md border border-gray-200/50 dark:border-gray-700/50 flex items-center justify-center active:scale-95 transition-all outline-none"
           >
             <Share size={18} strokeWidth={2.5} className="text-gray-900 dark:text-gray-100" />
           </button>
-          
+
           <div className="w-10 h-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-full shadow-md border border-gray-200/50 dark:border-gray-700/50 flex items-center justify-center active:scale-95 transition-all relative">
             <HeartButton listingId={listingId} hasFavorited={hasFavorited || false} />
           </div>
         </div>
       </div>
 
-      {/* Airbnb Style Gallery Grid */}
       <div className="relative w-full max-w-[1120px] mx-auto md:px-8 lg:px-12 md:pt-6 pb-2 transition-colors duration-300">
         <div className="flex gap-2 h-[350px] sm:h-[400px] md:h-[450px] lg:h-[500px] md:rounded-[1.25rem] overflow-hidden relative group">
-          
-          {/* Main Image (Left Half) */}
-          <div 
+
+          <div
             className="w-full relative overflow-hidden md:w-1/2 h-full cursor-pointer"
             onClick={() => {
               setShowModal(true);
@@ -199,14 +218,13 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
             }}
           >
              <div className="absolute inset-0 bg-transparent group-hover:bg-black/20 transition-colors z-10 duration-300 hover:!bg-transparent" />
-             <img
+             <SafeImage
               src={sortedImages[0].url}
               alt={sortedImages[0].caption || title}
-              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+              priority={true}
              />
           </div>
 
-          {/* Grid of 4 Smaller Images (Right Half - hidden on small screens) */}
           <div className="hidden md:grid md:w-1/2 h-full grid-cols-2 grid-rows-2 gap-2">
             {sortedImages.slice(1, 5).map((image, idx) => {
               return (
@@ -220,11 +238,9 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
                   }}
                 >
                   <div className="absolute inset-0 bg-transparent group-hover:bg-black/20 transition-colors z-10 duration-300 hover:!bg-transparent" />
-                  <img
+                  <SafeImage
                     src={image.url}
                     alt={image.caption || title}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                   />
                 </div>
               );
@@ -255,6 +271,7 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
             exit={{ opacity: 0, y: 50 }}
             transition={{ ease: "easeInOut", duration: 0.3 }}
             className="fixed inset-0 z-50 bg-white dark:bg-gray-900 overflow-y-auto flex flex-col hide-scrollbar"
+            id="scroll-container"
           >
             {/* Sticky Header */}
             <div className="sticky top-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md z-20 flex items-center justify-between p-4 md:px-6 border-b border-gray-100 dark:border-gray-800">
@@ -272,25 +289,25 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
 
             <div className="max-w-4xl mx-auto w-full px-4 py-8 flex flex-col items-center pb-24">
                <h1 className="text-[32px] font-bold mb-10 text-gray-900 dark:text-gray-100 self-start w-full tracking-tight">Photo tour</h1>
-               
+
                {/* Categories Navigator */}
                <div className="w-full mb-12 flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
                   {ROOM_TYPES.map(room => {
                      const roomImages = categorizedImages[room];
                      if (!roomImages || roomImages.length === 0) return null;
                      return (
-                        <div 
-                           key={room} 
+                        <div
+                           key={room}
                            className="flex flex-col gap-2 min-w-[140px] max-w-[140px] cursor-pointer opacity-80 hover:opacity-100 transition-opacity"
                            onClick={() => {
                               const el = document.getElementById(`section-${room}`);
                               if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                            }}
                         >
-                           <img 
-                              src={roomImages[0].url} 
-                              alt={room} 
-                              className="w-full h-24 object-cover rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm" 
+                           <SafeImage
+                              src={roomImages[0].url}
+                              alt={room}
+                              className="w-full h-24 object-cover rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
                            />
                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{room}</p>
                         </div>
@@ -307,19 +324,27 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
                      return (
                         <div key={room} id={`section-${room}`} className="flex flex-col gap-6 scroll-mt-24">
                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{room}</h2>
-                           
+
                            {/* Responsive Masonry Layout Pattern */}
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                               {roomImages.map((img, idx) => {
                                  // Every 3rd image spans 2 columns on desktop to mimic the layout variety
                                  const isFullWidth = idx % 3 === 0;
                                  return (
-                                    <div key={idx} className={isFullWidth ? "col-span-1 md:col-span-2 group relative" : "col-span-1 group relative"}>
-                                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors z-10 duration-300 pointer-events-none" />
-                                       <img 
-                                          src={img.url} 
-                                          alt={img.caption || room} 
-                                          className="w-full h-auto max-h-[600px] object-cover rounded-md" 
+                                    <div 
+                                       key={idx} 
+                                       className={isFullWidth ? "col-span-1 md:col-span-2 group relative cursor-pointer" : "col-span-1 group relative cursor-pointer"}
+                                       onClick={() => handleOpenPreview(roomImages.map(i => i.url), idx, room)}
+                                    >
+                                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors z-10 duration-300 flex items-center justify-center backdrop-blur-[1px] opacity-0 group-hover:opacity-100">
+                                          <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-white backdrop-blur-xl border border-white/20 scale-50 group-hover:scale-100 transition-transform duration-500">
+                                             <Maximize2 size={24} />
+                                          </div>
+                                       </div>
+                                       <SafeImage
+                                          src={img.url}
+                                          alt={img.caption || room}
+                                          className="w-full h-auto max-h-[600px] object-cover rounded-md"
                                        />
                                     </div>
                                  )
@@ -336,12 +361,20 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
                               {sortedImages.map((img, idx) => {
                                  const isFullWidth = idx % 3 === 0;
                                  return (
-                                    <div key={idx} className={isFullWidth ? "col-span-1 md:col-span-2 group relative" : "col-span-1 group relative"}>
-                                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors z-10 duration-300 pointer-events-none" />
-                                       <img 
-                                          src={img.url} 
-                                          alt={img.caption || "Property Photo"} 
-                                          className="w-full h-auto max-h-[600px] object-cover rounded-md" 
+                                    <div 
+                                       key={idx} 
+                                       className={isFullWidth ? "col-span-1 md:col-span-2 group relative cursor-pointer" : "col-span-1 group relative cursor-pointer"}
+                                       onClick={() => handleOpenPreview(sortedImages.map(i => i.url), idx, "Property Photos")}
+                                    >
+                                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors z-10 duration-300 flex items-center justify-center backdrop-blur-[1px] opacity-0 group-hover:opacity-100">
+                                          <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-white backdrop-blur-xl border border-white/20 scale-50 group-hover:scale-100 transition-transform duration-500">
+                                             <Maximize2 size={24} />
+                                          </div>
+                                       </div>
+                                       <SafeImage
+                                          src={img.url}
+                                          alt={img.caption || "Property Photo"}
+                                          className="w-full h-auto max-h-[600px] object-cover rounded-md"
                                        />
                                     </div>
                                  )
@@ -350,9 +383,10 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
                      </div>
                   )}
 
-               </div>
-            </div>
-          </motion.div>
+                </div>
+              </div>
+              <BackToTop containerId="scroll-container" bottomClass="bottom-10" />
+            </motion.div>
         )}
       </AnimatePresence>
 

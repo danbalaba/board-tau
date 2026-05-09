@@ -34,6 +34,7 @@ const Textarea: React.FC<TextareaProps> = ({
   validationRules,
   value: externalValue,
   onChange: externalOnChange,
+  className,
   ...props
 }) => {
   const internalValue = watch && watch(id);
@@ -82,7 +83,8 @@ const Textarea: React.FC<TextareaProps> = ({
           error
             ? "border-red-500 focus:border-red-500 focus:ring-red-200"
             : "border-border dark:border-gray-700 focus:border-primary focus:ring-primary/10",
-          "min-h-[100px]"
+          "min-h-[100px]",
+          className
         )}
         autoFocus={autoFocus}
         rows={rows}

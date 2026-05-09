@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useEffect, useState, useTransition, useRef } from "react";
 import { AiOutlineMenu } from "react-icons/ai";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -11,10 +11,13 @@ import Menu from "@/components/common/Menu";
 import HostApplicationModal from "../modals/HostApplicationModal";
 import Modal from "../modals/Modal";
 import AuthModal from "../modals/AuthModal";
+import ConfirmModal from "@/components/common/ConfirmModal";
 import { menuItems } from "@/utils/constants";
+import { useLoading } from "@/components/loading/LoadingContext";
 import { getUnreadNotificationStats, getUnreadNotifications, markNotificationsAsRead, NotificationType } from "@/services/notification";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { toast as hotToast } from "react-hot-toast";
+import { useMenuPanel } from "@/hooks/use-menu-panel";
 
 interface UserMenuProps {
   user?: User;
@@ -27,66 +30,116 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
   const [hasClearedOuterDot, setHasClearedOuterDot] = useState(false);
   const [isInitialFetch, setIsInitialFetch] = useState(true);
   const [lastNotificationId, setLastNotificationId] = useState<string | null>(null);
+  const hasTriggeredInitialToast = useRef(false);
+  const { startLoading } = useLoading();
   const toast = useResponsiveToast();
+  const { onOpen } = useMenuPanel();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const isFetching = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
     const fetchStats = async () => {
-      const stats = await getUnreadNotificationStats();
-      if (!stats) return;
-
-      // Toast Trigger Logic
-      const notifications = await getUnreadNotifications();
-      const latest = notifications.length > 0 ? notifications[0] : null;
-
-      const isNewNotification = latest && latest.id !== lastNotificationId;
-      const isFirstNotificationOnLogin = isInitialFetch && stats.total > 0;
-
-      if (isNewNotification || isFirstNotificationOnLogin) {
-        setHasClearedOuterDot(false);
-
-        const triggerToast = () => {
-          if (notifications.length > 0) {
-            toast.info({
-              title: isInitialFetch ? `You have ${stats.total} unread notifications` : latest!.title,
-              description: latest!.description,
-            });
-          }
-        };
-
-        if (isFirstNotificationOnLogin) {
-          setTimeout(triggerToast, 1500);
-        } else {
-          triggerToast();
+      if (isFetching.current) return;
+      isFetching.current = true;
+      
+      try {
+        const stats = await getUnreadNotificationStats();
+        
+        // 🔐 GHOST SESSION DETECTION: 
+        // If the UI thinks we are logged in (user prop exists) but the server 
+        // says the session is gone (stats is null), force a UI refresh.
+        if (!stats && user?.id) {
+          console.warn("🔐 Session mismatch detected in background. Refreshing UI...");
+          router.refresh();
+          return;
         }
 
-        setIsInitialFetch(false);
-      }
+        if (!stats) return;
 
-      if (latest && latest.id !== lastNotificationId) {
-        setLastNotificationId(latest.id);
+        // Toast Trigger Logic
+        const notifications = await getUnreadNotifications();
+        const latest = notifications.length > 0 ? notifications[0] : null;
+
+        const isNewNotification = latest && latest.id !== lastNotificationId;
+        const isFirstNotificationOnLogin = isInitialFetch && stats.total > 0;
+
+        if (isNewNotification || isFirstNotificationOnLogin) {
+          setHasClearedOuterDot(false);
+
+          const triggerToast = () => {
+            if (notifications.length > 0) {
+              const priorityNotif = notifications.find(n => 
+                n.title.toLowerCase().includes("complete") || 
+                n.title.toLowerCase().includes("pay") ||
+                n.description.toLowerCase().includes("complete")
+              );
+
+              const activeNotif = priorityNotif || latest;
+
+              const title = isInitialFetch 
+                ? `You have ${stats.total} unread notification${stats.total > 1 ? 's' : ''}` 
+                : activeNotif!.title;
+              
+              toast.info({
+                title: title,
+                description: activeNotif!.description,
+              });
+              
+              setIsInitialFetch(false);
+            }
+          };
+
+          if (isFirstNotificationOnLogin && !hasTriggeredInitialToast.current) {
+            hasTriggeredInitialToast.current = true;
+            // Longer delay for mobile/initial load to ensure Sileo is ready
+            timeoutRef.current = setTimeout(triggerToast, 2000);
+          } else if (isNewNotification) {
+            triggerToast();
+          }
+        }
+
+        if (latest && latest.id !== lastNotificationId) {
+          setLastNotificationId(latest.id);
+        }
+        setUnreadStats(stats);
+      } catch (error) {
+        console.error("Error fetching notification stats:", error);
+      } finally {
+        isFetching.current = false;
       }
-      setUnreadStats(stats);
-      setIsInitialFetch(false); // Move to end of successful fetch
     };
 
     fetchStats();
     const interval = setInterval(fetchStats, 10000);
-    return () => clearInterval(interval);
-  }, [user, unreadStats?.total, lastNotificationId, router, toast, isInitialFetch]);
+    
+    return () => {
+      clearInterval(interval);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, unreadStats?.total, lastNotificationId, isInitialFetch]);
 
   const handleMenuOpen = () => {
     setHasClearedOuterDot(true);
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      onOpen();
+    }
   };
 
   const redirect = async (url: string, label: string) => {
-    // Note: We deliberately do NOT call markNotificationsAsRead here anymore!
-    // Auto-clearing the database here creates a massive race condition where the 
-    // destination page (e.g., ReservationsClient) loads empty notifications 
-    // and hides the specific "STATUS UPDATE" badge. 
-    // Let the individual item Modals (e.g. ReservationDetailsModal) handle the read state.
+    if (window.location.pathname !== url) {
+      startLoading();
+    }
     router.push(url);
+  };
+
+  const handleLogout = () => {
+    setIsLoggingOut(true);
+    signOut({ callbackUrl: "/" });
   };
 
   const getUnreadCountForPath = (path: string): number => {
@@ -97,8 +150,10 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
     if (lowerPath.includes("inquir")) count = unreadStats.byType["inquiry"] || 0;
     else if (lowerPath.includes("reservation")) count = unreadStats.byType["reservation"] || 0;
     else if (lowerPath.includes("review")) count = unreadStats.byType["review"] || 0;
+    else if (lowerPath.includes("message")) count = unreadStats.byType["message"] || 0;
 
     return count;
+
   };
 
   return (
@@ -109,7 +164,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
             <Modal.Trigger name="host-application">
               <button
                 type="button"
-                className="hidden md:block text-sm font-bold py-3 px-4 rounded-full hover:bg-neutral-100 transition cursor-pointer text-[#585858]"
+                className="hidden md:block text-sm py-3 px-4 rounded-full hover:bg-neutral-100 dark:hover:bg-gray-800 transition cursor-pointer text-gray-600 dark:text-gray-300 font-medium"
               >
                 Become a Host
               </button>
@@ -118,7 +173,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
             <Modal.Trigger name="Login">
               <button
                 type="button"
-                className="hidden md:block text-sm font-bold py-3 px-4 rounded-full hover:bg-neutral-100 transition cursor-pointer text-[#585858]"
+                className="hidden md:block text-sm py-3 px-4 rounded-full hover:bg-neutral-100 dark:hover:bg-gray-800 transition cursor-pointer text-gray-600 dark:text-gray-300 font-medium"
               >
                 Become a Host
               </button>
@@ -142,7 +197,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
                 </div>
               </button>
             </Menu.Toggle>
-            <Menu.List className="shadow-[0_0_36px_4px_rgba(0,0,0,0.075)] rounded-xl bg-white dark:bg-gray-800 text-sm overflow-hidden">
+            <Menu.List className="hidden md:block shadow-[0_0_36px_4px_rgba(0,0,0,0.075)] rounded-xl bg-white dark:bg-gray-800 text-sm overflow-hidden">
               {user ? (
                 <>
                   <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 invisible md:visible h-0 md:h-auto overflow-hidden">
@@ -168,7 +223,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
                     <MenuItem label="Admin" onClick={() => redirect("/admin", "Admin")} />
                   )}
                   <hr className="border-gray-100 dark:border-gray-700" />
-                  <MenuItem label="Log out" onClick={() => signOut({ callbackUrl: "/" })} />
+                  <MenuItem label="Log out" onClick={() => setShowLogoutConfirm(true)} />
                 </>
               ) : (
                 <>
@@ -183,15 +238,34 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
               )}
             </Menu.List>
           </Menu>
-          <Modal.Window name="Login" size="sm">
+          <Modal.Window name="Login" size="sm" closeOnOutsideClick={false}>
             <AuthModal name="Login" />
           </Modal.Window>
-          <Modal.Window name="Sign up" size="sm">
+          <Modal.Window name="Sign up" size="sm" closeOnOutsideClick={false}>
             <AuthModal name="Sign up" />
           </Modal.Window>
-          <Modal.Window name="host-application" size="xl">
+          <Modal.Window name="host-application" size="xl" closeOnOutsideClick={false}>
             <HostApplicationModal />
           </Modal.Window>
+        </Modal>
+
+        {/* Logout Confirmation Modal */}
+        <Modal
+          isOpen={showLogoutConfirm}
+          onClose={() => setShowLogoutConfirm(false)}
+          width="xs"
+        >
+          <ConfirmModal
+            isOpen={showLogoutConfirm}
+            onClose={() => setShowLogoutConfirm(false)}
+            onConfirm={handleLogout}
+            title="Sign Out?"
+            message={`Are you sure you want to sign out of your account, ${user?.name || 'User'}? Any unsaved changes may be lost.`}
+            confirmLabel="Logout"
+            cancelLabel="Stay"
+            isLoading={isLoggingOut}
+            variant="danger"
+          />
         </Modal>
       </div>
     </div>

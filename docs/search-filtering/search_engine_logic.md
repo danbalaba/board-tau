@@ -9,6 +9,7 @@ Unlike basic search bars, BoardTAU uses a **Hybrid Search Engine** that distingu
 
 ### Tier A: The Hard Filters (The Exclusion Logic)
 *   **Purpose:** To strictly remove listings that do not match "Dealbreaker" criteria.
+*   **Criteria:** Budget, Gender Rules (Female/Male Only), and **Primary Categories** (e.g., Quiet / Study Environment, Flexible Lease).
 *   **Outcome:** If a listing fails a hard filter, it is **deleted** from the search results instantly.
 *   **Implementation:** MongoDB `$match` and `$geoNear` stages.
 
@@ -24,7 +25,7 @@ Unlike basic search bars, BoardTAU uses a **Hybrid Search Engine** that distingu
 | Stage # | Technique | Function | Technical Reason |
 | :--- | :--- | :--- | :--- |
 | **0** | **$geoNear** | **Geospatial Proximity** | Uses a `2dsphere` index to calculate distance from the selected College Gate. It is Stage 1 because it's the most restrictive filter. |
-| **1** | **Indexed Match** | **Status & Category** | Immediately prunes non-active listings or those in the wrong category using **Multikey Indexes** before any heavy database joining. |
+| **1** | **Indexed Match** | **Status & Category** | Immediately prunes non-active listings or those in the wrong category (e.g. Quiet Environment) using **Multikey Indexes**. |
 | **2** | **$lookup** | **Data Join** | Merges the `Listing` with its `Rooms`, `Rules`, and `Features`. In BoardTAU, we optimize this by joining *after* initial filtering. |
 | **3** | **$addFields** | **Data Transformation** | Prepares raw strings into clean arrays for accurate comparison (e.g., merging amenities). |
 | **4** | **$match** | **Hard Filtering** | Checks for price, gender rules (Female Only), and room-level requirements. |
@@ -39,14 +40,13 @@ Unlike basic search bars, BoardTAU uses a **Hybrid Search Engine** that distingu
 We use a "Heuristic" (Rule of Thumb) system to calculate the value of a property.
 
 ### **The Math Equation:**
-`FinalScore = (Quality Baseline) + (Security Bonuses) + (Amenity Bonuses) + (Preference Bonuses)`
+`FinalScore = (Quality Baseline) + (Security Bonuses) + (Amenity Bonuses) + (Proximity Bonuses)`
 
 ### **Individual Weights:**
 1.  **Safety First (+15 pts):** CCTV/Surveillance. (Weighted highest because security is the primary concern for students).
 2.  **Safety Presence (+10 pts):** 24/7 Security Guard or Landlord living on-site.
 3.  **Proximity (+10 pts):** Proximity to tricycle terminals or major Tau gates.
-4.  **Academic Study (+5 pts):** Quiet/Study friendly environments.
-5.  **Quality Baseline (Rating * 2):** Ensures a 5-star house has a **10.0** point advantage over a brand new house.
+4.  **Quality Baseline (Rating * 2):** Ensures a 5-star house has a **10.0** point advantage over a brand new house.
 
 ### **The "New Listing" Benefit of the Doubt (4.8 Rule):**
 New listings have 0 reviews. Instead of giving them a score of 0, we use a **Default Baseline of 4.8**.

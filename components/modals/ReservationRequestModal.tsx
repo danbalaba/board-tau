@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Modal from "./Modal";
 import Button from "@/components/common/Button";
 import { motion } from "framer-motion";
+import SafeImage from "@/components/common/SafeImage";
 import { FaChevronLeft, FaChevronRight, FaCheck, FaTimes, FaHeart, FaBan } from "react-icons/fa";
 import { stayDurationOptions } from "@/utils/constants";
 
@@ -92,11 +93,10 @@ const ReservationRequestModal: React.FC<ReservationRequestModalProps> = ({
                 {/* Selected Room Info */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-lg overflow-hidden">
-                      <img
+                    <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0">
+                      <SafeImage
                         src={room.images[0] || "/images/placeholder.jpg"}
                         alt={room.name}
-                        className="w-full h-full object-cover"
                       />
                     </div>
                     <div>
@@ -341,11 +341,10 @@ const ReservationRequestModal: React.FC<ReservationRequestModalProps> = ({
 
                   {/* Room Image */}
                   {room.images.length > 0 && (
-                    <div className="mb-6">
-                      <img
+                    <div className="mb-6 rounded-lg overflow-hidden">
+                      <SafeImage
                         src={room.images[0] || "/images/placeholder.jpg"}
                         alt={room.name}
-                        className="w-full h-48 object-cover rounded-lg"
                       />
                     </div>
                   )}

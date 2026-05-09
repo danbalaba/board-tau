@@ -7,10 +7,17 @@ import Button from "@/components/common/Button";
 import Input from "@/components/inputs/Input";
 import Textarea from "@/components/inputs/Textarea";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
-import { CheckCircle, XCircle, User, Phone, Info, Mail, MapPin, Globe } from "lucide-react";
-import { validateName, validatePhoneNumber, sanitizeInput } from "@/lib/validators";
+import { CheckCircle, User, Phone, Mail, MapPin, Globe, Search, Navigation } from "lucide-react";
+import { sanitizeInput } from "@/lib/validators";
+import { editProfileResolver, EditProfileFormValues } from "./hooks/use-edit-profile-validation";
 import Modal from "./Modal";
 import { motion, AnimatePresence } from "framer-motion";
+import dynamic from "next/dynamic";
+import { geocodeAddress, reverseGeocode } from "@/services/geocoding";
+import { TAU_COORDINATES } from "@/utils/constants";
+
+const Map = dynamic(() => import('@/components/common/Map'), { ssr: false });
+
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -26,12 +33,78 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   onUpdate,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
+  // Local-only state: coordinates never saved to DB — purely for dynamic map centering
+  const [mapCenter, setMapCenter] = useState<[number, number]>(TAU_COORDINATES);
   const { success, error } = useResponsiveToast();
-  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<UserProfile>({
-    defaultValues: profile,
+  
+  const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<EditProfileFormValues>({
+    defaultValues: {
+      name: profile.name ?? '',
+      phoneNumber: profile.phoneNumber ?? '',
+      city: profile.city ?? '',
+      region: profile.region ?? '',
+      address: profile.address ?? '',
+      bio: profile.bio ?? '',
+    },
+    resolver: editProfileResolver,
+    mode: 'onChange',
   });
 
-  const onSubmit = async (data: UserProfile) => {
+  const address = watch("address");
+
+
+
+  const handleAddressSearch = async () => {
+    if (address && address.length > 5) {
+      setIsSearching(true);
+      try {
+        const addressInfo = await geocodeAddress(address);
+        if (addressInfo) {
+          setValue("address", addressInfo.address);
+          setValue("city", addressInfo.city);
+          setValue("region", addressInfo.province);
+          // Update map center in local state only — never persisted to DB
+          setMapCenter([addressInfo.coordinates[0], addressInfo.coordinates[1]]);
+          success('Location pinned!');
+        } else {
+          error('Address not found');
+        }
+      } catch (err) {
+        console.error('Geocoding error:', err);
+        error('Search failed');
+      } finally {
+        setIsSearching(false);
+      }
+    } else {
+      error('Enter a valid address');
+    }
+  };
+
+  // Reverse geocode when user clicks/pins a location on the map
+  const handleMapClick = async (lat: number, lng: number) => {
+    setMapCenter([lat, lng]);
+    setIsReverseGeocoding(true);
+    try {
+      const addressInfo = await reverseGeocode(lat, lng);
+      if (addressInfo) {
+        setValue("address", addressInfo.address, { shouldValidate: true });
+        setValue("city", addressInfo.city, { shouldValidate: true });
+        setValue("region", addressInfo.province, { shouldValidate: true });
+        success('Address auto-filled from map pin!');
+      } else {
+        error('Could not resolve address for this location.');
+      }
+    } catch (err) {
+      console.error('Reverse geocoding error:', err);
+      error('Failed to get address from map.');
+    } finally {
+      setIsReverseGeocoding(false);
+    }
+  };
+
+  const onSubmit = async (data: EditProfileFormValues) => {
     setIsLoading(true);
     try {
       const sanitizedData = {
@@ -39,6 +112,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
         name: sanitizeInput(data.name || ""),
         phoneNumber: sanitizeInput(data.phoneNumber || ""),
         bio: sanitizeInput(data.bio || ""),
+        address: sanitizeInput(data.address || ""),
       };
 
       await onUpdate(sanitizedData);
@@ -52,7 +126,14 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   };
 
   const handleCancel = () => {
-    reset(profile);
+    reset({
+      name: profile.name ?? '',
+      phoneNumber: profile.phoneNumber ?? '',
+      city: profile.city ?? '',
+      region: profile.region ?? '',
+      address: profile.address ?? '',
+      bio: profile.bio ?? '',
+    });
     onClose();
   };
 
@@ -60,7 +141,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
     <Modal isOpen={isOpen} onClose={handleCancel} width="md" title="Edit My Account">
       <div className="p-1">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="space-y-6 bg-gray-50/50 dark:bg-gray-900/40 p-5 rounded-3xl border border-gray-100 dark:border-gray-800">
+          <div className="space-y-6 bg-gray-50/50 dark:bg-gray-900/40 p-5 rounded-3xl border border-gray-100 dark:border-gray-800 max-h-[60vh] overflow-y-auto custom-scrollbar">
             {/* Full Name */}
             <div className="relative group">
               <Input
@@ -70,18 +151,12 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 register={register as any}
                 errors={errors as any}
                 watch={watch as any}
-                {...register("name", {
-                  required: "Full name is required",
-                  validate: (value) => {
-                    const nameError = validateName(value || "");
-                    return nameError ? nameError : true;
-                  }
-                })}
+                {...register("name")}
                 useStaticLabel={false}
               />
             </div>
 
-            {/* Email Address - DISBLED */}
+            {/* Verification Details */}
             <div className="space-y-2 px-1">
               <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">
                 Verification Details
@@ -109,13 +184,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 register={register as any}
                 errors={errors as any}
                 watch={watch as any}
-                {...register("phoneNumber", {
-                  required: "Phone number is required",
-                  validate: (value) => {
-                    const phoneError = validatePhoneNumber(value || "");
-                    return phoneError ? phoneError : true;
-                  }
-                })}
+                {...register("phoneNumber")}
                 useStaticLabel={false}
               />
             </div>
@@ -129,7 +198,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 register={register as any}
                 errors={errors as any}
                 watch={watch as any}
-                {...register("city", { required: false })}
+                {...register("city")}
                 useStaticLabel={false}
               />
               <Input
@@ -139,16 +208,67 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 register={register as any}
                 errors={errors as any}
                 watch={watch as any}
-                {...register("region", { required: false })}
+                {...register("region")}
                 useStaticLabel={false}
               />
             </div>
 
-            {/* Bio */}
-            <div className="space-y-2 relative group">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 mt-3 text-gray-400 group-focus-within:text-primary transition-colors z-10 pointer-events-none">
-                <Info size={18} />
+            {/* Home Address Search */}
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                <Input
+                  id="address"
+                  label="Home Address"
+                  icon={MapPin as any}
+                  register={register as any}
+                  errors={errors as any}
+                  watch={watch as any}
+                  {...register("address", { required: false })}
+                  useStaticLabel={false}
+                />
               </div>
+              <button
+                type="button"
+                onClick={handleAddressSearch}
+                disabled={isSearching}
+                className="h-[52px] px-4 bg-primary text-white rounded-2xl hover:bg-primary/90 transition-all flex items-center justify-center shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 mb-[2px]"
+              >
+                {isSearching ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" /> : <Search size={18} />}
+              </button>
+            </div>
+
+
+            {/* Map — Dynamic, privacy-safe: coordinates stay in local state only */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                  Location Reference
+                </label>
+                <div className="flex items-center gap-1.5 text-[9px] font-black text-primary uppercase tracking-widest animate-pulse">
+                  <Navigation size={10} />
+                  <span>Search to Update Map</span>
+                </div>
+              </div>
+              <div className="h-[180px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-inner relative">
+                <Map
+                  center={mapCenter}
+                  readonly={false}
+                  scrollWheelZoom={false}
+                  onLocationSelect={handleMapClick}
+                />
+                {isReverseGeocoding && (
+                  <div className="absolute inset-0 bg-white/50 dark:bg-black/50 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-2">
+                    <div className="animate-spin h-6 w-6 border-4 border-primary border-t-transparent rounded-full" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary">Resolving Address...</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-[10px] text-gray-400 text-center">
+                📍 Map updates when you search an address. Your exact pin is never stored.
+              </p>
+            </div>
+
+            <div className="w-full space-y-2">
               <Textarea
                 id="bio"
                 label="Member Bio"
@@ -158,7 +278,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 placeholder="Tell us a bit about yourself..."
                 rows={4}
                 required={false}
-                className="pl-11 pt-4 text-sm font-medium rounded-2xl bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 focus:border-primary transition-all duration-300"
+                className="w-full text-sm font-medium rounded-2xl bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 focus:border-primary transition-all duration-300"
               />
             </div>
           </div>

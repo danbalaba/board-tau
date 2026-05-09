@@ -19,26 +19,56 @@ export async function GET(req: Request) {
 
     if (inquiry) {
       // Simulate what the webhook would do
-      await db.inquiry.update({
-        where: { id: inquiryId },
-        data: {
-          paymentStatus: "PAID",
-          status: "APPROVED",
-        },
-      });
+      // 1. ATOMIC STATUS UPDATE: Only proceed if the reservation is still PENDING_PAYMENT
+      let updatedReservation;
+      try {
+        updatedReservation = await db.reservation.update({
+          where: { 
+            inquiryId: inquiry.id,
+            status: "PENDING_PAYMENT" 
+          },
+          data: {
+            status: "RESERVED",
+            paymentStatus: "PAID",
+          },
+          include: {
+            listing: true,
+            user: true,
+            room: true
+          }
+        });
+      } catch (error) {
+        console.log(`ℹ️ Mock: Reservation ${inquiry.id} already finalized. Skipping inventory update.`);
+        return NextResponse.json({ success: true, message: "Already paid" });
+      }
 
-      // Update reservation
-      const updatedReservation = await db.reservation.update({
-        where: { inquiryId: inquiryId },
-        data: {
-          status: "RESERVED",
-          paymentStatus: "PAID",
-        },
-        include: {
-          listing: true,
-          user: true,
+      // 2. INVENTORY LOCK: Only happens ONCE because of the atomic status check above
+      if (updatedReservation.room) {
+        const slotsToSubtract = Number(updatedReservation.occupantsCount) || 1;
+        
+        const updatedRoom = await db.room.update({
+          where: { id: updatedReservation.roomId },
+          data: {
+            availableSlots: { decrement: slotsToSubtract },
+          },
+        });
+
+        if (updatedRoom.availableSlots <= 0) {
+          await db.room.update({
+            where: { id: updatedReservation.roomId },
+            data: { status: "FULL" },
+          });
         }
-      });
+
+        // CRITICAL: Invalidate Cache
+        const { revalidatePath } = await import("next/cache");
+        const { cache } = await import("@/lib/redis");
+        revalidatePath(`/listings/${updatedReservation.listingId}`);
+        try {
+          await cache.del(`listing:id:${updatedReservation.listingId}`);
+          await cache.delPattern("listings:*");
+        } catch (e) { console.error("Cache clear error in Mock Payment:", e); }
+      }
 
       // 🔥 Trigger Email Notifications
       try {
@@ -69,21 +99,6 @@ export async function GET(req: Request) {
         }
       } catch (e) {
         console.error("Mock notification error:", e);
-      }
-
-      // Update room availability
-      if (inquiry.roomId) {
-        const room = await db.room.findUnique({ where: { id: inquiry.roomId } });
-        if (room) {
-          const newAvailableSlots = room.availableSlots - 1;
-          await db.room.update({
-            where: { id: inquiry.roomId },
-            data: {
-              availableSlots: newAvailableSlots,
-              status: newAvailableSlots <= 0 ? "FULL" : "AVAILABLE",
-            },
-          });
-        }
       }
     }
   }

@@ -1,19 +1,19 @@
 "use client";
 
-import React, { useLayoutEffect } from "react";
-import LoadingAnimation from "@/components/common/LoadingAnimation";
+import React, { useEffect } from "react";
+import { useLoading } from "@/components/loading/LoadingContext";
 
 const Loading = () => {
-  useLayoutEffect(() => {
-    if (typeof window === "undefined") return;
-    window.scrollTo(0, 0);
-  }, []);
+  const { startLoading } = useLoading();
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <LoadingAnimation text="Loading Property Details..." size="large" />
-    </div>
-  );
+  useEffect(() => {
+    startLoading();
+    if (typeof window !== "undefined") {
+      window.scrollTo(0, 0);
+    }
+  }, [startLoading]);
+
+  return null;
 };
 
 export default Loading;

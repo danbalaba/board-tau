@@ -36,7 +36,7 @@ interface PaymentModalProps {
 interface PaymentMethod {
   id: string;
   name: string;
-  icon: React.ReactNode;
+  icon: React.ElementType; // Use ElementType to allow dynamic styling
   enabled: boolean;
   comingSoon?: boolean;
 }
@@ -47,7 +47,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   onClose,
   onPaymentSuccess,
 }) => {
-  // Auto-select the preferred method from inquiry (mapping gcash -> GCASH, etc)
   const defaultMethod = reservation.preferredPaymentMethod
     ? reservation.preferredPaymentMethod.toUpperCase()
     : "STRIPE";
@@ -60,19 +59,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     {
       id: "STRIPE",
       name: "Credit/Debit Card",
-      icon: <CreditCard className="text-primary" />,
+      icon: CreditCard,
       enabled: true,
     },
     {
       id: "GCASH",
       name: "GCash",
-      icon: <Smartphone className="text-primary" />,
+      icon: Smartphone,
       enabled: true,
     },
     {
       id: "MAYA",
       name: "Maya",
-      icon: <Wallet className="text-green-500" />,
+      icon: Wallet,
       enabled: true,
     },
   ];
@@ -92,20 +91,17 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         }),
       });
 
-      // 1. First check if the response is actually OK
       if (!response.ok) {
         let errorMsg = "Payment session creation failed.";
         try {
           const errorData = await response.json();
           errorMsg = errorData.message || errorMsg;
         } catch (jsonErr) {
-          // If response isn't JSON, it's likely an HTML error page (e.g. 404 or 500)
           errorMsg = `Server error (${response.status}). Please check your connection or contact support.`;
         }
         throw new Error(errorMsg);
       }
 
-      // 2. Parse the successful JSON response
       const data = await response.json();
 
       if (data.url) {
@@ -125,54 +121,55 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} width="md" hasFixedFooter={true}>
-      <div className="max-h-[85vh] flex flex-col overflow-hidden">
+      <div className="flex flex-col min-h-[85vh] max-h-[85vh] sm:min-h-0 sm:h-auto sm:max-h-[70vh] overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0">
-          <h2 className="text-xl font-bold text-text-primary dark:text-gray-100">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 ml-4 tracking-tight">
             Complete Payment
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors group"
           >
-            <X className="text-xl text-gray-500" />
+            <X className="text-xl text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200" />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 bg-gray-50/50 dark:bg-gray-900/50 custom-scrollbar">
           {/* Summary */}
-          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-6">
-            <h3 className="text-lg font-semibold text-text-primary dark:text-gray-100 mb-3">
+          <div className="bg-white dark:bg-gray-800 rounded-[32px] p-6 shadow-sm border border-gray-100 dark:border-gray-700/50">
+            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">
               Reservation Summary
             </h3>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-300">Room</span>
-                <span className="font-medium text-text-primary dark:text-gray-100">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Room</span>
+                <span className="text-sm font-black text-gray-900 dark:text-white">
                   {reservation.room.name}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-300">Listing</span>
-                <span className="font-medium text-text-primary dark:text-gray-100">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Listing</span>
+                <span className="text-sm font-black text-gray-900 dark:text-white">
                   {reservation.listing.title}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-300">Duration</span>
-                <span className="font-medium text-text-primary dark:text-gray-100">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Duration</span>
+                <span className="text-sm font-black text-gray-900 dark:text-white">
                   {reservation.durationInDays} days
                 </span>
               </div>
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-primary/5 dark:bg-primary/20 p-4 rounded-2xl border border-primary/10">
+              
+              <div className="pt-6 border-t border-gray-100 dark:border-gray-700/50">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-primary/5 dark:bg-primary/10 p-5 rounded-[28px] border border-primary/10">
                   <div className="flex flex-col mb-2 sm:mb-0">
                     <span className="text-[10px] font-black text-primary uppercase tracking-widest leading-none mb-1">Reservation Fee</span>
                     <span className="text-xs font-bold text-gray-500">
-                      {(reservation as any).occupantsCount || 1} {(reservation as any).occupantsCount === 1 ? 'Person' : 'People'} × ₱{(reservation.room.reservationFee || ((reservation.totalPrice || 0) / ((reservation as any).occupantsCount || 1))).toLocaleString()}
+                      {reservation.occupantsCount || 1} {(reservation.occupantsCount === 1 ? 'Person' : 'People')} × ₱{(reservation.room.reservationFee || (reservation.totalPrice / (reservation.occupantsCount || 1))).toLocaleString()}
                     </span>
                   </div>
-                  <span className="text-2xl font-black text-primary">
+                  <span className="text-3xl font-black text-primary">
                     ₱{reservation.totalPrice.toLocaleString()}
                   </span>
                 </div>
@@ -181,87 +178,104 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           </div>
 
           {/* Payment Methods */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-text-primary dark:text-gray-100 mb-3">
-              Payment Methods
+          <div className="bg-white dark:bg-gray-800 rounded-[32px] p-6 shadow-sm border border-gray-100 dark:border-gray-700/50">
+            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">
+              Select Payment Method
             </h3>
             <div className="space-y-3">
-              {paymentMethods.map((method) => (
-                <label
-                  key={method.id}
-                  className={`flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition-colors ${
-                    selectedMethod === method.id
-                      ? "border-primary bg-primary/5 dark:bg-primary/10"
-                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 shadow-sm"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value={method.id}
-                      checked={selectedMethod === method.id}
-                      onChange={() => setSelectedMethod(method.id)}
-                      className="w-4 h-4 text-primary accent-primary"
-                    />
-                    <span className="text-2xl">{method.icon}</span>
-                    <div>
-                      <p className="font-medium text-text-primary dark:text-gray-100">
-                        {method.name}
+              {paymentMethods.map((method) => {
+                const Icon = method.icon;
+                const isSelected = selectedMethod === method.id;
+                
+                return (
+                  <label
+                    key={method.id}
+                    className={`flex items-center justify-between p-5 rounded-[24px] border-2 cursor-pointer transition-all duration-300 ${
+                      isSelected
+                        ? "border-primary bg-primary/5 dark:bg-primary/10 ring-4 ring-primary/5 shadow-lg shadow-primary/5"
+                        : "border-gray-50 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="relative flex items-center justify-center">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value={method.id}
+                          checked={isSelected}
+                          onChange={() => setSelectedMethod(method.id)}
+                          className="sr-only"
+                        />
+                        <div className={`w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center ${
+                          isSelected 
+                            ? "border-primary bg-primary shadow-lg shadow-primary/20 scale-110" 
+                            : "border-gray-300 dark:border-gray-600 bg-transparent"
+                        }`}>
+                          {isSelected && (
+                            <div className="w-2.5 h-2.5 rounded-full bg-white shadow-sm animate-in zoom-in duration-300" />
+                          )}
+                        </div>
+                      </div>
+                      <div className={`p-3 rounded-2xl ${isSelected ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white dark:bg-gray-800 text-primary'} shadow-sm transition-all duration-300`}>
+                          <Icon size={24} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-gray-900 dark:text-white tracking-tight">
+                          {method.name}
+                        </p>
                         {reservation.preferredPaymentMethod?.toUpperCase() === method.id && (
-                          <span className="ml-2 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] uppercase font-bold border border-emerald-200 dark:border-emerald-800">
-                             Preferred by you
+                          <span className={`mt-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border block w-fit ${
+                            isSelected ? 'bg-white/20 text-white border-white/30' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                          }`}>
+                             Preferred By You
                           </span>
                         )}
-                      </p>
+                      </div>
                     </div>
-                  </div>
-                </label>
-              ))}
+                  </label>
+                );
+              })}
             </div>
           </div>
 
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <div className="p-5 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-[24px] flex items-start gap-4">
+            <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center text-primary shrink-0">
+               <Info size={16} strokeWidth={3} />
             </div>
-          )}
-
-          <div className="mb-6 p-4 bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/80 rounded-xl flex items-start gap-3">
-            <Info className="text-primary mt-0.5" size={20} />
-            <p className="text-sm text-primary-dark dark:text-primary-light font-medium leading-relaxed">
-              Your payment is a **one-time reservation fee** to secure this slot.
+            <p className="text-xs text-primary-dark dark:text-primary-light font-bold leading-relaxed">
+              Your payment is a <span className="font-black underline decoration-primary/30">one-time reservation fee</span> to secure this slot.
             </p>
           </div>
         </div>
+      </div>
 
-        {/* Footer */}
-        <div className="p-8 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3 shrink-0">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            disabled={isProcessing}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handlePayment}
-            disabled={isProcessing || !selectedMethod}
-            className="px-6 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Lock size={14} />
-                Pay ₱{reservation.totalPrice.toLocaleString()}
-              </>
-            )}
-          </button>
-        </div>
+      {/* Footer Actions */}
+      <div className="p-4 sm:p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-100 dark:border-gray-700 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
+        <button
+          onClick={onClose}
+          className="w-full sm:w-auto px-8 py-3 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+          disabled={isProcessing}
+        >
+          Go Back
+        </button>
+        
+        <button
+          onClick={handlePayment}
+          disabled={isProcessing || !selectedMethod}
+          className="w-full sm:w-auto px-10 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest text-white bg-primary rounded-2xl hover:bg-primary-dark shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/pay disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isProcessing ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Processing...</span>
+            </>
+          ) : (
+            <>
+              <Lock size={14} strokeWidth={3} className="group-hover/pay:translate-y-[-1px] transition-transform" />
+              <span>Pay ₱{reservation.totalPrice.toLocaleString()}</span>
+            </>
+          )}
+        </button>
       </div>
     </Modal>
   );

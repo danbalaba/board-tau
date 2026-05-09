@@ -292,6 +292,14 @@ export const getListings = async (query?: {
             category: true,
           },
         },
+        reviews: {
+          where: {
+            status: "approved",
+          },
+          select: {
+            rating: true,
+          },
+        },
       },
     };
 
@@ -451,6 +459,7 @@ export const getListingById = async (id: string) => {
     include: {
       user: {
         select: {
+          id: true,
           name: true,
           image: true,
         },
@@ -500,6 +509,11 @@ export const getListingById = async (id: string) => {
       rooms: {
         include: {
           images: true,
+          amenities: {
+            include: {
+              amenityType: true,
+            },
+          },
         },
       },
       amenities: true,
@@ -571,7 +585,7 @@ export const createListing = async (data: { [x: string]: any }) => {
       },
       price: parseInt(price, 10),
       userId: user.id,
-      category: Array.isArray(category) ? category : category ? [category] : [],
+      category: Array.isArray(category) ? category.slice(0, 1) : category ? [category] : [],
       amenities_list: Array.isArray(amenities) ? amenities : [],
       amenities: {
         create: {

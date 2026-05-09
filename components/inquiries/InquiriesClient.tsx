@@ -86,6 +86,7 @@ interface Inquiry {
 
 interface InquiriesClientProps {
   initialInquiries: any[];
+  currentUserId: string;
 }
 
 type StatusFilter = "all" | "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
@@ -105,7 +106,7 @@ const sortOptions = [
   { value: "price-low", label: "Price: Low", icon: <DollarSign size={16} className="opacity-50" /> },
 ];
 
-export default function InquiriesClient({ initialInquiries }: InquiriesClientProps) {
+export default function InquiriesClient({ initialInquiries, currentUserId }: InquiriesClientProps) {
   const router = useRouter();
   const [inquiries, setInquiries] = useState<Inquiry[]>(initialInquiries);
   const [searchQuery, setSearchQuery] = useState("");
@@ -130,6 +131,16 @@ export default function InquiriesClient({ initialInquiries }: InquiriesClientPro
       setUnreadNotifications(data);
     };
     fetchNotifications();
+
+    // Listen for notification-cleared event to sync state immediately
+    const handleNotificationCleared = () => {
+      fetchNotifications();
+    };
+
+    window.addEventListener("notification-cleared", handleNotificationCleared);
+    return () => {
+      window.removeEventListener("notification-cleared", handleNotificationCleared);
+    };
   }, []);
 
   useEffect(() => {
@@ -257,7 +268,7 @@ export default function InquiriesClient({ initialInquiries }: InquiriesClientPro
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-8 mb-10 flex flex-col md:flex-row items-center gap-4 bg-white/50 dark:bg-gray-800/50 p-4 rounded-2xl backdrop-blur-md border border-gray-100 dark:border-gray-700/50 shadow-sm"
+        className="mt-8 mb-10 flex flex-col md:flex-row items-center gap-4 bg-white/50 dark:bg-gray-800/50 p-4 rounded-2xl backdrop-blur-md border border-gray-100 dark:border-gray-700/50 shadow-sm relative z-20"
       >
         {/* Search */}
         <div className="relative flex-[5]">
@@ -359,6 +370,7 @@ export default function InquiriesClient({ initialInquiries }: InquiriesClientPro
             <InquiryDetailsModal
               inquiry={selectedInquiry}
               isOpen={!!selectedInquiry}
+              currentUserId={currentUserId}
               notification={unreadNotifications.find(n => n.link.includes(selectedInquiry.id))}
               onClose={() => {
                 // Optimistically clear the notification for this specific inquiry

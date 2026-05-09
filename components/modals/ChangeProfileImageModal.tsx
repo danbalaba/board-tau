@@ -67,6 +67,10 @@ const ChangeProfileImageModal: React.FC<ChangeProfileImageModalProps> = ({
     try {
       const res = await edgestore.publicFiles.upload({
         file,
+        options: {
+          // If there's an existing image, we tell EdgeStore to replace it
+          replaceTargetUrl: currentImage && currentImage.includes("edgestore") ? currentImage : undefined,
+        },
         onProgressChange: (progress) => {
           setProgress(progress);
         },

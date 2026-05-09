@@ -1,39 +1,27 @@
-import Redis from 'ioredis';
+import { Redis } from '@upstash/redis';
 
-// Create Redis connection with serverless-optimized settings
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
-  maxRetriesPerRequest: 0, // Best for serverless
-  connectTimeout: 10000,   // Fail quickly if connection is down
-});
-
-// Handle connection events
-redis.on('connect', () => {
-  console.log('✅ Connected to Cloud Redis (Upstash)');
-});
-
-redis.on('error', (error) => {
-  console.error('❌ Redis connection error:', error);
-});
+/**
+ * REST-based Redis client for Upstash.
+ * This is the gold standard for Next.js/Vercel as it handles
+ * stateless connections via HTTP, preventing connection leaks.
+ */
+const redis = Redis.fromEnv();
 
 // Date reviver for JSON.parse to handle ISO date strings
 const dateReviver = (_key: string, value: any) => {
-  const isDateString = typeof value === 'string' && 
+  const isDateString = typeof value === 'string' &&
     /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value);
   return isDateString ? new Date(value) : value;
 };
 
-// Cache operations
+// Cache operations helper
 export const cache = {
   /**
    * Generates a stable cache key by sorting object keys
    */
   generateKey(prefix: string, params: any): string {
     if (!params) return prefix;
-    
-    // Convert primitive or null/undefined to empty object for stable stringify
     const cleanParams = typeof params === 'object' ? params : { val: params };
-    
-    // Sort keys to ensure ?a=1&b=2 and ?b=2&a=1 produce same key
     const sortedParams = Object.keys(cleanParams)
       .sort()
       .reduce((obj: any, key) => {
@@ -46,13 +34,17 @@ export const cache = {
 
   /**
    * Get cached data
-   * @param key Cache key
-   * @returns Promise<null | any> Cached data or null
    */
   async get(key: string): Promise<any | null> {
     try {
       const data = await redis.get(key);
-      return data ? JSON.parse(data, dateReviver) : null;
+      if (!data) return null;
+
+      // If the data is already an object (Upstash REST does this sometimes),
+      // we just return it. Otherwise, we parse it with our dateReviver.
+      if (typeof data === 'object') return data;
+
+      return typeof data === 'string' ? JSON.parse(data, dateReviver) : data;
     } catch (error) {
       console.error('Cache get error for key %s:', key, error);
       return null;
@@ -61,14 +53,12 @@ export const cache = {
 
   /**
    * Set data in cache
-   * @param key Cache key
-   * @param data Data to cache
    * @param ttl Time to live in seconds (default: 1 hour)
-   * @returns Promise<boolean> Success status
    */
   async set(key: string, data: any, ttl: number = 3600): Promise<boolean> {
     try {
-      await redis.set(key, JSON.stringify(data), 'EX', ttl);
+      // By using JSON.stringify here, we ensure our format is consistent
+      await redis.set(key, JSON.stringify(data), { ex: ttl });
       return true;
     } catch (error) {
       console.error('Cache set error for key %s:', key, error);
@@ -78,8 +68,6 @@ export const cache = {
 
   /**
    * Delete cached data
-   * @param key Cache key
-   * @returns Promise<boolean> Success status
    */
   async del(key: string): Promise<boolean> {
     try {
@@ -92,10 +80,11 @@ export const cache = {
   },
 
   /**
-   * Delete multiple keys by pattern (e.g. "listings:*")
+   * Delete multiple keys by pattern (Note: patterns are slower in REST)
    */
   async delPattern(pattern: string): Promise<boolean> {
     try {
+      // Step 1: Find keys (Warning: Upstash REST 'keys' has limits)
       const keys = await redis.keys(pattern);
       if (keys.length > 0) {
         await redis.del(...keys);
@@ -108,9 +97,7 @@ export const cache = {
   },
 
   /**
-   * Check if key exists in cache
-   * @param key Cache key
-   * @returns Promise<boolean> Existence status
+   * Check if key exists
    */
   async exists(key: string): Promise<boolean> {
     try {
@@ -123,22 +110,7 @@ export const cache = {
   },
 
   /**
-   * Get cache TTL (time to live)
-   * @param key Cache key
-   * @returns Promise<number> TTL in seconds (-1 if key doesn't exist or is persistent)
-   */
-  async ttl(key: string): Promise<number> {
-    try {
-      return await redis.ttl(key);
-    } catch (error) {
-      console.error('Cache TTL check error for key %s:', key, error);
-      return -1;
-    }
-  },
-
-  /**
-   * Clear all cache (use with caution)
-   * @returns Promise<boolean> Success status
+   * Clear all cache
    */
   async flush(): Promise<boolean> {
     try {

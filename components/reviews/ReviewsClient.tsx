@@ -86,6 +86,16 @@ const ReviewsClient: React.FC<ReviewsClientProps> = ({ initialReviews }) => {
       setTimeout(() => setIsLoading(false), 800);
     };
     fetchNotifications();
+
+    // Listen for notification-cleared event to sync state immediately
+    const handleNotificationCleared = () => {
+      fetchNotifications();
+    };
+
+    window.addEventListener("notification-cleared", handleNotificationCleared);
+    return () => {
+      window.removeEventListener("notification-cleared", handleNotificationCleared);
+    };
   }, []);
 
   const filteredReviews = useMemo(() => {
@@ -125,7 +135,7 @@ const ReviewsClient: React.FC<ReviewsClientProps> = ({ initialReviews }) => {
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-8 mb-10 flex flex-col md:flex-row items-center gap-4 bg-white/50 dark:bg-gray-800/50 p-4 rounded-[2rem] backdrop-blur-md border border-gray-100 dark:border-gray-700/50 shadow-sm"
+        className="mt-8 mb-10 flex flex-col md:flex-row items-center gap-4 bg-white/50 dark:bg-gray-800/50 p-4 rounded-[2rem] backdrop-blur-md border border-gray-100 dark:border-gray-700/50 shadow-sm relative z-20"
       >
         <div className="relative flex-[5]">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />

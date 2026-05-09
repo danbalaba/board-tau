@@ -1,24 +1,24 @@
-import React from "react";
-import HeroSection from "@/components/home/HeroSection";
-import Categories from "@/components/navbar/Categories";
-import LoadingGrid from "@/components/listings/LoadingGrid";
+"use client";
 
+import { useEffect } from "react";
+import { useLoading } from "@/components/loading/LoadingContext";
+
+/**
+ * Root Loading Trigger
+ * This file is "Invisible". Its only job is to tell our Global Context 
+ * to show the high-fidelity Glass Overlay. 
+ * 
+ * We do this to prevent "Flickering" and to allow the Glass Overlay 
+ * to stay on screen for a minimum amount of time for a premium feel.
+ */
 const LoadingPage = () => {
-  return (
-    <main className="flex flex-col min-h-screen">
-      {/* Replicate the Home Page Layout */}
-      <HeroSection />
+  const { startLoading } = useLoading();
 
-      <section className="container mx-auto px-4 mb-12 mt-12 bg-white dark:bg-[#020817]">
-        <Categories />
-      </section>
+  useEffect(() => {
+    startLoading();
+  }, [startLoading]);
 
-      {/* The Skeleton Grid */}
-      <section className="pb-20">
-        <LoadingGrid count={10} />
-      </section>
-    </main>
-  );
+  return null;
 };
 
 export default LoadingPage;

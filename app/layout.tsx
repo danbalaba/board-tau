@@ -10,6 +10,7 @@ import { Suspense } from "react";
 import AuthErrorHandler from "@/components/auth/AuthErrorHandler";
 import { LoadingProvider } from "@/components/loading/LoadingContext";
 import GlobalLoadingOverlay from "@/components/loading/GlobalLoadingOverlay";
+import { NetworkStatusManager } from "@/components/common/NetworkStatusManager";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -25,6 +26,7 @@ export const metadata: Metadata = {
     shortcut: "/logo.png",
     apple: "/logo.png",
   },
+  manifest: "/manifest.json",
 
   openGraph: {
     title: "BoardTAU",
@@ -56,17 +58,13 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <Providers>
-          <LoadingProvider>
-            <Suspense fallback={null}>
-              <AuthErrorHandler />
-            </Suspense>
-            <Suspense fallback={null}>
-              <GlobalLoadingOverlay />
-            </Suspense>
-            <LayoutContent>
-              {children}
-            </LayoutContent>
-          </LoadingProvider>
+          <NetworkStatusManager />
+          <Suspense fallback={null}>
+            <GlobalLoadingOverlay />
+          </Suspense>
+          <LayoutContent>
+            {children}
+          </LayoutContent>
         </Providers>
       </body>
         {process.env.GA_MEASUREMENT_ID && (

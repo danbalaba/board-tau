@@ -38,12 +38,11 @@ enum STEPS {
   ROOM_TYPE = 2,
   ROOM_CONFIGURATION = 3,
   LOCATION = 4,
-  MOVE_IN = 5,
-  CATEGORY = 6,
-  AMENITIES = 7,
-  RULES = 8,
-  ADVANCED = 9,
-  SUMMARY = 10,
+  CATEGORY = 5,
+  AMENITIES = 6,
+  RULES = 7,
+  ADVANCED = 8,
+  SUMMARY = 9,
 }
 
 const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
@@ -145,8 +144,6 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
       case STEPS.ROOM_CONFIGURATION:
         return true;
       case STEPS.LOCATION:
-        return true;
-      case STEPS.MOVE_IN:
         return true;
       case STEPS.CATEGORY:
         return true;
@@ -369,30 +366,6 @@ const SearchModal = ({ onCloseModal }: { onCloseModal?: () => void }) => {
             <div className="h-[240px] rounded-lg overflow-hidden">
               <Map center={mapCenter} />
             </div>
-          </div>
-        );
-
-      case STEPS.MOVE_IN:
-        return (
-          <div className="flex flex-col gap-6">
-            <Heading
-              title="When do you plan to move in?"
-              subtitle="Optional — for availability (if implemented)."
-            />
-            <MonthPicker
-              id="moveInMonth"
-              label="Move-in month"
-              value={moveInMonth}
-              onChange={(value) => setCustomValue("moveInMonth", value)}
-              placeholder="Select a move-in date"
-            />
-            <Select
-              id="stayDuration"
-              label="Stay duration"
-              options={stayDurationOptions}
-              value={stayDuration}
-              onChange={(v) => setCustomValue("stayDuration", v)}
-            />
           </div>
         );
 

@@ -7,8 +7,10 @@ import {
 } from "react-icons/md";
 
 export const advancedFilters: { label: string; value: string; icon: IconType }[] = [
-  { label: "24/7 Security / Landlord on premises", value: "security24h", icon: MdSecurity },
-  { label: "CCTV / Surveillance Cameras", value: "cctv", icon: MdOutlineVideocam },
-  { label: "Near Transport / Tricycle Terminal", value: "nearTransport", icon: MdDirectionsBus },
-  { label: "Quiet / Study Environment", value: "studyFriendly", icon: MdSchool },
+  { label: "24/7 Security", value: "security24h", icon: MdSecurity },
+  { label: "CCTV Cameras", value: "cctv", icon: MdOutlineVideocam },
+  { label: "Near Transport", value: "nearTransport", icon: MdDirectionsBus },
+  { label: "Fire Safety", value: "fireSafety", icon: MdSecurity },
+  { label: "Flood-Free Area", value: "floodFree", icon: MdSecurity },
+  { label: "Backup Power", value: "backupPower", icon: MdSecurity },
 ];

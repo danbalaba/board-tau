@@ -4,11 +4,13 @@ import Button from "@/components/common/Button";
 import Modal from "../../modals/Modal";
 import InquiryModal from "../../modals/InquiryModal";
 import { useRouter, useSearchParams } from "next/navigation";
-import toast from "react-hot-toast";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import AllRoomsModal from "./AllRoomsModal";
 import RoomDetailsModal from "./RoomDetailsModal";
 import { Eye, Users, Layers, Info, CheckCircle2, XCircle, DoorOpen } from "lucide-react";
+import SafeImage from "@/components/common/SafeImage";
+import RoomTooltip from "./RoomTooltip";
 
 interface Room {
   id: string;
@@ -29,37 +31,65 @@ interface Room {
   bedType?: string;
   amenities?: string[];
   reservationFee: number;
+  imageSrc?: string;
 }
 
 interface AvailableRoomsSectionProps {
   rooms: Room[];
   listingId: string;
+  landlordId: string;
   listingName: string;
   onSubmit: (data: any) => Promise<void>;
   isLoading: boolean;
   user?: any; // User object or null if not logged in (optional)
+  activeStay?: { endDate: string; status: string; listing: { title: string } } | null;
 }
 
 const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
   rooms,
   listingId,
+  landlordId,
   listingName,
   onSubmit,
   isLoading,
   user,
+  activeStay,
 }) => {
-  // Show all rooms, not just available ones
-  const allRooms = rooms;
+  // Show all rooms, not just available ones, sorted naturally by name
+  const allRooms = [...rooms].sort((a, b) => 
+    a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+  );
   const router = useRouter();
   const [showAllRoomsModal, setShowAllRoomsModal] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [showRoomDetails, setShowRoomDetails] = useState(false);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
   const [roomToInquire, setRoomToInquire] = useState<Room | null>(null);
+  const { error: toastError } = useResponsiveToast();
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const searchParams = useSearchParams();
+  const [hoveredRoomId, setHoveredRoomId] = useState<string | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const handleMouseEnter = (id: string) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    
+    // Add a small delay before showing (Hover Intent)
+    // This prevents the tooltip from blocking the "Inquire" button immediately
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredRoomId(id);
+    }, 2000); 
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    
+    // Snappy exit to get out of the way of other buttons
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredRoomId(null);
+    }, 200); 
+  };
 
   // Slider navigation state
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -127,7 +157,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
         clearTimeout(debounceTimerRef.current);
       }
       debounceTimerRef.current = setTimeout(() => {
-        toast.error("Please log in to send an inquiry.");
+        toastError("Please log in to send an inquiry.");
       }, 100);
       return;
     }
@@ -141,8 +171,8 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
     setShowRoomDetails(true);
   };
 
-  // Show View All button only when there are more than 3 rooms
-  const showViewAllButton = allRooms.length > 3;
+  // Show View All button only when there are more than 5 rooms
+  const showViewAllButton = allRooms.length > 5;
 
   return (
     <section ref={sectionRef} className="py-8 border-t border-border scroll-mt-24">
@@ -197,17 +227,24 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
             className="flex gap-6 overflow-x-auto pb-4 px-2 scrollbar-hide"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {allRooms.map((room) => (
+            {(showViewAllButton ? allRooms.slice(0, 5) : allRooms).map((room) => (
               <div
                 key={room.id}
-                className="flex-shrink-0 w-80 group bg-white dark:bg-gray-800/50 rounded-[2rem] overflow-hidden border border-gray-100 dark:border-gray-700/50 hover:border-primary/30 dark:hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 relative"
+                className="flex-shrink-0 w-80 group bg-white dark:bg-gray-800/50 rounded-[2rem] border border-gray-100 dark:border-gray-700/50 hover:border-primary/30 dark:hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 relative"
+                onMouseEnter={() => handleMouseEnter(room.id)}
+                onMouseLeave={handleMouseLeave}
               >
+                {/* Sneak Peek Tooltip */}
+                <RoomTooltip 
+                  room={room} 
+                  isVisible={hoveredRoomId === room.id} 
+                  onViewDetails={() => handleViewDetails(room)} 
+                />
                 {/* Room Image */}
                 <div className="h-48 w-full relative overflow-hidden">
-                  <img
-                    src={(room.images && room.images.length > 0) ? room.images[0].url : "/images/placeholder.jpg"}
+                  <SafeImage
+                    src={(room.images && room.images.length > 0) ? room.images[0].url : (room.imageSrc || "/images/placeholder.jpg")}
                     alt={room.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   
                   {/* Status Badge */}
@@ -387,9 +424,11 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
           }}
           listingName={listingName}
           listingId={listingId}
+          landlordId={landlordId}
           room={roomToInquire}
           onSubmit={onSubmit}
           isLoading={isLoading}
+          activeStay={activeStay}
         />
       )}
     </section>

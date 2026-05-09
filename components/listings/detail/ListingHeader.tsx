@@ -6,6 +6,7 @@ import { Star, MapPin, Sparkles, Share, X, Copy, Mail, MessageCircle } from "luc
 import { LuBadgeCheck } from "react-icons/lu";
 import { FaFacebook, FaTwitter } from "react-icons/fa";
 import HeartButton from "@/components/favorites/HeartButton";
+import { categories } from "@/utils/constants";
 
 interface ListingHeaderProps {
   title: string;
@@ -15,6 +16,10 @@ interface ListingHeaderProps {
   reviewCount: number;
   listingId: string;
   hasFavorited: boolean;
+  category?: {
+    label: string;
+    value: string;
+  } | null;
 }
 
 const SHARE_BUTTONS: { label: string; icon: React.ElementType; action: string }[] = [
@@ -34,7 +39,9 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
   reviewCount,
   listingId,
   hasFavorited,
+  category,
 }) => {
+  const CategoryIcon = category ? categories.find(c => c.value === category.value)?.icon : null;
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -123,13 +130,25 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
               {rating.toFixed(1)} <span className="opacity-60">({reviewCount} Reviews)</span>
             </motion.button>
 
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest shadow-sm"
-            >
-              <Sparkles size={14} />
-              BoardTAU Choice
-            </motion.div>
+            {rating >= 4.9 && reviewCount >= 5 && (
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest shadow-sm"
+              >
+                <Sparkles size={14} />
+                BoardTAU Choice
+              </motion.div>
+            )}
+
+            {category && (
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 text-xs font-black uppercase tracking-widest shadow-sm"
+              >
+                {CategoryIcon && <CategoryIcon size={14} className="text-blue-500" />}
+                {category.label}
+              </motion.div>
+            )}
           </div>
 
           {/* Title, Location & Action Buttons Row */}

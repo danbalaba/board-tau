@@ -21,6 +21,7 @@ export const getMyReviews = async () => {
       },
       listing: {
         include: {
+          images: true,
           user: {
             select: {
               id: true,

@@ -16,6 +16,7 @@ interface CheckboxProps {
   value?: string; // Optional specific value for array-based checkboxes
   required?: boolean;
   className?: string;
+  icon?: React.ReactNode;
 }
 
 const Checkbox: React.FC<CheckboxProps> = ({
@@ -26,6 +27,7 @@ const Checkbox: React.FC<CheckboxProps> = ({
   value: choiceValue,
   required = false,
   className,
+  icon,
 }) => {
   // Check if it's checked by watching either the boolean id or if choiceValue exists in the array
   const watchedValue = watch(id);
@@ -78,11 +80,12 @@ const Checkbox: React.FC<CheckboxProps> = ({
 
       <span
         className={cn(
-          "text-[14px] font-medium transition-colors duration-200",
+          "text-[14px] font-medium transition-colors duration-200 flex items-center gap-2",
           isChecked ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300",
           className
         )}
       >
+        {icon && <span className="flex-shrink-0">{icon}</span>}
         {label}
       </span>
     </label>

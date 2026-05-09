@@ -8,10 +8,10 @@ export async function PUT(request: NextRequest) {
     const updatedProfile = await updateUserProfile(data);
     return NextResponse.json(updatedProfile);
   } catch (error: any) {
-    console.error('Error updating profile:', error);
+    console.error('API Error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to update profile' },
-      { status: 400 }
+      { error: 'An unexpected error occurred' },
+      { status: 500 }
     );
   }
 }
