@@ -11,6 +11,7 @@ import AuthErrorHandler from "@/components/auth/AuthErrorHandler";
 import { LoadingProvider } from "@/components/loading/LoadingContext";
 import GlobalLoadingOverlay from "@/components/loading/GlobalLoadingOverlay";
 import { NetworkStatusManager } from "@/components/common/NetworkStatusManager";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -65,6 +66,7 @@ export default function RootLayout({
           <LayoutContent>
             {children}
           </LayoutContent>
+          <SpeedInsights />
         </Providers>
       </body>
         {process.env.GA_MEASUREMENT_ID && (
