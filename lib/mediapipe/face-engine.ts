@@ -5,16 +5,21 @@ export interface FaceValidationResult {
   isValid: boolean;
   score: number;
   reason?: string;
+  blinkDetected?: boolean;
 }
 
 /**
  * Advanced Face Verification Engine with Multi-Model Security
- * v4.0: Alignment, Hand Avoidance & Anti-Spoofing
+ * v5.0: Blink-based Liveness Detection
  */
 export class FaceEngine {
   private faceLandmarker: FaceLandmarker | null = null;
   private handLandmarker: HandLandmarker | null = null;
   private objectDetector: ObjectDetector | null = null;
+
+  public async warmup() {
+    await this.getModels();
+  }
 
   private async getModels() {
     if (!this.faceLandmarker) this.faceLandmarker = await visionManager.createFaceLandmarker();
@@ -28,22 +33,42 @@ export class FaceEngine {
   }
 
   public async validateFace(
-    imageElement: HTMLImageElement | HTMLCanvasElement
+    imageElement: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement
   ): Promise<FaceValidationResult> {
     const { face, hand, object } = await this.getModels();
 
+    // Protection: Ensure the element actually has loaded frame data
+    const width = 'videoWidth' in imageElement ? imageElement.videoWidth : imageElement.width;
+    const height = 'videoHeight' in imageElement ? imageElement.videoHeight : imageElement.height;
+    if (!width || width === 0 || !height || height === 0) {
+        return {
+            isValid: false,
+            score: 0,
+            reason: "Camera stream initializing..."
+        };
+    }
+
     // 1. ANTI-SPOOFING (Phone/Screen Detection)
     const objectResult = object.detect(imageElement);
-    const phoneDetection = objectResult.detections?.find(d => 
-      d.categories[0].categoryName.toLowerCase().includes("phone")
-    );
-    if (phoneDetection && phoneDetection.categories[0].score > 0.4) {
+    const spoofCategories = [
+      "phone", "cell", "laptop", "tv", "monitor", "tablet", 
+      "screen", "display", "book", "remote", "paper", "picture", "photo"
+    ];
+    
+    const spoofDetection = objectResult.detections?.find(d => {
+      const categoryName = d.categories[0].categoryName.toLowerCase();
+      return spoofCategories.some(spoof => categoryName.includes(spoof));
+    });
+
+    // Extreme Paranoia Threshold (10%) to catch completely obscured/close-up devices
+    if (spoofDetection && spoofDetection.categories[0].score > 0.10) {
       return {
         isValid: false,
         score: 0,
-        reason: "Digital screens or phones are not allowed. Please take a live selfie."
+        reason: `Spoofing detected (${spoofDetection.categories[0].categoryName}). Please use your real face.`
       };
     }
+
 
     // 2. HAND DETECTION
     const handResult = hand.detect(imageElement);
@@ -102,7 +127,9 @@ export class FaceEngine {
     const rightDist = Math.abs(noseTip.x - rightEye.x);
     const symmetryRatio = Math.max(leftDist, rightDist) / Math.min(leftDist, rightDist);
 
-    if (noseMouthDist < 0.045 || mouthWidth < eyeWidth * 0.45 || symmetryRatio > 1.4) {
+    // Thresholds tuned for typical webcam distances. 
+    // Lowered noseMouthDist from 0.045 to 0.030 to support zoomed-out faces.
+    if (noseMouthDist < 0.030 || mouthWidth < eyeWidth * 0.45 || symmetryRatio > 1.4) {
       return { 
         isValid: false, 
         score: 0.3, 
@@ -112,6 +139,36 @@ export class FaceEngine {
 
     return { isValid: true, score: 1.0 };
   }
+
+  /**
+   * LIVENESS CHECK: Returns raw eye blink scores for state machine tracking.
+   * Returns { left, right } scores where 0 = fully open, 1 = fully closed.
+   * The caller is responsible for tracking the blink state machine across frames.
+   * 
+   * Thresholds (tuned for typical webcam conditions):
+   *   - "Eyes closed" = score > 0.45 (genuine blink, not blur artifact)
+   *   - "Eyes open"   = score < 0.20 (clearly open, not mid-blink)
+   */
+  public async getBlinkScores(
+    imageElement: HTMLVideoElement
+  ): Promise<{ left: number; right: number } | null> {
+    const { face } = await this.getModels();
+
+    const width = imageElement.videoWidth;
+    const height = imageElement.videoHeight;
+    if (!width || !height) return null;
+
+    const faceResult = face.detect(imageElement);
+    if (!faceResult.faceLandmarks || faceResult.faceLandmarks.length === 0) return null;
+    if (!faceResult.faceBlendshapes || faceResult.faceBlendshapes.length === 0) return null;
+
+    const categories = faceResult.faceBlendshapes[0].categories;
+    const left = categories.find(c => c.categoryName === 'eyeBlinkLeft')?.score ?? 0;
+    const right = categories.find(c => c.categoryName === 'eyeBlinkRight')?.score ?? 0;
+
+    return { left, right };
+  }
 }
 
 export const faceEngine = new FaceEngine();
+
