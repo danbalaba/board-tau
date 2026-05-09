@@ -1,19 +1,13 @@
-const runtimeCaching = require('next-pwa/cache');
-
-// Ensure API routes are never cached by the Service Worker to prevent stale dashboard data
-runtimeCaching.unshift({
-  urlPattern: /\/api\/.*/i,
-  handler: 'NetworkOnly',
-});
-
-const withPWA = require("next-pwa")({
+const withPWA = require("@ducanh2912/next-pwa").default({
   dest: "public",
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
-  runtimeCaching,
   fallbacks: {
     document: "/offline", // Serve our artistic offline page when a route is not cached
+  },
+  workboxOptions: {
+    disableDevLogs: true,
   },
 });
 

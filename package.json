@@ -18,7 +18,9 @@
   },
   "overrides": {
     "fast-xml-parser": "^5.5.6",
-    "object-path": "^0.11.8"
+    "object-path": "^0.11.8",
+    "serialize-javascript": "^7.0.5",
+    "fast-xml-builder": "^1.1.7"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1028.0",
@@ -28,6 +30,7 @@
     "@dnd-kit/modifiers": "^7.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@ducanh2912/next-pwa": "10.2.9",
     "@edgestore/react": "^0.7.0",
     "@edgestore/server": "^0.7.0",
     "@google/generative-ai": "0.24.1",
@@ -71,7 +74,7 @@
     "@upstash/ratelimit": "2.0.8",
     "@upstash/redis": "1.37.0",
     "@vladmandic/face-api": "1.7.15",
-    "axios": "^1.13.6",
+    "axios": "^1.15.2",
     "bcryptjs": "^3.0.3",
     "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",
@@ -92,7 +95,6 @@
     "match-sorter": "^8.2.0",
     "next": "^16.2.2",
     "next-auth": "^4.24.13",
-    "next-pwa": "5.6.0",
     "next-themes": "^0.4.6",
     "nodemailer": "^8.0.4",
     "nuqs": "^2.8.9",
@@ -135,7 +137,7 @@
     "uuid": "^13.0.0",
     "validator": "^13.15.26",
     "vaul": "^1.1.2",
-    "xlsx": "0.18.5",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz",
     "yaml": "^2.8.2",
     "zod": "4.4.3",
     "zustand": "^5.0.12"

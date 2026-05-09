@@ -9,8 +9,14 @@
 export const sanitizeSecurityString = (str: string): string => {
   if (!str) return '';
   
-  // Basic cleaning: remove HTML tags and trim
-  const clean = str.replace(/<[^>]*>?/gm, '').trim();
+  // Basic cleaning: escape HTML characters to prevent XSS and HTML injection
+  const clean = str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .trim();
   
   // Prevent common SQL injection keywords if they appear as standalone words
   const sqlKeywords = /\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|OR|AND|EXEC)\b/gi;
