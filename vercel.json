@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "app/api/host-applications/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/ai/suggest/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/edgestore/[...edgestore]/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}
