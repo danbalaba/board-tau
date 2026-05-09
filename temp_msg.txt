@@ -1,7 +1,0 @@
-feat(core): add PWA offline support, image compression, and Vercel routing optimizations
-
-- Registered Service Workers and added a Web App Manifest.
-- Developed an offline fallback page and a NetworkStatusManager component.
-- Upgraded next.config.js with remote image patterns.
-- Updated vercel.json to configure edge caching headers.
-- Added utils/image-compression.ts to compress EdgeStore uploads.
