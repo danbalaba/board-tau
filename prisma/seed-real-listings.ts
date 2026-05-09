@@ -175,7 +175,14 @@ async function main() {
             create: { femaleOnly: i % 5 === 0, maleOnly: i % 8 === 0, visitorsAllowed: true, petsAllowed: Math.random() > 0.5, smokingAllowed: false }
         },
         features: {
-            create: { security24h: true, cctv: true, fireSafety: true, nearTransport: true, studyFriendly: true, quietEnvironment: true }
+            create: { 
+                security24h: true, 
+                cctv: true, 
+                fireSafety: true, 
+                nearTransport: true, 
+                floodFree: Math.random() > 0.3, 
+                backupPower: Math.random() > 0.7 
+            }
         },
 
         // FIXED: Applying the deduplicated categories
