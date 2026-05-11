@@ -14,10 +14,12 @@ import {
   Check,
   ShieldCheck,
   Zap,
-  ChevronRight,
-  WrenchIcon,
   Loader2,
   ChevronLeft as ChevronLeftIcon,
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+  Wrench as WrenchIcon,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,15 +31,21 @@ import SafeImage from '@/components/common/SafeImage';
 interface LandlordRoomDetailsModalProps {
   room: Room;
   onClose: () => void;
+  onEdit?: (room: Room) => void;
   statusColors: Record<string, string>;
   formatStatus: (status: string) => string;
+  rooms?: Room[];
+  onNavigate?: (room: Room) => void;
 }
 
 export function LandlordRoomDetailsModal({
   room,
   onClose,
+  onEdit,
   statusColors,
-  formatStatus
+  formatStatus,
+  rooms = [],
+  onNavigate
 }: LandlordRoomDetailsModalProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,6 +94,45 @@ export function LandlordRoomDetailsModal({
     }
   };
 
+  const currentIndex = rooms.findIndex(r => r.id === room.id);
+  const hasNext = currentIndex !== -1 && currentIndex < rooms.length - 1;
+  const hasPrev = currentIndex > 0;
+
+  const handleNext = () => {
+    if (hasNext && onNavigate) {
+      onNavigate(rooms[currentIndex + 1]);
+      if (scrollRef.current) scrollRef.current.scrollTop = 0;
+      setCurrentImageIndex(0);
+    }
+  };
+
+  const handlePrev = () => {
+    if (hasPrev && onNavigate) {
+      onNavigate(rooms[currentIndex - 1]);
+      if (scrollRef.current) scrollRef.current.scrollTop = 0;
+      setCurrentImageIndex(0);
+    }
+  };
+
+  // Use a ref for keyboard navigation to keep useEffect dependency array stable
+  const navigationRef = useRef({ handleNext, handlePrev, onClose });
+  useEffect(() => {
+    navigationRef.current = { handleNext, handlePrev, onClose };
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't navigate if user is typing in an input (though unlikely in this modal)
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      if (e.key === 'Escape') navigationRef.current.onClose();
+      if (e.key === 'ArrowRight') navigationRef.current.handleNext();
+      if (e.key === 'ArrowLeft') navigationRef.current.handlePrev();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const statusActions = [
     {
       status: 'AVAILABLE' as const,
@@ -133,7 +180,7 @@ export function LandlordRoomDetailsModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[500] flex items-center justify-center p-4 md:p-10 bg-gray-900/80 backdrop-blur-md"
+      className="fixed inset-0 z-[500] flex items-center justify-center p-4 md:p-10 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -177,7 +224,7 @@ export function LandlordRoomDetailsModal({
         </div>
 
         {/* Scrollable Body */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto pt-[90px] custom-scrollbar">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto pt-[90px] pb-10 custom-scrollbar">
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div
@@ -222,13 +269,13 @@ export function LandlordRoomDetailsModal({
                     <>
                       <button 
                         onClick={handlePrevImage}
-                        className="absolute left-6 top-1/2 -translate-y-1/2 p-3 bg-black/20 backdrop-blur-xl border border-white/10 text-white rounded-2xl opacity-0 group-hover:opacity-100 transition-all hover:bg-black/40 hover:scale-110"
+                        className="absolute left-6 top-1/2 -translate-y-1/2 p-3 bg-black/40 backdrop-blur-xl border border-white/10 text-white rounded-2xl opacity-40 group-hover:opacity-100 transition-all hover:bg-black/60 hover:scale-110 pointer-events-auto z-50"
                       >
                         <ChevronLeftIcon size={20} />
                       </button>
                       <button 
                         onClick={handleNextImage}
-                        className="absolute right-6 top-1/2 -translate-y-1/2 p-3 bg-black/20 backdrop-blur-xl border border-white/10 text-white rounded-2xl opacity-0 group-hover:opacity-100 transition-all hover:bg-black/40 hover:scale-110"
+                        className="absolute right-6 top-1/2 -translate-y-1/2 p-3 bg-black/40 backdrop-blur-xl border border-white/10 text-white rounded-2xl opacity-40 group-hover:opacity-100 transition-all hover:bg-black/60 hover:scale-110 pointer-events-auto z-50"
                       >
                         <ChevronRight size={20} />
                       </button>
@@ -320,17 +367,37 @@ export function LandlordRoomDetailsModal({
                               let displayLabel = rawAmenity;
                               let customIconName = null;
                               
-                              if (typeof rawAmenity === 'string' && rawAmenity.includes('|')) {
-                                const parts = rawAmenity.split('|');
-                                displayLabel = parts[0].trim();
-                                customIconName = parts[1].trim();
+                              if (typeof rawAmenity === 'string') {
+                                if (rawAmenity.includes('||')) {
+                                  const parts = rawAmenity.split('||');
+                                  displayLabel = parts[0].trim();
+                                  customIconName = parts[1].trim();
+                                } else if (rawAmenity.includes('|')) {
+                                  const parts = rawAmenity.split('|');
+                                  displayLabel = parts[0].trim();
+                                  customIconName = parts[1].trim();
+                                }
                               }
 
                               const matchedAmenity = roomAmenities.find(
-                                ra => ra.value === displayLabel || ra.label === displayLabel
+                                ra => ra.value.toLowerCase() === displayLabel.toLowerCase() || 
+                                     ra.label.toLowerCase() === displayLabel.toLowerCase()
                               );
                               
-                              const DynamicIcon = customIconName ? (LucideIcons as any)[customIconName] : null;
+                              // Dynamically find icon from Lucide library
+                              let DynamicIcon = null;
+                              if (customIconName) {
+                                // Try exact match first, then capitalized
+                                DynamicIcon = (LucideIcons as any)[customIconName] || 
+                                              (LucideIcons as any)[customIconName.charAt(0).toUpperCase() + customIconName.slice(1)];
+                              }
+                              
+                              // Smart Fallback: If not in global list and no custom icon, try using the label itself as the icon name
+                              if (!DynamicIcon && !matchedAmenity) {
+                                const normalizedLabel = displayLabel.charAt(0).toUpperCase() + displayLabel.slice(1).toLowerCase();
+                                DynamicIcon = (LucideIcons as any)[displayLabel] || (LucideIcons as any)[normalizedLabel];
+                              }
+
                               const AmenityIcon = DynamicIcon || matchedAmenity?.icon || Check;
 
                               return (
@@ -404,27 +471,103 @@ export function LandlordRoomDetailsModal({
                     </div>
                   </div>
                 </div>
-
-                {/* Footer — matches property modal footer */}
-                <div className="flex-shrink-0 px-8 py-5 bg-gray-50/50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4">
-                  <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">Last Updated</span>
-                    <span className="text-[10px] font-black text-gray-600 dark:text-gray-300">
-                      {new Date((room as any).updatedAt || (room as any).createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}
-                    </span>
-                  </div>
-                  <button
-                    onClick={onClose}
-                    className="rounded-2xl px-8 py-3 border border-gray-200 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
-                  >
-                    Dismiss
-                  </button>
-                </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
+
+        {/* Fixed Footer */}
+        {!isLoading && (
+          <div className="flex-shrink-0 px-8 py-5 bg-gray-50/50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 z-50">
+            <div className="flex flex-col items-center md:items-start text-center md:text-left">
+              <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">Last Updated</span>
+              <span className="text-[10px] font-black text-gray-600 dark:text-gray-300">
+                {new Date((room as any).updatedAt || (room as any).createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {!room.isArchived && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onEdit) {
+                      onEdit(room);
+                    }
+                  }}
+                  className="rounded-2xl px-8 py-3 bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border border-primary/20"
+                >
+                  <Pencil size={14} />
+                  Edit Details
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="rounded-2xl px-8 py-3 border border-gray-200 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all shadow-sm"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
       </motion.div>
+
+      {/* Room Navigation Buttons */}
+      {!isLoading && rooms.length > 1 && (
+        <>
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-[100] hidden xl:block">
+            <button
+              onClick={handlePrev}
+              disabled={!hasPrev}
+              className={cn(
+                "p-4 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 transition-all shadow-2xl group",
+                !hasPrev && "opacity-0 pointer-events-none"
+              )}
+            >
+              <ChevronLeft size={32} className="group-hover:-translate-x-1 transition-transform" />
+            </button>
+          </div>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 z-[100] hidden xl:block">
+            <button
+              onClick={handleNext}
+              disabled={!hasNext}
+              className={cn(
+                "p-4 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 transition-all shadow-2xl group",
+                !hasNext && "opacity-0 pointer-events-none"
+              )}
+            >
+              <ChevronRight size={32} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+          
+          {/* Mobile Navigation Bar */}
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 xl:hidden">
+            <button
+              onClick={handlePrev}
+              disabled={!hasPrev}
+              className={cn(
+                "p-3 rounded-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl transition-all",
+                !hasPrev ? "opacity-30 cursor-not-allowed" : "active:scale-90"
+              )}
+            >
+              <ChevronLeft size={20} className="text-gray-900 dark:text-white" />
+            </button>
+            <div className="px-4 py-2 rounded-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
+              {currentIndex + 1} / {rooms.length}
+            </div>
+            <button
+              onClick={handleNext}
+              disabled={!hasNext}
+              className={cn(
+                "p-3 rounded-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl transition-all",
+                !hasNext ? "opacity-30 cursor-not-allowed" : "active:scale-90"
+              )}
+            >
+              <ChevronRight size={20} className="text-gray-900 dark:text-white" />
+            </button>
+          </div>
+        </>
+      )}
     </motion.div>,
     document.body
   );

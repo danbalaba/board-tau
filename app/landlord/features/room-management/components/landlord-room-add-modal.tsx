@@ -27,13 +27,15 @@ import {
   AlertCircle,
   Eye,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  HelpCircle
 } from 'lucide-react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import SafeImage from '@/components/common/SafeImage';
 import Button from '@/components/common/Button';
 import ModernSelect from '@/components/common/ModernSelect';
+import RoomAddModernSelect from './RoomAddModernSelect';
 import { 
   BATHROOM_ARRANGEMENTS, 
   roomAmenities, 
@@ -82,7 +84,8 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
     handleNext,
     handleBack,
     handleSubmit,
-    shakeKey
+    shakeKey,
+    submitted
   } = useAddRoomModal({ initialListingId, initialData, onSuccess, onClose });
 
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
@@ -139,7 +142,8 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-gray-900/80 backdrop-blur-md"
+        onClick={(e) => e.stopPropagation()}
+        className="fixed inset-0 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm"
       />
 
       <motion.div
@@ -198,7 +202,7 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
                 >
                   <label className="text-[11px] font-black uppercase tracking-widest text-gray-400 ml-1">Parent Boarding House</label>
                   <div className={cn("rounded-[2rem] transition-all", errors.listingId && "ring-4 ring-rose-500/20")}>
-                    <ModernSelect
+                    <RoomAddModernSelect
                       options={uniqueProperties.map(p => ({
                         value: p.id,
                         label: p.title,
@@ -543,10 +547,23 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
                       
                       {/* Custom Amenities Render */}
                       {formData.amenities
-                        .filter(a => a.includes('|'))
+                        .filter(a => {
+                          const isStandard = roomAmenities.some(ra => ra.value === a);
+                          return !isStandard;
+                        })
                         .map(amenity => {
-                          const [label, iconName] = amenity.split('|');
-                          const Icon = (LucideIcons as any)[iconName] || LucideIcons.HelpCircle;
+                          let label = amenity;
+                          let iconName = null;
+                          
+                          if (amenity.includes('||')) {
+                            [label, iconName] = amenity.split('||').map(s => s.trim());
+                          } else if (amenity.includes('|')) {
+                            [label, iconName] = amenity.split('|').map(s => s.trim());
+                          }
+
+                          const Icon = iconName ? ((LucideIcons as any)[iconName] || 
+                                       (LucideIcons as any)[iconName.charAt(0).toUpperCase() + iconName.slice(1)] || HelpCircle) : HelpCircle;
+                          
                           return (
                             <button
                               key={amenity}
@@ -625,19 +642,24 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
                 exit="hidden"
                 className="space-y-8"
               >
-                <motion.div variants={itemVariants} className={cn(
+                <motion.label variants={itemVariants} className={cn(
                   "p-10 border-4 border-dashed rounded-[3rem] flex flex-col items-center justify-center text-center space-y-4 group hover:border-primary/30 transition-all cursor-pointer relative overflow-hidden",
-                  errors.images ? "border-rose-500 bg-rose-50/10" : "border-gray-100 dark:border-gray-800"
+                          errors.images ? "border-rose-500 bg-rose-50/10" : "border-gray-100 dark:border-gray-800"
                 )}>
-                   <input type="file" multiple accept="image/*" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+                   <input type="file" multiple accept="image/*" onChange={handleFileChange} className="hidden" />
                    <div className={cn("w-20 h-20 rounded-3xl flex items-center justify-center group-hover:scale-110 transition-transform", errors.images ? "bg-rose-500/10 text-rose-500" : "bg-primary/10 text-primary")}>
                       <Plus size={40} strokeWidth={3} />
                    </div>
                    <div>
                       <h4 className={cn("text-sm font-black uppercase tracking-tight", errors.images ? "text-rose-500" : "text-gray-900 dark:text-white")}>Upload Room Photos</h4>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">{errors.images ? errors.images : 'Max 5 images • Under 5MB each'}</p>
+                      {errors.images && (
+                         <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest mt-2 flex items-center justify-center gap-2">
+                            <AlertCircle size={12} /> {errors.images}
+                         </p>
+                      )}
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">JPG, PNG, WEBP • Max 5 images • Under 5MB each</p>
                    </div>
-                </motion.div>
+                </motion.label>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                    {allImages.map((src: string, i: number) => (
@@ -760,14 +782,14 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
 
            <div className="flex gap-4">
               {currentStep < 3 ? (
-                <Button onClick={handleNext} className="px-10 py-5 bg-primary text-white rounded-3xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+                <Button onClick={handleNext} className="px-10 py-5 bg-primary text-white rounded-3xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-primary/20 active:scale-95 transition-all flex items-center gap-2">
                   Next Step <ChevronRight size={16} />
                 </Button>
               ) : (
                 <Button 
                   onClick={handleSubmit} 
                   disabled={loading || uploadingImages}
-                  className="px-12 py-5 bg-emerald-600 text-white rounded-3xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-emerald-600/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
+                  className="px-12 py-5 bg-primary text-white rounded-3xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-3"
                 >
                   {(loading || uploadingImages) ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                   {initialData ? 'Sync Unit' : 'Publish Unit'}
@@ -775,6 +797,28 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
               )}
            </div>
         </div>
+        {/* --- SUCCESS OVERLAY --- */}
+        <AnimatePresence>
+          {submitted && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-white/95 dark:bg-[#0B0F1A]/95 flex items-center justify-center z-[200] p-6 backdrop-blur-xl">
+              <motion.div initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-12 text-center max-w-sm w-full shadow-2xl relative overflow-hidden border border-gray-100 dark:border-white/10">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-primary" />
+                
+                <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+                  <Check size={48} className="text-primary" />
+                </div>
+                <h3 className="text-3xl font-black text-gray-900 dark:text-white mb-2 tracking-tighter uppercase">{initialData ? 'Sync Complete' : 'Unit Published'}</h3>
+                <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 mb-8 uppercase tracking-[0.3em]">{initialData ? 'Details synchronized' : 'Room is now live'}</p>
+                
+                <div className="h-2 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden mb-3">
+                  <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 1.2, ease: "easeOut" }} className="h-full bg-primary" />
+                </div>
+                <span className="text-[9px] font-black text-primary opacity-60 tracking-[0.4em] uppercase animate-pulse">Redirecting...</span>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </motion.div>
     </div>,
     document.body

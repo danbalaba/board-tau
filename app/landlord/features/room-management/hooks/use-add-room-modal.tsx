@@ -22,6 +22,7 @@ export const useAddRoomModal = ({
   const { edgestore } = useEdgeStore();
   const responsiveToast = useResponsiveToast();
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [files, setFiles] = useState<File[]>([]);
 
@@ -209,8 +210,13 @@ export const useAddRoomModal = ({
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
       if (files.length + selectedFiles.length > 5) return responsiveToast.error({ title: "Too Many Images", description: 'You can only upload up to 5 images per room.' });
+      
       const invalidFiles = selectedFiles.filter(file => file.size > 5 * 1024 * 1024);
       if (invalidFiles.length > 0) return responsiveToast.error({ title: "File Too Large", description: 'Please make sure each image is under 5MB.' });
+
+      const nonImageFiles = selectedFiles.filter(file => !file.type.startsWith('image/'));
+      if (nonImageFiles.length > 0) return responsiveToast.error({ title: "Invalid File Type", description: 'Please upload only image files (JPG, PNG, WEBP).' });
+
       setFiles(prev => [...prev, ...selectedFiles]);
       setErrors(prev => ({ ...prev, images: '' }));
     }
@@ -277,14 +283,19 @@ export const useAddRoomModal = ({
       });
 
       if (response.ok) {
+        setSubmitted(true);
         responsiveToast.success({
           title: "SUCCESS",
           description: initialData ? 'Unit updated!' : 'Unit published!'
         });
-        onSuccess?.();
-        onClose();
-        setCurrentStep(1);
-        setFiles([]);
+        
+        setTimeout(() => {
+          onSuccess?.();
+          onClose();
+          setCurrentStep(1);
+          setFiles([]);
+          setSubmitted(false);
+        }, 1500);
       } else {
         const err = await response.json();
         responsiveToast.error({ title: "ERROR", description: err.message || 'Failed to save' });
@@ -315,6 +326,7 @@ export const useAddRoomModal = ({
     shakeKey,
     handleNext,
     handleBack,
-    handleSubmit
+    handleSubmit,
+    submitted
   };
 };
