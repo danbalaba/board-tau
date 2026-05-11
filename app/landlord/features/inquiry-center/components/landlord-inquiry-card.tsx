@@ -157,7 +157,7 @@ export function LandlordInquiryCard({
               </span>
             </Button>
 
-            {inquiry.status === "PENDING" && (
+            {inquiry.status === "PENDING" && !inquiry.isArchived && (
               <div className="flex gap-2 flex-[2]">
                 <Button
                   onClick={() => handleRespond(inquiry.id, "APPROVED")}

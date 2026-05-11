@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
 import { toast } from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 export interface Inquiry {
   id: string;
@@ -48,6 +49,7 @@ export interface Inquiry {
 
 export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCursor: string | null }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { success, error: toastError } = useResponsiveToast();
   const [listings, setListings] = useState(initialInquiries.inquiries);
   const [nextCursor, setNextCursor] = useState(initialInquiries.nextCursor);
@@ -188,6 +190,7 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
       });
       if (response.ok) {
         setListings(prev => prev.map(i => i.id === inquiryId ? { ...i, status } : i));
+        queryClient.invalidateQueries({ queryKey: ["landlord-notifications"] });
         router.refresh();
         success(`Inquiry ${status.toLowerCase()} successfully.`);
       } else {

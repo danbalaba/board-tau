@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { IconSearch, IconX, IconCalendarCheck, IconUser } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/use-debounce';
 import { Booking } from '../hooks/use-booking-logic';
 import SafeImage from '@/components/common/SafeImage';
 
@@ -18,13 +19,23 @@ export function LandlordBookingSearch({
   setSearchQuery,
   bookings
 }: LandlordBookingSearchProps) {
+  const [localQuery, setLocalQuery] = useState(searchQuery);
+  const debouncedQuery = useDebounce(localQuery, 300);
   const [isFocused, setIsFocused] = useState(false);
   const [suggestions, setSuggestions] = useState<Booking[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (searchQuery.length >= 2 && bookings) {
-      const q = searchQuery.toLowerCase();
+    setLocalQuery(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setSearchQuery(debouncedQuery);
+  }, [debouncedQuery, setSearchQuery]);
+
+  useEffect(() => {
+    if (debouncedQuery.length >= 2 && bookings) {
+      const q = debouncedQuery.toLowerCase();
       const filtered = bookings
         .filter(b => 
           b.listing.title.toLowerCase().includes(q) || 
@@ -36,7 +47,7 @@ export function LandlordBookingSearch({
     } else {
       setSuggestions([]);
     }
-  }, [searchQuery, bookings]);
+  }, [debouncedQuery, bookings]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -56,14 +67,20 @@ export function LandlordBookingSearch({
       <input
         type="text"
         placeholder="Search tenant or property..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
+        value={localQuery}
+        onChange={(e) => setLocalQuery(e.target.value)}
         onFocus={() => setIsFocused(true)}
-        className="w-full relative z-10 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 py-3 pl-11 pr-10 text-xs font-bold text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+        spellCheck={false}
+        autoComplete="off"
+        autoCorrect="off"
+        className="w-full relative z-10 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 py-3 pl-11 pr-10 text-xs font-bold text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all shadow-sm"
       />
-      {searchQuery && (
+      {localQuery && (
         <button
-          onClick={() => setSearchQuery('')}
+          onClick={() => {
+            setLocalQuery('');
+            setSearchQuery('');
+          }}
           className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-primary transition-colors z-20"
         >
           <IconX size={14} strokeWidth={3} />

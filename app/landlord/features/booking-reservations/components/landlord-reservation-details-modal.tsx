@@ -15,18 +15,23 @@ import {
   IconPlayerPlay, 
   IconCheck, 
   IconX,
-  IconClock
+  IconClock,
+  IconChevronLeft,
+  IconChevronRight
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/helper';
 import SafeImage from '@/components/common/SafeImage';
+import { getSafeImageSrcString } from '@/components/modals/inquiry-modal/InquiryModalUtils';
+import { useRouter, usePathname } from 'next/navigation';
+import { LandlordReservationCancelModal } from './landlord-reservation-cancel-modal';
 
 interface LandlordReservationDetailsModalProps {
   reservation: ReservationRequest;
   isOpen: boolean;
   onClose: () => void;
-  onUpdateStatus: (id: string, status: string) => Promise<void>;
+  onUpdateStatus: (id: string, status: string, reason?: string) => Promise<void>;
 }
 
 const statusColors: Record<string, string> = {
@@ -44,31 +49,36 @@ export function LandlordReservationDetailsModal({
 }: LandlordReservationDetailsModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (isOpen) {
       setIsInitialLoading(true);
+      setCurrentImageIndex(0);
       const timer = setTimeout(() => setIsInitialLoading(false), 600);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
-  const handleAction = async (status: string) => {
+  const handleAction = async (status: string, reason?: string) => {
     setIsLoading(true);
     try {
-      await onUpdateStatus(reservation.id, status);
+      await onUpdateStatus(reservation.id, status, reason);
       onClose();
     } catch (error) {
       // toast handled in hook
     } finally {
       setIsLoading(false);
-      setShowRevokeConfirm(false);
+      setShowCancelModal(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Inquiry Details" width="lg" hasFixedFooter>
+    <>
+    <Modal isOpen={isOpen} onClose={onClose} title="Reservation Details" width="lg" hasFixedFooter>
       <div className="space-y-8 max-h-[80vh] overflow-y-auto p-8 custom-scrollbar relative">
         
         <AnimatePresence mode="wait">
@@ -99,38 +109,6 @@ export function LandlordReservationDetailsModal({
               }}
               className="space-y-8"
             >
-              {/* Profile Card Overlay (If Confirming Revoke) */}
-              {showRevokeConfirm && (
-                <div className="absolute inset-x-0 bottom-0 z-50 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-xl p-8 border-t border-rose-100 dark:border-rose-900/30 rounded-b-[32px] animate-in slide-in-from-bottom-full duration-300">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                      <IconX size={32} />
-                    </div>
-                    <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Cancel Reservation?</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 font-medium italic">
-                      This will remove the reservation. The tenant will be notified immediately.
-                    </p>
-                    <div className="grid grid-cols-2 gap-4">
-                      <Button
-                        outline
-                        onClick={() => setShowRevokeConfirm(false)}
-                        className="rounded-xl py-3 text-xs font-black uppercase tracking-widest border-gray-100 dark:border-gray-800"
-                      >
-                        Wait, Keep It
-                      </Button>
-                      <Button
-                        variant="danger"
-                        isLoading={isLoading}
-                        onClick={() => handleAction('CANCELLED')}
-                        className="rounded-xl py-3 text-xs font-black uppercase tracking-widest shadow-lg shadow-rose-500/10"
-                      >
-                        Confirm Revoke
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Profile Card */}
               <motion.div 
                 variants={{
@@ -179,17 +157,56 @@ export function LandlordReservationDetailsModal({
                     Booking Details
                   </span>
                   <div className="flex flex-col md:flex-row gap-6">
-                    <div className="w-full md:w-1/2 aspect-video rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-800">
-                      <SafeImage
-                        src={(reservation.room?.images && reservation.room.images.length > 0) 
-                          ? reservation.room.images[0].url 
-                          : (reservation.listing?.images && reservation.listing.images.length > 0)
-                            ? reservation.listing.images[0].url
-                            : reservation.listing?.imageSrc || "/images/placeholder.jpg"
-                        }
-                        alt={reservation.listing.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
+                    <div className="w-full md:w-1/2 aspect-video rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 relative group/gallery">
+                      <AnimatePresence mode="wait">
+                        <SafeImage
+                          key={currentImageIndex}
+                          src={getSafeImageSrcString(
+                            (reservation.room?.images && reservation.room.images.length > 0) 
+                              ? reservation.room.images[currentImageIndex].url 
+                              : (reservation.listing?.images && reservation.listing.images.length > 0)
+                                ? reservation.listing.images[0].url
+                                : reservation.listing?.imageSrc || "/images/placeholder.jpg"
+                          )}
+                          alt={reservation.listing.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover/gallery:scale-110"
+                        />
+                      </AnimatePresence>
+
+                      {/* Gallery Navigation */}
+                      {reservation.room?.images && reservation.room.images.length > 1 && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentImageIndex((prev) => (prev === 0 ? reservation.room!.images!.length - 1 : prev - 1));
+                            }}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                          >
+                            <IconChevronLeft size={18} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentImageIndex((prev) => (prev === reservation.room!.images!.length - 1 ? 0 : prev + 1));
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                          >
+                            <IconChevronRight size={18} />
+                          </button>
+                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                            {reservation.room.images.map((_, idx) => (
+                              <div
+                                key={idx}
+                                className={cn(
+                                  "w-1.5 h-1.5 rounded-full transition-all",
+                                  idx === currentImageIndex ? "bg-white w-4" : "bg-white/50"
+                                )}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
                     <div className="flex-1 flex flex-col justify-center">
                       <h4 className="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2">
@@ -283,7 +300,7 @@ export function LandlordReservationDetailsModal({
                 <div className="flex flex-col gap-4">
                   {/* Row 1: Primary Actions (Check-in & Cancel) */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {(reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED') && (
+                    {(reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED') && !(reservation as any).isArchived && (
                       <Button 
                         className="w-full bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 py-5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] group/act transition-all active:scale-95"
                         onClick={() => handleAction('CHECKED_IN')}
@@ -296,7 +313,7 @@ export function LandlordReservationDetailsModal({
                       </Button>
                     )}
 
-                    {reservation.status !== 'CANCELLED' && (
+                    {reservation.status !== 'CANCELLED' && !(reservation as any).isArchived && (
                       <Button 
                         outline
                         className={cn(
@@ -305,7 +322,7 @@ export function LandlordReservationDetailsModal({
                             ? "border-rose-100 text-rose-500 hover:bg-rose-50 dark:border-rose-900/30" 
                             : "sm:col-span-2 border-rose-100 text-rose-500 hover:bg-rose-50 dark:border-rose-900/30"
                         )}
-                        onClick={() => setShowRevokeConfirm(true)}
+                        onClick={() => setShowCancelModal(true)}
                         isLoading={isLoading}
                       >
                         <span className="flex items-center justify-center gap-2">
@@ -320,7 +337,21 @@ export function LandlordReservationDetailsModal({
                   <Button
                     outline
                     className="w-full rounded-[1.25rem] py-5 border-gray-100 dark:border-gray-800 text-[10px] font-black uppercase tracking-[0.2em] group/chat flex items-center justify-center gap-3 transition-all active:scale-[0.98] hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                    onClick={() => window.location.href = `/landlord?openChat=true&listingId=${reservation.listing.id}&tenantId=${reservation.user.id}`}
+                    onClick={() => {
+                      const listingImg = (reservation.room?.images && reservation.room.images.length > 0) ? reservation.room.images[0].url : (reservation.listing?.images && reservation.listing.images.length > 0) ? reservation.listing.images[0].url : reservation.listing?.imageSrc;
+                      const event = new CustomEvent('open-landlord-chat', {
+                        detail: {
+                          listingId: reservation.listing.id,
+                          tenantId: reservation.user.id,
+                          tenantName: reservation.user.name || 'Tenant',
+                          tenantImage: reservation.user.image || '',
+                          listingTitle: reservation.listing.title,
+                          listingImage: listingImg || ''
+                        }
+                      });
+                      window.dispatchEvent(event);
+                      onClose();
+                    }}
                   >
                     <IconMail size={18} className="group-hover/chat:scale-110 transition-transform text-primary" />
                     Chat with {reservation.user.name || 'Tenant'}
@@ -339,5 +370,14 @@ export function LandlordReservationDetailsModal({
         </AnimatePresence>
       </div>
     </Modal>
+    
+    {/* Standalone Cancel Modal (Portaled) */}
+    <LandlordReservationCancelModal
+      isOpen={showCancelModal}
+      onClose={() => setShowCancelModal(false)}
+      onConfirm={(reason) => handleAction('CANCELLED', reason)}
+      isLoading={isLoading}
+    />
+    </>
   );
 }
