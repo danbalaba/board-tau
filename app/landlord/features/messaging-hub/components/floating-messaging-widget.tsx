@@ -58,7 +58,7 @@ const FloatingMessagingWidget = () => {
 
   // Handle URL Deep Linking for Messaging Overlay
   useEffect(() => {
-    if (!mounted || conversations.length === 0) return;
+    if (!mounted || isLoadingConversations) return;
     
     const currentParams = searchParams.toString();
     if (currentParams === lastProcessedLink.current) return;
@@ -75,6 +75,31 @@ const FloatingMessagingWidget = () => {
         if (match) {
           setActiveConversation(match);
           setView('chat');
+        } else {
+          // If no existing conversation, check if we have enough data to build a placeholder
+          const tenantName = searchParams.get('tenantName');
+          const tenantImage = searchParams.get('tenantImage');
+          const listingTitle = searchParams.get('listingTitle');
+          const listingImage = searchParams.get('listingImage');
+          
+          if (tenantName && listingTitle) {
+            const placeholder = {
+              id: `${listingId}_${tenantId}`,
+              listingId: listingId,
+              listingTitle: listingTitle,
+              listingImage: listingImage || '',
+              tenantId: tenantId,
+              tenantName: tenantName,
+              tenantImage: tenantImage || '',
+              lastMessage: '',
+              lastMessageTime: new Date().toISOString(),
+              unreadCount: 0,
+              isArchived: false,
+              isPlaceholder: true
+            };
+            setActiveConversation(placeholder);
+            setView('chat');
+          }
         }
       }
       
@@ -83,12 +108,51 @@ const FloatingMessagingWidget = () => {
       params.delete('openChat');
       params.delete('listingId');
       params.delete('tenantId');
+      params.delete('tenantName');
+      params.delete('tenantImage');
+      params.delete('listingTitle');
+      params.delete('listingImage');
       const newPath = params.toString() ? `?${params.toString()}` : '';
       lastProcessedLink.current = searchParams.toString(); 
       router.replace(`${window.location.pathname}${newPath}`, { scroll: false });
     }
-  }, [searchParams, conversations, mounted, setActiveConversation, router]);
+  }, [searchParams, conversations, mounted, setActiveConversation, router, isLoadingConversations]);
   
+  // Handle Instant Client-Side Opening via Custom Event
+  useEffect(() => {
+    const handleOpenChat = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { listingId, tenantId, tenantName, tenantImage, listingTitle, listingImage } = customEvent.detail;
+      
+      setIsOpen(true);
+      
+      const match = conversations.find(c => c.listingId === listingId && c.tenantId === tenantId);
+      if (match) {
+        setActiveConversation(match);
+        setView('chat');
+      } else {
+        const placeholder = {
+          id: `${listingId}_${tenantId}`,
+          listingId,
+          listingTitle,
+          listingImage: listingImage || '',
+          tenantId,
+          tenantName,
+          tenantImage: tenantImage || '',
+          lastMessage: '',
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 0,
+          isArchived: false,
+          isPlaceholder: true
+        };
+        setActiveConversation(placeholder);
+        setView('chat');
+      }
+    };
+
+    window.addEventListener('open-landlord-chat', handleOpenChat);
+    return () => window.removeEventListener('open-landlord-chat', handleOpenChat);
+  }, [conversations, setActiveConversation]);
 
   const totalUnread = conversations.filter(c => !c.isArchived).reduce((acc, c) => acc + (c.unreadCount || 0), 0);
 
@@ -255,7 +319,8 @@ const FloatingMessagingWidget = () => {
                 className="w-full h-full max-w-[1600px] max-h-[95vh]"
               >
                 <MessagingHub 
-                  initialConversations={[]} 
+                  initialConversations={conversations} 
+                  initialActiveConversation={activeConversation}
                   onClose={() => setIsFullView(false)} 
                 />
               </motion.div>

@@ -376,29 +376,54 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
       {/* Input Area */}
       <div className="p-8 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-[#020817] z-20">
-        <div className="relative flex items-end gap-4 bg-gray-50 dark:bg-gray-900/50 p-2 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-inner focus-within:border-primary/20 focus-within:bg-white dark:focus-within:bg-gray-900 transition-all">
-          <textarea 
-            ref={textareaRef}
-            rows={1}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={`Message ${activeConversation.tenantName}...`}
-            className="flex-1 bg-transparent border-none outline-none py-3 px-4 text-sm font-medium resize-none max-h-32 min-h-[44px] break-all"
-          />
-          <button 
-            onClick={handleSend}
-            disabled={!inputValue.trim() || isSending}
-            className={cn(
-              "p-4 rounded-full transition-all active:scale-90 disabled:opacity-50",
-              inputValue.trim() 
-                ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                : "bg-gray-100 dark:bg-gray-800 text-gray-400"
-            )}
-          >
-            <IconSend size={20} />
-          </button>
-        </div>
+        {activeConversation.isArchived || activeConversation.isPendingArchive ? (
+          <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/20 rounded-[2rem] p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <IconArchive size={20} />
+              </div>
+              <div className="text-center sm:text-left">
+                <p className="text-xs font-black text-amber-900 dark:text-amber-100 uppercase tracking-widest leading-tight">
+                  Archived Conversation
+                </p>
+                <p className="text-[10px] font-bold text-amber-700/70 dark:text-amber-400/50 leading-tight">
+                  Unarchive this chat to send a new message.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={activeConversation.isPendingArchive ? handleUndo : handleUnarchive}
+              className="w-full sm:w-auto px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+            >
+              <IconRefresh size={14} />
+              Unarchive Chat
+            </button>
+          </div>
+        ) : (
+          <div className="relative flex items-end gap-4 bg-gray-50 dark:bg-gray-900/50 p-2 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-inner focus-within:border-primary/20 focus-within:bg-white dark:focus-within:bg-gray-900 transition-all">
+            <textarea 
+              ref={textareaRef}
+              rows={1}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={`Message ${activeConversation.tenantName}...`}
+              className="flex-1 bg-transparent border-none outline-none py-3 px-4 text-sm font-medium resize-none max-h-32 min-h-[44px] break-all"
+            />
+            <button 
+              onClick={handleSend}
+              disabled={!inputValue.trim() || isSending}
+              className={cn(
+                "p-4 rounded-full transition-all active:scale-90 disabled:opacity-50",
+                inputValue.trim() 
+                  ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-400"
+              )}
+            >
+              <IconSend size={20} />
+            </button>
+          </div>
+        )}
       </div>
 
       <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)}>

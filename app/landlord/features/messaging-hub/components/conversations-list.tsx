@@ -267,7 +267,8 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
                   />
                   <SafeImage 
                     src={conv.listingImage} 
-                    className="absolute -bottom-1 -right-1 w-5 h-5 rounded-lg border-2 border-white dark:border-gray-900 object-cover shadow-sm"
+                    containerClassName="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg overflow-hidden z-10 shadow-sm border-2 border-white dark:border-gray-900"
+                    className="object-cover"
                     alt=""
                   />
                 </div>
