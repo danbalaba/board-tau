@@ -13,8 +13,7 @@ const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,
 
 export const changePasswordSchema = z.object({
   oldPassword: z
-    .string()
-    .min(1, 'Current password is required.'),
+    .string(),
     
   newPassword: z
     .string()

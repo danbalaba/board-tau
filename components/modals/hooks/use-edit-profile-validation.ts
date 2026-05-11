@@ -14,10 +14,24 @@ const PH_PHONE = /^(09|9|639)\d{9}$/;
 export const editProfileSchema = z.object({
   name: z
     .string()
-    .min(2, 'Full name must be at least 2 characters.')
+    .trim()
+    .min(1, 'Full name is required.')
     .max(100, 'Full name must be less than 100 characters.')
-    .regex(/^[a-zA-Z\s'-]+$/, 'Name can only contain letters, spaces, hyphens, and apostrophes.')
-    .regex(NO_HTML, 'Name must not contain HTML tags.'),
+    .regex(/^[a-zA-Z\s'.-]+$/, 'Name can only contain letters, spaces, hyphens, dots, and apostrophes.')
+    .regex(NO_HTML, 'Name must not contain HTML tags.')
+    .refine((val) => {
+      const parts = val.split(/\s+/);
+      // Ensure there are at least two words
+      if (parts.length < 2) return false;
+      
+      // Ensure the first word has at least 2 characters
+      if (parts[0].length < 2) return false;
+
+      // Ensure every part actually contains at least one letter 
+      // (prevents bypassing with "-- --" or "' '")
+      const hasLetters = parts.every(part => /[a-zA-Z]/.test(part));
+      return hasLetters;
+    }, 'Please enter a valid full name (at least first and last name, containing letters).'),
 
   phoneNumber: z
     .string()

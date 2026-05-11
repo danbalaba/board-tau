@@ -22,6 +22,7 @@ import Avatar from '@/components/common/Avatar';
 import Button from '@/components/common/Button';
 import { toast } from 'sonner';
 import SafeImage from '@/components/common/SafeImage';
+import { getSafeImageSrcString } from '@/components/modals/inquiry-modal/InquiryModalUtils';
 
 interface Review {
   id: string;
@@ -78,6 +79,7 @@ export function LandlordReviewDetailsModal({
   const [responseText, setResponseText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedMediaIdx, setSelectedMediaIdx] = useState<number | null>(null);
+  const [currentRoomImageIndex, setCurrentRoomImageIndex] = useState(0);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -94,6 +96,7 @@ export function LandlordReviewDetailsModal({
         if (!res.ok) throw new Error('Failed to fetch details');
         const data = await res.json();
         setReview(data.data);
+        setCurrentRoomImageIndex(0);
       } catch (err) {
         console.error(err);
         toast.error('Could not load review details');
@@ -243,17 +246,56 @@ export function LandlordReviewDetailsModal({
                 </span>
 
                 <div className="flex flex-col md:flex-row gap-6">
-                   <div className="w-full md:w-40 aspect-square rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-800 shrink-0">
-                      <SafeImage
-                        src={(review.reservation?.room?.images && review.reservation.room.images.length > 0)
-                          ? review.reservation.room.images[0].url
-                          : (review.listing?.images && review.listing.images.length > 0)
-                            ? (typeof review.listing.images[0] === 'string' ? review.listing.images[0] : (review.listing.images[0] as any).url)
-                            : review.listing?.imageSrc || "/images/placeholder.jpg"
-                        }
-                        alt={review.listing.title}
-                        className="w-full h-full object-cover"
-                      />
+                   <div className="w-full md:w-40 aspect-square rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-800 shrink-0 relative group/room-gallery bg-gray-100 dark:bg-gray-900">
+                      <AnimatePresence mode="wait">
+                        <SafeImage
+                          key={currentRoomImageIndex}
+                          src={getSafeImageSrcString(
+                            (review.reservation?.room?.images && review.reservation.room.images.length > 0)
+                              ? review.reservation.room.images[currentRoomImageIndex].url
+                              : (review.listing?.images && review.listing.images.length > 0)
+                                ? (typeof review.listing.images[0] === 'string' ? review.listing.images[0] : (review.listing.images[0] as any).url)
+                                : review.listing?.imageSrc || "/images/placeholder.jpg"
+                          )}
+                          alt={review.listing.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover/room-gallery:scale-110"
+                        />
+                      </AnimatePresence>
+
+                      {/* Room Gallery Navigation */}
+                      {review.reservation?.room?.images && review.reservation.room.images.length > 1 && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentRoomImageIndex((prev) => (prev === 0 ? review.reservation!.room!.images!.length - 1 : prev - 1));
+                            }}
+                            className="absolute left-1.5 top-1/2 -translate-y-1/2 p-1 rounded-full bg-black/50 text-white opacity-0 group-hover/room-gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                          >
+                            <IconChevronLeft size={14} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentRoomImageIndex((prev) => (prev === review.reservation!.room!.images!.length - 1 ? 0 : prev + 1));
+                            }}
+                            className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-full bg-black/50 text-white opacity-0 group-hover/room-gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                          >
+                            <IconChevronRight size={14} />
+                          </button>
+                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+                            {review.reservation.room.images.map((_, idx) => (
+                              <div
+                                key={idx}
+                                className={cn(
+                                  "w-1 h-1 rounded-full transition-all",
+                                  idx === currentRoomImageIndex ? "bg-white w-3" : "bg-white/50"
+                                )}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
                    </div>
                    <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
@@ -393,7 +435,7 @@ export function LandlordReviewDetailsModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black backdrop-blur-2xl"
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm"
             onClick={() => setSelectedMediaIdx(null)}
           >
             <button className="absolute top-8 right-8 text-white/50 hover:text-white transition-colors z-[11000] bg-white/10 p-3 rounded-2xl">

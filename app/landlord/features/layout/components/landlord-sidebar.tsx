@@ -1,5 +1,5 @@
 'use client';
- 
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -118,7 +118,7 @@ export default function LandlordSidebar() {
       )}
     >
       <SidebarHeader className={cn(
-        'pt-8 px-8 pb-4 mb-4 overflow-hidden', 
+        'pt-8 px-8 pb-4 mb-4 overflow-hidden',
         mounted && 'transition-all duration-500 ease-in-out',
         state === 'collapsed' && 'pt-4 px-2 pb-2 mb-2'
       )}>
@@ -133,9 +133,9 @@ export default function LandlordSidebar() {
             className="flex items-center justify-center w-full"
           >
             <Link href="/landlord" className="p-2 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary border border-primary/10 shadow-lg shadow-primary/5 transition-all duration-500 cursor-pointer relative overflow-hidden">
-              <IconHome 
-                size={22} 
-                stroke={2.5} 
+              <IconHome
+                size={22}
+                stroke={2.5}
                 data-slot="sidebar-menu-button-icon"
                 className="relative z-10"
               />
@@ -167,7 +167,7 @@ export default function LandlordSidebar() {
       </SidebarHeader>
 
       <SidebarContent className={cn(
-        'px-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]', 
+        'px-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
         mounted && 'transition-all duration-500 ease-in-out',
         state === 'collapsed' && 'px-0'
       )}>
@@ -195,8 +195,8 @@ export default function LandlordSidebar() {
                       className={cn(
                         "group relative h-12 rounded-2xl transition-all duration-500 border border-transparent",
                         state === 'collapsed' ? "px-0 justify-center mx-auto w-9" : "px-5 w-full",
-                        isActive 
-                          ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-xl shadow-primary/30 translate-x-1 border-white/10" 
+                        isActive
+                          ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-xl shadow-primary/30 translate-x-1 border-white/10"
                           : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-primary dark:hover:text-primary-hover hover:translate-x-1 hover:border-gray-100 dark:hover:border-white/5"
                       )}
                     >
@@ -215,10 +215,10 @@ export default function LandlordSidebar() {
                             )}
                           />
                         </div>
-                        
+
                         <AnimatePresence mode="wait">
                           {state !== 'collapsed' && (
-                            <motion.span 
+                            <motion.span
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               exit={{ opacity: 0, x: -10 }}
@@ -232,7 +232,7 @@ export default function LandlordSidebar() {
                             </motion.span>
                           )}
                         </AnimatePresence>
-                        
+
                         {isActive && state !== 'collapsed' && (
                           <motion.div
                             layoutId="active-nav-indicator"
@@ -309,11 +309,11 @@ export default function LandlordSidebar() {
                 <span className="text-[10px] font-medium text-gray-400">v3.4.2</span>
               </div>
             </div>
-            
+
             <div className='flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-gray-400/80 px-1'>
                <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default group/brand">
                  <IconCircleLetterT size={16} stroke={3} className="text-primary group-hover/brand:scale-110 transition-transform" />
-                 <span>TAU Board</span>
+                 <span>BoardTAU</span>
                </div>
                <span className="opacity-50">© 2026</span>
             </div>

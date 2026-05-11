@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FaEnvelope, FaCheckCircle } from "react-icons/fa";
 import { useResponsiveToast } from "../common/ResponsiveToast";
+import Link from "next/link";
 
 import Heading from "../common/Heading";
 import AuthInput from "../inputs/AuthInput";
@@ -17,13 +18,13 @@ import SpinnerMini from "../common/Loader";
 import { registerUser } from "@/services/auth";
 import { sendOTP, verifyOTP } from "@/services/user/otp";
 import { validateOTP } from "@/lib/validators";
-import { 
-  signupResolver, 
-  loginResolver, 
-  otpResolver, 
-  SignupFormValues, 
-  LoginFormValues, 
-  OtpFormValues 
+import {
+  signupResolver,
+  loginResolver,
+  otpResolver,
+  SignupFormValues,
+  LoginFormValues,
+  OtpFormValues
 } from "./hooks/use-auth-validation";
 
 const AuthModal = ({
@@ -42,7 +43,7 @@ const AuthModal = ({
   const [resendCooldown, setResendCooldown] = useState(0);
   const [otpAttemptLimitReached, setOtpAttemptLimitReached] = useState(false);
   const [lockoutCountdown, setLockoutCountdown] = useState(0);
-  
+
   const isLoginModal = title === "Login";
   const {
     register,
@@ -100,7 +101,7 @@ const AuthModal = ({
               }
 
               const result = await verifyOTP(userEmail, otp);
-              
+
               if (result?.error) {
                 throw new Error(result.error);
               }
@@ -160,9 +161,9 @@ const AuthModal = ({
             const response = await fetch('/api/auth/session');
             const sessionData = await response.json();
 
-            if (sessionData.user?.role === 'admin') {
+            if (sessionData.user?.role === 'admin' || sessionData.user?.role === 'ADMIN') {
               router.push('/admin');
-            } else if (sessionData.user?.role === 'landlord') {
+            } else if (sessionData.user?.role === 'landlord' || sessionData.user?.role === 'LANDLORD') {
               router.push('/landlord');
             } else {
               router.refresh(); // Default to refresh for regular users
@@ -182,7 +183,7 @@ const AuthModal = ({
             "Access Denied: Your account is currently under a 24-hour security lock due to multiple failed OTP attempts. Please try again later or contact support.",
             { duration: 5000 }
           );
-          
+
           // Delayed redirect to give the user time to read the toast
           setTimeout(() => {
             onCloseModal?.();
@@ -205,7 +206,7 @@ const AuthModal = ({
 
   const resendOTP = async () => {
     // Let the backend enforce the actual limits, we'll catch the error and set the timer
-    // setResendCooldown(30); 
+    // setResendCooldown(30);
 
     startTransition(async () => {
       try {
@@ -335,7 +336,7 @@ const AuthModal = ({
             {!isLoginModal && (
               <AuthInput
                 id="name"
-                label="Name"
+                label="Full Name"
                 disabled={isLoading}
                 register={register}
                 errors={errors}
@@ -367,6 +368,18 @@ const AuthModal = ({
               watch={watch}
               placeholder="••••••••"
             />
+
+            {isLoginModal && (
+              <div className="flex justify-end -mt-3">
+                <Link
+                  href="/forgot-password"
+                  onClick={() => onCloseModal?.()}
+                  className="text-xs text-blue-500 hover:underline font-medium transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            )}
 
             <Button
               type="submit"
@@ -400,7 +413,7 @@ const AuthModal = ({
                     // Extract email from error message if possible (format: AccountLocked:email)
                     const emailFromError = result.error.split(":")[1];
                     const finalEmail = emailFromError || watch("email") || userEmail;
-                    
+
                     onCloseModal?.();
                     router.push(`/auth/locked?email=${encodeURIComponent(finalEmail)}`);
                   } else {
