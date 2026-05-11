@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useLoading } from "@/components/loading/LoadingContext";
-import LandlordDashboardFeature from "./features/dashboard";
 
 /**
  * Landlord Dashboard Loading Trigger
@@ -16,7 +15,7 @@ const LandlordLoading = () => {
     startLoading();
   }, [startLoading]);
 
-  return <LandlordDashboardFeature isLoading={true} />;
+  return null;
 };
 
 export default LandlordLoading;
