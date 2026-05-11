@@ -136,7 +136,8 @@ export const getBookingDetails = async (bookingId: string) => {
 
 export const updateBookingStatus = async (
   bookingId: string,
-  status: "PENDING_PAYMENT" | "RESERVED" | "CHECKED_IN" | "COMPLETED" | "CANCELLED"
+  status: "PENDING_PAYMENT" | "RESERVED" | "CHECKED_IN" | "COMPLETED" | "CANCELLED",
+  reason?: string
 ) => {
   const landlord = await requireLandlord();
 
@@ -214,6 +215,7 @@ export const updateBookingStatus = async (
     where: { id: bookingId },
     data: {
       status,
+      ...(status === "CANCELLED" && reason ? { cancellationReason: reason } : {}),
     },
     include: {
       listing: { select: { title: true, userId: true } },

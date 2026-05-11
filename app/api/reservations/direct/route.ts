@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
+import { createNotification } from "@/services/notification";
 
 export async function POST(request: Request) {
   try {
@@ -77,6 +78,18 @@ export async function POST(request: Request) {
         status: "PENDING_PAYMENT",
         paymentStatus: "PENDING",
       },
+      include: {
+        listing: { select: { userId: true, title: true } }
+      }
+    }) as any;
+
+    // Notify the Landlord
+    await createNotification({
+      userId: reservation.listing.userId,
+      type: "reservation",
+      title: "New Direct Booking",
+      description: `${user.name || 'A student'} has initiated a direct booking for ${reservation.listing.title}.`,
+      link: `/landlord/bookings`
     });
 
     console.log("Reservation created successfully:", reservation);

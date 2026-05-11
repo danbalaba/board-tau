@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { sendReservationNotificationEmail } from "@/services/email/notifications";
+import { createNotification } from "@/services/notification";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -85,6 +86,15 @@ export async function GET(req: Request) {
             "Booking Confirmed!",
             `Success! Your simulated payment was accepted. Your reservation for ${updatedReservation.listing.title} is now confirmed.`
           );
+
+          // In-app for Tenant
+          await createNotification({
+            userId: updatedReservation.userId,
+            type: 'reservation',
+            title: 'Booking Confirmed!',
+            description: `Your reservation for ${updatedReservation.listing.title} is now secured and confirmed (Simulated).`,
+            link: `/reservations?id=${updatedReservation.id}`
+          });
         }
 
         if (landlord && landlord.email) {
@@ -96,6 +106,15 @@ export async function GET(req: Request) {
             `${updatedReservation.user.name} has paid the reservation fee for ${updatedReservation.listing.title} using ${method}.`,
             true
           );
+
+          // In-app for Landlord
+          await createNotification({
+            userId: updatedReservation.listing.userId,
+            type: 'reservation',
+            title: 'New Confirmed Reservation (Mock)',
+            description: `${updatedReservation.user.name} has secured their reservation for ${updatedReservation.listing.title} via ${method}.`,
+            link: `/landlord/reservations`
+          });
         }
       } catch (e) {
         console.error("Mock notification error:", e);
