@@ -26,7 +26,7 @@ interface AdminApplicationAlertProps {
   reviewLink: string;
 }
 
-const domain = 'https://boardtau.xyz';
+import { lightLogoUrl, baseUrl } from "../services/email/constants";
 
 export const AdminApplicationAlert = ({
   adminName = "Admin",
@@ -36,7 +36,7 @@ export const AdminApplicationAlert = ({
   propertyName = "Property",
   email = "email@example.com",
   phone = "09000000000",
-  reviewLink = `${domain}/admin/applications`,
+  reviewLink = `${baseUrl}/admin/applications`,
 }: AdminApplicationAlertProps) => {
   const styles = {
     body: {
@@ -148,7 +148,7 @@ export const AdminApplicationAlert = ({
       <Body style={styles.body}>
         <Container style={styles.container} className="main-card">
           <Section style={styles.header}>
-            <Img src={`${domain}/images/TauBOARD-Light.png`} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
+            <Img src={lightLogoUrl} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
           </Section>
 
           <Section style={styles.content}>

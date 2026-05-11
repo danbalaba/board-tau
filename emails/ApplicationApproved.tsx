@@ -20,11 +20,11 @@ interface ApplicationApprovedProps {
   dashboardLink: string;
 }
 
-const domain = 'https://boardtau.xyz';
+import { lightLogoUrl, baseUrl } from '../services/email/constants';
 
 export const ApplicationApproved = ({
   userName = "User",
-  dashboardLink = `${domain}/landlord`,
+  dashboardLink = `${baseUrl}/landlord`,
 }: ApplicationApprovedProps) => {
   const styles = {
     body: {
@@ -136,7 +136,7 @@ export const ApplicationApproved = ({
       <Body style={styles.body}>
         <Container style={styles.container} className="main-card">
           <Section style={styles.header}>
-            <Img src={`${domain}/images/TauBOARD-Light.png`} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
+            <Img src={lightLogoUrl} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
           </Section>
 
           <Section style={styles.content}>
@@ -181,3 +181,4 @@ export const ApplicationApproved = ({
 };
 
 export default ApplicationApproved;
+

@@ -30,13 +30,13 @@ interface InquiryReceiptProps {
   trackInquiryLink: string;
 }
 
-const domain = 'https://boardtau.xyz';
+import { lightLogoUrl, baseUrl } from '../services/email/constants';
 
 export const InquiryReceipt = ({
   tenantName = "Guest",
   listingTitle = "Listing",
   roomName = "Room",
-  roomImage = `${domain}/images/placeholder.jpg`,
+  roomImage = `${baseUrl}/images/placeholder.jpg`,
   moveInDate = "TBD",
   checkOutDate = "TBD",
   monthlyPrice = 0,
@@ -44,7 +44,7 @@ export const InquiryReceipt = ({
   reservationFee = 0,
   baseFee = 0,
   message = "",
-  trackInquiryLink = `${domain}/inquiries`,
+  trackInquiryLink = `${baseUrl}/inquiries`,
 }: InquiryReceiptProps) => {
   const styles = {
     body: {
@@ -156,7 +156,7 @@ export const InquiryReceipt = ({
       <Body style={styles.body}>
         <Container style={styles.container} className="main-card">
           <Section style={styles.header}>
-            <Img src={`${domain}/images/TauBOARD-Light.png`} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
+            <Img src={lightLogoUrl} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
           </Section>
 
           <Section style={styles.content}>
@@ -237,3 +237,4 @@ export const InquiryReceipt = ({
 };
 
 export default InquiryReceipt;
+

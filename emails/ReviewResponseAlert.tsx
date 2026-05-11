@@ -20,13 +20,13 @@ interface ReviewResponseAlertProps {
   viewReviewsLink: string;
 }
 
-const domain = 'https://boardtau.xyz';
+import { lightLogoUrl, baseUrl } from '../services/email/constants';
 
 export const ReviewResponseAlert = ({
   tenantName = "Guest",
   listingTitle = "Property",
   response = "Thank you!",
-  viewReviewsLink = `${domain}/my-reviews`,
+  viewReviewsLink = `${baseUrl}/my-reviews`,
 }: ReviewResponseAlertProps) => {
   const styles = {
     body: {
@@ -123,7 +123,7 @@ export const ReviewResponseAlert = ({
       <Body style={styles.body}>
         <Container style={styles.container} className="main-card">
           <Section style={styles.header}>
-            <Img src={`${domain}/images/TauBOARD-Light.png`} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
+            <Img src={lightLogoUrl} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
           </Section>
 
           <Section style={styles.content}>
@@ -148,3 +148,4 @@ export const ReviewResponseAlert = ({
 };
 
 export default ReviewResponseAlert;
+

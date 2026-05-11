@@ -20,7 +20,7 @@ interface GenericNotificationProps {
   actionLink?: string;
 }
 
-const domain = 'https://boardtau.xyz';
+import { lightLogoUrl, baseUrl } from '../services/email/constants';
 
 export const GenericNotification = ({
   title = "Notification",
@@ -115,7 +115,7 @@ export const GenericNotification = ({
       <Body style={styles.body}>
         <Container style={styles.container} className="main-card">
           <Section style={styles.header}>
-            <Img src={`${domain}/images/TauBOARD-Light.png`} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
+            <Img src={lightLogoUrl} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
           </Section>
 
           <Section style={styles.content}>
@@ -137,3 +137,4 @@ export const GenericNotification = ({
 };
 
 export default GenericNotification;
+

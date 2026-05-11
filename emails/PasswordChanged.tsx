@@ -17,7 +17,7 @@ interface PasswordChangedEmailProps {
   userName: string;
 }
 
-const domain = 'https://boardtau.xyz';
+import { lightLogoUrl, baseUrl } from '../services/email/constants';
 
 export const PasswordChangedEmail = ({
   userName = "Valued User",
@@ -119,7 +119,7 @@ export const PasswordChangedEmail = ({
         <Container style={styles.container}>
           <Section style={styles.header}>
             <Img
-              src={`${domain}/images/TauBOARD-Light.png`}
+              src={lightLogoUrl}
               width="180"
               alt="BoardTAU Logo"
               style={{ margin: "0 auto" }}
@@ -141,7 +141,7 @@ export const PasswordChangedEmail = ({
               </Text>
             </Section>
 
-            <Link href={`${domain}/auth/login`} style={styles.button}>
+            <Link href={`${baseUrl}/auth/login`} style={styles.button}>
               Secure My Account
             </Link>
           </Section>
@@ -158,3 +158,4 @@ export const PasswordChangedEmail = ({
 };
 
 export default PasswordChangedEmail;
+

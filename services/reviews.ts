@@ -30,6 +30,15 @@ export const getMyReviews = async () => {
             }
           }
         }
+      },
+      reservation: {
+        include: {
+          room: {
+            include: {
+              images: true
+            }
+          }
+        }
       }
     },
     orderBy: {

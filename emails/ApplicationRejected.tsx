@@ -18,7 +18,7 @@ interface ApplicationRejectedProps {
   reason: string;
 }
 
-const domain = 'https://boardtau.xyz';
+import { lightLogoUrl, baseUrl } from '../services/email/constants';
 
 export const ApplicationRejected = ({
   userName = "User",
@@ -134,7 +134,7 @@ export const ApplicationRejected = ({
       <Body style={styles.body}>
         <Container style={styles.container} className="main-card">
           <Section style={styles.header}>
-            <Img src={`${domain}/images/TauBOARD-Light.png`} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
+            <Img src={lightLogoUrl} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
           </Section>
 
           <Section style={styles.content}>
@@ -150,7 +150,7 @@ export const ApplicationRejected = ({
               If you believe this decision was made in error or have additional documentation to provide, please contact our support team. We appreciate your interest in BoardTAU.
             </Text>
 
-            <Link href={`${domain}/help`} style={styles.button}>Contact Support Team</Link>
+            <Link href={`${baseUrl}/help`} style={styles.button}>Contact Support Team</Link>
           </Section>
 
           <Section style={{ backgroundColor: "#0f172a", padding: "30px", textAlign: "center" }}>
@@ -163,3 +163,4 @@ export const ApplicationRejected = ({
 };
 
 export default ApplicationRejected;
+

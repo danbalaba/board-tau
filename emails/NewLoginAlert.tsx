@@ -21,7 +21,7 @@ interface NewLoginAlertEmailProps {
   time: string;
 }
 
-const domain = 'https://boardtau.xyz';
+import { lightLogoUrl, baseUrl } from '../services/email/constants';
 
 export const NewLoginAlertEmail = ({
   userName = "Valued User",
@@ -141,7 +141,7 @@ export const NewLoginAlertEmail = ({
         <Container style={styles.container}>
           <Section style={styles.header}>
             <Img
-              src={`${domain}/images/TauBOARD-Light.png`}
+              src={lightLogoUrl}
               width="180"
               alt="BoardTAU Logo"
               style={{ margin: "0 auto" }}
@@ -169,7 +169,7 @@ export const NewLoginAlertEmail = ({
               </Text>
             </Section>
 
-            <Link href={`${domain}/profile`} style={styles.button}>
+            <Link href={`${baseUrl}/profile`} style={styles.button}>
               Secure My Account
             </Link>
           </Section>
@@ -186,3 +186,4 @@ export const NewLoginAlertEmail = ({
 };
 
 export default NewLoginAlertEmail;
+
