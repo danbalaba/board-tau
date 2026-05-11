@@ -251,6 +251,8 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
             onClose={() => setViewModalOpen(false)}
             statusColors={statusColors}
             formatStatus={formatStatus}
+            properties={listings}
+            onNavigate={setSelectedProperty}
           />
         )}
       </AnimatePresence>

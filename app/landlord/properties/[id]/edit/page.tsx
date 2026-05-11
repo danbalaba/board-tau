@@ -26,6 +26,10 @@ const EditPropertyPage = async ({ params }: EditPropertyPageProps) => {
     return notFound();
   }
 
+  if ((property as any).isArchived) {
+    return redirect("/landlord/properties");
+  }
+
   return (
     <LandlordPropertyEditor initialData={property} />
   );

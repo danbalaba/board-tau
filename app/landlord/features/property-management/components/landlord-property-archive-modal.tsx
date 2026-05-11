@@ -41,13 +41,13 @@ export function LandlordPropertyArchiveModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => onClose(false)}
-            className="absolute inset-0 bg-gray-900/80 backdrop-blur-md"
+            className="absolute inset-0 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm"
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative bg-[#111827] rounded-[32px] border border-white/10 p-8 max-w-sm w-full shadow-2xl overflow-hidden"
+            className="relative bg-white dark:bg-[#111827] rounded-[32px] border border-gray-100 dark:border-white/10 p-8 max-w-sm w-full shadow-2xl overflow-hidden"
           >
             <div className={cn(
               "absolute top-0 left-0 w-full h-1.5",

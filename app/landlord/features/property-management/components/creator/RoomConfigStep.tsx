@@ -631,11 +631,21 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
                         ...(watch(`propertyConfig.rooms[${index}].amenities`) || [])
                           .filter((a: string) => a.includes('|'))
                           .map((a: string) => {
-                            const [label, iconName] = a.split('|');
+                            let label = a;
+                            let iconName = null;
+                            
+                            if (a.includes('||')) {
+                              [label, iconName] = a.split('||').map(s => s.trim());
+                            } else if (a.includes('|')) {
+                              [label, iconName] = a.split('|').map(s => s.trim());
+                            }
+
                             return {
                               label,
                               value: a,
-                              icon: (LucideIcons as any)[iconName] || HelpCircle,
+                              icon: (iconName && (LucideIcons as any)[iconName]) || 
+                                    (iconName && (LucideIcons as any)[iconName.charAt(0).toUpperCase() + iconName.slice(1)]) || 
+                                    HelpCircle,
                               isCustom: true
                             };
                           })

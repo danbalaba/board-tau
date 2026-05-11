@@ -93,6 +93,11 @@ export function LandlordPropertyCard({
               {formatStatus(property.status)}
             </span>
           </div>
+
+          <ArchiveButton 
+            property={property} 
+            onArchive={onArchive} 
+          />
         </div>
 
         {/* Content Section */}
@@ -157,7 +162,7 @@ export function LandlordPropertyCard({
             <Button
               outline
               onClick={() => onView(property)}
-              className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-50 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700"
+              className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-[0.2em] bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 dark:hover:text-primary border-gray-200 dark:border-gray-700 shadow-sm"
             >
               <span className="flex items-center justify-center gap-2">
                 <Eye size={14} />
@@ -166,23 +171,26 @@ export function LandlordPropertyCard({
             </Button>
 
             <div className="flex gap-2 basis-[100%] sm:basis-auto flex-1">
-               <Link href={`/landlord/properties/${property.id}/edit`} className="flex-1">
-                  <Button
-                    className="w-full rounded-2xl py-3 text-[10px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 group/btn"
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      <Pencil size={14} className="group-hover:scale-110 transition-transform" />
-                      Edit
-                    </span>
-                  </Button>
-               </Link>
+               {!(property as any).isArchived && (
+                 <Link href={`/landlord/properties/${property.id}/edit`} className="flex-1">
+                    <Button
+                      className="w-full rounded-2xl py-3 text-[10px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 group/btn"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        <Pencil size={14} className="group-hover:scale-110 transition-transform" />
+                        Edit
+                      </span>
+                    </Button>
+                 </Link>
+               )}
                {(property as any).isArchived && (
                  <Button
                   outline
                   onClick={() => onDelete(property)}
-                  className="rounded-2xl px-3 py-3 border-rose-100 text-rose-500 hover:bg-rose-50 dark:border-rose-900/30 group/btn"
+                  className="flex-1 rounded-2xl py-3 border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white dark:border-rose-900/30 dark:hover:bg-rose-900 transition-all group/btn flex items-center justify-center gap-2"
                  >
                    <Trash2 size={14} className="group-hover:rotate-12 transition-transform" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Delete Permanent</span>
                  </Button>
                )}
             </div>
@@ -260,14 +268,16 @@ export function LandlordPropertyCard({
 
         {/* Right: Actions */}
         <div className="flex sm:flex-col gap-4 w-full lg:w-44 mt-6 lg:mt-0 pt-8 lg:pt-0 lg:border-l border-gray-100 dark:border-gray-800 lg:pl-8 shrink-0">
-          <Link href={`/landlord/properties/${property.id}/edit`} className="w-full">
-            <Button className="w-full rounded-2xl h-14 bg-primary hover:bg-primary/90 text-white font-black text-[11px] uppercase tracking-widest shadow-xl shadow-primary/20 group/btn transition-all border-b-4 border-primary/30 active:border-b-0">
-               <span className="flex items-center justify-center gap-3">
-                 <Pencil size={16} className="group-hover:scale-110 transition-transform" />
-                 Edit Listing
-               </span>
-            </Button>
-          </Link>
+          {!(property as any).isArchived && (
+            <Link href={`/landlord/properties/${property.id}/edit`} className="w-full">
+              <Button className="w-full rounded-2xl h-14 bg-primary hover:bg-primary/90 text-white font-black text-[11px] uppercase tracking-widest shadow-xl shadow-primary/20 group/btn transition-all border-b-4 border-primary/30 active:border-b-0">
+                 <span className="flex items-center justify-center gap-3">
+                   <Pencil size={16} className="group-hover:scale-110 transition-transform" />
+                   Edit Listing
+                 </span>
+              </Button>
+            </Link>
+          )}
           
           <div className="flex gap-2 w-full h-12">
             <button 
@@ -313,12 +323,10 @@ export function LandlordPropertyCard({
 
 function ArchiveButton({ 
   property, 
-  onArchive,
-  onDelete
+  onArchive
 }: { 
   property: Property, 
-  onArchive: (p: Property) => void,
-  onDelete: (p: Property) => void 
+  onArchive: (p: Property) => void
 }) {
   return (
     <div className="absolute top-3 right-3 z-20 flex flex-col gap-2">
@@ -342,18 +350,6 @@ function ArchiveButton({
         )}
       </button>
 
-      {(property as any).isArchived && (
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(property);
-          }}
-          className="p-2 rounded-xl bg-rose-500/80 text-white border-rose-400/50 hover:bg-rose-600 backdrop-blur-md transition-all duration-300 shadow-lg border"
-          title="Permanently Delete"
-        >
-          <Trash2 size={14} strokeWidth={2.5} />
-        </button>
-      )}
     </div>
   );
 }
