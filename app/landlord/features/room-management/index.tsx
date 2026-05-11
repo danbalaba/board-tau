@@ -232,8 +232,15 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
           <LandlordRoomDetailsModal
             room={selectedRoom}
             onClose={() => setViewModalOpen(false)}
+            onEdit={(r) => {
+              setViewModalOpen(false);
+              setSelectedRoom(r);
+              setEditModalOpen(true);
+            }}
             statusColors={statusColors}
             formatStatus={formatStatus}
+            rooms={rooms}
+            onNavigate={setSelectedRoom}
           />
         )}
       </AnimatePresence>

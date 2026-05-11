@@ -4,6 +4,62 @@ import { requireLandlord } from "@/lib/landlord";
 import { cache } from "@/lib/redis";
 import { backendClient } from "@/lib/edgestore-server";
 
+// GET /api/landlord/rooms/[roomId] — fetch single room details
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ roomId: string }> }
+) {
+  try {
+    const landlord = await requireLandlord();
+    const { roomId } = await params;
+
+    const room = await db.room.findFirst({
+      where: { id: roomId, listing: { userId: landlord.id } },
+      include: {
+        listing: {
+          select: {
+            title: true,
+            region: true,
+            status: true,
+            userId: true
+          }
+        },
+        images: true,
+        amenities: {
+          include: { amenityType: true }
+        }
+      }
+    });
+
+    if (!room) {
+      return NextResponse.json(
+        { success: false, message: "Room not found or unauthorized" },
+        { status: 404 }
+      );
+    }
+
+    const formattedRoom = {
+      ...room,
+      createdAt: room.createdAt.toISOString(),
+      updatedAt: room.updatedAt.toISOString(),
+      propertyId: room.listingId,
+      propertyTitle: room.listing.title,
+      propertyRegion: room.listing.region,
+      propertyStatus: room.listing.status,
+      imageSrc: room.images[0]?.url || null,
+      images: room.images.map(img => img.url),
+    };
+
+    return NextResponse.json({ success: true, room: formattedRoom });
+  } catch (error: any) {
+    console.error("[ROOM_GET]", error);
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
+  }
+}
+
 // PATCH /api/landlord/rooms/[roomId] — update room details + images
 export async function PATCH(
   request: Request,

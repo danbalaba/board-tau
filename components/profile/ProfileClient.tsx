@@ -270,6 +270,7 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
         <ChangePasswordModal
           isOpen={isChangePasswordModalOpen}
           onClose={() => setIsChangePasswordModalOpen(false)}
+          hasPassword={currentUserProfile.hasPassword}
         />
       )}
 

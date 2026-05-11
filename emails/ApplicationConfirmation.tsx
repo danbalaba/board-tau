@@ -22,7 +22,7 @@ interface ApplicationConfirmationProps {
   propertyName: string;
 }
 
-const domain = 'https://boardtau.xyz';
+import { lightLogoUrl, baseUrl } from '../services/email/constants';
 
 export const ApplicationConfirmation = ({
   userName = "User",
@@ -140,7 +140,7 @@ export const ApplicationConfirmation = ({
       <Body style={styles.body}>
         <Container style={styles.container} className="main-card">
           <Section style={styles.header}>
-            <Img src={`${domain}/images/TauBOARD-Light.png`} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
+            <Img src={lightLogoUrl} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
           </Section>
 
           <Section style={styles.content}>
@@ -165,7 +165,7 @@ export const ApplicationConfirmation = ({
               We typically review applications within 24-48 business hours. You'll receive an email update as soon as our team makes a decision.
             </Text>
 
-            <Link href={domain} style={styles.button}>Visit Help Center</Link>
+            <Link href={baseUrl} style={styles.button}>Visit Help Center</Link>
           </Section>
 
           <Section style={{ backgroundColor: "#0f172a", padding: "30px", textAlign: "center" }}>
@@ -178,3 +178,4 @@ export const ApplicationConfirmation = ({
 };
 
 export default ApplicationConfirmation;
+

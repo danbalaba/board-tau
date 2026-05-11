@@ -26,6 +26,19 @@ export function NetworkStatusManager() {
     }
   }, [isOnline, wasOffline]);
 
+  // Lock body scroll when offline to prevent background scrolling
+  useEffect(() => {
+    if (!isOnline) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOnline]);
+
   if (!showBanner && isOnline) return null;
 
   // If offline, we show the full-screen overlay

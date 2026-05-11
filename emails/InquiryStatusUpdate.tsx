@@ -25,14 +25,14 @@ interface InquiryStatusUpdateProps {
   actionLink: string;
 }
 
-const domain = 'https://boardtau.xyz';
+import { lightLogoUrl, baseUrl } from '../services/email/constants';
 
 export const InquiryStatusUpdate = ({
   tenantName = "Guest",
   listingTitle = "Property",
   status = 'APPROVED',
   rejectionReason = "",
-  actionLink = `${domain}/inquiries`,
+  actionLink = `${baseUrl}/inquiries`,
 }: InquiryStatusUpdateProps) => {
   const isApproved = status === 'APPROVED';
   
@@ -134,7 +134,7 @@ export const InquiryStatusUpdate = ({
       <Body style={styles.body}>
         <Container style={styles.container} className="main-card">
           <Section style={styles.header}>
-            <Img src={`${domain}/images/TauBOARD-Light.png`} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
+            <Img src={lightLogoUrl} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
           </Section>
 
           <Section style={styles.content}>
@@ -198,3 +198,4 @@ export const InquiryStatusUpdate = ({
 };
 
 export default InquiryStatusUpdate;
+

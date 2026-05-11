@@ -22,7 +22,8 @@ import {
   HeartPulse,
   Building2,
   Truck,
-  GraduationCap
+  GraduationCap,
+  X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ModernSelect from "@/components/common/ModernSelect";
@@ -411,82 +412,91 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
             onClose={() => setShowCancelReason(false)} 
             width="md"
             title=""
+            closeOnOutsideClick={false}
           >
-            <div className="overflow-hidden rounded-3xl">
-              {/* Premium Header Banner */}
-              <div className="bg-amber-500/10 p-6 border-b border-amber-500/10 flex items-start gap-4">
-                <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20">
-                  <Info size={24} strokeWidth={2.5} />
+            <div className="overflow-hidden rounded-3xl relative">
+              {/* X Close Button */}
+              <button
+                onClick={() => setShowCancelReason(false)}
+                className="absolute top-4 right-4 z-10 p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-full transition-colors text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+              {/* Header Banner - theme-aware */}
+              <div className="bg-amber-500/10 dark:bg-amber-500/5 p-5 border-b border-amber-500/20 dark:border-amber-500/10 flex items-center gap-4">
+                <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20 flex-shrink-0">
+                  <Info size={20} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Withdrawal Reason</h3>
-                  <p className="text-xs font-bold text-amber-600/70 uppercase tracking-widest leading-relaxed">
+                  <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">Withdrawal Reason</h3>
+                  <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest mt-0.5">
                     Help the host manage their room better
                   </p>
                 </div>
               </div>
 
-              <div className="p-8">
-                <p className="text-sm text-gray-400 mb-8 font-medium leading-relaxed">
-                  Please select why you are withdrawing this inquiry. This helps in record keeping and keeps the platform fair for others.
+              <div className="p-6">
+                <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-5 leading-relaxed">
+                  Select why you are withdrawing this inquiry. This helps with record keeping and keeps the platform fair.
                 </p>
                 
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 gap-3">
-                    {[
-                      { label: "Found another room already", icon: <Home size={18} /> },
-                      { label: "Changed my mind about the location", icon: <MapPin size={18} /> },
-                      { label: "Inquired by mistake", icon: <AlertCircle size={18} /> },
-                      { label: "Room details don't fit my needs", icon: <FileText size={18} /> },
-                      { label: "Stay dates no longer fit my schedule", icon: <Calendar size={18} /> },
-                      { label: "Other", icon: <MoreHorizontal size={18} /> }
-                    ].map((item, index) => (
-                      <motion.button
-                        key={item.label}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        onClick={() => setCancelReason(item.label)}
-                        className={`group flex items-center gap-4 px-5 py-4 rounded-[22px] border-2 transition-all duration-300 ${
-                          cancelReason === item.label 
-                            ? "border-primary bg-primary/5 text-primary shadow-xl shadow-primary/10 ring-4 ring-primary/5" 
-                            : "border-gray-50 hover:border-gray-200 bg-gray-50/50 dark:bg-gray-900/50 dark:border-gray-800 dark:hover:border-gray-700 text-gray-600 dark:text-gray-300"
-                        }`}
-                      >
-                        <div className={`p-2.5 rounded-xl transition-colors ${
-                          cancelReason === item.label 
-                            ? "bg-primary text-white" 
-                            : "bg-white dark:bg-gray-800 text-gray-400 group-hover:text-primary"
-                        }`}>
-                          {item.icon}
-                        </div>
-                        <span className="text-sm font-black tracking-tight">{item.label}</span>
-                      </motion.button>
-                    ))}
-                  </div>
-
-                  <AnimatePresence>
-                    {cancelReason === "Other" && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                      >
-                        <textarea
-                          placeholder="Please specify your reason here..."
-                          className="w-full p-5 border-2 border-gray-100 dark:border-gray-800 dark:bg-gray-900 rounded-[22px] focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none text-sm font-medium transition-all min-h-[120px] dark:text-white"
-                          onChange={(e) => setCancelReason(e.target.value)}
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                <div className="grid grid-cols-1 gap-2 mb-5">
+                  {[
+                    { label: "Found another room already", icon: <Home size={16} /> },
+                    { label: "Changed my mind about the location", icon: <MapPin size={16} /> },
+                    { label: "Inquired by mistake", icon: <AlertCircle size={16} /> },
+                    { label: "Room details don't fit my needs", icon: <FileText size={16} /> },
+                    { label: "Stay dates no longer fit my schedule", icon: <Calendar size={16} /> },
+                    { label: "Other", icon: <MoreHorizontal size={16} /> }
+                  ].map((item, index) => (
+                    <motion.button
+                      key={item.label}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.04 }}
+                      onClick={() => setCancelReason(item.label)}
+                      className={`group flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left ${
+                        cancelReason === item.label 
+                          ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary shadow-sm ring-2 ring-primary/10" 
+                          : "border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 bg-gray-50/80 dark:bg-gray-900/50 text-gray-600 dark:text-gray-300"
+                      }`}
+                    >
+                      <div className={`p-2 rounded-xl flex-shrink-0 transition-colors ${
+                        cancelReason === item.label 
+                          ? "bg-primary text-white" 
+                          : "bg-white dark:bg-gray-800 text-gray-400 group-hover:text-primary dark:group-hover:text-primary"
+                      }`}>
+                        {item.icon}
+                      </div>
+                      <span className="text-sm font-bold tracking-tight">{item.label}</span>
+                    </motion.button>
+                  ))}
                 </div>
 
-                <div className="flex items-center gap-4 mt-10">
+                <AnimatePresence>
+                  {cancelReason === "Other" && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden mb-5"
+                    >
+                      <textarea
+                        autoFocus
+                        placeholder="Please specify your reason here..."
+                        className="w-full p-4 border border-gray-100 dark:border-gray-800 dark:bg-gray-900 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none text-sm font-medium transition-all min-h-[100px] dark:text-white resize-none"
+                        onChange={(e) => setCancelReason(e.target.value)}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="grid grid-cols-2 gap-3">
                   <Button
                     outline
                     onClick={() => setShowCancelReason(false)}
-                    className="flex-1 rounded-2xl py-4 h-auto text-[11px] font-black uppercase tracking-widest border-2"
+                    className="rounded-2xl py-3 h-auto text-[10px] font-black uppercase tracking-widest"
                   >
                     Back
                   </Button>
@@ -494,7 +504,7 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
                     onClick={handleFinalCancel}
                     isLoading={isCancelling}
                     disabled={!cancelReason}
-                    className="flex-[2] rounded-2xl py-4 h-auto text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-primary/30"
+                    className="rounded-2xl py-3 h-auto text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20"
                   >
                     Confirm Withdrawal
                   </Button>

@@ -64,6 +64,13 @@ export function LandlordRoomCard({
     }
   };
 
+  const getRoomImage = () => {
+    const firstImg = room.images?.[0];
+    if (!firstImg) return room.imageSrc || '';
+    if (typeof firstImg === 'string') return firstImg;
+    return (firstImg as any).url || '';
+  };
+
   if (isGrid) {
     return (
       <motion.div 
@@ -74,15 +81,9 @@ export function LandlordRoomCard({
       >
         <div className="relative h-48 w-full rounded-2xl overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800 z-10 flex-shrink-0">
           <div className="absolute inset-0 bg-gray-900/5 animate-pulse" />
-          {room.images && room.images.length > 0 ? (
+          {getRoomImage() ? (
             <SafeImage 
-              src={room.images[0]} 
-              alt={room.name} 
-              priority={idx < 6}
-            />
-          ) : room.imageSrc ? (
-            <SafeImage 
-              src={room.imageSrc} 
+              src={getRoomImage()} 
               alt={room.name} 
               priority={idx < 6}
             />
@@ -182,7 +183,7 @@ export function LandlordRoomCard({
             <Button
               outline
               onClick={() => onView(room)}
-              className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-50 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700"
+              className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-[0.2em] bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/10 hover:border-primary/30 border-gray-200 dark:border-gray-700 shadow-sm transition-all"
             >
               <span className="flex items-center justify-center gap-2">
                 <Eye size={14} />
@@ -191,22 +192,25 @@ export function LandlordRoomCard({
             </Button>
 
             <div className="flex gap-2 basis-[100%] sm:basis-auto flex-1">
-                <Button
-                  onClick={() => onEdit && onEdit(room)}
-                  className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 group/btn"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <Pencil size={14} />
-                    Edit
-                  </span>
-                </Button>
-               {(room as any).isArchived && (
+                {!room.isArchived && (
+                  <Button
+                    onClick={() => onEdit && onEdit(room)}
+                    className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 group/btn"
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <Pencil size={14} />
+                      Edit
+                    </span>
+                  </Button>
+                )}
+               {room.isArchived && (
                  <Button
                   outline
                   onClick={() => onDelete(room)}
-                  className="rounded-2xl px-3 py-3 border-rose-100 text-rose-500 hover:bg-rose-50 dark:border-rose-900/30 group/btn"
+                  className="flex-1 rounded-2xl py-3 border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white dark:border-rose-900/30 dark:hover:bg-rose-900 transition-all group/btn flex items-center justify-center gap-2"
                  >
-                   <Trash2 size={14} />
+                   <Trash2 size={14} className="group-hover:rotate-12 transition-transform" />
+                   <span className="text-[10px] font-black uppercase tracking-widest">Delete Permanent</span>
                  </Button>
                )}
             </div>
@@ -225,14 +229,9 @@ export function LandlordRoomCard({
       <div className="flex flex-col lg:flex-row items-center gap-8">
         {/* Left: Image */}
         <div className="relative w-full lg:w-64 h-48 rounded-[2rem] overflow-hidden shadow-lg flex-shrink-0 bg-gray-100 dark:bg-gray-800">
-          {room.images && room.images.length > 0 ? (
+          {getRoomImage() ? (
             <SafeImage
-              src={room.images[0]}
-              alt={room.name}
-            />
-          ) : room.imageSrc ? (
-            <SafeImage
-              src={room.imageSrc}
+              src={getRoomImage()}
               alt={room.name}
             />
           ) : (
@@ -289,7 +288,7 @@ export function LandlordRoomCard({
         {/* Right: Actions */}
         <div className="flex sm:flex-col gap-4 w-full lg:w-44 mt-6 lg:mt-0 pt-8 lg:pt-0 lg:border-l border-gray-100 dark:border-gray-800 lg:pl-8 shrink-0">
           <Button
-            className="w-full rounded-2xl h-14 bg-primary hover:bg-primary/90 text-white font-black text-[11px] uppercase tracking-widest shadow-xl shadow-primary/20 group/btn transition-all border-b-4 border-primary/30 active:border-b-0"
+            className="w-full rounded-2xl h-14 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/10 border-2 border-gray-100 dark:border-gray-800 hover:border-primary/30 font-black text-[11px] uppercase tracking-widest shadow-xl shadow-gray-200/50 dark:shadow-none group/btn transition-all"
             onClick={() => onView(room)}
           >
             <span className="flex items-center justify-center gap-3">
@@ -298,13 +297,15 @@ export function LandlordRoomCard({
             </span>
           </Button>
           <div className="flex gap-2 w-full h-12">
-            <button
-              onClick={() => onEdit && onEdit(room)}
-              className="flex-1 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center group/btn shadow-sm border border-blue-100 dark:border-blue-900/30"
-              title="Edit Details"
-            >
-              <Pencil size={18} className="group-hover/btn:scale-110 transition-transform" />
-            </button>
+            {!room.isArchived && (
+              <button
+                onClick={() => onEdit && onEdit(room)}
+                className="flex-1 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center group/btn shadow-sm border border-blue-100 dark:border-blue-900/30"
+                title="Edit Details"
+              >
+                <Pencil size={18} className="group-hover/btn:scale-110 transition-transform" />
+              </button>
+            )}
             
             <button 
               onClick={() => onArchive(room)}
@@ -314,16 +315,16 @@ export function LandlordRoomCard({
                   ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white" 
                   : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white"
               )}
-              title={(room as any).isArchived ? "Restore Room" : "Archive Room"}
+              title={room.isArchived ? "Restore Room" : "Archive Room"}
             >
-              {(room as any).isArchived ? (
+              {room.isArchived ? (
                 <RotateCcw size={18} className="group-hover/btn:-rotate-45 transition-transform" />
               ) : (
                 <Archive size={18} className="group-hover/btn:scale-110 transition-transform" />
               )}
             </button>
 
-            {(room as any).isArchived && (
+            {room.isArchived && (
               <button
                 onClick={() => onDelete(room)}
                 className="flex-1 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center group/btn shadow-sm border border-rose-100 dark:border-rose-900/30"

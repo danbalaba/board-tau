@@ -131,7 +131,7 @@ const Modal: FC<ModalProps> & {
             animate="show"
             exit="hidden"
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[10000] flex justify-center items-center overflow-hidden outline-none focus:outline-none bg-black/35 backdrop-blur-xl"
+            className="fixed inset-0 z-[10000] flex justify-center items-center overflow-hidden outline-none focus:outline-none bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm"
             onClick={(e) => {
               e.stopPropagation(); // prevent bubbling to parent modals
               // Close modal when clicking outside the inner box
@@ -282,7 +282,7 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, 
           animate="show"
           exit="hidden"
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[10000] flex justify-center items-end md:items-center overflow-hidden outline-none focus:outline-none bg-black/35 backdrop-blur-xl"
+          className="fixed inset-0 z-[10000] flex justify-center items-end md:items-center overflow-hidden outline-none focus:outline-none bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm"
         >
             <motion.div
               variants={modalSheet}

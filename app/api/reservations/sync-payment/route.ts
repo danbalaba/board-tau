@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/services/user";
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import { sendReservationNotificationEmail } from "@/services/email/notifications";
+import { createNotification } from "@/services/notification";
 
 export async function GET() {
   try {
@@ -151,6 +152,15 @@ export async function GET() {
             "Booking Confirmed!",
             `Success! Your payment for ${updatedReservation.listing.title} has been verified and your stay is now secured.`
           );
+
+          // Add in-app notification for the Tenant
+          await createNotification({
+            userId: updatedReservation.userId,
+            type: "reservation",
+            title: "Booking Confirmed!",
+            description: `Success! Your payment for ${updatedReservation.listing.title} has been verified and your stay is now secured.`,
+            link: `/reservations?id=${updatedReservation.id}`
+          });
         }
 
         // Landlord

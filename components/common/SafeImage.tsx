@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Skeleton from './Skeleton';
 import { IconPhotoOff } from '@tabler/icons-react';
+import { useTheme } from 'next-themes';
 
 interface SafeImageProps extends Omit<ImageProps, 'onLoadingComplete' | 'onError'> {
   fallbackSrc?: string;
@@ -23,21 +24,38 @@ const SafeImage = ({
   alt,
   className,
   containerClassName,
-  fallbackSrc = '/images/placeholder-listing.jpg', // Default fallback
+  fallbackSrc = '/images/dark_placeholder.png', // Default local fallback
   fill = true, // We default to fill for modern responsive layouts
   priority = false,
   ...props
 }: SafeImageProps) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [imgSrc, setImgSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const imgRef = React.useRef<HTMLImageElement>(null);
 
   // Update internal state if src prop changes
   useEffect(() => {
-    setImgSrc(src);
-    setError(false);
+    setHasError(false);
     setIsLoading(true);
   }, [src]);
+
+  // Check if image is already loaded (e.g. from cache)
+  useEffect(() => {
+    if (imgRef.current?.complete) {
+      setIsLoading(false);
+    }
+  }, [src]);
+
+  const resolvedFallbackSrc = mounted && resolvedTheme === 'light' ? '/images/white_placeholder.png' : '/images/dark_placeholder.png';
+
+  const finalSrc = hasError || !src ? resolvedFallbackSrc : src;
 
   return (
     <div className={cn("relative overflow-hidden", containerClassName || "w-full h-full")}>
@@ -47,7 +65,7 @@ const SafeImage = ({
             key="skeleton"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.2 }}
             className="absolute inset-0 z-10"
           >
             <Skeleton className="w-full h-full rounded-none" />
@@ -55,40 +73,28 @@ const SafeImage = ({
         )}
       </AnimatePresence>
 
-      {error ? (
-        <div className="flex flex-col items-center justify-center w-full h-full bg-gray-100 dark:bg-gray-800 text-gray-400 gap-2">
-          <IconPhotoOff size={24} stroke={1.5} />
-          <span className="text-[10px] font-medium uppercase tracking-widest">Image Unavailable</span>
-        </div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ 
-            opacity: isLoading ? 0 : 1,
-            scale: isLoading ? 1.05 : 1
-          }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="w-full h-full"
-        >
-          <Image
-            {...props}
-            src={imgSrc || fallbackSrc}
-            alt={alt || "BoardTAU Listing"}
-            fill={fill}
-            priority={priority}
-            className={cn(
-              "object-cover transition-all duration-300",
-              className
-            )}
-            onLoadingComplete={() => setIsLoading(false)}
-            onError={() => {
-              setError(true);
-              setIsLoading(false);
-            }}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-        </motion.div>
-      )}
+      <Image
+        {...props}
+        ref={imgRef}
+        src={finalSrc}
+        alt={alt || "BoardTAU Listing"}
+        fill={fill}
+        priority={priority}
+        unoptimized={true}
+        className={cn(
+          "object-cover transition-opacity duration-200 ease-in-out",
+          isLoading ? "opacity-0" : "opacity-100",
+          className
+        )}
+        onLoad={() => {
+          setIsLoading(false);
+        }}
+        onError={() => {
+          if (!hasError) setHasError(true);
+          setIsLoading(false);
+        }}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      />
     </div>
   );
 };

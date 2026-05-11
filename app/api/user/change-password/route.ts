@@ -6,9 +6,9 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     const { oldPassword, newPassword } = data;
 
-    if (!oldPassword || !newPassword) {
+    if (!newPassword) {
       return NextResponse.json(
-        { error: 'All fields are required' },
+        { error: 'New password is required' },
         { status: 400 }
       );
     }
@@ -21,10 +21,12 @@ export async function POST(request: NextRequest) {
     // List of safe error messages to expose to the user
     const safeMessages = [
       "Current password is incorrect",
+      "Current password is required to change your password.",
       "User not authenticated",
       "User not found",
       "User does not have a password set",
-      "You cannot reuse a recently used password."
+      "You cannot reuse a recently used password.",
+      "Security Lock"
     ];
 
     let message = 'An unexpected error occurred. Please try again later.';

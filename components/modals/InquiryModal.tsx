@@ -233,23 +233,25 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                 <div className="lg:sticky lg:top-4 space-y-4">
                   <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700">
                     <div className="relative aspect-[16/10] bg-gray-100 dark:bg-gray-900">
-                        <AnimatePresence mode="wait">
+                        <AnimatePresence initial={false}>
                           {(room.images && room.images.length > 0) ? (
                            <SafeImage
                               key={room.images[logic.currentImageIndex].url}
                               src={getSafeImageSrcString(room.images[logic.currentImageIndex].url)}
                               alt={room.name}
                               priority={true}
+                              unoptimized={true}
+                              containerClassName="absolute inset-0 w-full h-full"
                            />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400 font-black text-[10px] uppercase">No Image</div>
+                            <div className="absolute inset-0 w-full h-full flex items-center justify-center text-gray-400 font-black text-[10px] uppercase">No Image</div>
                           )}
                         </AnimatePresence>
                         
                         {(room.images && room.images.length > 1) && (
-                          <div className="absolute bottom-3 right-3 flex gap-2">
-                             <button onClick={() => logic.setCurrentImageIndex(prev => prev === 0 ? room.images.length - 1 : prev - 1)} className="bg-black/40 hover:bg-black/60 text-white p-1 rounded-full pointer-events-auto transition-all"><FaChevronLeft size={12} /></button>
-                             <button onClick={() => logic.setCurrentImageIndex(prev => prev === room.images.length - 1 ? 0 : prev + 1)} className="bg-black/40 hover:bg-black/60 text-white p-1 rounded-full pointer-events-auto transition-all"><FaChevronRight size={12} /></button>
+                          <div className="absolute bottom-3 right-3 flex gap-2 z-30">
+                             <button onClick={() => logic.setCurrentImageIndex(prev => prev === 0 ? room.images.length - 1 : prev - 1)} className="bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full pointer-events-auto transition-all shadow-lg backdrop-blur-sm active:scale-90"><FaChevronLeft size={12} /></button>
+                             <button onClick={() => logic.setCurrentImageIndex(prev => prev === room.images.length - 1 ? 0 : prev + 1)} className="bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full pointer-events-auto transition-all shadow-lg backdrop-blur-sm active:scale-90"><FaChevronRight size={12} /></button>
                           </div>
                         )}
                     </div>

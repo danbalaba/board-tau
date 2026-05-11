@@ -19,6 +19,8 @@ import NewMessageAlert from '@/emails/NewMessageAlert';
 import GenericNotification from '@/emails/GenericNotification';
 import PasswordChangedEmail from '@/emails/PasswordChanged';
 import NewLoginAlertEmail from '@/emails/NewLoginAlert';
+import ResetPasswordEmail from '@/emails/ResetPasswordEmail';
+import OAuthReminderEmail from '@/emails/OAuthReminderEmail';
 
 // Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
@@ -352,6 +354,45 @@ export const sendNewLoginEmail = async (user: any, loginInfo: { browser: string;
   return await sendEmail({
     to: user.email,
     subject: 'Security Alert: New Login to BoardTAU',
+    html: emailHtml
+  });
+};
+
+/**
+ * Password Reset Link Email
+ */
+export const sendPasswordResetEmail = async (
+  user: any, 
+  resetLink: string, 
+  loginInfo: { browser: string; device: string; ipAddress: string }
+) => {
+  const emailHtml = await render(React.createElement(ResetPasswordEmail, {
+    userName: user.name || 'Valued User',
+    resetLink,
+    browser: loginInfo.browser,
+    device: loginInfo.device,
+    ipAddress: loginInfo.ipAddress,
+  }));
+
+  return await sendEmail({
+    to: user.email,
+    subject: 'Reset Your BoardTAU Password',
+    html: emailHtml
+  });
+};
+
+/**
+ * OAuth Login Reminder Email (for Forgot Password flow)
+ */
+export const sendOAuthReminderEmail = async (user: any, provider: string) => {
+  const emailHtml = await render(React.createElement(OAuthReminderEmail, {
+    userName: user.name || 'Valued User',
+    provider: provider,
+  }));
+
+  return await sendEmail({
+    to: user.email,
+    subject: `Login Reminder: Your BoardTAU account uses ${provider}`,
     html: emailHtml
   });
 };

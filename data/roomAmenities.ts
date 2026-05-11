@@ -89,7 +89,7 @@ export const roomAmenities: { label: string; value: string; icon: IconType; appl
     applicableTo: [ROOM_TYPES.SOLO, ROOM_TYPES.BEDSPACE],
   },
 
-  // ── Solo Room Specific (Sub-meters usually apply per distinct room unit) 
+  // ── Solo Room Specific (Sub-meters usually apply per distinct room unit)
   {
     label: ROOM_AMENITY_LABELS.SUBMETER_ELEC,
     value: ROOM_AMENITIES.SUBMETER_ELEC,

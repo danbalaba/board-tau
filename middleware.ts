@@ -10,6 +10,21 @@ import {
 
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  // --- HOME PAGE ROLE REDIRECT ---
+  // Redirect logged-in internal roles away from the public home page instantly
+  if (pathname === "/") {
+    if (token?.role === "ADMIN") {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+    if (token?.role === "LANDLORD") {
+      return NextResponse.redirect(new URL("/landlord", request.url));
+    }
+  }
 
   // --- CUSTOM AUTH ERROR REDIRECTS ---
   // Catch the AccountLocked error from NextAuth and redirect to our high-fidelity page

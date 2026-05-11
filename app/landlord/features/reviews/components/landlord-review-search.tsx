@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { IconSearch, IconX, IconStar, IconUser, IconMessage } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/use-debounce';
 import { Review } from '../hooks/use-review-logic';
 import SafeImage from '@/components/common/SafeImage';
 
@@ -18,13 +19,23 @@ export function LandlordReviewSearch({
   setSearchQuery,
   reviews
 }: LandlordReviewSearchProps) {
+  const [localQuery, setLocalQuery] = useState(searchQuery);
+  const debouncedQuery = useDebounce(localQuery, 300);
   const [isFocused, setIsFocused] = useState(false);
   const [suggestions, setSuggestions] = useState<Review[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (searchQuery.length >= 2 && reviews) {
-      const q = searchQuery.toLowerCase();
+    setLocalQuery(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setSearchQuery(debouncedQuery);
+  }, [debouncedQuery, setSearchQuery]);
+
+  useEffect(() => {
+    if (debouncedQuery.length >= 2 && reviews) {
+      const q = debouncedQuery.toLowerCase();
       const filtered = reviews
         .filter(r =>
           r.listing.title.toLowerCase().includes(q) ||
@@ -37,7 +48,7 @@ export function LandlordReviewSearch({
     } else {
       setSuggestions([]);
     }
-  }, [searchQuery, reviews]);
+  }, [debouncedQuery, reviews]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -57,14 +68,20 @@ export function LandlordReviewSearch({
       <input
         type="text"
         placeholder="Search reviews..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
+        value={localQuery}
+        onChange={(e) => setLocalQuery(e.target.value)}
         onFocus={() => setIsFocused(true)}
+        spellCheck={false}
+        autoComplete="off"
+        autoCorrect="off"
         className="w-full relative z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 py-3 pl-12 pr-10 text-sm font-bold text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all shadow-sm"
       />
-      {searchQuery && (
+      {localQuery && (
         <button
-          onClick={() => setSearchQuery('')}
+          onClick={() => {
+            setLocalQuery('');
+            setSearchQuery('');
+          }}
           className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-primary transition-colors z-20"
         >
           <IconX size={16} strokeWidth={3} />

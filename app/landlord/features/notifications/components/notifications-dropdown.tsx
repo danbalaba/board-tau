@@ -157,12 +157,15 @@ export function NotificationsDropdown() {
                         opacity: { duration: 0.15 }
                       }}
                     >
-                      <DropdownMenuItem asChild>
+                      <DropdownMenuItem 
+                        asChild 
+                        className="focus:bg-gray-50 dark:focus:bg-gray-800/50"
+                      >
                         <Link 
                           href={getNotificationLink(notif)}
                           onClick={() => markAsRead(notif.id)}
                           className={cn(
-                            "flex items-start gap-4 p-4 rounded-2xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-700/50 group relative my-0.5",
+                            "flex items-start gap-4 p-4 rounded-2xl cursor-pointer transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-700/50 group relative my-0.5",
                             !notif.isRead && "bg-primary/[0.03]"
                           )}
                         >

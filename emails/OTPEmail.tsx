@@ -18,7 +18,7 @@ interface OTPEmailProps {
 }
 
 // Use your live domain for images
-const domain = 'https://boardtau.xyz';
+import { lightLogoUrl, baseUrl } from "../services/email/constants";
 
 export const OTPEmail = ({
   otp = "000000",
@@ -160,7 +160,7 @@ export const OTPEmail = ({
           {/* Header */}
           <Section style={styles.header}>
             <Img
-              src={`${domain}/images/TauBOARD-Light.png`}
+              src={lightLogoUrl}
               width="180"
               alt="BoardTAU Logo"
               style={{ margin: "0 auto" }}
@@ -190,7 +190,7 @@ export const OTPEmail = ({
               </Text>
             </Section>
 
-            <Link href={domain} style={styles.button}>
+            <Link href={baseUrl} style={styles.button}>
               Complete Login
             </Link>
           </Section>

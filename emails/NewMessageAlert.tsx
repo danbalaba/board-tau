@@ -22,13 +22,13 @@ interface NewMessageAlertProps {
   viewReplyLink: string;
 }
 
-const domain = 'https://boardtau.xyz';
+import { lightLogoUrl, baseUrl } from '../services/email/constants';
 
 export const NewMessageAlert = ({
   senderName = "User",
   listingTitle = "Property",
   messageContent = "You have a new message.",
-  viewReplyLink = `${domain}/messages`,
+  viewReplyLink = `${baseUrl}/messages`,
 }: NewMessageAlertProps) => {
   const styles = {
     body: {
@@ -129,7 +129,7 @@ export const NewMessageAlert = ({
       <Body style={styles.body}>
         <Container style={styles.container} className="main-card">
           <Section style={styles.header}>
-            <Img src={`${domain}/images/TauBOARD-Light.png`} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
+            <Img src={lightLogoUrl} width="160" alt="BoardTAU" style={{ margin: "0 auto" }} />
           </Section>
 
           <Section style={styles.content}>
@@ -161,3 +161,4 @@ export const NewMessageAlert = ({
 };
 
 export default NewMessageAlert;
+

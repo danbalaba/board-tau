@@ -15,6 +15,7 @@ import {
   IconUser,
   IconCircleCheck,
   IconAlertCircle,
+  IconArchive,
   IconX
 } from "@tabler/icons-react";
 import { format, formatDistanceToNow } from "date-fns";
@@ -123,6 +124,15 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
           {isLoading ? <Skeleton width="60%" enableAnimation={false} /> : (isEmailVerified ? "Verified Account" : "Unverified Account")}
         </p>
+
+        {(activeConversation.isArchived || activeConversation.isPendingArchive) && (
+          <div className="mt-3 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center gap-1.5 animate-in fade-in zoom-in duration-300">
+            <IconArchive size={10} className="text-amber-500" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
+              Archived
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Trust Indicators */}
@@ -296,32 +306,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
         </div>
       </section>
 
-      {/* Property */}
-      <section className="space-y-2">
-        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-          <IconMapPin size={12} />
-          Property
-        </label>
 
-        <div 
-          onClick={() => window.location.href = `/landlord/properties?listingId=${activeConversation.listingId}`}
-          className="group bg-white dark:bg-gray-900 rounded-2xl p-2 pr-4 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-3 hover:border-primary/20 transition-all cursor-pointer"
-        >
-          <SafeImage
-            src={activeConversation.listingImage || "/images/placeholder.jpg"}
-            className="w-14 h-14 rounded-xl object-cover shadow-sm group-hover:scale-95 transition-transform shrink-0"
-            alt=""
-          />
-          <div className="flex-1 min-w-0">
-            <h4 className="text-xs font-black text-gray-900 dark:text-white truncate mb-1">
-              {activeConversation.listingTitle}
-            </h4>
-            <div className="flex items-center gap-1 text-[10px] font-bold text-primary">
-              View Listing <IconExternalLink size={11} />
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Manage Booking CTA */}
       <section className="pb-4">
@@ -362,7 +347,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
 
               <div className="relative w-full aspect-square sm:w-[480px] sm:aspect-square md:w-[600px] bg-gray-900 rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white/10">
                 <SafeImage
-                  src={activeConversation.tenantImage || '/images/placeholder.jpg'}
+                  src={activeConversation.tenantImage || ''}
                   alt={activeConversation.tenantName}
                   className="w-full h-full object-cover"
                 />

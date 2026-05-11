@@ -60,14 +60,14 @@ const Categories = () => {
         <h2 className="text-center text-xl md:text-2xl font-semibold text-text-primary dark:text-gray-100 mb-8">
           Seamless stay & experiences
         </h2>
-        <div className="flex flex-nowrap justify-start items-center gap-2 overflow-x-auto pb-2 -mx-4 md:mx-0 md:justify-center md:overflow-visible hide-scrollbar">
+        <div className="flex flex-nowrap justify-start items-center gap-2 overflow-x-auto pb-2 px-4 -mx-4 xl:mx-0 xl:px-0 xl:justify-center xl:overflow-visible hide-scrollbar transition-all duration-300">
           {categories.map((item: Category, index: number) => {
             const Icon = item.icon;
             return (
               <motion.button
                 key={item.value}
                 onClick={() => handleCategoryClick(item.value)}
-                className={`px-4 py-2.5 rounded-full text-sm md:text-sm font-medium transition-all duration-300 flex items-center space-x-1.5 group flex-shrink-0 ${
+                className={`px-4 py-2.5 rounded-full text-sm xl:text-sm font-medium transition-all duration-300 flex items-center space-x-1.5 group flex-shrink-0 ${
                   category === item.value
                     ? "bg-primary text-white shadow-lg shadow-primary/30"
                     : "bg-white dark:bg-slate-800 text-text-primary dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700"

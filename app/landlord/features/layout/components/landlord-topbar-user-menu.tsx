@@ -1,7 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { signOut } from 'next-auth/react';
+import { useLoadingStore } from '@/hooks/use-loading-store';
+import ConfirmModal from '@/components/common/ConfirmModal';
+import Modal from '@/components/modals/Modal';
 import { 
   IconLogout, 
   IconMenu2,
@@ -33,6 +36,19 @@ interface LandlordTopbarUserMenuProps {
 }
 
 export function LandlordTopbarUserMenu({ user, onOpenSettings, isLoading }: LandlordTopbarUserMenuProps) {
+  const { isLoggingOut, setIsLoggingOut } = useLoadingStore();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogout = () => {
+    setIsLoggingOut(true);
+    setShowLogoutConfirm(false);
+    
+    // Premium 2.5s delay for cinematic cleanup
+    setTimeout(() => {
+      signOut({ callbackUrl: '/' });
+    }, 2500);
+  };
+
   if (isLoading || !user) {
     return (
       <div className='flex items-center gap-3 p-1.5'>
@@ -107,7 +123,7 @@ export function LandlordTopbarUserMenu({ user, onOpenSettings, isLoading }: Land
         <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
         <div className="p-1">
           <DropdownMenuItem 
-            onClick={() => signOut({ callbackUrl: '/' })}
+            onClick={() => setShowLogoutConfirm(true)}
             className='rounded-xl flex items-center gap-3 p-3 cursor-pointer text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all font-black text-sm uppercase tracking-widest'
           >
             <IconLogout size={18} />
@@ -115,6 +131,25 @@ export function LandlordTopbarUserMenu({ user, onOpenSettings, isLoading }: Land
           </DropdownMenuItem>
         </div>
       </DropdownMenuContent>
+      
+      {/* Logout Confirmation Modal */}
+      <Modal 
+        isOpen={showLogoutConfirm} 
+        onClose={() => setShowLogoutConfirm(false)}
+        width="xs"
+      >
+        <ConfirmModal
+          isOpen={showLogoutConfirm}
+          onClose={() => setShowLogoutConfirm(false)}
+          onConfirm={handleLogout}
+          title="Sign Out Dashboard?"
+          message={`Ready to leave the dashboard, ${user.name || 'Landlord'}? We'll make sure your property data is synced and secure.`}
+          confirmLabel="Logout"
+          cancelLabel="Stay"
+          isLoading={isLoggingOut}
+          variant="danger"
+        />
+      </Modal>
     </DropdownMenu>
   );
 }

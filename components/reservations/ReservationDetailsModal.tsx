@@ -1,8 +1,9 @@
 "use client";
 import React from "react";
 import Modal from "../modals/Modal";
-import { X, Calendar, CreditCard, Info, Clock, Home, MapPin, CheckCircle as IconCircleCheck } from "lucide-react";
+import { X, Calendar, CreditCard, Info, Clock, Home, MapPin, CheckCircle as IconCircleCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
+import { cn } from "@/utils/helper";
 
 interface ReservationListing {
   id: string;
@@ -74,14 +75,37 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
 }) => {
   const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
+  const [activeNotification, setActiveNotification] = React.useState(notification);
   
+  // "Freeze" the notification data so it doesn't vanish when marked as read
   React.useEffect(() => {
-    if (isOpen && notification) {
+    if (notification && !activeNotification) {
+      setActiveNotification(notification);
+      
+      // Auto-dismiss after 8 seconds so the user can finish reading
+      const timer = setTimeout(() => {
+        setActiveNotification(undefined);
+      }, 8000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [notification, activeNotification]);
+
+  // Reset activeNotification when the modal is closed so it's fresh for next time
+  React.useEffect(() => {
+    if (!isOpen) {
+      setActiveNotification(undefined);
+    }
+  }, [isOpen]);
+
+  React.useEffect(() => {
+    if (isOpen && activeNotification) {
+      // Use the raw reservation.id to ensure the best matching
       markEntityNotificationsAsRead("reservation", reservation.id).then(() => {
         window.dispatchEvent(new Event("notification-cleared"));
       });
     }
-  }, [isOpen, notification, reservation.id]);
+  }, [isOpen, activeNotification, reservation.id]);
   const images = reservation.room.images || [];
 
   const formatDate = (dateString: string) => {
@@ -163,20 +187,37 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 sm:space-y-8 bg-gray-50/50 dark:bg-gray-900/50 custom-scrollbar">
-          {notification && (
+          {activeNotification && (
             <motion.div 
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-6 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-900/50 rounded-3xl flex gap-4 items-start shadow-sm"
+              className={cn(
+                "p-6 border rounded-[32px] flex flex-col gap-4 shadow-sm mb-6",
+                reservation.status === "COMPLETED"
+                  ? "bg-purple-500/10 dark:bg-purple-500/20 border-purple-200 dark:border-purple-900/50"
+                  : "bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-200 dark:border-emerald-900/50"
+              )}
             >
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-emerald-500/20">
-                <IconCircleCheck size={20} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <h4 className="text-sm font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest leading-none mb-1">{notification.title}</h4>
-                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
-                  {notification.description}
-                </p>
+              <div className="flex gap-4 items-start">
+                <div className={cn(
+                  "w-10 h-10 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg",
+                  reservation.status === "COMPLETED"
+                    ? "bg-purple-500 shadow-purple-500/20"
+                    : "bg-emerald-500 shadow-emerald-500/20"
+                )}>
+                  {reservation.status === "COMPLETED" ? <IconCircleCheck size={20} /> : <Info size={20} />}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <h4 className={cn(
+                    "text-sm font-black uppercase tracking-widest leading-none mb-1",
+                    reservation.status === "COMPLETED" ? "text-purple-600 dark:text-purple-400" : "text-emerald-600 dark:text-emerald-400"
+                  )}>
+                    {activeNotification.title}
+                  </h4>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
+                    {activeNotification.description}
+                  </p>
+                </div>
               </div>
             </motion.div>
           )}
@@ -186,18 +227,57 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
             <div className="space-y-6">
               {/* Room Showcase */}
               <div className="bg-white dark:bg-gray-800 rounded-[32px] overflow-hidden border border-gray-100 dark:border-gray-700 shadow-sm relative group">
-                <div className="aspect-video w-full relative">
-                  <SafeImage
-                    src={images.length > 0 
-                      ? images[currentImageIndex]?.url 
-                      : (reservation.listing?.images && reservation.listing.images.length > 0)
-                        ? reservation.listing.images[0].url
-                        : reservation.listing.imageSrc || "/images/placeholder.jpg"
-                    }
-                    alt={reservation.room.name}
-                    priority={true}
-                  />
-                  <div className="absolute top-4 left-4 flex gap-2">
+                <div className="aspect-video w-full relative group/gallery">
+                  <AnimatePresence mode="wait">
+                    <SafeImage
+                      key={currentImageIndex}
+                      src={images.length > 0 
+                        ? images[currentImageIndex]?.url 
+                        : (reservation.listing?.images && reservation.listing.images.length > 0)
+                          ? reservation.listing.images[0].url
+                          : reservation.listing.imageSrc || "/images/placeholder.jpg"
+                      }
+                      alt={reservation.room.name}
+                      priority={true}
+                      unoptimized={true}
+                    />
+                  </AnimatePresence>
+
+                  {images.length > 1 && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+                        }}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                      >
+                        <ChevronLeft size={20} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+                        }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                      >
+                        <ChevronRight size={20} />
+                      </button>
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                        {images.map((_, idx) => (
+                          <div
+                            key={idx}
+                            className={cn(
+                              "w-1.5 h-1.5 rounded-full transition-all",
+                              idx === currentImageIndex ? "bg-white w-4" : "bg-white/50"
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  <div className="absolute top-4 left-4 flex gap-2 z-10">
                     <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl backdrop-blur-md border border-white/20 ${getStatusColor(reservation.status)}`}>
                       {reservation.status.replace('_', ' ')}
                     </span>
@@ -371,7 +451,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
           
           {canPay && onPayNow && (
             <button
-              className="px-4 sm:px-10 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-primary rounded-2xl hover:bg-primary-dark shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/pay"
+              className="col-span-2 sm:col-span-1 px-4 sm:px-10 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-primary rounded-2xl hover:bg-primary-dark shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/pay"
               onClick={onPayNow}
             >
               <CreditCard size={14} strokeWidth={3} className="group-hover/pay:translate-x-0.5 transition-transform" /> 

@@ -45,3 +45,21 @@ export const isCleanString = (str: string): boolean => {
   const suspiciousChars = /[<>{}[\]\\/]/;
   return !suspiciousChars.test(str);
 };
+
+/**
+ * Validates a phone number format (supports local PH and International)
+ */
+export const validatePhoneNumber = (str: string): boolean => {
+  if (!str) return false;
+  
+  // Remove common formatting characters for validation
+  const clean = str.replace(/[\s\-()]/g, '');
+  
+  // 1. PH Mobile: 09XXXXXXXXX (11 digits) or +639XXXXXXXXX (13 chars)
+  const phRegex = /^(09|\+639)\d{9}$/;
+  
+  // 2. Global: +[CountryCode][Number] (Min 10 digits total)
+  const globalRegex = /^\+?[1-9]\d{9,14}$/;
+  
+  return phRegex.test(clean) || globalRegex.test(clean);
+};

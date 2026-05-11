@@ -229,6 +229,9 @@ export function LandlordRoomHeader({
                       placeholder="Find Property..."
                       value={propertySearch}
                       onChange={(e) => setPropertySearch(e.target.value)}
+                      spellCheck={false}
+                      autoComplete="off"
+                      autoCorrect="off"
                       className="w-full bg-gray-50 dark:bg-gray-800/50 border border-transparent focus:border-primary/20 rounded-xl py-2.5 pl-9 pr-4 text-xs font-bold outline-none transition-all placeholder:text-gray-400 placeholder:font-black placeholder:uppercase placeholder:tracking-widest"
                     />
                   </div>

@@ -26,6 +26,7 @@ const HeartButton: React.FC<HeartButtonProps> = ({
   const { error } = useResponsiveToast();
   const [isPending, startTransition] = useTransition();
   const [mounted, setMounted] = useState(false);
+  const lastToastTime = React.useRef<number>(0);
 
   useEffect(() => {
     setMounted(true);
@@ -46,10 +47,14 @@ const HeartButton: React.FC<HeartButtonProps> = ({
     if (isPending) return;
 
     if (status !== "authenticated") {
-      error({
-        title: "Please sign in",
-        description: "You need to be logged in to favorite listings"
-      });
+      const now = Date.now();
+      if (now - lastToastTime.current > 5000) {
+        error({
+          title: "Please sign in",
+          description: "You need to be logged in to favorite listings"
+        });
+        lastToastTime.current = now;
+      }
       return;
     }
 

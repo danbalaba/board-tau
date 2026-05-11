@@ -32,6 +32,8 @@ import { createPortal } from 'react-dom';
 import { useEdgeStore } from '@/lib/edgestore';
 import { getSafeImageSrcString } from '@/components/modals/inquiry-modal/InquiryModalUtils';
 import SafeImage from '@/components/common/SafeImage';
+import { useRouter, usePathname } from 'next/navigation';
+import { LandlordInquiryDeclineModal } from './landlord-inquiry-decline-modal';
 
 interface LandlordInquiryDetailsModalProps {
   inquiry: Inquiry | null;
@@ -57,19 +59,19 @@ export function LandlordInquiryDetailsModal({
   const { edgestore } = useEdgeStore();
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
-  const [customReason, setCustomReason] = useState("");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   
   // States for signed URLs (for protected identityDocs bucket)
   const [signedProfileUrl, setSignedProfileUrl] = useState<string | null>(null);
   const [signedIdUrl, setSignedIdUrl] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (isOpen && inquiry) {
       setIsInitialLoading(true);
       setShowRejectConfirm(false);
-      setCustomReason("");
       setPreviewImage(null);
       setCurrentImageIndex(0);
       
@@ -93,13 +95,6 @@ export function LandlordInquiryDetailsModal({
       // Error handled by hook
     }
   };
-
-  const PREDEFINED_REASONS = [
-    "Room no longer available",
-    "Profile incomplete or not verified",
-    "Number of occupants exceeds limit",
-    "Stay duration does not meet minimum requirements"
-  ];
 
   return (
     <>
@@ -132,62 +127,7 @@ export function LandlordInquiryDetailsModal({
                 }}
                 className="space-y-8"
               >
-                {/* Overlay for Reject Confirmation */}
-                {showRejectConfirm && (
-                  <div className="absolute inset-x-0 bottom-0 z-50 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-xl p-8 border-t border-rose-100 dark:border-rose-900/30 rounded-b-[32px] animate-in slide-in-from-bottom-full duration-300">
-                    <div className="flex flex-col">
-                      <div className="flex items-center justify-between mb-6">
-                        <div>
-                          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-1">Decline Inquiry</h3>
-                          <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Provide a reason for the tenant</p>
-                        </div>
-                        <button onClick={() => setShowRejectConfirm(false)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-                          <IconX size={20} />
-                        </button>
-                      </div>
-
-                      <div className="space-y-4 mb-6 text-left">
-                        <div className="flex flex-wrap gap-2">
-                          {PREDEFINED_REASONS.map((reason) => (
-                            <button
-                              key={reason}
-                              onClick={() => handleAction('REJECTED', reason)}
-                              disabled={isUpdatingStatus}
-                              className="px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-gray-600 dark:text-gray-300 hover:text-rose-600 dark:hover:text-rose-400 border border-gray-100 dark:border-gray-700 hover:border-rose-200 rounded-xl text-xs font-bold transition-all"
-                            >
-                              {reason}
-                            </button>
-                          ))}
-                        </div>
-                        <textarea
-                          value={customReason}
-                          onChange={(e) => setCustomReason(e.target.value)}
-                          placeholder="Or type a custom reason..."
-                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 text-sm font-medium focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all min-h-[80px]"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <Button
-                          outline
-                          onClick={() => setShowRejectConfirm(false)}
-                          className="rounded-xl py-3 text-xs font-black uppercase tracking-widest border-gray-100 dark:border-gray-800"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="danger"
-                          isLoading={isUpdatingStatus}
-                          disabled={!customReason.trim()}
-                          onClick={() => handleAction('REJECTED', customReason)}
-                          className="rounded-xl py-3 text-xs font-black uppercase tracking-widest shadow-lg shadow-rose-500/10"
-                        >
-                          Confirm Decline
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {/* NOTE: Inline reject panel removed – replaced by LandlordInquiryDeclineModal portal below */}
 
                 {/* Profile Card */}
                 <motion.div 
@@ -378,6 +318,7 @@ export function LandlordInquiryDetailsModal({
                                    src={signedProfileUrl} 
                                    alt="Tenant Profile Photo" 
                                    className="w-full h-full object-cover transition-transform group-hover:scale-110" 
+                                   unoptimized={true}
                                  />
                                ) : (
                                  <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 animate-pulse">
@@ -402,6 +343,7 @@ export function LandlordInquiryDetailsModal({
                                    src={signedIdUrl} 
                                    alt="Tenant ID Attachment" 
                                    className="w-full h-full object-cover transition-transform group-hover:scale-110" 
+                                   unoptimized={true}
                                  />
                                ) : (
                                  <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 animate-pulse">
@@ -469,7 +411,7 @@ export function LandlordInquiryDetailsModal({
                     <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800 mx-6"></div>
                   </div>
                   
-                  {inquiry.status === 'PENDING' ? (
+                  {inquiry.status === 'PENDING' && !(inquiry as any).isArchived ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Button 
                         className="w-full bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 py-5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] group/act"
@@ -505,7 +447,21 @@ export function LandlordInquiryDetailsModal({
                     <Button
                       outline
                       className="w-full rounded-[1.25rem] py-4 border-gray-100 dark:border-gray-800 text-[10px] font-black uppercase tracking-[0.2em] group/chat flex items-center justify-center gap-2"
-                      onClick={() => window.location.href = `/landlord?openChat=true&listingId=${inquiry.listing.id}&tenantId=${inquiry.user.id}`}
+                      onClick={() => {
+                        const listingImg = (inquiry.room?.images && inquiry.room.images.length > 0) ? inquiry.room.images[0].url : inquiry.listing.imageSrc;
+                        const event = new CustomEvent('open-landlord-chat', {
+                          detail: {
+                            listingId: inquiry.listing.id,
+                            tenantId: inquiry.user.id,
+                            tenantName: inquiry.user.name || 'Tenant',
+                            tenantImage: inquiry.user.image || '',
+                            listingTitle: inquiry.listing.title,
+                            listingImage: listingImg || ''
+                          }
+                        });
+                        window.dispatchEvent(event);
+                        onClose();
+                      }}
                     >
                       <IconMessage size={18} className="group-hover/chat:scale-110 transition-transform text-primary" />
                       Chat with {inquiry.user.name || 'Tenant'}
@@ -535,7 +491,7 @@ export function LandlordInquiryDetailsModal({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setPreviewImage(null)}
-                className="absolute inset-0 bg-black/95 backdrop-blur-md"
+                className="absolute inset-0 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm"
               />
               <motion.button
                 initial={{ opacity: 0, y: -20 }}
@@ -545,17 +501,18 @@ export function LandlordInquiryDetailsModal({
               >
                 <IconX size={24} />
               </motion.button>
-              <motion.div
+                <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="relative max-w-5xl w-full max-h-[85vh] flex items-center justify-center z-10"
+                className="relative w-[90vw] h-[80vh] flex items-center justify-center z-10"
                 onClick={(e) => e.stopPropagation()}
               >
                 <SafeImage 
                   src={previewImage} 
-                  className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl" 
+                  className="w-full h-full object-contain rounded-2xl shadow-2xl" 
                   alt="Document Preview" 
+                  unoptimized={true}
                 />
               </motion.div>
             </div>
@@ -563,6 +520,16 @@ export function LandlordInquiryDetailsModal({
         </AnimatePresence>,
         document.body
       )}
+      {/* Decline Inquiry Modal — rendered as a separate portal modal */}
+      <LandlordInquiryDeclineModal
+        isOpen={showRejectConfirm}
+        onClose={() => setShowRejectConfirm(false)}
+        onConfirm={async (reason) => {
+          await handleAction('REJECTED', reason);
+          setShowRejectConfirm(false);
+        }}
+        isLoading={isUpdatingStatus}
+      />
     </>
   );
 }

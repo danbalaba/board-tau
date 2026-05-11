@@ -32,15 +32,20 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
             onClick={() => setSelectedPreview(null)}
             className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 md:p-8 cursor-zoom-out"
           >
-            <motion.div 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative max-w-[95vw] max-h-[90vh] flex items-center justify-center"
-              onClick={(e) => e.stopPropagation()}
-            >
-               <SafeImage src={selectedPreview} alt="Full Preview" priority={true} />
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="relative w-[90vw] h-[80vh] flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                 <SafeImage 
+                    src={selectedPreview} 
+                    alt="Full Preview" 
+                    priority={true} 
+                    className="object-contain"
+                 />
                
                <div className="absolute -top-14 left-0 right-0 flex justify-between items-center text-white/70">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 px-3 py-1 rounded-full backdrop-blur-md">

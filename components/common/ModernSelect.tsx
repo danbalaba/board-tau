@@ -23,6 +23,7 @@ interface ModernSelectProps {
   instanceId?: string;
   size?: 'sm' | 'md';
   disabled?: boolean;
+  isSearchable?: boolean;
 }
 
 const CustomOption = (props: OptionProps<Option, false>) => {
@@ -106,6 +107,7 @@ const ModernSelect: React.FC<ModernSelectProps> = ({
   instanceId,
   size = 'md',
   disabled = false,
+  isSearchable = false,
 }) => {
   const [isMounted, setIsMounted] = React.useState(false);
   const [portalTarget, setPortalTarget] = React.useState<HTMLElement | null>(null);
@@ -169,7 +171,7 @@ const ModernSelect: React.FC<ModernSelectProps> = ({
               IndicatorSeparator: () => null,
             }}
             unstyled
-            isSearchable={true}
+            isSearchable={isSearchable}
             menuPortalTarget={portalTarget}
             styles={{
               menuPortal: (base) => ({

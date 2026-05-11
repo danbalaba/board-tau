@@ -82,6 +82,39 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   --color-propertyC: oklch(0.81 0.17 75.35); /* Orange */
 }
 
+/* ===== UTILITIES ===== */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Custom scrollbar utility */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(var(--border-rgb), 0.3);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--border-rgb), 0.5);
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--border-rgb), 0.3) transparent;
+}
+
 html.dark {
   --foreground-rgb: 248, 250, 252;
   --background-rgb: 15, 23, 42; /* slate-900 */

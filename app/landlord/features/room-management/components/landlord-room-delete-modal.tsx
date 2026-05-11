@@ -31,7 +31,7 @@ export function LandlordRoomDeleteModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-gray-900/80 backdrop-blur-md"
+        className="absolute inset-0 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm"
         onClick={onClose}
       />
       <motion.div
@@ -39,7 +39,7 @@ export function LandlordRoomDeleteModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-        className="relative w-full max-w-md bg-[#111827] rounded-[2.5rem] border border-white/10 shadow-2xl p-8 overflow-hidden"
+        className="relative w-full max-w-md bg-white dark:bg-[#111827] rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-2xl p-8 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}

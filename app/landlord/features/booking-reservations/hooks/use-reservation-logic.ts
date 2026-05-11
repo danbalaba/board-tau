@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
+import { useQueryClient } from '@tanstack/react-query';
 
 export interface ReservationRequest {
   id: string;
@@ -35,6 +36,7 @@ export interface ReservationRequest {
 
 export function useReservationLogic(initialReservations: ReservationRequest[]) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { success, error: toastError } = useResponsiveToast();
   
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -116,19 +118,21 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
     }
   }, [router, success, toastError]);
 
-  const handleUpdateStatus = useCallback(async (bookingId: string, status: string) => {
+  const handleUpdateStatus = useCallback(async (bookingId: string, status: string, reason?: string) => {
     setIsUpdating(true);
     try {
       const response = await fetch(`/api/landlord/bookings?id=${bookingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, reason }),
       });
 
       if (response.ok) {
         setReservations(prev => prev.map(r => r.id === bookingId ? { ...r, status } : r));
         success(`Reservation status updated to ${status.replace('_', ' ')}.`);
         
+        // Force immediate notification sync
+        queryClient.invalidateQueries({ queryKey: ["landlord-notifications"] });
         router.refresh();
       } else {
         const data = await response.json();

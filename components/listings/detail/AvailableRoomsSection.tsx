@@ -66,7 +66,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
   const [showInquiryModal, setShowInquiryModal] = useState(false);
   const [roomToInquire, setRoomToInquire] = useState<Room | null>(null);
   const { error: toastError } = useResponsiveToast();
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastInquiryToastTime = useRef<number>(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const searchParams = useSearchParams();
@@ -153,12 +153,11 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
     }
     
     if (!user) {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      debounceTimerRef.current = setTimeout(() => {
+      const now = Date.now();
+      if (now - lastInquiryToastTime.current > 5000) {
         toastError("Please log in to send an inquiry.");
-      }, 100);
+        lastInquiryToastTime.current = now;
+      }
       return;
     }
 

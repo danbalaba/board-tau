@@ -75,6 +75,35 @@ const ListingCard: React.FC<ListingCardProps> = ({
   const isPopular = reviewCount >= 10;
 
   const displayScore = matchScore || (Math.floor(Math.random() * (98 - 85 + 1)) + 85);
+  
+  // Smart image selection helper
+  const getImageUrl = (img: any) => {
+    if (!img) return null;
+    if (typeof img === 'string') return img;
+    if (typeof img.url === 'string') return img.url;
+    if (typeof img.imageUrl === 'string') return img.imageUrl;
+    if (typeof img.getUrl === 'function') return img.getUrl();
+    if (typeof img.imageSrc === 'string') return img.imageSrc;
+    if (typeof img.src === 'string') return img.src;
+    return null;
+  };
+
+  // Find the best available image source
+  const displayImage = React.useMemo(() => {
+    // 1. Try primary imageSrc
+    if (data.imageSrc) return getImageUrl(data.imageSrc);
+    
+    // 2. Try gallery images
+    const galleryImages = (data as any).images || [];
+    if (galleryImages.length > 0) return getImageUrl(galleryImages[0]);
+    
+    // 3. Try room images
+    if (rooms.length > 0 && rooms[0].images?.length > 0) {
+      return getImageUrl(rooms[0].images[0]);
+    }
+
+    return null;
+  }, [data, rooms]);
 
   return (
     <div className="relative group/card h-full">
@@ -113,7 +142,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
           {/* ── Image Container (Screenshot Layout) ── */}
           <div className="relative overflow-hidden rounded-[1.5rem] aspect-[5/4] bg-slate-100 dark:bg-slate-900 shadow-inner">
             <SafeImage
-              src={data.imageSrc}
+              src={displayImage}
               alt={data.title}
             />
 

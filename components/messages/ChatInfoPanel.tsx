@@ -17,6 +17,7 @@ import {
   IconAlertCircle,
   IconBuildingStore,
   IconChecklist,
+  IconArchive,
   IconX
 } from "@tabler/icons-react";
 import { format } from "date-fns";
@@ -120,8 +121,17 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
           {isLoading ? <Skeleton width="80%" enableAnimation={false} /> : activeConversation.landlordName}
         </h3>
         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-          {isLoading ? <Skeleton width="60%" enableAnimation={false} /> : "Host / Boarding House Owner"}
+          {isLoading ? <Skeleton width="60%" enableAnimation={false} /> : (isEmailVerified ? "Verified Account" : "Unverified Account")}
         </p>
+        
+        {(activeConversation.isArchived || activeConversation.isPendingArchive) && (
+          <div className="mt-3 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center gap-1.5 animate-in fade-in zoom-in duration-300">
+            <IconArchive size={10} className="text-amber-500" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
+              Archived
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Trust Indicators */}
@@ -226,12 +236,13 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
                 <div className="flex-1 min-w-0">
                     <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-1">Inquiry Regarding</p>
                     <h4 className="text-xs font-black text-gray-900 dark:text-white truncate leading-tight">
-                        {activeConversation.listingTitle}
+                        {activeConversation.listingTitle || "Unknown Property"}
                     </h4>
                 </div>
                 <SafeImage 
                     src={activeConversation.listingImage} 
-                    className="w-10 h-10 rounded-lg border-2 border-white dark:border-gray-800 shadow-sm"
+                    containerClassName="w-10 h-10 shrink-0"
+                    className="rounded-lg border-2 border-white dark:border-gray-800 shadow-sm"
                     alt="" 
                 />
             </div>
@@ -259,26 +270,27 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
               href={`/listings/${listing.id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="group bg-white dark:bg-gray-900 rounded-2xl p-2 pr-4 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-3 hover:border-primary/20 transition-all cursor-pointer block"
+              className="group bg-white dark:bg-gray-900 rounded-2xl p-2 pr-4 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-3 hover:border-primary/20 transition-all cursor-pointer"
             >
               <SafeImage
                 src={(Array.isArray(listing.images) && (listing.images as any).length > 0)
                   ? (typeof (listing.images as any)[0] === 'string' 
                       ? (listing.images as any)[0] 
                       : (listing.images as any)[0].url)
-                  : listing.imageSrc || "/images/placeholder.jpg"}
-                className="w-12 h-12 rounded-xl shadow-sm shrink-0"
+                  : listing.imageSrc || ""}
+                containerClassName="w-12 h-12 shrink-0"
+                className="rounded-xl shadow-sm"
                 alt=""
               />
               <div className="flex-1 min-w-0">
                 <h4 className="text-[11px] font-black text-gray-900 dark:text-white truncate">
-                  {listing.title}
+                  {listing.title || "Untitled"}
                 </h4>
                 <p className="text-[9px] font-bold text-gray-400 truncate">
-                  {listing.category}
+                  {listing.category ? (Array.isArray(listing.category) ? listing.category.join(", ") : listing.category) : "Uncategorized"}
                 </p>
               </div>
-              <IconExternalLink size={12} className="text-gray-300 group-hover:text-primary transition-colors" />
+              <IconExternalLink size={12} className="text-gray-300 group-hover:text-primary transition-colors shrink-0" />
             </a>
            )) || (
              <p className="text-[10px] font-bold italic text-gray-400 text-center">No other listings found.</p>
@@ -321,7 +333,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
               
               <div className="relative w-full aspect-square sm:w-[480px] sm:aspect-square md:w-[600px] bg-gray-900 rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white/10">
                 <SafeImage
-                  src={activeConversation.landlordImage || '/images/placeholder.jpg'}
+                  src={activeConversation.landlordImage || ''}
                   alt={activeConversation.landlordName}
                   priority={true}
                 />

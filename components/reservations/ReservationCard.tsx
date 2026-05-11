@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Calendar, CreditCard, Check, ArrowRight, Eye, X, MapPin, Star, MessageCircle } from "lucide-react";
+import { Home, Calendar, CreditCard, Check, ArrowRight, Eye, X, MapPin, Star } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
 
 interface ReservationListing {
@@ -47,7 +47,6 @@ interface ReservationCardProps {
     onPayNow?: () => void;
     onCancel?: () => void;
     onReview?: () => void;
-    onMessage?: () => void;
     hasNotification?: boolean;
 }
 
@@ -57,7 +56,6 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
     onPayNow,
     onCancel,
     onReview,
-    onMessage,
     hasNotification,
 }) => {
     const formatDate = (dateString: string) => {
@@ -139,7 +137,7 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
                 opacity: 1, 
                 y: 0,
                 scale: 1,
-                boxShadow: "0 0 0px rgba(0,0,0,0)"
+                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" 
             }}
             whileHover={{ y: -4, scale: 1.02 }}
             transition={{ 
@@ -152,13 +150,13 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
                 },
                 scale: { 
                     duration: 2, 
-                    repeat: Infinity, 
+                    repeat: hasNotification ? Infinity : 0, 
                     ease: "easeInOut",
                     repeatDelay: 1
                 },
                 boxShadow: { 
                     duration: 2, 
-                    repeat: Infinity, 
+                    repeat: hasNotification ? Infinity : 0, 
                     ease: "easeInOut",
                     repeatDelay: 1
                 }
@@ -267,17 +265,6 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
                         <Eye size={14} className="text-primary group-hover/btn:scale-110 transition-transform" />
                         Details
                     </button>
-
-                    {onMessage && (
-                        <button
-                            onClick={onMessage}
-                            className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-400 hover:text-primary hover:border-primary/30 transition-all shadow-sm flex items-center justify-center group/msg"
-                            title="Message Landlord"
-                        >
-                            <MessageCircle size={18} className="group-hover/msg:scale-110 transition-transform" />
-                        </button>
-                    )}
-
 
                     {canPay && onPayNow && (
                         <button

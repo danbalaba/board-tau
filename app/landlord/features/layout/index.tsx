@@ -8,6 +8,8 @@ import LandlordKBar from './components/landlord-kbar';
 import { useLandlordProfileStore } from '../settings-hub/hooks/use-landlord-profile-store';
 import BackToTop from '@/components/common/BackToTop';
 import FloatingMessagingWidget from '../messaging-hub/components/floating-messaging-widget';
+import { useLoadingStore } from '@/hooks/use-loading-store';
+import UltimateLogoutOverlay from '@/components/navbar/UltimateLogoutOverlay';
 
 interface LandlordLayoutClientProps {
   children: React.ReactNode;
@@ -20,6 +22,7 @@ export default function LandlordLayoutClient({
 }: LandlordLayoutClientProps) {
   const setUser = useLandlordProfileStore((state: any) => state.setUser);
   const isInitialized = useLandlordProfileStore((state: any) => state.isInitialized);
+  const { isLoggingOut } = useLoadingStore();
 
   React.useEffect(() => {
     if (!isInitialized) {
@@ -44,6 +47,9 @@ export default function LandlordLayoutClient({
       </LandlordKBar>
       <BackToTop />
       <FloatingMessagingWidget />
+      
+      {/* Global Logout Overlay */}
+      {isLoggingOut && <UltimateLogoutOverlay userName={user?.name} />}
     </div>
   );
 }

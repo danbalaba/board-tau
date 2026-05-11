@@ -60,6 +60,7 @@ const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
   const [selectedMediaIdx, setSelectedMediaIdx] = React.useState<number | null>(null);
   const [mounted, setMounted] = React.useState(false);
   const [isDetailsExpanded, setIsDetailsExpanded] = React.useState(false);
+  const [currentImgIdx, setCurrentImgIdx] = React.useState(0);
 
   React.useEffect(() => {
     setMounted(true);
@@ -69,6 +70,29 @@ const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
     ...(review.images || []).map(url => ({ url, type: 'image' as const })),
     ...(review.videos || []).map(url => ({ url, type: 'video' as const }))
   ];
+
+  // Room/Listing images for the sidebar gallery
+  const featuredMedia = React.useMemo(() => {
+    let imgs: string[] = [];
+    if (review.reservation?.room?.images && review.reservation.room.images.length > 0) {
+      imgs = review.reservation.room.images.map(i => i.url);
+    } else if (review.listing?.images && review.listing.images.length > 0) {
+      imgs = review.listing.images.map(i => typeof i === 'string' ? i : (i as any).url);
+    } else if (review.listing?.imageSrc) {
+      imgs = [review.listing.imageSrc];
+    }
+    return imgs.length > 0 ? imgs : ["/images/placeholder.jpg"];
+  }, [review]);
+
+  const handleNextImg = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImgIdx((prev) => (prev + 1) % featuredMedia.length);
+  };
+
+  const handlePrevImg = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImgIdx((prev) => (prev - 1 + featuredMedia.length) % featuredMedia.length);
+  };
 
   const handleNext = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -128,16 +152,19 @@ const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
                 onClick={() => setIsDetailsExpanded(!isDetailsExpanded)}
                 className="w-full p-3 flex items-center gap-4 text-left active:bg-gray-100 dark:active:bg-gray-700 transition-all"
                >
-                  <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-white dark:border-gray-700 shadow-sm">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-white dark:border-gray-700 shadow-sm relative group/thumb">
                      <SafeImage 
-                        src={(review.reservation?.room?.images && review.reservation.room.images.length > 0)
-                          ? review.reservation.room.images[0].url
-                          : (review.listing?.images && review.listing.images.length > 0)
-                            ? (typeof review.listing.images[0] === 'string' ? review.listing.images[0] : (review.listing.images[0] as any).url)
-                            : review.listing.imageSrc || "/images/placeholder.jpg"
-                        } 
+                        src={featuredMedia[currentImgIdx]} 
                         alt="Listing" 
                      />
+                     {featuredMedia.length > 1 && (
+                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity">
+                         <div className="flex gap-1">
+                           <button onClick={handlePrevImg} className="p-0.5 bg-white/20 rounded-md hover:bg-white/40"><ChevronLeft size={10} /></button>
+                           <button onClick={handleNextImg} className="p-0.5 bg-white/20 rounded-md hover:bg-white/40"><ChevronRight size={10} /></button>
+                         </div>
+                       </div>
+                     )}
                   </div>
                  <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
@@ -191,18 +218,37 @@ const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
 
           {/* Desktop Sidebar (Hidden on Mobile) */}
           <div className="hidden md:flex w-[360px] bg-gray-50/30 dark:bg-gray-950/10 border-r border-gray-100 dark:border-gray-800 overflow-y-auto p-8 flex-col shrink-0">
-            <div className="relative aspect-square w-full rounded-3xl overflow-hidden mb-5 shadow-lg border-2 border-white dark:border-gray-800">
+            <div className="relative aspect-square w-full rounded-3xl overflow-hidden mb-5 shadow-lg border-2 border-white dark:border-gray-800 group/gallery">
                <SafeImage
-                src={(review.reservation?.room?.images && review.reservation.room.images.length > 0)
-                  ? review.reservation.room.images[0].url
-                  : (review.listing?.images && review.listing.images.length > 0)
-                    ? (typeof review.listing.images[0] === 'string' ? review.listing.images[0] : (review.listing.images[0] as any).url)
-                    : review.listing.imageSrc || "/images/placeholder.jpg"
-                }
+                src={featuredMedia[currentImgIdx]}
                 alt={review.listing.title}
                 priority={true}
               />
-              <div className="absolute top-3 left-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md px-2 py-1 rounded-xl flex items-center gap-1 shadow-sm border border-gray-100 dark:border-gray-700">
+              
+              {/* Navigation Arrows */}
+              {featuredMedia.length > 1 && (
+                <>
+                  <button 
+                    onClick={handlePrevImg}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/30 backdrop-blur-md rounded-full text-white opacity-0 group-hover/gallery:opacity-100 transition-all border border-white/10"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button 
+                    onClick={handleNextImg}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/30 backdrop-blur-md rounded-full text-white opacity-0 group-hover/gallery:opacity-100 transition-all border border-white/10"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                  
+                  {/* Counter Badge */}
+                  <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-xl text-white text-[9px] font-black uppercase tracking-widest border border-white/10">
+                    {currentImgIdx + 1} / {featuredMedia.length}
+                  </div>
+                </>
+              )}
+
+              <div className="absolute top-3 left-3 z-20 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md px-2 py-1 rounded-xl flex items-center gap-1 shadow-sm border border-gray-100 dark:border-gray-700">
                 <Star size={12} className="text-amber-500 fill-amber-500" />
                 <span className="text-xs font-black text-gray-900 dark:text-white leading-none">{review.rating.toFixed(1)}</span>
               </div>

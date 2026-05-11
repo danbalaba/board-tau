@@ -15,7 +15,9 @@ import {
   IconPlayerPlay, 
   IconCheck, 
   IconX,
-  IconClock
+  IconClock,
+  IconChevronLeft,
+  IconChevronRight
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -23,6 +25,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
 import SafeImage from '@/components/common/SafeImage';
+import { getSafeImageSrcString } from '@/components/modals/inquiry-modal/InquiryModalUtils';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface LandlordBookingDetailsModalProps {
   booking: Booking;
@@ -41,10 +45,14 @@ export function LandlordBookingDetailsModal({
 }: LandlordBookingDetailsModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (isOpen) {
       setIsInitialLoading(true);
+      setCurrentImageIndex(0);
       const timer = setTimeout(() => setIsInitialLoading(false), 600);
       return () => clearTimeout(timer);
     }
@@ -138,17 +146,56 @@ export function LandlordBookingDetailsModal({
                     Booked Room
                   </span>
                   <div className="flex flex-col md:flex-row gap-6">
-                    <div className="w-full md:w-1/2 aspect-video rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-800">
-                      <SafeImage
-                        src={(booking.room?.images && booking.room.images.length > 0) 
-                          ? booking.room.images[0].url 
-                          : (booking.listing?.images && booking.listing.images.length > 0)
-                            ? booking.listing.images[0].url
-                            : booking.listing?.imageSrc || "/images/placeholder.jpg"
-                        }
-                        alt={booking.listing.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
+                    <div className="w-full md:w-1/2 aspect-video rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 relative group/gallery">
+                      <AnimatePresence mode="wait">
+                        <SafeImage
+                          key={currentImageIndex}
+                          src={getSafeImageSrcString(
+                            (booking.room?.images && booking.room.images.length > 0) 
+                              ? booking.room.images[currentImageIndex].url 
+                              : (booking.listing?.images && booking.listing.images.length > 0)
+                                ? booking.listing.images[0].url
+                                : booking.listing?.imageSrc || "/images/placeholder.jpg"
+                          )}
+                          alt={booking.listing.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover/gallery:scale-110"
+                        />
+                      </AnimatePresence>
+
+                      {/* Gallery Navigation */}
+                      {booking.room?.images && booking.room.images.length > 1 && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentImageIndex((prev) => (prev === 0 ? booking.room!.images!.length - 1 : prev - 1));
+                            }}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                          >
+                            <IconChevronLeft size={18} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentImageIndex((prev) => (prev === booking.room!.images!.length - 1 ? 0 : prev + 1));
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                          >
+                            <IconChevronRight size={18} />
+                          </button>
+                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                            {booking.room.images.map((_, idx) => (
+                              <div
+                                key={idx}
+                                className={cn(
+                                  "w-1.5 h-1.5 rounded-full transition-all",
+                                  idx === currentImageIndex ? "bg-white w-4" : "bg-white/50"
+                                )}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
                     <div className="flex-1 flex flex-col justify-center">
                       <h4 className="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2">
@@ -230,14 +277,28 @@ export function LandlordBookingDetailsModal({
                     <Button
                       outline
                       className="w-full rounded-[1.25rem] py-4 border-gray-100 dark:border-gray-800 text-[10px] font-black uppercase tracking-[0.2em] group/chat flex items-center justify-center gap-2"
-                      onClick={() => window.location.href = `/landlord?openChat=true&listingId=${booking.listing.id}&tenantId=${booking.user.id}`}
+                      onClick={() => {
+                        const listingImg = (booking.room?.images && booking.room.images.length > 0) ? booking.room.images[0].url : (booking.listing?.images && booking.listing.images.length > 0) ? booking.listing.images[0].url : booking.listing?.imageSrc;
+                        const event = new CustomEvent('open-landlord-chat', {
+                          detail: {
+                            listingId: booking.listing.id,
+                            tenantId: booking.user.id,
+                            tenantName: booking.user.name || 'Tenant',
+                            tenantImage: booking.user.image || '',
+                            listingTitle: booking.listing.title,
+                            listingImage: listingImg || ''
+                          }
+                        });
+                        window.dispatchEvent(event);
+                        onClose();
+                      }}
                     >
                       <IconMail size={18} className="group-hover/chat:scale-110 transition-transform text-primary" />
                       Chat with {booking.user.name || 'Tenant'}
                     </Button>
                   </div>
 
-                  {booking.status === 'CHECKED_IN' && (
+                  {booking.status === 'CHECKED_IN' && !(booking as any).isArchived && (
                     <Button 
                       className="w-full bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 py-5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] group/act"
                       onClick={() => handleAction('COMPLETED')}

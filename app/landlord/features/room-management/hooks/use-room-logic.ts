@@ -120,20 +120,50 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
   // Refs for lifecycle management
   const isInitialMount = useRef(true);
   
-  // Listen for redirection from property creator (Run once on mount)
+  // Listen for redirection from property details or creator (Run once on mount)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const propertyId = params.get('propertyId');
       const isNewListing = params.get('newListing') === 'true';
+      const roomId = params.get('roomId');
 
+      // 1. Handle auto-open for a specific room
+      if (roomId) {
+        const fetchAndOpenRoom = async () => {
+          try {
+            // Check if already in current rooms
+            const existingRoom = rooms.find(r => r.id === roomId);
+            if (existingRoom) {
+              setSelectedRoom(existingRoom);
+              setViewModalOpen(true);
+            } else {
+              // Fetch from API
+              const res = await fetch(`/api/landlord/rooms/${roomId}`);
+              const json = await res.json();
+              if (json.success && json.room) {
+                setSelectedRoom(json.room);
+                setViewModalOpen(true);
+              }
+            }
+          } catch (err) {
+            console.error("Failed to auto-open room:", err);
+          } finally {
+            // Clean up URL
+            router.replace('/landlord/rooms', { scroll: false });
+          }
+        };
+        fetchAndOpenRoom();
+      }
+
+      // 2. Handle property creator redirection
       if (propertyId && isNewListing) {
         setFilters(prev => ({ ...prev, property: propertyId }));
         setAddModalOpen(true);
         router.replace('/landlord/rooms', { scroll: false });
       }
     }
-  }, [router]);
+  }, [router, rooms]);
 
   useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), 700);

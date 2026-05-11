@@ -18,6 +18,7 @@ import { getUnreadNotificationStats, getUnreadNotifications, markNotificationsAs
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { toast as hotToast } from "react-hot-toast";
 import { useMenuPanel } from "@/hooks/use-menu-panel";
+import { useLoadingStore } from "@/hooks/use-loading-store";
 
 interface UserMenuProps {
   user?: User;
@@ -34,8 +35,8 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
   const { startLoading } = useLoading();
   const toast = useResponsiveToast();
   const { onOpen } = useMenuPanel();
+  const { isLoggingOut, setIsLoggingOut } = useLoadingStore();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const isFetching = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -139,7 +140,12 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
 
   const handleLogout = () => {
     setIsLoggingOut(true);
-    signOut({ callbackUrl: "/" });
+    setShowLogoutConfirm(false);
+    
+    // Allow the premium animation to play for 2.5 seconds before redirecting
+    setTimeout(() => {
+      signOut({ callbackUrl: "/" });
+    }, 2500);
   };
 
   const getUnreadCountForPath = (path: string): number => {
@@ -153,7 +159,6 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
     else if (lowerPath.includes("message")) count = unreadStats.byType["message"] || 0;
 
     return count;
-
   };
 
   return (
@@ -204,17 +209,27 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
                     <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Account</p>
                     <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{user.name || user.email}</p>
                   </div>
-                  {menuItems.map((item) => {
-                    const unreadCount = getUnreadCountForPath(item.path);
-                    return (
-                      <MenuItem
-                        label={item.label}
-                        hasNotification={unreadCount > 0}
-                        onClick={() => redirect(item.path, item.label)}
-                        key={item.label}
-                      />
-                    );
-                  })}
+                  {menuItems
+                    .filter((item) => {
+                      const role = (user as { role?: string })?.role?.toLowerCase();
+                      if (role === 'landlord' || role === 'admin') {
+                        // Hide student-centric items for internal roles
+                        const label = item.label.toLowerCase();
+                        return !['my favorites', 'my inquiries', 'my reservations', 'my reviews'].includes(label);
+                      }
+                      return true;
+                    })
+                    .map((item) => {
+                      const unreadCount = getUnreadCountForPath(item.path);
+                      return (
+                        <MenuItem
+                          label={item.label}
+                          hasNotification={unreadCount > 0}
+                          onClick={() => redirect(item.path, item.label)}
+                          key={item.label}
+                        />
+                      );
+                    })}
 
                   <Modal.Trigger name="host-application">
                     <MenuItem label="Become a Host" />

@@ -80,14 +80,36 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
     const router = useRouter();
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [activeNotification, setActiveNotification] = useState(notification);
+
+    // "Freeze" the notification data so it doesn't vanish when marked as read
+    React.useEffect(() => {
+        if (notification && !activeNotification) {
+            setActiveNotification(notification);
+
+            // Auto-dismiss after 8 seconds so the user can finish reading
+            const timer = setTimeout(() => {
+                setActiveNotification(undefined);
+            }, 8000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [notification, activeNotification]);
+
+    // Reset activeNotification when the modal is closed so it's fresh for next time
+    React.useEffect(() => {
+        if (!isOpen) {
+            setActiveNotification(undefined);
+        }
+    }, [isOpen]);
 
     React.useEffect(() => {
-        if (isOpen && notification) {
+        if (isOpen) {
             markEntityNotificationsAsRead("inquiry", inquiry.id).then(() => {
                 window.dispatchEvent(new Event("notification-cleared"));
             });
         }
-    }, [isOpen, notification, inquiry.id]);
+    }, [isOpen, inquiry.id]);
     const images = inquiry.room.images || [];
 
     const formatDate = (dateString: string) => {
@@ -152,7 +174,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
 
                     {/* Content Section */}
                     <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 sm:space-y-8 bg-gray-50/50 dark:bg-gray-900/50 custom-scrollbar">
-                        {notification && (
+                        {activeNotification && !(inquiry.status === "REJECTED" && inquiry.rejectionReason) && (
                             <motion.div
                                 initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -177,10 +199,10 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                                             "text-sm font-black uppercase tracking-widest leading-none mb-1",
                                             inquiry.status === "APPROVED" ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
                                         )}>
-                                            {notification.title}
+                                            {activeNotification.title}
                                         </h4>
                                         <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
-                                            {notification.description}
+                                            {activeNotification.description}
                                         </p>
                                     </div>
                                 </div>
@@ -242,6 +264,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                                                 )}
                                                 alt={inquiry.room.name}
                                                 priority={true}
+                                                unoptimized={true}
                                             />
                                         </AnimatePresence>
 
@@ -393,7 +416,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                                                         className="aspect-square rounded-[24px] overflow-hidden border-2 border-gray-100 dark:border-gray-700 cursor-zoom-in group relative shadow-sm"
                                                         onClick={() => setPreviewImage(inquiry.profilePhotoUrl || null)}
                                                     >
-                                                        <SafeImage src={inquiry.profilePhotoUrl} alt="Selfie" />
+                                                        <SafeImage src={inquiry.profilePhotoUrl} alt="Selfie" unoptimized={true} />
                                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                             <IconEye size={24} className="text-white" />
                                                         </div>
@@ -407,7 +430,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                                                         className="aspect-square rounded-[24px] overflow-hidden border-2 border-gray-100 dark:border-gray-700 cursor-zoom-in group relative shadow-sm"
                                                         onClick={() => setPreviewImage(inquiry.idAttachmentUrl || null)}
                                                     >
-                                                        <SafeImage src={inquiry.idAttachmentUrl} alt="ID card" />
+                                                        <SafeImage src={inquiry.idAttachmentUrl} alt="ID card" unoptimized={true} />
                                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                             <IconEye size={24} className="text-white" />
                                                         </div>
@@ -503,12 +526,14 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="relative max-w-5xl w-full aspect-auto max-h-[90vh] flex items-center justify-center"
+                            className="relative w-[90vw] h-[80vh] flex items-center justify-center"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <SafeImage
                                 src={previewImage as string}
                                 alt="Enlarged preview"
+                                unoptimized={true}
+                                className="object-contain"
                             />
                         </motion.div>
                     </motion.div>

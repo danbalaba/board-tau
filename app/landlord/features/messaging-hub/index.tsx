@@ -17,9 +17,11 @@ import { IconX, IconMessage } from "@tabler/icons-react";
  */
 export default function MessagingHub({ 
   initialConversations,
+  initialActiveConversation,
   onClose
 }: { 
   initialConversations: any[],
+  initialActiveConversation?: any,
   onClose?: () => void
 }) {
   const [showInfo, setShowInfo] = useState(false);
@@ -51,6 +53,14 @@ export default function MessagingHub({
 
   // Track if we have already auto-selected from URL to prevent re-opening on close
   const hasAutoSelected = useRef(false);
+
+  // Handle initial active conversation if passed from widget expansion
+  useEffect(() => {
+    if (initialActiveConversation) {
+      setActiveConversation(initialActiveConversation);
+      hasAutoSelected.current = true;
+    }
+  }, [initialActiveConversation, setActiveConversation]);
 
   // Handle URL Deep Linking
   useEffect(() => {

@@ -253,6 +253,10 @@ export default function ReviewModal({ reservation, isOpen, onClose }: ReviewModa
 
       if (response.ok) {
         rToast.success({ title: "Review Submitted", description: "Thank you! Your review has been submitted." });
+        
+        // Dispatch custom event to sync notifications in real-time
+        window.dispatchEvent(new CustomEvent("sync-notifications"));
+        
         router.refresh();
         onClose();
       } else {
@@ -297,6 +301,10 @@ export default function ReviewModal({ reservation, isOpen, onClose }: ReviewModa
 
       if (response.ok) {
         rToast.success({ title: "Review Skipped", description: "Status updated successfully." });
+        
+        // Dispatch custom event to sync notifications in real-time
+        window.dispatchEvent(new CustomEvent("sync-notifications"));
+        
         router.refresh();
         onClose();
       } else {
@@ -628,7 +636,7 @@ export default function ReviewModal({ reservation, isOpen, onClose }: ReviewModa
               {step < 3 ? (
                 <Button
                   onClick={handleNextStep}
-                  className="w-full px-10 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest text-white bg-gray-900 dark:bg-gray-100 dark:text-gray-900 rounded-2xl hover:bg-primary dark:hover:bg-primary hover:text-white dark:hover:text-white shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
+                  className="w-full px-10 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest text-white bg-emerald-500 hover:bg-emerald-500 border-emerald-500 rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
                   Next Step <ArrowRight size={14} strokeWidth={3} />
                 </Button>

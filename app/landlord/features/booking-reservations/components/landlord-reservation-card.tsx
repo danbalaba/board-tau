@@ -24,7 +24,7 @@ interface LandlordReservationCardProps {
   reservation: ReservationRequest;
   idx: number;
   viewMode: 'grid' | 'list';
-  onUpdateStatus: (id: string, status: string) => Promise<void>;
+  onUpdateStatus: (id: string, status: string, reason?: string) => Promise<void>;
   isUpdating?: boolean;
   onViewDetails: (reservation: ReservationRequest) => void;
   onArchive: () => void;

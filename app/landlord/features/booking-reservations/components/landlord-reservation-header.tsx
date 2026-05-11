@@ -101,21 +101,27 @@ export function LandlordReservationHeader({
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative p-6 rounded-2xl border border-primary/10 shadow-sm z-30"
+      className="relative p-8 rounded-[3rem] border border-primary/10 shadow-xl overflow-hidden bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl overflow-hidden pointer-events-none" />
+      {/* Premium Background Accents */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 blur-[100px] rounded-full pointer-events-none" />
+      
       <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
-        <div className="flex items-center gap-4 shrink-0">
-          <div className="p-2.5 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary">
-            <IconCalendar size={20} />
+        <div className="flex items-center gap-6 shrink-0">
+          <div className="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center text-primary border border-gray-100 dark:border-gray-700">
+            <IconCalendar size={28} strokeWidth={2.5} />
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight truncate">
+            <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight">
               Reservations
             </h1>
-            <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider truncate">
-              Review and manage incoming requests
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-[0.2em]">
+                Review and manage incoming requests
+              </p>
+            </div>
           </div>
         </div>
 

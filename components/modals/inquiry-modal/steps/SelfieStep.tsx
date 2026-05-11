@@ -176,7 +176,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
             </>
           ) : (
             <div className="relative w-full h-full">
-              <SafeImage src={capturedSelfie} alt="Captured Selfie" />
+              <SafeImage src={capturedSelfie} alt="Captured Selfie" unoptimized={true} />
               <button
                 type="button"
                 onClick={() => {

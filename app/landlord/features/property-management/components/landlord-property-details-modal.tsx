@@ -45,7 +45,9 @@ import {
   Droplets,
   Zap,
   Shield,
-  Focus
+  Focus,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
@@ -59,6 +61,8 @@ interface PropertyDetailsModalProps {
   onClose: () => void;
   statusColors: Record<string, string>;
   formatStatus: (status: string) => string;
+  properties?: Property[];
+  onNavigate?: (property: Property) => void;
 }
 
 const AMENITY_ICONS: Record<string, any> = {
@@ -82,7 +86,9 @@ export function LandlordPropertyDetailsModal({
   property,
   onClose,
   statusColors,
-  formatStatus
+  formatStatus,
+  properties = [],
+  onNavigate
 }: PropertyDetailsModalProps) {
   const isClient = useIsClient();
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
@@ -99,6 +105,46 @@ export function LandlordPropertyDetailsModal({
     container: container ? { current: container } : undefined 
   });
   const [isLoading, setIsLoading] = useState(true);
+  // Gallery lightbox state: tracks the full image list, current index, and category label
+  const [galleryPreview, setGalleryPreview] = useState<{ images: string[]; index: number; category: string } | null>(null);
+  const [currentBannerImageIndex, setCurrentBannerImageIndex] = useState(0);
+
+  // Collect all unique images for the banner gallery
+  const bannerImages = Array.from(new Set([
+    ...(property.imageSrc ? [property.imageSrc] : []),
+    ...(property.images?.map((img: any) => img.url) || [])
+  ]));
+
+  const handleNextBannerImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentBannerImageIndex((prev) => (prev + 1) % bannerImages.length);
+  };
+
+  const handlePrevBannerImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentBannerImageIndex((prev) => (prev - 1 + bannerImages.length) % bannerImages.length);
+  };
+
+  useEffect(() => {
+    setCurrentBannerImageIndex(0);
+  }, [property.id]);
+
+  // Lightbox navigation helpers
+  const openGallery = (images: string[], index: number, category: string) => {
+    setGalleryPreview({ images, index, category });
+  };
+
+  const closeGallery = () => setGalleryPreview(null);
+
+  const galleryNext = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setGalleryPreview(prev => prev ? { ...prev, index: (prev.index + 1) % prev.images.length } : null);
+  };
+
+  const galleryPrev = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setGalleryPreview(prev => prev ? { ...prev, index: (prev.index - 1 + prev.images.length) % prev.images.length } : null);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 800);
@@ -116,6 +162,49 @@ export function LandlordPropertyDetailsModal({
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = originalStyle || ''; };
   }, []);
+
+  const currentIndex = properties.findIndex(p => p.id === property.id);
+  const hasNext = currentIndex !== -1 && currentIndex < properties.length - 1;
+  const hasPrev = currentIndex > 0;
+
+  const handleNext = () => {
+    if (hasNext && onNavigate) {
+      onNavigate(properties[currentIndex + 1]);
+      if (container) container.scrollTop = 0;
+    }
+  };
+
+  const handlePrev = () => {
+    if (hasPrev && onNavigate) {
+      onNavigate(properties[currentIndex - 1]);
+      if (container) container.scrollTop = 0;
+    }
+  };
+
+  // Use a ref to store navigation functions for the keyboard effect to keep its dependency array stable
+  const navigationRef = useRef({ handleNext, handlePrev, onClose });
+
+  // Update the ref on every render to ensure it has the latest closures
+  useEffect(() => {
+    navigationRef.current = { handleNext, handlePrev, onClose };
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (galleryPreview) {
+        if (e.key === 'Escape') closeGallery();
+        if (e.key === 'ArrowRight') galleryNext();
+        if (e.key === 'ArrowLeft') galleryPrev();
+        return;
+      }
+      
+      if (e.key === 'Escape') navigationRef.current.onClose();
+      if (e.key === 'ArrowRight') navigationRef.current.handleNext();
+      if (e.key === 'ArrowLeft') navigationRef.current.handlePrev();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [galleryPreview]); // Dependency array size remains 1
 
   // Simplified animations that don't cause layout shifts
   const headerContentOpacity = useTransform(scrollY, [0, 100], [1, 0]);
@@ -152,7 +241,13 @@ export function LandlordPropertyDetailsModal({
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-gray-900/80 backdrop-blur-md" />
+      <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0 }} 
+        onClick={onClose} 
+        className="absolute inset-0 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm" 
+      />
       <motion.div initial={{ opacity: 0, scale: 0.95, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 40 }} className="relative bg-white dark:bg-[#111827] rounded-[2.5rem] border border-gray-100 dark:border-white/10 max-w-6xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh] antialiased">
         <div ref={setContainer} className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar scroll-smooth">
         <AnimatePresence mode="wait">
@@ -168,21 +263,60 @@ export function LandlordPropertyDetailsModal({
               <p className="text-[11px] font-black uppercase tracking-[0.4em] text-gray-500 animate-pulse">Syncing Environment</p>
             </motion.div>
           ) : (
-            <motion.div key="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="flex flex-col h-full">
+            <motion.div key="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }}>
               {/* STABLE STICKY ANCHOR - Fixed at compact height to prevent layout jumps */}
               <div className="sticky top-0 w-full h-[110px] z-[40] pointer-events-none">
                 
                 {/* Full Banner - Absolute but visible beyond parent bounds initially */}
                 <motion.div 
                   style={{ opacity: headerContentOpacity, height: 280, scale: bannerScale, y: bannerTranslateY }} 
-                  className="absolute top-0 left-0 w-full overflow-hidden origin-top"
+                  className="absolute top-0 left-0 w-full overflow-hidden origin-top group pointer-events-auto"
                 >
-                  {property.imageSrc ? (
-                    <SafeImage src={property.imageSrc} alt={property.title} priority={true} />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center"><Building2 size={64} className="text-gray-300 dark:text-gray-700" /></div>
+                  <AnimatePresence mode="wait">
+                    {bannerImages.length > 0 ? (
+                      <SafeImage 
+                        key={currentBannerImageIndex}
+                        src={bannerImages[currentBannerImageIndex]} 
+                        alt={property.title} 
+                        priority={true} 
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
+                        <Building2 size={64} className="text-gray-300 dark:text-gray-700" />
+                      </div>
+                    )}
+                  </AnimatePresence>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent dark:from-gray-950 dark:via-gray-950/20" />
+                  
+                  {bannerImages.length > 1 && (
+                    <>
+                      <button 
+                        onClick={handlePrevBannerImage}
+                        className="absolute left-6 top-1/2 -translate-y-1/2 p-3 bg-black/40 backdrop-blur-xl border border-white/10 text-white rounded-2xl opacity-40 group-hover:opacity-100 transition-all hover:bg-black/60 hover:scale-110 pointer-events-auto z-50"
+                      >
+                        <ChevronLeft size={20} />
+                      </button>
+                      <button 
+                        onClick={handleNextBannerImage}
+                        className="absolute right-6 top-1/2 -translate-y-1/2 p-3 bg-black/40 backdrop-blur-xl border border-white/10 text-white rounded-2xl opacity-40 group-hover:opacity-100 transition-all hover:bg-black/60 hover:scale-110 pointer-events-auto z-50"
+                      >
+                        <ChevronRight size={20} />
+                      </button>
+
+                      {/* Dots Indicator */}
+                      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 px-3 py-2 bg-black/20 backdrop-blur-md rounded-full border border-white/5 z-50">
+                        {bannerImages.map((_, idx) => (
+                          <div 
+                            key={idx} 
+                            className={cn(
+                              "h-1 transition-all duration-500 rounded-full",
+                              currentBannerImageIndex === idx ? "w-6 bg-primary" : "w-1.5 bg-white/30"
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/20 to-transparent" />
                   
                   {/* Full Header Content */}
                   <div className="absolute inset-0 p-10 flex flex-col justify-between z-40">
@@ -211,9 +345,9 @@ export function LandlordPropertyDetailsModal({
                   className="absolute inset-0 bg-white/90 dark:bg-gray-900/95 backdrop-blur-2xl border-b border-gray-100 dark:border-gray-800 flex items-center px-10"
                 >
                   <div className="flex items-center gap-4">
-                    {property.imageSrc ? (
+                    {bannerImages[currentBannerImageIndex] ? (
                       <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-xl">
-                        <SafeImage src={property.imageSrc} alt={property.title} />
+                        <SafeImage src={bannerImages[currentBannerImageIndex]} alt={property.title} />
                       </div>
                     ) : (
                       <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-300 border-2 border-white shadow-xl"><Building2 size={20} /></div>
@@ -296,11 +430,20 @@ export function LandlordPropertyDetailsModal({
                                 <span className="text-[9px] font-bold bg-gray-100 dark:bg-gray-800 text-gray-500 px-3 py-1 rounded-full uppercase tracking-tighter">{images.length} Photos</span>
                               </div>
                               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                {images.map((url, idx) => (
-                                  <div key={idx} className="group relative aspect-video rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all cursor-pointer">
-                                  <SafeImage src={url} alt={`${category} ${idx + 1}`} />
+                                {(images as string[]).map((url, idx) => (
+                                  <div 
+                                    key={idx} 
+                                    onClick={() => openGallery(images as string[], idx, category)}
+                                    className="group relative aspect-video rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all cursor-pointer"
+                                  >
+                                    <SafeImage src={url} alt={`${category} ${idx + 1}`} />
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-[2px]">
                                       <Eye size={24} className="text-white" />
+                                      {(images as string[]).length > 1 && (
+                                        <span className="absolute bottom-2 right-2 text-[9px] font-black text-white/80 bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                                          {idx + 1} / {(images as string[]).length}
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                 ))}
@@ -318,8 +461,20 @@ export function LandlordPropertyDetailsModal({
                       </div>
                       <div className="grid grid-cols-1 gap-5">
                         {property.rooms?.map((room) => (
-                          <div key={room.id} className="group flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 hover:border-primary/30 transition-all shadow-sm hover:shadow-md">
-                            <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 relative">
+                          <Link 
+                            key={room.id} 
+                            href={`/landlord/rooms?roomId=${room.id}`}
+                            className="group flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 hover:border-primary/30 transition-all shadow-sm hover:shadow-md cursor-pointer"
+                          >
+                            <div 
+                              className={cn("w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 relative", room.images?.[0]?.url ? "cursor-pointer" : "")}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const roomImgs = room.images?.map((i: any) => i.url).filter(Boolean) || [];
+                                if (roomImgs.length > 0) openGallery(roomImgs, 0, room.name || 'Room');
+                              }}
+                            >
                               {room.images?.[0]?.url ? (<SafeImage src={room.images?.[0].url} alt={room.name} />) : (<div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-300"><Bed size={24} /></div>)}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -328,7 +483,7 @@ export function LandlordPropertyDetailsModal({
                                 <span className="text-primary font-black text-sm">₱{(room.price || 0).toLocaleString()}</span>
                               </div>
                               <div className="flex flex-wrap items-center gap-3 mb-3">
-                                <div className="flex items-center gap-1 text-[10px] font-bold text-gray-400"><Users size={12} className="text-blue-500" /><span>Guests: {room.capacity}</span></div>
+                                <div className="flex items-center gap-1 text-[10px] font-bold text-gray-400"><Users size={12} className="text-blue-500" /><span>Capacity: {room.capacity} Slots</span></div>
                                 <div className="flex items-center gap-1 text-[10px] font-bold text-gray-400"><Check size={12} className="text-green-500" /><span>Available: {room.availableSlots}</span></div>
                                 <div className="flex items-center gap-1 text-[10px] font-bold text-gray-400"><Bed size={12} className="text-purple-500" /><span>{room.bedType} Bed</span></div>
                                 {room.size && (<div className="flex items-center gap-1 text-[10px] font-bold text-gray-400"><Maximize size={12} className="text-orange-500" /><span>{room.size} sqm</span></div>)}
@@ -359,7 +514,7 @@ export function LandlordPropertyDetailsModal({
                                 </div>
                               )}
                             </div>
-                          </div>
+                          </Link>
                         ))}
                       </div>
                     </section>
@@ -413,26 +568,182 @@ export function LandlordPropertyDetailsModal({
                   </div>
                 </div>
               </div>
-
-              <div className="flex-shrink-0 px-6 py-5 bg-gray-50/50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex flex-col md:flex-row items-center justify-between gap-6">
-                 <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">Last Updated</span>
-                  <span className="text-[10px] font-black text-gray-600 dark:text-gray-300">{new Date(property.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-                  <Link href={`/landlord/properties/${property.id}/edit`} className="w-full sm:w-auto flex-1 md:flex-none">
-                    <Button className="rounded-2xl w-full py-3 px-6 shadow-xl shadow-primary/20 flex items-center justify-center gap-2 group/edit whitespace-nowrap"><Pencil size={14} className="group-hover/edit:rotate-12 transition-transform" /><span className="text-[10px] font-black uppercase tracking-widest">Full Property Editor</span></Button>
-                  </Link>
-                  <Button outline onClick={onClose} className="rounded-2xl w-full sm:w-auto py-3 px-8 flex items-center justify-center border-gray-200 dark:border-gray-700">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Dismiss</span>
-                  </Button>
-                </div>
-              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>
         </div>
+
+        {/* Fixed Footer */}
+        {!isLoading && (
+          <div className="flex-shrink-0 px-8 py-5 bg-white dark:bg-gray-900/50 border-t border-gray-100 dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 z-50">
+             <div className="flex flex-col items-center md:items-start text-center md:text-left">
+              <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">Last Updated</span>
+              <span className="text-[10px] font-black text-gray-500 dark:text-gray-300">{new Date(property.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {!(property as any).isArchived && (
+                <Link href={`/landlord/properties/${property.id}/edit`}>
+                  <button className="rounded-2xl px-8 py-3 bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border border-primary/20">
+                    <Pencil size={14} />
+                    Full Property Editor
+                  </button>
+                </Link>
+              )}
+              <button
+                onClick={onClose}
+                className="rounded-2xl px-8 py-3 border border-gray-200 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all shadow-sm"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
       </motion.div>
+
+      {/* Image Lightbox Overlay */}
+      <AnimatePresence>
+        {galleryPreview && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm p-4 sm:p-8"
+            onClick={closeGallery}
+          >
+            {/* Close button */}
+            <button
+              onClick={(e) => { e.stopPropagation(); closeGallery(); }}
+              className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full text-white transition-all border border-white/20 shadow-2xl z-50"
+            >
+              <X size={24} />
+            </button>
+
+            {/* Category label + counter */}
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-3 z-50">
+              <span className="px-4 py-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-black uppercase tracking-widest text-white">
+                {galleryPreview.category}
+              </span>
+              <span className="px-3 py-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-black text-white/70">
+                {galleryPreview.index + 1} / {galleryPreview.images.length}
+              </span>
+            </div>
+
+            {/* Prev button */}
+            {galleryPreview.images.length > 1 && (
+              <button
+                onClick={galleryPrev}
+                className={cn(
+                  "absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 p-4 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 transition-all shadow-2xl z-50 group",
+                  galleryPreview.index === 0 && "opacity-30 cursor-not-allowed"
+                )}
+                disabled={galleryPreview.index === 0}
+              >
+                <ChevronLeft size={28} className="group-hover:-translate-x-1 transition-transform" />
+              </button>
+            )}
+
+            {/* Image */}
+            <motion.div
+              key={galleryPreview.index}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-5xl aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-gray-900"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SafeImage src={galleryPreview.images[galleryPreview.index]} alt="Preview" fill={true} />
+            </motion.div>
+
+            {/* Next button */}
+            {galleryPreview.images.length > 1 && (
+              <button
+                onClick={galleryNext}
+                className={cn(
+                  "absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 p-4 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 transition-all shadow-2xl z-50 group",
+                  galleryPreview.index === galleryPreview.images.length - 1 && "opacity-30 cursor-not-allowed"
+                )}
+                disabled={galleryPreview.index === galleryPreview.images.length - 1}
+              >
+                <ChevronRight size={28} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+            )}
+
+            {/* Dot indicators */}
+            {galleryPreview.images.length > 1 && (
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-50">
+                {galleryPreview.images.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => { e.stopPropagation(); setGalleryPreview(prev => prev ? { ...prev, index: i } : null); }}
+                    className={cn(
+                      "h-1.5 rounded-full transition-all duration-300",
+                      i === galleryPreview.index ? "w-8 bg-primary" : "w-2 bg-white/30 hover:bg-white/60"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Navigation Buttons */}
+      {!isLoading && properties.length > 1 && (
+        <>
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-[100] hidden xl:block">
+            <button
+              onClick={handlePrev}
+              disabled={!hasPrev}
+              className={cn(
+                "p-4 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 transition-all shadow-2xl group",
+                !hasPrev && "opacity-0 pointer-events-none"
+              )}
+            >
+              <ChevronLeft size={32} className="group-hover:-translate-x-1 transition-transform" />
+            </button>
+          </div>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 z-[100] hidden xl:block">
+            <button
+              onClick={handleNext}
+              disabled={!hasNext}
+              className={cn(
+                "p-4 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 transition-all shadow-2xl group",
+                !hasNext && "opacity-0 pointer-events-none"
+              )}
+            >
+              <ChevronRight size={32} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+          
+          {/* Mobile Navigation Bar */}
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 xl:hidden">
+            <button
+              onClick={handlePrev}
+              disabled={!hasPrev}
+              className={cn(
+                "p-3 rounded-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl transition-all",
+                !hasPrev ? "opacity-30 cursor-not-allowed" : "active:scale-90"
+              )}
+            >
+              <ChevronLeft size={20} className="text-gray-900 dark:text-white" />
+            </button>
+            <div className="px-4 py-2 rounded-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
+              {currentIndex + 1} / {properties.length}
+            </div>
+            <button
+              onClick={handleNext}
+              disabled={!hasNext}
+              className={cn(
+                "p-3 rounded-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl transition-all",
+                !hasNext ? "opacity-30 cursor-not-allowed" : "active:scale-90"
+              )}
+            >
+              <ChevronRight size={20} className="text-gray-900 dark:text-white" />
+            </button>
+          </div>
+        </>
+      )}
     </div>,
     document.body
   );
