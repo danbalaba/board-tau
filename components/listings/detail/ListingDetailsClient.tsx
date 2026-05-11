@@ -174,6 +174,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
   const router = useRouter();
   const { success, error } = useResponsiveToast();
   const [activeStay, setActiveStay] = useState<{ endDate: string; status: string; listing: { title: string } } | null>(null);
+  const lastInquiryToastTime = React.useRef<number>(0);
 
   // Fetch active stay for Flexible Mode overlap checks
   useEffect(() => {
@@ -261,7 +262,11 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
 
   const handleInquiry = async (formData: any) => {
     if (!user) {
-      error("Please log in to send an inquiry.");
+      const now = Date.now();
+      if (now - lastInquiryToastTime.current > 5000) {
+        error("Please log in to send an inquiry.");
+        lastInquiryToastTime.current = now;
+      }
       return;
     }
 
@@ -296,10 +301,37 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
   };
 
   // Smart image selection for "Where you'll sleep"
-  const bedroomImage = images?.find((img: any) => 
-    img.roomType?.toLowerCase() === 'bedroom' || 
-    img.category?.toLowerCase() === 'bedroom'
-  )?.url || rooms[0]?.images?.[0]?.url || images[0]?.url;
+  const getImageUrl = (img: any) => {
+    if (!img) return null;
+    if (typeof img === 'string') return img;
+    if (typeof img.url === 'string') return img.url;
+    if (typeof img.imageUrl === 'string') return img.imageUrl;
+    if (typeof img.getUrl === 'function') return img.getUrl();
+    if (typeof img.imageSrc === 'string') return img.imageSrc;
+    if (typeof img.src === 'string') return img.src;
+    return null;
+  };
+
+  const bedroomImage = useMemo(() => {
+    // 1. Try to find an image explicitly tagged as bedroom or similar
+    const specificBedroom = images?.find((img: any) => {
+      const category = (img.roomType || img.category || img.caption || "").toLowerCase();
+      return category.includes('bedroom') || 
+             category.includes('bed') || 
+             category.includes('room') ||
+             category.includes('interior');
+    });
+    if (specificBedroom) return getImageUrl(specificBedroom);
+
+    // 2. Try to get the first image from the first room
+    if (rooms?.[0]?.images?.[0]) return getImageUrl(rooms[0].images[0]);
+    if (rooms?.[0]?.imageSrc) return getImageUrl(rooms[0].imageSrc);
+
+    // 3. Fallback to the first listing image
+    if (images?.[0]) return getImageUrl(images[0]);
+    
+    return null;
+  }, [images, rooms]);
 
   // Smart bed info summary
   const getBedInfo = () => {
@@ -400,12 +432,13 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Where you&apos;ll sleep</h2>
             <div 
               onClick={() => setShowBedroomPreview(true)}
-              className="group relative overflow-hidden rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm cursor-pointer"
+              className="group relative overflow-hidden rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm cursor-pointer h-80 sm:h-96"
             >
               <SafeImage
                 src={bedroomImage}
                 alt="Bedroom"
-                className="w-full h-72 object-cover group-hover:scale-[1.03] transition-transform duration-700"
+                className="group-hover:scale-[1.03] transition-transform duration-700"
+                containerClassName="w-full h-full"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/20 to-transparent" />
               <div className="absolute bottom-8 left-8">
@@ -815,12 +848,14 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="max-w-6xl w-full max-h-[90vh] flex flex-col items-center"
+              className="max-w-6xl w-full max-h-[90vh] flex flex-col items-center relative z-[75]"
               onClick={(e) => e.stopPropagation()}
             >
               <SafeImage
                 src={bedroomImage}
                 alt="Bedroom Full Preview"
+                containerClassName="w-full h-[60vh] md:h-[75vh] rounded-3xl"
+                className="object-contain"
               />
               <p className="text-white/60 text-sm font-black mt-6 uppercase tracking-widest">
                  {bedInfo || "Standard Unit Preview"}

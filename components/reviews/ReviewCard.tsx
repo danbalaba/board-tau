@@ -61,7 +61,12 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
           "0 15px 35px rgba(16, 185, 129, 0.25)",
           "0 0 0 rgba(16, 185, 129, 0)"
         ]
-      } : { opacity: 1, y: 0 }}
+      } : { 
+        opacity: 1, 
+        y: 0,
+        scale: 1,
+        boxShadow: "0 0 0 rgba(0,0,0,0)"
+      }}
       whileHover={{ y: -4, scale: 1.02 }}
       transition={{ 
         opacity: { duration: 0.3 },

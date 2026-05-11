@@ -14,6 +14,8 @@ import HostApplicationModal from "@/components/modals/HostApplicationModal";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { useMenuPanel } from "@/hooks/use-menu-panel";
+import { useLoadingStore } from "@/hooks/use-loading-store";
+
 
 interface RightSwipePanelProps {
   user?: (User & { id: string; role?: string });
@@ -23,8 +25,8 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
   const router = useRouter();
   const { isOpen, onOpen, onClose } = useMenuPanel();
   const [unreadStats, setUnreadStats] = useState<{ total: number; byType: Record<string, number> } | null>(null);
+  const { isLoggingOut, setIsLoggingOut } = useLoadingStore();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isInteractable, setIsInteractable] = useState(false);
 
   // Interaction shield: Prevent accidental clicks during the opening animation
@@ -60,7 +62,11 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
 
   const handleLogoutConfirm = () => {
     setIsLoggingOut(true);
-    signOut({ callbackUrl: "/" });
+    setShowLogoutConfirm(false);
+    
+    setTimeout(() => {
+      signOut({ callbackUrl: "/" });
+    }, 2500);
   };
 
   // Close panel when user navigates
@@ -233,7 +239,7 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
         <HostApplicationModal />
       </Modal.Window>
 
-      <Modal isOpen={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} width="xs">
+      <Modal isOpen={showLogoutConfirm && !isLoggingOut} onClose={() => setShowLogoutConfirm(false)} width="xs">
         <ConfirmModal
           isOpen={showLogoutConfirm}
           onClose={() => setShowLogoutConfirm(false)}

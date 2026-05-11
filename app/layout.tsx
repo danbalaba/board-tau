@@ -68,10 +68,10 @@ export default function RootLayout({
           </LayoutContent>
           <SpeedInsights />
         </Providers>
-      </body>
         {process.env.GA_MEASUREMENT_ID && (
           <GoogleAnalytics gaId={process.env.GA_MEASUREMENT_ID} />
         )}
+      </body>
     </html>
   );
 }

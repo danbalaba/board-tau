@@ -305,9 +305,10 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
                            }}
                         >
                            <SafeImage
-                              src={roomImages[0].url}
-                              alt={room}
-                              className="w-full h-24 object-cover rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
+                               src={roomImages[0].url}
+                               alt={room}
+                               containerClassName="w-full h-24 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden"
+                               className="object-cover"
                            />
                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{room}</p>
                         </div>
@@ -344,7 +345,8 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
                                        <SafeImage
                                           src={img.url}
                                           alt={img.caption || room}
-                                          className="w-full h-auto max-h-[600px] object-cover rounded-md"
+                                          containerClassName="w-full aspect-[4/3] md:aspect-video rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800"
+                                          className="object-cover"
                                        />
                                     </div>
                                  )
@@ -374,7 +376,8 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
                                        <SafeImage
                                           src={img.url}
                                           alt={img.caption || "Property Photo"}
-                                          className="w-full h-auto max-h-[600px] object-cover rounded-md"
+                                          containerClassName="w-full aspect-[4/3] md:aspect-video rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800"
+                                          className="object-cover"
                                        />
                                     </div>
                                  )

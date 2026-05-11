@@ -164,7 +164,7 @@ const IDStep: React.FC<IDStepProps> = ({
             </>
           ) : (
             <div className="relative w-full h-full">
-              <SafeImage src={capturedID} alt="Captured ID" />
+              <SafeImage src={capturedID} alt="Captured ID" unoptimized={true} />
               <button 
                 type="button"
                 onClick={() => {

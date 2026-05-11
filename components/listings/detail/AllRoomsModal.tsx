@@ -159,6 +159,7 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
   const [sortOption, setSortOption] = useState<SortOption>("price-asc");
   const [showFilters, setShowFilters] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
+  const lastInquiryToastTime = React.useRef<number>(0);
 
   // Trigger a brief loading state for UX feedback
   const triggerFilteringState = () => {
@@ -225,7 +226,11 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
 
   const handleInquireClick = (room: Room) => {
     if (!user) {
-      toast.error("Please log in to inquire");
+      const now = Date.now();
+      if (now - lastInquiryToastTime.current > 5000) {
+        toast.error("Please log in to inquire");
+        lastInquiryToastTime.current = now;
+      }
       return;
     }
     onInquire(room);

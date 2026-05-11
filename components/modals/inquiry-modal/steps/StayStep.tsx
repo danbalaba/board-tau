@@ -9,7 +9,7 @@ import { Controller } from "react-hook-form";
 import Button from "@/components/common/Button";
 import { FormData } from "../useInquiryLogic";
 import { ModernInquirySelect } from "../components/ModernInquirySelect";
-import { sanitizeSecurityString, validateStrictChars, isCleanString } from "../validation/security";
+import { sanitizeSecurityString, validateStrictChars, isCleanString, validatePhoneNumber } from "../validation/security";
 
 interface StayStepProps {
   dateRange: DateRange | undefined;
@@ -51,23 +51,33 @@ const StayStep: React.FC<StayStepProps> = ({
         type: 'email',
         validation: {
           required: "Email is required",
-          pattern: {
-            value: /\S+@\S+\.\S+/,
-            message: "Please enter a valid email address"
+          validate: (value: string) => {
+            const emailRegex = /\S+@\S+\.\S+/;
+            if (!emailRegex.test(value)) {
+              return "Please enter a valid email address";
+            }
+            if (!isCleanString(value)) {
+              return "Please remove special characters (< > { } [ ])";
+            }
+            return true;
           }
         }
       };
     }
-    // Default to Phone/SMS validation (PH format)
+
     return {
-      label: 'Phone Number / ID Number',
-      placeholder: 'Numbers, - and _ only',
+      label: 'Phone Number (Mobile/Viber/WhatsApp)',
+      placeholder: 'e.g. 09123456789 or +63...',
       type: 'text',
       validation: {
         required: "Information is required",
         validate: (value: string) => {
-          if (!validateStrictChars(value)) {
-            return "Only numbers, hyphens (-) and underscores (_) are allowed";
+          // Double check method inside validation to avoid race conditions
+          const currentMethod = getValues('contactMethod');
+          if (currentMethod === 'email') return true; // Let the email check handle it if it switched
+
+          if (!validatePhoneNumber(value)) {
+            return "Please enter a valid phone number (e.g. 09123456789 or +63...)";
           }
           if (!isCleanString(value)) {
             return "Please remove special characters (< > { } [ ])";
@@ -285,6 +295,7 @@ const StayStep: React.FC<StayStepProps> = ({
                 value={field.value}
                 onChange={(val) => {
                   field.onChange(val);
+                  // Reset field and clear errors when method changes
                   setValue('contactInfo', '', { shouldValidate: false });
                   clearErrors('contactInfo');
                 }}
@@ -310,6 +321,7 @@ const StayStep: React.FC<StayStepProps> = ({
               <span className="text-red-500 ml-1">*</span>
             </label>
             <Controller
+              key={contactMethod} // CRITICAL: Forces RHF to reset internal rules when method changes
               name="contactInfo"
               control={control}
               rules={getContactInfoProps().validation}

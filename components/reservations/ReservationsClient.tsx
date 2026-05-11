@@ -24,7 +24,8 @@ import {
     HeartPulse,
     Building2,
     Truck,
-    GraduationCap
+    GraduationCap,
+    X
 } from "lucide-react";
 import Modal from "@/components/modals/Modal";
 import ModernLoader from "@/components/common/ModernLoader";
@@ -115,15 +116,17 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
         };
         fetchNotifications();
 
-        // Listen for notification-cleared event to sync state immediately
-        const handleNotificationCleared = () => {
+        // Listen for notification-cleared/added events to sync state immediately
+        const handleNotificationSync = () => {
             fetchNotifications();
             router.refresh();
         };
 
-        window.addEventListener("notification-cleared", handleNotificationCleared);
+        window.addEventListener("notification-cleared", handleNotificationSync);
+        window.addEventListener("sync-notifications", handleNotificationSync);
         return () => {
-            window.removeEventListener("notification-cleared", handleNotificationCleared);
+            window.removeEventListener("notification-cleared", handleNotificationSync);
+            window.removeEventListener("sync-notifications", handleNotificationSync);
         };
     }, []);
     const [searchQuery, setSearchQuery] = useState("");
@@ -266,9 +269,6 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
     }, [reservations, statusFilter, searchQuery, sortBy]);
 
     const handleViewDetails = (reservation: Reservation) => {
-        // Optimistically clear notification for this reservation locally
-        setUnreadNotifications(prev => prev.filter(n => !n.link.includes(reservation.id)));
-        
         setSelectedReservation(reservation);
         setShowDetailsModal(true);
     };
@@ -450,11 +450,6 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                                             onPayNow={() => handlePayNow(reservation)}
                                             onCancel={() => handleCancelClick(reservation)}
                                             onReview={() => handleReview(reservation)}
-                                            onMessage={() => {
-                                                const landlordId = (reservation.listing as any)?.userId as string | undefined;
-                                                if (!landlordId) return;
-                                                router.push(`/messages/${reservation.listingId}/${landlordId}`);
-                                            }}
                                         />
                                     </motion.div>
                                 );
@@ -519,80 +514,89 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                 onClose={() => setShowCancelReason(false)}
                 width="md"
                 title=""
+                closeOnOutsideClick={false}
             >
-                <div className="overflow-hidden rounded-[32px]">
-                    {/* Premium Header Banner */}
-                    <div className="bg-primary/10 p-7 border-b border-primary/10 flex items-start gap-5">
-                        <div className="p-3 bg-primary text-white rounded-2xl shadow-xl shadow-primary/20">
-                            <AlertCircle size={26} strokeWidth={2.5} />
+                <div className="overflow-hidden rounded-3xl relative">
+                    {/* X Close Button */}
+                    <button
+                        onClick={() => setShowCancelReason(false)}
+                        className="absolute top-4 right-4 z-10 p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-full transition-colors text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                        aria-label="Close"
+                    >
+                        <X size={18} />
+                    </button>
+                    {/* Header Banner - theme-aware */}
+                    <div className="bg-primary/10 dark:bg-primary/5 p-5 border-b border-primary/20 dark:border-primary/10 flex items-center gap-4">
+                        <div className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 flex-shrink-0">
+                            <AlertCircle size={20} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter">Cancellation Details</h3>
-                            <p className="text-[10px] font-black text-primary/70 uppercase tracking-[0.2em] leading-tight">
+                            <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">Cancellation Details</h3>
+                            <p className="text-[10px] font-bold text-primary dark:text-primary/70 uppercase tracking-widest mt-0.5">
                                 Help us improve the community
                             </p>
                         </div>
                     </div>
 
-                    <div className="p-8">
-                        <p className="text-sm text-gray-400 mb-8 font-medium leading-relaxed">
-                            We're sorry to see you go. Please let the landlord know the reason for your cancellation to finalize the record.
+                    <div className="p-6">
+                        <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-5 leading-relaxed">
+                            Please let the landlord know why you're cancelling. This helps with record keeping and keeps the platform fair.
                         </p>
 
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 gap-3">
-                                {[
-                                    { label: "Financial constraints", icon: <DollarSign size={18} /> },
-                                    { label: "Family emergency / Health reasons", icon: <HeartPulse size={18} /> },
-                                    { label: "Found a better boarding house", icon: <Building2 size={18} /> },
-                                    { label: "Change of residence plan (Relocation)", icon: <Truck size={18} /> },
-                                    { label: "School/Work schedule changed", icon: <GraduationCap size={18} /> },
-                                    { label: "Other", icon: <MoreHorizontal size={18} /> }
-                                ].map((item, index) => (
-                                    <motion.button
-                                        key={item.label}
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        onClick={() => setCancelReason(item.label)}
-                                        className={`group flex items-center gap-4 px-5 py-4 rounded-[22px] border-2 transition-all duration-300 ${cancelReason === item.label
-                                                ? "border-primary bg-primary/5 text-primary shadow-xl shadow-primary/10 ring-8 ring-primary/5"
-                                                : "border-gray-50 hover:border-gray-200 bg-gray-50/50 dark:bg-gray-900/50 dark:border-gray-800 dark:hover:border-gray-700 text-gray-600 dark:text-gray-300"
-                                            }`}
-                                    >
-                                        <div className={`p-2.5 rounded-xl transition-colors ${cancelReason === item.label
-                                                ? "bg-primary text-white"
-                                                : "bg-white dark:bg-gray-800 text-gray-400 group-hover:text-primary"
-                                            }`}>
-                                            {item.icon}
-                                        </div>
-                                        <span className="text-sm font-black tracking-tight">{item.label}</span>
-                                    </motion.button>
-                                ))}
-                            </div>
-
-                            <AnimatePresence>
-                                {cancelReason === "Other" && (
-                                    <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: "auto" }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                    >
-                                        <textarea
-                                            placeholder="Please specify your reason here..."
-                                            className="w-full p-5 border-2 border-gray-100 dark:border-gray-800 dark:bg-gray-900 rounded-[22px] focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none text-sm font-medium transition-all min-h-[120px] dark:text-white"
-                                            onChange={(e) => setCancelReason(e.target.value)}
-                                        />
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                        <div className="grid grid-cols-1 gap-2 mb-5">
+                            {[
+                                { label: "Financial constraints", icon: <DollarSign size={16} /> },
+                                { label: "Family emergency / Health reasons", icon: <HeartPulse size={16} /> },
+                                { label: "Found a better boarding house", icon: <Building2 size={16} /> },
+                                { label: "Change of residence plan (Relocation)", icon: <Truck size={16} /> },
+                                { label: "School/Work schedule changed", icon: <GraduationCap size={16} /> },
+                                { label: "Other", icon: <MoreHorizontal size={16} /> }
+                            ].map((item, index) => (
+                                <motion.button
+                                    key={item.label}
+                                    initial={{ opacity: 0, x: -8 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.04 }}
+                                    onClick={() => setCancelReason(item.label)}
+                                    className={`group flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left ${cancelReason === item.label
+                                        ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary shadow-sm ring-2 ring-primary/10"
+                                        : "border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 bg-gray-50/80 dark:bg-gray-900/50 text-gray-600 dark:text-gray-300"
+                                    }`}
+                                >
+                                    <div className={`p-2 rounded-xl flex-shrink-0 transition-colors ${cancelReason === item.label
+                                        ? "bg-primary text-white"
+                                        : "bg-white dark:bg-gray-800 text-gray-400 group-hover:text-primary dark:group-hover:text-primary"
+                                    }`}>
+                                        {item.icon}
+                                    </div>
+                                    <span className="text-sm font-bold tracking-tight">{item.label}</span>
+                                </motion.button>
+                            ))}
                         </div>
 
-                        <div className="flex items-center gap-4 mt-10">
+                        <AnimatePresence>
+                            {cancelReason === "Other" && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="overflow-hidden mb-5"
+                                >
+                                    <textarea
+                                        autoFocus
+                                        placeholder="Please specify your reason here..."
+                                        className="w-full p-4 border border-gray-100 dark:border-gray-800 dark:bg-gray-900 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none text-sm font-medium transition-all min-h-[100px] dark:text-white resize-none"
+                                        onChange={(e) => setCancelReason(e.target.value)}
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <div className="grid grid-cols-2 gap-3">
                             <Button
                                 outline
                                 onClick={() => setShowCancelReason(false)}
-                                className="flex-1 rounded-[20px] py-4 h-auto text-[11px] font-black uppercase tracking-widest border-2"
+                                className="rounded-2xl py-3 h-auto text-[10px] font-black uppercase tracking-widest"
                             >
                                 Go Back
                             </Button>
@@ -600,7 +604,7 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                                 onClick={handleFinalCancel}
                                 isLoading={isCancelling}
                                 disabled={!cancelReason}
-                                className="flex-[2] rounded-[20px] py-4 h-auto text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-primary/30"
+                                className="rounded-2xl py-3 h-auto text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20"
                             >
                                 Submit Cancellation
                             </Button>
@@ -608,6 +612,7 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                     </div>
                 </div>
             </Modal>
+
 
             {/* Payment Modal */}
             {selectedReservation && (

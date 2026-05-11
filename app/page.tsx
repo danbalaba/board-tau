@@ -23,9 +23,9 @@ const Home: FC<HomeProps> = async ({ searchParams }) => {
   const user = session?.user;
 
   // Redirect admins and landlords to their respective dashboards
-  if (user?.role === "ADMIN") {
+  if (user?.role === "ADMIN" || user?.role === "admin") {
     redirect("/admin");
-  } else if (user?.role === "LANDLORD") {
+  } else if (user?.role === "LANDLORD" || user?.role === "landlord") {
     redirect("/landlord");
   }
 
@@ -48,7 +48,7 @@ const Home: FC<HomeProps> = async ({ searchParams }) => {
     } else {
       result = await getListings(resolved);
     }
-    
+
     favorites = await getFavorites();
   } catch (error) {
     console.error("Error fetching listings:", error);

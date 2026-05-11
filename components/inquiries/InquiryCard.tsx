@@ -111,7 +111,12 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
           "0 15px 35px rgba(16, 185, 129, 0.25)",
           "0 0 0 rgba(16, 185, 129, 0)"
         ]
-      } : { opacity: 1, y: 0 }}
+      } : { 
+        opacity: 1, 
+        y: 0,
+        scale: 1,
+        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" 
+      }}
       whileHover={{ y: -4, scale: 1.02 }}
       transition={{ 
         opacity: { duration: 0.3 },
@@ -123,13 +128,13 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
         },
         scale: { 
           duration: 2, 
-          repeat: Infinity, 
+          repeat: hasNotification ? Infinity : 0, 
           ease: "easeInOut",
           repeatDelay: 1
         },
         boxShadow: { 
           duration: 2, 
-          repeat: Infinity, 
+          repeat: hasNotification ? Infinity : 0, 
           ease: "easeInOut",
           repeatDelay: 1
         }
