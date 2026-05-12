@@ -18,29 +18,42 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
   ),
 
-  title: "BoardTAU",
+  title: {
+    default: "BoardTAU",
+    template: "%s | BoardTAU",
+  },
   description:
-    "Your Ultimate Destination Connection. Discover a world of endless possibilities and seamless vacation planning at BoardTAU.",
+    "A comprehensive web-based platform designed to revolutionize the search and management of boarding houses near Tarlac Agricultural University (TAU). Find safe, affordable, and suitable accommodations with ease.",
 
   icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    icon: "/images/TauBOARD-Dark.png",
+    shortcut: "/images/TauBOARD-Dark.png",
+    apple: "/images/TauBOARD-Dark.png",
   },
   manifest: "/manifest.json",
 
   openGraph: {
-    title: "BoardTAU",
+    title: "BoardTAU - Tarlac Agricultural University Boarding House System",
     description:
-    "Your Ultimate Destination Connection. Discover a world of endless possibilities and seamless vacation planning at BoardTAU.",
+      "Find and manage boarding houses near TAU. A seamless experience for students, faculty, and staff to find safe and affordable accommodations.",
+    url: "https://board-tau-rho.vercel.app",
+    siteName: "BoardTAU",
     images: [
-    {
-      url: "/logo.png",
-      width: 512,
-      height: 512,
-      alt: "BoardTAU Logo",
-    },
+      {
+        url: "/images/TauBOARD-Dark.png",
+        width: 1200,
+        height: 630,
+        alt: "BoardTAU Logo",
+      },
     ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BoardTAU",
+    description: "Find and manage boarding houses near Tarlac Agricultural University with ease.",
+    images: ["/images/TauBOARD-Dark.png"],
   },
 };
 
