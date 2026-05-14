@@ -28,10 +28,39 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 80);
+      // 🛠️ MODAL-AWARE SCROLL DETECTION:
+      // When a modal is open, our custom Modal implementation sets body to 'fixed' 
+      // and window.scrollY becomes 0. We must check the body's 'top' style to 
+      // find the 'real' scroll position that was saved.
+      const body = document.body;
+      const isLocked = body.classList.contains("fixed");
+      
+      let scrollTop = window.scrollY;
+      
+      if (isLocked && body.style.top) {
+        // body.style.top is like "-123px", we want 123
+        scrollTop = Math.abs(parseFloat(body.style.top)) || 0;
+      }
+
+      setIsScrolled(scrollTop > 80);
     };
+
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    
+    // 💡 MutationObserver to detect when Modal adds/removes 'fixed' class to body
+    const observer = new MutationObserver(handleScroll);
+    observer.observe(document.body, { 
+      attributes: true, 
+      attributeFilter: ["class", "style"] 
+    });
+
+    // Initial check
+    handleScroll();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      observer.disconnect();
+    };
   }, []);
 
   return (

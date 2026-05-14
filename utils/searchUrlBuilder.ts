@@ -50,11 +50,10 @@ export function buildSearchUrl(data: FieldValues, currentSearchParams: URLSearch
     // Convert Advanced Soft Filters (Scoring multipliers) to Boolean Parameters
     security24h: (data.advanced ?? []).includes("security24h") ? "true" : undefined,
     cctv: (data.advanced ?? []).includes("cctv") ? "true" : undefined,
-    fireSafety: (data.advanced ?? []).includes("fire-safety") ? "true" : undefined,
+    fireSafety: (data.advanced ?? []).includes("fireSafety") ? "true" : undefined,
     nearTransport: (data.advanced ?? []).includes("nearTransport") ? "true" : undefined,
-    studyFriendly: (data.advanced ?? []).includes("studyFriendly") ? "true" : undefined,
-    quietEnvironment: (data.advanced ?? []).includes("quietEnvironment") ? "true" : undefined,
-    flexibleLease: (data.advanced ?? []).includes("flexible-lease") ? "true" : undefined,
+    floodFree: (data.advanced ?? []).includes("floodFree") ? "true" : undefined,
+    backupPower: (data.advanced ?? []).includes("backupPower") ? "true" : undefined,
     isUnlimitedDistance: data.isUnlimitedDistance ? "true" : undefined,
   };
 

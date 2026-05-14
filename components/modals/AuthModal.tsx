@@ -171,7 +171,12 @@ const AuthModal = ({
           }
         } else {
           // Signup
-          await registerUser({ email, password, name });
+          const result = await registerUser({ email, password, name });
+          
+          if (result?.error) {
+            throw new Error(result.error);
+          }
+
           setUserEmail(email);
           setIsOTPModal(true);
           responsiveToast.success("OTP sent to your email!");
