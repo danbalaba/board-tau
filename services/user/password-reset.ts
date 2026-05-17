@@ -113,8 +113,16 @@ export const requestPasswordReset = async (email: string) => {
     return { success: true };
   } catch (error: any) {
     console.error("Forgot password error:", error);
-    // Generic error for the user
-    throw new Error("Failed to process request. Please try again later.");
+    
+    const safeErrorMessages = [
+      "Please wait",
+      "Security Lock",
+      "Invalid",
+      "OAuth",
+    ];
+
+    const isSafe = safeErrorMessages.some(prefix => error.message.includes(prefix));
+    return { error: isSafe ? error.message : "Failed to process request. Please try again later." };
   }
 };
 
@@ -210,6 +218,18 @@ export const resetPassword = async (token: string, password: string) => {
     return { success: true };
   } catch (error: any) {
     console.error("Reset password error:", error);
-    throw new Error(error.message || "Failed to reset password.");
+    
+    const safeErrorMessages = [
+      "Invalid",
+      "expired",
+      "Security Lock",
+      "Please wait",
+      "previous password",
+      "different from your current one",
+      "User not found"
+    ];
+
+    const isSafe = safeErrorMessages.some(prefix => error.message.includes(prefix));
+    return { error: isSafe ? error.message : "Failed to reset password." };
   }
 };

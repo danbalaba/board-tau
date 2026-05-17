@@ -66,12 +66,14 @@ const ForgotPasswordPage = () => {
     startTransition(async () => {
       try {
         const result = await requestPasswordReset(data.email);
-        if (result.success) {
+        if (result?.error) {
+          responsiveToast.error(result.error);
+        } else if (result?.success) {
           setIsSuccess(true);
           responsiveToast.success("Reset link sent! Please check your email.");
         }
       } catch (error: any) {
-        responsiveToast.error(error.message);
+        responsiveToast.error("Failed to process request. Please try again later.");
       }
     });
   };

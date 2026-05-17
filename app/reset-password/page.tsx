@@ -92,13 +92,15 @@ const ResetPasswordContent = () => {
       try {
         if (!token) throw new Error("Reset token is missing or has expired.");
         const result = await resetPassword(token, data.password);
-        if (result.success) {
+        if (result?.error) {
+          responsiveToast.error(result.error);
+        } else if (result?.success) {
           setIsSuccess(true);
           responsiveToast.success("Password reset successfully!");
           setTimeout(() => router.push("/"), 3000);
         }
       } catch (error: any) {
-        responsiveToast.error(error.message);
+        responsiveToast.error(error.message || "Failed to reset password.");
       }
     });
   };

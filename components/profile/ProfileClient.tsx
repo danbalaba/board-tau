@@ -19,6 +19,7 @@ import ConfirmModal from "@/components/common/ConfirmModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { useLoadingStore } from "@/hooks/use-loading-store";
 
 interface ProfileClientProps {
   profile: UserProfile;
@@ -32,7 +33,7 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
   const [isPageLoading, setIsPageLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { isLoggingOut, setIsLoggingOut } = useLoadingStore();
 
   const { success, error } = useResponsiveToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -57,7 +58,12 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
 
   const handleLogout = () => {
     setIsLoggingOut(true);
-    signOut({ callbackUrl: "/" });
+    setShowLogoutConfirm(false);
+    
+    // Allow the premium animation to play for 2.5 seconds before redirecting
+    setTimeout(() => {
+      signOut({ callbackUrl: "/" });
+    }, 2500);
   };
 
   const updateProfileImage = async (url: string) => {
