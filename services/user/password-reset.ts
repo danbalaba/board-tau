@@ -55,13 +55,13 @@ export const requestPasswordReset = async (email: string) => {
       return { success: true };
     }
 
-    // 🔒 Check 24-hour cooldown for recent password changes
+    // 🔒 Check 2-minute cooldown for recent password changes (optimized for live Capstone defense demos)
     if (user.lastPasswordChangeAt) {
       const timeSinceLastChange = Date.now() - user.lastPasswordChangeAt.getTime();
-      if (timeSinceLastChange < 24 * 60 * 60 * 1000) { // 24 Hours
-        const nextAvailable = new Date(user.lastPasswordChangeAt.getTime() + 24 * 60 * 60 * 1000);
-        const hoursLeft = Math.ceil((nextAvailable.getTime() - Date.now()) / (1000 * 60 * 60));
-        throw new Error(`Security Lock: Password was recently changed. Please wait ${hoursLeft} hour(s).`);
+      if (timeSinceLastChange < 2 * 60 * 1000) { // 2 Minutes
+        const nextAvailable = new Date(user.lastPasswordChangeAt.getTime() + 2 * 60 * 1000);
+        const secondsLeft = Math.ceil((nextAvailable.getTime() - Date.now()) / 1000);
+        throw new Error(`Security Lock: Password was recently changed. Please wait ${secondsLeft} second(s).`);
       }
     }
 
@@ -165,13 +165,13 @@ export const resetPassword = async (token: string, password: string) => {
 
     if (!user) throw new Error("User not found.");
 
-    // 🔒 Check 24-hour cooldown for recent password changes
+    // 🔒 Check 2-minute cooldown for recent password changes (optimized for live Capstone defense demos)
     if (user.lastPasswordChangeAt) {
       const timeSinceLastChange = Date.now() - user.lastPasswordChangeAt.getTime();
-      if (timeSinceLastChange < 24 * 60 * 60 * 1000) { // 24 Hours
-        const nextAvailable = new Date(user.lastPasswordChangeAt.getTime() + 24 * 60 * 60 * 1000);
-        const hoursLeft = Math.ceil((nextAvailable.getTime() - Date.now()) / (1000 * 60 * 60));
-        throw new Error(`Security Lock: Password was recently changed. Please wait ${hoursLeft} hour(s).`);
+      if (timeSinceLastChange < 2 * 60 * 1000) { // 2 Minutes
+        const nextAvailable = new Date(user.lastPasswordChangeAt.getTime() + 2 * 60 * 1000);
+        const secondsLeft = Math.ceil((nextAvailable.getTime() - Date.now()) / 1000);
+        throw new Error(`Security Lock: Password was recently changed. Please wait ${secondsLeft} second(s).`);
       }
     }
 

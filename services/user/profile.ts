@@ -175,14 +175,14 @@ export async function changeUserPassword(oldPassword: string, newPassword: strin
     throw new Error("User not found");
   }
 
-  // 🔒 Security: 24-hour cooldown for password changes
+  // 🔒 Security: 2-minute cooldown for password changes (optimized for live Capstone defense demos)
   if (user.lastPasswordChangeAt) {
     const lastChange = user.lastPasswordChangeAt;
-    const cooldownMs = 24 * 60 * 60 * 1000; // 24 Hours
+    const cooldownMs = 2 * 60 * 1000; // 2 Minutes
     if (lastChange && (Date.now() - lastChange.getTime()) < cooldownMs) {
       const nextAvailable = new Date(lastChange.getTime() + cooldownMs);
-      const hoursLeft = Math.ceil((nextAvailable.getTime() - Date.now()) / (1000 * 60 * 60));
-      throw new Error(`Security Lock: Please wait ${hoursLeft} hour(s) before changing your password again.`);
+      const secondsLeft = Math.ceil((nextAvailable.getTime() - Date.now()) / 1000);
+      throw new Error(`Security Lock: Please wait ${secondsLeft} second(s) before changing your password again.`);
     }
   }
 
