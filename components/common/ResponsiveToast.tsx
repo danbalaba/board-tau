@@ -133,7 +133,7 @@ const ResponsiveToasters: React.FC = () => {
 
       {isMobile && (
         <div style={{ position: 'fixed', top: '24px', left: 0, right: 0, zIndex: 99999, pointerEvents: 'none' }}>
-          <div className="flex justify-center w-full px-4 pointer-events-auto">
+          <div className="flex justify-center w-full px-4 pointer-events-none">
             <Toaster
               position="top-center"
               options={{

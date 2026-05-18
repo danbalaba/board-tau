@@ -50,23 +50,53 @@ const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const validateFile = (file: File) => {
-    // 1. Type Check (Prioritized as per Step 5 behavior)
-    if (accept) {
-      const isImageAccept = accept.includes('image/jpeg') || accept.includes('image/png') || accept.includes('image/webp');
-      
-      if (isImageAccept) {
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!allowedTypes.includes(file.type)) {
-          toast.error(`${file.name} is an invalid file type. Only JPG, PNG, and WEBP allowed.`, { id: `type-error-${file.name}` });
-          return false;
+    const fileType = file.type;
+    const fileName = file.name;
+    const fileExtension = '.' + fileName.split('.').pop()?.toLowerCase();
+
+    // 1. Type Check
+    const acceptTypes = accept || ".pdf,.jpg,.jpeg,.png";
+    const allowedSpecs = acceptTypes.split(',').map(s => s.trim().toLowerCase());
+    
+    let isTypeAllowed = false;
+    for (const spec of allowedSpecs) {
+      if (spec.startsWith('.')) {
+        // Extension check (e.g. .pdf, .jpg)
+        if (fileExtension === spec) {
+          isTypeAllowed = true;
+          break;
+        }
+      } else if (spec.includes('/*')) {
+        // Wildcard MIME type check (e.g. image/*)
+        const mimeGroup = spec.split('/')[0];
+        if (fileType.startsWith(mimeGroup + '/')) {
+          isTypeAllowed = true;
+          break;
+        }
+      } else {
+        // Direct MIME type check (e.g. image/jpeg, application/pdf)
+        if (fileType === spec) {
+          isTypeAllowed = true;
+          break;
         }
       }
-      // General type check for other formats if needed could go here
+    }
+
+    if (!isTypeAllowed) {
+      let allowedLabel = "valid document formats";
+      if (acceptTypes.includes("image/")) {
+        allowedLabel = "JPG, PNG, or WEBP images";
+      } else if (acceptTypes.includes("pdf")) {
+        allowedLabel = "PDF, JPG, or PNG files";
+      }
+      
+      toast.error(`${fileName} is an invalid file type. Only ${allowedLabel} allowed.`, { id: 'file-upload-error' });
+      return false;
     }
 
     // 2. Size Check
     if (file.size > MAX_FILE_SIZE) {
-      toast.error(`File "${file.name}" is too large. Maximum size is 5MB.`, { id: `size-error-${file.name}` });
+      toast.error(`File "${fileName}" is too large. Maximum size is 5MB.`, { id: 'file-upload-error' });
       return false;
     }
 
