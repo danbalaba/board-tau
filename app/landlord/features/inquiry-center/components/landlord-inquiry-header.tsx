@@ -19,6 +19,7 @@ import {
 } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
+import { prepareDataForExport, exportToCSV, exportToExcel } from '@/utils/export-utils';
 import { LandlordInquirySearch } from './landlord-inquiry-search';
 import { Inquiry } from '../hooks/use-inquiry-logic';
 import {
@@ -58,25 +59,63 @@ export function LandlordInquiryHeader({
   isArchived,
   onToggleArchived
 }: LandlordInquiryHeaderProps) {
+  const handleGenerateCSV = async () => {
+    const reportData = prepareDataForExport(rawInquiries, 'inquiry');
+    const totalInquiries = rawInquiries.length;
+    const uniqueListings = new Set(rawInquiries.map(i => i.listingId)).size;
+    const metadata = {
+      reportTitle: 'Tenant Inquiry Business Report',
+      reportId: `BTAU-INQ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Total Inquiries', value: `${totalInquiries}` },
+        { label: 'Interested Properties', value: `${uniqueListings}` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToCSV(reportData, `Inquiry_Report_${new Date().toLocaleDateString()}`, metadata);
+  };
+
+  const handleGenerateExcel = async () => {
+    const reportData = prepareDataForExport(rawInquiries, 'inquiry');
+    const totalInquiries = rawInquiries.length;
+    const uniqueListings = new Set(rawInquiries.map(i => i.listingId)).size;
+    const metadata = {
+      reportTitle: 'Tenant Inquiry Business Report',
+      reportId: `BTAU-INQ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Total Inquiries', value: `${totalInquiries}` },
+        { label: 'Interested Properties', value: `${uniqueListings}` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToExcel(reportData, `Inquiry_Report_${new Date().toLocaleDateString()}`, 'Inquiries', metadata);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative p-6 rounded-2xl border border-primary/10 shadow-sm z-30"
+      className="relative p-8 rounded-[3rem] border border-primary/10 shadow-xl overflow-hidden bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl overflow-hidden pointer-events-none" />
+      {/* Premium Background Accents */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 blur-[100px] rounded-full pointer-events-none" />
+      
       <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
         <div className="flex items-center gap-6 shrink-0">
-          <div className="p-2.5 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary">
-            <IconMail size={20} />
+          <div className="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center text-primary border border-gray-100 dark:border-gray-700">
+            <IconMail size={28} strokeWidth={2.5} />
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight truncate">
+            <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight">
               Tenant Inquiries
             </h1>
-            <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider truncate">
-              Manage your active inquiries & requests
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-[0.2em]">
+                Manage your active inquiries & requests
+              </p>
+            </div>
           </div>
         </div>
 
@@ -174,8 +213,8 @@ export function LandlordInquiryHeader({
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all backdrop-blur-sm shadow-sm",
                 isArchived 
-                  ? "bg-amber-500/10 border-amber-500/20 text-amber-600 hover:bg-amber-500/20" 
-                  : "bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700 text-gray-500 hover:text-primary"
+              ? "bg-amber-500/10 border-amber-500/20 text-amber-600 hover:bg-amber-500/20" 
+              : "bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700 text-gray-500 hover:text-primary"
               )}
             >
               <IconHistory size={14} className={isArchived ? "animate-spin-slow" : ""} />
@@ -204,7 +243,13 @@ export function LandlordInquiryHeader({
               </button>
             </div>
             
-            <GenerateReportButton onGeneratePDF={handleGenerateReport} />
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport}
+              onGenerateCSV={handleGenerateCSV}
+              onGenerateExcel={handleGenerateExcel}
+              label="Generate Report"
+              className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hidden sm:flex items-center gap-2"
+            />
           </div>
         </div>
       </div>

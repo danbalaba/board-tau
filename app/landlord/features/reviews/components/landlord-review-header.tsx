@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/app/admin/components/ui/dropdown-menu';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
+import { prepareDataForExport, exportToCSV, exportToExcel } from '@/utils/export-utils';
 import { LandlordReviewSearch } from './landlord-review-search';
 import { Review } from '../hooks/use-review-logic';
 
@@ -52,25 +53,67 @@ export function LandlordReviewHeader({
   setSearchQuery,
   rawReviews
 }: LandlordReviewHeaderProps) {
+  const handleGenerateCSV = async () => {
+    const reportData = prepareDataForExport(rawReviews, 'review');
+    const totalReviews = rawReviews.length;
+    const avgRating = totalReviews > 0 
+      ? rawReviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews 
+      : 0;
+    const metadata = {
+      reportTitle: 'Property Reputation Business Report',
+      reportId: `BTAU-REV-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Average Rating', value: `${avgRating.toFixed(1)} / 5.0` },
+        { label: 'Total Reviews', value: `${totalReviews}` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToCSV(reportData, `Review_Report_${new Date().toLocaleDateString()}`, metadata);
+  };
+
+  const handleGenerateExcel = async () => {
+    const reportData = prepareDataForExport(rawReviews, 'review');
+    const totalReviews = rawReviews.length;
+    const avgRating = totalReviews > 0 
+      ? rawReviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews 
+      : 0;
+    const metadata = {
+      reportTitle: 'Property Reputation Business Report',
+      reportId: `BTAU-REV-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Average Rating', value: `${avgRating.toFixed(1)} / 5.0` },
+        { label: 'Total Reviews', value: `${totalReviews}` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToExcel(reportData, `Review_Report_${new Date().toLocaleDateString()}`, 'Reviews', metadata);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative p-6 rounded-2xl border border-primary/10 shadow-sm z-30"
+      className="relative p-8 rounded-[3rem] border border-primary/10 shadow-xl overflow-hidden bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl overflow-hidden pointer-events-none" />
+      {/* Premium Background Accents */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 blur-[100px] rounded-full pointer-events-none" />
+      
       <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
-        <div className="flex items-center gap-4 shrink-0">
-          <div className="p-2.5 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary">
-            <IconStar size={20} />
+        <div className="flex items-center gap-6 shrink-0">
+          <div className="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center text-primary border border-gray-100 dark:border-gray-700">
+            <IconStar size={28} strokeWidth={2.5} />
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight truncate">
+            <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight">
               Guest Reviews
             </h1>
-            <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider truncate">
-              Monitor and respond to property feedback
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-[0.2em]">
+                Monitor and respond to property feedback
+              </p>
+            </div>
           </div>
         </div>
 
@@ -165,7 +208,13 @@ export function LandlordReviewHeader({
               </button>
             </div>
 
-            <GenerateReportButton onGeneratePDF={handleGenerateReport} />
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport}
+              onGenerateCSV={handleGenerateCSV}
+              onGenerateExcel={handleGenerateExcel}
+              label="Generate Report"
+              className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hidden sm:flex items-center gap-2"
+            />
           </div>
       </div>
     </motion.div>

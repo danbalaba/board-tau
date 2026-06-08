@@ -3,6 +3,7 @@ import Webcam from "react-webcam";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaIdCard, FaCamera, FaTimes } from "react-icons/fa";
 import { RefreshCcw, ShieldAlert, Loader2 } from "lucide-react";
+import SafeImage from "@/components/common/SafeImage";
 
 interface IDStepProps {
   capturedID: string | null;
@@ -93,7 +94,7 @@ const IDStep: React.FC<IDStepProps> = ({
                  <span className="text-[8px] font-bold text-white uppercase tracking-widest">AI Scanner Active</span>
               </div>
 
-              {/* Top-Middle Notification System */}
+               {/* Top-Middle Notification System */}
               <div className="absolute top-0 left-0 right-0 z-50 pointer-events-none flex justify-center">
                 <AnimatePresence mode="wait">
                   {isPhoneDetected ? (
@@ -107,7 +108,7 @@ const IDStep: React.FC<IDStepProps> = ({
                        <ShieldAlert className="w-4 h-4 animate-pulse" />
                        <div className="flex flex-col items-center">
                           <span className="text-[10px] font-black uppercase tracking-[0.2em]">Physical Presence Required</span>
-                          <span className="text-[8px] opacity-80 font-medium">Digital screens or photos detected</span>
+                          <span className="text-[8px] opacity-80 font-medium whitespace-nowrap">Digital screens or photos detected</span>
                        </div>
                     </motion.div>
                   ) : isIDAligned && !isProcessing ? (
@@ -119,7 +120,7 @@ const IDStep: React.FC<IDStepProps> = ({
                       className="bg-blue-600/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-blue-400/30 flex items-center justify-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-w-[200px]"
                     >
                        <div className="w-2 h-2 bg-white rounded-full animate-ping" />
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em]">Document Aligned & Detected</span>
+                       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-center">Ready to Scan</span>
                     </motion.div>
                   ) : null}
                 </AnimatePresence>
@@ -149,7 +150,7 @@ const IDStep: React.FC<IDStepProps> = ({
                 </div>
               )}
 
-              <div className="absolute bottom-6 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-6 left-0 right-0 flex justify-center transition-all duration-300">
                  <button 
                   type="button"
                   onClick={handleCaptureID}
@@ -163,7 +164,7 @@ const IDStep: React.FC<IDStepProps> = ({
             </>
           ) : (
             <div className="relative w-full h-full">
-              <img src={capturedID} className="w-full h-full object-cover" alt="Captured ID" />
+              <SafeImage src={capturedID} alt="Captured ID" unoptimized={true} />
               <button 
                 type="button"
                 onClick={() => {

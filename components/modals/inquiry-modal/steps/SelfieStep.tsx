@@ -1,15 +1,16 @@
 import React from "react";
 import Webcam from "react-webcam";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, RefreshCcw, Loader2 } from "lucide-react";
+import { User, RefreshCcw, Loader2, Eye } from "lucide-react";
 import { FaCamera, FaTimes } from "react-icons/fa";
-
+import SafeImage from "@/components/common/SafeImage";
 interface SelfieStepProps {
   capturedSelfie: string | null;
   setCapturedSelfie: (val: string | null) => void;
   webcamRef: React.RefObject<Webcam | null>;
   facingMode: "user" | "environment";
   isFaceAligned: boolean;
+  hasUserBlinked: boolean;
   setIsFaceAligned: (val: boolean) => void;
   isProcessing: boolean;
   isFlashActive: boolean;
@@ -20,7 +21,7 @@ interface SelfieStepProps {
 const SelfieStep: React.FC<SelfieStepProps> = ({
   capturedSelfie, setCapturedSelfie,
   webcamRef, facingMode,
-  isFaceAligned, setIsFaceAligned,
+  isFaceAligned, hasUserBlinked, setIsFaceAligned,
   isProcessing, isFlashActive,
   toggleCamera, handleCaptureSelfie
 }) => {
@@ -89,16 +90,33 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
               {/* Top-Middle Notification System */}
               <div className="absolute top-0 left-0 right-0 z-50 pointer-events-none flex justify-center">
                 <AnimatePresence mode="wait">
-                  {isFaceAligned && !isProcessing ? (
-                    <motion.div 
+                  {isFaceAligned && hasUserBlinked && !isProcessing ? (
+                    <motion.div
                       key="face-centered"
                       initial={{ y: -60, opacity: 0 }}
                       animate={{ y: 12, opacity: 1 }}
                       exit={{ y: -60, opacity: 0 }}
-                      className="bg-emerald-600/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-emerald-400/30 flex items-center justify-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-w-[200px]"
+                      className="bg-emerald-600/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-emerald-400/30 flex items-center justify-center gap-3 shadow-[0_8px_32_rgba(0,0,0,0.3)] min-w-[200px]"
                     >
                        <div className="w-2 h-2 bg-white rounded-full animate-ping" />
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em]">Face Aligned & Centered</span>
+                       <span className="text-[10px] font-black uppercase tracking-[0.2em]">Liveness Confirmed ✓</span>
+                    </motion.div>
+                  ) : isFaceAligned && !hasUserBlinked && !isProcessing ? (
+                    <motion.div
+                      key="blink-prompt"
+                      initial={{ y: -60, opacity: 0 }}
+                      animate={{ y: 12, opacity: 1 }}
+                      exit={{ y: -60, opacity: 0 }}
+                      className="bg-amber-500/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-amber-400/30 flex items-center justify-center gap-3 shadow-[0_8px_32_rgba(0,0,0,0.3)] min-w-[200px]"
+                    >
+                      <motion.span
+                        animate={{ opacity: [1, 0.3, 1] }}
+                        transition={{ duration: 1.2, repeat: Infinity }}
+                        className="flex items-center justify-center"
+                      >
+                        <Eye size={20} className="text-white" />
+                      </motion.span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Please Blink to Continue</span>
                     </motion.div>
                   ) : null}
                 </AnimatePresence>
@@ -139,21 +157,26 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                 </div>
               )}
 
-              <div className="absolute bottom-8 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-8 left-0 right-0 flex justify-center transition-all duration-300">
                  <button
                   type="button"
                   onClick={handleCaptureSelfie}
-                  disabled={isProcessing}
-                  className={`bg-white text-gray-900 px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl flex items-center gap-3 hover:bg-primary hover:text-white transition-all transform hover:scale-110 active:scale-95 border-4 border-white/10 ${isProcessing ? 'opacity-0 scale-50' : ''}`}
+                  disabled={isProcessing || !isFaceAligned || !hasUserBlinked}
+                  className={`px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl flex items-center gap-3 transition-all transform active:scale-95 border-4 border-white/10
+                    ${ isProcessing ? 'opacity-0 scale-50' :
+                       (isFaceAligned && hasUserBlinked)
+                         ? 'bg-emerald-500 text-white hover:bg-emerald-400 hover:scale-110 cursor-pointer'
+                         : 'bg-white/30 text-white/50 cursor-not-allowed scale-95'
+                    }`}
                  >
                    <FaCamera size={16} />
-                   Capture Selfie
+                   {isFaceAligned && !hasUserBlinked ? 'Blink to Unlock' : 'Capture Selfie'}
                  </button>
               </div>
             </>
           ) : (
             <div className="relative w-full h-full">
-              <img src={capturedSelfie} className="w-full h-full object-cover" alt="Captured Selfie" />
+              <SafeImage src={capturedSelfie} alt="Captured Selfie" unoptimized={true} />
               <button
                 type="button"
                 onClick={() => {

@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/app/admin/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, LabelList, Cell } from 'recharts';
-import { ShieldCheck, UserCheck, Activity } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, LabelList, Cell, ResponsiveContainer } from 'recharts';
+import { IconShieldCheck } from '@tabler/icons-react';
 import {
   ChartConfig,
   ChartContainer,
@@ -28,13 +28,13 @@ export function VerificationLifecycleChart({ data }: { data: UserAnalytics }) {
       stage: 'Verified', 
       value: verifiedCount, 
       percent: registeredCount > 0 ? Math.round((verifiedCount / registeredCount) * 100) : 0, 
-      color: '#2f7d6d'
+      color: '#d946ef' // fuchsia-500
     },
     { 
       stage: 'Active', 
       value: data.activeUsers, 
       percent: registeredCount > 0 ? Math.round((data.activeUsers / registeredCount) * 100) : 0, 
-      color: '#0ea5e9'
+      color: '#10b981' // emerald-500
     },
   ];
 
@@ -45,25 +45,25 @@ export function VerificationLifecycleChart({ data }: { data: UserAnalytics }) {
   } satisfies ChartConfig;
 
   return (
-    <Card className="flex flex-col border-border/50 h-full shadow-sm">
-      <CardHeader className="pb-0 pt-6 px-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-lg font-bold tracking-tight">Trust Funnel</CardTitle>
-            <CardDescription className="text-[10px] uppercase font-bold tracking-wider opacity-60">Database Integrity Check</CardDescription>
-          </div>
-          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <ShieldCheck className="w-4 h-4 text-primary" />
-          </div>
+    <Card className="flex flex-col border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-xl rounded-[2.5rem] overflow-hidden h-full">
+      <CardHeader className="pb-0 pt-8 px-8 flex-row items-center justify-between space-y-0">
+        <div className="space-y-1.5">
+          <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">Trust Funnel</CardTitle>
+          <CardDescription className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+            Platform integrity and verification health
+          </CardDescription>
+        </div>
+        <div className="w-12 h-12 rounded-2xl bg-fuchsia-500/10 flex items-center justify-center border border-fuchsia-500/10 shadow-sm shadow-fuchsia-500/5">
+          <IconShieldCheck className="w-6 h-6 text-fuchsia-500" />
         </div>
       </CardHeader>
       
-      <CardContent className="flex-1 pb-10 pt-6 px-10 flex flex-col justify-center">
+      <CardContent className="flex-1 pb-10 pt-8 px-8 flex flex-col justify-center">
         <ChartContainer config={chartConfig} className="min-h-[320px] w-full">
           <BarChart
             data={stages}
             layout="vertical"
-            margin={{ left: -10, right: 80, top: 0, bottom: 0 }}
+            margin={{ left: 0, right: 80, top: 0, bottom: 0 }}
           >
             <XAxis type="number" hide />
             <YAxis
@@ -71,28 +71,33 @@ export function VerificationLifecycleChart({ data }: { data: UserAnalytics }) {
               type="category"
               tickLine={false}
               axisLine={false}
-              width={120}
-              tick={{ fontSize: 10, fontWeight: 800 }}
-              className="fill-muted-foreground uppercase tracking-widest"
+              width={100}
+              tick={{ fontSize: 9, fontWeight: 900 }}
+              className="fill-gray-400 uppercase tracking-widest"
             />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel />}
+              content={<ChartTooltipContent hideLabel className="rounded-2xl border-none shadow-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl" />}
             />
             <Bar
               dataKey="value"
-              radius={[0, 6, 6, 0]}
-              barSize={36}
+              radius={[0, 12, 12, 0]}
+              barSize={40}
               animationDuration={2000}
             >
               {stages.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.8} />
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={entry.color} 
+                  fillOpacity={0.8}
+                  className="transition-all duration-300 hover:fill-opacity-100"
+                />
               ))}
               <LabelList
                 dataKey="percent"
                 position="right"
                 offset={20}
-                className="fill-foreground font-black text-xs"
+                className="fill-gray-900 dark:fill-white font-black text-[11px]"
                 formatter={(value: any) => typeof value === 'number' ? `${value}%` : value}
               />
             </Bar>

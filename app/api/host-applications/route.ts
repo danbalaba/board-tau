@@ -19,9 +19,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error: any) {
-    console.error('Error submitting host application:', error);
+    console.error('API Error:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to submit application' },
+      { success: false, error: 'An unexpected error occurred. Please try again later.' },
       { status: 500 }
     );
   }
@@ -38,7 +38,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user is admin (for all applications) or regular user (for their application)
-    if (user.role === 'admin') {
+    // IMPORTANT: Roles are stored as uppercase ADMIN in the DB and session
+    if (user.role === 'ADMIN') {
       const searchParams = request.nextUrl.searchParams;
       const status = searchParams.get('status') || undefined;
       const search = searchParams.get('search') || undefined;
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') {
+    if (!user || user.role !== 'ADMIN') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized: Only admins can update application status' },
         { status: 401 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { InputHTMLAttributes, useState } from "react";
-import { LucideIcon, Eye, EyeOff } from "lucide-react";
+import { LucideIcon, Eye, EyeOff, AlertCircle } from "lucide-react";
 import {
   UseFormRegister,
   FieldValues,
@@ -14,7 +14,7 @@ import { motion } from "framer-motion";
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   id: string;
   label: string;
-  icon?: LucideIcon;
+  icon?: any;
   register?: UseFormRegister<any>;
   errors?: FieldErrors;
   watch?: UseFormWatch<any>;
@@ -65,14 +65,18 @@ const Input: React.FC<InputProps> = ({
   // Floating Label Design
   if (!useStaticLabel) {
     return (
-      <div className="w-full relative group">
+      <motion.div 
+        whileHover={{ scale: 1.005 }}
+        whileTap={{ scale: 0.998 }}
+        className="w-full relative group transition-all duration-300"
+      >
         <div className="relative mt-2">
           {Icon && (
             <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 z-10 flex items-center justify-center">
               <Icon
                 size={isSmall ? 14 : 18}
                 className={cn(
-                  error ? "text-red-500" : "text-gray-400 group-focus-within:text-primary"
+                  error ? "text-red-500" : "text-gray-400 group-focus-within:text-primary transition-colors duration-300"
                 )}
               />
             </div>
@@ -83,37 +87,27 @@ const Input: React.FC<InputProps> = ({
             type={isPasswordInput ? (showPassword ? "text" : "password") : type}
             disabled={disabled}
             placeholder=" "
-            {...(register && {
-              ...register(id, {
-                required: required ? "This field is required" : false,
-                ...validationRules
-              })
-            })}
-            {...props}
-            value={value || ''}
-            onChange={(e) => {
-              // Priority 1: Handle registration if it exists
-              if (register) {
-                const r = register(id);
-                if (r && r.onChange) {
-                  r.onChange(e);
+            {...(register 
+              ? register(id, {
+                  required: required ? "This field is required" : false,
+                  ...validationRules
+                })
+              : {
+                  value: value || '',
+                  onChange: externalOnChange
                 }
-              }
-              
-              // Priority 2: Handle external onChange if it exists
-              if (externalOnChange) {
-                externalOnChange(e);
-              }
-            }}
+            )}
+            onWheel={(e) => (e.target as HTMLElement).blur()}
+            {...props}
             className={cn(
               "peer w-full text-sm font-medium bg-white dark:bg-gray-800 border-2 rounded-2xl outline-none transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed",
               isSmall ? "px-3 py-2.5 rounded-xl" : "px-4 py-4",
               error
                 ? "border-red-500/50 focus:border-red-500 ring-red-500/10"
-                : "border-gray-100 dark:border-gray-700/50 focus:border-primary dark:focus:border-primary/60 shadow-sm",
+                : "border-gray-100 dark:border-gray-700/50 focus:border-primary dark:focus:border-primary/60 shadow-sm hover:border-gray-200 dark:hover:border-gray-600",
               Icon ? (isSmall ? "pl-9" : "pl-11") : "pl-4",
               isPasswordInput ? "pr-11" : "pr-4",
-              "focus:ring-4 focus:ring-primary/5"
+              "focus:ring-4 focus:ring-primary/5 group-focus-within:shadow-xl group-focus-within:shadow-primary/5"
             )}
             autoFocus={autoFocus}
           />
@@ -152,24 +146,29 @@ const Input: React.FC<InputProps> = ({
 
         {error && (
           <motion.p
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-red-500 text-[10px] font-bold mt-1.5 ml-2 flex items-center gap-1 uppercase tracking-[0.1em]"
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-red-500 text-[10px] font-black mt-1.5 ml-2 flex items-center gap-1 uppercase tracking-[0.1em]"
           >
+            <AlertCircle size={10} />
             {typeof error === 'string' ? error : (error as any).message || "Required"}
           </motion.p>
         )}
-      </div>
+      </motion.div>
     );
   }
 
   // Static Label Design
   return (
-    <div className="w-full relative group">
+    <motion.div 
+      whileHover={{ scale: 1.005 }}
+      whileTap={{ scale: 0.998 }}
+      className="w-full relative group transition-all duration-300"
+    >
       <label
         htmlFor={id}
         className={cn(
-          "block font-black uppercase tracking-widest mb-2 ml-1 transition-all duration-200",
+          "block font-black uppercase tracking-widest mb-2 ml-1 transition-all duration-300",
           isSmall ? "text-[9px]" : "text-xs",
           error ? "text-red-500" : "text-gray-500 dark:text-gray-400 group-focus-within:text-primary"
         )}
@@ -183,7 +182,7 @@ const Input: React.FC<InputProps> = ({
             <Icon
               size={isSmall ? 14 : 18}
               className={cn(
-                error ? "text-red-500" : "text-gray-400 group-focus-within:text-primary"
+                error ? "text-red-500" : "text-gray-400 group-focus-within:text-primary transition-colors duration-300"
               )}
             />
           </div>
@@ -193,37 +192,27 @@ const Input: React.FC<InputProps> = ({
           id={id}
           type={isPasswordInput ? (showPassword ? "text" : "password") : type}
           disabled={disabled}
-          {...(register && {
-            ...register(id, {
-              required: required ? "This field is required" : false,
-              ...validationRules
-            })
-          })}
-          {...props}
-          value={value || ''}
-          onChange={(e) => {
-            // Priority 1: Handle registration if it exists
-            if (register) {
-              const r = register(id);
-              if (r && r.onChange) {
-                r.onChange(e);
+          {...(register 
+            ? register(id, {
+                required: required ? "This field is required" : false,
+                ...validationRules
+              })
+            : {
+                value: value || '',
+                onChange: externalOnChange
               }
-            }
-            
-            // Priority 2: Handle external onChange if it exists
-            if (externalOnChange) {
-              externalOnChange(e);
-            }
-          }}
+          )}
+          onWheel={(e) => (e.target as HTMLElement).blur()}
+          {...props}
           className={cn(
             "peer w-full text-sm font-medium bg-white dark:bg-gray-800 border-2 rounded-2xl outline-none transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed",
             isSmall ? "px-3 py-2.5 rounded-xl" : "px-4 py-3.5",
             error
               ? "border-red-500/50 focus:border-red-500 ring-red-500/10"
-              : "border-gray-100 dark:border-gray-700/50 focus:border-primary dark:focus:border-primary/60 shadow-sm",
+              : "border-gray-100 dark:border-gray-700/50 focus:border-primary dark:focus:border-primary/60 shadow-sm hover:border-gray-200 dark:hover:border-gray-600",
             Icon ? (isSmall ? "pl-9" : "pl-11") : "pl-4",
             isPasswordInput ? "pr-11" : "pr-4",
-            "focus:ring-4 focus:ring-primary/5"
+            "focus:ring-4 focus:ring-primary/5 group-focus-within:shadow-xl group-focus-within:shadow-primary/5"
           )}
           autoFocus={autoFocus}
         />
@@ -244,11 +233,16 @@ const Input: React.FC<InputProps> = ({
       </div>
 
       {error && (
-        <p className="text-red-500 text-[10px] font-bold mt-1.5 ml-2 flex items-center gap-1 uppercase tracking-[0.1em]">
+        <motion.p 
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-red-500 text-[10px] font-black mt-1.5 ml-2 flex items-center gap-1 uppercase tracking-[0.1em]"
+        >
+          <AlertCircle size={10} />
           {typeof error === 'string' ? error : (error as any).message || "Required"}
-        </p>
+        </motion.p>
       )}
-    </div>
+    </motion.div>
   );
 };
 

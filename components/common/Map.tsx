@@ -23,9 +23,11 @@ interface MapProps {
   center?: number[];
   onLocationSelect?: (lat: number, lng: number) => void;
   onClick?: (lat: number, lng: number) => void;
+  readonly?: boolean;
+  scrollWheelZoom?: boolean;
 }
 
-const Map: React.FC<MapProps> = ({ center, onLocationSelect, onClick }) => {
+const Map: React.FC<MapProps> = ({ center, onLocationSelect, onClick, readonly = false, scrollWheelZoom = false }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -36,7 +38,7 @@ const Map: React.FC<MapProps> = ({ center, onLocationSelect, onClick }) => {
 
     try {
       const map = L.map(containerRef.current, {
-        scrollWheelZoom: false,
+        scrollWheelZoom: scrollWheelZoom,
       }).setView(DEFAULT_CENTER, 12);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -44,25 +46,27 @@ const Map: React.FC<MapProps> = ({ center, onLocationSelect, onClick }) => {
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(map);
 
-      // Add click event listener for location selection and auto-fill
-      map.on('click', (e) => {
-        const { lat, lng } = e.latlng;
-        
-        // Update marker position
-        if (markerRef.current) {
-          markerRef.current.setLatLng(e.latlng);
-        } else {
-          markerRef.current = L.marker(e.latlng, { icon: defaultIcon }).addTo(map);
-        }
-        
-        // Call both callbacks
-        if (onLocationSelect) {
-          onLocationSelect(lat, lng);
-        }
-        if (onClick) {
-          onClick(lat, lng);
-        }
-      });
+      // Add click event listener for location selection and auto-fill (Only if not readonly)
+      if (!readonly) {
+        map.on('click', (e) => {
+          const { lat, lng } = e.latlng;
+          
+          // Update marker position
+          if (markerRef.current) {
+            markerRef.current.setLatLng(e.latlng);
+          } else {
+            markerRef.current = L.marker(e.latlng, { icon: defaultIcon }).addTo(map);
+          }
+          
+          // Call both callbacks
+          if (onLocationSelect) {
+            onLocationSelect(lat, lng);
+          }
+          if (onClick) {
+            onClick(lat, lng);
+          }
+        });
+      }
 
       // Initialize marker
       if (!markerRef.current) {

@@ -1,11 +1,7 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import html2canvas from 'html2canvas';
-
-interface ReportHeaderOptions {
-  title: string;
-  subtitle?: string;
-  author?: string;
+interface SummaryCard {
+  label: string;
+  value: string;
+  subValue?: string;
 }
 
 export interface ReportSection {
@@ -14,6 +10,13 @@ export interface ReportSection {
   content?: string | string[];
   columns?: string[];
   data?: any[][];
+}
+
+interface ReportHeaderOptions {
+  title: string;
+  subtitle?: string;
+  author?: string;
+  summaryData?: SummaryCard[];
 }
 
 const PRIMARY_COLOR = [47, 125, 109]; // #2f7d6d
@@ -39,22 +42,27 @@ const getLogoBase64 = (): Promise<string> => {
   });
 };
 
-const addHeader = async (doc: jsPDF, options: ReportHeaderOptions) => {
+const addHeader = async (doc: any, options: ReportHeaderOptions) => {
   let hasLogo = false;
   try {
     const logoData = await getLogoBase64();
-    // Square dimensions for the logo (12x12 instead of 30x10 stretched)
     doc.addImage(logoData, 'PNG', 14, 10, 12, 12);
     hasLogo = true;
   } catch (error) {
     console.error('Logo not found, skipping...', error);
   }
 
-  // Draw exactly "BoardTAU" branding next to the logo (or starting left if no logo)
+  // Report metadata (Audit Trail)
+  const reportId = `BTAU-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${new Date().getFullYear()}`;
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(150);
+  doc.text(`REPORT ID: ${reportId}`, 196, 15, { align: 'right' });
+
+  // Branding
   const brandX = hasLogo ? 29 : 14;
   doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
-  // Use our primary color #2f7d6d for the brand name
   doc.setTextColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
   doc.text('BoardTAU', brandX, 19);
 
@@ -71,7 +79,7 @@ const addHeader = async (doc: jsPDF, options: ReportHeaderOptions) => {
     doc.text(options.subtitle, 14, 40);
   }
 
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'italic');
   doc.setTextColor(150);
   const date = new Date().toLocaleDateString('en-US', {
@@ -81,16 +89,73 @@ const addHeader = async (doc: jsPDF, options: ReportHeaderOptions) => {
     hour: '2-digit',
     minute: '2-digit'
   });
-  doc.text(`Generated on: ${date}`, 14, 45);
+  doc.text(`Generated on: ${date}`, 14, 46);
 
   if (options.author) {
-    doc.text(`Author: ${options.author}`, 14, 50);
+    doc.text(`Author: ${options.author}`, 14, 51);
   }
 
-  // Draw a line
+  // Draw a horizontal divider
   doc.setDrawColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
-  doc.setLineWidth(0.5);
-  doc.line(14, 55, 196, 55);
+  doc.setLineWidth(0.8);
+  doc.line(14, 56, 196, 56);
+};
+
+const drawSummaryCards = (doc: any, cards: SummaryCard[], startY: number) => {
+  const cardWidth = (196 - 14 - (cards.length - 1) * 5) / cards.length;
+  const cardHeight = 22;
+
+  cards.forEach((card, index) => {
+    const x = 14 + index * (cardWidth + 5);
+
+    // Card background
+    doc.setFillColor(245, 250, 249);
+    doc.roundedRect(x, startY, cardWidth, cardHeight, 3, 3, 'F');
+
+    // Accent line
+    doc.setDrawColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
+    doc.setLineWidth(1);
+    doc.line(x, startY, x, startY + cardHeight);
+
+    // Labels
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(100);
+    doc.text(card.label.toUpperCase(), x + 4, startY + 6);
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
+    doc.text(card.value, x + 4, startY + 14);
+
+    if (card.subValue) {
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(120);
+      doc.text(card.subValue, x + 4, startY + 19);
+    }
+  });
+
+  return startY + cardHeight + 10;
+};
+
+const addFooter = (doc: any) => {
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(150);
+
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    const pageSize = doc.internal.pageSize;
+    const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+
+    // Page number
+    doc.text(`Page ${i} of ${pageCount}`, 196, pageHeight - 10, { align: 'right' });
+
+    // Confidentiality notice
+    doc.text('© BoardTAU - Private & Confidential Business Report', 14, pageHeight - 10);
+  }
 };
 
 export const generateTablePDF = async (
@@ -99,12 +164,20 @@ export const generateTablePDF = async (
   data: any[][],
   options: ReportHeaderOptions
 ) => {
+  const { default: jsPDF } = await import('jspdf');
+  const { default: autoTable } = await import('jspdf-autotable');
+
   const doc = new jsPDF();
-  
+
   await addHeader(doc, options);
 
+  let startY = 65;
+  if (options.summaryData) {
+    startY = drawSummaryCards(doc, options.summaryData, 65);
+  }
+
   autoTable(doc, {
-    startY: 65,
+    startY: startY,
     head: [columns],
     body: data,
     theme: 'grid',
@@ -122,9 +195,10 @@ export const generateTablePDF = async (
     alternateRowStyles: {
       fillColor: [245, 250, 249]
     },
-    margin: { top: 65 }
+    margin: { top: 20 },
   });
 
+  addFooter(doc);
   doc.save(`${filename}.pdf`);
 };
 
@@ -133,6 +207,9 @@ export const generateVisualPDF = async (
   elementId: string,
   options: ReportHeaderOptions
 ) => {
+  const { default: jsPDF } = await import('jspdf');
+  const { default: html2canvas } = await import('html2canvas');
+
   const doc = new jsPDF('p', 'mm', 'a4');
   await addHeader(doc, options);
 
@@ -163,6 +240,9 @@ export const generateMultiSectionPDF = async (
   sections: ReportSection[],
   options: ReportHeaderOptions
 ) => {
+  const { default: jsPDF } = await import('jspdf');
+  const { default: autoTable } = await import('jspdf-autotable');
+
   const doc = new jsPDF();
   await addHeader(doc, options);
 
@@ -185,7 +265,7 @@ export const generateMultiSectionPDF = async (
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(50, 50, 50);
-      
+
       const lines = Array.isArray(section.content) ? section.content : [section.content];
       for (const line of lines) {
         if (currentY > 280) {

@@ -5,6 +5,7 @@ import { TbPhotoPlus } from "react-icons/tb";
 import SpinnerMini from "./Loader";
 import { useEdgeStore } from "@/lib/edgestore";
 import { cn } from "@/utils/helper";
+import { compressImage } from "@/utils/image-compression";
 
 interface ImageUploadProps {
   onChange: (fieldName: string, imgSrc: string) => void;
@@ -38,12 +39,18 @@ const getSafeImageSrc = (src: string | null | undefined): string => {
   return '';
 };
 
-  const uploadImage = (e: any, file: File) => {
+  const uploadImage = async (e: any, file: File) => {
     if(!file.type.startsWith("image")) return;
-    setImage(getSafeImageSrc(URL.createObjectURL(file)));
+    
     startTransition(async () => {
+      // 1. Client-side compression
+      const optimizedFile = await compressImage(file);
+      
+      setImage(getSafeImageSrc(URL.createObjectURL(optimizedFile)));
+
+      // 2. Upload to EdgeStore
       const res = await edgestore.publicFiles.upload({
-        file,
+        file: optimizedFile,
         options: {
           replaceTargetUrl: initialImage,
         },

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { generateTablePDF } from '@/utils/pdfGenerator';
 
@@ -10,6 +10,14 @@ export interface Review {
     id: string;
     title: string;
     imageSrc: string;
+    images?: Array<{ url: string }>;
+  };
+  reservation?: {
+    room?: {
+      id: string;
+      name: string;
+      images?: Array<{ url: string }>;
+    }
   };
   user: {
     id: string;
@@ -34,8 +42,19 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedRating, setSelectedRating] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setIsLoading(false), 700);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    setListings(initialReviews);
+    setNextCursor(initialNextCursor);
+  }, [initialReviews, initialNextCursor]);
 
   const filteredReviews = useMemo(() => {
     return listings.filter(review => {
@@ -74,19 +93,49 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
   }, [nextCursor, isLoadingMore]);
 
   const handleGenerateReport = async () => {
-    const columns = ['Listing', 'Guest', 'Rating', 'Comment', 'Date'];
-    const data = filteredReviews.map((r) => [
-      r.listing.title,
-      r.user.name || r.user.email,
-      `${r.rating} / 5`,
-      r.comment || 'N/A',
-      new Date(r.createdAt).toLocaleDateString()
-    ]);
-    await generateTablePDF('Reviews_Report', columns, data, {
-      title: 'Property Reviews Report',
-      subtitle: `Compilation of all ${filteredReviews.length} reviews`,
-      author: 'Landlord Dashboard'
-    });
+    try {
+      const totalReviews = filteredReviews.length;
+      const avgRating = totalReviews > 0 
+        ? filteredReviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews 
+        : 0;
+      const responseCount = filteredReviews.filter(r => r.response !== null).length;
+
+      const summaryData = [
+        { 
+          label: 'Average Rating', 
+          value: `${avgRating.toFixed(1)} / 5.0`,
+          subValue: 'Overall guest satisfaction'
+        },
+        { 
+          label: 'Total Reviews', 
+          value: `${totalReviews}`,
+          subValue: 'Feedback volume'
+        },
+        { 
+          label: 'Response Rate', 
+          value: `${((responseCount / (totalReviews || 1)) * 100).toFixed(0)}%`,
+          subValue: `${responseCount} Responses provided`
+        }
+      ];
+
+      const columns = ['Listing', 'Guest', 'Rating', 'Comment', 'Date'];
+      const data = filteredReviews.map((r) => [
+        r.listing.title,
+        r.user.name || r.user.email,
+        `${r.rating} / 5`,
+        r.comment || 'N/A',
+        new Date(r.createdAt).toLocaleDateString()
+      ]);
+
+      await generateTablePDF('Reviews_Report', columns, data, {
+        title: 'Property Reputation Business Report',
+        subtitle: `Auditing feedback and response performance for ${totalReviews} guest reviews`,
+        author: 'Landlord Relationship Management',
+        summaryData: summaryData
+      });
+    } catch (error) {
+      console.error('Failed to generate report:', error);
+    }
   };
 
   const [respondModal, setRespondModal] = useState<{
@@ -119,6 +168,7 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
     handleGenerateReport,
     respondModal,
     setRespondModal,
-    updateReviewResponse
+    updateReviewResponse,
+    isLoading
   };
 }

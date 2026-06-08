@@ -11,6 +11,7 @@ import { getListingById } from "@/services/user/listings";
 import { getFavorites } from "@/services/user/favorites/favorite";
 import { categories } from "@/utils/constants";
 import { db } from "@/lib/db";
+import { calculateAverageRating } from "@/utils/helper";
 
 interface IParams {
   listingId: string;
@@ -45,19 +46,34 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
     rating,
     reviewCount,
     rooms,
+    features,
   } = listing;
 
   // Convert new amenities object to string array for backward compatibility
-  const amenities = [];
-  if (listingAmenities?.wifi) amenities.push("WiFi");
-  if (listingAmenities?.parking) amenities.push("Parking");
-  if (listingAmenities?.pool) amenities.push("Pool");
-  if (listingAmenities?.gym) amenities.push("Gym");
-  if (listingAmenities?.airConditioning) amenities.push("Air conditioning");
-  if (listingAmenities?.laundry) amenities.push("Laundry area");
+  const amenities = [...(listing.amenities_list || [])];
+  if (listingAmenities?.wifi) if (!amenities.includes("WiFi")) amenities.push("WiFi");
+  if (listingAmenities?.parking) if (!amenities.includes("Parking")) amenities.push("Parking");
+  if (listingAmenities?.pool) if (!amenities.includes("Pool")) amenities.push("Pool");
+  if (listingAmenities?.gym) if (!amenities.includes("Gym")) amenities.push("Gym");
+  if (listingAmenities?.airConditioning) if (!amenities.includes("Air conditioning")) amenities.push("Air conditioning");
+  if (listingAmenities?.laundry) if (!amenities.includes("Laundry area")) amenities.push("Laundry area");
+
+  // Add features to amenities array for display
+  if (features?.cctv) if (!amenities.includes("CCTV")) amenities.push("CCTV");
+  if (features?.security24h) if (!amenities.includes("Security guard")) amenities.push("Security guard");
+  if (features?.nearTransport) if (!amenities.includes("Near transport")) amenities.push("Near transport");
+  if (features?.studyFriendly) if (!amenities.includes("Study friendly")) amenities.push("Study friendly");
+  if (features?.fireSafety) if (!amenities.includes("Fire safety")) amenities.push("Fire safety");
+  if (features?.quietEnvironment) if (!amenities.includes("Quiet environment")) amenities.push("Quiet environment");
+  if (features?.flexibleLease) if (!amenities.includes("Flexible lease")) amenities.push("Flexible lease");
 
   const normalizedImages = (images && images.length > 0)
-    ? images.map((img: any) => ({ url: img.url, caption: img.caption ?? undefined, order: img.order ?? 0 }))
+    ? images.map((img: any) => ({ 
+        url: img.url, 
+        caption: img.caption ?? undefined, 
+        order: img.order ?? 0,
+        roomType: img.roomType ?? undefined 
+      }))
     : [{ url: imageSrc, caption: title, order: 0 }];
 
   const category = categories.find((cate) =>
@@ -68,19 +84,12 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
     ? {
         label: category.label,
         description: category.description,
+        value: category.value,
       }
     : null;
 
-  // Always compute from actual fetched reviews (filtered to approved-only by getListingById).
-  // This guarantees the detail page always shows the true correct average.
-  // Fall back to stored listing.rating only when there are zero reviews yet.
-  let actualRating = 0;
-  if (listing.reviews && listing.reviews.length > 0) {
-    const total = listing.reviews.reduce((acc: number, r: any) => acc + (r.rating || 0), 0);
-    actualRating = total / listing.reviews.length;
-  } else {
-    actualRating = listing.rating || 0;
-  }
+  // Guaranteed true average based on fetched reviews
+  const actualRating = calculateAverageRating(listing.reviews || [], listing.rating);
 
   return (
     <div className="bg-white dark:bg-gray-900 transition-colors duration-300">
@@ -98,6 +107,7 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
           reviewCount={listing.reviews?.length || 0}
           listingId={id}
           hasFavorited={favoriteIds.includes(id)}
+          category={categoryData}
         />
 
         {/* Main Content Grid */}
@@ -114,6 +124,8 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
             bathroomCount={bathroomCount}
             latlng={[listing.latitude || 0, listing.longitude || 0]}
             amenities={amenities}
+            rules={listing.rules}
+            features={listing.features}
             rating={actualRating > 0 ? actualRating : undefined}
             reviewCount={listing.reviews?.length || 0}
             images={normalizedImages}

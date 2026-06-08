@@ -1,11 +1,24 @@
-import LoadingAnimation from "@/components/common/LoadingAnimation";
+"use client";
 
+import { useEffect } from "react";
+import { useLoading } from "@/components/loading/LoadingContext";
+
+/**
+ * Root Loading Trigger
+ * This file is "Invisible". Its only job is to tell our Global Context 
+ * to show the high-fidelity Glass Overlay. 
+ * 
+ * We do this to prevent "Flickering" and to allow the Glass Overlay 
+ * to stay on screen for a minimum amount of time for a premium feel.
+ */
 const LoadingPage = () => {
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <LoadingAnimation text="Loading BoardTAU..." size="large" />
-    </div>
-  );
+  const { startLoading } = useLoading();
+
+  useEffect(() => {
+    startLoading();
+  }, [startLoading]);
+
+  return null;
 };
 
 export default LoadingPage;

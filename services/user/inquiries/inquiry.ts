@@ -53,8 +53,10 @@ export const getInquiriesByUser = async (userId: string) => {
         listing: {
           select: {
             id: true,
+            userId: true,
             title: true,
             imageSrc: true,
+            images: true,
           },
         },
         room: {
@@ -62,6 +64,7 @@ export const getInquiriesByUser = async (userId: string) => {
             id: true,
             name: true,
             price: true,
+            images: true,
           },
         },
       },
@@ -96,6 +99,7 @@ export const getInquiriesByListing = async (listingId: string) => {
             id: true,
             name: true,
             price: true,
+            images: true,
           },
         },
       },

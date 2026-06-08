@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { 
-  IconStarFilled, 
-  IconX, 
-  IconMessage, 
+import {
+  IconStarFilled,
+  IconX,
+  IconMessage,
   IconCalendar,
   IconHome,
   IconCircleCheck,
@@ -21,6 +21,8 @@ import Modal from '@/components/modals/Modal';
 import Avatar from '@/components/common/Avatar';
 import Button from '@/components/common/Button';
 import { toast } from 'sonner';
+import SafeImage from '@/components/common/SafeImage';
+import { getSafeImageSrcString } from '@/components/modals/inquiry-modal/InquiryModalUtils';
 
 interface Review {
   id: string;
@@ -28,6 +30,14 @@ interface Review {
     id: string;
     title: string;
     imageSrc: string;
+    images?: Array<{ url: string }>;
+  };
+  reservation?: {
+    room?: {
+      id: string;
+      name: string;
+      images?: Array<{ url: string }>;
+    }
   };
   user: {
     id: string;
@@ -69,6 +79,7 @@ export function LandlordReviewDetailsModal({
   const [responseText, setResponseText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedMediaIdx, setSelectedMediaIdx] = useState<number | null>(null);
+  const [currentRoomImageIndex, setCurrentRoomImageIndex] = useState(0);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -78,13 +89,14 @@ export function LandlordReviewDetailsModal({
   useEffect(() => {
     const fetchReviewDetails = async () => {
       if (!reviewId || !isOpen) return;
-      
+
       try {
         setLoading(true);
         const res = await fetch(`/api/landlord/reviews?id=${reviewId}`);
         if (!res.ok) throw new Error('Failed to fetch details');
         const data = await res.json();
         setReview(data.data);
+        setCurrentRoomImageIndex(0);
       } catch (err) {
         console.error(err);
         toast.error('Could not load review details');
@@ -113,7 +125,7 @@ export function LandlordReviewDetailsModal({
       setReview(data.data);
       setResponseText('');
       toast.success('Response recorded successfully');
-      
+
       if (onSuccess) {
         onSuccess(reviewId, data.data.response || responseText.trim());
       }
@@ -155,12 +167,12 @@ export function LandlordReviewDetailsModal({
 
   return (
     <>
-    <Modal isOpen={isOpen} onClose={onClose} title="Review Details" width="lg">
-      <div className="p-8 space-y-8 bg-white dark:bg-gray-900">
-        
+    <Modal isOpen={isOpen} onClose={onClose} title="Review Details" width="lg" hasFixedFooter>
+      <div className="space-y-8 max-h-[80vh] overflow-y-auto p-8 custom-scrollbar">
+
         <AnimatePresence mode="wait">
           {loading ? (
-             <motion.div 
+             <motion.div
                key="loading"
                initial={{ opacity: 0 }}
                animate={{ opacity: 1 }}
@@ -188,7 +200,7 @@ export function LandlordReviewDetailsModal({
               className="space-y-8"
             >
               {/* Profile Card */}
-              <motion.div 
+              <motion.div
                 variants={{
                   hidden: { opacity: 0, scale: 0.95, y: 10 },
                   visible: { opacity: 1, scale: 1, y: 0 }
@@ -198,10 +210,10 @@ export function LandlordReviewDetailsModal({
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-amber-500/20 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
                 <div className="relative flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800 backdrop-blur-sm transition-all duration-300">
                   <div className="flex items-center gap-5">
-                     <Avatar 
-                        src={review.user.image} 
-                        name={review.user.name} 
-                        className="w-16 h-16 rounded-[1.25rem] shadow-2xl border-4 border-white dark:border-gray-800" 
+                     <Avatar
+                        src={review.user.image}
+                        name={review.user.name}
+                        className="w-16 h-16 rounded-[1.25rem] shadow-2xl border-4 border-white dark:border-gray-800"
                      />
                      <div>
                         <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-none mb-2">{review.user.name || 'Anonymous Guest'}</h3>
@@ -212,16 +224,16 @@ export function LandlordReviewDetailsModal({
                      </div>
                   </div>
                   <div className={cn(
-                    "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm backdrop-blur-md", 
+                    "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm backdrop-blur-md",
                     statusColors[review.status] || 'bg-gray-100 text-gray-500'
                   )}>
                     {review.status}
                   </div>
                 </div>
               </motion.div>
-  
+
               {/* Guest Feedback Section */}
-              <motion.div 
+              <motion.div
                 variants={{
                   hidden: { opacity: 0, x: -20 },
                   visible: { opacity: 1, x: 0 }
@@ -232,10 +244,58 @@ export function LandlordReviewDetailsModal({
                   <div className="w-1.5 h-3 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary-rgb),0.4)]"></div>
                   Guest Feedback
                 </span>
-                
+
                 <div className="flex flex-col md:flex-row gap-6">
-                   <div className="w-full md:w-40 aspect-square rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-800 shrink-0">
-                      <img src={review.listing.imageSrc} alt="" className="w-full h-full object-cover" />
+                   <div className="w-full md:w-40 aspect-square rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-800 shrink-0 relative group/room-gallery bg-gray-100 dark:bg-gray-900">
+                      <AnimatePresence mode="wait">
+                        <SafeImage
+                          key={currentRoomImageIndex}
+                          src={getSafeImageSrcString(
+                            (review.reservation?.room?.images && review.reservation.room.images.length > 0)
+                              ? review.reservation.room.images[currentRoomImageIndex].url
+                              : (review.listing?.images && review.listing.images.length > 0)
+                                ? (typeof review.listing.images[0] === 'string' ? review.listing.images[0] : (review.listing.images[0] as any).url)
+                                : review.listing?.imageSrc || "/images/placeholder.jpg"
+                          )}
+                          alt={review.listing.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover/room-gallery:scale-110"
+                        />
+                      </AnimatePresence>
+
+                      {/* Room Gallery Navigation */}
+                      {review.reservation?.room?.images && review.reservation.room.images.length > 1 && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentRoomImageIndex((prev) => (prev === 0 ? review.reservation!.room!.images!.length - 1 : prev - 1));
+                            }}
+                            className="absolute left-1.5 top-1/2 -translate-y-1/2 p-1 rounded-full bg-black/50 text-white opacity-0 group-hover/room-gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                          >
+                            <IconChevronLeft size={14} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentRoomImageIndex((prev) => (prev === review.reservation!.room!.images!.length - 1 ? 0 : prev + 1));
+                            }}
+                            className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-full bg-black/50 text-white opacity-0 group-hover/room-gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                          >
+                            <IconChevronRight size={14} />
+                          </button>
+                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+                            {review.reservation.room.images.map((_, idx) => (
+                              <div
+                                key={idx}
+                                className={cn(
+                                  "w-1 h-1 rounded-full transition-all",
+                                  idx === currentRoomImageIndex ? "bg-white w-3" : "bg-white/50"
+                                )}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
                    </div>
                    <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
@@ -257,10 +317,10 @@ export function LandlordReviewDetailsModal({
                    </div>
                 </div>
               </motion.div>
-  
+
               {/* Media Gallery Section */}
               {allMedia.length > 0 && (
-                <motion.div 
+                <motion.div
                   variants={{
                     hidden: { opacity: 0, y: 20 },
                     visible: { opacity: 1, y: 0 }
@@ -273,15 +333,15 @@ export function LandlordReviewDetailsModal({
                   </span>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {allMedia.map((item, idx) => (
-                      <motion.div 
-                        key={idx} 
+                      <motion.div
+                        key={idx}
                         whileHover={{ scale: 1.05, rotate: 1 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setSelectedMediaIdx(idx)}
                         className="aspect-square rounded-[1.5rem] overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm relative group cursor-zoom-in transition-all"
                       >
                          {item.type === 'image' ? (
-                            <img src={item.url} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Review Media" />
+                            <SafeImage src={item.url} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Review Media" />
                          ) : (
                             <div className="relative w-full h-full bg-gray-100 dark:bg-gray-900/50">
                                <video src={item.url} className="w-full h-full object-cover opacity-60" />
@@ -297,9 +357,9 @@ export function LandlordReviewDetailsModal({
                   </div>
                 </motion.div>
               )}
-  
+
               {/* Response Section */}
-              <motion.div 
+              <motion.div
                 variants={{
                   hidden: { opacity: 0, y: 30 },
                   visible: { opacity: 1, y: 0 }
@@ -310,7 +370,7 @@ export function LandlordReviewDetailsModal({
                   <h4 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">Respond to Review</h4>
                   <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800 mx-6"></div>
                 </div>
-  
+
                 {review.response ? (
                    <div className="bg-emerald-500/5 dark:bg-emerald-500/10 p-6 rounded-[2rem] border border-emerald-500/10 dark:border-emerald-500/20 relative overflow-hidden group">
                       <div className="absolute top-0 right-0 p-8 text-emerald-500/10 group-hover:text-emerald-500/20 transition-colors">
@@ -334,15 +394,15 @@ export function LandlordReviewDetailsModal({
                 ) : (
                   <div className="space-y-4">
                     <div className="relative group">
-                      <textarea 
+                      <textarea
                         value={responseText}
                         onChange={(e) => setResponseText(e.target.value)}
                         placeholder="Write your reply here..."
                         className="w-full bg-gray-50/50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-[1.5rem] p-6 text-sm text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[120px] resize-none transition-all placeholder:text-[10px] placeholder:uppercase placeholder:font-black placeholder:tracking-widest placeholder:text-gray-400"
                       />
                     </div>
-                    
-                    <Button 
+
+                    <Button
                       className="w-full bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 py-5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 group/act"
                       onClick={() => handleSubmitResponse()}
                       isLoading={isSubmitting}
@@ -353,11 +413,11 @@ export function LandlordReviewDetailsModal({
                     </Button>
                   </div>
                 )}
-  
+
                 <div className="mt-6 flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl">
                   <IconClock size={12} className="text-gray-400" />
                   <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">
-                    Response will be visible to all verified students
+                    Response will be visible to all verified users
                   </p>
                 </div>
               </motion.div>
@@ -375,7 +435,7 @@ export function LandlordReviewDetailsModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black backdrop-blur-2xl"
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm"
             onClick={() => setSelectedMediaIdx(null)}
           >
             <button className="absolute top-8 right-8 text-white/50 hover:text-white transition-colors z-[11000] bg-white/10 p-3 rounded-2xl">
@@ -384,13 +444,13 @@ export function LandlordReviewDetailsModal({
 
             {allMedia.length > 1 && (
               <>
-                <button 
+                <button
                   onClick={(e) => { e.stopPropagation(); handlePrev(e as any); }}
                   className="absolute left-8 p-4 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all z-[11000] backdrop-blur-md"
                 >
                   <IconChevronLeft size={32} />
                 </button>
-                <button 
+                <button
                   onClick={(e) => { e.stopPropagation(); handleNext(e as any); }}
                   className="absolute right-8 p-4 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all z-[11000] backdrop-blur-md"
                 >
@@ -407,7 +467,7 @@ export function LandlordReviewDetailsModal({
               onClick={(e) => e.stopPropagation()}
             >
                {allMedia[selectedMediaIdx].type === 'image' ? (
-                  <img src={allMedia[selectedMediaIdx].url} className="max-w-full max-h-full object-contain rounded-3xl shadow-2xl" alt="Preview" />
+                  <SafeImage src={allMedia[selectedMediaIdx].url} className="max-w-full max-h-full object-contain rounded-3xl shadow-2xl" alt="Preview" />
                ) : (
                   <video src={allMedia[selectedMediaIdx].url} controls autoPlay className="max-w-full max-h-full rounded-3xl shadow-2xl" />
                )}

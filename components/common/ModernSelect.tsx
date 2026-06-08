@@ -23,6 +23,7 @@ interface ModernSelectProps {
   instanceId?: string;
   size?: 'sm' | 'md';
   disabled?: boolean;
+  isSearchable?: boolean;
 }
 
 const CustomOption = (props: OptionProps<Option, false>) => {
@@ -65,8 +66,8 @@ const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => {
     <components.DropdownIndicator {...props}>
       <div className={cn(
         "w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-300",
-        props.selectProps.menuIsOpen 
-          ? "bg-primary/20 text-primary rotate-180" 
+        props.selectProps.menuIsOpen
+          ? "bg-primary/20 text-primary rotate-180"
           : "bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-primary dark:hover:text-primary"
       )}>
         <ChevronDown size={12} strokeWidth={3} />
@@ -95,25 +96,29 @@ const CustomMenuList = (props: MenuListProps<Option, false, GroupBase<Option>>) 
   );
 };
 
-const ModernSelect: React.FC<ModernSelectProps> = ({ 
-  options, 
-  value, 
-  onChange, 
-  placeholder = "Select Option", 
+const ModernSelect: React.FC<ModernSelectProps> = ({
+  options,
+  value,
+  onChange,
+  placeholder = "Select Option",
   icon,
   label,
   className,
   instanceId,
   size = 'md',
   disabled = false,
+  isSearchable = false,
 }) => {
-  const selectedOption = options.find((opt) => opt.value === value) || null;
-  const isSmall = size === 'sm';
   const [isMounted, setIsMounted] = React.useState(false);
+  const [portalTarget, setPortalTarget] = React.useState<HTMLElement | null>(null);
 
   React.useEffect(() => {
     setIsMounted(true);
+    setPortalTarget(document.body);
   }, []);
+
+  const selectedOption = options.find((opt) => opt.value === value) || null;
+  const isSmall = size === 'sm';
 
   if (!isMounted) {
     return (
@@ -166,15 +171,19 @@ const ModernSelect: React.FC<ModernSelectProps> = ({
               IndicatorSeparator: () => null,
             }}
             unstyled
-            isSearchable={false}
-            menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+            isSearchable={isSearchable}
+            menuPortalTarget={portalTarget}
             styles={{
-              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-              menu: (base) => ({ 
-                ...base, 
+              menuPortal: (base) => ({
+                ...base,
+                zIndex: 999999
+              }),
+              menu: (base) => ({
+                ...base,
                 width: '100%',
                 minWidth: 'max-content',
                 marginTop: '6px',
+                zIndex: 999999
               }),
             }}
             classNames={{
@@ -187,7 +196,7 @@ const ModernSelect: React.FC<ModernSelectProps> = ({
               input: () => "m-0 p-0",
               indicatorsContainer: () => "shrink-0 ml-2",
               menu: () => cn(
-                "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl overflow-hidden",
+                "absolute z-50 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl overflow-hidden",
                 isSmall ? "rounded-xl" : "rounded-2xl",
               ),
               option: ({ isFocused, isSelected }) => cn(
@@ -201,11 +210,10 @@ const ModernSelect: React.FC<ModernSelectProps> = ({
               ),
               placeholder: () => "text-gray-300 dark:text-gray-700 truncate font-black tracking-widest uppercase text-[10px]",
               menuList: () => cn(
-                "max-h-[300px] overflow-y-auto scrollbar-none",
-                "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                "max-h-[300px] overflow-y-auto custom-scrollbar",
               ),
             }}
-            menuPlacement="auto"
+            menuPlacement="bottom"
           />
         </div>
       </div>

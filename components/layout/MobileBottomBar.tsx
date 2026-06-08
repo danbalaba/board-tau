@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Heart, CalendarCheck, Home, User as UserIcon, MessageCircle, Star, UserPlus } from "lucide-react";
+import { Heart, CalendarCheck, Home, LogIn, UserPlus, MessageCircle, Star, ClipboardList } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { User } from "next-auth";
 import { getUnreadNotificationStats } from "@/services/notification";
@@ -69,7 +69,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
     >
       <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-t border-gray-200 dark:border-gray-700 shadow-2xl rounded-t-2xl px-4 py-3 pb-6">
         {/* Safe area padding */}
-        <div className="flex items-center justify-between w-full pb-1">
+        <div className="flex items-center justify-between w-full pb-1 gap-3">
           {/* Not logged in */}
           {!user ? (
             <>
@@ -79,7 +79,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
                     type="button"
                     className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-3 rounded-xl font-semibold transition-colors"
                   >
-                    <UserIcon className="w-4 h-4" />
+                    <LogIn className="w-4 h-4" />
                     <span>Login</span>
                   </button>
                 </Modal.Trigger>
@@ -94,11 +94,11 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
                   </button>
                 </Modal.Trigger>
 
-                <Modal.Window name="Login" size="sm">
+                <Modal.Window name="Login" size="sm" closeOnOutsideClick={false}>
                   <AuthModal name="Login" />
                 </Modal.Window>
 
-                <Modal.Window name="Sign up" size="sm">
+                <Modal.Window name="Sign up" size="sm" closeOnOutsideClick={false}>
                   <AuthModal name="Sign up" />
                 </Modal.Window>
               </Modal>
@@ -136,7 +136,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
                 className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full"
               >
                 <div className="relative">
-                  <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7 text-gray-600 dark:text-gray-400" />
+                  <ClipboardList className="w-6 h-6 sm:w-7 sm:h-7 text-gray-600 dark:text-gray-400" />
                   {unreadStats && (unreadStats.byType["inquiry"] || 0) > 0 && (
                     <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white dark:border-gray-900" />
                   )}

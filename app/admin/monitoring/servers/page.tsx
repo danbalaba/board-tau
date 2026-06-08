@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { ServerMetrics } from '@/app/admin/features/monitoring/components/server-metrics';
+import ServerMetrics from '@/app/admin/features/monitoring/components/server-metrics/index';
 
 export const metadata: Metadata = {
   title: 'Server Metrics - BoardTAU Admin',

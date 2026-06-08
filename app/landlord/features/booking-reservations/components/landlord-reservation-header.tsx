@@ -18,6 +18,7 @@ import {
 import { motion } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
+import { prepareDataForExport, exportToCSV, exportToExcel } from '@/utils/export-utils';
 import { LandlordReservationSearch } from './landlord-reservation-search';
 import { ReservationRequest } from '../hooks/use-reservation-logic';
 import {
@@ -57,6 +58,38 @@ export function LandlordReservationHeader({
   isArchived,
   onToggleArchived
 }: LandlordReservationHeaderProps) {
+  const handleGenerateCSV = async () => {
+    const reportData = prepareDataForExport(rawReservations, 'reservation');
+    const totalRequests = rawReservations.length;
+    const reservedCount = rawReservations.filter(r => r.status?.toLowerCase() === 'reserved').length;
+    const metadata = {
+      reportTitle: 'Reservation Requests Business Report',
+      reportId: `BTAU-RES-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Total Requests', value: `${totalRequests}` },
+        { label: 'Confirmed Volume', value: `${reservedCount} Paid` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToCSV(reportData, `Reservation_Report_${new Date().toLocaleDateString()}`, metadata);
+  };
+
+  const handleGenerateExcel = async () => {
+    const reportData = prepareDataForExport(rawReservations, 'reservation');
+    const totalRequests = rawReservations.length;
+    const reservedCount = rawReservations.filter(r => r.status?.toLowerCase() === 'reserved').length;
+    const metadata = {
+      reportTitle: 'Reservation Requests Business Report',
+      reportId: `BTAU-RES-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Total Requests', value: `${totalRequests}` },
+        { label: 'Confirmed Volume', value: `${reservedCount} Paid` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToExcel(reportData, `Reservation_Report_${new Date().toLocaleDateString()}`, 'Reservations', metadata);
+  };
+
   const statusOptions = [
     { value: 'all', label: 'All Pre-Stay', icon: IconInbox },
     { value: 'PENDING_PAYMENT', label: 'Pending Payment', icon: IconClock },
@@ -68,21 +101,27 @@ export function LandlordReservationHeader({
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative p-6 rounded-2xl border border-primary/10 shadow-sm z-30"
+      className="relative p-8 rounded-[3rem] border border-primary/10 shadow-xl overflow-hidden bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl overflow-hidden pointer-events-none" />
+      {/* Premium Background Accents */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 blur-[100px] rounded-full pointer-events-none" />
+      
       <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
-        <div className="flex items-center gap-4 shrink-0">
-          <div className="p-2.5 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary">
-            <IconCalendar size={20} />
+        <div className="flex items-center gap-6 shrink-0">
+          <div className="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center text-primary border border-gray-100 dark:border-gray-700">
+            <IconCalendar size={28} strokeWidth={2.5} />
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight truncate">
+            <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight">
               Reservations
             </h1>
-            <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider truncate">
-              Review and manage incoming requests
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-[0.2em]">
+                Review and manage incoming requests
+              </p>
+            </div>
           </div>
         </div>
 
@@ -152,7 +191,7 @@ export function LandlordReservationHeader({
                         onClick={() => setSelectedStatus(option.value)}
                         className={cn(
                           "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
-                          selectedStatus === option.value ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          selectedStatus === option.value ? "bg-primary/10 text-primary" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                         )}
                       >
                         <Icon size={14} />
@@ -199,8 +238,14 @@ export function LandlordReservationHeader({
                 <IconList size={18} />
               </button>
             </div>
-
-            <GenerateReportButton onGeneratePDF={handleGenerateReport} />
+ 
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport}
+              onGenerateCSV={handleGenerateCSV}
+              onGenerateExcel={handleGenerateExcel}
+              label="Generate Report"
+              className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hidden sm:flex items-center gap-2"
+            />
           </div>
         </div>
       </div>

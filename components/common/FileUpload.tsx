@@ -12,6 +12,8 @@ export interface FileUploadProps {
   errors?: any;
   description?: string;
   accept?: string;
+  fileUrl?: string;
+  onPreview?: () => void;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({
@@ -19,14 +21,18 @@ const FileUpload: React.FC<FileUploadProps> = ({
   label,
   onFileSelect,
   fileName,
+  fileUrl,
   required = false,
   errors,
   description,
   accept,
+  onPreview,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const toast = useResponsiveToast();
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
@@ -44,23 +50,53 @@ const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const validateFile = (file: File) => {
-    // 1. Type Check (Prioritized as per Step 5 behavior)
-    if (accept) {
-      const isImageAccept = accept.includes('image/jpeg') || accept.includes('image/png') || accept.includes('image/webp');
-      
-      if (isImageAccept) {
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!allowedTypes.includes(file.type)) {
-          toast.error(`${file.name} is an invalid file type. Only JPG, PNG, and WEBP allowed.`, { id: `type-error-${file.name}` });
-          return false;
+    const fileType = file.type;
+    const fileName = file.name;
+    const fileExtension = '.' + fileName.split('.').pop()?.toLowerCase();
+
+    // 1. Type Check
+    const acceptTypes = accept || ".pdf,.jpg,.jpeg,.png";
+    const allowedSpecs = acceptTypes.split(',').map(s => s.trim().toLowerCase());
+    
+    let isTypeAllowed = false;
+    for (const spec of allowedSpecs) {
+      if (spec.startsWith('.')) {
+        // Extension check (e.g. .pdf, .jpg)
+        if (fileExtension === spec) {
+          isTypeAllowed = true;
+          break;
+        }
+      } else if (spec.includes('/*')) {
+        // Wildcard MIME type check (e.g. image/*)
+        const mimeGroup = spec.split('/')[0];
+        if (fileType.startsWith(mimeGroup + '/')) {
+          isTypeAllowed = true;
+          break;
+        }
+      } else {
+        // Direct MIME type check (e.g. image/jpeg, application/pdf)
+        if (fileType === spec) {
+          isTypeAllowed = true;
+          break;
         }
       }
-      // General type check for other formats if needed could go here
+    }
+
+    if (!isTypeAllowed) {
+      let allowedLabel = "valid document formats";
+      if (acceptTypes.includes("image/")) {
+        allowedLabel = "JPG, PNG, or WEBP images";
+      } else if (acceptTypes.includes("pdf")) {
+        allowedLabel = "PDF, JPG, or PNG files";
+      }
+      
+      toast.error(`${fileName} is an invalid file type. Only ${allowedLabel} allowed.`, { id: 'file-upload-error' });
+      return false;
     }
 
     // 2. Size Check
     if (file.size > MAX_FILE_SIZE) {
-      toast.error(`File "${file.name}" is too large. Maximum size is 5MB.`, { id: `size-error-${file.name}` });
+      toast.error(`File "${fileName}" is too large. Maximum size is 5MB.`, { id: 'file-upload-error' });
       return false;
     }
 
@@ -88,16 +124,27 @@ const FileUpload: React.FC<FileUploadProps> = ({
         onFileSelect(file);
       }
     }
+    // Clear value to allow re-uploading same file
+    if (e.target) e.target.value = '';
   };
 
   const handleRemoveFile = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     // Reset the file input
-    const fileInput = document.getElementById(id) as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
+    if (inputRef.current) {
+      inputRef.current.value = '';
     }
     onFileSelect(null as any);
+  };
+
+  const handlePreview = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onPreview) {
+      onPreview();
+    } else if (fileUrl) {
+      window.open(fileUrl, '_blank');
+    }
   };
 
   return (
@@ -124,7 +171,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
-          onClick={() => document.getElementById(id)?.click()}
+          onClick={() => inputRef.current?.click()}
         >
           <Upload className={cn(
             "w-8 h-8 mx-auto mb-3",
@@ -142,36 +189,45 @@ const FileUpload: React.FC<FileUploadProps> = ({
         </div>
       ) : (
         <div className={cn(
-          "flex items-center justify-between p-4 border rounded-lg transition-colors",
+          "flex items-center justify-between p-4 border rounded-lg transition-colors group relative",
           errors
             ? "border-red-500 bg-red-50 dark:bg-red-900/20"
             : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600"
         )}>
           <div className="flex items-center space-x-3">
             <div className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center",
+              "w-10 h-10 rounded-full flex items-center justify-center",
               errors
                 ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
                 : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
             )}>
-              <Upload className="w-4 h-4" />
+              <Upload className="w-5 h-5" />
             </div>
             <div>
-              <p className={cn(
-                "text-sm font-medium",
-                errors ? "text-red-900 dark:text-red-100" : "text-gray-900 dark:text-gray-100"
-              )}>
+              <button
+                type="button"
+                onClick={handlePreview}
+                className={cn(
+                  "text-sm font-bold block text-left hover:underline decoration-2 underline-offset-4 decoration-primary/30",
+                  errors ? "text-red-900 dark:text-red-100" : "text-gray-900 dark:text-gray-100"
+                )}
+                title="Click to view full document"
+              >
                 {fileName}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              </button>
+              <button 
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="text-xs text-gray-500 dark:text-gray-400 font-bold hover:text-primary transition-colors flex items-center gap-1 mt-0.5"
+              >
                 Click to change
-              </p>
+              </button>
             </div>
           </div>
           <button
             type="button"
             onClick={handleRemoveFile}
-            className="text-red-500 hover:text-red-600 transition-colors"
+            className="p-2 bg-red-100 dark:bg-red-900/20 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-all shadow-sm"
           >
             <X className="w-4 h-4" />
           </button>
@@ -179,6 +235,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       )}
 
       <input
+        ref={inputRef}
         id={id}
         type="file"
         accept={accept || ".pdf,.jpg,.jpeg,.png"}

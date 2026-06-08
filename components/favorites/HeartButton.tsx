@@ -21,9 +21,16 @@ const HeartButton: React.FC<HeartButtonProps> = ({
   showLabel = false,
 }) => {
   const router = useRouter();
-  const { status } = useSession();
+  const session = useSession();
+  const status = session?.status;
   const { error } = useResponsiveToast();
   const [isPending, startTransition] = useTransition();
+  const [mounted, setMounted] = useState(false);
+  const lastToastTime = React.useRef<number>(0);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Use the prop as the source of truth
   const [hasFavorited, setHasFavorited] = useState(initialValue);
@@ -40,10 +47,14 @@ const HeartButton: React.FC<HeartButtonProps> = ({
     if (isPending) return;
 
     if (status !== "authenticated") {
-      error({
-        title: "Please sign in",
-        description: "You need to be logged in to favorite listings"
-      });
+      const now = Date.now();
+      if (now - lastToastTime.current > 5000) {
+        error({
+          title: "Please sign in",
+          description: "You need to be logged in to favorite listings"
+        });
+        lastToastTime.current = now;
+      }
       return;
     }
 
@@ -66,6 +77,15 @@ const HeartButton: React.FC<HeartButtonProps> = ({
       }
     });
   };
+
+  if (!mounted) {
+    return (
+      <div className={cn(
+        "relative opacity-50",
+        showLabel ? "px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 w-24 h-10" : "w-7 h-7"
+      )} />
+    );
+  }
 
   if (showLabel) {
     return (

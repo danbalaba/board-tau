@@ -8,7 +8,8 @@ import {
   IconCheck, 
   IconX,
   IconPlayerPlay,
-  IconArchive
+  IconArchive,
+  IconRestore
 } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
 import Button from "@/components/common/Button";
@@ -17,11 +18,13 @@ import { motion } from 'framer-motion';
 import Avatar from '@/components/common/Avatar';
 import { ReservationRequest } from '../hooks/use-reservation-logic';
 
+import SafeImage from '@/components/common/SafeImage';
+
 interface LandlordReservationCardProps {
   reservation: ReservationRequest;
   idx: number;
   viewMode: 'grid' | 'list';
-  onUpdateStatus: (id: string, status: string) => Promise<void>;
+  onUpdateStatus: (id: string, status: string, reason?: string) => Promise<void>;
   isUpdating?: boolean;
   onViewDetails: (reservation: ReservationRequest) => void;
   onArchive: () => void;
@@ -67,15 +70,17 @@ export function LandlordReservationCard({
       onClick={onArchive}
       title={reservation.isArchived ? "Unarchive" : "Archive"}
       className={cn(
-        "flex items-center justify-center p-2 rounded-xl shadow-lg transition-all",
+        "absolute top-3 right-3 z-20 p-2 rounded-xl backdrop-blur-md transition-all duration-300 shadow-lg border",
         reservation.isArchived 
-          ? "bg-amber-500/20 text-amber-500 hover:bg-amber-500/30"
-          : isGrid 
-            ? "bg-white/80 dark:bg-gray-800/80 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 backdrop-blur-md"
-            : "bg-gray-50 dark:bg-gray-800 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+          ? "bg-emerald-500/80 text-white border-emerald-400/50 hover:bg-emerald-600" 
+          : "bg-white/80 dark:bg-gray-900/80 text-gray-500 hover:text-rose-500 border-gray-100 dark:border-gray-800 hover:border-rose-100"
       )}
     >
-      <IconArchive size={16} />
+      {reservation.isArchived ? (
+        <IconRestore size={14} strokeWidth={2.5} className="group-hover:-rotate-45 transition-transform" />
+      ) : (
+        <IconArchive size={14} strokeWidth={2.5} className="hover:scale-110 transition-transform" />
+      )}
     </button>
   );
 
@@ -86,24 +91,23 @@ export function LandlordReservationCard({
       transition={{ delay: idx * 0.05, duration: 0.3 }}
       className={cn(
         "group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 transition-all duration-300 shadow-sm",
-        isGrid ? "flex flex-col p-6 rounded-3xl hover:shadow-xl hover:-translate-y-1" : "flex flex-col sm:flex-row gap-6 p-6 rounded-2xl hover:shadow-xl"
+        isGrid ? "flex flex-col p-6 rounded-[2rem] hover:shadow-xl hover:-translate-y-1" : "flex flex-col lg:flex-row items-center gap-8 p-8 rounded-[2.5rem] hover:shadow-xl"
       )}
     >
       <div className={cn(
-        "relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 z-10",
-        isGrid ? "h-44 mb-6 w-full" : "w-full sm:w-48 h-40"
+        "relative rounded-[2rem] overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 z-10",
+        isGrid ? "h-44 mb-6 w-full" : "w-full lg:w-64 h-48"
       )}>
-        {reservation.listing.imageSrc ? (
-          <img
-            src={reservation.listing.imageSrc}
-            alt={reservation.listing.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-50 flex items-center justify-center text-gray-300">
-            <IconCalendar size={isGrid ? 32 : 24} />
-          </div>
-        )}
+        <SafeImage
+          src={(reservation.room?.images && reservation.room.images.length > 0) 
+            ? reservation.room.images[0].url 
+            : (reservation.listing?.images && reservation.listing.images.length > 0)
+              ? reservation.listing.images[0].url
+              : reservation.listing?.imageSrc || "/images/placeholder.jpg"
+          }
+          alt={reservation.listing.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
         <div className="absolute top-3 left-3 z-20">
           <span className={cn(
             "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] uppercase font-black tracking-widest shadow-lg backdrop-blur-md border",
@@ -112,18 +116,10 @@ export function LandlordReservationCard({
             {reservation.status.replace('_', ' ')}
           </span>
         </div>
-        {isGrid && (
-          <div className="absolute top-3 right-3 z-20">
-            <ArchiveButton />
-          </div>
-        )}
+        {isGrid && <ArchiveButton />}
       </div>
 
-      {!isGrid && (
-        <div className="absolute top-6 right-6 z-20">
-          <ArchiveButton />
-        </div>
-      )}
+
 
       <div className="flex-1 min-w-0 w-full z-10 flex flex-col">
         <div className="flex items-start justify-between mb-4">
@@ -166,38 +162,83 @@ export function LandlordReservationCard({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 pt-6 border-t border-gray-100 dark:border-gray-800 mt-auto">
-          <Button
-            outline
-            onClick={() => onViewDetails(reservation)}
-            className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-[0.2em] border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-          >
-            <span className="flex items-center justify-center gap-2">
-              <IconEye size={14} />
-              Details
-            </span>
-          </Button>
-          
-          {(reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED') && (
+        {isGrid && (
+          <div className="flex items-center gap-2 pt-6 border-t border-gray-100 dark:border-gray-800 mt-auto w-full">
             <Button
-              onClick={() => onUpdateStatus(reservation.id, 'CHECKED_IN')}
-              isLoading={isUpdating}
-              className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-widest bg-blue-500 hover:bg-blue-600 text-white shadow-xl shadow-blue-500/20 group/btn"
+              outline
+              onClick={() => onViewDetails(reservation)}
+              className="flex-1 rounded-2xl py-3 px-1 text-[10px] font-black uppercase tracking-widest border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
             >
-              <span className="flex items-center justify-center gap-2">
-                <IconPlayerPlay size={14} fill="currentColor" className="group-hover:scale-110 transition-transform" />
-                Check In
+              <span className="flex items-center justify-center gap-1.5">
+                <IconEye size={14} />
+                <span className="hidden sm:inline">Details</span>
               </span>
             </Button>
-          )}
+            
+            {(reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED') && (
+              <Button
+                onClick={() => onUpdateStatus(reservation.id, 'CHECKED_IN')}
+                isLoading={isUpdating}
+                className="flex-1 rounded-2xl py-3 px-1 text-[10px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 group/btn"
+              >
+                <span className="flex items-center justify-center gap-1.5">
+                  <IconPlayerPlay size={14} fill="currentColor" className="group-hover:scale-110 transition-transform" />
+                  Check In
+                </span>
+              </Button>
+            )}
 
-          {reservation.status === 'PENDING_PAYMENT' && (
-             <div className="flex-1 flex items-center justify-center gap-1.5 px-3 py-3 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border border-amber-100 dark:border-amber-900/30">
-                <span className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest">Awaiting Payment</span>
-             </div>
-          )}
-        </div>
+            {reservation.status === 'PENDING_PAYMENT' && (
+               <div className="flex-1 flex items-center justify-center gap-1.5 px-1 py-3 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border border-amber-100 dark:border-amber-900/30">
+                  <span className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest text-center leading-none">Awaiting Payment</span>
+               </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {!isGrid && (
+        <div className="flex sm:flex-col gap-4 w-full lg:w-44 mt-6 lg:mt-0 pt-8 lg:pt-0 lg:border-l border-gray-100 dark:border-gray-800 lg:pl-8 shrink-0">
+          <Button
+            onClick={() => onViewDetails(reservation)}
+            className="w-full rounded-2xl h-14 bg-primary hover:bg-primary/90 text-white font-black text-[11px] uppercase tracking-widest shadow-xl shadow-primary/20 group/btn transition-all border-b-4 border-primary/30 active:border-b-0"
+          >
+            <span className="flex items-center justify-center gap-3">
+              <IconEye size={16} className="group-hover/btn:scale-110 transition-transform" />
+              Manage
+            </span>
+          </Button>
+
+          <div className="flex gap-2 w-full h-12">
+            <button
+              onClick={onArchive}
+              className={cn(
+                "flex-1 rounded-2xl transition-all flex items-center justify-center group/btn shadow-sm border",
+                reservation.isArchived 
+                  ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white" 
+                  : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white"
+              )}
+              title={reservation.isArchived ? "Restore Reservation" : "Archive Reservation"}
+            >
+              {reservation.isArchived ? (
+                <IconRestore size={18} className="group-hover/btn:-rotate-45 transition-transform" />
+              ) : (
+                <IconArchive size={18} className="group-hover/btn:scale-110 transition-transform" />
+              )}
+            </button>
+
+            {(reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED') && (
+              <button
+                onClick={() => onUpdateStatus(reservation.id, 'CHECKED_IN')}
+                className="flex-1 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center group/btn shadow-sm border border-blue-100 dark:border-blue-900/30"
+                title="Check In"
+              >
+                <IconPlayerPlay size={18} fill="currentColor" className="group-hover/btn:scale-110 transition-transform" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

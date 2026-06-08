@@ -45,6 +45,7 @@ export type SidebarNavItem = NavItemWithChildren;
 
 export interface Category {
   label: string;
+  value: string;
   icon: IconType;
   description?: string;
 }

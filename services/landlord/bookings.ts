@@ -57,6 +57,7 @@ export const getLandlordBookings = async (args?: {
           id: true,
           title: true,
           imageSrc: true,
+          images: true,
         },
       },
       room: {
@@ -65,6 +66,7 @@ export const getLandlordBookings = async (args?: {
           name: true,
           price: true,
           reservationFee: true,
+          images: true,
         },
       },
     },
@@ -106,6 +108,7 @@ export const getBookingDetails = async (bookingId: string) => {
           imageSrc: true,
           description: true,
           amenities: true,
+          images: true,
         },
       },
       room: {
@@ -114,6 +117,7 @@ export const getBookingDetails = async (bookingId: string) => {
           name: true,
           price: true,
           reservationFee: true,
+          images: true,
         },
       },
     },
@@ -132,7 +136,8 @@ export const getBookingDetails = async (bookingId: string) => {
 
 export const updateBookingStatus = async (
   bookingId: string,
-  status: "PENDING_PAYMENT" | "RESERVED" | "CHECKED_IN" | "COMPLETED" | "CANCELLED"
+  status: "PENDING_PAYMENT" | "RESERVED" | "CHECKED_IN" | "COMPLETED" | "CANCELLED",
+  reason?: string
 ) => {
   const landlord = await requireLandlord();
 
@@ -153,47 +158,64 @@ export const updateBookingStatus = async (
   const occupantCount = (booking as any).occupantsCount || 1;
 
   // 1. Determine if we need to update room slots
-  // As per brainstorming, the decrement will now happen strictly on CHECKED_IN
-  const isNowOccupying = status === "CHECKED_IN";
-  const wasPreviouslyOccupying = previousStatus === "CHECKED_IN";
+  // Subtraction now happens strictly at the Payment phase (RESERVED) in Stripe/Paymongo webhooks.
+  const isOccupyingStatus = (s: string) => s === "RESERVED" || s === "CHECKED_IN";
+  const wasPreviouslyOccupying = isOccupyingStatus(previousStatus);
+  const isNowOccupying = isOccupyingStatus(status);
 
   // Perform slot updates ONLY if the "occupancy" state has changed to avoid double-counting
-  if (isNowOccupying && !wasPreviouslyOccupying) {
-    // LOCK SLOT: Decrement available slots based on group size
-    await db.room.update({
-      where: { id: booking.roomId },
-      data: {
-        availableSlots: { decrement: occupantCount },
-      }
-    });
-
-    // Check if room is now full and update status
-    const updatedRoom = await db.room.findUnique({
-      where: { id: booking.roomId },
-      select: { availableSlots: true }
-    });
-
-    if (updatedRoom && updatedRoom.availableSlots <= 0) {
-      await db.room.update({
-        where: { id: booking.roomId },
-        data: { status: "FULL" }
-      });
-    }
-  } else if (!isNowOccupying && wasPreviouslyOccupying) {
+  if (!isNowOccupying && wasPreviouslyOccupying) {
     // RELEASE SLOT: Increment available slots (Cancellation or Completion)
     await db.room.update({
       where: { id: booking.roomId },
       data: {
         availableSlots: { increment: occupantCount },
-        status: "AVAILABLE" // Always ensure it's available if a slot is freed
+        status: "AVAILABLE"
       }
     });
+  } else if (isNowOccupying && !wasPreviouslyOccupying) {
+    // LOCK SLOT: Decrement available slots (Manual Approval or Direct Check-in)
+    
+    // CRITICAL: Fetch count from Inquiry to ensure source-of-truth accuracy
+    let finalOccupantCount = occupantCount;
+    if (booking.inquiryId) {
+      const sourceInquiry = await db.inquiry.findUnique({
+        where: { id: booking.inquiryId },
+        select: { occupantsCount: true }
+      });
+      if (sourceInquiry) finalOccupantCount = sourceInquiry.occupantsCount;
+    }
+
+    // 2. HARD FLOOR: Fetch current slots to ensure we don't go negative
+    const currentRoom = await db.room.findUnique({
+      where: { id: booking.roomId },
+      select: { availableSlots: true }
+    });
+
+    const currentSlots = currentRoom?.availableSlots || 0;
+    const finalSubtraction = Math.min(currentSlots, finalOccupantCount);
+
+    const updatedRoom = await db.room.update({
+      where: { id: booking.roomId },
+      data: {
+        availableSlots: { decrement: finalSubtraction }
+      }
+    });
+
+    // Update room status if it's now full
+    if (updatedRoom.availableSlots <= 0) {
+      await db.room.update({
+        where: { id: booking.roomId },
+        data: { status: "FULL" }
+      });
+    }
   }
 
   const updatedBooking = await db.reservation.update({
     where: { id: bookingId },
     data: {
       status,
+      ...(status === "CANCELLED" && reason ? { cancellationReason: reason } : {}),
     },
     include: {
       listing: { select: { title: true, userId: true } },

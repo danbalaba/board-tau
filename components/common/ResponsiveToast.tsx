@@ -14,6 +14,7 @@ interface ResponsiveToastContextType {
   warning: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => void;
   info: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => void;
   loading: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => void;
+  toast: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => void;
 }
 
 const ResponsiveToastContext = createContext<ResponsiveToastContextType | undefined>(undefined);
@@ -24,8 +25,15 @@ const useScreenSize = () => {
   const isMobileMQ = useMediaQuery({ maxWidth: 768 });
 
   useEffect(() => {
-    setIsMobile(isMobileMQ);
-  }, [isMobileMQ]);
+    // Initial check for mobile to avoid the "false" state on mount
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return { isMobile };
 };
@@ -48,58 +56,40 @@ export const ResponsiveToastProvider: React.FC<{ children: React.ReactNode }> = 
     message: string | { title: string; description?: string | React.ReactNode; [key: string]: any },
     options?: any
   ) => {
-    if (isMobile) {
+    // Direct detection for logic to avoid state race conditions
+    const isMobileNow = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
+
+    if (isMobileNow) {
       // Use Sileo for mobile
-      // Default options for Sileo
       const defaultOptions = {
-        autopilot: { expand: 500, collapse: 3000 },
-        roundness: 16,
+        autopilot: { expand: 500, collapse: 4000 },
+        roundness: 24,
         styles: {
-          title: "text-lg font-semibold",
-          description: "text-base",
+          title: `text-[10px]! font-black! uppercase! tracking-[0.2em]! leading-tight! block! whitespace-pre-wrap! break-words! text-center! w-[240px]! mx-auto! py-1!`,
+          description: `text-xs! font-bold! leading-relaxed! block! whitespace-pre-wrap! break-words! text-center! w-[240px]! mx-auto! pb-2!`,
         },
         ...options,
       };
 
-      // Sileo doesn't support loading type, fallback to info
-      if (type === "loading") {
-        if (typeof message === "string") {
-          sileo.info({ title: message, ...defaultOptions });
-        } else {
-          sileo.info({ ...message, ...defaultOptions });
-        }
+      const sileoInstance = sileo as any;
+      const method = (type === "loading" || !sileoInstance[type]) ? "info" : type;
+      
+      if (typeof message === "string") {
+        sileoInstance[method]({ title: "Notification", description: message, ...defaultOptions });
       } else {
-        const sileoMethod = sileo[type];
-        if (sileoMethod) {
-          if (typeof message === "string") {
-            sileoMethod({ title: message, ...defaultOptions });
-          } else {
-            sileoMethod({ ...message, ...defaultOptions });
-          }
-        } else {
-          // Fallback if type is not supported
-          if (typeof message === "string") {
-            sileo.info({ title: message, ...defaultOptions });
-          } else {
-            sileo.info({ ...message, ...defaultOptions });
-          }
-        }
+        sileoInstance[method]({ ...message, ...defaultOptions });
       }
     } else {
       // Use existing toast library for desktop
-      // react-hot-toast doesn't have native .info() or .warning() methods, 
-      // but we can use the base toast() function with a type property
       let toastFunction;
       if (type === "success") toastFunction = toast.success;
       else if (type === "error") toastFunction = toast.error;
       else if (type === "loading") toastFunction = toast.loading;
       else {
-        // Fallback for info and warning
         toastFunction = (msg: string, opts: any) => toast(msg, { ...opts, type: type as any });
       }
 
       if (toastFunction) {
-        // Handle react-hot-toast API
         const displayMessage = typeof message === "string"
           ? message
           : message.description ? `${message.title}: ${message.description}` : message.title;
@@ -109,7 +99,7 @@ export const ResponsiveToastProvider: React.FC<{ children: React.ReactNode }> = 
     }
   };
 
-  const toastMethods = {
+  const toastMethods = React.useMemo(() => ({
     success: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) =>
       showToast("success", message, options),
     error: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) =>
@@ -120,11 +110,12 @@ export const ResponsiveToastProvider: React.FC<{ children: React.ReactNode }> = 
       showToast("info", message, options),
     loading: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) =>
       showToast("loading", message, options),
-  };
+    toast: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) =>
+      showToast("info", message, options),
+  }), [isMobile]);
 
   return (
     <ResponsiveToastContext.Provider value={toastMethods}>
-      {/* Render toasters based on screen size */}
       <ResponsiveToasters />
       {children}
     </ResponsiveToastContext.Provider>
@@ -134,29 +125,29 @@ export const ResponsiveToastProvider: React.FC<{ children: React.ReactNode }> = 
 // Responsive toasters component
 const ResponsiveToasters: React.FC = () => {
   const { isMobile } = useScreenSize();
-  const { theme } = useTheme(); // Get current theme (light/dark)
+  const { theme } = useTheme();
 
   return (
     <>
-      {/* Desktop toasters - Only render HotToaster (react-hot-toast) */}
       {!isMobile && <HotToaster />}
 
-      {/* Mobile toaster (Sileo) */}
       {isMobile && (
-        <div style={{ position: 'fixed', top: '80px', left: 0, right: 0, zIndex: 9999 }}>
-          <Toaster
-            position="top-center"
-            options={{
-              fill: theme === 'dark' ? '#171717' : '#ffffff',
-              roundness: 16,
-              styles: {
-                title: theme === 'dark' ? 'text-white!' : 'text-gray-900!',
-                description: theme === 'dark' ? 'text-white/75!' : 'text-gray-600!',
-                badge: theme === 'dark' ? 'bg-white/10!' : 'bg-gray-200!',
-                button: theme === 'dark' ? 'bg-white/10! hover:bg-white/15!' : 'bg-gray-200! hover:bg-gray-300!',
-              },
-            }}
-          />
+        <div style={{ position: 'fixed', top: '24px', left: 0, right: 0, zIndex: 99999, pointerEvents: 'none' }}>
+          <div className="flex justify-center w-full px-4 pointer-events-none">
+            <Toaster
+              position="top-center"
+              options={{
+                fill: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+                roundness: 24,
+                styles: {
+                  title: `text-[10px]! font-black! uppercase! tracking-[0.2em]! leading-tight! block! whitespace-pre-wrap! break-words! text-center! w-[240px]! mx-auto! py-1! ${theme === 'dark' ? 'text-white/60!' : 'text-gray-400!'}`,
+                  description: `text-xs! font-bold! leading-relaxed! block! whitespace-pre-wrap! break-words! text-center! w-[240px]! mx-auto! pb-2! ${theme === 'dark' ? 'text-white!' : 'text-gray-900!'}`,
+                  badge: theme === 'dark' ? 'bg-white/10!' : 'bg-gray-200!',
+                  button: theme === 'dark' ? 'bg-white/10! hover:bg-white/15!' : 'bg-gray-200! hover:bg-gray-300!',
+                },
+              }}
+            />
+          </div>
         </div>
       )}
     </>

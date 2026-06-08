@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
 import { revalidatePath } from "next/cache";
+import { cache } from "@/lib/redis";
 
 export type NotificationType = "inquiry" | "reservation" | "review" | "message";
 
@@ -35,6 +36,10 @@ export async function createNotification({
     });
 
     revalidatePath("/");
+    
+    // HI-2 FIX: Invalidate notification stats cache
+    await cache.del(`notifications:stats:${userId}`);
+
     return { success: true, notification };
   } catch (error) {
     console.error("Failed to create notification:", error);
@@ -50,27 +55,40 @@ export async function getUnreadNotificationStats() {
   const user = await getCurrentUser();
   if (!user) return null;
 
+  const cacheKey = `notifications:stats:${user.id}`;
+
   try {
-    const unreadNotifications = await db.notification.findMany({
+    // 1. Check Redis Cache (30s TTL)
+    const cached = await cache.get(cacheKey);
+    if (cached) return cached;
+
+    // ============================================================
+    // OPTIMIZED: groupBy in MongoDB instead of fetching all records
+    // This runs on every page navigation — must be lightweight
+    // ============================================================
+    const grouped = await db.notification.groupBy({
+      by: ['type'],
       where: {
         userId: user.id,
         isRead: false,
       },
-      select: {
-        type: true,
-      },
+      _count: { id: true },
     });
 
-    const stats = {
-      total: unreadNotifications.length,
-      byType: unreadNotifications.reduce((acc, note) => {
-        const type = note.type.toLowerCase();
-        acc[type] = (acc[type] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>),
-    };
+    const byType: Record<string, number> = {};
+    let total = 0;
+    for (const group of grouped) {
+      const type = group.type.toLowerCase();
+      byType[type] = group._count.id;
+      total += group._count.id;
+    }
 
-    return stats;
+    const result = { total, byType };
+
+    // 2. Save to Redis (short 30s TTL for real-time feel)
+    await cache.set(cacheKey, result, 30);
+
+    return result;
   } catch (error) {
     console.error("Failed to fetch unread stats:", error);
     return null;
@@ -122,6 +140,7 @@ export async function markNotificationsAsRead(type?: NotificationType) {
     });
 
     revalidatePath("/");
+    await cache.del(`notifications:stats:${user.id}`);
     return { success: true };
   } catch (error) {
     console.error("Failed to mark notifications as read:", error);
@@ -162,6 +181,7 @@ export async function markEntityNotificationsAsRead(type: NotificationType, enti
       });
 
       revalidatePath("/");
+      await cache.del(`notifications:stats:${user.id}`);
     }
 
     return { success: true };

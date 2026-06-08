@@ -3,7 +3,9 @@ import { Role } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sanitizeInput } from "@/lib/validators";
+import { isForbiddenPassword } from "@/lib/password-blacklist";
 import bcrypt from 'bcryptjs';
+import { sendPasswordChangeEmail } from "@/services/email/notifications";
 
 export interface UserProfile {
   id: string;
@@ -21,6 +23,7 @@ export interface UserProfile {
   bio: string | null;
   city: string | null;
   region: string | null;
+  hasPassword?: boolean;
 }
 
 // Server-side function to get user profile
@@ -51,6 +54,7 @@ export async function getUserProfile(): Promise<UserProfile> {
       bio: true,
       city: true,
       region: true,
+      password: true,
     },
   });
 
@@ -58,7 +62,11 @@ export async function getUserProfile(): Promise<UserProfile> {
     throw new Error("User not found");
   }
 
-  return user as UserProfile;
+  const { password, ...rest } = user;
+  return {
+    ...rest,
+    hasPassword: !!password,
+  } as UserProfile;
 }
 
 // Server-side function to update user profile
@@ -155,7 +163,11 @@ export async function changeUserPassword(oldPassword: string, newPassword: strin
     },
     select: {
       id: true,
+      name: true,
       password: true,
+      lastPasswordChangeAt: true,
+      passwordHistory: true,
+      securityVersion: true,
     },
   });
 
@@ -163,18 +175,54 @@ export async function changeUserPassword(oldPassword: string, newPassword: strin
     throw new Error("User not found");
   }
 
-  if (!user.password) {
-    throw new Error("User does not have a password set");
+  // 🔒 Security: 2-minute cooldown for password changes (optimized for live Capstone defense demos)
+  if (user.lastPasswordChangeAt) {
+    const lastChange = user.lastPasswordChangeAt;
+    const cooldownMs = 2 * 60 * 1000; // 2 Minutes
+    if (lastChange && (Date.now() - lastChange.getTime()) < cooldownMs) {
+      const nextAvailable = new Date(lastChange.getTime() + cooldownMs);
+      const secondsLeft = Math.ceil((nextAvailable.getTime() - Date.now()) / 1000);
+      throw new Error(`Security Lock: Please wait ${secondsLeft} second(s) before changing your password again.`);
+    }
   }
 
-  // Verify old password
-  const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
-  if (!isPasswordValid) {
-    throw new Error("Current password is incorrect");
+
+  // 🛡️ Blacklist check on server
+  if (isForbiddenPassword(newPassword)) {
+    throw new Error("This password is too common/easy to guess. Please choose a stronger one.");
+  }
+
+  // 🛡️ If user has a password, verify the old one
+  if (user.password) {
+    if (!oldPassword) {
+      throw new Error("Current password is required to change your password.");
+    }
+    // We already checked user.password is not null above
+    const isPasswordValid = await bcrypt.compare(oldPassword, user.password as string);
+    if (!isPasswordValid) {
+      throw new Error("Current password is incorrect");
+    }
+  }
+
+  // Check Password History (Last 3 hashes)
+  // We check the new password against the current and history
+  const isPreviouslyUsed = await Promise.all(
+    user.passwordHistory
+      .filter((hash): hash is string => hash !== null)
+      .map((oldHash) => bcrypt.compare(newPassword, oldHash))
+  );
+
+  if (isPreviouslyUsed.some(match => match)) {
+    throw new Error("You cannot reuse a recently used password.");
   }
 
   // Hash new password
   const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+  // Update password history (keep only last 10, filter out nulls)
+  const updatedHistory = [user.password, ...user.passwordHistory]
+    .filter((p): p is string => p !== null)
+    .slice(0, 10);
 
   // Update user password
   await db.user.update({
@@ -183,7 +231,16 @@ export async function changeUserPassword(oldPassword: string, newPassword: strin
     },
     data: {
       password: hashedPassword,
+      lastPasswordChangeAt: new Date(),
+      securityVersion: { increment: 1 },
+      passwordHistory: updatedHistory,
     },
+  });
+
+  // Send Security Notification Email
+  await sendPasswordChangeEmail({
+    email: session.user.email,
+    name: user.name,
   });
 }
 

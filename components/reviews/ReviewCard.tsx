@@ -2,6 +2,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Star, MessageSquare, Calendar, MapPin, Eye } from "lucide-react";
+import SafeImage from "@/components/common/SafeImage";
 
 interface ReviewListing {
   id: string;
@@ -9,6 +10,7 @@ interface ReviewListing {
   imageSrc: string;
   region?: string;
   country?: string;
+  images?: Array<{ url: string }>;
 }
 
 interface Review {
@@ -19,6 +21,13 @@ interface Review {
   createdAt: any;
   listing: ReviewListing;
   images: string[];
+  reservation?: {
+    room?: {
+      id: string;
+      name: string;
+      images?: Array<{ url: string }>;
+    }
+  }
 }
 
 interface ReviewCardProps {
@@ -42,22 +51,58 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
 
   return (
     <motion.div 
-      initial={{ opacity: 0, translateY: 15 }}
-      animate={{ opacity: 1, translateY: 0 }}
+      initial={{ opacity: 0, y: 15 }}
+      animate={hasNotification ? { 
+        opacity: 1, 
+        y: 0,
+        scale: [1, 1.03, 1],
+        boxShadow: [
+          "0 0 0 rgba(16, 185, 129, 0)",
+          "0 15px 35px rgba(16, 185, 129, 0.25)",
+          "0 0 0 rgba(16, 185, 129, 0)"
+        ]
+      } : { 
+        opacity: 1, 
+        y: 0,
+        scale: 1,
+        boxShadow: "0 0 0 rgba(0,0,0,0)"
+      }}
       whileHover={{ y: -4, scale: 1.02 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-700/50 relative group flex flex-col h-full"
+      transition={{ 
+        opacity: { duration: 0.3 },
+        y: { 
+          duration: 0.3,
+          type: "spring", 
+          stiffness: 300, 
+          damping: 20 
+        },
+        scale: { 
+          duration: 2, 
+          repeat: Infinity, 
+          ease: "easeInOut",
+          repeatDelay: 1
+        },
+        boxShadow: { 
+          duration: 2, 
+          repeat: Infinity, 
+          ease: "easeInOut",
+          repeatDelay: 1
+        }
+      }}
+      className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100 dark:border-gray-700/50 relative group flex flex-col h-full"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
 
       <div className="relative h-48 overflow-hidden z-10 shrink-0">
         <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300 z-10" />
-        <motion.img
-          whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.6 }}
-          src={review.listing.imageSrc || "/images/placeholder.jpg"}
+        <SafeImage
+          src={(review.reservation?.room?.images && review.reservation.room.images.length > 0)
+            ? review.reservation.room.images[0].url
+            : (review.listing?.images && review.listing.images.length > 0)
+              ? (typeof review.listing.images[0] === 'string' ? review.listing.images[0] : (review.listing.images[0] as any).url)
+              : review.listing?.imageSrc || "/images/placeholder.jpg"
+          }
           alt={review.listing.title}
-          className="w-full h-full object-cover"
         />
         
         <div className="absolute top-3 left-3 z-20 flex flex-col gap-2">

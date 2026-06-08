@@ -4,19 +4,28 @@ import { FaFacebook } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import { signIn } from "next-auth/react";
-import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { FaEnvelope, FaCheckCircle } from "react-icons/fa";
+import { useResponsiveToast } from "../common/ResponsiveToast";
+import Link from "next/link";
 
 import Heading from "../common/Heading";
-import Input from "../inputs/Input";
+import AuthInput from "../inputs/AuthInput";
 import OtpInput from "../inputs/OtpInput";
 import Button from "../common/Button";
 import Modal from "./Modal";
 import SpinnerMini from "../common/Loader";
 import { registerUser } from "@/services/auth";
 import { sendOTP, verifyOTP } from "@/services/user/otp";
-import { validateEmail, validatePassword, validateName, validateOTP } from "@/lib/validators";
+import { validateOTP } from "@/lib/validators";
+import {
+  signupResolver,
+  loginResolver,
+  otpResolver,
+  SignupFormValues,
+  LoginFormValues,
+  OtpFormValues
+} from "./hooks/use-auth-validation";
 
 const AuthModal = ({
   name,
@@ -25,6 +34,7 @@ const AuthModal = ({
   name?: string;
   onCloseModal?: () => void;
 }) => {
+  const responsiveToast = useResponsiveToast();
   const [isLoading, startTransition] = useTransition();
   const [title, setTitle] = useState(name || "");
   const [isOTPModal, setIsOTPModal] = useState(false);
@@ -33,6 +43,8 @@ const AuthModal = ({
   const [resendCooldown, setResendCooldown] = useState(0);
   const [otpAttemptLimitReached, setOtpAttemptLimitReached] = useState(false);
   const [lockoutCountdown, setLockoutCountdown] = useState(0);
+
+  const isLoginModal = title === "Login";
   const {
     register,
     handleSubmit,
@@ -41,7 +53,9 @@ const AuthModal = ({
     reset,
     setError,
     setFocus,
-  } = useForm<FieldValues>({
+  } = useForm<SignupFormValues | LoginFormValues | OtpFormValues>({
+    resolver: (isOTPModal ? otpResolver : isLoginModal ? loginResolver : signupResolver) as any,
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",
@@ -49,8 +63,7 @@ const AuthModal = ({
       otp: "",
     },
   });
-  const router = useRouter();
-  const isLoginModal = title === "Login";
+   const router = useRouter();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -72,7 +85,7 @@ const AuthModal = ({
     reset();
   };
 
-  const onSubmit: SubmitHandler<FieldValues> = (data) => {
+  const onSubmit = (data: any) => {
     const { email, password, name, otp } = data;
 
     startTransition(async () => {
@@ -87,8 +100,13 @@ const AuthModal = ({
                 return;
               }
 
-              await verifyOTP(userEmail, otp);
-              toast.success("Email verified successfully!");
+              const result = await verifyOTP(userEmail, otp);
+
+              if (result?.error) {
+                throw new Error(result.error);
+              }
+
+              responsiveToast.success("Email verified successfully!");
               setIsOTPModal(false);
               setTitle("Login");
               setOtpAttemptLimitReached(false);
@@ -101,33 +119,22 @@ const AuthModal = ({
                 const countdownSeconds = parseInt(countdownMatch[1]);
                 setLockoutCountdown(countdownSeconds);
                 setOtpAttemptLimitReached(true);
-                toast.error(error.message, {
+                responsiveToast.error(error.message, {
                   duration: Math.min(countdownSeconds, 5) * 1000, // Max 5 seconds
                 });
               } else if (error.message.includes("attempt(s) remaining")) {
                 // Show remaining attempts with shorter duration
-                toast.error(error.message, {
+                responsiveToast.error(error.message, {
                   duration: 3000,
                 });
+              } else if (error.message.includes("temporarily locked")) {
+                onCloseModal?.();
+                router.push(`/auth/locked?email=${encodeURIComponent(userEmail)}`);
               } else {
-                toast.error(error.message);
+                responsiveToast.error(error.message);
               }
             }
         } else if (isLoginModal) {
-          // Client-side validation for login
-          const emailError = validateEmail(email);
-          const passwordError = validatePassword(password);
-
-          if (emailError) {
-            setError("email", { message: emailError });
-            return;
-          }
-
-          if (passwordError) {
-            setError("password", { message: passwordError });
-            return;
-          }
-
           // Login
           const callback = await signIn("credentials", {
             email,
@@ -140,12 +147,12 @@ const AuthModal = ({
             if (callback.error.includes("Email not verified")) {
               setUserEmail(email);
               setIsOTPModal(true);
-              toast.error("Please verify your email first");
+              responsiveToast.error("Please verify your email first");
             } else {
               throw new Error(callback.error);
             }
           } else if (callback?.ok) {
-            toast.success("You've successfully logged in.", {
+            responsiveToast.success("You've successfully logged in.", {
               duration: 3000,
             });
             onCloseModal?.();
@@ -154,43 +161,42 @@ const AuthModal = ({
             const response = await fetch('/api/auth/session');
             const sessionData = await response.json();
 
-            if (sessionData.user?.role === 'admin') {
+            if (sessionData.user?.role === 'admin' || sessionData.user?.role === 'ADMIN') {
               router.push('/admin');
-            } else if (sessionData.user?.role === 'landlord') {
+            } else if (sessionData.user?.role === 'landlord' || sessionData.user?.role === 'LANDLORD') {
               router.push('/landlord');
             } else {
               router.refresh(); // Default to refresh for regular users
             }
           }
         } else {
-          // Client-side validation for signup
-          const nameError = validateName(name);
-          const emailError = validateEmail(email);
-          const passwordError = validatePassword(password);
-
-          if (nameError) {
-            setError("name", { message: nameError });
-            return;
-          }
-
-          if (emailError) {
-            setError("email", { message: emailError });
-            return;
-          }
-
-          if (passwordError) {
-            setError("password", { message: passwordError });
-            return;
-          }
-
           // Signup
-          await registerUser({ email, password, name });
+          const result = await registerUser({ email, password, name });
+          
+          if (result?.error) {
+            throw new Error(result.error);
+          }
+
           setUserEmail(email);
           setIsOTPModal(true);
-          toast.success("OTP sent to your email!");
+          responsiveToast.success("OTP sent to your email!");
         }
       } catch (error: any) {
-        toast.error(error.message);
+        if (error.message.includes("AccountLocked")) {
+          const email = watch("email") || userEmail;
+          responsiveToast.error(
+            "Access Denied: Your account is currently under a 24-hour security lock due to multiple failed OTP attempts. Please try again later or contact support.",
+            { duration: 5000 }
+          );
+
+          // Delayed redirect to give the user time to read the toast
+          setTimeout(() => {
+            onCloseModal?.();
+            router.push(`/auth/locked?email=${encodeURIComponent(email || userEmail)}`);
+          }, 2000);
+        } else {
+          responsiveToast.error(error.message);
+        }
         if (isLoginModal) {
           reset();
           setError("email", {});
@@ -204,14 +210,16 @@ const AuthModal = ({
   };
 
   const resendOTP = async () => {
-    // Calculate progressive cooldown based on attempt count
-    // We'll use a default of 30 seconds initially, backend will enforce actual limits
-    setResendCooldown(30);
+    // Let the backend enforce the actual limits, we'll catch the error and set the timer
+    // setResendCooldown(30);
 
     startTransition(async () => {
       try {
-        await sendOTP(userEmail);
-        toast.success("New OTP sent to your email!", {
+        const result = await sendOTP(userEmail);
+        if (result?.error) {
+          throw new Error(result.error);
+        }
+        responsiveToast.success("New OTP sent to your email!", {
           duration: 4000,
         });
         setOtpAttemptLimitReached(false); // Reset attempt limit state
@@ -221,11 +229,11 @@ const AuthModal = ({
         if (cooldownMatch) {
           const cooldownSeconds = parseInt(cooldownMatch[1]);
           setResendCooldown(cooldownSeconds);
-          toast.error(error.message, {
+          responsiveToast.error(error.message, {
             duration: cooldownSeconds * 1000, // Show toast for duration of cooldown
           });
         } else {
-          toast.error(error.message);
+          responsiveToast.error(error.message);
           setResendCooldown(0); // Clear cooldown if there's an error
         }
       }
@@ -277,8 +285,8 @@ const AuthModal = ({
               title="Check your email"
               subtitle="We've sent a verification code to your email"
             />
-            <div className="text-center mb-4">
-              <p className="text-sm text-gray-600">{userEmail}</p>
+            <div className="text-center mb-4 bg-blue-500/5 py-2 rounded-xl border border-blue-500/10 backdrop-blur-sm">
+              <p className="text-sm font-bold text-blue-500 dark:text-blue-400 tracking-wide">{userEmail}</p>
             </div>
               <OtpInput
                 id="otp"
@@ -290,31 +298,33 @@ const AuthModal = ({
                 required
                 length={6}
               />
-              {lockoutCountdown > 0 && (
-                <div className="text-center text-red-500 font-medium my-4">
-                  Please try again in {lockoutCountdown} seconds
-                </div>
-              )}
-              <Button
-                type="submit"
-                className="flex items-center justify-center h-[42px]"
-                disabled={isLoading || !watch("otp") || watch("otp").length !== 6 || otpAttemptLimitReached}
-              >
-                {isLoading ? <SpinnerMini className="w-5 h-5" /> : "Verify Email"}
-              </Button>
-              <div className="text-center mt-4">
+              <div className="flex justify-center mt-4">
                   <button
                     type="button"
                     onClick={resendOTP}
-                    className="text-sm text-blue-600 hover:text-blue-800 font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
+                    className="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 font-black uppercase tracking-widest disabled:text-gray-500 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
                     disabled={isLoading || resendCooldown > 0 || otpAttemptLimitReached}
                   >
                     {resendCooldown > 0
-                      ? `Resend OTP in ${resendCooldown}s`
+                      ? `New code in ${resendCooldown}s`
                       : otpAttemptLimitReached
-                      ? `Resend OTP in ${lockoutCountdown}s`
-                      : "Didn't receive code? Resend"}
+                      ? `Locked for ${lockoutCountdown}s`
+                      : "Didn't get it? Resend"}
                   </button>
+              </div>
+              {lockoutCountdown > 0 && (
+                <div className="text-center text-rose-500 font-black text-[10px] uppercase tracking-widest my-4 bg-rose-500/5 py-2 rounded-lg border border-rose-500/10">
+                  Security Lockout: {lockoutCountdown} seconds remaining
+                </div>
+              )}
+              <div className="mt-6">
+                <Button
+                  type="submit"
+                  className="flex items-center justify-center h-[48px] w-full rounded-2xl shadow-lg shadow-blue-500/20"
+                  disabled={isLoading || !watch("otp") || watch("otp").length !== 6 || otpAttemptLimitReached}
+                >
+                  {isLoading ? <SpinnerMini className="w-5 h-5" /> : "Verify Identity"}
+                </Button>
               </div>
           </>
         ) : (
@@ -329,18 +339,19 @@ const AuthModal = ({
             />
 
             {!isLoginModal && (
-              <Input
+              <AuthInput
                 id="name"
-                label="Name"
+                label="Full Name"
                 disabled={isLoading}
                 register={register}
                 errors={errors}
                 required
                 watch={watch}
+                placeholder="John Doe"
               />
             )}
 
-            <Input
+            <AuthInput
               id="email"
               label="Email"
               disabled={isLoading}
@@ -348,9 +359,10 @@ const AuthModal = ({
               errors={errors}
               required
               watch={watch}
+              placeholder="email@boardtau.com"
             />
 
-            <Input
+            <AuthInput
               id="password"
               label="Password"
               type="password"
@@ -359,7 +371,20 @@ const AuthModal = ({
               errors={errors}
               required
               watch={watch}
+              placeholder="••••••••"
             />
+
+            {isLoginModal && (
+              <div className="flex justify-end -mt-3">
+                <Link
+                  href="/forgot-password"
+                  onClick={() => onCloseModal?.()}
+                  className="text-xs text-blue-500 hover:underline font-medium transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            )}
 
             <Button
               type="submit"
@@ -388,18 +413,25 @@ const AuthModal = ({
 
                 if (result?.error) {
                   if (result.error === "OAuthAccountNotLinked") {
-                    toast.error("An account with this email already exists. Please log in using your existing account type or use a different email.");
+                    responsiveToast.error("An account with this email already exists. Please log in using your existing account type or use a different email.");
+                  } else if (result.error.includes("AccountLocked")) {
+                    // Extract email from error message if possible (format: AccountLocked:email)
+                    const emailFromError = result.error.split(":")[1];
+                    const finalEmail = emailFromError || watch("email") || userEmail;
+
+                    onCloseModal?.();
+                    router.push(`/auth/locked?email=${encodeURIComponent(finalEmail)}`);
                   } else {
-                    toast.error(`Failed to sign in. Error: ${result.error}`);
+                    responsiveToast.error(`Failed to sign in. Error: ${result.error}`);
                   }
                 } else if (result?.ok) {
-                  toast.success("Successfully signed in!");
+                  responsiveToast.success("Successfully signed in!");
                   onCloseModal?.();
                   router.refresh();
                 }
               } catch (error: any) {
                 console.error("Google signIn error:", error);
-                toast.error(`Failed to sign in. Error: ${error.message || "Unknown error"}`);
+                responsiveToast.error(`Failed to sign in. Error: ${error.message || "Unknown error"}`);
               } finally {
                 setIsOAuthLoading(false);
               }
@@ -426,17 +458,20 @@ const AuthModal = ({
                 if (result?.error) {
                   if (result.error.startsWith("OAuthAccountNotLinked")) {
                     const provider = result.error.split(":")[1];
-                    toast.error(`An account with this email already exists. Please log in using your ${provider === "google" ? "Google" : "Facebook"} account or use a different email.`);
+                    responsiveToast.error(`An account with this email already exists. Please log in using your ${provider === "google" ? "Google" : "Facebook"} account or use a different email.`);
+                  } else if (result.error.includes("AccountLocked")) {
+                    onCloseModal?.();
+                    router.push(`/auth/locked?email=${encodeURIComponent(watch("email") || userEmail)}`);
                   } else {
-                    toast.error("Failed to sign in. Please try again.");
+                    responsiveToast.error("Failed to sign in. Please try again.");
                   }
                 } else if (result?.ok) {
-                  toast.success("Successfully signed in!");
+                  responsiveToast.success("Successfully signed in!");
                   onCloseModal?.();
                   router.refresh();
                 }
               } catch (error) {
-                toast.error("Failed to sign in. Please try again.");
+                responsiveToast.error("Failed to sign in. Please try again.");
               } finally {
                 setIsOAuthLoading(false);
               }
@@ -453,6 +488,7 @@ const AuthModal = ({
           <div
             className="
               text-neutral-500
+              dark:text-gray-400
             text-center
             mt-2
             font-light
@@ -469,6 +505,7 @@ const AuthModal = ({
                 onClick={onToggle}
                 className="
                 text-neutral-800
+                dark:text-white
                 cursor-pointer
                 hover:underline
                 ml-1

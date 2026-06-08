@@ -64,8 +64,18 @@ export function NotificationsDropdown() {
     }
   };
 
+  const getNotificationLink = (notif: any) => {
+    if (notif.type === 'message') {
+      return notif.link.replace('/landlord/messages?', '/landlord?openChat=true&');
+    }
+    if (notif.link.startsWith('/landlord/reservations')) {
+      return '/landlord/reservations';
+    }
+    return notif.link;
+  };
+
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button className="relative p-2.5 text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all group active:scale-95 outline-none">
           <IconBellTabler size={22} className="group-hover:rotate-12 transition-transform" />
@@ -81,7 +91,7 @@ export function NotificationsDropdown() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        className='w-96 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-gray-800 p-2 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 overflow-hidden'
+        className='w-96 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-gray-800 p-2 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 overflow-hidden z-[100]'
         align='end'
         sideOffset={12}
       >
@@ -147,12 +157,15 @@ export function NotificationsDropdown() {
                         opacity: { duration: 0.15 }
                       }}
                     >
-                      <DropdownMenuItem asChild>
+                      <DropdownMenuItem 
+                        asChild 
+                        className="focus:bg-gray-50 dark:focus:bg-gray-800/50"
+                      >
                         <Link 
-                          href={notif.link.startsWith('/landlord/reservations') ? '/landlord/reservations' : notif.link}
+                          href={getNotificationLink(notif)}
                           onClick={() => markAsRead(notif.id)}
                           className={cn(
-                            "flex items-start gap-4 p-4 rounded-2xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-700/50 group relative my-0.5",
+                            "flex items-start gap-4 p-4 rounded-2xl cursor-pointer transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-700/50 group relative my-0.5",
                             !notif.isRead && "bg-primary/[0.03]"
                           )}
                         >

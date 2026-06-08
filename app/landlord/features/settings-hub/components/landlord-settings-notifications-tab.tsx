@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Bell, LucideLoader2 } from 'lucide-react';
+import { IconBell, IconLoader2, IconMail, IconDeviceMobile, IconMessageDots, IconChartBar } from '@tabler/icons-react';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
+import { cn } from '@/utils/helper';
 
 export function LandlordSettingsNotificationsTab() {
   const { success } = useResponsiveToast();
@@ -10,26 +11,21 @@ export function LandlordSettingsNotificationsTab() {
 
   const handleToggle = (title: string) => {
     setIsUpdating(title);
-    // Simulate real-time API call
     setTimeout(() => {
       setIsUpdating(null);
       success(`${title} updated successfully`);
     }, 600);
   };
 
+  const notificationItems = [
+    { title: 'Email Notifications', desc: 'Critical alerts sent to your verified email address', checked: true, icon: IconMail, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { title: 'SMS Direct Alerts', desc: 'Instant mobile updates for arrivals and payments', checked: false, icon: IconDeviceMobile, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+    { title: 'Inquiry Signals', desc: 'Real-time alerts when potential tenants reach out', checked: true, icon: IconMessageDots, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { title: 'Financial Updates', desc: 'Consolidated reports and verification notifications', checked: true, icon: IconChartBar, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+  ];
+
   return (
-    <div className="space-y-12 pb-8">
-      <div className="flex flex-col items-center text-center">
-        <div className="p-4 bg-primary/10 rounded-[2rem] text-primary mb-5 shadow-inner">
-          <Bell size={40} />
-        </div>
-        <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
-          Notification Center
-        </h2>
-        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-1">
-          Stay updated with your properties
-        </p>
-      </div>
+    <div className="space-y-8">
 
       <div className="space-y-6">
         <div className="flex items-center gap-3 px-1 mb-2">
@@ -38,20 +34,20 @@ export function LandlordSettingsNotificationsTab() {
         </div>
 
         <div className="grid gap-4">
-          {[
-            { title: 'Email Notifications', desc: 'Critical alerts sent to your verified email address', checked: true },
-            { title: 'SMS Direct Alerts', desc: 'Instant mobile updates for arrivals and payments', checked: false },
-            { title: 'Inquiry Signals', desc: 'Real-time alerts when potential tenants reach out', checked: true },
-            { title: 'Financial Updates', desc: 'Consolidated reports and verification notifications', checked: true },
-          ].map((item, i) => (
-            <div key={i} className="flex items-center justify-between p-6 bg-white/40 dark:bg-gray-800/20 rounded-[2rem] border border-gray-100 dark:border-gray-800 hover:bg-white dark:hover:bg-gray-800/40 transition-all group">
-              <div className="flex-1">
-                <h3 className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-wider mb-0.5">{item.title}</h3>
-                <p className="text-xs font-medium text-gray-500">{item.desc}</p>
+          {notificationItems.map((item, i) => (
+            <div key={i} className="flex items-center justify-between p-6 bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 hover:shadow-xl hover:shadow-primary/5 transition-all group">
+              <div className="flex items-center gap-5">
+                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform", item.bg)}>
+                  <item.icon size={22} className={item.color} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-wider mb-0.5">{item.title}</h3>
+                  <p className="text-xs font-medium text-gray-500">{item.desc}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-3 ml-4">
+              <div className="flex items-center gap-4 ml-4">
                 {isUpdating === item.title && (
-                  <LucideLoader2 size={16} className="animate-spin text-primary" />
+                  <IconLoader2 size={16} className="animate-spin text-primary" />
                 )}
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 

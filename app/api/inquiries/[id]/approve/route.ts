@@ -86,6 +86,7 @@ export async function POST(
         totalPrice,
         status: "PENDING_PAYMENT" as any,
         paymentStatus: "PENDING" as any,
+        occupantsCount: inquiry.occupantsCount || 1,
       },
     });
 

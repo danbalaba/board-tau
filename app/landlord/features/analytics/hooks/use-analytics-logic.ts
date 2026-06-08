@@ -1,7 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { generateMultiSectionPDF, ReportSection } from '@/utils/pdfGenerator';
+import { 
+  getLandlordDashboardStats, 
+  getRevenueReport, 
+  getOccupancyReport, 
+  getDailyRevenueHistory, 
+  getMonthlyRevenueByProperty, 
+  getGrowthTrendData, 
+  getPropertyTypeBreakdown, 
+  getRatingDistribution, 
+  getAllPropertiesPerformance, 
+  getInquirySourceBreakdown 
+} from '@/services/landlord/analytics';
 
 export interface AnalyticsStats {
   totalProperties: number;
@@ -13,7 +25,7 @@ export interface AnalyticsStats {
   monthlyRevenue: number;
 }
 
-interface ChartData {
+export interface ChartData {
   dailyRevenue: Array<{ date: string; revenue: number; bookings: number }>;
   monthlyRevenue: Array<{ date: string; [key: string]: any }>;
   monthlyRevenueListings: Array<{ id: string; title: string }>;
@@ -22,15 +34,78 @@ interface ChartData {
   propertyTypes: Array<{ type: string; count: number; revenue: number }>;
   ratings: Array<{ rating: string; value: number; percentage: number }>;
   propertyPerformance: Array<{ name: string; inquiries: number; bookings: number; revenue: number }>;
+  inquirySources?: Array<{ date: string; direct: number; email: number; social: number }>;
 }
 
-export function useAnalyticsLogic(stats: AnalyticsStats, occupancy: any, chartData?: ChartData) {
+export function useAnalyticsLogic() {
+  const [stats, setStats] = useState<AnalyticsStats | null>(null);
+  const [occupancy, setOccupancy] = useState<any>(null);
+  const [chartData, setChartData] = useState<ChartData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState<'month' | 'quarter' | 'year'>('month');
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setIsLoading(true);
+        const [
+          s, 
+          rev, 
+          occ, 
+          daily, 
+          monthly, 
+          growth, 
+          types, 
+          rates, 
+          performance, 
+          sources
+        ] = await Promise.all([
+          getLandlordDashboardStats().catch(() => null),
+          getRevenueReport().catch(() => null),
+          getOccupancyReport().catch(() => null),
+          getDailyRevenueHistory(30).catch(() => []),
+          getMonthlyRevenueByProperty(6).catch(() => ({ monthlyData: [], listings: [], listingMap: {} })),
+          getGrowthTrendData(6).catch(() => []),
+          getPropertyTypeBreakdown().catch(() => []),
+          getRatingDistribution().catch(() => []),
+          getAllPropertiesPerformance().catch(() => []),
+          getInquirySourceBreakdown(6).catch(() => []),
+        ]);
+        
+        setStats(s as any);
+        setOccupancy(occ);
+        
+        setChartData({
+          dailyRevenue: daily,
+          monthlyRevenue: monthly.monthlyData.map(m => {
+            const obj: { [key: string]: any; date: string } = { date: m.date };
+            monthly.listings.forEach((l: { id: string; title: string }) => {
+              obj[l.id] = (m as Record<string, unknown>)[l.id] as number ?? 0;
+            });
+            return obj;
+          }),
+          monthlyRevenueListings: monthly.listings,
+          monthlyRevenueMap: monthly.listingMap,
+          growthTrend: growth,
+          propertyTypes: types,
+          ratings: rates,
+          propertyPerformance: performance,
+          inquirySources: sources,
+        });
+      } catch (error) {
+        console.error('Error fetching analytics data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
 
   const propertyPerformanceData = chartData?.propertyPerformance || [];
 
   const handleGenerateReport = async () => {
-    if (!chartData) return;
+    if (!chartData || !stats || !occupancy) return;
 
     const formatDaily = (dateStr: string) => {
       const date = new Date(dateStr);
@@ -181,9 +256,13 @@ export function useAnalyticsLogic(stats: AnalyticsStats, occupancy: any, chartDa
   };
 
   return {
+    stats,
+    occupancy,
+    chartData,
+    isLoading,
     timePeriod,
     setTimePeriod,
     propertyPerformanceData,
     handleGenerateReport
   };
-}
+}

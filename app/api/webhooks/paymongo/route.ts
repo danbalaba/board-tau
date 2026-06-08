@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { handleStripeWebhook } from "@/services/payments/stripe";
-import { sendReservationNotificationEmail } from "@/services/email/notifications";
+import { 
+  sendReservationNotificationEmail, 
+  sendReservationFeeEmail 
+} from "@/services/email/notifications";
 import { createNotification } from "@/services/notification";
 
 export async function POST(req: Request) {
@@ -30,26 +33,56 @@ export async function POST(req: Request) {
         });
 
         if (inquiry) {
-          await db.inquiry.update({
-            where: { id: inquiryId },
-            data: {
-              paymentStatus: "PAID",
-              status: "APPROVED",
-            },
-          });
+          // 1. ATOMIC STATUS UPDATE: Only proceed if the reservation is still PENDING_PAYMENT
+          let updatedReservation;
+          try {
+            updatedReservation = await db.reservation.update({
+              where: { 
+                inquiryId: inquiryId,
+                status: "PENDING_PAYMENT" 
+              },
+              data: {
+                status: "RESERVED",
+                paymentStatus: "PAID",
+              },
+              include: {
+                listing: true,
+                user: true,
+                room: true
+              }
+            });
+          } catch (error) {
+            console.log(`ℹ️ PayMongo: Reservation ${inquiryId} already finalized. Skipping inventory update.`);
+            return NextResponse.json({ ok: true });
+          }
 
-          // Update reservation
-          const updatedReservation = await db.reservation.update({
-            where: { inquiryId: inquiryId },
-            data: {
-              status: "RESERVED",
-              paymentStatus: "PAID",
-            },
-            include: {
-              listing: true,
-              user: true,
+          // 2. INVENTORY LOCK: Only happens if this webhook was the first to flip the status
+          if (updatedReservation.room) {
+            const slotsToSubtract = Number(updatedReservation.occupantsCount) || 1;
+            
+            const updatedRoom = await db.room.update({
+              where: { id: updatedReservation.roomId },
+              data: {
+                availableSlots: { decrement: slotsToSubtract },
+              },
+            });
+
+            if (updatedRoom.availableSlots <= 0) {
+              await db.room.update({
+                where: { id: updatedReservation.roomId },
+                data: { status: "FULL" },
+              });
             }
-          });
+
+            // CRITICAL: Invalidate Cache
+            const { revalidatePath } = await import("next/cache");
+            const { cache } = await import("@/lib/redis");
+            revalidatePath(`/listings/${updatedReservation.listingId}`);
+            try {
+              await cache.del(`listing:id:${updatedReservation.listingId}`);
+              await cache.delPattern("listings:*");
+            } catch (e) { console.error("Cache clear error in Paymongo webhook:", e); }
+          }
 
           // Trigger Notifications
           try {
@@ -78,15 +111,13 @@ export async function POST(req: Request) {
               });
             }
 
-            // Landlord Email & In-app
+            // Landlord Email (Premium Template) & In-app
             if (landlord && landlord.email) {
-              await sendReservationNotificationEmail(
+              await sendReservationFeeEmail(
                 landlord,
+                updatedReservation.user,
                 updatedReservation.listing,
-                "RESERVED",
-                "New Confirmed Reservation",
-                `${updatedReservation.user.name} has successfully paid the reservation via PayMongo for ${updatedReservation.listing.title}.`,
-                true
+                updatedReservation.totalPrice
               );
 
               // In-app for Landlord
@@ -102,20 +133,6 @@ export async function POST(req: Request) {
             console.error("Failed PayMongo notifications:", notifErr);
           }
 
-          // Update room available slots
-          if (inquiry.roomId) {
-            const room = await db.room.findUnique({ where: { id: inquiry.roomId } });
-            if (room) {
-              const newAvailableSlots = room.availableSlots - 1;
-              await db.room.update({
-                where: { id: inquiry.roomId },
-                data: {
-                  availableSlots: newAvailableSlots,
-                  status: newAvailableSlots <= 0 ? "FULL" : "AVAILABLE",
-                },
-              });
-            }
-          }
         }
         break;
 

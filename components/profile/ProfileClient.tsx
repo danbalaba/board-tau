@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Mail, Phone, Building, Edit2, LogOut, Lock, Camera, ArrowRight, ShieldCheck } from "lucide-react";
+import { User, Mail, Phone, Building, Edit2, LogOut, Lock, Camera, ArrowRight, ShieldCheck, MapPin } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { UserProfile, updateUserProfileClient } from "@/services/user/profile";
 import Button from "@/components/common/Button";
@@ -14,13 +14,18 @@ import ChangePasswordModal from "@/components/modals/ChangePasswordModal";
 import ChangeProfileImageModal from "@/components/modals/ChangeProfileImageModal";
 import ModernLoader from "@/components/common/ModernLoader";
 import Modal from "@/components/modals/Modal";
+import Heading from "@/components/common/Heading";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { useLoadingStore } from "@/hooks/use-loading-store";
 
 interface ProfileClientProps {
   profile: UserProfile;
 }
+
+const Map = dynamic(() => import("@/components/common/Map"), { ssr: false });
 
 const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
   const router = useRouter();
@@ -28,7 +33,7 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
   const [isPageLoading, setIsPageLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { isLoggingOut, setIsLoggingOut } = useLoadingStore();
 
   const { success, error } = useResponsiveToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -53,7 +58,12 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
 
   const handleLogout = () => {
     setIsLoggingOut(true);
-    signOut({ callbackUrl: "/" });
+    setShowLogoutConfirm(false);
+    
+    // Allow the premium animation to play for 2.5 seconds before redirecting
+    setTimeout(() => {
+      signOut({ callbackUrl: "/" });
+    }, 2500);
   };
 
   const updateProfileImage = async (url: string) => {
@@ -96,22 +106,27 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4">
+    <div className="max-w-4xl mx-auto px-4 py-4 md:py-8">
+      <Heading 
+        title="My Profile" 
+        subtitle="Manage your personal information and security"
+        backBtn 
+      />
       {/* Settings Layout */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="space-y-8 py-8"
+        className="space-y-4 md:space-y-8 py-4 md:py-8"
       >
         {/* Header Section */}
-        <section className="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700 relative overflow-hidden group">
+        <section className="bg-white dark:bg-gray-800 rounded-2xl md:rounded-3xl p-5 md:p-10 shadow-2xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 dark:bg-accent/10 rounded-full -mr-32 -mt-32 blur-3xl transition-transform group-hover:scale-125 duration-1000" />
 
           <div className="flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-10 relative z-10">
             {/* Avatar Section */}
             <div className="relative group/avatar cursor-pointer" onClick={() => setIsChangeImageModalOpen(true)}>
-              <div className="w-28 h-28 md:w-32 md:h-32 rounded-3xl overflow-hidden ring-8 ring-gray-50/50 dark:ring-gray-900/50 dark:bg-gray-700 relative shadow-inner">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl md:rounded-3xl overflow-hidden ring-8 ring-gray-50/50 dark:ring-gray-900/50 dark:bg-gray-700 relative shadow-inner">
                 <Avatar
                   src={currentUserProfile.image}
                   name={currentUserProfile.name}
@@ -132,7 +147,7 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
 
             {/* Profile Info */}
             <div className="text-center md:text-left flex-1 py-1">
-              <motion.h1 variants={itemVariants} className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tight leading-none mb-2">
+              <motion.h1 variants={itemVariants} className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tight leading-none mb-2">
                 {currentUserProfile.name || "User Account"}
               </motion.h1>
               <motion.p variants={itemVariants} className="text-sm font-bold text-primary/80 dark:text-accent/80 uppercase tracking-widest mb-4">
@@ -169,9 +184,9 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
           <div className="lg:col-span-12">
             <motion.div
               variants={itemVariants}
-              className="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 border border-gray-100 dark:border-gray-700 shadow-xl shadow-gray-200/40 dark:shadow-none"
+              className="bg-white dark:bg-gray-800 rounded-2xl md:rounded-3xl p-5 md:p-8 border border-gray-100 dark:border-gray-700 shadow-xl shadow-gray-200/40 dark:shadow-none"
             >
-              <h3 className="text-xl font-black text-gray-900 dark:text-white mb-8 flex items-center gap-3">
+              <h3 className="text-lg md:text-xl font-black text-gray-900 dark:text-white mb-6 md:mb-8 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-primary/10 dark:bg-accent/20 flex items-center justify-center">
                    <ShieldCheck size={18} className="text-primary dark:text-accent" />
                 </div>
@@ -184,7 +199,7 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
                   whileHover={{ y: -5, scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   transition={{ duration: 0.2 }}
-                  className="p-6 rounded-3xl bg-gray-50 dark:bg-gray-900/40 border-2 border-transparent hover:border-primary/20 dark:hover:border-accent/40 text-left flex flex-col gap-6 group relative overflow-hidden transition-all duration-300"
+                  className="p-5 md:p-6 rounded-2xl md:rounded-3xl bg-gray-50 dark:bg-gray-900/40 border-2 border-transparent hover:border-primary/20 dark:hover:border-accent/40 text-left flex flex-col gap-4 md:gap-6 group relative overflow-hidden transition-all duration-300"
                   onClick={() => setIsEditModalOpen(true)}
                 >
                    <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-center group-hover:bg-primary transition-colors duration-300">
@@ -204,7 +219,7 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
                   whileHover={{ y: -5, scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   transition={{ duration: 0.2 }}
-                  className="p-6 rounded-3xl bg-gray-50 dark:bg-gray-900/40 border-2 border-transparent hover:border-indigo-500/20 dark:hover:border-accent/40 text-left flex flex-col gap-6 group transition-all duration-300"
+                  className="p-5 md:p-6 rounded-2xl md:rounded-3xl bg-gray-50 dark:bg-gray-900/40 border-2 border-transparent hover:border-indigo-500/20 dark:hover:border-accent/40 text-left flex flex-col gap-4 md:gap-6 group transition-all duration-300"
                   onClick={() => setIsChangePasswordModalOpen(true)}
                 >
                    <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-center group-hover:bg-indigo-600 transition-colors duration-300">
@@ -224,7 +239,7 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
                   whileHover={{ y: -5, scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   transition={{ duration: 0.2 }}
-                  className="p-6 rounded-3xl bg-rose-50/50 dark:bg-rose-900/10 border-2 border-transparent hover:border-rose-300/30 dark:hover:border-rose-900/60 text-left flex flex-col gap-6 group transition-all duration-300"
+                  className="p-5 md:p-6 rounded-2xl md:rounded-3xl bg-rose-50/50 dark:bg-rose-900/10 border-2 border-transparent hover:border-rose-300/30 dark:hover:border-rose-900/60 text-left flex flex-col gap-4 md:gap-6 group transition-all duration-300"
                   onClick={() => setShowLogoutConfirm(true)}
                 >
                    <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-rose-100 dark:border-rose-900 flex items-center justify-center group-hover:bg-rose-600 transition-colors duration-300">
@@ -261,6 +276,7 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
         <ChangePasswordModal
           isOpen={isChangePasswordModalOpen}
           onClose={() => setIsChangePasswordModalOpen(false)}
+          hasPassword={currentUserProfile.hasPassword}
         />
       )}
 
@@ -277,7 +293,7 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
       <Modal
         isOpen={showLogoutConfirm}
         onClose={() => setShowLogoutConfirm(false)}
-        width="sm"
+        width="xs"
       >
         <ConfirmModal
           isOpen={showLogoutConfirm}
@@ -285,8 +301,8 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
           onConfirm={handleLogout}
           title="Sign Out?"
           message={`Are you sure you want to sign out of your account, ${currentUserProfile.name}? Any unsaved changes may be lost.`}
-          confirmLabel="Yes, Sign Out"
-          cancelLabel="Wait, Stay Logged In"
+          confirmLabel="Logout"
+          cancelLabel="Stay"
           isLoading={isLoggingOut}
           variant="danger"
         />

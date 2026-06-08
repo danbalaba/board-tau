@@ -2,17 +2,21 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShieldCheck, Info, Lightbulb, User, ChevronLeft, CreditCard } from "lucide-react";
 import { FaCamera, FaIdCard, FaTimes, FaCheck } from "react-icons/fa";
+import SafeImage from "@/components/common/SafeImage";
 
 interface PrepareStepProps {
   isShowingIDList: boolean;
   setIsShowingIDList: (val: boolean) => void;
   selectedIDTab: "primary" | "secondary";
   setSelectedIDTab: (val: "primary" | "secondary") => void;
+  hasReadGuidelines: boolean;
+  setHasReadGuidelines: (val: boolean) => void;
 }
 
 const PrepareStep: React.FC<PrepareStepProps> = ({
   isShowingIDList, setIsShowingIDList,
-  selectedIDTab, setSelectedIDTab
+  selectedIDTab, setSelectedIDTab,
+  hasReadGuidelines, setHasReadGuidelines
 }) => {
   return (
     <div className="relative overflow-hidden min-h-[400px]">
@@ -34,9 +38,9 @@ const PrepareStep: React.FC<PrepareStepProps> = ({
               </p>
             </div>
 
-            <div className="bg-blue-50/50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800/50">
-              <div className="text-sm font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-xl border border-primary/10">
+              <div className="text-sm font-semibold text-primary flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 Please prepare a valid ID and make sure your camera is turned on.
               </div>
             </div>
@@ -50,9 +54,9 @@ const PrepareStep: React.FC<PrepareStepProps> = ({
                 { icon: <Info size={18} />, title: "Show details clearly", desc: "Your ID must be fully visible and readable. No redacting." },
                 { icon: <Lightbulb size={20} />, title: "Find good lighting", desc: "Stay in a well-lit area with a plain background." },
               ].map((item, i) => (
-                <div key={i} className="p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/50 shadow-sm hover:shadow-md transition-shadow">
+                <div key={i} className={`p-4 rounded-xl border transition-all duration-300 bg-white dark:bg-gray-800/50 shadow-sm hover:shadow-md ${hasReadGuidelines ? 'border-primary/20 bg-primary/5' : 'border-gray-100 dark:border-gray-700'}`}>
                   <div className="flex items-start gap-3">
-                    <div className="bg-primary/10 p-2 rounded-lg text-primary shrink-0">
+                    <div className={`p-2 rounded-lg shrink-0 transition-colors ${hasReadGuidelines ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}`}>
                       {item.icon}
                     </div>
                     <div>
@@ -73,9 +77,24 @@ const PrepareStep: React.FC<PrepareStepProps> = ({
               ))}
             </div>
 
-            <div className="pt-4 mt-6 border-t border-gray-100 dark:border-gray-800">
-              <p className="text-[10px] text-gray-500 italic">
-                Note: Identity verification is part of our Know Your Customer (KYC) process. You won't be able to proceed until this step is completed.
+            <div className="flex flex-col items-center gap-4 pt-4 mt-2 border-t border-gray-100 dark:border-gray-800">
+               <button 
+                type="button"
+                onClick={() => setHasReadGuidelines(!hasReadGuidelines)}
+                className={`w-full max-w-sm py-4 rounded-2xl flex items-center justify-center gap-3 font-black text-xs uppercase tracking-widest transition-all transform active:scale-95 shadow-xl ${
+                  hasReadGuidelines 
+                    ? 'bg-emerald-500 text-white shadow-emerald-500/20' 
+                    : 'bg-primary text-white shadow-primary/20 hover:bg-primary/90'
+                }`}
+              >
+                {hasReadGuidelines ? (
+                  <><FaCheck size={14} /> I AM READY TO PROCEED</>
+                ) : (
+                  <><ShieldCheck size={16} /> I UNDERSTAND & I'M READY</>
+                )}
+              </button>
+              <p className="text-[10px] text-gray-400 font-medium italic text-center max-w-xs">
+                By clicking, you acknowledge that you have your documents ready and environment prepared.
               </p>
             </div>
           </motion.div>
@@ -142,7 +161,7 @@ const PrepareStep: React.FC<PrepareStepProps> = ({
                       ].map((id) => (
                         <div key={id.name} className="group p-2.5 rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-primary transition-all shadow-sm flex flex-col items-center gap-3 text-center">
                           <div className="w-full aspect-[1.6/1] rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900 shadow-inner">
-                             <img src={id.src} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={id.name} />
+                             <SafeImage src={id.src} alt={id.name} />
                           </div>
                           <p className="text-[9px] font-black uppercase tracking-tighter text-gray-700 dark:text-gray-300 leading-tight">{id.name}</p>
                         </div>
@@ -164,12 +183,12 @@ const PrepareStep: React.FC<PrepareStepProps> = ({
                         <div key={id.name} className="group p-2.5 rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-primary transition-all shadow-sm flex flex-col items-center gap-3 text-center">
                           <div className="w-full aspect-[1.6/1] rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900 shadow-inner flex items-center justify-center">
                              {id.src ? (
-                               <img src={id.src} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={id.name} />
+                               <SafeImage src={id.src} alt={id.name} />
                              ) : (
                                <div className={`w-full h-full ${id.color} flex flex-col items-center justify-center text-white p-3 gap-1 group-hover:scale-110 transition-transform duration-500`}>
                                  {id.icon}
                                  <span className="text-[7px] font-black uppercase tracking-tighter opacity-70">Official Doc</span>
-                               </div>
+                                </div>
                              )}
                           </div>
                           <p className="text-[9px] font-black uppercase tracking-tighter text-gray-700 dark:text-gray-300 leading-tight">{id.name}</p>
@@ -191,10 +210,13 @@ const PrepareStep: React.FC<PrepareStepProps> = ({
             <div className="flex justify-center pt-2">
               <button 
                  type="button"
-                 onClick={() => setIsShowingIDList(false)}
-                 className="text-xs font-bold text-gray-500 hover:text-primary transition-colors underline underline-offset-4"
+                 onClick={() => {
+                   setIsShowingIDList(false);
+                   setHasReadGuidelines(true);
+                 }}
+                 className="w-full py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
                >
-                Understood, let's continue
+                <FaCheck size={12} /> Understood, let's continue
               </button>
             </div>
           </motion.div>

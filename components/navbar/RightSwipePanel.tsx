@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, CalendarCheck, Home, User as UserIcon, LogOut, MessageCircle, Star, UserPlus } from "lucide-react";
+import { Heart, CalendarCheck, Home, User as UserIcon, LogOut, MessageCircle, Star, UserPlus, ClipboardList, LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { User } from "next-auth";
@@ -11,7 +11,11 @@ import { getUnreadNotificationStats } from "@/services/notification";
 import Modal from "@/components/modals/Modal";
 import AuthModal from "@/components/modals/AuthModal";
 import HostApplicationModal from "@/components/modals/HostApplicationModal";
+import ConfirmModal from "@/components/common/ConfirmModal";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { useMenuPanel } from "@/hooks/use-menu-panel";
+import { useLoadingStore } from "@/hooks/use-loading-store";
+
 
 interface RightSwipePanelProps {
   user?: (User & { id: string; role?: string });
@@ -19,11 +23,24 @@ interface RightSwipePanelProps {
 
 const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, onOpen, onClose } = useMenuPanel();
   const [unreadStats, setUnreadStats] = useState<{ total: number; byType: Record<string, number> } | null>(null);
+  const { isLoggingOut, setIsLoggingOut } = useLoadingStore();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isInteractable, setIsInteractable] = useState(false);
+
+  // Interaction shield: Prevent accidental clicks during the opening animation
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => setIsInteractable(true), 500);
+      return () => clearTimeout(timer);
+    } else {
+      setIsInteractable(false);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     const fetchStats = async () => {
       const stats = await getUnreadNotificationStats();
       if (stats) setUnreadStats(stats);
@@ -31,31 +48,40 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
     fetchStats();
     const interval = setInterval(fetchStats, 10000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user?.id]);
 
   const redirect = (url: string) => {
-    setIsOpen(false);
+    onClose();
     router.push(url);
   };
 
-  const handleLogout = () => {
-    setIsOpen(false);
-    signOut({ callbackUrl: "/" });
+  const handleLogoutClick = () => {
+    onClose();
+    setShowLogoutConfirm(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    setIsLoggingOut(true);
+    setShowLogoutConfirm(false);
+    
+    setTimeout(() => {
+      signOut({ callbackUrl: "/" });
+    }, 2500);
   };
 
   // Close panel when user navigates
   useEffect(() => {
     const handleRouteChange = () => {
-      setIsOpen(false);
+      onClose();
     };
     window.addEventListener("popstate", handleRouteChange);
     return () => window.removeEventListener("popstate", handleRouteChange);
   }, []);
 
   return (
-    <>
+    <Modal>
       {/* Overlay */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isOpen && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -63,110 +89,86 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             className="fixed inset-0 bg-black z-40 md:hidden"
-            onClick={() => setIsOpen(false)}
+            onClick={onClose}
           />
         )}
       </AnimatePresence>
 
-      {/* Panel */}
-      <AnimatePresence>
+      {/* Panel Container */}
+      <AnimatePresence mode="wait">
         {isOpen && (
           <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed top-0 right-0 h-full w-[80%] bg-white dark:bg-gray-900 z-50 md:hidden shadow-2xl"
+            className="fixed top-0 right-0 h-full w-[85%] bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl z-50 md:hidden shadow-[-10px_0_30px_rgba(0,0,0,0.1)] dark:shadow-[-10px_0_30px_rgba(0,0,0,0.5)] border-l border-white/20 dark:border-white/5 overflow-hidden"
           >
-            {/* Panel Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="w-12" /> {/* Empty to center content */}
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Menu
-              </h2>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <svg
-                  className="w-6 h-6 text-gray-600 dark:text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.4, ease: "easeOut" }}
+              className={`h-full flex flex-col ${isInteractable ? "pointer-events-auto" : "pointer-events-none"}`}
+            >
+              {/* Panel Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200/50 dark:border-gray-700/50">
+                <div className="w-12" />
+                <h2 className="text-sm font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white opacity-80">
+                  Navigation
+                </h2>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="p-2 rounded-2xl bg-gray-100/50 dark:bg-gray-800/50 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-all border border-transparent hover:border-gray-200 dark:hover:border-gray-600 shadow-sm"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {/* Panel Content */}
-            <div className="flex flex-col h-[calc(100%-64px)]">
-              {/* Theme Toggle (Top) */}
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <ThemeToggle />
+                  <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
 
-              {/* Menu Items */}
-              <div className="flex-1 overflow-y-auto">
-                {!user ? (
-                  /* Not Logged In */
-                  <Modal>
+              {/* Panel Content */}
+              <div className="flex flex-col h-[calc(100%-64px)]">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <ThemeToggle />
+                </div>
+
+                <div className="flex-1 overflow-y-auto">
+                  <div className="p-4 pb-0">
+                    <button
+                      type="button"
+                      onClick={() => redirect("/")}
+                      className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
+                    >
+                      <Home className="text-sm" />
+                      <span className="font-semibold">Home</span>
+                    </button>
+                    <hr className="mt-2 border-gray-100 dark:border-gray-800" />
+                  </div>
+
+                  {!user ? (
                     <div className="flex flex-col gap-3 p-4">
-                      <Modal.Trigger name="Login">
-                        <button
-                          type="button"
-                          onClick={() => setIsOpen(false)}
-                          className="flex items-center gap-3 w-full bg-primary hover:bg-primary-hover text-white px-4 py-3 rounded-xl font-semibold transition-colors"
-                        >
-                          <UserIcon className="text-sm" />
+                      <Modal.Trigger name="Login" onClick={onClose}>
+                        <button className="flex items-center gap-3 w-full bg-primary hover:bg-primary-hover text-white px-4 py-3 rounded-xl font-semibold transition-colors">
+                          <LogIn className="text-sm" />
                           <span>Login</span>
                         </button>
                       </Modal.Trigger>
 
-                      <Modal.Trigger name="Sign up">
-                        <button
-                          type="button"
-                          onClick={() => setIsOpen(false)}
-                          className="flex items-center gap-3 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-4 py-3 rounded-xl font-semibold transition-colors"
-                        >
+                      <Modal.Trigger name="Sign up" onClick={onClose}>
+                        <button className="flex items-center gap-3 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-4 py-3 rounded-xl font-semibold transition-colors">
                           <UserPlus className="text-sm" />
                           <span>Signup</span>
                         </button>
                       </Modal.Trigger>
                     </div>
-
-                    <Modal.Window name="Login" size="sm">
-                      <AuthModal name="Login" />
-                    </Modal.Window>
-
-                    <Modal.Window name="Sign up" size="sm">
-                      <AuthModal name="Sign up" />
-                    </Modal.Window>
-                  </Modal>
-                ) : (
-                  /* Logged In */
-                  <Modal>
+                  ) : (
                     <div className="flex flex-col gap-1 p-4">
-                      <button
-                        type="button"
-                        onClick={() => redirect("/favorites")}
-                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
-                      >
+                      <button onClick={() => redirect("/favorites")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
                         <Heart className="text-sm" />
                         <span>My favorites</span>
                       </button>
-
-                      <button
-                        type="button"
-                        onClick={() => redirect("/reservations")}
-                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
-                      >
+                      <button onClick={() => redirect("/reservations")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
                         <div className="relative">
                           <CalendarCheck className="text-sm" />
                           {unreadStats && (unreadStats.byType["reservation"] || 0) > 0 && (
@@ -175,26 +177,16 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
                         </div>
                         <span>My reservations</span>
                       </button>
-
-                      <button
-                        type="button"
-                        onClick={() => redirect("/inquiries")}
-                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
-                      >
+                      <button onClick={() => redirect("/inquiries")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
                         <div className="relative">
-                          <MessageCircle className="text-sm" />
+                          <ClipboardList className="text-sm" />
                           {unreadStats && (unreadStats.byType["inquiry"] || 0) > 0 && (
                             <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-red-500 rounded-full" />
                           )}
                         </div>
                         <span>My inquiries</span>
                       </button>
-
-                      <button
-                        type="button"
-                        onClick={() => redirect("/my-reviews")}
-                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
-                      >
+                      <button onClick={() => redirect("/my-reviews")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
                         <div className="relative">
                           <Star className="text-sm" />
                           {unreadStats && (unreadStats.byType["review"] || 0) > 0 && (
@@ -203,60 +195,76 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
                         </div>
                         <span>My reviews</span>
                       </button>
-
+                      <button onClick={() => redirect(user?.role === 'LANDLORD' ? '/landlord/messages' : '/messages')} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
+                        <div className="relative">
+                          <MessageCircle className="text-sm" />
+                          {unreadStats && (unreadStats.byType["message"] || 0) > 0 && (
+                            <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+                          )}
+                        </div>
+                        <span>My messages</span>
+                      </button>
                       <Modal.Trigger name="host-application">
-                        <button
-                          type="button"
-                          className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
-                        >
+                        <button className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
                           <Home className="text-sm" />
                           <span>Become a host</span>
                         </button>
                       </Modal.Trigger>
-
-                      <button
-                        type="button"
-                        onClick={() => redirect("/profile")}
-                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
-                      >
+                      <button onClick={() => redirect("/profile")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
                         <UserIcon className="text-sm" />
                         <span>My profile</span>
                       </button>
-
                       <hr className="my-2" />
-
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
-                      >
+                      <button onClick={handleLogoutClick} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
                         <LogOut className="text-sm" />
                         <span>Logout</span>
                       </button>
                     </div>
-
-                    <Modal.Window name="host-application" size="xl">
-                      <HostApplicationModal />
-                    </Modal.Window>
-                  </Modal>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Swipe Trigger Zone */}
-      <div
-        className="fixed top-0 bottom-0 right-0 w-4 z-30 md:hidden"
-        onTouchStart={(e) => {
-          // Right edge swipe detection
-          if (e.touches[0].clientX > window.innerWidth - 20) {
-            setIsOpen(true);
-          }
-        }}
-      />
-    </>
+      {/* Persistent Windows */}
+      <Modal.Window name="Login" size="sm" closeOnOutsideClick={false}>
+        <AuthModal name="Login" />
+      </Modal.Window>
+      <Modal.Window name="Sign up" size="sm" closeOnOutsideClick={false}>
+        <AuthModal name="Sign up" />
+      </Modal.Window>
+      <Modal.Window name="host-application" size="xl">
+        <HostApplicationModal />
+      </Modal.Window>
+
+      <Modal isOpen={showLogoutConfirm && !isLoggingOut} onClose={() => setShowLogoutConfirm(false)} width="xs">
+        <ConfirmModal
+          isOpen={showLogoutConfirm}
+          onClose={() => setShowLogoutConfirm(false)}
+          onConfirm={handleLogoutConfirm}
+          title="Sign Out?"
+          message={`Are you sure you want to sign out, ${user?.name || 'User'}?`}
+          confirmLabel="Logout"
+          cancelLabel="Stay"
+          isLoading={isLoggingOut}
+          variant="danger"
+        />
+      </Modal>
+
+      {/* Swipe Trigger */}
+      {!isOpen && (
+        <div className="fixed top-1/2 -translate-y-1/2 right-0 w-8 h-32 z-40 md:hidden group cursor-pointer flex items-center justify-end" onClick={onOpen}>
+          <div className="w-3 h-24 bg-neutral-900 dark:bg-white/20 rounded-l-3xl backdrop-blur-xl border-l border-t border-b border-white/20 group-hover:w-5 group-active:w-6 transition-all duration-500 shadow-[-5px_0_20px_rgba(0,0,0,0.3)] flex items-center justify-center">
+            <div className="flex gap-0.5">
+              <div className="w-0.5 h-8 bg-white/40 rounded-full" />
+              <div className="w-0.5 h-8 bg-white/40 rounded-full" />
+            </div>
+          </div>
+        </div>
+      )}
+    </Modal>
   );
 };
 

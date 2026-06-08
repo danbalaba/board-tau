@@ -10,35 +10,86 @@ import { Suspense } from "react";
 import AuthErrorHandler from "@/components/auth/AuthErrorHandler";
 import { LoadingProvider } from "@/components/loading/LoadingContext";
 import GlobalLoadingOverlay from "@/components/loading/GlobalLoadingOverlay";
+import { NetworkStatusManager } from "@/components/common/NetworkStatusManager";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL 
+  ? process.env.NEXT_PUBLIC_SITE_URL 
+  : process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-  ),
+  metadataBase: new URL(baseUrl),
 
-  title: "BoardTAU",
+  title: {
+    default: "BoardTAU | Boarding House System for TAU",
+    template: "%s | BoardTAU",
+  },
   description:
-    "Your Ultimate Destination Connection. Discover a world of endless possibilities and seamless vacation planning at BoardTAU.",
+    "The official boarding house management and search platform for Tarlac Agricultural University (TAU). Find safe, affordable, and vetted accommodations near campus.",
+  keywords: [
+    "BoardTAU",
+    "TAU",
+    "Tarlac Agricultural University",
+    "Boarding House",
+    "Student Accommodation",
+    "Camiling Tarlac",
+    "Housing",
+    "Student Living",
+  ],
+  authors: [{ name: "BoardTAU Team" }],
+  creator: "BoardTAU",
+  publisher: "BoardTAU",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
 
   icons: {
     icon: "/logo.png",
     shortcut: "/logo.png",
     apple: "/logo.png",
   },
+  manifest: "/manifest.json",
 
   openGraph: {
-    title: "BoardTAU",
+    title: "BoardTAU - Tarlac Agricultural University Boarding House System",
     description:
-    "Your Ultimate Destination Connection. Discover a world of endless possibilities and seamless vacation planning at BoardTAU.",
+      "Find and manage boarding houses near TAU. A seamless experience for students, faculty, and staff to find safe and affordable accommodations.",
+    url: baseUrl,
+    siteName: "BoardTAU",
     images: [
-    {
-      url: "/logo.png",
-      width: 512,
-      height: 512,
-      alt: "BoardTAU Logo",
-    },
+      {
+        url: "/images/TauBOARD-Dark.png",
+        width: 1200,
+        height: 630,
+        alt: "BoardTAU - Modern Housing System",
+      },
     ],
+    locale: "en_US",
+    type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "BoardTAU | Find Your Next Home near TAU",
+    description: "Discover the best boarding houses near Tarlac Agricultural University.",
+    images: ["/images/TauBOARD-Dark.png"],
+    creator: "@boardtau",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  category: "technology",
 };
 
 export default function RootLayout({
@@ -56,22 +107,19 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <Providers>
-          <LoadingProvider>
-            <Suspense fallback={null}>
-              <AuthErrorHandler />
-            </Suspense>
-            <Suspense fallback={null}>
-              <GlobalLoadingOverlay />
-            </Suspense>
-            <LayoutContent>
-              {children}
-            </LayoutContent>
-          </LoadingProvider>
+          <NetworkStatusManager />
+          <Suspense fallback={null}>
+            <GlobalLoadingOverlay />
+          </Suspense>
+          <LayoutContent>
+            {children}
+          </LayoutContent>
+          <SpeedInsights />
         </Providers>
-      </body>
         {process.env.GA_MEASUREMENT_ID && (
           <GoogleAnalytics gaId={process.env.GA_MEASUREMENT_ID} />
         )}
+      </body>
     </html>
   );
 }

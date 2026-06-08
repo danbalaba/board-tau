@@ -7,6 +7,8 @@ declare module "next-auth/jwt" {
     id: string;
     role?: string;
     emailVerified?: boolean;
+    isVerifiedLandlord?: boolean;
+    securityVersion?: number;
   }
 }
 
@@ -16,6 +18,8 @@ declare module "next-auth" {
       id: string;
       role?: string;
       emailVerified?: boolean;
+      isVerifiedLandlord?: boolean;
+      securityVersion?: number;
     };
   }
 }

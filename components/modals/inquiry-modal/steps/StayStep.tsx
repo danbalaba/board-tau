@@ -1,13 +1,15 @@
 import React from "react";
 import { FaCalendar, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, differenceInDays } from "date-fns";
 import { DayPicker, DateRange } from "react-day-picker";
 import "react-day-picker/style.css";
-import Select from "react-select";
 import { Controller } from "react-hook-form";
 import Button from "@/components/common/Button";
 import { FormData } from "../useInquiryLogic";
+import { ModernInquirySelect } from "../components/ModernInquirySelect";
+import { sanitizeSecurityString, validateStrictChars, isCleanString, validatePhoneNumber } from "../validation/security";
 
 interface StayStepProps {
   dateRange: DateRange | undefined;
@@ -19,16 +21,78 @@ interface StayStepProps {
   control: any;
   errors: any;
   room: any;
+  activeStay?: { endDate: string; status: string; listing: { title: string } } | null;
+  register: any;
+  watch: any;
+  clearErrors: any;
 }
 
 const StayStep: React.FC<StayStepProps> = ({
   dateRange, setDateRange,
   showCalendar, setShowCalendar,
   getValues, setValue,
-  control, errors, room
+  control, errors, room,
+  activeStay, register,
+  watch, clearErrors
 }) => {
+  const moveInDate = watch('moveInDate');
+  const contactMethod = watch('contactMethod');
+  
+  const hasOverlap = activeStay && moveInDate && new Date(moveInDate) < new Date(activeStay.endDate);
   const handleOccupantsChange = (value: number) => {
     setValue('occupantsCount', value, { shouldValidate: true });
+  };
+  
+  const getContactInfoProps = () => {
+    if (contactMethod === 'email') {
+      return {
+        label: 'Email Address',
+        placeholder: 'example@email.com',
+        type: 'email',
+        validation: {
+          required: "Email is required",
+          validate: (value: string) => {
+            const emailRegex = /\S+@\S+\.\S+/;
+            if (!emailRegex.test(value)) {
+              return "Please enter a valid email address";
+            }
+            if (!isCleanString(value)) {
+              return "Please remove special characters (< > { } [ ])";
+            }
+            return true;
+          }
+        }
+      };
+    }
+
+    return {
+      label: 'Phone Number (Mobile/Viber/WhatsApp)',
+      placeholder: 'e.g. 09123456789 or +63...',
+      type: 'text',
+      validation: {
+        required: "Information is required",
+        validate: (value: string) => {
+          // Double check method inside validation to avoid race conditions
+          const currentMethod = getValues('contactMethod');
+          if (currentMethod === 'email') return true; // Let the email check handle it if it switched
+
+          if (!validatePhoneNumber(value)) {
+            return "Please enter a valid phone number (e.g. 09123456789 or +63...)";
+          }
+          if (!isCleanString(value)) {
+            return "Please remove special characters (< > { } [ ])";
+          }
+          return true;
+        }
+      }
+    };
+  };
+
+  const handleClearDates = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent calendar from opening
+    setDateRange({ from: undefined, to: undefined });
+    setValue('moveInDate', '', { shouldValidate: true });
+    setValue('checkOutDate', '', { shouldValidate: true });
   };
 
   return (
@@ -58,9 +122,21 @@ const StayStep: React.FC<StayStepProps> = ({
                 <span className="text-gray-400">Select dates</span>
               )}
             </div>
-            {dateRange?.to && dateRange?.from && (
-              <div className="text-xs font-semibold bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 px-2 py-1 rounded-md shadow-sm border border-blue-200 dark:border-blue-800/50">
-                {differenceInDays(dateRange.to, dateRange.from)} nights
+            {dateRange?.from && (
+              <div className="flex items-center gap-2">
+                {dateRange?.to && (
+                  <div className="text-xs font-semibold bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 px-2 py-1 rounded-md shadow-sm border border-blue-200 dark:border-blue-800/50">
+                    {differenceInDays(dateRange.to, dateRange.from)} nights
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handleClearDates}
+                  className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 rounded-full transition-colors"
+                  title="Clear dates"
+                >
+                  <MdClose size={18} />
+                </button>
               </div>
             )}
           </div>
@@ -108,6 +184,26 @@ const StayStep: React.FC<StayStepProps> = ({
           {(errors.moveInDate || errors.checkOutDate) && (
             <p className="text-sm text-red-500 mt-1">Please select both check-in and check-out dates.</p>
           )}
+
+          {hasOverlap && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-xl"
+            >
+              <div className="flex gap-3">
+                <span className="text-xl">🏠</span>
+                <div>
+                  <p className="text-sm font-bold text-amber-800 dark:text-amber-300">Active Residence Conflict</p>
+                  <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5 leading-relaxed">
+                    You currently have an active stay at <span className="font-bold underline italic">&apos;{activeStay?.listing.title}&apos;</span> until <span className="font-bold">{format(new Date(activeStay?.endDate || ''), 'MMMM dd, yyyy')}</span>. 
+                    <br />
+                    Please select a move-in date after your current check-out to avoid double-booking.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
 
         {/* Dynamic Spacer for Calendar */}
@@ -126,7 +222,7 @@ const StayStep: React.FC<StayStepProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block font-semibold text-sm mb-2 text-text-primary dark:text-gray-100">
-              Number of Occupants
+              Number of Occupants (Including you)
             </label>
             <div className="flex items-center gap-4">
               <button
@@ -165,36 +261,20 @@ const StayStep: React.FC<StayStepProps> = ({
             control={control}
             rules={{ required: "Role is required" }}
             render={({ field }) => (
-              <Select
-                {...field}
+              <ModernInquirySelect
                 options={[
-                  { value: 'student', label: 'Student' },
-                  { value: 'staff', label: 'Staff' },
-                  { value: 'faculty', label: 'Faculty' },
-                  { value: 'other', label: 'Other' },
+                  { value: 'STUDENT', label: 'Student' },
+                  { value: 'STAFF', label: 'Staff' },
+                  { value: 'FACULTY', label: 'Faculty' },
+                  { value: 'OTHER', label: 'Other' },
                 ]}
-                value={field.value ? { value: field.value, label: field.value.charAt(0).toUpperCase() + field.value.slice(1) } : null}
-                onChange={(val: any) => field.onChange(val?.value)}
+                value={field.value}
+                onChange={field.onChange}
                 placeholder="Select your role..."
-                classNames={{
-                  control: (state) => `!bg-white dark:!bg-gray-900 !border ${state.isFocused ? '!border-primary dark:!border-primary !ring-1 !ring-primary' : '!border-gray-300 dark:!border-gray-700'} !rounded-lg !p-1.5 !shadow-none transition-all`,
-                  singleValue: () => `!text-text-primary dark:!text-gray-100`,
-                  menu: () => `!bg-white dark:!bg-gray-900 !border !border-gray-200 dark:!border-gray-700 !shadow-xl !rounded-lg !mt-1 z-50 overflow-hidden`,
-                  menuList: () => `!p-0`,
-                  option: (state) => `!cursor-pointer ${state.isSelected ? '!bg-primary/10 !text-primary dark:!text-primary font-medium' : state.isFocused ? '!bg-gray-100 dark:!bg-gray-800 !text-text-primary dark:!text-gray-100' : '!bg-transparent dark:!bg-transparent !text-text-primary dark:!text-gray-100'} !px-3 !py-1.5 !text-sm transition-colors`,
-                  indicatorSeparator: () => `!bg-gray-200 dark:!bg-gray-700`,
-                  dropdownIndicator: () => `!text-gray-400 dark:!text-gray-500 hover:!text-primary`,
-                  placeholder: () => `!text-gray-400 dark:!text-gray-500`,
-                  input: () => `dark:!text-gray-100`
-                }}
-                menuPlacement="auto"
-                instanceId="role-select"
+                error={errors.role?.message}
               />
             )}
           />
-          {errors.role && (
-            <p className="text-sm text-red-500 mt-1">{errors.role.message}</p>
-          )}
         </div>
 
         <div>
@@ -207,37 +287,63 @@ const StayStep: React.FC<StayStepProps> = ({
             control={control}
             rules={{ required: "Contact method is required" }}
             render={({ field }) => (
-              <Select
-                {...field}
+              <ModernInquirySelect
                 options={[
                   { value: 'email', label: 'Email' },
                   { value: 'phone', label: 'Phone' },
-                  { value: 'sms', label: 'SMS' },
                 ]}
-                value={field.value ? { value: field.value, label: field.value === 'sms' ? 'SMS' : field.value.charAt(0).toUpperCase() + field.value.slice(1) } : null}
-                onChange={(val: any) => field.onChange(val?.value)}
-                placeholder="Select a contact method..."
-                classNames={{
-                  control: (state) => `!bg-white dark:!bg-gray-900 !border ${state.isFocused ? '!border-primary dark:!border-primary !ring-1 !ring-primary' : '!border-gray-300 dark:!border-gray-700'} !rounded-lg !p-1.5 !shadow-none transition-all`,
-                  singleValue: () => `!text-text-primary dark:!text-gray-100`,
-                  menu: () => `!bg-white dark:!bg-gray-900 !border !border-gray-200 dark:!border-gray-700 !shadow-xl !rounded-lg !mt-1 z-50 overflow-hidden`,
-                  menuList: () => `!p-0`,
-                  option: (state) => `!cursor-pointer ${state.isSelected ? '!bg-primary/10 !text-primary dark:!text-primary font-medium' : state.isFocused ? '!bg-gray-100 dark:!bg-gray-800 !text-text-primary dark:!text-gray-100' : '!bg-transparent dark:!bg-transparent !text-text-primary dark:!text-gray-100'} !px-3 !py-1.5 !text-sm transition-colors`,
-                  indicatorSeparator: () => `!bg-gray-200 dark:!bg-gray-700`,
-                  dropdownIndicator: () => `!text-gray-400 dark:!text-gray-500 hover:!text-primary`,
-                  placeholder: () => `!text-gray-400 dark:!text-gray-500`,
-                  input: () => `dark:!text-gray-100`
+                value={field.value}
+                onChange={(val) => {
+                  field.onChange(val);
+                  // Reset field and clear errors when method changes
+                  setValue('contactInfo', '', { shouldValidate: false });
+                  clearErrors('contactInfo');
                 }}
-                menuPlacement="auto"
-                instanceId="contact-method-select"
+                placeholder="Select a contact method..."
+                error={errors.contactMethod?.message}
               />
             )}
           />
-          {errors.contactMethod && (
-            <p className="text-sm text-red-500 mt-1">{errors.contactMethod.message}</p>
-          )}
         </div>
       </div>
+
+      <AnimatePresence mode="wait">
+        {contactMethod && (
+          <motion.div
+            key={contactMethod}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-2"
+          >
+            <label className="block font-semibold text-sm text-text-primary dark:text-gray-100">
+              {getContactInfoProps().label}
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+            <Controller
+              key={contactMethod} // CRITICAL: Forces RHF to reset internal rules when method changes
+              name="contactInfo"
+              control={control}
+              rules={getContactInfoProps().validation}
+              render={({ field }) => (
+                <input
+                  {...field}
+                  type={getContactInfoProps().type}
+                  placeholder={getContactInfoProps().placeholder}
+                  className={`w-full p-4 bg-white dark:bg-gray-900 border rounded-xl outline-none transition-all ${
+                    errors.contactInfo 
+                      ? 'border-red-500 focus:ring-1 focus:ring-red-500' 
+                      : 'border-gray-300 dark:border-gray-700 focus:border-primary focus:ring-1 focus:ring-primary'
+                  }`}
+                />
+              )}
+            />
+            {errors.contactInfo && (
+              <p className="text-xs text-red-500 font-medium">{errors.contactInfo.message}</p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

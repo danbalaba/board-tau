@@ -3,8 +3,7 @@ import LandlordDashboardFeature from './features/dashboard';
 import { requireLandlord } from '@/lib/landlord';
 
 export default async function LandlordDashboardPage() {
-  const stats = await getLandlordDashboardStats();
   const user = await requireLandlord();
 
-  return <LandlordDashboardFeature stats={stats} user={user} />;
+  return <LandlordDashboardFeature user={user} />;
 }

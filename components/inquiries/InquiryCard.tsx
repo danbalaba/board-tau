@@ -4,11 +4,13 @@ import { motion } from "framer-motion";
 import { Eye, Calendar, Home, Trash2, MapPin, User, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import SafeImage from "@/components/common/SafeImage";
 
 interface InquiryListing {
   id: string;
   title: string;
   imageSrc: string;
+  images?: Array<{ url: string }>;
   location: any;
   region?: string;
   country?: string;
@@ -19,10 +21,7 @@ interface InquiryRoom {
   name: string;
   price: number;
   roomType: string;
-  images: Array<{
-    id: string;
-    url: string;
-  }>;
+  images?: Array<{ url: string }>;
 }
 
 interface Inquiry {
@@ -102,11 +101,45 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
 
   return (
     <motion.div 
-      initial={{ opacity: 0, translateY: 15 }}
-      animate={{ opacity: 1, translateY: 0 }}
+      initial={{ opacity: 0, y: 15 }}
+      animate={hasNotification ? { 
+        opacity: 1, 
+        y: 0,
+        scale: [1, 1.03, 1],
+        boxShadow: [
+          "0 0 0 rgba(16, 185, 129, 0)",
+          "0 15px 35px rgba(16, 185, 129, 0.25)",
+          "0 0 0 rgba(16, 185, 129, 0)"
+        ]
+      } : { 
+        opacity: 1, 
+        y: 0,
+        scale: 1,
+        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" 
+      }}
       whileHover={{ y: -4, scale: 1.02 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-700/50 relative group flex flex-col h-full"
+      transition={{ 
+        opacity: { duration: 0.3 },
+        y: { 
+          duration: 0.3,
+          type: "spring", 
+          stiffness: 300, 
+          damping: 20 
+        },
+        scale: { 
+          duration: 2, 
+          repeat: hasNotification ? Infinity : 0, 
+          ease: "easeInOut",
+          repeatDelay: 1
+        },
+        boxShadow: { 
+          duration: 2, 
+          repeat: hasNotification ? Infinity : 0, 
+          ease: "easeInOut",
+          repeatDelay: 1
+        }
+      }}
+      className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100 dark:border-gray-700/50 relative group flex flex-col h-full"
     >
       {/* Dynamic Background Glow */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
@@ -114,12 +147,14 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
       {/* Room Image */}
       <div className="h-44 w-full bg-gray-200 dark:bg-gray-700 relative overflow-hidden z-10">
         <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300 z-10" />
-        <motion.img
-          whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.6 }}
-          src={inquiry.listing.imageSrc || "/images/placeholder.jpg"}
+        <SafeImage
+          src={(inquiry.room?.images && inquiry.room.images.length > 0) 
+            ? inquiry.room.images[0].url 
+            : (inquiry.listing?.images && inquiry.listing.images.length > 0)
+              ? inquiry.listing.images[0].url
+              : inquiry.listing?.imageSrc || "/images/placeholder.jpg"
+          }
           alt={inquiry.room.name}
-          className="w-full h-full object-cover"
         />
         <div className="absolute top-3 left-3 z-20">
           {hasNotification && (

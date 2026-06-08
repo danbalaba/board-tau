@@ -13,6 +13,8 @@ import { UserAvatarProfile } from "../user-avatar-profile";
 
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
+import React, { useState } from "react";
+import UltimateLogoutOverlay from "@/components/navbar/UltimateLogoutOverlay";
 
 export function UserNav() {
   // Mock user data for admin
@@ -24,6 +26,15 @@ export function UserNav() {
   };
 
   const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    // Give time for the animation sequence to play out
+    setTimeout(() => {
+      signOut({ callbackUrl: '/' });
+    }, 2500);
+  };
   if (user) {
     return (
       <DropdownMenu>
@@ -58,10 +69,11 @@ export function UserNav() {
             <DropdownMenuItem>New Team</DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>
+          <DropdownMenuItem onClick={handleLogout}>
             Logout
           </DropdownMenuItem>
         </DropdownMenuContent>
+        {isLoggingOut && <UltimateLogoutOverlay userName={user.name} />}
       </DropdownMenu>
     );
   }

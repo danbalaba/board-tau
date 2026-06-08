@@ -41,7 +41,7 @@ interface ModalProps {
   isOpen?: boolean;
   onClose?: () => void;
   title?: string;
-  width?: 'sm' | 'md' | 'lg' | 'xl';
+  width?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   hasFixedFooter?: boolean;
   closeOnOutsideClick?: boolean;
 }
@@ -53,12 +53,14 @@ interface TriggerProps {
 }
 
 interface WindowProps extends TriggerProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   hasFixedFooter?: boolean;
+  closeOnOutsideClick?: boolean;
 }
 
 interface WindowHeaderProps {
   title: string;
+  onClose?: () => void;
 }
 
 export const ModalContext = createContext({
@@ -110,7 +112,14 @@ const Modal: FC<ModalProps> & {
       };
     }, [isClient, isOpen]);
 
-    // Only render portal on client side
+    const widthClasses = {
+      xs: 'md:w-[320px]',
+      sm: 'md:w-[400px]',
+      md: 'md:w-[500px]',
+      lg: 'md:w-[800px]',
+      xl: 'md:w-[1100px]'
+    };
+
     if (!isClient) return null;
 
     return createPortal(
@@ -122,7 +131,7 @@ const Modal: FC<ModalProps> & {
             animate="show"
             exit="hidden"
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[100] flex justify-center items-center overflow-hidden outline-none focus:outline-none bg-black/35 backdrop-blur-xl"
+            className="fixed inset-0 z-[10000] flex justify-center items-center overflow-hidden outline-none focus:outline-none bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm"
             onClick={(e) => {
               e.stopPropagation(); // prevent bubbling to parent modals
               // Close modal when clicking outside the inner box
@@ -136,7 +145,7 @@ const Modal: FC<ModalProps> & {
               initial="hidden"
               animate="show"
               exit="exit"
-              className={`md:h-auto h-auto md:max-h-[90vh] ${hasFixedFooter ? 'overflow-hidden' : 'overflow-y-auto'} w-full md:w-[${width === 'sm' ? '400px' : width === 'md' ? '500px' : width === 'lg' ? '800px' : '1100px'}] md:rounded-card rounded-card shadow-glass border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
+              className={`md:h-auto h-auto md:max-h-[90vh] ${hasFixedFooter ? 'overflow-hidden' : 'overflow-y-auto'} w-full ${widthClasses[width]} md:rounded-card rounded-card shadow-glass border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
               onClick={(e) => e.stopPropagation()}
             >
               {title && (
@@ -154,7 +163,7 @@ const Modal: FC<ModalProps> & {
                   </button>
                 </header>
               )}
-              <div className="p-6">
+              <div className={hasFixedFooter ? "" : "p-6"}>
                 {children}
               </div>
             </motion.div>
@@ -200,8 +209,9 @@ const Trigger: FC<TriggerProps> = ({ children, name, onClick }) => {
   return cloneElement(children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>, { onClick: handleClick });
 };
 
-const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter }) => {
+const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, closeOnOutsideClick = true }) => {
   const sizeClasses = {
+    xs: 'md:w-[320px] lg:w-[320px]',
     sm: 'md:w-[400px] lg:w-[400px]',
     md: 'md:w-[500px] lg:w-[500px]',
     lg: 'md:w-[800px] lg:w-[800px]',
@@ -211,7 +221,7 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter }
   const isWindowOpen = openName === name;
   const { ref } = useOutsideClick({
     action: close,
-    enable: isWindowOpen,
+    enable: isWindowOpen && closeOnOutsideClick,
     listenCapturing: false,
   });
 
@@ -272,7 +282,7 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter }
           animate="show"
           exit="hidden"
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex justify-center items-end md:items-center overflow-hidden outline-none focus:outline-none bg-black/35 backdrop-blur-xl"
+          className="fixed inset-0 z-[10000] flex justify-center items-end md:items-center overflow-hidden outline-none focus:outline-none bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm"
         >
             <motion.div
               variants={modalSheet}
@@ -295,8 +305,14 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter }
   );
 };
 
-const WindowHeader: FC<WindowHeaderProps> = ({ title }) => {
-  const { close } = useContext(ModalContext);
+const WindowHeader: FC<WindowHeaderProps> = ({ title, onClose }) => {
+  const { close: contextClose } = useContext(ModalContext);
+  
+  const handleClose = () => {
+    if (onClose) onClose();
+    else contextClose();
+  };
+
   return (
     <header className="flex items-center px-6 py-4 rounded-t justify-center relative border-b border-border dark:border-gray-700 bg-transparent">
       <h4 className="text-[18px] font-semibold text-text-primary dark:text-gray-100">
@@ -305,7 +321,7 @@ const WindowHeader: FC<WindowHeaderProps> = ({ title }) => {
       <button
         type="button"
         className="p-2 border-0 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors absolute right-4 rounded-full text-current"
-        onClick={close}
+        onClick={handleClose}
         aria-label="Close"
       >
         <IoMdClose size={22} className="text-current" />

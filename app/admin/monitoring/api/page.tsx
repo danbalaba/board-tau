@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { ApiMonitoring } from '@/app/admin/features/monitoring/components/api-monitoring';
+import ApiMonitoring from '@/app/admin/features/monitoring/components/api-monitoring/index';
 
 export const metadata: Metadata = {
   title: 'API Monitoring - BoardTAU Admin',

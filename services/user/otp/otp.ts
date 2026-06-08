@@ -5,37 +5,49 @@ import { generateAndStoreOTP, sendOTPEmail, verifyOTP as verifyOTPUtil } from "@
 import { validateEmail, validateOTP, sanitizeInput } from "@/lib/validators";
 
 export const sendOTP = async (email: string) => {
-  // Sanitize and validate input
-  const sanitizedEmail = sanitizeInput(email);
-  const emailError = validateEmail(sanitizedEmail);
+  try {
+    // Sanitize and validate input
+    const sanitizedEmail = sanitizeInput(email);
+    const emailError = validateEmail(sanitizedEmail);
 
-  if (emailError) {
-    throw new Error(emailError);
+    if (emailError) {
+      return { error: emailError };
+    }
+
+    const otp = await generateAndStoreOTP(sanitizedEmail);
+    await sendOTPEmail(sanitizedEmail, otp);
+    return { success: 'OTP sent to your email' };
+  } catch (error: any) {
+    console.error('Send OTP Error:', error);
+    return { error: error.message || 'Failed to send OTP' };
   }
-
-  const otp = await generateAndStoreOTP(sanitizedEmail);
-  await sendOTPEmail(sanitizedEmail, otp);
-  return { success: 'OTP sent to your email' };
 };
 
 export const verifyOTP = async (email: string, otp: string) => {
-  // Sanitize and validate inputs
-  const sanitizedEmail = sanitizeInput(email);
-  const sanitizedOTP = sanitizeInput(otp);
+  try {
+    // Sanitize and validate inputs
+    const sanitizedEmail = sanitizeInput(email);
+    const sanitizedOTP = sanitizeInput(otp);
 
-  const emailError = validateEmail(sanitizedEmail);
-  const otpError = validateOTP(sanitizedOTP);
+    const emailError = validateEmail(sanitizedEmail);
+    const otpError = validateOTP(sanitizedOTP);
 
-  if (emailError) {
-    throw new Error(emailError);
+    if (emailError) {
+      return { error: emailError };
+    }
+
+    if (otpError) {
+      return { error: otpError };
+    }
+
+    await verifyOTPUtil(sanitizedEmail, sanitizedOTP);
+    
+    // Revalidate user data
+    revalidateTag("user", "layout");
+    
+    return { success: 'Email verified successfully' };
+  } catch (error: any) {
+    console.error('OTP Verification Error:', error);
+    return { error: error.message || 'Failed to verify OTP' };
   }
-
-  if (otpError) {
-    throw new Error(otpError);
-  }
-
-  await verifyOTPUtil(sanitizedEmail, sanitizedOTP);
-  // Revalidate user data
-  revalidateTag("user", "layout");
-  return { success: 'Email verified successfully' };
 };

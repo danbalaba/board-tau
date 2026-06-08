@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import { AlertTriangle, X } from "lucide-react";
-import Button from "./Button";
-import Modal from "../modals/Modal";
+import { AlertTriangle } from "lucide-react";
+import { cn } from "@/utils/helper";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -29,55 +28,55 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   variant = "danger",
 }) => {
   return (
-    <div className="flex flex-col gap-4">
-      {/* Header Icon */}
-      <div className="flex items-center justify-between">
-        <div className={`p-3 rounded-full ${
+    <div className="flex flex-col items-start gap-5 p-2">
+      {/* Header Icon with Glow */}
+      <div className="relative">
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center relative z-10 ${
           variant === "danger" 
-            ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" 
-            : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+            ? "bg-red-500 text-white shadow-lg shadow-red-500/20" 
+            : "bg-primary text-white shadow-lg shadow-primary/20"
         }`}>
-          <AlertTriangle size={24} />
+          <AlertTriangle size={22} strokeWidth={2.5} />
         </div>
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-        >
-          <X size={20} className="text-gray-500" />
-        </button>
+        <div className={`absolute inset-0 rounded-full blur-xl opacity-20 animate-pulse ${
+          variant === "danger" ? "bg-red-500" : "bg-primary"
+        }`} />
       </div>
 
       {/* Content */}
-      <div>
-        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+      <div className="space-y-2">
+        <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
           {title}
         </h3>
-        <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+        <p className="text-[13px] font-medium text-gray-500 dark:text-gray-400 leading-relaxed">
           {message}
         </p>
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 mt-6">
-        <Button
-          outline
+      <div className="flex items-center gap-3 w-full pt-2">
+        <button
           onClick={onClose}
           disabled={isLoading}
-          className="flex-1"
+          className="flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all uppercase tracking-widest"
         >
           {cancelLabel}
-        </Button>
-        <Button
-          variant={variant}
+        </button>
+        <button
           onClick={onConfirm}
           disabled={isLoading}
-          className="flex-1 flex items-center justify-center gap-2"
+          className={cn(
+            "flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-white transition-all uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg",
+            variant === "danger" 
+              ? "bg-red-500 hover:bg-red-600 shadow-red-500/20" 
+              : "bg-primary hover:bg-primary/90 shadow-primary/20"
+          )}
         >
           {isLoading ? (
-             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+             <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : null}
           {confirmLabel}
-        </Button>
+        </button>
       </div>
     </div>
   );

@@ -22,6 +22,7 @@ import {
 import { motion } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
+import { prepareDataForExport, exportToCSV, exportToExcel } from '@/utils/export-utils';
 import { LandlordBookingSearch } from './landlord-booking-search';
 import { Booking } from '../hooks/use-booking-logic';
 import {
@@ -80,25 +81,63 @@ export function LandlordBookingHeader({
     { value: 'failed', label: 'Failed', icon: IconAlertCircle },
   ], []);
 
+  const handleGenerateCSV = async () => {
+    const reportData = prepareDataForExport(rawBookings, 'booking');
+    const totalRevenue = rawBookings.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+    const totalBookings = rawBookings.length;
+    const metadata = {
+      reportTitle: 'Booking & Revenue Business Report',
+      reportId: `BTAU-BOOK-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Total Revenue', value: `PHP ${totalRevenue.toLocaleString()}` },
+        { label: 'Total Bookings', value: `${totalBookings}` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToCSV(reportData, `Booking_Report_${new Date().toLocaleDateString()}`, metadata);
+  };
+
+  const handleGenerateExcel = async () => {
+    const reportData = prepareDataForExport(rawBookings, 'booking');
+    const totalRevenue = rawBookings.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+    const totalBookings = rawBookings.length;
+    const metadata = {
+      reportTitle: 'Booking & Revenue Business Report',
+      reportId: `BTAU-BOOK-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      summary: [
+        { label: 'Total Revenue', value: `PHP ${totalRevenue.toLocaleString()}` },
+        { label: 'Total Bookings', value: `${totalBookings}` }
+      ],
+      author: 'Landlord Management System'
+    };
+    exportToExcel(reportData, `Booking_Report_${new Date().toLocaleDateString()}`, 'Bookings', metadata);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative p-6 rounded-2xl border border-primary/10 shadow-sm z-30"
+      className="relative p-8 rounded-[3rem] border border-primary/10 shadow-xl overflow-hidden bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl overflow-hidden pointer-events-none" />
+      {/* Premium Background Accents */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 blur-[100px] rounded-full pointer-events-none" />
+      
       <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
-        <div className="flex items-center gap-4 shrink-0">
-          <div className="p-2.5 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-primary">
-            <IconCalendarCheck size={20} />
+        <div className="flex items-center gap-6 shrink-0">
+          <div className="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center text-primary border border-gray-100 dark:border-gray-700">
+            <IconCalendarCheck size={28} strokeWidth={2.5} />
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight truncate">
+            <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight">
               Bookings
             </h1>
-            <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider truncate">
-              Manage your active and past guest stays
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-[0.2em]">
+                Manage your active and past guest stays
+              </p>
+            </div>
           </div>
         </div>
 
@@ -191,7 +230,7 @@ export function LandlordBookingHeader({
                       onClick={() => setSelectedPaymentStatus(option.value)}
                       className={cn(
                         "cursor-pointer flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold transition-all",
-                        selectedPaymentStatus === option.value ? "bg-blue-500/10 text-blue-600" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        selectedPaymentStatus === option.value ? "bg-blue-500/10 text-blue-600" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                       )}
                     >
                       <option.icon size={14} />
@@ -221,8 +260,14 @@ export function LandlordBookingHeader({
               <button onClick={() => setViewMode('grid')} className={cn("p-2.5 rounded-xl transition-all duration-300", viewMode === 'grid' ? "bg-primary text-white shadow-lg shadow-primary/30" : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white")} title="Grid View"><IconLayoutGrid size={18} /></button>
               <button onClick={() => setViewMode('list')} className={cn("p-2.5 rounded-xl transition-all duration-300", viewMode === 'list' ? "bg-primary text-white shadow-lg shadow-primary/30" : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white")} title="List View"><IconList size={18} /></button>
             </div>
-
-            <GenerateReportButton onGeneratePDF={handleGenerateReport} />
+ 
+            <GenerateReportButton 
+              onGeneratePDF={handleGenerateReport}
+              onGenerateCSV={handleGenerateCSV}
+              onGenerateExcel={handleGenerateExcel}
+              label="Generate Report"
+              className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hidden sm:flex items-center gap-2"
+            />
           </div>
         </div>
       </div>

@@ -16,12 +16,24 @@ import {
   IconClock,
   IconMapPin,
   IconMessage,
-  IconEye
+  IconEye,
+  IconPhone,
+  IconDeviceMobile,
+  IconTrash,
+  IconLoader2,
+  IconChevronLeft,
+  IconChevronRight,
+  IconTag 
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import { createPortal } from 'react-dom';
+import { useEdgeStore } from '@/lib/edgestore';
+import { getSafeImageSrcString } from '@/components/modals/inquiry-modal/InquiryModalUtils';
+import SafeImage from '@/components/common/SafeImage';
+import { useRouter, usePathname } from 'next/navigation';
+import { LandlordInquiryDeclineModal } from './landlord-inquiry-decline-modal';
 
 interface LandlordInquiryDetailsModalProps {
   inquiry: Inquiry | null;
@@ -44,21 +56,34 @@ export function LandlordInquiryDetailsModal({
   onUpdateStatus,
   isUpdatingStatus
 }: LandlordInquiryDetailsModalProps) {
+  const { edgestore } = useEdgeStore();
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
-  const [customReason, setCustomReason] = useState("");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  
+  // States for signed URLs (for protected identityDocs bucket)
+  const [signedProfileUrl, setSignedProfileUrl] = useState<string | null>(null);
+  const [signedIdUrl, setSignedIdUrl] = useState<string | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && inquiry) {
       setIsInitialLoading(true);
       setShowRejectConfirm(false);
-      setCustomReason("");
       setPreviewImage(null);
+      setCurrentImageIndex(0);
+      
+      // EdgeStore 0.7.0 uses cookie-based protection for the identityDocs bucket.
+      // We just need to provide the raw URL and ensure the user is logged in.
+      setSignedProfileUrl(inquiry.profilePhotoUrl || null);
+      setSignedIdUrl(inquiry.idAttachmentUrl || null);
+      
       const timer = setTimeout(() => setIsInitialLoading(false), 600);
       return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, inquiry]);
 
   if (!inquiry) return null;
 
@@ -71,17 +96,10 @@ export function LandlordInquiryDetailsModal({
     }
   };
 
-  const PREDEFINED_REASONS = [
-    "Room no longer available",
-    "Profile incomplete or not verified",
-    "Number of occupants exceeds limit",
-    "Stay duration does not meet minimum requirements"
-  ];
-
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title="Inquiry Details" width="lg">
-        <div className="p-8 space-y-8 bg-white dark:bg-gray-900 overflow-hidden">
+      <Modal isOpen={isOpen} onClose={onClose} title="Inquiry Details" width="lg" hasFixedFooter>
+        <div className="space-y-8 max-h-[80vh] overflow-y-auto p-8 custom-scrollbar relative">
           
           <AnimatePresence mode="wait">
             {isInitialLoading ? (
@@ -109,62 +127,7 @@ export function LandlordInquiryDetailsModal({
                 }}
                 className="space-y-8"
               >
-                {/* Overlay for Reject Confirmation */}
-                {showRejectConfirm && (
-                  <div className="absolute inset-x-0 bottom-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl p-8 border-t border-rose-100 dark:border-rose-900/30 rounded-b-[32px] animate-in slide-in-from-bottom-full duration-300">
-                    <div className="flex flex-col">
-                      <div className="flex items-center justify-between mb-6">
-                        <div>
-                          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-1">Decline Inquiry</h3>
-                          <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Provide a reason for the tenant</p>
-                        </div>
-                        <button onClick={() => setShowRejectConfirm(false)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-                          <IconX size={20} />
-                        </button>
-                      </div>
-
-                      <div className="space-y-4 mb-6 text-left">
-                        <div className="flex flex-wrap gap-2">
-                          {PREDEFINED_REASONS.map((reason) => (
-                            <button
-                              key={reason}
-                              onClick={() => handleAction('REJECTED', reason)}
-                              disabled={isUpdatingStatus}
-                              className="px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-gray-600 dark:text-gray-300 hover:text-rose-600 dark:hover:text-rose-400 border border-gray-100 dark:border-gray-700 hover:border-rose-200 rounded-xl text-xs font-bold transition-all"
-                            >
-                              {reason}
-                            </button>
-                          ))}
-                        </div>
-                        <textarea
-                          value={customReason}
-                          onChange={(e) => setCustomReason(e.target.value)}
-                          placeholder="Or type a custom reason..."
-                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 text-sm font-medium focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all min-h-[80px]"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <Button
-                          outline
-                          onClick={() => setShowRejectConfirm(false)}
-                          className="rounded-xl py-3 text-xs font-black uppercase tracking-widest border-gray-100 dark:border-gray-800"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="danger"
-                          isLoading={isUpdatingStatus}
-                          disabled={!customReason.trim()}
-                          onClick={() => handleAction('REJECTED', customReason)}
-                          className="rounded-xl py-3 text-xs font-black uppercase tracking-widest shadow-lg shadow-rose-500/10"
-                        >
-                          Confirm Decline
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {/* NOTE: Inline reject panel removed – replaced by LandlordInquiryDeclineModal portal below */}
 
                 {/* Profile Card */}
                 <motion.div 
@@ -215,8 +178,56 @@ export function LandlordInquiryDetailsModal({
                       Stay Information
                     </span>
                     <div className="flex flex-col md:flex-row gap-6">
-                      <div className="w-full md:w-1/2 aspect-video rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-800">
-                        <img src={inquiry.listing.imageSrc} alt="" className="w-full h-full object-cover" />
+                      <div className="w-full md:w-1/2 aspect-video rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 relative group/gallery">
+                        <AnimatePresence mode="wait">
+                          <SafeImage 
+                            key={currentImageIndex}
+                            src={getSafeImageSrcString(
+                              (inquiry.room?.images && inquiry.room.images.length > 0) 
+                                ? inquiry.room.images[currentImageIndex].url 
+                                : (inquiry.listing?.images && inquiry.listing.images.length > 0)
+                                  ? inquiry.listing.images[0].url
+                                  : inquiry.listing?.imageSrc || "/images/placeholder.jpg"
+                            )} 
+                            alt="" 
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover/gallery:scale-110" 
+                          />
+                        </AnimatePresence>
+
+                        {/* Gallery Navigation */}
+                        {inquiry.room?.images && inquiry.room.images.length > 1 && (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCurrentImageIndex((prev) => (prev === 0 ? inquiry.room!.images!.length - 1 : prev - 1));
+                              }}
+                              className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                            >
+                              <IconChevronLeft size={18} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCurrentImageIndex((prev) => (prev === inquiry.room!.images!.length - 1 ? 0 : prev + 1));
+                              }}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                            >
+                              <IconChevronRight size={18} />
+                            </button>
+                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                              {inquiry.room.images.map((_, idx) => (
+                                <div
+                                  key={idx}
+                                  className={cn(
+                                    "w-1.5 h-1.5 rounded-full transition-all",
+                                    idx === currentImageIndex ? "bg-white w-4" : "bg-white/50"
+                                  )}
+                                />
+                              ))}
+                            </div>
+                          </>
+                        )}
                       </div>
                       <div className="flex-1 flex flex-col justify-center">
                         <h4 className="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2">
@@ -242,9 +253,27 @@ export function LandlordInquiryDetailsModal({
                                 <span className="text-xs font-bold text-gray-600 dark:text-gray-300">Occupants</span>
                               </div>
                               <span className="text-xs font-black text-gray-900 dark:text-white">
-                                {(inquiry as any).occupantsCount || 1} Person
+                                 {(inquiry as any).occupantsCount || 1} Person
                               </span>
                            </div>
+                           
+                           {inquiry.contactInfo && (
+                             <div className="p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-50 dark:border-gray-800/50 flex items-center justify-between">
+                               <div className="flex items-center gap-3">
+                                 {inquiry.contactMethod?.toLowerCase() === 'email' ? (
+                                   <IconMail size={16} className="text-primary" />
+                                 ) : (
+                                   <IconDeviceMobile size={16} className="text-primary" />
+                                 )}
+                                 <span className="text-xs font-bold text-gray-600 dark:text-gray-300">
+                                   {inquiry.contactMethod?.toLowerCase() === 'email' ? 'Email' : 'Contact Number'}
+                                 </span>
+                               </div>
+                               <span className="text-xs font-black text-gray-900 dark:text-white">
+                                 {inquiry.contactInfo}
+                               </span>
+                             </div>
+                           )}
                         </div>
                       </div>
                     </div>
@@ -281,10 +310,21 @@ export function LandlordInquiryDetailsModal({
                       <div className="flex items-center gap-4">
                          {inquiry.profilePhotoUrl ? (
                             <div 
-                              onClick={() => setPreviewImage(inquiry.profilePhotoUrl ?? null)}
+                              onClick={() => setPreviewImage(signedProfileUrl)}
                               className="group relative w-16 h-16 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-gray-200 dark:border-gray-700"
                             >
-                               <img src={inquiry.profilePhotoUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                               {signedProfileUrl ? (
+                                 <SafeImage 
+                                   src={signedProfileUrl} 
+                                   alt="Tenant Profile Photo" 
+                                   className="w-full h-full object-cover transition-transform group-hover:scale-110" 
+                                   unoptimized={true}
+                                 />
+                               ) : (
+                                 <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 animate-pulse">
+                                   <div className="w-4 h-4 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+                                 </div>
+                               )}
                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                   <IconEye size={16} className="text-white" />
                                </div>
@@ -295,10 +335,21 @@ export function LandlordInquiryDetailsModal({
 
                          {inquiry.idAttachmentUrl ? (
                             <div 
-                              onClick={() => setPreviewImage(inquiry.idAttachmentUrl ?? null)}
+                              onClick={() => setPreviewImage(signedIdUrl)}
                               className="group relative w-16 h-16 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-gray-200 dark:border-gray-700"
                             >
-                               <img src={inquiry.idAttachmentUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                               {signedIdUrl ? (
+                                 <SafeImage 
+                                   src={signedIdUrl} 
+                                   alt="Tenant ID Attachment" 
+                                   className="w-full h-full object-cover transition-transform group-hover:scale-110" 
+                                   unoptimized={true}
+                                 />
+                               ) : (
+                                 <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 animate-pulse">
+                                   <div className="w-4 h-4 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+                                 </div>
+                               )}
                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                   <IconEye size={16} className="text-white" />
                                </div>
@@ -309,18 +360,40 @@ export function LandlordInquiryDetailsModal({
                       </div>
                     </div>
 
-                    {/* Quick Financial Overview */}
+                    {/* Detailed Financial Overview */}
                     <div className="bg-emerald-500/5 p-5 rounded-3xl border border-emerald-500/10 flex flex-col justify-center">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-emerald-500 text-white rounded-xl">
-                           <IconCreditCard size={18} />
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-emerald-500 text-white rounded-lg">
+                             <IconCreditCard size={14} />
+                          </div>
+                          <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Reservation Deposit</span>
                         </div>
-                        <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Reservation Deposit</span>
                       </div>
-                      <p className="text-2xl font-black tracking-tighter text-emerald-700 dark:text-emerald-400">
-                         ₱{((inquiry.room as any)?.reservationFee || (((inquiry as any).reservationFee || 0) / ((inquiry as any).occupantsCount || 1))).toLocaleString()}
-                      </p>
-                      <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">Per Person Fee</p>
+                      
+                      <div className="space-y-1">
+                        <p className="text-2xl font-black tracking-tighter text-emerald-700 dark:text-emerald-400 leading-none">
+                           ₱{((inquiry as any).reservationFee || 0).toLocaleString()}
+                        </p>
+                        <div className="flex items-center gap-2">
+                           <p className="text-[10px] font-bold text-emerald-600/60 uppercase tracking-widest">
+                             Total Payable
+                           </p>
+                           <div className="h-px flex-1 bg-emerald-500/10"></div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-emerald-500/10 flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Calculation Breakdown</span>
+                          <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300">
+                             {inquiry.occupantsCount || 1} {inquiry.occupantsCount === 1 ? 'Person' : 'People'} × ₱{((inquiry.room as any)?.reservationFee || (((inquiry as any).reservationFee || 0) / ((inquiry as any).occupantsCount || 1))).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="p-1 bg-emerald-500/10 rounded-md">
+                           <IconTag size={12} className="text-emerald-600" />
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
                 </div>
@@ -338,10 +411,10 @@ export function LandlordInquiryDetailsModal({
                     <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800 mx-6"></div>
                   </div>
                   
-                  {inquiry.status === 'PENDING' ? (
+                  {inquiry.status === 'PENDING' && !(inquiry as any).isArchived ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Button 
-                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-xl shadow-emerald-500/20 py-5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] group/act"
+                        className="w-full bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 py-5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] group/act"
                         onClick={() => handleAction('APPROVED')}
                         isLoading={isUpdatingStatus}
                       >
@@ -370,11 +443,36 @@ export function LandlordInquiryDetailsModal({
                      </div>
                   )}
                   
-                  <div className="mt-6 flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl">
-                    <IconClock size={12} className="text-gray-400" />
-                    <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest text-center px-4">
-                      Approving will notify the tenant to proceed with the reservation payment.
-                    </p>
+                  <div className="mt-6 flex flex-col gap-4">
+                    <Button
+                      outline
+                      className="w-full rounded-[1.25rem] py-4 border-gray-100 dark:border-gray-800 text-[10px] font-black uppercase tracking-[0.2em] group/chat flex items-center justify-center gap-2"
+                      onClick={() => {
+                        const listingImg = (inquiry.room?.images && inquiry.room.images.length > 0) ? inquiry.room.images[0].url : inquiry.listing.imageSrc;
+                        const event = new CustomEvent('open-landlord-chat', {
+                          detail: {
+                            listingId: inquiry.listing.id,
+                            tenantId: inquiry.user.id,
+                            tenantName: inquiry.user.name || 'Tenant',
+                            tenantImage: inquiry.user.image || '',
+                            listingTitle: inquiry.listing.title,
+                            listingImage: listingImg || ''
+                          }
+                        });
+                        window.dispatchEvent(event);
+                        onClose();
+                      }}
+                    >
+                      <IconMessage size={18} className="group-hover/chat:scale-110 transition-transform text-primary" />
+                      Chat with {inquiry.user.name || 'Tenant'}
+                    </Button>
+
+                    <div className="flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl">
+                      <IconClock size={12} className="text-gray-400" />
+                      <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest text-center px-4">
+                        Approving will notify the tenant to proceed with the reservation payment.
+                      </p>
+                    </div>
                   </div>
                 </motion.div>
               </motion.div>
@@ -393,7 +491,7 @@ export function LandlordInquiryDetailsModal({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setPreviewImage(null)}
-                className="absolute inset-0 bg-black/95 backdrop-blur-md"
+                className="absolute inset-0 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm"
               />
               <motion.button
                 initial={{ opacity: 0, y: -20 }}
@@ -403,17 +501,18 @@ export function LandlordInquiryDetailsModal({
               >
                 <IconX size={24} />
               </motion.button>
-              <motion.div
+                <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="relative max-w-5xl w-full max-h-[85vh] flex items-center justify-center z-10"
+                className="relative w-[90vw] h-[80vh] flex items-center justify-center z-10"
                 onClick={(e) => e.stopPropagation()}
               >
-                <img 
+                <SafeImage 
                   src={previewImage} 
-                  className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl" 
+                  className="w-full h-full object-contain rounded-2xl shadow-2xl" 
                   alt="Document Preview" 
+                  unoptimized={true}
                 />
               </motion.div>
             </div>
@@ -421,6 +520,16 @@ export function LandlordInquiryDetailsModal({
         </AnimatePresence>,
         document.body
       )}
+      {/* Decline Inquiry Modal — rendered as a separate portal modal */}
+      <LandlordInquiryDeclineModal
+        isOpen={showRejectConfirm}
+        onClose={() => setShowRejectConfirm(false)}
+        onConfirm={async (reason) => {
+          await handleAction('REJECTED', reason);
+          setShowRejectConfirm(false);
+        }}
+        isLoading={isUpdatingStatus}
+      />
     </>
   );
 }

@@ -31,8 +31,16 @@ const ReservationPage = async () => {
       userId: user.id,
     },
     include: {
-      listing: true, // Includes all fields including region/country
-      room: true,
+      listing: {
+        include: {
+          images: true,
+        },
+      },
+      room: {
+        include: {
+          images: true,
+        },
+      },
       inquiry: true,
       reviews: true,
     },
@@ -63,9 +71,11 @@ const ReservationPage = async () => {
       id: reservation.listing.id,
       title: reservation.listing.title,
       imageSrc: reservation.listing.imageSrc,
+      images: reservation.listing.images,
       location: reservation.listing.location,
       region: (reservation.listing as any).region,
       country: (reservation.listing as any).country,
+      userId: reservation.listing.userId,
     },
     room: {
       id: reservation.room.id,
@@ -73,7 +83,7 @@ const ReservationPage = async () => {
       price: reservation.room.price,
       reservationFee: reservation.room.reservationFee,
       roomType: reservation.room.roomType as string,
-      images: [],
+      images: reservation.room.images,
     },
   }));
 

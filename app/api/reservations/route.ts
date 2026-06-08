@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
+import { createNotification } from "@/services/notification";
 
 export async function POST(request: Request) {
   try {
@@ -50,6 +51,18 @@ export async function POST(request: Request) {
         status: "PENDING" as any,
         paymentStatus: "UNPAID" as any,
       },
+      include: {
+        listing: { select: { userId: true, title: true } }
+      }
+    }) as any;
+
+    // Notify the Landlord
+    await createNotification({
+      userId: reservationRequest.listing.userId,
+      type: "inquiry",
+      title: "New Inquiry Received",
+      description: `${user.name || 'A student'} sent a new inquiry for ${reservationRequest.listing.title}.`,
+      link: `/landlord/inquiries`
     });
 
     return NextResponse.json(reservationRequest);
@@ -99,6 +112,20 @@ export async function PUT(request: Request) {
     const updatedReservationRequest = await db.inquiry.update({
       where: { id },
       data: { status },
+      include: {
+        listing: { select: { title: true } }
+      }
+    }) as any;
+
+    // Notify the Student
+    await createNotification({
+      userId: updatedReservationRequest.userId,
+      type: "inquiry",
+      title: status === "APPROVED" ? "Inquiry Approved!" : "Inquiry Update",
+      description: status === "APPROVED" 
+        ? `Your inquiry for ${updatedReservationRequest.listing.title} has been approved! You can now proceed to payment.` 
+        : `Your inquiry for ${updatedReservationRequest.listing.title} has been ${status.toLowerCase()}.`,
+      link: `/inquiries`
     });
 
     return NextResponse.json(updatedReservationRequest);

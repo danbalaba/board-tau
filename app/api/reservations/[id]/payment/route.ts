@@ -9,7 +9,16 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: reservationId } = await params;
+    // In Next.js 15/16, params is a Promise that must be awaited
+    const resolvedParams = await params;
+    const reservationId = resolvedParams.id;
+    
+    if (!reservationId) {
+      return NextResponse.json(
+        { message: "Missing reservation ID" },
+        { status: 400 }
+      );
+    }
     const user = await getCurrentUser();
 
     if (!user) {
@@ -113,7 +122,15 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: reservationId } = await params;
+    const resolvedParams = await params;
+    const reservationId = resolvedParams.id;
+    
+    if (!reservationId) {
+      return NextResponse.json(
+        { message: "Missing reservation ID" },
+        { status: 400 }
+      );
+    }
     const user = await getCurrentUser();
 
     if (!user) {

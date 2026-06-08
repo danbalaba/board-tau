@@ -3,6 +3,7 @@ import { FaCheck, FaUser, FaIdCard, FaTimes } from "react-icons/fa";
 import { ShieldCheck, Search } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
+import SafeImage from "../../../common/SafeImage";
 
 import { createPortal } from "react-dom";
 
@@ -31,15 +32,20 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
             onClick={() => setSelectedPreview(null)}
             className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 md:p-8 cursor-zoom-out"
           >
-            <motion.div 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative max-w-[95vw] max-h-[90vh] flex items-center justify-center"
-              onClick={(e) => e.stopPropagation()}
-            >
-               <img src={selectedPreview} className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10" alt="Full Preview" />
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="relative w-[90vw] h-[80vh] flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                 <SafeImage 
+                    src={selectedPreview} 
+                    alt="Full Preview" 
+                    priority={true} 
+                    className="object-contain"
+                 />
                
                <div className="absolute -top-14 left-0 right-0 flex justify-between items-center text-white/70">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 px-3 py-1 rounded-full backdrop-blur-md">
@@ -97,7 +103,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
               >
                  {capturedSelfie ? (
                     <>
-                      <img src={capturedSelfie} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Review Selfie" />
+                      <SafeImage src={capturedSelfie} alt="Review Selfie" />
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                          <Search className="text-white w-6 h-6" />
                       </div>
@@ -117,7 +123,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
               >
                  {capturedID ? (
                     <>
-                      <img src={capturedID} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Review ID" />
+                      <SafeImage src={capturedID} alt="Review ID" />
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                          <Search className="text-white w-6 h-6" />
                       </div>
@@ -130,14 +136,19 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
         </div>
 
         <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/50">
-             <div>
-                <span className="text-[10px] text-blue-500 uppercase font-black tracking-widest block opacity-70 mb-0.5">Verification Fee Included</span>
-                <span className="font-black text-blue-600 dark:text-blue-400 text-xl tracking-tighter">₱ {room.reservationFee.toLocaleString()}</span>
-             </div>
-             <div className="bg-blue-600 text-white p-2 rounded-xl">
-                <ShieldCheck size={24} />
-             </div>
+          <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-2xl border border-primary/10">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Total Reservation Fee</span>
+              <span className="text-xl font-black text-primary">
+                ₱ {(room.reservationFee * (Number(watchedValues[7]) || 1)).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={12} className="text-primary/60" />
+              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider italic">
+                Calculated as ₱ {room.reservationFee.toLocaleString()} × {watchedValues[7] || 1} occupants
+              </p>
+            </div>
           </div>
         </div>
       </div>

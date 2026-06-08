@@ -21,11 +21,21 @@ export const getMyReviews = async () => {
       },
       listing: {
         include: {
+          images: true,
           user: {
             select: {
               id: true,
               name: true,
               image: true
+            }
+          }
+        }
+      },
+      reservation: {
+        include: {
+          room: {
+            include: {
+              images: true
             }
           }
         }

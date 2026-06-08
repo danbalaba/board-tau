@@ -1,23 +1,23 @@
 export const ROOM_AMENITIES = {
-  AC: "AC",
-  DESK: "DESK",
-  CABINET: "CABINET",
-  FOAM: "FOAM",
-  FAN: "FAN",
-  SUBMETER_ELEC: "SUBMETER_ELEC",
-  SUBMETER_WATER: "SUBMETER_WATER",
-  WIFI: "WIFI",
+  AC: "ac",
+  DESK: "desk",
+  CABINET: "locker",
+  FOAM: "foam",
+  FAN: "fan",
+  SUBMETER_ELEC: "submeter",
+  SUBMETER_WATER: "submeter_water",
+  WIFI: "wifi",
 } as const;
 
 export const ROOM_AMENITY_LABELS: Record<string, string> = {
   AC: "Air Conditioning",
-  DESK: "Desk / Study Table",
-  CABINET: "Cabinet with Lock",
-  FOAM: "Foam / Mattress Included",
-  FAN: "Electric Fan Provided",
-  SUBMETER_ELEC: "Own Sub-Meter (Electricity)",
-  SUBMETER_WATER: "Own Sub-Meter (Water)",
-  WIFI: "WiFi / Ethernet Access",
+  DESK: "Study Table",
+  CABINET: "Locker",
+  FOAM: "Foam Mattress",
+  FAN: "Electric Fan",
+  SUBMETER_ELEC: "Electric Sub-Meter",
+  SUBMETER_WATER: "Water Sub-Meter",
+  WIFI: "WiFi Access",
 };
 
 // Bathroom arrangement options — used as a radio question per room, NOT as amenity checkboxes
@@ -49,41 +49,47 @@ import {
 } from "react-icons/fa";
 
 /** BoardTAU — Room-level amenity checkboxes (bathroom excluded — handled via dedicated radio). */
-export const roomAmenities: { label: string; value: string; icon: IconType; applicableTo?: string[] }[] = [
+export const roomAmenities: { label: string; value: string; icon: IconType; applicableTo: string[] }[] = [
 
   // ── Shared by both room types ───────────────────────────────────────────
   {
     label: ROOM_AMENITY_LABELS.AC,
     value: ROOM_AMENITIES.AC,
     icon: FaSnowflake,
+    applicableTo: [ROOM_TYPES.SOLO, ROOM_TYPES.BEDSPACE],
   },
   {
     label: ROOM_AMENITY_LABELS.FAN,
     value: ROOM_AMENITIES.FAN,
     icon: FaFan,
+    applicableTo: [ROOM_TYPES.SOLO, ROOM_TYPES.BEDSPACE],
   },
   {
     label: ROOM_AMENITY_LABELS.WIFI,
     value: ROOM_AMENITIES.WIFI,
     icon: FaWifi,
+    applicableTo: [ROOM_TYPES.SOLO, ROOM_TYPES.BEDSPACE],
   },
   {
     label: ROOM_AMENITY_LABELS.DESK,
     value: ROOM_AMENITIES.DESK,
     icon: FaBook,
+    applicableTo: [ROOM_TYPES.SOLO, ROOM_TYPES.BEDSPACE],
   },
   {
     label: ROOM_AMENITY_LABELS.CABINET,
     value: ROOM_AMENITIES.CABINET,
     icon: FaLock,
+    applicableTo: [ROOM_TYPES.SOLO, ROOM_TYPES.BEDSPACE],
   },
   {
     label: ROOM_AMENITY_LABELS.FOAM,
     value: ROOM_AMENITIES.FOAM,
     icon: FaBed,
+    applicableTo: [ROOM_TYPES.SOLO, ROOM_TYPES.BEDSPACE],
   },
 
-  // ── Solo Room Specific (Sub-meters usually apply per distinct room unit) 
+  // ── Solo Room Specific (Sub-meters usually apply per distinct room unit)
   {
     label: ROOM_AMENITY_LABELS.SUBMETER_ELEC,
     value: ROOM_AMENITIES.SUBMETER_ELEC,
@@ -100,7 +106,8 @@ export const roomAmenities: { label: string; value: string; icon: IconType; appl
 
 /** BoardTAU — Bed type options. */
 export const bedTypeOptions = [
-  { value: "Single", label: "Single" },
-  { value: "Double", label: "Double" },
-  { value: "Bunk Bed", label: "Bunk Bed (Double Deck)" },
+  { value: "SINGLE", label: "Single Bed" },
+  { value: "DOUBLE", label: "Double Bed" },
+  { value: "QUEEN", label: "Queen Bed" },
+  { value: "BUNK", label: "Bunk Bed (Double Deck)" },
 ];

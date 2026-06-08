@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { SecurityLogs } from '@/app/admin/features/monitoring/components/security-logs';
+import SecurityLogs from '@/app/admin/features/monitoring/components/security-logs/index';
 
 export const metadata: Metadata = {
   title: 'Security Logs - BoardTAU Admin',

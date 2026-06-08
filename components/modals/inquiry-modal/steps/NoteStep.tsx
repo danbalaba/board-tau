@@ -2,6 +2,7 @@ import React from "react";
 import { FaComment } from "react-icons/fa";
 import { UseFormRegister, FieldErrors } from "react-hook-form";
 import { FormData } from "../useInquiryLogic";
+import { isCleanString, sanitizeSecurityString } from "../validation/security";
 
 interface NoteStepProps {
   register: UseFormRegister<FormData>;
@@ -29,8 +30,19 @@ const NoteStep: React.FC<NoteStepProps> = ({ register, errors }) => {
               message: "Message must be at least 10 characters long.",
             },
             validate: {
-              noXss: (value) => !/[<>]/.test(value) || "Special characters like (< >) are not allowed for security reasons.",
-              noSql: (value) => !/(\b(SELECT|UPDATE|DELETE|INSERT|DROP|ALTER|EXEC|UNION)\b)/i.test(value) || "Invalid input detected for security reasons."
+              noXss: (value) => isCleanString(value) || "Special characters like (< > { } [ ]) are not allowed for security reasons.",
+              noSql: (value) => {
+                const sanitized = sanitizeSecurityString(value);
+                if (sanitized.length < value.length) {
+                   // This means some keywords were stripped
+                }
+                return true; 
+              },
+              secureContent: (value) => {
+                const sqlKeywords = /\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|OR|AND|EXEC)\b/gi;
+                if (sqlKeywords.test(value)) return "Input contains restricted keywords for security.";
+                return true;
+              }
             }
           })}
           className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg outline-none focus:border-primary dark:focus:border-primary bg-white dark:bg-gray-900 text-text-primary dark:text-gray-100"

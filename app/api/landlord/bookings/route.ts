@@ -56,7 +56,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { status } = await request.json();
+    const { status, reason } = await request.json();
 
     const validStatuses = ["PENDING_PAYMENT", "RESERVED", "CHECKED_IN", "COMPLETED", "CANCELLED"];
     if (!status || !validStatuses.includes(status)) {
@@ -69,7 +69,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const result = await updateBookingStatus(bookingId, status);
+    const result = await updateBookingStatus(bookingId, status, reason);
 
     return NextResponse.json({
       success: true,

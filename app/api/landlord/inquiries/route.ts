@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import validator from "validator";
+import { db } from "@/lib/db";
+import { backendClient } from "@/lib/edgestore-server";
+import { requireLandlord } from "@/lib/landlord";
 import {
   getLandlordInquiries,
   getInquiryDetails,
@@ -87,24 +90,88 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const landlord = await requireLandlord();
     const { searchParams } = new URL(request.url);
     const inquiryId = searchParams.get("id");
+    const isPurge = searchParams.get("purge") === "true";
 
     if (!inquiryId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Inquiry ID is required",
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: "Inquiry ID is required" }, { status: 400 });
     }
 
+    // 1. Fetch current state ensuring it belongs to the authenticated landlord
+    const inquiry = await db.inquiry.findFirst({
+      where: { 
+        id: inquiryId,
+        listing: {
+          userId: landlord.id
+        }
+      }
+    });
+
+    if (!inquiry) {
+      return NextResponse.json({ success: false, error: "Inquiry not found or unauthorized" }, { status: 404 });
+    }
+
+    // 2. If PURGE requested (Permanent Delete)
+    if (isPurge) {
+      const fileUrls = [
+        inquiry.profilePhotoUrl,
+        inquiry.idAttachmentUrl
+      ].filter(Boolean) as string[];
+
+      if (fileUrls.length > 0) {
+        await Promise.allSettled(
+          fileUrls.map(async (url) => {
+            try {
+              let targetUrl = url;
+
+              // Robustly extract the real EdgeStore URL from the proxy
+              if (url.includes('/api/edgestore/proxy-file')) {
+                try {
+                  // Handle both relative (/api/...) and absolute (http://...) URLs
+                  const urlObj = url.startsWith('http') 
+                    ? new URL(url) 
+                    : new URL(url, process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
+                  
+                  const extractedUrl = urlObj.searchParams.get('url');
+                  if (extractedUrl) targetUrl = extractedUrl;
+                } catch (urlErr) {
+                  console.error("Failed to parse proxied URL:", url);
+                }
+              }
+
+              // Verify we are sending a valid external URL to EdgeStore
+              if (targetUrl.startsWith('http')) {
+                 return await backendClient.identityDocs.deleteFile({ url: targetUrl });
+              } else {
+                 console.warn(`⚠️ Skipping delete for invalid/non-external URL: ${targetUrl}`);
+              }
+            } catch (err) {
+              console.error(`❌ EdgeStore Delete Failed for ${url}:`, err);
+              throw err;
+            }
+          })
+        );
+      }
+
+      await db.inquiry.delete({
+        where: { id: inquiryId }
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "Inquiry and all associated sensitive files purged permanently."
+      });
+    }
+
+    // 3. Otherwise, just archive/restore (toggle behavior via service)
     const result = await deleteInquiry(inquiryId);
 
     return NextResponse.json({
       success: true,
       data: result,
+      message: result.isArchived ? "Inquiry archived successfully." : "Inquiry restored successfully."
     });
   } catch (error) {
     console.error("Error deleting inquiry:", error);

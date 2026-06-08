@@ -27,6 +27,7 @@ export function buildSearchUrl(data: FieldValues, currentSearchParams: URLSearch
     moveInDate: data.moveInMonth || undefined,
     stayDuration: data.stayDuration || undefined,
     amenities: (data.amenities ?? []).length ? data.amenities : undefined,
+    // Send raw enum values — DB stores enums (SOLO, DESK, etc.)
     roomType: data.roomType || undefined,
     bedType: data.bedType || undefined,
     roomAmenities: (data.roomAmenities ?? []).length ? data.roomAmenities : undefined,
@@ -47,13 +48,12 @@ export function buildSearchUrl(data: FieldValues, currentSearchParams: URLSearch
     noCurfew: (data.rules ?? []).includes("no-curfew") ? "true" : undefined,
 
     // Convert Advanced Soft Filters (Scoring multipliers) to Boolean Parameters
-    security24h: (data.advanced ?? []).includes("24-7-security") ? "true" : undefined,
+    security24h: (data.advanced ?? []).includes("security24h") ? "true" : undefined,
     cctv: (data.advanced ?? []).includes("cctv") ? "true" : undefined,
-    fireSafety: (data.advanced ?? []).includes("fire-safety") ? "true" : undefined,
-    nearTransport: (data.advanced ?? []).includes("near-public-transport") ? "true" : undefined,
-    studyFriendly: (data.advanced ?? []).includes("study-friendly") ? "true" : undefined,
-    quietEnvironment: (data.advanced ?? []).includes("quiet-environment") ? "true" : undefined,
-    flexibleLease: (data.advanced ?? []).includes("flexible-lease") ? "true" : undefined,
+    fireSafety: (data.advanced ?? []).includes("fireSafety") ? "true" : undefined,
+    nearTransport: (data.advanced ?? []).includes("nearTransport") ? "true" : undefined,
+    floodFree: (data.advanced ?? []).includes("floodFree") ? "true" : undefined,
+    backupPower: (data.advanced ?? []).includes("backupPower") ? "true" : undefined,
     isUnlimitedDistance: data.isUnlimitedDistance ? "true" : undefined,
   };
 

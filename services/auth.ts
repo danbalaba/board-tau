@@ -2,7 +2,8 @@
 import { db } from "@/lib/db";
 import bcrypt from 'bcryptjs';
 import { generateAndStoreOTP, sendOTPEmail } from "@/lib/otp";
-import { validateName, validateEmail, validatePassword, sanitizeInput } from "@/lib/validators";
+import { sanitizeInput } from "@/lib/validators";
+import { signupSchema } from "@/lib/validations/auth";
 
 export const registerUser = async ({
   name,
@@ -17,16 +18,18 @@ export const registerUser = async ({
     // Sanitize inputs to prevent XSS attacks
     const sanitizedName = sanitizeInput(name);
     const sanitizedEmail = sanitizeInput(email);
-    const sanitizedPassword = inputPassword; // Don't sanitize passwords
+    const sanitizedPassword = inputPassword;
 
-    // Validate inputs
-    const nameError = validateName(sanitizedName);
-    const emailError = validateEmail(sanitizedEmail);
-    const passwordError = validatePassword(sanitizedPassword);
+    // 🛡️ Enterprise Validation via Zod
+    const validation = signupSchema.safeParse({
+      name: sanitizedName,
+      email: sanitizedEmail,
+      password: sanitizedPassword,
+    });
 
-    if (nameError) throw new Error(nameError);
-    if (emailError) throw new Error(emailError);
-    if (passwordError) throw new Error(passwordError);
+    if (!validation.success) {
+      return { error: validation.error.issues[0].message };
+    }
 
     const hashedPassword = await bcrypt.hash(sanitizedPassword, 12);
 
@@ -38,7 +41,7 @@ export const registerUser = async ({
     if (user) {
       // User exists - check if they have a password set
       if (user.password) {
-        throw new Error("User with this email already exists. Please use login instead.");
+        return { error: "User with this email already exists. Please use login instead." };
       } else {
         // User exists but no password - update with password
         user = await db.user.update({
@@ -65,11 +68,15 @@ export const registerUser = async ({
     await sendOTPEmail(sanitizedEmail, otp);
 
     return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      }
     };
   } catch (error: any) {
-    throw new Error(error.message);
+    console.error("REGISTRATION_ERROR", error);
+    return { error: error.message || "An unexpected error occurred during registration" };
   }
 };

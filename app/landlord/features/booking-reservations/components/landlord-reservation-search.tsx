@@ -4,7 +4,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { IconSearch, IconX, IconCalendar, IconUser } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/use-debounce';
 import { ReservationRequest } from '../hooks/use-reservation-logic';
+import SafeImage from '@/components/common/SafeImage';
 
 interface LandlordReservationSearchProps {
   searchQuery: string;
@@ -17,13 +19,23 @@ export function LandlordReservationSearch({
   setSearchQuery,
   reservations
 }: LandlordReservationSearchProps) {
+  const [localQuery, setLocalQuery] = useState(searchQuery);
+  const debouncedQuery = useDebounce(localQuery, 300);
   const [isFocused, setIsFocused] = useState(false);
   const [suggestions, setSuggestions] = useState<ReservationRequest[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (searchQuery.length >= 2 && reservations) {
-      const q = searchQuery.toLowerCase();
+    setLocalQuery(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setSearchQuery(debouncedQuery);
+  }, [debouncedQuery, setSearchQuery]);
+
+  useEffect(() => {
+    if (debouncedQuery.length >= 2 && reservations) {
+      const q = debouncedQuery.toLowerCase();
       const filtered = reservations
         .filter(r => 
           r.listing.title.toLowerCase().includes(q) || 
@@ -35,7 +47,7 @@ export function LandlordReservationSearch({
     } else {
       setSuggestions([]);
     }
-  }, [searchQuery, reservations]);
+  }, [debouncedQuery, reservations]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -55,14 +67,20 @@ export function LandlordReservationSearch({
       <input
         type="text"
         placeholder="Search tenant or property..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
+        value={localQuery}
+        onChange={(e) => setLocalQuery(e.target.value)}
         onFocus={() => setIsFocused(true)}
-        className="w-full relative z-10 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 py-3 pl-11 pr-10 text-xs font-bold text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+        spellCheck={false}
+        autoComplete="off"
+        autoCorrect="off"
+        className="w-full relative z-10 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 py-3 pl-11 pr-10 text-xs font-bold text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all shadow-sm"
       />
-      {searchQuery && (
+      {localQuery && (
         <button
-          onClick={() => setSearchQuery('')}
+          onClick={() => {
+            setLocalQuery('');
+            setSearchQuery('');
+          }}
           className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-primary transition-colors z-20"
         >
           <IconX size={14} strokeWidth={3} />
@@ -92,7 +110,7 @@ export function LandlordReservationSearch({
                 >
                   <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 group-hover/item:text-primary transition-colors overflow-hidden">
                     {res.listing.imageSrc ? (
-                      <img src={res.listing.imageSrc} alt="" className="w-full h-full object-cover" />
+                      <SafeImage src={res.listing.imageSrc} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <IconCalendar size={16} />
                     )}

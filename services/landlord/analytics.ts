@@ -2,9 +2,15 @@
 
 import { db } from "@/lib/db";
 import { requireLandlord } from "@/lib/landlord";
+import { cache } from "@/lib/redis";
 
 export const getLandlordDashboardStats = async () => {
   const landlord = await requireLandlord();
+
+  // 1. Check Cache first
+  const cacheKey = `landlord:dashboard:${landlord.id}`;
+  const cachedData = await cache.get(cacheKey);
+  if (cachedData) return cachedData;
 
   const [
     propertyCount,
@@ -73,56 +79,58 @@ export const getLandlordDashboardStats = async () => {
     }),
     // Occupancy statistics
     (async () => {
-      // Get all rooms for landlord's properties
-      const properties = await db.listing.findMany({
+      // 1. Get all rooms for landlord's properties in one go
+      const activeListings = await db.listing.findMany({
+        where: { userId: landlord.id, status: "active" },
+        select: { id: true }
+      });
+      const listingIds = activeListings.map(l => l.id);
+
+      const allRooms = await db.room.findMany({
+        where: { listingId: { in: listingIds } },
+        select: { id: true, capacity: true }
+      });
+      
+      const roomIds = allRooms.map(r => r.id);
+      const totalCapacity = allRooms.reduce((sum, r) => sum + r.capacity, 0);
+
+      // 2. Get ALL active reservations for these rooms in ONE query
+      const now = new Date();
+      const activeReservations = await db.reservation.findMany({
         where: {
-          userId: landlord.id,
-          status: "active",
+          roomId: { in: roomIds },
+          status: "RESERVED",
+          startDate: { lte: now },
+          endDate: { gte: now },
         },
-        include: {
-          rooms: true,
-        },
+        select: { roomId: true }
       });
 
-      // Calculate total capacity and occupied rooms
-      let totalCapacity = 0;
+      // 3. Group and sum in memory (O(N) instead of O(N^2))
+      const resCounts: Record<string, number> = {};
+      activeReservations.forEach(r => {
+        resCounts[r.roomId] = (resCounts[r.roomId] || 0) + 1;
+      });
+
       let occupiedRooms = 0;
+      allRooms.forEach(room => {
+        occupiedRooms += Math.min(resCounts[room.id] || 0, room.capacity);
+      });
 
-      for (const property of properties) {
-        for (const room of property.rooms) {
-          totalCapacity += room.capacity;
-          // Count active reservations for this room
-          const activeReservations = await db.reservation.count({
-            where: {
-              roomId: room.id,
-              status: "RESERVED",
-              startDate: { lte: new Date() },
-              endDate: { gte: new Date() },
-            },
-          });
-          occupiedRooms += Math.min(activeReservations, room.capacity);
-        }
-      }
-
-      // Count reservations ending within 30 days (expiring leases)
+      // 4. Count reservations ending within 30 days (expiring leases)
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
       const expiringLeases = await db.reservation.count({
         where: {
-          listing: {
-            userId: landlord.id,
-          },
+          listing: { userId: landlord.id },
           status: "RESERVED",
-          endDate: {
-            gte: new Date(),
-            lte: thirtyDaysFromNow,
-          },
+          endDate: { gte: now, lte: thirtyDaysFromNow },
         },
       });
 
       return {
-        vacantRooms: totalCapacity - occupiedRooms,
+        vacantRooms: Math.max(0, totalCapacity - occupiedRooms),
         occupiedRooms,
         expiringLeases,
       };
@@ -135,7 +143,7 @@ export const getLandlordDashboardStats = async () => {
     ? Math.round((occupancyData.occupiedRooms / totalRooms) * 100) 
     : 0;
 
-  return {
+  const result = {
     totalProperties: propertyCount,
     activeListings: activeListingsCount,
     pendingInquiries: pendingInquiriesCount,
@@ -148,6 +156,11 @@ export const getLandlordDashboardStats = async () => {
     occupiedRooms: occupancyData.occupiedRooms,
     expiringLeases: occupancyData.expiringLeases,
   };
+
+  // 2. Save to Cache (60s TTL)
+  await cache.set(cacheKey, result, 60);
+
+  return result;
 };
 
 export const getPropertyPerformance = async (propertyId: string) => {
@@ -250,45 +263,54 @@ export const getRevenueReport = async (period: "month" | "quarter" | "year" = "m
       break;
   }
 
-  const bookings = await db.reservation.findMany({
-    where: {
-      listing: {
-        userId: landlord.id,
-      },
-      status: "RESERVED",
-      paymentStatus: "PAID",
-      createdAt: {
-        gte: startDate,
-      },
-    },
-    include: {
-      listing: {
-        select: {
-          id: true,
-          title: true,
-        },
-      },
-    },
+  const baseWhere = {
+    listing: { userId: landlord.id },
+    status: "RESERVED" as const,
+    paymentStatus: "PAID" as const,
+    createdAt: { gte: startDate },
+  };
+
+  // ============================================================
+  // OPTIMIZED: Use groupBy aggregation instead of loading all records
+  // ============================================================
+  const [totalStats, revenueByPropertyRaw, listings] = await Promise.all([
+    // 1. Total revenue + count computed in MongoDB
+    db.reservation.aggregate({
+      where: baseWhere,
+      _sum: { totalPrice: true },
+      _count: { id: true },
+    }),
+    // 2. Revenue per property — grouped in MongoDB
+    db.reservation.groupBy({
+      by: ['listingId'],
+      where: baseWhere,
+      _sum: { totalPrice: true },
+      _count: { id: true },
+    }),
+    // 3. Listing titles for display (lightweight)
+    db.listing.findMany({
+      where: { userId: landlord.id },
+      select: { id: true, title: true },
+    }),
+  ]);
+
+  const totalRevenue = totalStats._sum.totalPrice || 0;
+  const bookingsCount = totalStats._count.id;
+  const listingTitleMap = new Map(listings.map(l => [l.id, l.title]));
+
+  const revenueByProperty = revenueByPropertyRaw.map(r => ({
+    title: listingTitleMap.get(r.listingId) || 'Unknown Property',
+    amount: r._sum.totalPrice || 0,
+  }));
+
+  // Monthly breakdown — still needs individual dates, but with select only (no include)
+  const bookingDates = await db.reservation.findMany({
+    where: baseWhere,
+    select: { createdAt: true, totalPrice: true },
   });
 
-  // Calculate total revenue
-  const totalRevenue = bookings.reduce((sum, booking) => sum + booking.totalPrice, 0);
-
-  // Calculate revenue by property
-  const revenueByProperty: Record<string, { title: string; amount: number }> = {};
-  bookings.forEach((booking) => {
-    if (!revenueByProperty[booking.listingId]) {
-      revenueByProperty[booking.listingId] = {
-        title: booking.listing.title,
-        amount: 0,
-      };
-    }
-    revenueByProperty[booking.listingId].amount += booking.totalPrice;
-  });
-
-  // Calculate monthly breakdown
   const monthlyBreakdown: Record<string, number> = {};
-  bookings.forEach((booking) => {
+  bookingDates.forEach((booking) => {
     const key = `${booking.createdAt.getFullYear()}-${String(
       booking.createdAt.getMonth() + 1
     ).padStart(2, "0")}`;
@@ -300,9 +322,9 @@ export const getRevenueReport = async (period: "month" | "quarter" | "year" = "m
     startDate,
     endDate: new Date(),
     totalRevenue,
-    bookingsCount: bookings.length,
-    averageBookingValue: bookings.length > 0 ? totalRevenue / bookings.length : 0,
-    revenueByProperty: Object.values(revenueByProperty),
+    bookingsCount,
+    averageBookingValue: bookingsCount > 0 ? totalRevenue / bookingsCount : 0,
+    revenueByProperty,
     monthlyBreakdown,
   };
 };
@@ -310,61 +332,60 @@ export const getRevenueReport = async (period: "month" | "quarter" | "year" = "m
 export const getOccupancyReport = async (propertyId?: string) => {
   const landlord = await requireLandlord();
 
-  const where: any = {
-    listing: {
-      userId: landlord.id,
-    },
+  const reservationWhere: any = {
+    listing: { userId: landlord.id },
     status: "RESERVED",
   };
+  if (propertyId) reservationWhere.listingId = propertyId;
 
-  if (propertyId) {
-    where.listingId = propertyId;
-  }
+  const listingWhere: any = { userId: landlord.id, status: "active" };
+  if (propertyId) listingWhere.id = propertyId;
+  
+  // Bound to last year to prevent unbounded growth
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  reservationWhere.createdAt = { gte: oneYearAgo };
 
-  const bookings = await db.reservation.findMany({
-    where,
-    include: {
-      listing: {
-        select: {
-          id: true,
-          title: true,
-        },
+  // ============================================================
+  // OPTIMIZED: select only needed fields, no include: rooms: true
+  // ============================================================
+  const [bookings, bookingCount, rooms] = await Promise.all([
+    // Only fetch dates for day calculation (no listing include)
+    db.reservation.findMany({
+      where: reservationWhere,
+      select: { startDate: true, endDate: true, durationInDays: true },
+    }),
+    // Count in MongoDB
+    db.reservation.count({ where: reservationWhere }),
+    // Only fetch capacity — not the entire room document
+    db.room.findMany({
+      where: {
+        listing: listingWhere,
       },
-    },
-  });
+      select: { capacity: true },
+    }),
+  ]);
 
-  // Calculate total days booked
+  // Calculate total days booked using stored durationInDays when available
   let totalBookedDays = 0;
   bookings.forEach((booking) => {
-    const start = new Date(booking.startDate);
-    const end = new Date(booking.endDate);
-    const days = Math.ceil((end.getTime() - start.getTime()) / (1_000 * 60 * 60 * 24));
-    totalBookedDays += days;
+    if (booking.durationInDays > 0) {
+      totalBookedDays += booking.durationInDays;
+    } else {
+      const start = new Date(booking.startDate);
+      const end = new Date(booking.endDate);
+      totalBookedDays += Math.ceil((end.getTime() - start.getTime()) / (1_000 * 60 * 60 * 24));
+    }
   });
 
-  // Calculate occupancy rate
-  const properties = await db.listing.findMany({
-    where: {
-      userId: landlord.id,
-      status: "active",
-    },
-    include: {
-      rooms: true,
-    },
-  });
-
-  // Calculate total available slots
-  const totalSlots = properties.reduce((sum, property) => {
-    return sum + property.rooms.reduce((roomSum, room) => roomSum + room.capacity, 0);
-  }, 0);
-
+  const totalSlots = rooms.reduce((sum, room) => sum + room.capacity, 0);
   const occupancyRate = totalSlots > 0 ? (totalBookedDays / (totalSlots * 365)) * 100 : 0;
 
   return {
     totalBookedDays,
     totalSlots,
     occupancyRate: Math.min(100, Math.max(0, occupancyRate)),
-    bookingsCount: bookings.length,
+    bookingsCount: bookingCount,
   };
 };
 
@@ -524,44 +545,38 @@ export const getGrowthTrendData = async (months: number = 6) => {
 export const getPropertyTypeBreakdown = async () => {
   const landlord = await requireLandlord();
 
+  // ============================================================
+  // OPTIMIZED: Use lightweight select + groupBy instead of loading all bookings
+  // ============================================================
   const properties = await db.listing.findMany({
-    where: {
-      userId: landlord.id,
-    },
-    select: {
-      id: true,
-      category: true,
-    },
-    distinct: ['category'],
+    where: { userId: landlord.id },
+    select: { id: true, category: true },
   });
 
   const typeCounts: Record<string, number> = {};
+  const listingCategoryMap = new Map<string, string>();
   properties.forEach(p => {
     const type = Array.isArray(p.category) ? p.category.join(', ') : 'Other';
     typeCounts[type] = (typeCounts[type] || 0) + 1;
+    listingCategoryMap.set(p.id, type);
   });
 
-  const bookings = await db.reservation.findMany({
+  // Use groupBy to compute revenue per listing in MongoDB (not JS)
+  const revenueByListing = await db.reservation.groupBy({
+    by: ['listingId'],
     where: {
-      listing: {
-        userId: landlord.id,
-      },
+      listing: { userId: landlord.id },
       status: "RESERVED",
       paymentStatus: "PAID",
     },
-    include: {
-      listing: {
-        select: {
-          category: true,
-        },
-      },
-    },
+    _sum: { totalPrice: true },
   });
 
+  // Map listing revenue to category type in memory (O(N), not O(N) queries)
   const revenueByType: Record<string, number> = {};
-  bookings.forEach(b => {
-    const type = Array.isArray(b.listing.category) ? b.listing.category.join(', ') : 'Other';
-    revenueByType[type] = (revenueByType[type] || 0) + b.totalPrice;
+  revenueByListing.forEach(r => {
+    const type = listingCategoryMap.get(r.listingId) || 'Other';
+    revenueByType[type] = (revenueByType[type] || 0) + (r._sum.totalPrice || 0);
   });
 
   return Object.keys(typeCounts).map(type => ({
@@ -574,73 +589,75 @@ export const getPropertyTypeBreakdown = async () => {
 export const getRatingDistribution = async () => {
   const landlord = await requireLandlord();
 
-  const reviews = await db.review.findMany({
+  // ============================================================
+  // OPTIMIZED: groupBy in MongoDB instead of fetching all reviews + filtering 5x in JS
+  // ============================================================
+  const ratingGroups = await db.review.groupBy({
+    by: ['rating'],
     where: {
-      listing: {
-        userId: landlord.id,
-      },
+      listing: { userId: landlord.id },
       status: "approved",
     },
-    select: {
-      rating: true,
-    },
+    _count: { id: true },
   });
 
-  const distribution = [1, 2, 3, 4, 5].map(rating => ({
-    rating: `${rating} Star`,
-    value: reviews.filter(r => r.rating === rating).length,
-  }));
+  const ratingMap = new Map(ratingGroups.map(r => [r.rating, r._count.id]));
+  const total = ratingGroups.reduce((sum, r) => sum + r._count.id, 0);
 
-  const total = distribution.reduce((sum, d) => sum + d.value, 0);
-  
-  return distribution.map(d => ({
-    ...d,
-    percentage: total > 0 ? Math.round((d.value / total) * 100) : 0,
-  }));
+  return [1, 2, 3, 4, 5].map(rating => {
+    const value = ratingMap.get(rating) || 0;
+    return {
+      rating: `${rating} Star`,
+      value,
+      percentage: total > 0 ? Math.round((value / total) * 100) : 0,
+    };
+  });
 };
 
 export const getAllPropertiesPerformance = async () => {
   const landlord = await requireLandlord();
 
   const listings = await db.listing.findMany({
-    where: {
-      userId: landlord.id,
-    },
-    select: {
-      id: true,
-      title: true,
-    },
+    where: { userId: landlord.id },
+    select: { id: true, title: true },
   });
 
-  const propertyData = await Promise.all(
-    listings.map(async (listing) => {
-      const [inquiries, bookings, revenueData] = await Promise.all([
-        db.inquiry.count({
-          where: { listingId: listing.id },
-        }),
-        db.reservation.count({
-          where: { listingId: listing.id, status: "RESERVED" },
-        }),
-        db.reservation.aggregate({
-          where: {
-            listingId: listing.id,
-            status: "RESERVED",
-            paymentStatus: "PAID",
-          },
-          _sum: { totalPrice: true },
-        }),
-      ]);
+  const listingIds = listings.map(l => l.id);
 
-      return {
-        name: listing.title,
-        inquiries,
-        bookings,
-        revenue: revenueData._sum.totalPrice || 0,
-      };
-    })
-  );
+  // Optimized Bulk Aggregation
+  const [inquiryStats, reservationStats] = await Promise.all([
+    db.inquiry.groupBy({
+      by: ['listingId'],
+      where: { listingId: { in: listingIds } },
+      _count: { id: true },
+    }),
+    db.reservation.groupBy({
+      by: ['listingId'],
+      where: { 
+        listingId: { in: listingIds },
+        status: "RESERVED"
+      },
+      _count: { id: true },
+      _sum: { totalPrice: true },
+    }),
+  ]);
 
-  return propertyData;
+  // Create lookup maps for O(1) merging
+  const inquiryMap = inquiryStats.reduce((acc, curr) => ({ ...acc, [curr.listingId]: curr._count.id }), {} as any);
+  const resMap = reservationStats.reduce((acc, curr) => ({
+    ...acc, 
+    [curr.listingId]: { 
+      bookings: curr._count.id, 
+      revenue: curr._sum.totalPrice || 0 
+    }
+  }), {} as any);
+
+  return listings.map(listing => ({
+    name: listing.title,
+    inquiries: inquiryMap[listing.id] || 0,
+    bookings: resMap[listing.id]?.bookings || 0,
+    revenue: resMap[listing.id]?.revenue || 0,
+  }));
 };
 
 export const getInquirySourceBreakdown = async (months: number = 6) => {
@@ -676,14 +693,17 @@ export const getInquirySourceBreakdown = async (months: number = 6) => {
   inquiries.forEach((inquiry) => {
     const key = `${inquiry.createdAt.getFullYear()}-${String(inquiry.createdAt.getMonth() + 1).padStart(2, '0')}`;
     if (monthlyData[key]) {
-      const monthTotal = inquiries.filter(i => 
-        `${i.createdAt.getFullYear()}-${String(i.createdAt.getMonth() + 1).padStart(2, '0')}` === key
-      ).length;
-      
-      monthlyData[key].direct += Math.round(monthTotal * 0.5);
-      monthlyData[key].email += Math.round(monthTotal * 0.3);
-      monthlyData[key].social += monthTotal - Math.round(monthTotal * 0.5) - Math.round(monthTotal * 0.3);
+      // In-memory counters instead of O(N^2) filter
+      monthlyData[key].direct += 1; // Since source isn't real yet, just count as direct
     }
+  });
+
+  // Distribute counts (Simulating the percentages in a single pass)
+  Object.values(monthlyData).forEach(item => {
+    const total = item.direct;
+    item.direct = Math.round(total * 0.5);
+    item.email = Math.round(total * 0.3);
+    item.social = total - item.direct - item.email;
   });
 
   const result = Object.values(monthlyData).sort((a, b) => a.date.localeCompare(b.date));

@@ -27,3 +27,11 @@ export function haversineKm(
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
+
+export function calculateAverageRating(reviews: { rating: number }[], fallbackRating?: number | null): number {
+  if (!reviews || reviews.length === 0) {
+    return fallbackRating || 0;
+  }
+  const total = reviews.reduce((acc, curr) => acc + (curr.rating || 0), 0);
+  return total / reviews.length;
+}

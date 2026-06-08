@@ -36,6 +36,7 @@ export async function POST(request: Request) {
       profilePhotoUrl,
       idAttachmentUrl,
       paymentMethod,
+      contactInfo,
     } = data;
 
     // Validate required fields
@@ -76,6 +77,24 @@ export async function POST(request: Request) {
        }, { status: 400 });
     }
 
+    // FLEXIBLE MODE CHECK: Block if new move-in overlaps with active stay
+    const activeStay = await db.reservation.findFirst({
+      where: {
+        userId: user.id,
+        status: { in: ["RESERVED", "CHECKED_IN"] as any },
+        isArchived: false,
+      },
+      orderBy: { endDate: "desc" },
+      select: { endDate: true, listing: { select: { title: true } } }
+    });
+
+    if (activeStay && new Date(moveInDate) < activeStay.endDate) {
+       return NextResponse.json({
+         error: "Active Stay Conflict",
+         message: `You currently have an active stay at '${activeStay.listing.title}' until ${activeStay.endDate.toLocaleDateString()}. Your new move-in date must be after this date.`
+       }, { status: 400 });
+    }
+
     // Create inquiry with PENDING status
     const startDate = new Date(moveInDate);
     const endDate = new Date(checkOutDate);
@@ -106,6 +125,7 @@ export async function POST(request: Request) {
         profilePhotoUrl: profilePhotoUrl || null,
         idAttachmentUrl: idAttachmentUrl || null,
         paymentMethod: paymentMethod || null,
+        contactInfo: contactInfo || null,
         reservationFee: ((room as any).reservationFee || 0) * (occupantsCount || 1), // Multiplier logic added
         status: "PENDING",
         paymentStatus: "UNPAID",

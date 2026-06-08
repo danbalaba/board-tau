@@ -38,9 +38,9 @@ export function AnalyticsKPICards({ data }: AnalyticsKPICardsProps) {
       icon: IconUsers,
       trend: '+12.5%',
       trendDir: 'up',
-      color: 'text-primary',
-      bg: 'bg-primary/10',
-      chartColor: 'var(--primary)',
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
+      chartColor: '#3b82f6',
       trendData: generateTrend(data.totalUsers)
     },
     {
@@ -62,9 +62,9 @@ export function AnalyticsKPICards({ data }: AnalyticsKPICardsProps) {
       icon: IconUserCheck,
       trend: '+0.8%',
       trendDir: 'up',
-      color: 'text-blue-500',
-      bg: 'bg-blue-500/10',
-      chartColor: '#3b82f6',
+      color: 'text-fuchsia-500',
+      bg: 'bg-fuchsia-500/10',
+      chartColor: '#d946ef',
       trendData: generateTrend(verifiedHostsCount)
     },
     {
@@ -82,7 +82,7 @@ export function AnalyticsKPICards({ data }: AnalyticsKPICardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {stats.map((stat, index) => (
         <motion.div
           key={index}
@@ -90,39 +90,40 @@ export function AnalyticsKPICards({ data }: AnalyticsKPICardsProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
         >
-          <Card className="group relative overflow-hidden border-none bg-card/30 backdrop-blur-md shadow-xl transition-all hover:bg-card/40">
+          <Card className="group relative overflow-hidden border-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl shadow-xl rounded-[2.5rem] transition-all hover:bg-white/50 dark:hover:bg-gray-900/50 hover:shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              <CardTitle className="text-[10px] font-black uppercase tracking-widest text-gray-500">
                 {stat.title}
               </CardTitle>
-              <div className={cn("p-2 rounded-lg", stat.bg)}>
-                <stat.icon className={cn("h-4 w-4", stat.color)} />
+              <div className={cn("p-3 rounded-2xl transition-transform group-hover:scale-110 shadow-sm", stat.bg)}>
+                <stat.icon className={cn("h-5 w-5", stat.color)} />
               </div>
             </CardHeader>
             <CardContent className="pb-0">
               <div className="flex flex-col">
-                <div className="text-3xl font-black tabular-nums tracking-tighter">{stat.value}</div>
-                <div className="flex items-center gap-1 mt-1">
-                  {stat.trendDir === 'up' ? (
-                    <IconArrowUpRight className="w-3 h-3 text-emerald-500" />
-                  ) : (
-                    <IconArrowDownRight className="w-3 h-3 text-rose-500" />
-                  )}
-                  <p className={cn(
-                    "text-[10px] font-bold tracking-tight",
-                    stat.trendDir === 'up' ? "text-emerald-500" : "text-rose-500"
+                <div className="text-3xl font-black tabular-nums tracking-tighter text-gray-900 dark:text-white">{stat.value}</div>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className={cn(
+                    "flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest",
+                    stat.trendDir === 'up' ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
                   )}>
-                    {stat.trend} <span className="text-muted-foreground/60 font-medium ml-1">vs Last Week</span>
-                  </p>
+                    {stat.trendDir === 'up' ? (
+                      <IconArrowUpRight className="w-3 h-3" />
+                    ) : (
+                      <IconArrowDownRight className="w-3 h-3" />
+                    )}
+                    {stat.trend}
+                  </div>
+                  <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">vs Target</span>
                 </div>
               </div>
               
-              <div className="h-14 w-full mt-4 -mx-6">
+              <div className="h-20 w-full mt-6 -mx-6">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={stat.trendData}>
                     <defs>
                       <linearGradient id={`gradient-${index}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={stat.chartColor} stopOpacity={0.3} />
+                        <stop offset="0%" stopColor={stat.chartColor} stopOpacity={0.25} />
                         <stop offset="100%" stopColor={stat.chartColor} stopOpacity={0} />
                       </linearGradient>
                     </defs>
@@ -130,7 +131,7 @@ export function AnalyticsKPICards({ data }: AnalyticsKPICardsProps) {
                       type="monotone"
                       dataKey="v"
                       stroke={stat.chartColor}
-                      strokeWidth={2}
+                      strokeWidth={3}
                       fill={`url(#gradient-${index})`}
                       isAnimationActive={true}
                     />
