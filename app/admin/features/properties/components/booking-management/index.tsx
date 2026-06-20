@@ -71,21 +71,21 @@ export function BookingManagement() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
           >
-            <Card className="border-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl shadow-lg rounded-[2rem] overflow-hidden group">
-              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                <CardTitle className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{kpi.label}</CardTitle>
-                <div className={cn("p-3 rounded-2xl transition-transform group-hover:scale-110", kpi.bg)}>
-                  <kpi.icon className={cn("w-5 h-5", kpi.color)} />
+            <div className="group relative bg-white dark:bg-gray-900 rounded-[24px] border border-gray-100 dark:border-gray-800 p-6 hover:shadow-xl hover:border-primary/20 transition-all duration-500 shadow-sm overflow-hidden h-full">
+              <div className="flex items-start justify-between mb-4">
+                <div className={cn('w-12 h-12 rounded-[18px] flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm', kpi.bg, kpi.color)}>
+                  <kpi.icon className="w-5 h-5" strokeWidth={2.5} />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-black text-gray-900 dark:text-white tabular-nums tracking-tighter">{kpi.value}</div>
-                <div className="flex items-center mt-2 gap-1.5 bg-gray-50 dark:bg-gray-800/50 w-fit px-2 py-1 rounded-lg">
-                  <IconArrowUpRight className={cn("w-3 h-3 text-emerald-500")} />
-                  <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">{kpi.desc}</span>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">{kpi.label}</p>
+                <p className="text-2xl font-black text-gray-900 dark:text-white mb-2 tracking-tighter group-hover:text-primary transition-colors">{kpi.value}</p>
+                <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800/50 w-fit px-2 py-0.5 rounded-lg">
+                  <IconArrowUpRight className="w-3 h-3 text-emerald-500" />
+                  <span className="text-[11px] font-bold text-emerald-500">{kpi.desc}</span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </motion.div>
         ))}
       </div>

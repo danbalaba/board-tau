@@ -64,6 +64,7 @@ const Providers = ({ children }: PropsWithChildren) => {
           defaultTheme="light"
           enableSystem
           disableTransitionOnChange
+          scriptProps={{ nonce: '' }}
         >
           <QueryClientProvider client={queryClient}>
             <SessionProvider>
