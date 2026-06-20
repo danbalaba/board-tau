@@ -1,0 +1,56 @@
+# Pull Request Template
+
+## Description
+
+Modernizing the Admin Dashboard UI to achieve full parity with the premium Landlord Dashboard aesthetic. This update standardizes design tokens (glassmorphism, rounded cards, color-coded icon bubbles), updates the admin sidebar and header designs, and expands upon the missing Property Management features.
+
+Fixes # (issue number)
+
+## Type of Change
+
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [x] New feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Documentation update
+
+## How Has This Been Tested?
+
+The UI has been locally tested in the browser to ensure the layout, animations, and high-fidelity skeleton loading patterns accurately match the Landlord dashboard design.
+
+- [ ] Ran existing tests: `npm run test`
+- [ ] Added new tests for my changes
+- [ ] Verified tests pass: `npm run test:coverage`
+- [ ] Checked type safety: `npm run type-check`
+- [ ] Test file location follows standard conventions: `<component-name>.test.tsx` or `<function-name>.test.ts`
+
+## Testing Details
+
+If you added new tests, please describe them:
+- Test file location: N/A
+- What functionality is being tested: N/A
+- How to run the specific tests: N/A
+- Test coverage percentage: N/A
+
+## Test Requirements
+
+- [ ] All new components have corresponding test files
+- [ ] All new API endpoints have corresponding test files
+- [ ] Tests cover edge cases and error scenarios
+- [ ] Tests are properly isolated and don't share state
+
+## Security & Performance
+
+- [x] My changes don't introduce any security vulnerabilities
+- [x] I've checked for performance implications of my changes
+- [x] I've followed best practices for secure coding
+
+## Checklist:
+
+- [x] My code follows the style guidelines of this project
+- [x] I have performed a self-review of my own code
+- [ ] I have commented my code, particularly in hard-to-understand areas
+- [ ] I have made corresponding changes to the documentation
+- [x] My changes generate no new warnings
+- [ ] I have added tests that prove my fix is effective or that my feature works
+- [ ] New and existing unit tests pass locally with my changes
+- [x] My changes are properly formatted and linted

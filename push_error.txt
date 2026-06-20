@@ -1,0 +1,15 @@
+remote: error: GH013: Repository rule violations found for refs/heads/main.        
+remote: Review all repository rules at https://github.com/danbalaba/board-tau/rules?ref=refs%2Fheads%2Fmain        
+remote: 
+remote: - Changes must be made through a pull request.        
+remote: 
+remote: - Commits must have verified signatures.        
+remote:   Found 3 violations:        
+remote: 
+remote:   bfba0161a630bb3e43eb804ece73213d60dbeaf6        
+remote:   945064e5bb1d3463cff2a312cda8e5d0fecb2a8f        
+remote:   80b592b90d435ff45d4293919b682f174a60e03d        
+remote: 
+To https://github.com/danbalaba/board-tau.git
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'https://github.com/danbalaba/board-tau.git'
