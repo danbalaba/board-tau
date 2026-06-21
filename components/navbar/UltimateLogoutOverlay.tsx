@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { LogOut, CheckCircle2, Cpu, ShieldCheck } from "lucide-react";
 
@@ -27,7 +28,7 @@ const UltimateLogoutOverlay: React.FC<UltimateLogoutOverlayProps> = ({ userName 
 
   const firstName = userName?.split(' ')[0] || 'User';
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
@@ -155,7 +156,8 @@ const UltimateLogoutOverlay: React.FC<UltimateLogoutOverlayProps> = ({ userName 
         {/* Scanlines Overlay */}
         <div className="absolute inset-0 z-50 pointer-events-none opacity-20 dark:opacity-40 bg-[length:100%_4px,3px_100%] bg-[linear-gradient(rgba(255,255,255,0)_50%,rgba(0,0,0,0.02)_50%),linear-gradient(90deg,rgba(0,0,0,0.01),rgba(0,0,0,0.01),rgba(0,0,0,0.01))] dark:bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03))]" />
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger
 } from "../ui/dropdown-menu";
 import { UserAvatarProfile } from "../user-avatar-profile";
+import { IconMenu2 } from '@tabler/icons-react';
 
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
@@ -39,9 +40,23 @@ export function UserNav() {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant='ghost' className='relative h-8 w-8 rounded-full'>
-            <UserAvatarProfile user={user} />
-          </Button>
+          <button className='flex items-center gap-3 p-1.5 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 group focus:outline-none'>
+            <div className='relative'>
+              <div className='w-9 h-9 rounded-full flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-300 overflow-hidden ring-2 ring-primary/20'>
+                <UserAvatarProfile user={user} className="w-full h-full object-cover" />
+              </div>
+              <div className='absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-gray-900 rounded-full' />
+            </div>
+            <div className='text-left hidden lg:block'>
+              <p className='text-sm font-black text-gray-900 dark:text-white tracking-tight leading-none mb-0.5'>
+                {user.name || "Admin User"}
+              </p>
+              <p className='text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest'>
+                Admin Account
+              </p>
+            </div>
+            <IconMenu2 size={14} className="text-gray-400 ml-1 group-hover:text-primary transition-colors" />
+          </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
           className='w-56'
