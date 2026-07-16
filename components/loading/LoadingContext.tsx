@@ -35,7 +35,12 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
 export const useLoading = (): LoadingContextType => {
   const context = useContext(LoadingContext);
   if (context === undefined) {
-    throw new Error("useLoading must be used within a LoadingProvider");
+    // Fallback for Next.js SSR/SSG edge cases (like global-error prerendering)
+    return {
+      isLoading: false,
+      startLoading: () => {},
+      stopLoading: () => {},
+    };
   }
   return context;
 };

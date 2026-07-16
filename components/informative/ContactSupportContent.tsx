@@ -1,61 +1,99 @@
 import FooterPageLayout from '@/components/layout/FooterPageLayout';
-import { FaPhoneAlt, FaEnvelope, FaCommentAlt, FaMapMarkerAlt } from 'react-icons/fa';
+import Link from 'next/link';
 
 export default function ContactSupportContent() {
   return (
     <FooterPageLayout
-      title="Contact Support"
-      description="We're here to help you around the clock. Reach us through your preferred module."
-      lastUpdated="April 2026"
+      title="How can I request support via email?"
+      lastUpdated="June 18, 2026"
     >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
-        
-        {/* Live Chat Card */}
-        <div className="lg:col-span-2 bg-gradient-to-br from-green-600 to-green-800 rounded-3xl p-8 md:p-12 text-white shadow-xl relative overflow-hidden group">
-          <div className="absolute -right-10 -bottom-10 opacity-20 transform group-hover:scale-110 group-hover:rotate-12 transition-transform duration-700">
-            <FaCommentAlt className="text-[250px]" />
-          </div>
-          <div className="relative z-10">
-            <h2 className="text-4xl font-bold mb-4">Live Support Chat</h2>
-            <p className="text-green-100 text-lg mb-8 max-w-md">
-              Get instant answers from our dedicated BoardTAU student-support team. Typical wait time is under 3 minutes.
-            </p>
-            <button className="bg-white text-green-800 font-bold px-8 py-4 rounded-full shadow-lg hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3">
-              <FaCommentAlt /> Start a Conversation
-            </button>
-          </div>
+      <div className="space-y-6">
+        <p>
+          Our Support Team is available 24/7 to assist you with any issues or questions you may have. You can contact us via email and receive the help you need whenever you need it.
+        </p>
+
+        <p>
+          To expedite the resolution of your request, please select the appropriate email address based on the product you are inquiring about or experiencing issues with. Describe your question or the situation you are facing, and <strong>send an email to the chosen address</strong>.
+        </p>
+
+        <p className="italic text-sm text-gray-600 dark:text-gray-400">
+          Note: If you are an existing customer, please mention your Name and Student ID/Host ID in the email to speed up the resolution.
+        </p>
+
+        <p className="mt-8 mb-4">
+          Check out the full list of BoardTAU contact information and departments below:
+        </p>
+
+        <h3 className="text-xl font-bold mt-8 mb-4">General</h3>
+        <div className="overflow-hidden border border-gray-300 dark:border-slate-700 rounded-lg">
+          <table className="min-w-full divide-y divide-gray-300 dark:divide-slate-700">
+            <tbody className="divide-y divide-gray-300 dark:divide-slate-700 bg-white dark:bg-slate-900">
+              <tr>
+                <td className="py-4 px-6 text-sm font-medium text-gray-900 dark:text-white align-top w-2/3">
+                  <div className="font-semibold mb-1">General</div>
+                  <div className="text-gray-500 dark:text-slate-400 font-normal">To ask or resolve basic general BoardTAU-related questions.</div>
+                </td>
+                <td className="py-4 px-6 text-sm text-gray-600 dark:text-slate-300 align-top w-1/3 border-l border-gray-300 dark:border-slate-700">
+                  <a href="mailto:support@boardtau.com" className="hover:underline">support@boardtau.com</a>
+                </td>
+              </tr>
+              <tr>
+                <td className="py-4 px-6 text-sm font-medium text-gray-900 dark:text-white align-top">
+                  <div className="font-semibold mb-1">Pre-Sales / Pre-Booking inquiries</div>
+                  <div className="text-gray-500 dark:text-slate-400 font-normal">For general questions about our booking process and to get help with choosing the right boarding house.</div>
+                </td>
+                <td className="py-4 px-6 text-sm text-gray-600 dark:text-slate-300 align-top border-l border-gray-300 dark:border-slate-700">
+                  <a href="mailto:sales@boardtau.com" className="hover:underline">sales@boardtau.com</a>
+                </td>
+              </tr>
+              <tr>
+                <td className="py-4 px-6 text-sm font-medium text-gray-900 dark:text-white align-top">
+                  <div className="font-semibold mb-1">Account access</div>
+                  <div className="text-gray-500 dark:text-slate-400 font-normal">To get assistance if there are issues with accessing your BoardTAU account.</div>
+                </td>
+                <td className="py-4 px-6 text-sm text-gray-600 dark:text-slate-300 align-top border-l border-gray-300 dark:border-slate-700">
+                  <a href="mailto:accountaccess@boardtau.com" className="hover:underline">accountaccess@boardtau.com</a>
+                </td>
+              </tr>
+              <tr>
+                <td className="py-4 px-6 text-sm font-medium text-gray-900 dark:text-white align-top">
+                  <div className="font-semibold mb-1">Feedback</div>
+                  <div className="text-gray-500 dark:text-slate-400 font-normal">To provide feedback on the website or our services.</div>
+                </td>
+                <td className="py-4 px-6 text-sm text-gray-600 dark:text-slate-300 align-top border-l border-gray-300 dark:border-slate-700">
+                  <a href="mailto:feedback@boardtau.com" className="hover:underline">feedback@boardtau.com</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        {/* Info Cards */}
-        <div className="space-y-8">
-          <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-            <div className="bg-blue-50 dark:bg-blue-900/20 w-14 h-14 flex items-center justify-center rounded-2xl mb-6 group-hover:rotate-12 transition-transform">
-              <FaPhoneAlt className="text-2xl text-blue-600 dark:text-blue-400" />
-            </div>
-            <h4 className="text-xl font-bold mb-2 dark:text-gray-200">Phone Support</h4>
-            <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">+63 912 345 6789</p>
-            <p className="text-sm text-gray-500">Available 9am to 6pm PHT</p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-            <div className="bg-purple-50 dark:bg-purple-900/20 w-14 h-14 flex items-center justify-center rounded-2xl mb-6 group-hover:-rotate-12 transition-transform">
-              <FaEnvelope className="text-2xl text-purple-600 dark:text-purple-400" />
-            </div>
-            <h4 className="text-xl font-bold mb-2 dark:text-gray-200">Email Updates</h4>
-            <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">support@boardtau.edu.ph</p>
-            <p className="text-sm text-gray-500">Expect replies within 24 hours</p>
-          </div>
+        <h3 className="text-xl font-bold mt-8 mb-4">Trust & Safety</h3>
+        <div className="overflow-hidden border border-gray-300 dark:border-slate-700 rounded-lg">
+          <table className="min-w-full divide-y divide-gray-300 dark:divide-slate-700">
+            <tbody className="divide-y divide-gray-300 dark:divide-slate-700 bg-white dark:bg-slate-900">
+              <tr>
+                <td className="py-4 px-6 text-sm font-medium text-gray-900 dark:text-white align-top w-2/3">
+                  <div className="font-semibold mb-1">Identity Verification (KYC)</div>
+                  <div className="text-gray-500 dark:text-slate-400 font-normal">For issues regarding ID verification or account validation.</div>
+                </td>
+                <td className="py-4 px-6 text-sm text-gray-600 dark:text-slate-300 align-top w-1/3 border-l border-gray-300 dark:border-slate-700">
+                  <a href="mailto:verification@boardtau.com" className="hover:underline">verification@boardtau.com</a>
+                </td>
+              </tr>
+              <tr>
+                <td className="py-4 px-6 text-sm font-medium text-gray-900 dark:text-white align-top">
+                  <div className="font-semibold mb-1">Report Abuse / Scam</div>
+                  <div className="text-gray-500 dark:text-slate-400 font-normal">To report a suspicious listing, a fraudulent host, or a violation of community standards.</div>
+                </td>
+                <td className="py-4 px-6 text-sm text-gray-600 dark:text-slate-300 align-top border-l border-gray-300 dark:border-slate-700">
+                  <a href="mailto:abuse@boardtau.com" className="hover:underline">abuse@boardtau.com</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-      </div>
-
-      <div className="w-full h-64 bg-gray-200 dark:bg-gray-800 rounded-3xl overflow-hidden relative flex items-center justify-center border border-gray-200 dark:border-gray-700">
-        <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/mapTAU/1200/400')] bg-cover bg-center opacity-50 dark:opacity-30 blur-[2px]"></div>
-        <div className="relative z-10 text-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-white/20">
-          <FaMapMarkerAlt className="text-3xl text-red-500 mx-auto mb-2" />
-          <h4 className="font-bold text-lg dark:text-gray-200">Campus Office</h4>
-          <p className="text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap">IT Dept, Tarlac Agricultural University, Camiling</p>
-        </div>
       </div>
     </FooterPageLayout>
   );

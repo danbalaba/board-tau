@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Modal from "../modals/Modal";
 import { CreditCard, Smartphone, Wallet, X, Lock, Info, Loader2 } from "lucide-react";
+import { SlideToConfirm } from "../ui/slide-to-confirm";
 
 interface ReservationListing {
   id: string;
@@ -250,32 +251,25 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       </div>
 
       {/* Footer Actions */}
-      <div className="p-4 sm:p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-100 dark:border-gray-700 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
+      <div className="p-4 sm:p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-100 dark:border-gray-700 flex justify-center sm:justify-between items-center gap-4 shrink-0">
         <button
           onClick={onClose}
-          className="w-full sm:w-auto px-8 py-3 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+          className="hidden sm:block w-full sm:w-auto px-6 py-3 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
           disabled={isProcessing}
         >
           Go Back
         </button>
         
-        <button
-          onClick={handlePayment}
-          disabled={isProcessing || !selectedMethod}
-          className="w-full sm:w-auto px-10 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest text-white bg-primary rounded-2xl hover:bg-primary-dark shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/pay disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isProcessing ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Processing...</span>
-            </>
-          ) : (
-            <>
-              <Lock size={14} strokeWidth={3} className="group-hover/pay:translate-y-[-1px] transition-transform" />
-              <span>Pay ₱{reservation.totalPrice.toLocaleString()}</span>
-            </>
-          )}
-        </button>
+        <div className="w-full sm:w-auto flex justify-center">
+          <SlideToConfirm 
+            text={`PAY ₱${reservation.totalPrice.toLocaleString()}`}
+            successText="REDIRECTING..."
+            onConfirm={handlePayment}
+            width={280}
+            disabled={isProcessing || !selectedMethod}
+            icon={<Lock size={14} strokeWidth={3} />}
+          />
+        </div>
       </div>
     </Modal>
   );

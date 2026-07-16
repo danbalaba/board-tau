@@ -2,9 +2,11 @@
 import React, { useState, useMemo, useEffect, useTransition } from "react";
 import { User } from "next-auth";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
+import posthog from "posthog-js";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
+import { BorderBeam } from "@/components/ui/border-beam";
 
 import Avatar from "@/components/common/Avatar";
 import { AiOutlineCheck } from "react-icons/ai";
@@ -18,12 +20,13 @@ import {
 } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import ListingReviews from "./ListingReviews";
-import Modal from "@/components/modals/Modal";
-import Button from "@/components/common/Button";
+import { ListingRecommendations } from "./ListingRecommendations";
 import AvailableRoomsSection from "./AvailableRoomsSection";
 import ListingCategory from "./ListingCategory";
 import { categories } from "@/utils/constants";
 import SafeImage from "@/components/common/SafeImage";
+import ThreeDHoverGallery from "@/components/ui/3d-hover-gallery";
+import AngledSlider from "@/components/ui/angled-slider";
 
 const Map = dynamic(() => import("@/components/common/Map"), {
   ssr: false,
@@ -49,7 +52,7 @@ interface ListingDetailsClientProps {
     image: string | null;
     name: string | null;
   };
-  category: { label: string; description?: string; value: string } | null;
+  categories: { label: string; description?: string; value: string }[] | null;
   description: string;
   roomCount: number;
   bathroomCount: number;
@@ -124,7 +127,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
   user,
   title,
   owner,
-  category,
+  categories: listingCategories,
   description,
   roomCount,
   bathroomCount,
@@ -141,7 +144,6 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
   rules,
   features,
 }) => {
-  const CategoryIcon = category ? categories.find(c => c.value === category.value)?.icon : null;
   // Convert amenities to string array for consistent rendering
   const amenitiesArray = (() => {
     // Filter out items that are actually safety features or rules to avoid duplication
@@ -197,6 +199,32 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const [showBedroomPreview, setShowBedroomPreview] = useState(false);
+
+  const galleryItems = useMemo(() => {
+    if (!rooms || rooms.length === 0) return [];
+    return rooms
+      .filter(room => room.images && room.images.length > 0)
+      .slice(0, 5)
+      .map(room => ({
+        id: room.id,
+        urls: room.images.map((img: any) => img.url),
+        title: room.name,
+        subtitle: `${room.capacity} Bed${room.capacity > 1 ? 's' : ''} • ${room.roomType === 'SOLO' ? 'Private Room' : 'Shared Space'}`
+      }));
+  }, [rooms]);
+
+  const sliderItems = useMemo(() => {
+    if (!rooms || rooms.length === 0) return [];
+    return rooms
+      .filter(room => room.images && room.images.length > 0)
+      .slice(0, 5)
+      .map(room => ({
+        id: room.id,
+        urls: room.images.map((img: any) => img.url),
+        title: room.name,
+        subtitle: `${room.capacity} Bed${room.capacity > 1 ? 's' : ''} • ${room.roomType === 'SOLO' ? 'Private Room' : 'Shared Space'}`
+      }));
+  }, [rooms]);
 
   // Helper for explicit amenity icons
   const getAmenityIcon = (amenityName: string) => {
@@ -292,9 +320,17 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
         throw new Error(errorData.error || errorData.message || "Failed to create inquiry");
       }
 
+      posthog.capture("inquiry_submitted", {
+        listing_id: id,
+        listing_title: title,
+        room_id: formData.roomId,
+        move_in_date: formData.moveInDate,
+        occupants_count: formData.occupantsCount,
+      });
       success("Inquiry sent! Waiting for landlord approval.");
     } catch (err: any) {
       console.error('Inquiry request error:', err);
+      posthog.captureException(err as Error);
       error(err?.message || 'Failed to send inquiry');
       throw err; // Ensure InquiryModal catches the failure!
     }
@@ -399,7 +435,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
          >
-           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Property Overview</h2>
+           <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6">Property Overview</h2>
            <div className="grid grid-cols-3 gap-4">
              <div className="p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col items-center justify-center gap-2 hover:shadow-md transition-shadow">
                <DoorOpen size={28} className="text-primary/80" />
@@ -423,39 +459,38 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
          </motion.section>
 
         {/* Where You'll Sleep */}
-        {bedroomImage && (
+        {galleryItems.length > 0 && (
           <motion.section 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Where you&apos;ll sleep</h2>
-            <div 
-              onClick={() => setShowBedroomPreview(true)}
-              className="group relative overflow-hidden rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm cursor-pointer h-80 sm:h-96"
-            >
-              <SafeImage
-                src={bedroomImage}
-                alt="Bedroom"
-                className="group-hover:scale-[1.03] transition-transform duration-700"
-                containerClassName="w-full h-full"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/20 to-transparent" />
-              <div className="absolute bottom-8 left-8">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 text-white shadow-xl">
-                    <Bed size={20} />
-                  </div>
-                  <h3 className="text-2xl font-black text-white tracking-tight">
-                    {category?.value === 'BEDSPACE' ? 'Shared Sleeping Area' : 'Private Bedroom'}
-                  </h3>
-                </div>
-                <p className="text-xs font-black text-white/70 uppercase tracking-[0.2em] ml-1">
-                  {bedInfo}
-                </p>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6">Where you&apos;ll sleep</h2>
+            <div className="w-full">
+              {/* Desktop View */}
+              <div className="hidden md:block">
+                <ThreeDHoverGallery 
+                  items={galleryItems} 
+                  itemWidth={15}
+                  itemHeight={25}
+                  gap={1.5}
+                />
               </div>
-              <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/40 backdrop-blur-md rounded-full p-2">
-                 <Camera size={20} className="text-white" />
+              
+              {/* Mobile View */}
+              <div className="block md:hidden">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="bg-[#2f7d6d]/10 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-sm border border-[#2f7d6d]/20">
+                    <ArrowRight size={14} className="text-[#2f7d6d]" />
+                    <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-[#2f7d6d]">Swipe to explore</span>
+                  </div>
+                </div>
+                <AngledSlider 
+                  items={sliderItems} 
+                  containerHeight="350px" 
+                  cardWidth="220px" 
+                  gap="16px" 
+                />
               </div>
             </div>
           </motion.section>
@@ -466,20 +501,30 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="flex flex-col gap-10"
+          className="flex flex-col gap-12"
         >
-          {category && CategoryIcon && (
-            <div className="pb-2">
-              <ListingCategory
-                icon={CategoryIcon}
-                label={category.label}
-                description={category.description || ""}
-              />
+          {listingCategories && listingCategories.length > 0 && (
+            <div className="flex flex-col">
+              <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6">Listing Categories</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {listingCategories.map((cat, idx) => {
+                  const CategoryIcon = categories.find(c => c.value === cat.value)?.icon;
+                  if (!CategoryIcon) return null;
+                  return (
+                    <ListingCategory
+                      key={idx}
+                      icon={CategoryIcon}
+                      label={cat.label}
+                      description={cat.description || ""}
+                    />
+                  );
+                })}
+              </div>
             </div>
           )}
 
           <div className="bg-gray-50/50 dark:bg-gray-800/20 p-8 rounded-3xl border border-gray-100 dark:border-gray-700">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">About this place</h2>
+            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6">About this place</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-4 font-medium">{description}</p>
             <button
               onClick={() => setShowDescriptionModal(true)}
@@ -495,7 +540,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">What this place offers</h2>
+          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6">What this place offers</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4">
             {amenitiesArray.slice(0, 9).map((amenity) => (
               <div key={amenity} className="flex items-center gap-3">
@@ -525,7 +570,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
             className="p-8 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-[2.5rem] border border-emerald-500/20"
           >
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-3">
+              <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
                 <div className="p-2 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/20">
                   <ShieldCheck size={20} />
                 </div>
@@ -585,7 +630,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
           viewport={{ once: true }}
           className="bg-gray-50 dark:bg-gray-800/40 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-700/50"
         >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Policies & Rules</h2>
+          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6">Policies & Rules</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
              <div className="space-y-6">
                 <div className="flex items-center gap-4">
@@ -693,8 +738,8 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
           viewport={{ once: true }}
           className="pb-6"
         >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Location</h2>
-          <div className="rounded-3xl overflow-hidden h-96 shadow-lg border border-gray-100 dark:border-gray-700 relative">
+          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6">Location</h2>
+          <div className="rounded-3xl overflow-hidden h-96 shadow-lg border border-gray-100 dark:border-gray-700 relative z-0">
             <Map 
               center={latlng} 
               readonly={true}
@@ -711,6 +756,16 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
             </div>
           </div>
         </motion.section>
+
+        {/* AI Recommendations */}
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="pb-6"
+        >
+          <ListingRecommendations listingId={id} currentUser={user} />
+        </motion.section>
       </div>
 
        {/* Floating Inquiry Card - Right Side */}
@@ -721,6 +776,21 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
            transition={{ delay: 0.2 }}
            className="sticky top-32 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-[2rem] border border-gray-100 dark:border-gray-800 p-8 shadow-2xl relative overflow-hidden group"
          >
+           <BorderBeam
+             size={70}
+             duration={4}
+             delay={0}
+             colorFrom="#2f7d6d"
+             colorTo="#2f7d6d"
+             reverse={false}
+             initialOffset={0}
+             borderThickness={4}
+             opacity={1}
+             glowIntensity={6}
+             beamBorderRadius={60}
+             pauseOnHover={false}
+             speedMultiplier={1.5}
+           />
            <div className="mb-8 relative z-10">
              <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">Starting From</p>
              <div className="flex items-baseline gap-2 mb-2">
@@ -776,12 +846,6 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
               <div className="prose prose-lg dark:prose-invert">
                 <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-loose font-medium">{description}</p>
               </div>
-              {category && (
-                <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800">
-                  <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight mb-2">{category.label}</h3>
-                  <p className="text-gray-600 dark:text-gray-400 font-medium">{category.description}</p>
-                </div>
-              )}
             </motion.div>
           </motion.div>
         )}

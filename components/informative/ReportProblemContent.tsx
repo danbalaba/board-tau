@@ -1,78 +1,46 @@
-'use client';
-
 import FooterPageLayout from '@/components/layout/FooterPageLayout';
-import { FaFlag, FaBug, FaUserEdit, FaCommentSlash } from 'react-icons/fa';
+import Link from 'next/link';
 
 export default function ReportProblemContent() {
   return (
     <FooterPageLayout
       title="Report a Problem"
-      description="Help maintain a high-quality community by securely flagging issues to our moderation team."
-      lastUpdated="April 2026"
+      description="Let us know if you encounter an issue on BoardTAU."
+      lastUpdated="June 2026"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
-        
-        <div className="space-y-6">
-          <h2 className="text-3xl font-bold dark:text-white mb-6">What are you reporting?</h2>
-          
-          <div className="flex items-center gap-4 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-red-500 cursor-pointer transition-colors group">
-            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl group-hover:bg-red-500 group-hover:text-white transition-colors duration-300">
-              <FaFlag className="text-2xl text-red-500 group-hover:text-white" />
-            </div>
-            <div>
-              <h4 className="font-bold text-lg dark:text-gray-200">Fake or Inaccurate Listing</h4>
-              <p className="text-sm text-gray-500">The photos or description vastly differ from reality.</p>
-            </div>
-          </div>
+      <div className="space-y-6">
+        <p>
+          Keeping BoardTAU safe and functional is a community effort. If you encounter a technical issue, a suspicious listing, or inappropriate behavior, we want to know about it immediately.
+        </p>
 
-          <div className="flex items-center gap-4 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-purple-500 cursor-pointer transition-colors group">
-            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl group-hover:bg-purple-500 group-hover:text-white transition-colors duration-300">
-              <FaUserEdit className="text-2xl text-purple-500 group-hover:text-white" />
-            </div>
-            <div>
-              <h4 className="font-bold text-lg dark:text-gray-200">Suspicious Host Behavior</h4>
-              <p className="text-sm text-gray-500">Asking for advanced transfers outside BoardTAU.</p>
-            </div>
-          </div>
+        <h2 className="text-2xl font-semibold mt-8 mb-4">What Should You Report?</h2>
+        <ul className="list-disc pl-6 space-y-2 mt-4">
+          <li><strong>Inaccurate Listings:</strong> The photos don't match reality, the listed price is wrong, or the amenities listed are missing.</li>
+          <li><strong>Suspicious Behavior:</strong> A host asks you to pay outside the platform, asks for your passwords, or seems to be impersonating someone else.</li>
+          <li><strong>Inappropriate Content:</strong> Offensive language in reviews, messages, or listing descriptions.</li>
+          <li><strong>Technical Bugs:</strong> Pages failing to load, payment errors, or broken features on the website.</li>
+        </ul>
 
-          <div className="flex items-center gap-4 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-yellow-500 cursor-pointer transition-colors group">
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl group-hover:bg-yellow-500 group-hover:text-white transition-colors duration-300">
-              <FaCommentSlash className="text-2xl text-yellow-500 group-hover:text-white" />
-            </div>
-            <div>
-              <h4 className="font-bold text-lg dark:text-gray-200">Inappropriate Messages</h4>
-              <p className="text-sm text-gray-500">Harassment or unprofessional conduct in chat.</p>
-            </div>
-          </div>
+        <h2 className="text-2xl font-semibold mt-8 mb-4">How to Report a Listing or User</h2>
+        <p>
+          To report a specific listing or user, navigate to their profile or the property page. Look for the flag icon or the "Report" button located at the bottom of the page. Select the reason for your report from the dropdown menu and provide any relevant details.
+        </p>
 
-          <div className="flex items-center gap-4 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-blue-500 cursor-pointer transition-colors group">
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl group-hover:bg-blue-500 group-hover:text-white transition-colors duration-300">
-              <FaBug className="text-2xl text-blue-500 group-hover:text-white" />
-            </div>
-            <div>
-              <h4 className="font-bold text-lg dark:text-gray-200">Platform Technical Bug</h4>
-              <p className="text-sm text-gray-500">Errors loading pages or finalizing reservations.</p>
-            </div>
-          </div>
-        </div>
+        <h2 className="text-2xl font-semibold mt-8 mb-4">How to Report a Technical Bug</h2>
+        <p>
+          If you are experiencing a technical issue with the BoardTAU website, please contact our support team directly. When reporting a bug, it is helpful to include:
+        </p>
+        <ul className="list-disc pl-6 space-y-2 mt-4">
+          <li>What device and browser you are using.</li>
+          <li>A description of what you were trying to do.</li>
+          <li>A screenshot of any error messages you received.</li>
+        </ul>
 
-        <div className="bg-gray-50 dark:bg-[#151515] p-8 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-inner">
-          <h3 className="text-xl font-bold mb-6 dark:text-white">File a Detailed Report</h3>
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Issue Link (Optional)</label>
-              <input type="text" placeholder="https://boardtau.com/listing/123" className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring focus:ring-gray-300 outline-none transition-shadow text-gray-800 dark:text-gray-200" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-              <textarea rows={5} placeholder="Explain exactly what happened..." className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring focus:ring-gray-300 outline-none transition-shadow resize-none text-gray-800 dark:text-gray-200"></textarea>
-            </div>
-            <button className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold py-4 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              Submit Secure Report
-            </button>
-          </form>
-        </div>
-
+        <p className="mt-8">
+          <Link href="/support/contact" className="px-6 py-3 bg-black text-white dark:bg-white dark:text-black rounded-lg font-medium hover:opacity-80 transition-opacity inline-block">
+            Contact Support Team
+          </Link>
+        </p>
       </div>
     </FooterPageLayout>
   );

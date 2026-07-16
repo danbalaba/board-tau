@@ -27,9 +27,9 @@ export async function hasPermission(userId: string, permissionName: string): Pro
 
     if (!user) return false;
 
-    // 2. Special case: If user is "ADMIN" in the legacy role field, grant all permissions
-    // This ensures backward compatibility while migrating to the permission-based system
-    if (user.role === 'ADMIN') return true;
+    // 2. Special case: If user is "SUPER_ADMIN" in the legacy role field, grant all permissions
+    // This bypasses the granular checks so Super Admins can never be locked out
+    if (user.role === 'SUPER_ADMIN') return true;
 
     // 3. Check permissions associated with the UserRole
     if (user.roleRelation && user.roleRelation.permissions && user.roleRelation.permissions.length > 0) {
@@ -39,9 +39,25 @@ export async function hasPermission(userId: string, permissionName: string): Pro
     // 4. Default fallback: Grant basic permissions based on the User's legacy role level
     // This handles users who haven't been assigned a specific granular role yet
     const defaultPermissions: Record<string, string[]> = {
-      'USER': ['CREATE_INQUIRY', 'VIEW_LISTINGS', 'SEND_MESSAGES'],
-      'LANDLORD': ['CREATE_LISTING', 'APPROVE_INQUIRY', 'MANAGE_ROOMS'],
-      'ADMIN': ['*'] // Admin already handled above, but here for completeness
+      'USER': [
+        'FAVORITE_LISTING', 'CREATE_INQUIRY', 'VIEW_INQUIRIES', 
+        'VIEW_RESERVATIONS', 'PAY_RESERVATION', 'CREATE_REVIEW', 
+        'VIEW_REVIEWS', 'UPDATE_PROFILE', 'UPLOAD_AVATAR', 
+        'UPDATE_PASSWORD', 'SEND_MESSAGES', 'CREATE_HOST_APPLICATION'
+      ],
+      'LANDLORD': [
+        'VIEW_DASHBOARD', 'VIEW_PROPERTIES', 'CREATE_PROPERTY', 
+        'UPDATE_PROPERTY', 'VIEW_ROOMS', 'CREATE_ROOM', 
+        'UPDATE_ROOM', 'MANAGE_INQUIRIES', 'MANAGE_RESERVATIONS', 
+        'RESPOND_REVIEW', 'VIEW_TENANT_PROFILE'
+      ],
+      'ADMIN': [
+        'VIEW_MODERATION_QUEUE', 'MODERATE_HOSTS', 'MODERATE_LISTINGS', 
+        'MODERATE_REVIEWS', 'MANAGE_USERS'
+      ],
+      'SUPER_ADMIN': [
+        '*'
+      ]
     };
 
     const rolesPermissions = defaultPermissions[user.role] || [];
@@ -76,7 +92,7 @@ export async function hasAnyPermission(userId: string, permissionNames: string[]
     });
 
     if (!user) return false;
-    if (user.role === 'ADMIN') return true;
+    if (user.role === 'SUPER_ADMIN') return true;
 
     if (user.roleRelation && user.roleRelation.permissions) {
       return permissionNames.some(perm => user.roleRelation?.permissions.includes(perm));
@@ -97,5 +113,19 @@ export async function requirePermission(userId: string, permissionName: string) 
 
   if (!permitted) {
     throw new Error(`Forbidden: Missing permission ${permissionName}`);
+  }
+}
+
+import { redirect } from 'next/navigation';
+
+/**
+ * Ensures a user has a specific permission, or redirects to /unauthorized.
+ * Useful for Next.js App Router Server Components.
+ */
+export async function requirePagePermission(userId: string, permissionName: string) {
+  const permitted = await hasPermission(userId, permissionName);
+
+  if (!permitted) {
+    redirect('/unauthorized');
   }
 }

@@ -49,7 +49,7 @@ const InquiriesPage = async () => {
           images: true,
         },
       },
-      reservation: true,
+      reservations: true,
     },
     orderBy: {
       createdAt: "desc",
@@ -57,7 +57,7 @@ const InquiriesPage = async () => {
   });
 
   // Transform to ensure dates are serializable and match the client component interface
-  const transformedInquiries = inquiries.map((inquiry) => ({
+  const transformedInquiries = inquiries.map((inquiry: any) => ({
     ...inquiry,
     createdAt: (inquiry as any).createdAt.toISOString(),
     updatedAt: (inquiry as any).updatedAt.toISOString(),

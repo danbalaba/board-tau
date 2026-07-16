@@ -3,8 +3,8 @@ import validator from 'validator';
 // Email validation
 export const validateEmail = (email: string): string | null => {
   if (!email) return 'Email is required';
-  if (!validator.isEmail(email)) return 'Please enter a valid email address';
   if (email.length > 255) return 'Email must be less than 255 characters';
+  if (!validator.isEmail(email)) return 'Please enter a valid email address';
   return null;
 };
 

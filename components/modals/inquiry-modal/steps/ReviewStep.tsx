@@ -140,13 +140,13 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
             <div className="flex justify-between items-center mb-1">
               <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Total Reservation Fee</span>
               <span className="text-xl font-black text-primary">
-                ₱ {(room.reservationFee * (Number(watchedValues[7]) || 1)).toLocaleString()}
+                ₱ {(room.reservationFee * (watchedValues[8] ? room.capacity : (Number(watchedValues[7]) || 1))).toLocaleString()}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <ShieldCheck size={12} className="text-primary/60" />
               <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider italic">
-                Calculated as ₱ {room.reservationFee.toLocaleString()} × {watchedValues[7] || 1} occupants
+                Calculated as ₱ {room.reservationFee.toLocaleString()} × {watchedValues[8] ? `${room.capacity} (Full Room Buyout)` : `${watchedValues[7] || 1} occupants`}
               </p>
             </div>
           </div>

@@ -241,21 +241,28 @@ export default function ListingReviews({
      setGalleryState({ media: allMedia, index: initialIndex });
   };
 
-  if (!reviews || reviews.length === 0) {
-    return (
-      <div className="border-t dark:border-gray-700 pt-8">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 uppercase tracking-tight">Reviews</h2>
-        <p className="text-gray-500 dark:text-gray-400 font-medium font-outfit">No reviews yet. Be the first to review!</p>
-      </div>
-    );
-  }
+    if (!reviews || reviews.length === 0) {
+      return (
+        <div className="border-t border-gray-100 dark:border-gray-800 pt-8">
+          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-8">Guest Reviews</h2>
+          
+          <div className="bg-gray-50 dark:bg-gray-800/20 border border-dashed border-gray-200 dark:border-gray-700 rounded-3xl p-12 flex flex-col items-center justify-center text-center">
+            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+              <AiOutlineStar className="text-4xl text-primary" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No reviews yet</h3>
+            <p className="text-gray-500 dark:text-gray-400 max-w-md">This listing is waiting for its first review. Be the first to share your experience after your stay!</p>
+          </div>
+        </div>
+      );
+    }
 
   return (
     <div className="border-t dark:border-gray-700 pt-8">
       {/* Header with Sort */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div className="flex items-center gap-4">
-           <h2 className="text-2xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">Guest Reviews</h2>
+           <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">Guest Reviews</h2>
            <div className="px-2 py-1 bg-primary/10 rounded-lg text-primary text-xs font-black">
              {listingReviewCount} TOTAL
            </div>

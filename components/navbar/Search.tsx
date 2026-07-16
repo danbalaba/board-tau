@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect, useContext } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { FaSearch, FaMapMarkerAlt, FaBed } from "react-icons/fa";
+import { Search as SearchIcon, MapPin, BedDouble } from "lucide-react";
 import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
 
@@ -87,7 +87,7 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.08 }}
                     >
-                      <FaSearch className="text-lg" aria-hidden />
+                      <SearchIcon className="text-lg w-5 h-5" aria-hidden />
                     </motion.div>
                   </div>
                 </div>
@@ -97,17 +97,17 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                {compact ? (
                 <>
                   <motion.div
-                    className="flex items-center flex-1 min-w-0"
+                    className="flex items-center"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.08 }}
                   >
-                    <div className="flex items-center mr-5 text-primary">
-                      <FaMapMarkerAlt className="text-sm" />
+                    <div className="flex items-center mr-3 text-primary">
+                      <MapPin className="text-sm w-4 h-4" />
                     </div>
-                    <div className="flex flex-col min-w-0 w-full">
+                    <div className="flex flex-col">
                       <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Location</span>
-                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate block w-full">
+                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate max-w-[100px] sm:max-w-[130px] md:max-w-[160px] lg:max-w-[200px]">
                         {locationLabel}
                       </span>
                     </div>
@@ -115,17 +115,17 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                   </motion.div>
 
                    <motion.div
-                    className="flex items-center flex-1 min-w-0"
+                    className="flex items-center"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.11 }}
                   >
-                    <div className="flex items-center mr-5 text-[#2F7D6D] dark:text-[#4FA89A]">
-                      <FaSearch className="text-sm" />
+                    <div className="flex items-center mr-3 text-[#2F7D6D] dark:text-[#4FA89A]">
+                      <SearchIcon className="text-sm w-4 h-4" />
                     </div>
-                    <div className="flex flex-col min-w-0 w-full">
+                    <div className="flex flex-col">
                       <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Budget</span>
-                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate block w-full">
+                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate max-w-[80px] sm:max-w-[100px] md:max-w-[120px]">
                         {priceLabel}
                       </span>
                     </div>
@@ -133,17 +133,17 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                   </motion.div>
 
                   <motion.div
-                    className="flex items-center flex-1 min-w-0"
+                    className="flex items-center"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.14 }}
                   >
-                    <div className="flex items-center mr-5 text-[#2F7D6D] dark:text-[#4FA89A]">
-                      <FaBed className="text-sm" />
+                    <div className="flex items-center mr-3 text-[#2F7D6D] dark:text-[#4FA89A]">
+                      <BedDouble className="text-sm w-4 h-4" />
                     </div>
-                    <div className="flex flex-col min-w-0 w-full">
+                    <div className="flex flex-col">
                       <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Room Type</span>
-                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate block w-full">
+                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate max-w-[80px] sm:max-w-[100px] md:max-w-[120px]">
                         {roomTypeLabel}
                       </span>
                     </div>
@@ -152,12 +152,12 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                   <motion.div
                     whileHover={{ scale: 1.1, rotate: 5 }}
                     whileTap={{ scale: 0.95, rotate: -5 }}
-                    className="p-3 bg-gradient-to-r from-primary to-orange-500 rounded-full text-white shadow-lg shrink-0 ml-5 hover:shadow-orange-500/40 transition-all duration-300"
+                    className="p-3 bg-gradient-to-r from-primary to-orange-500 rounded-full text-white shadow-lg shrink-0 ml-4 hover:shadow-orange-500/40 transition-all duration-300"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.23 }}
                   >
-                    <FaSearch className="text-sm" aria-hidden />
+                    <SearchIcon className="text-sm w-4 h-4" aria-hidden />
                   </motion.div>
                 </>
               ) : (
@@ -181,7 +181,7 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.08 }}
                       >
-                        <FaSearch className="text-lg" aria-hidden />
+                        <SearchIcon className="text-lg w-5 h-5" aria-hidden />
                       </motion.div>
                     </div>
                   </div>
@@ -200,7 +200,7 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                       transition={{ delay: 0.08 }}
                     >
                       <div className="flex items-center mr-5 text-primary">
-                        <FaMapMarkerAlt className="text-lg" />
+                        <MapPin className="text-lg w-5 h-5" />
                       </div>
                       <div className="flex flex-col min-w-0 w-full">
                         <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Location</span>
@@ -219,7 +219,7 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                       transition={{ delay: 0.11 }}
                     >
                       <div className="flex items-center mr-5 text-primary">
-                        <FaSearch className="text-lg" />
+                        <SearchIcon className="text-lg w-5 h-5" />
                       </div>
                       <div className="flex flex-col min-w-0 w-full">
                         <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Budget</span>
@@ -238,7 +238,7 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                       transition={{ delay: 0.14 }}
                     >
                       <div className="flex items-center mr-5 text-primary">
-                        <FaBed className="text-lg" />
+                        <BedDouble className="text-lg w-5 h-5" />
                       </div>
                       <div className="flex flex-col min-w-0 w-full">
                         <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Room Type</span>
@@ -256,7 +256,7 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.23 }}
                     >
-                      <FaSearch className="text-lg" aria-hidden />
+                      <SearchIcon className="text-lg w-5 h-5" aria-hidden />
                     </motion.div>
                   </motion.div>
                 </>
@@ -266,7 +266,7 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
         </Modal.Trigger>
       </motion.div>
 
-      <Modal.Window name="search">
+      <Modal.Window name="search" size="lg" hasFixedFooter>
         <SearchModal onCloseModal={handleSearchClose} />
       </Modal.Window>
     </Modal>

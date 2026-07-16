@@ -10,6 +10,7 @@ import {
 } from "react-hook-form";
 import { cn } from "@/utils/helper";
 import { motion } from "framer-motion";
+import HelpTooltip from "@/components/common/HelpTooltip";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   id: string;
@@ -25,6 +26,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   inputSize?: "default" | "small";
+  helpText?: string;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -43,6 +45,7 @@ const Input: React.FC<InputProps> = ({
   value: externalValue,
   onChange: externalOnChange,
   inputSize = "default",
+  helpText,
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -128,6 +131,12 @@ const Input: React.FC<InputProps> = ({
           >
             {label} {required && <span className="text-red-500 ml-0.5">*</span>}
           </label>
+          
+          {helpText && !useStaticLabel && (
+            <div className={cn("absolute z-20", isSmall ? "right-2 top-2" : "right-4 top-3.5")}>
+              <HelpTooltip text={helpText} />
+            </div>
+          )}
 
           {isPasswordInput && (
             <button
@@ -173,7 +182,10 @@ const Input: React.FC<InputProps> = ({
           error ? "text-red-500" : "text-gray-500 dark:text-gray-400 group-focus-within:text-primary"
         )}
       >
-        {label} {required && <span className="text-red-500 ml-0.5">*</span>}
+        <div className="flex items-center">
+          <span>{label} {required && <span className="text-red-500 ml-0.5">*</span>}</span>
+          {helpText && <HelpTooltip text={helpText} />}
+        </div>
       </label>
 
       <div className="relative">

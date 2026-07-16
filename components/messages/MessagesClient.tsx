@@ -11,6 +11,7 @@ import Modal from "@/components/modals/Modal";
 import { motion } from "framer-motion";
 import Heading from "@/components/common/Heading";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
+import { useNotification } from "@/context/NotificationContext";
 
 interface MessagesClientProps {
   initialConversations: TenantConversation[];
@@ -42,6 +43,7 @@ const MessagesClient: React.FC<MessagesClientProps> = ({
     markAsUnread,
     deleteConversation
   } = useMessages(initialConversations, currentUserId);
+  const { notifications, markAsRead } = useNotification();
 
   const [mobileView, setMobileView] = useState<"list" | "chat">("chat");
   const [showInfo, setShowInfo] = useState(false);
@@ -107,6 +109,16 @@ const MessagesClient: React.FC<MessagesClientProps> = ({
       setMobileView("chat");
     }
   }, [isMobile, activeConversation, conversations, setActiveConversation]);
+
+  // Clear unread notifications from context when a conversation is active
+  useEffect(() => {
+    if (activeConversation) {
+      const relatedNotifications = notifications.filter(
+        n => !n.isRead && n.type === "message" && n.link.includes(activeConversation.listingId)
+      );
+      relatedNotifications.forEach(n => markAsRead(n.id, "message"));
+    }
+  }, [activeConversation, notifications, markAsRead]);
 
   // Handle Double Tap for Quick Return
   const lastTap = useRef<number>(0);

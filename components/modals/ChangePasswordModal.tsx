@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import ModalInput from "@/components/inputs/ModalInput";
 import Button from "@/components/common/Button";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
-import { changeUserPasswordClient } from "@/services/user/profile";
+import { changeUserPasswordClient } from "@/services/client/profile.client";
 import { changePasswordResolver, ChangePasswordFormValues } from "./hooks/use-change-password-validation";
 import Modal from "./Modal";
 import { motion } from "framer-motion";

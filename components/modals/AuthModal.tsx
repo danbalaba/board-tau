@@ -129,7 +129,7 @@ const AuthModal = ({
                 });
               } else if (error.message.includes("temporarily locked")) {
                 onCloseModal?.();
-                router.push(`/auth/locked?email=${encodeURIComponent(userEmail)}`);
+                router.push(`/auth/locked?email=${encodeURIComponent(userEmail)}&secure=1`);
               } else {
                 responsiveToast.error(error.message);
               }
@@ -192,7 +192,7 @@ const AuthModal = ({
           // Delayed redirect to give the user time to read the toast
           setTimeout(() => {
             onCloseModal?.();
-            router.push(`/auth/locked?email=${encodeURIComponent(email || userEmail)}`);
+            router.push(`/auth/locked?email=${encodeURIComponent(email || userEmail)}&secure=1`);
           }, 2000);
         } else {
           responsiveToast.error(error.message);
@@ -270,7 +270,7 @@ const AuthModal = ({
 
   return (
     <div className="h-full w-full">
-      <Modal.WindowHeader title={isOTPModal ? "Verify Email" : title} />
+      <Modal.WindowHeader title={isOTPModal ? "Verify Email" : title} onClose={onCloseModal} />
 
       <form
         className="flex flex-col gap-5 p-4 pb-0 md:gap-5 md:p-6 w-full"
@@ -403,38 +403,8 @@ const AuthModal = ({
             outline
             onClick={async () => {
               setIsOAuthLoading(true);
-              try {
-                const result = await signIn("google", {
-                  callbackUrl: "/",
-                  redirect: false,
-                });
-
-                console.log("Google signIn result:", result);
-
-                if (result?.error) {
-                  if (result.error === "OAuthAccountNotLinked") {
-                    responsiveToast.error("An account with this email already exists. Please log in using your existing account type or use a different email.");
-                  } else if (result.error.includes("AccountLocked")) {
-                    // Extract email from error message if possible (format: AccountLocked:email)
-                    const emailFromError = result.error.split(":")[1];
-                    const finalEmail = emailFromError || watch("email") || userEmail;
-
-                    onCloseModal?.();
-                    router.push(`/auth/locked?email=${encodeURIComponent(finalEmail)}`);
-                  } else {
-                    responsiveToast.error(`Failed to sign in. Error: ${result.error}`);
-                  }
-                } else if (result?.ok) {
-                  responsiveToast.success("Successfully signed in!");
-                  onCloseModal?.();
-                  router.refresh();
-                }
-              } catch (error: any) {
-                console.error("Google signIn error:", error);
-                responsiveToast.error(`Failed to sign in. Error: ${error.message || "Unknown error"}`);
-              } finally {
-                setIsOAuthLoading(false);
-              }
+              const returnUrl = `${window.location.pathname}${window.location.search}`;
+              signIn("google", { callbackUrl: returnUrl });
             }}
             disabled={isOAuthLoading}
             className="flex flex-row justify-center gap-2 items-center px-3 py-2"
@@ -449,32 +419,8 @@ const AuthModal = ({
             outline
             onClick={async () => {
               setIsOAuthLoading(true);
-              try {
-                const result = await signIn("facebook", {
-                  callbackUrl: "/",
-                  redirect: false,
-                });
-
-                if (result?.error) {
-                  if (result.error.startsWith("OAuthAccountNotLinked")) {
-                    const provider = result.error.split(":")[1];
-                    responsiveToast.error(`An account with this email already exists. Please log in using your ${provider === "google" ? "Google" : "Facebook"} account or use a different email.`);
-                  } else if (result.error.includes("AccountLocked")) {
-                    onCloseModal?.();
-                    router.push(`/auth/locked?email=${encodeURIComponent(watch("email") || userEmail)}`);
-                  } else {
-                    responsiveToast.error("Failed to sign in. Please try again.");
-                  }
-                } else if (result?.ok) {
-                  responsiveToast.success("Successfully signed in!");
-                  onCloseModal?.();
-                  router.refresh();
-                }
-              } catch (error) {
-                responsiveToast.error("Failed to sign in. Please try again.");
-              } finally {
-                setIsOAuthLoading(false);
-              }
+              const returnUrl = `${window.location.pathname}${window.location.search}`;
+              signIn("facebook", { callbackUrl: returnUrl });
             }}
             disabled={isOAuthLoading}
             className="flex flex-row justify-center gap-2 items-center px-3 py-2"

@@ -7,6 +7,17 @@ import { ThemeProvider } from "next-themes";
 import { LoadingProvider } from "@/components/loading/LoadingContext";
 import { ResponsiveToastProvider } from "./ResponsiveToast";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { NotificationProvider } from "@/context/NotificationContext";
+
+if (typeof window !== "undefined") {
+  const originalError = console.error;
+  console.error = (...args) => {
+    if (typeof args[0] === "string" && args[0].includes("Encountered a script tag while rendering React component")) {
+      return;
+    }
+    originalError(...args);
+  };
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,7 +49,7 @@ const queryClient = new QueryClient({
 
 const EdgeStoreWrapper = ({ children }: PropsWithChildren) => {
   const { status, data: session } = useSession();
-  
+
   // Use session status + userId as key to force re-initialization when login state changes
   return (
     <EdgeStoreProvider key={status === "authenticated" ? session?.user?.id : "guest"}>
@@ -64,13 +75,14 @@ const Providers = ({ children }: PropsWithChildren) => {
           defaultTheme="light"
           enableSystem
           disableTransitionOnChange
-          scriptProps={{ nonce: '' }}
         >
           <QueryClientProvider client={queryClient}>
             <SessionProvider>
               <EdgeStoreWrapper>
                 <ResponsiveToastProvider>
-                  {children}
+                  <NotificationProvider>
+                    {children}
+                  </NotificationProvider>
                 </ResponsiveToastProvider>
               </EdgeStoreWrapper>
             </SessionProvider>

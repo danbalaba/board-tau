@@ -42,7 +42,15 @@ const useScreenSize = () => {
 export const useResponsiveToast = (): ResponsiveToastContextType => {
   const context = useContext(ResponsiveToastContext);
   if (!context) {
-    throw new Error("useResponsiveToast must be used within ResponsiveToastProvider");
+    // Fallback for Next.js SSR/SSG edge cases (like error prerendering)
+    return {
+      success: () => {},
+      error: () => {},
+      warning: () => {},
+      info: () => {},
+      loading: () => {},
+      toast: () => {},
+    };
   }
   return context;
 };

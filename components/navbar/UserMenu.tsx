@@ -14,11 +14,9 @@ import AuthModal from "../modals/AuthModal";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { menuItems } from "@/utils/constants";
 import { useLoading } from "@/components/loading/LoadingContext";
-import { getUnreadNotificationStats, getUnreadNotifications, markNotificationsAsRead, NotificationType } from "@/services/notification";
-import { useResponsiveToast } from "@/components/common/ResponsiveToast";
-import { toast as hotToast } from "react-hot-toast";
 import { useMenuPanel } from "@/hooks/use-menu-panel";
 import { useLoadingStore } from "@/hooks/use-loading-store";
+import { useNotification } from "@/context/NotificationContext";
 
 interface UserMenuProps {
   user?: User;
@@ -27,105 +25,15 @@ interface UserMenuProps {
 const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [unreadStats, setUnreadStats] = useState<{ total: number; byType: Record<string, number> } | null>(null);
-  const [hasClearedOuterDot, setHasClearedOuterDot] = useState(false);
-  const [isInitialFetch, setIsInitialFetch] = useState(true);
-  const [lastNotificationId, setLastNotificationId] = useState<string | null>(null);
-  const hasTriggeredInitialToast = useRef(false);
   const { startLoading } = useLoading();
-  const toast = useResponsiveToast();
   const { onOpen } = useMenuPanel();
   const { isLoggingOut, setIsLoggingOut } = useLoadingStore();
+
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const isFetching = useRef(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const fetchStats = async () => {
-      if (isFetching.current) return;
-      isFetching.current = true;
-      
-      try {
-        const stats = await getUnreadNotificationStats();
-        
-        // 🔐 GHOST SESSION DETECTION: 
-        // If the UI thinks we are logged in (user prop exists) but the server 
-        // says the session is gone (stats is null), force a UI refresh.
-        if (!stats && user?.id) {
-          console.warn("🔐 Session mismatch detected in background. Refreshing UI...");
-          router.refresh();
-          return;
-        }
-
-        if (!stats) return;
-
-        // Toast Trigger Logic
-        const notifications = await getUnreadNotifications();
-        const latest = notifications.length > 0 ? notifications[0] : null;
-
-        const isNewNotification = latest && latest.id !== lastNotificationId;
-        const isFirstNotificationOnLogin = isInitialFetch && stats.total > 0;
-
-        if (isNewNotification || isFirstNotificationOnLogin) {
-          setHasClearedOuterDot(false);
-
-          const triggerToast = () => {
-            if (notifications.length > 0) {
-              const priorityNotif = notifications.find(n => 
-                n.title.toLowerCase().includes("complete") || 
-                n.title.toLowerCase().includes("pay") ||
-                n.description.toLowerCase().includes("complete")
-              );
-
-              const activeNotif = priorityNotif || latest;
-
-              const title = isInitialFetch 
-                ? `You have ${stats.total} unread notification${stats.total > 1 ? 's' : ''}` 
-                : activeNotif!.title;
-              
-              toast.info({
-                title: title,
-                description: activeNotif!.description,
-              });
-              
-              setIsInitialFetch(false);
-            }
-          };
-
-          if (isFirstNotificationOnLogin && !hasTriggeredInitialToast.current) {
-            hasTriggeredInitialToast.current = true;
-            // Longer delay for mobile/initial load to ensure Sileo is ready
-            timeoutRef.current = setTimeout(triggerToast, 2000);
-          } else if (isNewNotification) {
-            triggerToast();
-          }
-        }
-
-        if (latest && latest.id !== lastNotificationId) {
-          setLastNotificationId(latest.id);
-        }
-        setUnreadStats(stats);
-      } catch (error) {
-        console.error("Error fetching notification stats:", error);
-      } finally {
-        isFetching.current = false;
-      }
-    };
-
-    fetchStats();
-    const interval = setInterval(fetchStats, 10000);
-    
-    return () => {
-      clearInterval(interval);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, unreadStats?.total, lastNotificationId, isInitialFetch]);
+  const { unreadStats } = useNotification();
 
   const handleMenuOpen = () => {
-    setHasClearedOuterDot(true);
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       onOpen();
     }
@@ -169,7 +77,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
             <Modal.Trigger name="host-application">
               <button
                 type="button"
-                className="hidden md:block text-sm py-3 px-4 rounded-full hover:bg-neutral-100 dark:hover:bg-gray-800 transition cursor-pointer text-gray-600 dark:text-gray-300 font-medium"
+                className="hidden xl:block text-sm py-3 px-4 rounded-full hover:bg-neutral-100 dark:hover:bg-gray-800 transition cursor-pointer text-gray-600 dark:text-gray-300 font-medium"
               >
                 Become a Host
               </button>
@@ -178,7 +86,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
             <Modal.Trigger name="Login">
               <button
                 type="button"
-                className="hidden md:block text-sm py-3 px-4 rounded-full hover:bg-neutral-100 dark:hover:bg-gray-800 transition cursor-pointer text-gray-600 dark:text-gray-300 font-medium"
+                className="hidden xl:block text-sm py-3 px-4 rounded-full hover:bg-neutral-100 dark:hover:bg-gray-800 transition cursor-pointer text-gray-600 dark:text-gray-300 font-medium"
               >
                 Become a Host
               </button>
@@ -193,9 +101,6 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
               >
                 <div className="relative">
                   <AiOutlineMenu className="text-text-primary dark:text-gray-100" />
-                  {unreadStats && unreadStats.total > 0 && !hasClearedOuterDot && (
-                    <span className="absolute -top-1.5 -right-1.5 w-2 h-2 bg-red-600 rounded-full border border-white dark:border-gray-800" />
-                  )}
                 </div>
                 <div className="hidden md:block">
                   <Avatar src={user?.image} name={user?.name} className="w-8 h-8" />
@@ -245,19 +150,12 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
                   <Modal.Trigger name="Login">
                     <MenuItem label="Log in" />
                   </Modal.Trigger>
-
-                  <Modal.Trigger name="Sign up">
-                    <MenuItem label="Sign up" />
-                  </Modal.Trigger>
                 </>
               )}
             </Menu.List>
           </Menu>
           <Modal.Window name="Login" size="sm" closeOnOutsideClick={false}>
             <AuthModal name="Login" />
-          </Modal.Window>
-          <Modal.Window name="Sign up" size="sm" closeOnOutsideClick={false}>
-            <AuthModal name="Sign up" />
           </Modal.Window>
           <Modal.Window name="host-application" size="xl" closeOnOutsideClick={false}>
             <HostApplicationModal />

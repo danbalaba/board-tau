@@ -1,55 +1,56 @@
 import FooterPageLayout from '@/components/layout/FooterPageLayout';
-import { FaHeart, FaHandshake, FaGlobeAsia, FaBalanceScale } from 'react-icons/fa';
 
 export default function CommunityStandardsContent() {
   return (
     <FooterPageLayout
       title="Community Standards"
-      description="The principles and values that keep BoardTAU safe, welcoming, and reliable for Tarlac Agricultural University students."
-      lastUpdated="April 2026"
+      description="The rules that keep BoardTAU safe and welcoming."
+      lastUpdated="January 2026"
     >
-      <div className="text-center mb-16">
-        <FaGlobeAsia className="text-8xl text-green-500 mx-auto mb-6 opacity-80" />
-        <h2 className="text-3xl font-extrabold dark:text-white max-w-2xl mx-auto leading-tight">
-          A Community Built on Mutual Respect.
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 mt-4 text-lg">
-          We expect every host and every student to uphold these foundational pillars.
+      <div className="space-y-6">
+        <p>
+          Our community is built on trust, respect, and a shared goal of supporting education. These standards apply to everyone who uses BoardTAU—students, landlords, and administrators alike.
         </p>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        
-        <div className="bg-white dark:bg-gray-900 border border-red-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:border-red-400 dark:hover:border-red-500/50 transition-all duration-300 group hover:-translate-y-1">
-          <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform duration-300">
-            <FaHeart className="text-3xl text-red-500" />
-          </div>
-          <h3 className="text-xl font-bold dark:text-gray-200 mb-3">Inclusion & Respect</h3>
-          <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
-            BoardTAU welcomes everyone from TAU regardless of background, gender, or orientation. Discrimination or hateful behavior results in an immediate permanent ban.
-          </p>
-        </div>
+        <h2 className="text-2xl font-semibold mt-8 mb-4">1. Safety</h2>
+        <p>
+          Your BoardTAU experience begins with a safe environment.
+        </p>
+        <ul className="list-disc pl-6 space-y-2 mt-4">
+          <li><strong>No Harassment:</strong> We do not tolerate physical or verbal abuse, sexual assault, harassment, or bullying of any kind.</li>
+          <li><strong>No Dangerous Activities:</strong> Properties listed on BoardTAU must not be used for illegal activities, illicit drug use, or the unauthorized possession of firearms.</li>
+          <li><strong>Self-Harm:</strong> If we are notified of a user who is at risk of self-harm, we may intervene by contacting emergency services.</li>
+        </ul>
 
-        <div className="bg-white dark:bg-gray-900 border border-blue-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:border-blue-400 dark:hover:border-blue-500/50 transition-all duration-300 group hover:-translate-y-1">
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform duration-300">
-            <FaHandshake className="text-3xl text-blue-500" />
-          </div>
-          <h3 className="text-xl font-bold dark:text-gray-200 mb-3">Honesty</h3>
-          <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
-            No scams, no bait-and-switches. Landlords must provide accurate room listings. Students must provide truthful details on their reservation applications.
-          </p>
-        </div>
+        <h2 className="text-2xl font-semibold mt-8 mb-4">2. Authenticity</h2>
+        <p>
+          Trust requires authenticity.
+        </p>
+        <ul className="list-disc pl-6 space-y-2 mt-4">
+          <li><strong>Real Identities:</strong> You must accurately represent who you are. Do not use fake names or photos that are not of you. Our KYC process enforces this rule.</li>
+          <li><strong>Real Properties:</strong> Hosts must not list properties they do not own or have the authority to rent out.</li>
+          <li><strong>Honest Reviews:</strong> Reviews must be based on genuine experiences. Do not manipulate the review system by coercing guests or posting fake reviews.</li>
+        </ul>
 
-        <div className="bg-white dark:bg-gray-900 border border-purple-100 dark:border-gray-800 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:border-purple-400 dark:hover:border-purple-500/50 transition-all duration-300 group hover:-translate-y-1 lg:col-span-1 md:col-span-2">
-          <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform duration-300">
-            <FaBalanceScale className="text-3xl text-purple-500" />
-          </div>
-          <h3 className="text-xl font-bold dark:text-gray-200 mb-3">Fair Accountability</h3>
-          <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
-            Mistakes happen, but responsibility is mandatory. If you cause property damage, you are expected to report and cover it. Landlords must fairly return deposits.
-          </p>
-        </div>
+        <h2 className="text-2xl font-semibold mt-8 mb-4">3. Respect</h2>
+        <p>
+          We expect all users to treat each other with respect.
+        </p>
+        <ul className="list-disc pl-6 space-y-2 mt-4">
+          <li><strong>Respect Privacy:</strong> Do not spy on guests or hosts. The use of undisclosed recording devices in private spaces is strictly prohibited.</li>
+          <li><strong>Respect the Property:</strong> Guests must treat the boarding house with care and leave it in the condition they found it.</li>
+          <li><strong>Respect Neighbors:</strong> Be mindful of noise levels and community rules to ensure you are a good neighbor.</li>
+        </ul>
 
+        <h2 className="text-2xl font-semibold mt-8 mb-4">4. Reliability & System Abuse</h2>
+        <p>
+          Landlords rely on accurate bookings to manage their business, and users rely on landlords to honor their commitments.
+        </p>
+        <ul className="list-disc pl-6 space-y-2 mt-4">
+          <li><strong>No Spamming:</strong> Repeatedly making and cancelling inquiries or reservations to maliciously block room availability is prohibited.</li>
+          <li><strong>Strike System:</strong> We enforce a strict 3-strike rule for cancellation abuse. Excessive cancellations will automatically trigger account suspension and potential lifetime bans.</li>
+          <li><strong>Forfeiture:</strong> Users suspended for violating these standards forfeit any paid reservation fees, and their un-started bookings are automatically voided to protect the host.</li>
+        </ul>
       </div>
     </FooterPageLayout>
   );

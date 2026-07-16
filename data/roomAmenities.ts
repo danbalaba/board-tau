@@ -36,7 +36,7 @@ export const BATHROOM_ARRANGEMENT_LABELS: Record<string, string> = {
 export type RoomAmenity = keyof typeof ROOM_AMENITIES;
 
 import { IconType } from "react-icons";
-import { ROOM_TYPES } from "./roomTypes";
+import { ROOM_TYPES, RoomType } from "./roomTypes";
 import {
   FaBook,
   FaLock,
@@ -45,48 +45,61 @@ import {
   FaSnowflake,
   FaBed,
   FaBolt,
-  FaTint
+  FaTint,
+  FaChair
 } from "react-icons/fa";
 
 /** BoardTAU — Room-level amenity checkboxes (bathroom excluded — handled via dedicated radio). */
-export const roomAmenities: { label: string; value: string; icon: IconType; applicableTo: string[] }[] = [
+export const roomAmenities: {
+  label: string;
+  value: string;
+  icon: IconType;
+  applicableTo?: RoomType[];
+  description?: string;
+}[] = [
+  // ── Universal
+  {
+    label: ROOM_AMENITY_LABELS.WIFI,
+    value: ROOM_AMENITIES.WIFI,
+    icon: FaWifi,
+    description: "Fast, reliable internet access is provided for tenants.",
+  },
 
-  // ── Shared by both room types ───────────────────────────────────────────
+  // ── Comfort & Furnishing
   {
     label: ROOM_AMENITY_LABELS.AC,
     value: ROOM_AMENITIES.AC,
     icon: FaSnowflake,
     applicableTo: [ROOM_TYPES.SOLO, ROOM_TYPES.BEDSPACE],
+    description: "Room comes equipped with an installed air conditioning unit.",
   },
   {
     label: ROOM_AMENITY_LABELS.FAN,
     value: ROOM_AMENITIES.FAN,
     icon: FaFan,
     applicableTo: [ROOM_TYPES.SOLO, ROOM_TYPES.BEDSPACE],
-  },
-  {
-    label: ROOM_AMENITY_LABELS.WIFI,
-    value: ROOM_AMENITIES.WIFI,
-    icon: FaWifi,
-    applicableTo: [ROOM_TYPES.SOLO, ROOM_TYPES.BEDSPACE],
+    description: "Room is equipped with a ceiling or stand fan.",
   },
   {
     label: ROOM_AMENITY_LABELS.DESK,
     value: ROOM_AMENITIES.DESK,
-    icon: FaBook,
+    icon: FaChair,
     applicableTo: [ROOM_TYPES.SOLO, ROOM_TYPES.BEDSPACE],
+    description: "Room includes a dedicated desk and chair for studying or working.",
   },
   {
     label: ROOM_AMENITY_LABELS.CABINET,
     value: ROOM_AMENITIES.CABINET,
     icon: FaLock,
     applicableTo: [ROOM_TYPES.SOLO, ROOM_TYPES.BEDSPACE],
+    description: "Includes personal storage space with secure locks.",
   },
   {
     label: ROOM_AMENITY_LABELS.FOAM,
     value: ROOM_AMENITIES.FOAM,
     icon: FaBed,
     applicableTo: [ROOM_TYPES.SOLO, ROOM_TYPES.BEDSPACE],
+    description: "A foam mattress is provided with the bed.",
   },
 
   // ── Solo Room Specific (Sub-meters usually apply per distinct room unit)
@@ -95,12 +108,14 @@ export const roomAmenities: { label: string; value: string; icon: IconType; appl
     value: ROOM_AMENITIES.SUBMETER_ELEC,
     icon: FaBolt,
     applicableTo: [ROOM_TYPES.SOLO],
+    description: "You pay only for the exact electricity you consume inside your room.",
   },
   {
     label: ROOM_AMENITY_LABELS.SUBMETER_WATER,
     value: ROOM_AMENITIES.SUBMETER_WATER,
     icon: FaTint,
     applicableTo: [ROOM_TYPES.SOLO],
+    description: "You pay only for the exact water you consume.",
   },
 ];
 
