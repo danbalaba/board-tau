@@ -17,23 +17,39 @@ import type { UserAnalytics } from '@/app/admin/hooks/use-user-analytics';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 
 interface AnalyticsKPICardsProps {
-  data: UserAnalytics;
+  data: any;
+  isLoading?: boolean;
+  range?: string;
 }
 
-export function AnalyticsKPICards({ data }: AnalyticsKPICardsProps) {
-  // Calculate verified hosts from the verificationStatus array
-  const verifiedHostsCount = data.verificationStatus?.find((v: any) => v.isVerifiedLandlord)?.count || 0;
+export function AnalyticsKPICards({ data, isLoading = false, range = '30d' }: AnalyticsKPICardsProps) {
+  const verifiedHostsCount = data?.verificationStatus?.find((v: any) => v.isVerifiedLandlord)?.count || 0;
 
   // Generate random trend data for sparklines based on real values
-  const generateTrend = (val: number) => [
-    { v: val * 0.8 }, { v: val * 0.85 }, { v: val * 0.82 }, 
-    { v: val * 0.9 }, { v: val * 0.88 }, { v: val * 0.95 }, { v: val }
-  ];
+  const generateTrend = (val: number, isLoad: boolean = false) => {
+    if (isLoad) {
+      return [{ v: 0 }, { v: 0 }, { v: 0 }, { v: 0 }, { v: 0 }, { v: 0 }, { v: 0 }];
+    }
+    return [
+      { v: val * 0.8 }, { v: val * 0.85 }, { v: val * 0.82 }, 
+      { v: val * 0.9 }, { v: val * 0.88 }, { v: val * 0.95 }, { v: val }
+    ];
+  };
+
+  const getRangeLabel = (r: string) => {
+    switch (r) {
+      case '7d': return 'last 7 days';
+      case '90d': return 'last 90 days';
+      case '1y': return 'past year';
+      case '30d':
+      default: return 'last 30 days';
+    }
+  };
 
   const stats = [
     {
       title: 'Total Identities',
-      value: data.totalUsers.toLocaleString(),
+      value: data?.totalUsers?.toLocaleString() || '0',
       description: '+12.5% from last month',
       icon: IconUsers,
       trend: '+12.5%',
@@ -41,11 +57,11 @@ export function AnalyticsKPICards({ data }: AnalyticsKPICardsProps) {
       color: 'text-blue-500',
       bg: 'bg-blue-500/10',
       chartColor: '#3b82f6',
-      trendData: generateTrend(data.totalUsers)
+      trendData: generateTrend(data?.totalUsers || 0, isLoading)
     },
     {
       title: 'Active Sessions',
-      value: data.activeUsers.toLocaleString(),
+      value: data?.activeUsers?.toLocaleString() || '0',
       description: '+5.2% from last week',
       icon: IconActivity,
       trend: '+5.2%',
@@ -53,7 +69,7 @@ export function AnalyticsKPICards({ data }: AnalyticsKPICardsProps) {
       color: 'text-emerald-500',
       bg: 'bg-emerald-500/10',
       chartColor: '#10b981',
-      trendData: generateTrend(data.activeUsers)
+      trendData: generateTrend(data?.activeUsers || 0, isLoading)
     },
     {
       title: 'Verified Governance',
@@ -65,11 +81,11 @@ export function AnalyticsKPICards({ data }: AnalyticsKPICardsProps) {
       color: 'text-fuchsia-500',
       bg: 'bg-fuchsia-500/10',
       chartColor: '#d946ef',
-      trendData: generateTrend(verifiedHostsCount)
+      trendData: generateTrend(verifiedHostsCount, isLoading)
     },
     {
       title: 'Registration Velocity',
-      value: data.newUsers.toLocaleString(),
+      value: data?.newUsers?.toLocaleString() || '0',
       description: '-2.1% from yesterday',
       icon: IconTrendingUp,
       trend: '-2.1%',
@@ -77,12 +93,12 @@ export function AnalyticsKPICards({ data }: AnalyticsKPICardsProps) {
       color: 'text-amber-500',
       bg: 'bg-amber-500/10',
       chartColor: '#f59e0b',
-      trendData: generateTrend(data.newUsers)
+      trendData: generateTrend(data?.newUsers || 0, isLoading)
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, index) => (
         <motion.div
           key={index}
@@ -101,8 +117,14 @@ export function AnalyticsKPICards({ data }: AnalyticsKPICardsProps) {
             </CardHeader>
             <CardContent className="pb-0">
               <div className="flex flex-col">
-                <div className="text-3xl font-black tabular-nums tracking-tighter text-gray-900 dark:text-white">{stat.value}</div>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="text-3xl font-black tabular-nums tracking-tighter text-gray-900 dark:text-white">
+                  {isLoading ? (
+                    <div className="h-9 w-16 bg-muted/50 dark:bg-white/10 animate-pulse rounded-xl" />
+                  ) : (
+                    stat.value
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
                   <div className={cn(
                     "flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest",
                     stat.trendDir === 'up' ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
@@ -114,7 +136,7 @@ export function AnalyticsKPICards({ data }: AnalyticsKPICardsProps) {
                     )}
                     {stat.trend}
                   </div>
-                  <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">vs Target</span>
+                  <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest bg-gray-50 dark:bg-gray-800/50 px-2 py-0.5 rounded-lg">vs {getRangeLabel(range)}</span>
                 </div>
               </div>
               
@@ -134,6 +156,8 @@ export function AnalyticsKPICards({ data }: AnalyticsKPICardsProps) {
                       strokeWidth={3}
                       fill={`url(#gradient-${index})`}
                       isAnimationActive={true}
+                      animationDuration={1500}
+                      animationEasing="ease-out"
                     />
                   </AreaChart>
                 </ResponsiveContainer>

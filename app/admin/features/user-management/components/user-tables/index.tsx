@@ -4,34 +4,40 @@ import { DataTable } from '@/app/admin/components/ui/table/data-table';
 import { DataTableToolbar } from '@/app/admin/components/ui/table/data-table-toolbar';
 import { useDataTable } from '@/app/admin/hooks/use-data-table';
 import { ColumnDef } from '@tanstack/react-table';
-import { parseAsInteger, useQueryState } from 'nuqs';
+import { parseAsString, useQueryState } from 'nuqs';
 import { User } from './columns';
 
 interface UserTableParams<TData, TValue> {
   data: TData[];
   totalItems: number;
   columns: ColumnDef<TData, TValue>[];
+  isLoading?: boolean;
+  toolbarActions?: React.ReactNode;
 }
 
 export function UserTable<TData, TValue>({
   data,
   totalItems,
-  columns
+  columns,
+  isLoading,
+  toolbarActions
 }: UserTableParams<TData, TValue>) {
-  console.log('Raw data:', data); // Debug log to see if we're getting data
-  console.log('Total items:', totalItems); // Debug log to see total items
+  const [pageSize] = useQueryState('perPage', parseAsString.withDefault('10'));
+  const pageCount = Math.max(1, Math.ceil(totalItems / parseInt(pageSize)));
 
   const { table } = useDataTable({
     data: data,
     columns: columns as any,
-    shallow: false,
+    shallow: true,
     debounceMs: 500,
-    pageCount: 1 // We'll use client-side pagination
+    pageCount: pageCount
   });
 
   return (
-    <DataTable table={table}>
-      <DataTableToolbar table={table} />
+    <DataTable table={table} isLoading={isLoading}>
+      <DataTableToolbar table={table}>
+        {toolbarActions}
+      </DataTableToolbar>
     </DataTable>
   );
 }
