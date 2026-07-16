@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { IconTrendingUp } from '@tabler/icons-react';
-import { LabelList, Pie, PieChart } from 'recharts';
+import { Label, Pie, PieChart } from 'recharts';
 import { Badge } from "../../../components/ui/badge";
 
 import {
@@ -44,41 +44,65 @@ export function PieGraph({ data: propData }: { data?: any[] }) {
     }));
   }, [data]);
 
+  const totalProperties = React.useMemo(() => {
+    return data.reduce((acc: number, curr: any) => acc + curr.value, 0);
+  }, [data]);
+
   return (
-    <Card className='flex h-full flex-col border-none bg-card/30 backdrop-blur-md shadow-xl'>
-      <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-white/5">
-        <div>
-          <CardTitle className="text-base font-black tracking-tight">Property Split</CardTitle>
-          <CardDescription className="text-[10px] uppercase font-bold tracking-widest mt-1">Active inventory by type</CardDescription>
+    <Card className='flex h-full flex-col border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-xl rounded-[2.5rem] overflow-hidden'>
+      <CardHeader className="flex flex-row items-center justify-between pb-4 px-8 pt-8 border-b border-gray-100/50 dark:border-gray-800/50">
+        <div className="space-y-1.5">
+          <CardTitle className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">Property Split</CardTitle>
+          <CardDescription className="text-[10px] uppercase font-black tracking-widest text-gray-500">Active inventory by type</CardDescription>
         </div>
-        <Badge variant='outline' className="bg-blue-500/10 text-blue-500 border-none font-black uppercase text-[9px] h-5 px-2">
-          <IconTrendingUp className="size-3 mr-1" />
-          +5.2%
+        <Badge variant='outline' className="bg-blue-500/10 text-blue-500 border-none font-black uppercase text-[9px] h-6 px-3 rounded-xl shadow-sm">
+          TOTAL
         </Badge>
       </CardHeader>
       <CardContent className='flex flex-1 items-center justify-center pb-0'>
         <ChartContainer
           config={chartConfig}
-          className='[&_.recharts-text]:fill-background mx-auto aspect-square max-h-[350px] min-h-[300px]'
+          className='mx-auto aspect-square max-h-[250px] min-h-[250px] w-full'
         >
           <PieChart>
-            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent className="rounded-2xl border-none shadow-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl" hideLabel />} />
             <Pie
               data={chartData}
-              innerRadius={30}
+              innerRadius={70}
+              outerRadius={100}
               dataKey='value'
               nameKey='name'
-              radius={10}
-              cornerRadius={8}
-              paddingAngle={4}
+              strokeWidth={5}
+              paddingAngle={2}
             >
-              <LabelList
-                dataKey='value'
-                stroke='none'
-                fontSize={12}
-                fontWeight={500}
-                fill='currentColor'
-                formatter={(value: any) => value.toString()}
+              <Label
+                content={({ viewBox }) => {
+                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                    return (
+                      <text
+                        x={viewBox.cx}
+                        y={viewBox.cy}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        <tspan
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          className="fill-foreground text-3xl font-black"
+                        >
+                          {totalProperties.toLocaleString()}
+                        </tspan>
+                        <tspan
+                          x={viewBox.cx}
+                          y={(viewBox.cy || 0) + 24}
+                          className="fill-muted-foreground text-[10px] uppercase font-bold tracking-widest"
+                        >
+                          Listings
+                        </tspan>
+                      </text>
+                    )
+                  }
+                }}
               />
             </Pie>
           </PieChart>

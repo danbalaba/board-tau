@@ -1,5 +1,5 @@
-import { PieGraphSkeleton } from "../../features/overview/components/pie-graph-skeleton";
+import Skeleton from "@/components/common/Skeleton";
 
 export default function Loading() {
-  return <PieGraphSkeleton />;
+  return <Skeleton className="h-[350px] w-full rounded-[3rem]" />;
 }
