@@ -25,6 +25,7 @@ import { cn } from '@/utils/helper';
 import { LandlordPropertySearch } from './landlord-property-search';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
 import { prepareDataForExport, exportToCSV, exportToExcel } from '@/utils/export-utils';
+import { DateRange } from 'react-day-picker';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,30 +70,56 @@ export function LandlordPropertyHeader({
 }: LandlordPropertyHeaderProps) {
   const hasActiveFilters = searchQuery.trim() !== '' || categoryFilter !== 'all' || isArchived;
 
-  const handleGenerateCSV = async () => {
-    const reportData = prepareDataForExport(listings, 'property');
-    const totalValue = listings.reduce((acc, p) => acc + (p.price || 0), 0);
+  const handleGenerateCSV = async (dateRange?: DateRange) => {
+    let exportData = listings;
+    if (dateRange?.from) {
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to;
+      exportData = exportData.filter(p => {
+        const createdAt = new Date(p.createdAt);
+        if (toDate) {
+          return createdAt >= fromDate && createdAt <= toDate;
+        }
+        return createdAt >= fromDate;
+      });
+    }
+
+    const reportData = prepareDataForExport(exportData, 'property');
+    const totalValue = exportData.reduce((acc, p) => acc + (p.price || 0), 0);
     const metadata = {
       reportTitle: 'Property Portfolio Business Report',
       reportId: `BTAU-PROP-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       summary: [
         { label: 'Portfolio Value', value: `PHP ${totalValue.toLocaleString()}` },
-        { label: 'Total Listings', value: `${listings.length}` }
+        { label: 'Total Listings', value: `${exportData.length}` }
       ],
       author: 'Landlord Management System'
     };
     exportToCSV(reportData, `Property_Report_${new Date().toLocaleDateString()}`, metadata);
   };
 
-  const handleGenerateExcel = async () => {
-    const reportData = prepareDataForExport(listings, 'property');
-    const totalValue = listings.reduce((acc, p) => acc + (p.price || 0), 0);
+  const handleGenerateExcel = async (dateRange?: DateRange) => {
+    let exportData = listings;
+    if (dateRange?.from) {
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to;
+      exportData = exportData.filter(p => {
+        const createdAt = new Date(p.createdAt);
+        if (toDate) {
+          return createdAt >= fromDate && createdAt <= toDate;
+        }
+        return createdAt >= fromDate;
+      });
+    }
+
+    const reportData = prepareDataForExport(exportData, 'property');
+    const totalValue = exportData.reduce((acc, p) => acc + (p.price || 0), 0);
     const metadata = {
       reportTitle: 'Property Portfolio Business Report',
       reportId: `BTAU-PROP-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       summary: [
         { label: 'Portfolio Value', value: `PHP ${totalValue.toLocaleString()}` },
-        { label: 'Total Listings', value: `${listings.length}` }
+        { label: 'Total Listings', value: `${exportData.length}` }
       ],
       author: 'Landlord Management System'
     };

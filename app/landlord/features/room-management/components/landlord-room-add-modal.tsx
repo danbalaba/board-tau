@@ -516,7 +516,7 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
                    </label>
                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {roomAmenities
-                        .filter(a => !formData.roomType || a.applicableTo?.includes(formData.roomType))
+                        .filter(a => !formData.roomType || a.applicableTo?.includes(formData.roomType as any))
                         .map(amenity => {
                           const isSelected = formData.amenities.includes(amenity.value);
                           return (

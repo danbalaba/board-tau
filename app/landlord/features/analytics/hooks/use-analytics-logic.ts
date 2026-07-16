@@ -88,7 +88,7 @@ export function useAnalyticsLogic() {
           monthlyRevenueMap: monthly.listingMap,
           growthTrend: growth,
           propertyTypes: types,
-          ratings: rates,
+          ratings: rates as any,
           propertyPerformance: performance,
           inquirySources: sources,
         });

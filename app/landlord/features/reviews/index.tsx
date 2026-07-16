@@ -14,7 +14,7 @@ import { LandlordReviewHeader } from './components/landlord-review-header';
 import { LandlordReviewCard } from './components/landlord-review-card';
 import { LandlordReviewRespondModal } from './components/landlord-review-respond-modal';
 import { LandlordReviewDetailsModal } from './components/landlord-review-details-modal';
-import { useLoadMore } from '@/hooks/useLoadMore';
+import { LandlordPagination } from '../shared/landlord-pagination';
 
 interface LandlordReviewsProps {
   reviews: {
@@ -26,6 +26,11 @@ interface LandlordReviewsProps {
 export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
   const {
     filteredReviews,
+    totalReviews,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    setItemsPerPage,
     nextCursor,
     isLoadingMore,
     selectedStatus,
@@ -49,13 +54,6 @@ export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
     isOpen: boolean;
     reviewId: string | null;
   }>({ isOpen: false, reviewId: null });
-
-  const { ref: loadMoreRef } = useLoadMore(
-    handleLoadMore,
-    !!nextCursor,
-    isLoadingMore,
-    false
-  );
 
   useRegisterActions(
     rawReviews.map((review) => ({
@@ -132,7 +130,7 @@ export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
               {filteredReviews.length > 0 && (
                 <div className="flex items-center gap-2 mb-6">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                    Showing {filteredReviews.length} review{filteredReviews.length !== 1 ? 's' : ''}
+                    Showing {totalReviews} review{totalReviews !== 1 ? 's' : ''}
                   </span>
                   <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
                 </div>
@@ -162,37 +160,20 @@ export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
                       onViewDetails={(id) => setDetailsModal({ isOpen: true, reviewId: id })}
                     />
                   ))}
-                  {/* Scroll Sentinel */}
-                  <div ref={loadMoreRef} className="h-1 col-span-full opacity-0 pointer-events-none" />
                 </div>
               )}
 
-              {nextCursor && (
-                <div className="flex flex-col items-center gap-4 pt-12 pb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-[2px] bg-gradient-to-r from-transparent to-gray-200 dark:to-gray-800" />
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                        {isLoadingMore ? 'Loading more reviews...' : 'More reviews available'}
-                      </span>
-                    </div>
-                    <div className="w-12 h-[2px] bg-gradient-to-l from-transparent to-gray-200 dark:to-gray-800" />
-                  </div>
+              <LandlordPagination 
+                currentPage={currentPage}
+                totalPages={Math.ceil(totalReviews / itemsPerPage)}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={setItemsPerPage}
+                totalItems={totalReviews}
+                itemName="reviews"
+              />
 
-                  <Button 
-                    outline 
-                    className="rounded-2xl px-12 py-4 group hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/5 border-2 border-gray-100 dark:border-gray-800"
-                    onClick={handleLoadMore}
-                    isLoading={isLoadingMore}
-                  >
-                    <span className="flex items-center gap-2 uppercase font-black tracking-[0.2em] text-[10px]">
-                      {isLoadingMore ? 'Loading...' : 'Load More'}
-                      <IconChevronDown className="group-hover:translate-y-0.5 transition-transform" size={14} />
-                    </span>
-                  </Button>
-                </div>
-              )}
+
             </motion.div>
           )}
         </AnimatePresence>

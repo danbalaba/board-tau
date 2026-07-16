@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { generateTablePDF } from '@/utils/pdfGenerator';
+import { DateRange } from 'react-day-picker';
 
 export interface Review {
   id: string;
@@ -44,7 +45,17 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
   const [selectedRating, setSelectedRating] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [isLoading, setIsLoading] = useState(true);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedStatus, selectedRating]);
 
   useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), 700);
@@ -75,6 +86,11 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
     });
   }, [selectedStatus, selectedRating, listings, searchQuery]);
 
+  const paginatedReviews = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredReviews.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredReviews, currentPage, itemsPerPage]);
+
   const handleLoadMore = useCallback(async () => {
     if (!nextCursor || isLoadingMore) return;
     setIsLoadingMore(true);
@@ -92,34 +108,57 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
     }
   }, [nextCursor, isLoadingMore]);
 
-  const handleGenerateReport = async () => {
+  const handleGenerateReport = async (dateRange?: DateRange) => {
     try {
-      const totalReviews = filteredReviews.length;
-      const avgRating = totalReviews > 0 
-        ? filteredReviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews 
-        : 0;
-      const responseCount = filteredReviews.filter(r => r.response !== null).length;
+      let exportData = filteredReviews;
+      if (dateRange?.from) {
+        const fromDate = dateRange.from;
+        const toDate = dateRange.to;
+        exportData = exportData.filter(r => {
+          const createdAt = new Date(r.createdAt);
+          if (toDate) {
+            return createdAt >= fromDate && createdAt <= toDate;
+          }
+          return createdAt >= fromDate;
+        });
+      }
 
-      const summaryData = [
-        { 
-          label: 'Average Rating', 
-          value: `${avgRating.toFixed(1)} / 5.0`,
-          subValue: 'Overall guest satisfaction'
-        },
-        { 
-          label: 'Total Reviews', 
-          value: `${totalReviews}`,
-          subValue: 'Feedback volume'
-        },
-        { 
-          label: 'Response Rate', 
-          value: `${((responseCount / (totalReviews || 1)) * 100).toFixed(0)}%`,
-          subValue: `${responseCount} Responses provided`
-        }
-      ];
+      const totalReviews = exportData.length;
+      let summaryData: any[] = [];
+      let subtitle = `Auditing feedback and response performance for ${totalReviews} guest reviews`;
+      const responseCount = exportData.filter(r => r.response !== null).length;
+
+      if (selectedStatus === 'pending') {
+        summaryData = [
+          { label: 'Pending Reviews', value: `${totalReviews}` },
+          { label: 'Status', value: `Needs Response` },
+          { label: 'Action Required', value: `Yes` }
+        ];
+        subtitle = `Auditing pending reviews requiring response`;
+      } 
+      else if (selectedRating !== 'all') {
+        summaryData = [
+          { label: 'Star Rating', value: `${selectedRating} Stars` },
+          { label: 'Total Reviews', value: `${totalReviews}` },
+          { label: 'Response Rate', value: `${((responseCount / (totalReviews || 1)) * 100).toFixed(0)}%` }
+        ];
+        subtitle = `Auditing ${selectedRating}-star reviews for ${totalReviews} feedback entries`;
+      }
+      else {
+        // Global 'all' view
+        const avgRating = totalReviews > 0 
+          ? exportData.reduce((acc, r) => acc + r.rating, 0) / totalReviews 
+          : 0;
+
+        summaryData = [
+          { label: 'Average Rating', value: `${avgRating.toFixed(1)} / 5.0`, subValue: 'Overall guest satisfaction' },
+          { label: 'Total Reviews', value: `${totalReviews}`, subValue: 'Feedback volume' },
+          { label: 'Response Rate', value: `${((responseCount / (totalReviews || 1)) * 100).toFixed(0)}%`, subValue: `${responseCount} Responses provided` }
+        ];
+      }
 
       const columns = ['Listing', 'Guest', 'Rating', 'Comment', 'Date'];
-      const data = filteredReviews.map((r) => [
+      const data = exportData.map((r) => [
         r.listing.title,
         r.user.name || r.user.email,
         `${r.rating} / 5`,
@@ -129,7 +168,7 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
 
       await generateTablePDF('Reviews_Report', columns, data, {
         title: 'Property Reputation Business Report',
-        subtitle: `Auditing feedback and response performance for ${totalReviews} guest reviews`,
+        subtitle: subtitle,
         author: 'Landlord Relationship Management',
         summaryData: summaryData
       });
@@ -152,7 +191,12 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
   };
 
   return {
-    filteredReviews,
+    filteredReviews: paginatedReviews,
+    totalReviews: filteredReviews.length,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    setItemsPerPage,
     nextCursor,
     isLoadingMore,
     selectedStatus,

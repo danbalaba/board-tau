@@ -1,10 +1,17 @@
 "use client";
 
+import { useEffect } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { pusherClient } from "@/lib/pusher-client";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { getLandlordNotifications, markNotificationAsRead, clearAllNotifications, markAllNotificationsAsRead } from "../actions";
 
 export function useNotifications() {
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
+  const userId = (session?.user as any)?.id;
+  const toast = useResponsiveToast();
 
   const query = useInfiniteQuery({
     queryKey: ["landlord-notifications"],
@@ -15,9 +22,31 @@ export function useNotifications() {
       return lastPage.hasMore ? allPages.length : undefined;
     },
     initialPageParam: 0,
-    refetchInterval: 30000, 
     staleTime: 10000,
   });
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const channelName = `private-user-${userId}`;
+    const channel = pusherClient.subscribe(channelName);
+
+    const handleNewNotification = (newNotif: any) => {
+      queryClient.invalidateQueries({ queryKey: ["landlord-notifications"] });
+      
+      toast.info({
+        title: newNotif.title,
+        description: newNotif.description
+      });
+    };
+
+    channel.bind("new-notification", handleNewNotification);
+
+    return () => {
+      channel.unbind("new-notification", handleNewNotification);
+      pusherClient.unsubscribe(channelName);
+    };
+  }, [userId, queryClient, toast]);
 
   const markAsReadMutation = useMutation({
     mutationFn: (id: string) => markNotificationAsRead(id),

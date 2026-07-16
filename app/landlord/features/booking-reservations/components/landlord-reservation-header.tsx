@@ -19,6 +19,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
 import { prepareDataForExport, exportToCSV, exportToExcel } from '@/utils/export-utils';
+import { DateRange } from 'react-day-picker';
 import { LandlordReservationSearch } from './landlord-reservation-search';
 import { ReservationRequest } from '../hooks/use-reservation-logic';
 import {
@@ -42,6 +43,7 @@ interface LandlordReservationHeaderProps {
   rawReservations: ReservationRequest[];
   isArchived: boolean;
   onToggleArchived: () => void;
+  onCreateWalkIn?: () => void;
 }
 
 export function LandlordReservationHeader({
@@ -56,12 +58,26 @@ export function LandlordReservationHeader({
   setSearchQuery,
   rawReservations,
   isArchived,
-  onToggleArchived
+  onToggleArchived,
+  onCreateWalkIn
 }: LandlordReservationHeaderProps) {
-  const handleGenerateCSV = async () => {
-    const reportData = prepareDataForExport(rawReservations, 'reservation');
-    const totalRequests = rawReservations.length;
-    const reservedCount = rawReservations.filter(r => r.status?.toLowerCase() === 'reserved').length;
+  const handleGenerateCSV = async (dateRange?: DateRange) => {
+    let exportData = rawReservations;
+    if (dateRange?.from) {
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to;
+      exportData = exportData.filter(r => {
+        const createdAt = new Date(r.createdAt);
+        if (toDate) {
+          return createdAt >= fromDate && createdAt <= toDate;
+        }
+        return createdAt >= fromDate;
+      });
+    }
+
+    const reportData = prepareDataForExport(exportData, 'reservation');
+    const totalRequests = exportData.length;
+    const reservedCount = exportData.filter(r => r.status?.toLowerCase() === 'reserved').length;
     const metadata = {
       reportTitle: 'Reservation Requests Business Report',
       reportId: `BTAU-RES-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
@@ -74,10 +90,23 @@ export function LandlordReservationHeader({
     exportToCSV(reportData, `Reservation_Report_${new Date().toLocaleDateString()}`, metadata);
   };
 
-  const handleGenerateExcel = async () => {
-    const reportData = prepareDataForExport(rawReservations, 'reservation');
-    const totalRequests = rawReservations.length;
-    const reservedCount = rawReservations.filter(r => r.status?.toLowerCase() === 'reserved').length;
+  const handleGenerateExcel = async (dateRange?: DateRange) => {
+    let exportData = rawReservations;
+    if (dateRange?.from) {
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to;
+      exportData = exportData.filter(r => {
+        const createdAt = new Date(r.createdAt);
+        if (toDate) {
+          return createdAt >= fromDate && createdAt <= toDate;
+        }
+        return createdAt >= fromDate;
+      });
+    }
+
+    const reportData = prepareDataForExport(exportData, 'reservation');
+    const totalRequests = exportData.length;
+    const reservedCount = exportData.filter(r => r.status?.toLowerCase() === 'reserved').length;
     const metadata = {
       reportTitle: 'Reservation Requests Business Report',
       reportId: `BTAU-RES-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
@@ -246,6 +275,15 @@ export function LandlordReservationHeader({
               label="Generate Report"
               className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hidden sm:flex items-center gap-2"
             />
+
+            {onCreateWalkIn && (
+              <button
+                onClick={onCreateWalkIn}
+                className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/30 hover:-translate-y-0.5 active:translate-y-0 transition-all"
+              >
+                Create Walk-In
+              </button>
+            )}
           </div>
         </div>
       </div>

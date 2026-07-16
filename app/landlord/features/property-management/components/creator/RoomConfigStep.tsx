@@ -223,7 +223,7 @@ const RoomConfigStep: React.FC<RoomConfigStepProps> = ({
   }, [watch, setValue]);
 
   const getApplicableAmenities = (roomType: string) => {
-    return roomAmenities.filter(a => a.applicableTo?.includes(roomType));
+    return roomAmenities.filter(a => !a.applicableTo || a.applicableTo.includes(roomType as any));
   };
 
   return (

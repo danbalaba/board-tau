@@ -39,8 +39,8 @@ export function LandlordBookingSearch({
       const filtered = bookings
         .filter(b => 
           b.listing.title.toLowerCase().includes(q) || 
-          (b.user.name?.toLowerCase() || '').includes(q) || 
-          b.user.email.toLowerCase().includes(q)
+          ((b.user?.name || b.guestName)?.toLowerCase() || '').includes(q) || 
+          ((b.user?.email || b.guestContact) || '').toLowerCase().includes(q)
         )
         .slice(0, 5);
       setSuggestions(filtered);
@@ -103,7 +103,7 @@ export function LandlordBookingSearch({
                 <button
                   key={booking.id}
                   onClick={() => {
-                    setSearchQuery(booking.user.name || booking.user.email);
+                    setSearchQuery((booking.user?.name || booking.guestName) || (booking.user?.email || booking.guestContact) || '');
                     setIsFocused(false);
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-primary/5 text-left transition-colors group/item"
@@ -117,7 +117,7 @@ export function LandlordBookingSearch({
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs font-bold text-gray-900 dark:text-white truncate">
-                      {booking.user.name || 'Anonymous Guest'}
+                      {(booking.user?.name || booking.guestName) || 'Anonymous Guest'}
                     </span>
                     <span className="text-[10px] text-gray-500 truncate font-medium">
                       {booking.listing.title} • {booking.status}

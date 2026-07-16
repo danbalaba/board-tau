@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
+import { DateRange } from 'react-day-picker';
 
 export interface Booking {
   id: string;
@@ -25,6 +26,12 @@ export interface Booking {
     email: string;
     image?: string | null;
   };
+  isWalkIn?: boolean;
+  guestName?: string | null;
+  guestContact?: string | null;
+  guestPhotoUrl?: string | null;
+  guestIdUrl?: string | null;
+  occupantsCount?: number;
   status: string;
   paymentStatus: string;
   totalPrice: number;
@@ -46,8 +53,18 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [isArchived, setIsArchived] = useState(false);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedStatus, selectedPaymentStatus, sortBy, isArchived]);
 
   useEffect(() => {
     setListings(initialBookings);
@@ -74,8 +91,8 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
         const q = searchQuery.toLowerCase();
         searchMatch = 
           booking.listing.title.toLowerCase().includes(q) || 
-          (booking.user.name?.toLowerCase() || '').includes(q) || 
-          booking.user.email.toLowerCase().includes(q);
+          ((booking.user?.name || booking.guestName)?.toLowerCase() || '').includes(q) || 
+        ((booking.user?.email || booking.guestContact) || '').toLowerCase().includes(q);
       }
 
       return statusMatch && paymentMatch && searchMatch;
@@ -96,10 +113,15 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     });
 
     return result;
-  }, [selectedStatus, selectedPaymentStatus, listings, sortBy]);
+  }, [selectedStatus, selectedPaymentStatus, listings, sortBy, searchQuery]);
+
+  const paginatedBookings = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredBookings.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredBookings, currentPage, itemsPerPage]);
 
   const handleUpdateStatus = useCallback(async (bookingId: string, status: string) => {
-    setIsUpdatingStatus(true);
+    setUpdatingId(bookingId);
     console.log(`🔄 Updating booking ${bookingId} to status: ${status}`);
     try {
       const response = await fetch(`/api/landlord/bookings?id=${bookingId}`, {
@@ -125,7 +147,7 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
       toastError(error.message || 'Error updating status');
       throw error;
     } finally {
-      setIsUpdatingStatus(false);
+      setUpdatingId(null);
     }
   }, [router]);
 
@@ -148,34 +170,68 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     }
   }, [nextCursor, isLoadingMore]);
 
-  const handleGenerateReport = async () => {
+  const handleGenerateReport = async (dateRange?: DateRange) => {
     try {
-      const totalRevenue = filteredBookings.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
-      const totalBookings = filteredBookings.length;
-      const activeStays = filteredBookings.filter(b => b.status?.toLowerCase() === 'checked_in').length;
+      let exportData = filteredBookings;
+      if (dateRange?.from) {
+        const fromDate = dateRange.from;
+        const toDate = dateRange.to;
+        exportData = exportData.filter(b => {
+          const createdAt = new Date(b.createdAt);
+          if (toDate) {
+            return createdAt >= fromDate && createdAt <= toDate;
+          }
+          return createdAt >= fromDate;
+        });
+      }
 
-      const summaryData = [
-        { 
-          label: 'Total Revenue', 
-          value: `PHP ${totalRevenue.toLocaleString()}`,
-          subValue: 'Confirmed bookings'
-        },
-        { 
-          label: 'Booking Volume', 
-          value: `${totalBookings} Total`,
-          subValue: 'Historical record'
-        },
-        { 
-          label: 'Operational Status', 
-          value: `${activeStays} Checked-In`,
-          subValue: 'Current active stays'
-        }
-      ];
+      const totalBookings = exportData.length;
+      let summaryData: any[] = [];
+      let subtitle = `Financial auditing for ${totalBookings} stay records`;
+
+      if (selectedStatus === 'CHECKED_IN') {
+        const totalRevenue = exportData.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+        summaryData = [
+          { label: 'Active Stays', value: `${totalBookings}` },
+          { label: 'Revenue Generated', value: `₱${totalRevenue.toLocaleString()}` },
+          { label: 'Status', value: `Checked In` }
+        ];
+        subtitle = `Auditing active stays for ${totalBookings} bookings`;
+      } 
+      else if (selectedStatus === 'COMPLETED') {
+        const totalRevenue = exportData.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+        summaryData = [
+          { label: 'Completed Stays', value: `${totalBookings}` },
+          { label: 'Total Revenue', value: `₱${totalRevenue.toLocaleString()}` },
+          { label: 'Status', value: `Completed` }
+        ];
+        subtitle = `Auditing completed stays for ${totalBookings} bookings`;
+      }
+      else if (selectedPaymentStatus === 'pending') {
+        const pendingAmount = exportData.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+        summaryData = [
+          { label: 'Unpaid Bookings', value: `${totalBookings}` },
+          { label: 'Pending Amount', value: `₱${pendingAmount.toLocaleString()}` },
+          { label: 'Status', value: `Pending Payment` }
+        ];
+        subtitle = `Auditing unpaid bookings for ${totalBookings} stays`;
+      }
+      else {
+        // Global 'all' view
+        const totalRevenue = exportData.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+        const activeStays = exportData.filter(b => b.status?.toLowerCase() === 'checked_in').length;
+        
+        summaryData = [
+          { label: 'Total Bookings', value: `${totalBookings}` },
+          { label: 'Total Revenue', value: `₱${totalRevenue.toLocaleString()}` },
+          { label: 'Active Stays', value: `${activeStays}` }
+        ];
+      }
 
       const columns = ['Listing', 'Guest', 'Status', 'Payment', 'Total Price', 'Dates'];
-      const data = filteredBookings.map((b: any) => [
+      const data = exportData.map((b: any) => [
         b.listing.title,
-        b.user.name || b.user.email,
+        (b.user?.name || b.guestName) || (b.user?.email || b.guestContact),
         b.status.toUpperCase(),
         b.paymentStatus.toUpperCase(),
         `PHP ${b.totalPrice.toLocaleString()}`,
@@ -184,7 +240,7 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
 
       await generateTablePDF('Bookings_Report', columns, data, {
         title: 'Booking & Revenue Business Report',
-        subtitle: `Financial auditing for ${totalBookings} stay records`,
+        subtitle: subtitle,
         author: 'Landlord Revenue Management',
         summaryData: summaryData
       });
@@ -242,7 +298,12 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     setSortBy,
     viewMode,
     setViewMode,
-    filteredBookings,
+    filteredBookings: paginatedBookings,
+    totalBookings: filteredBookings.length,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    setItemsPerPage,
     searchQuery,
     setSearchQuery,
     rawBookings: listings,
@@ -252,7 +313,7 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     handleUpdateStatus,
     handleLoadMore,
     handleGenerateReport,
-    isUpdatingStatus,
+    updatingId,
     isLoading
   };
 }
