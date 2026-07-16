@@ -46,19 +46,19 @@ export async function getTenantConversations() {
   
   // To identify the landlord, we need to know who owns the listing. 
   // We'll collect list of listingIds first.
-  const listingIds = Array.from(new Set(conversationsData.map(c => c.listingId)));
+  const listingIds = Array.from(new Set(conversationsData.map((c: any) => c.listingId)));
   const listings = await db.listing.findMany({
     where: { id: { in: listingIds } },
     select: { id: true, userId: true, title: true, imageSrc: true, images: true }
   });
 
   listingIds.forEach(lId => {
-    const listing = listings.find(l => l.id === lId);
+    const listing = listings.find((l: any) => l.id === lId);
     if (listing) {
       const landlordId = listing.userId;
       const key = `${lId}_${landlordId}`;
       if (!uniquePairs.has(key)) {
-         uniquePairs.set(key, { listingId: lId, landlordId });
+         uniquePairs.set(key, { listingId: lId, landlordId: landlordId as string });
       }
     }
   });

@@ -280,6 +280,13 @@ export const getListings = async (query?: {
       take: 1000,
       orderBy: { createdAt: "desc" },
       include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
         rooms: {
           where: roomWhere,
         },
@@ -320,14 +327,14 @@ export const getListings = async (query?: {
 
      // Apply distance filter (strict)
     if (distance != null && distance >= 0) {
-      primaryListings = primaryListings.filter((listing) => {
+      primaryListings = primaryListings.filter((listing: any) => {
         if ((listing as any).latitude == null || (listing as any).longitude == null) return false;
         return haversineKm(lat, lng, (listing as any).latitude, (listing as any).longitude) <= distance;
       });
     }
 
     // Calculate scores for all primary listings (Heuristic v2.0)
-    const scoredListings = primaryListings.map((listing) => {
+    const scoredListings = primaryListings.map((listing: any) => {
       // 1. Calculate Secondary Filter Scores (Weighted 50%)
       let secondaryScore = 0;
       let secondaryTotal = 0;
@@ -404,9 +411,13 @@ export const getListings = async (query?: {
     let paginatedListings: any[] = [];
     let nextCursor = null;
 
-    if (cursor) {
+    const isMap = query?.isMap === "true";
+
+    if (isMap) {
+      paginatedListings = sortedListings;
+    } else if (cursor) {
       // Get listings after cursor
-      const cursorIndex = sortedListings.findIndex((listing) => listing.id === cursor);
+      const cursorIndex = sortedListings.findIndex((listing: any) => listing.id === cursor);
       if (cursorIndex !== -1) {
         paginatedListings = sortedListings.slice(cursorIndex + 1, cursorIndex + 1 + LISTINGS_BATCH);
         if (cursorIndex + 1 + LISTINGS_BATCH < sortedListings.length) {
@@ -424,7 +435,29 @@ export const getListings = async (query?: {
     const response = {
       type: "exact" as const,
       message: "Showing exact matches",
-      listings: paginatedListings,
+      listings: isMap 
+        ? paginatedListings.map(l => ({
+            id: l.id,
+            price: l.price,
+            latitude: l.latitude,
+            longitude: l.longitude,
+            title: l.title,
+            imageSrc: l.imageSrc,
+            category: l.category,
+            rating: l.rating,
+            region: l.region,
+            rooms: l.rooms,
+            reviews: l.reviews,
+            description: l.description,
+            images: l.images,
+            amenities_list: l.amenities_list,
+            amenities: l.amenities,
+            features: l.features,
+            rules: l.rules,
+            user: l.user,
+            categories: l.categories,
+          }))
+        : paginatedListings,
       nextCursor,
     };
 

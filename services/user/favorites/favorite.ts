@@ -98,6 +98,16 @@ export const getFavoriteListings = async () => {
           in: [...(favoriteIds || [])],
         },
       },
+      include: {
+        rooms: true,
+        reviews: true,
+        categories: {
+          include: {
+            category: true,
+          },
+        },
+        images: true,
+      },
     });
 
     return favorites;

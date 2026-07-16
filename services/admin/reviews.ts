@@ -65,7 +65,7 @@ export async function adminUpdateReviewStatus(
       select: { rating: true },
     });
     const avg = approved.length
-      ? approved.reduce((s, r) => s + r.rating, 0) / approved.length
+      ? approved.reduce((s: any, r: any) => s + r.rating, 0) / approved.length
       : null;
     await db.listing.update({
       where: { id: review.listingId },
@@ -80,7 +80,7 @@ export async function adminUpdateReviewStatus(
       select: { rating: true },
     });
     const avg = approved.length
-      ? approved.reduce((s, r) => s + r.rating, 0) / approved.length
+      ? approved.reduce((s: any, r: any) => s + r.rating, 0) / approved.length
       : null;
     await db.listing.update({
       where: { id: review.listingId },

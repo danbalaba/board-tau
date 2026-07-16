@@ -19,7 +19,7 @@ export const getLandlordReviews = async (args?: {
     select: { id: true }
   });
 
-  const listingIds = listings.map(l => l.id);
+  const listingIds = listings.map((l: any) => l.id);
 
   const where: any = {
     listingId: { in: listingIds }

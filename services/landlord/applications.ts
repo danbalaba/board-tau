@@ -13,7 +13,7 @@ import {
  * Interface representing the new 8-step Host Application data.
  * Focused on Identity and Legitimacy verification.
  */
-export interface HostApplicationData {
+interface HostApplicationData {
   businessInfo: {
     businessName: string;
     businessType: string;
@@ -97,7 +97,7 @@ export const createHostApplication = async (data: HostApplicationData) => {
       where: { role: 'ADMIN' }
     });
     
-    adminUsers.forEach(admin => {
+    adminUsers.forEach((admin: any) => {
       sendAdminApplicationNotification(admin, application as any);
     });
 

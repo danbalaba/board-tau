@@ -56,6 +56,7 @@ export const getLandlordInquiries = async (args?: {
           id: true,
           name: true,
           price: true,
+          capacity: true,
           reservationFee: true,
           images: {
             select: {
@@ -187,6 +188,7 @@ export const respondToInquiry = async (
         durationInDays,
         totalPrice,
         occupantsCount: (inquiry as any).occupantsCount || 1,
+        isSoloBuyout: (inquiry as any).isSoloBuyout || false,
         status: "PENDING_PAYMENT",
         paymentStatus: "PENDING",
       } as any

@@ -21,6 +21,10 @@ import PasswordChangedEmail from '@/emails/PasswordChanged';
 import NewLoginAlertEmail from '@/emails/NewLoginAlert';
 import ResetPasswordEmail from '@/emails/ResetPasswordEmail';
 import OAuthReminderEmail from '@/emails/OAuthReminderEmail';
+import StrikeWarningEmail from '@/emails/StrikeWarningEmail';
+import BanNoticeEmail from '@/emails/BanNoticeEmail';
+import SuspensionNoticeEmail from '@/emails/SuspensionNoticeEmail';
+import ReactivationNoticeEmail from '@/emails/ReactivationNoticeEmail';
 
 // Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
@@ -33,9 +37,22 @@ export interface EmailOptions {
   html: string;
 }
 
+import { db } from '@/lib/db';
+
 // Send email with error handling
 export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
   try {
+    // 1. Check Global Feature Flag
+    const emailFlag = await db.featureFlag.findUnique({
+      where: { name: 'GLOBAL_EMAIL_NOTIFICATIONS' }
+    });
+    
+    if (emailFlag && !emailFlag.enabled) {
+      console.log('Email sending skipped: GLOBAL_EMAIL_NOTIFICATIONS is disabled.');
+      return false;
+    }
+
+    // 2. Proceed with sending
     const { data, error } = await resend.emails.send({
       from: `BoardTAU <${process.env.EMAIL_FROM}>`,
       to: options.to,
@@ -132,6 +149,7 @@ export const sendInquirySubmissionEmail = async (landlord: any, tenant: any, lis
     occupantsCount: inquiryData.occupantsCount || 1,
     reservationFee: inquiryData.reservationFee || 0,
     baseFee: room.reservationFee || 0,
+    isSoloBuyout: inquiryData.isSoloBuyout || false,
     tenantName: tenant.name,
     message: inquiryData.message || 'No message provided.',
     manageInquiriesLink: inquiryLink
@@ -178,13 +196,16 @@ export const sendReservationNotificationEmail = async (
   title: string,
   description: string,
   isLandlord: boolean = false,
-  overrideLink?: string
+  overrideLink?: string,
+  overrideLabel?: string
 ) => {
   const bookingLink = overrideLink || (isLandlord ? `${baseUrl}/landlord/reservations` : `${baseUrl}/reservations`);
+  const buttonLabel = overrideLabel || (isLandlord ? 'Manage Reservations' : 'My Reservations');
+
   const emailHtml = await render(React.createElement(GenericNotification, {
     title: title,
     description: description,
-    actionLabel: isLandlord ? 'Manage Reservations' : 'My Reservations',
+    actionLabel: buttonLabel,
     actionLink: bookingLink
   }));
 
@@ -235,6 +256,7 @@ export const sendInquiryReceiptEmail = async (tenant: any, listing: any, room: a
     occupantsCount: inquiryData.occupantsCount || 1,
     reservationFee: inquiryData.reservationFee,
     baseFee: room.reservationFee,
+    isSoloBuyout: inquiryData.isSoloBuyout || false,
     message: inquiryData.message,
     trackInquiryLink: `${baseUrl}/inquiries`
   }));
@@ -393,6 +415,70 @@ export const sendOAuthReminderEmail = async (user: any, provider: string) => {
   return await sendEmail({
     to: user.email,
     subject: `Login Reminder: Your BoardTAU account uses ${provider}`,
+    html: emailHtml
+  });
+};
+/**
+ * Strike Warning Email (for cancellations/violations)
+ */
+export const sendStrikeWarningEmail = async (user: any, strikeCount: number, reason: string, isRepeatOffender: boolean = false) => {
+  const emailHtml = await render(React.createElement(StrikeWarningEmail, {
+    userName: user.name || 'User',
+    strikeCount: strikeCount,
+    reason: reason,
+    isRepeatOffender: isRepeatOffender,
+  }));
+
+  return await sendEmail({
+    to: user.email,
+    subject: `⚠️ Warning: Strike ${strikeCount}/3 on your BoardTAU Account`,
+    html: emailHtml
+  });
+};
+
+/**
+ * Permanent Ban Notice Email
+ */
+export const sendBanNoticeEmail = async (user: any, reason: string) => {
+  const emailHtml = await render(React.createElement(BanNoticeEmail, {
+    userName: user.name || 'User',
+    reason: reason,
+  }));
+
+  return await sendEmail({
+    to: user.email,
+    subject: `🚨 Account Banned: BoardTAU Security Notice`,
+    html: emailHtml
+  });
+};
+
+/**
+ * Temporary Suspension Notice Email
+ */
+export const sendSuspensionNoticeEmail = async (user: any, reason: string) => {
+  const emailHtml = await render(React.createElement(SuspensionNoticeEmail, {
+    userName: user.name || 'User',
+    reason: reason,
+  }));
+
+  return await sendEmail({
+    to: user.email,
+    subject: `⚠️ Account Suspended: BoardTAU Security Notice`,
+    html: emailHtml
+  });
+};
+
+/**
+ * Account Reactivation Notice Email
+ */
+export const sendReactivationEmail = async (user: any) => {
+  const emailHtml = await render(React.createElement(ReactivationNoticeEmail, {
+    userName: user.name || 'User',
+  }));
+
+  return await sendEmail({
+    to: user.email,
+    subject: `✅ Account Reactivated: Welcome back to BoardTAU!`,
     html: emailHtml
   });
 };
