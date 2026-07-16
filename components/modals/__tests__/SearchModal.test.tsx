@@ -152,7 +152,7 @@ jest.mock('next/dynamic', () => () => {
 jest.mock('framer-motion', () => {
   const React = require('react');
   const Dummy = React.forwardRef((props: any, ref: any) => {
-    const { initial, animate, exit, transition, ...rest } = props;
+    const { initial, animate, exit, transition, layout, ...rest } = props;
     return <div ref={ref} {...rest} />;
   });
   return {
