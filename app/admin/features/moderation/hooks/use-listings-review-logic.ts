@@ -1,26 +1,35 @@
 import { useState, useMemo } from 'react';
-import { useListingsReview, useModerationDecision } from '@/app/admin/hooks/use-moderation';
-import { toast } from 'sonner';
+import { useListingsReview, useModerationDecision, useModerationDelete } from '@/app/admin/hooks/use-moderation';
+import { toast } from '@/app/admin/components/ui/sonner';
 
-export function useListingsReviewLogic() {
-  const { data: apiResponse, isLoading, refetch, isFetching } = useListingsReview();
+export function useListingsReviewLogic(isArchived: boolean = false) {
+  const { data: apiResponse, isLoading, error, refetch, isFetching } = useListingsReview({ isArchived });
   const { mutate: decide, isPending: isDeciding } = useModerationDecision();
+  const { mutate: doDelete, isPending: isDeleting } = useModerationDelete();
 
   // Raw data from the API
   const rawListings = apiResponse?.data || [];
   const pendingCount = apiResponse?.meta?.stats?.pending || 0;
   const approvedCount = apiResponse?.meta?.stats?.active || 0;
   const rejectedCount = apiResponse?.meta?.stats?.rejected || 0;
+  const totalLastWeek = apiResponse?.meta?.stats?.totalLastWeek || 0;
+  const pendingLastWeek = apiResponse?.meta?.stats?.pendingLastWeek || 0;
+  const approvedLastWeek = apiResponse?.meta?.stats?.activeLastWeek || 0;
+  const rejectedLastWeek = apiResponse?.meta?.stats?.rejectedLastWeek || 0;
 
   // View state
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
 
-  // Modal & Selection state
   const [selectedListing, setSelectedListing] = useState<any | null>(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  
+  const [archiveModalOpen, setArchiveModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToArchive, setItemToArchive] = useState<any | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<any | null>(null);
 
   // Filtering and Sorting
   const filteredListings = useMemo(() => {
@@ -60,14 +69,17 @@ export function useListingsReviewLogic() {
 
   // Actions
   const handleRefresh = async () => {
-    await refetch();
-    toast.success('Market inventory synchronized.');
+    toast.promise(refetch(), {
+      loading: 'Syncing market inventory...',
+      success: 'Market inventory synchronized.',
+      error: 'Failed to synchronize inventory.'
+    });
   };
 
-  const handleDecision = (id: string, action: 'approve' | 'reject', reason?: string) => {
+  const handleDecision = (id: string, action: 'approve' | 'reject' | 'archive', reason?: string) => {
     decide({ id, entityType: 'listing', action, reason }, {
       onSuccess: () => {
-        toast.success(`Listing ${action === 'approve' ? 'authorized' : 'rejected'} successfully.`);
+        toast.success(action === 'archive' ? 'Listing archived.' : `Listing ${action === 'approve' ? 'authorized' : 'rejected'} successfully.`);
         // Close modals after action
         if (action === 'approve') setViewModalOpen(false);
         if (action === 'reject') {
@@ -81,6 +93,35 @@ export function useListingsReviewLogic() {
     });
   };
 
+  const handleArchive = (listing: any) => {
+    setItemToArchive(listing);
+    setArchiveModalOpen(true);
+  };
+
+  const handleConfirmArchive = () => {
+    if (!itemToArchive) return;
+    handleDecision(itemToArchive.id, 'archive');
+    setArchiveModalOpen(false);
+  };
+
+  const handleDelete = (listing: any) => {
+    setItemToDelete(listing);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!itemToDelete) return;
+    doDelete({ id: itemToDelete.id, entityType: 'listing' }, {
+      onSuccess: () => {
+        toast.success('Listing permanently deleted.');
+        setDeleteModalOpen(false);
+      },
+      onError: (err: any) => {
+        toast.error(`Delete Failed: ${err.message}`);
+      }
+    });
+  };
+
   return {
     // Data
     rawListings,
@@ -88,9 +129,15 @@ export function useListingsReviewLogic() {
     pendingCount,
     approvedCount,
     rejectedCount,
+    totalLastWeek,
+    pendingLastWeek,
+    approvedLastWeek,
+    rejectedLastWeek,
     
     // State
-    isLoading: isLoading || isFetching,
+    isLoading,
+    isFetching,
+    error,
     isDeciding,
     viewMode,
     setViewMode,
@@ -109,6 +156,18 @@ export function useListingsReviewLogic() {
     
     // Actions
     handleRefresh,
-    handleDecision
+    handleDecision,
+    handleArchive,
+    handleConfirmArchive,
+    handleDelete,
+    handleConfirmDelete,
+    isDeleting,
+    
+    archiveModalOpen,
+    setArchiveModalOpen,
+    deleteModalOpen,
+    setDeleteModalOpen,
+    itemToArchive,
+    itemToDelete
   };
 }
