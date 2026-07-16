@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      - run: npm ci
+      - run: npm install
 
   quality:
     runs-on: ubuntu-latest
@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      - run: npm ci
+      - run: npm install
       - run: npm run lint
       - run: npm run type-check
 
@@ -50,7 +50,7 @@ jobs:
         with:
           node-version: 22.13.1
           cache: 'npm'
-      - run: npm ci
+      - run: npm install
       - run: npm audit --audit-level=high
 
   tests:
@@ -66,7 +66,7 @@ jobs:
         with:
           node-version: 22.13.1
           cache: 'npm'
-      - run: npm ci
+      - run: npm install
       - run: npx prisma generate
       - run: npm run test:coverage
 
@@ -110,7 +110,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      - run: npm ci
+      - run: npm install
       - run: npm run build
       - uses: actions/upload-artifact@v7
         with:
@@ -156,7 +156,7 @@ jobs:
         with:
           node-version: 22.13.1
           cache: 'npm'
-      - run: npm ci
+      - run: npm install
       - run: npm run build
 
   deploy:
@@ -169,7 +169,7 @@ jobs:
         with:
           node-version: 22.13.1
           cache: 'npm'
-      - run: npm ci
+      - run: npm install
       - uses: actions/download-artifact@v7
         with:
           name: build-artifact
