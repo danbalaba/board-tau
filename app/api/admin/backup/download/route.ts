@@ -37,12 +37,29 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid or tampered file reference' }, { status: 400 });
     }
 
+    // Parse path segments using a strict regex whitelist to sanitize input and break CodeQL taint path
+    const match = urlObj.pathname.match(/^\/([a-zA-Z0-9\-_]+)\/([a-zA-Z0-9\-_]+)\/(?:([a-zA-Z0-9\-_]+)\/)?([a-zA-Z0-9\-_.]+)\.json$/);
+    if (!match) {
+      console.error('[BACKUP_DOWNLOAD] Path does not match safe pattern:', urlObj.pathname);
+      return NextResponse.json({ error: 'Invalid file reference format' }, { status: 400 });
+    }
+
+    const folder1 = match[1];
+    const folder2 = match[2];
+    const folder3 = match[3]; // Optional sub-folder (might be undefined)
+    const filename = match[4];
+
+    // Reconstruct the path using only the whitelisted matched segments
+    const safePath = folder3 
+      ? `/${folder1}/${folder2}/${folder3}/${filename}.json`
+      : `/${folder1}/${folder2}/${filename}.json`;
+
     // 5. Reconstruct the URL using strictly hardcoded string literals to prevent SSRF and clear CodeQL taint tracking
     let safeUrl = '';
     if (urlObj.hostname === 'files.edgestore.dev') {
-      safeUrl = `https://files.edgestore.dev${urlObj.pathname}${urlObj.search}`;
+      safeUrl = `https://files.edgestore.dev${safePath}`;
     } else if (urlObj.hostname === 'edgestore.dev') {
-      safeUrl = `https://edgestore.dev${urlObj.pathname}${urlObj.search}`;
+      safeUrl = `https://edgestore.dev${safePath}`;
     } else {
       console.error('[BACKUP_DOWNLOAD] Hostname is not a valid EdgeStore origin:', urlObj.hostname);
       return NextResponse.json({ error: 'Invalid or tampered file reference' }, { status: 400 });
