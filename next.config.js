@@ -87,6 +87,11 @@ module.exports = withSentryConfig(module.exports, {
   org: "dan-richie",
   project: "javascript-nextjs",
 
+  // Disable source map uploads to prevent build-time API failures on Vercel
+  sourcemaps: {
+    disable: true,
+  },
+
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
 
