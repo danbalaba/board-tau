@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { FeatureFlags } from '@/app/admin/features/settings/components/platform-flags';
+import { FeatureFlags } from '@/app/admin/features/settings/components/feature-flags';
 
 export const metadata: Metadata = {
   title: 'Feature Flags - BoardTAU Admin',
