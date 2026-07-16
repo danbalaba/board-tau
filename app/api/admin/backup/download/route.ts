@@ -23,9 +23,19 @@ export async function GET(req: NextRequest) {
     //    The raw EdgeStore URL is never exposed to the browser at any point
     const rawUrl = decryptMessage(fileUrl);
 
-    // 4. Validate the decrypted URL belongs to EdgeStore (security check)
-    if (!rawUrl.includes('edgestore.dev')) {
-      console.error('[BACKUP_DOWNLOAD] Decrypted URL is not an EdgeStore URL:', rawUrl.substring(0, 30));
+    // 4. Validate the decrypted URL strictly belongs to EdgeStore (security check to prevent SSRF)
+    let urlObj: URL;
+    try {
+      urlObj = new URL(rawUrl);
+    } catch (e) {
+      return NextResponse.json({ error: 'Malformed URL reference' }, { status: 400 });
+    }
+
+    const isSecure = urlObj.protocol === 'https:';
+    const isEdgeStoreHost = urlObj.hostname === 'files.edgestore.dev' || urlObj.hostname === 'edgestore.dev' || urlObj.hostname.endsWith('.edgestore.dev');
+
+    if (!isSecure || !isEdgeStoreHost) {
+      console.error('[BACKUP_DOWNLOAD] Decrypted URL is not a valid EdgeStore reference or insecure:', rawUrl.substring(0, 50));
       return NextResponse.json({ error: 'Invalid or tampered file reference' }, { status: 400 });
     }
 
