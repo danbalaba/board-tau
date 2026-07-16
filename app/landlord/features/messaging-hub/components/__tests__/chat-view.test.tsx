@@ -20,7 +20,7 @@ jest.mock('framer-motion', () => ({
 
 jest.mock('react-loading-skeleton', () => {
   return function MockSkeleton() {
-    return <div data-testid="mock-skeleton" />;
+    return <span data-testid="mock-skeleton" />;
   };
 });
 
