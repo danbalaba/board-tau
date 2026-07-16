@@ -15,6 +15,7 @@ console.error = (...args: any[]) => {
     msg.includes('non-boolean attribute `priority`') ||
     msg.includes('non-boolean attribute `unoptimized`') ||
     msg.includes('passed to the src attribute') ||
+    msg.includes('download the whole page again over the network') ||
     msg.includes('non-boolean attribute `initial`') ||
     msg.includes('non-boolean attribute `drag`') ||
     msg.includes('non-boolean attribute `animate`') ||
