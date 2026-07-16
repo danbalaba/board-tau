@@ -31,11 +31,13 @@ const useKeyPress = ({ key, action, enable = true }: { key: string; action: (e: 
   }, [action, key, enable]);
 };
 
-const MenuContext = createContext({
+export const MenuContext = createContext({
   openId: "",
   setOpenId: (val: string) => { },
   close: () => { },
 });
+
+export const useMenu = () => useContext(MenuContext);
 
 interface ToggleProps {
   children: ReactElement;

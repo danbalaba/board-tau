@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sendNewReviewEmail, sendReviewReceiptEmail } from "@/services/email/notifications";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function POST(request: Request) {
   try {
@@ -11,6 +12,12 @@ export async function POST(request: Request) {
 
     if (!currentUser || !currentUser.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { hasPermission } = await import("@/lib/rbac");
+    const permitted = await hasPermission(currentUser.id, "CREATE_REVIEW");
+    if (!permitted) {
+      return NextResponse.json({ error: "Forbidden: Missing permission CREATE_REVIEW" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -86,7 +93,7 @@ export async function POST(request: Request) {
     
     let newAvgRating: number | null = null;
     if (allReviews.length > 0) {
-       newAvgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
+       newAvgRating = allReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / allReviews.length;
     }
 
     try {
@@ -171,6 +178,25 @@ export async function POST(request: Request) {
       revalidatePath(`/listings/${listingId}`);
     } catch (cacheError) {
       console.error("Cache invalidation failed:", cacheError);
+    }
+
+    // Track review submission server-side
+    try {
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: currentUser.id,
+        event: "review_submitted",
+        properties: {
+          listing_id: listingId,
+          reservation_id: reservationId,
+          rating,
+          has_comment: !!comment,
+          has_images: (images || []).length > 0,
+        },
+      });
+      await posthog.flush();
+    } catch (phErr) {
+      console.error("PostHog review_submitted capture failed:", phErr);
     }
 
     return NextResponse.json(review);

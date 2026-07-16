@@ -3,12 +3,13 @@ import React, { useState, useRef, useEffect } from "react";
 import Button from "@/components/common/Button";
 import Modal from "../../modals/Modal";
 import InquiryModal from "../../modals/InquiryModal";
+import AuthModal from "../../modals/AuthModal";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import AllRoomsModal from "./AllRoomsModal";
 import RoomDetailsModal from "./RoomDetailsModal";
-import { Eye, Users, Layers, Info, CheckCircle2, XCircle, DoorOpen } from "lucide-react";
+import { Eye, Users, Layers, Info, CheckCircle2, XCircle, DoorOpen, ArrowRight } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
 import RoomTooltip from "./RoomTooltip";
 
@@ -55,15 +56,28 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
   user,
   activeStay,
 }) => {
-  // Show all rooms, not just available ones, sorted naturally by name
-  const allRooms = [...rooms].sort((a, b) => 
+  const soloRooms = React.useMemo(() => [...rooms].filter(r => r.roomType === 'SOLO').sort((a, b) => 
     a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+  ), [rooms]);
+  
+  const bedspaceRooms = React.useMemo(() => [...rooms].filter(r => r.roomType === 'BEDSPACE').sort((a, b) => 
+    a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+  ), [rooms]);
+
+  const [activeTab, setActiveTab] = useState<'SOLO' | 'BEDSPACE'>(
+    soloRooms.length > 0 ? 'SOLO' : 'BEDSPACE'
   );
+
+  // The active rooms being displayed in the carousel
+  const activeRooms = React.useMemo(() => activeTab === 'SOLO' ? soloRooms : bedspaceRooms, [activeTab, soloRooms, bedspaceRooms]);
+  
+  const handledAutoInquire = useRef<string | null>(null);
   const router = useRouter();
   const [showAllRoomsModal, setShowAllRoomsModal] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [showRoomDetails, setShowRoomDetails] = useState(false);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [roomToInquire, setRoomToInquire] = useState<Room | null>(null);
   const { error: toastError } = useResponsiveToast();
   const lastInquiryToastTime = useRef<number>(0);
@@ -111,29 +125,41 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
       container.addEventListener('scroll', checkScroll);
       return () => container.removeEventListener('scroll', checkScroll);
     }
-  }, [allRooms]);
+  }, [activeRooms]);
 
   // Handle Auto-Inquiry from Deep Links
   useEffect(() => {
     const roomId = searchParams.get('room');
     const autoInquire = searchParams.get('autoInquire');
 
-    if (autoInquire === 'true' && roomId && allRooms.length > 0) {
-      const room = allRooms.find(r => r.id === roomId);
+    if (!autoInquire) {
+      handledAutoInquire.current = null;
+    }
+
+    if (user && autoInquire === 'true' && roomId && activeRooms.length > 0) {
+      if (handledAutoInquire.current === roomId) return; // Prevent infinite loop on re-renders
+
+      const room = [...soloRooms, ...bedspaceRooms].find(r => r.id === roomId);
       if (room && room.status === "AVAILABLE") {
+        handledAutoInquire.current = roomId; // Mark as handled so it won't force reopen
+
+        // Switch tab to the correct one before opening modal
+        if (room.roomType === 'SOLO') setActiveTab('SOLO');
+        if (room.roomType === 'BEDSPACE') setActiveTab('BEDSPACE');
+        
         // Scroll to section
         sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         
         // Open modal
         setRoomToInquire(room);
         setShowInquiryModal(true);
-        
-        // Optional: clean up URL to prevent re-triggering on refresh
+
+        // Clear the URL immediately to prevent any re-triggers on background renders
         const newUrl = window.location.pathname;
-        window.history.replaceState({}, '', newUrl);
+        router.replace(newUrl, { scroll: false });
       }
     }
-  }, [searchParams, allRooms]);
+  }, [searchParams, soloRooms, bedspaceRooms, activeRooms, user, router]);
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -153,11 +179,18 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
     }
     
     if (!user) {
+      // Update URL with intent so it survives OAuth or page reload
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('autoInquire', 'true');
+      newUrl.searchParams.set('room', room.id);
+      window.history.replaceState({}, '', newUrl.toString());
+
       const now = Date.now();
       if (now - lastInquiryToastTime.current > 5000) {
-        toastError("Please log in to send an inquiry.");
+        toastError("Please sign in to send your inquiry.");
         lastInquiryToastTime.current = now;
       }
+      setShowAuthModal(true);
       return;
     }
 
@@ -171,33 +204,69 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
   };
 
   // Show View All button only when there are more than 5 rooms
-  const showViewAllButton = allRooms.length > 5;
+  const showViewAllButton = activeRooms.length > 5;
 
   return (
-    <section ref={sectionRef} className="py-8 border-t border-border scroll-mt-24">
-      <h2 className="text-2xl font-bold text-text-primary mb-6">
-        Available Rooms / Bedspaces
-      </h2>
+    <section ref={sectionRef} className="scroll-mt-24">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+        <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+          Available Rentals
+        </h2>
 
-      {allRooms.length === 0 ? (
+        {/* Tabs UI */}
+        {(soloRooms.length > 0 && bedspaceRooms.length > 0) && (
+          <div className="flex items-center gap-2 p-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-2xl w-max">
+            <button
+              onClick={() => setActiveTab('SOLO')}
+              className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 ${
+                activeTab === 'SOLO'
+                  ? 'bg-white dark:bg-gray-700 text-primary shadow-sm ring-1 ring-black/5'
+                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              <DoorOpen size={16} />
+              Private Solo Rooms
+            </button>
+            <button
+              onClick={() => setActiveTab('BEDSPACE')}
+              className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 ${
+                activeTab === 'BEDSPACE'
+                  ? 'bg-white dark:bg-gray-700 text-primary shadow-sm ring-1 ring-black/5'
+                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              <Users size={16} />
+              Shared Bedspaces
+            </button>
+          </div>
+        )}
+      </div>
+
+      {rooms.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-lg text-gray-500 dark:text-gray-400 mb-4">
             No rooms available for this listing
           </p>
         </div>
+      ) : activeRooms.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/20 rounded-3xl border border-gray-100 dark:border-gray-800">
+          <p className="text-gray-500 dark:text-gray-400">
+            There are no {activeTab === 'SOLO' ? 'Solo Rooms' : 'Bedspaces'} available in this property.
+          </p>
+        </div>
       ) : (
         <div className="relative">
           {/* Navigation Arrows */}
-          {allRooms.length > 1 && (
+          {activeRooms.length > 1 && (
             <>
               {/* Left Arrow */}
               <button
                 onClick={scrollLeft}
                 disabled={!canScrollLeft}
-                className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full shadow-lg transition-all duration-200 ${
+                className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full shadow-lg transition-all duration-200 border border-gray-100/50 dark:border-gray-700/50 ${
                   canScrollLeft
-                    ? "bg-white dark:bg-gray-800 text-primary hover:bg-gray-100 dark:hover:bg-gray-700"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
+                    ? "bg-white/60 dark:bg-gray-800/60 backdrop-blur-md text-primary hover:bg-white/90 dark:hover:bg-gray-700/90"
+                    : "bg-gray-200/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-400 cursor-not-allowed border-transparent"
                 }`}
                 aria-label="Scroll left"
               >
@@ -208,10 +277,10 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
               <button
                 onClick={scrollRight}
                 disabled={!canScrollRight}
-                className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full shadow-lg transition-all duration-200 ${
+                className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full shadow-lg transition-all duration-200 border border-gray-100/50 dark:border-gray-700/50 ${
                   canScrollRight
-                    ? "bg-white dark:bg-gray-800 text-primary hover:bg-gray-100 dark:hover:bg-gray-700"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
+                    ? "bg-white/60 dark:bg-gray-800/60 backdrop-blur-md text-primary hover:bg-white/90 dark:hover:bg-gray-700/90"
+                    : "bg-gray-200/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-400 cursor-not-allowed border-transparent"
                 }`}
                 aria-label="Scroll right"
               >
@@ -220,13 +289,21 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
             </>
           )}
 
+          {/* Mobile Swipe Hint */}
+          <div className="flex md:hidden items-center gap-2 mb-4">
+            <div className="bg-[#2f7d6d]/10 px-3 py-1.5 rounded-full flex items-center gap-2">
+                <ArrowRight size={14} className="text-[#2f7d6d]" />
+                <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-[#2f7d6d]">Swipe to explore</span>
+            </div>
+          </div>
+
           {/* Rooms Carousel */}
           <div
             ref={scrollContainerRef}
             className="flex gap-6 overflow-x-auto pb-4 px-2 scrollbar-hide"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {(showViewAllButton ? allRooms.slice(0, 5) : allRooms).map((room) => (
+            {(showViewAllButton ? activeRooms.slice(0, 5) : activeRooms).map((room) => (
               <div
                 key={room.id}
                 className="flex-shrink-0 w-80 group bg-white dark:bg-gray-800/50 rounded-[2rem] border border-gray-100 dark:border-gray-700/50 hover:border-primary/30 dark:hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 relative"
@@ -249,10 +326,10 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
                   {/* Status Badge */}
                   <div className="absolute top-4 right-4 z-10">
                     <div
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-md border border-white/20 shadow-lg flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-md border shadow-lg flex items-center gap-1.5 ${
                         room.status === "AVAILABLE"
-                          ? "bg-emerald-500/90 text-white"
-                          : "bg-rose-500/90 text-white"
+                          ? "bg-primary/60 border-white/30 text-white"
+                          : "bg-rose-500/60 border-white/30 text-white"
                       }`}
                     >
                       {room.status === "AVAILABLE" ? (
@@ -371,7 +448,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
                     View All Rooms
                   </span>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {allRooms.length} rooms available
+                    {activeRooms.length} rooms available
                   </span>
                 </button>
               </div>
@@ -384,7 +461,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
       <AllRoomsModal
         isOpen={showAllRoomsModal}
         onClose={() => setShowAllRoomsModal(false)}
-        rooms={allRooms}
+        rooms={activeRooms}
         listingName={listingName}
         listingId={listingId}
         onSubmit={onSubmit}
@@ -406,30 +483,33 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
           listingName={listingName}
           onInquire={() => {
             setShowRoomDetails(false);
-            setRoomToInquire(selectedRoom);
-            setShowInquiryModal(true);
+            handleInquireClick(undefined, selectedRoom);
           }}
           user={user}
         />
       )}
 
       {/* Central Inquiry Modal */}
-      {roomToInquire && (
-        <InquiryModal
-          isOpen={showInquiryModal}
-          onClose={() => {
-            setShowInquiryModal(false);
-            setRoomToInquire(null);
-          }}
-          listingName={listingName}
-          listingId={listingId}
-          landlordId={landlordId}
-          room={roomToInquire}
-          onSubmit={onSubmit}
-          isLoading={isLoading}
-          activeStay={activeStay}
-        />
-      )}
+      <InquiryModal
+        isOpen={showInquiryModal}
+        onClose={() => {
+          setShowInquiryModal(false);
+          // Delay clearing the room so the exit animation can play
+          setTimeout(() => setRoomToInquire(null), 300);
+        }}
+        listingName={listingName}
+        listingId={listingId}
+        landlordId={landlordId}
+        room={roomToInquire || activeRooms[0] || rooms[0]} // Fallback to prevent crashes during exit animation
+        onSubmit={onSubmit}
+        isLoading={isLoading}
+        activeStay={activeStay}
+      />
+
+      {/* Auth Modal for Guests */}
+      <Modal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} width="sm" noPadding>
+        <AuthModal name="Login" onCloseModal={() => setShowAuthModal(false)} />
+      </Modal>
     </section>
   );
 };

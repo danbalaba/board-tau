@@ -10,6 +10,16 @@ export const navItems: NavItem[] = [
     icon: 'dashboard',
     isActive: false,
     shortcut: ['d', 'd'],
+    allowedRoles: ['SUPER_ADMIN'],
+    items: []
+  },
+  {
+    title: 'Dashboard',
+    url: '/admin/dashboard',
+    icon: 'dashboard',
+    isActive: false,
+    shortcut: ['d', 'd'],
+    allowedRoles: ['ADMIN'],
     items: []
   },
   {
@@ -29,13 +39,15 @@ export const navItems: NavItem[] = [
         title: 'Roles & Permissions',
         url: '/admin/user-management/roles',
         icon: 'shield',
-        shortcut: ['r', 'p']
+        shortcut: ['r', 'p'],
+        allowedRoles: ['SUPER_ADMIN']
       },
       {
         title: 'User Analytics',
         url: '/admin/user-management/analytics',
         icon: 'chartBar',
-        shortcut: ['u', 'a']
+        shortcut: ['u', 'a'],
+        allowedRoles: ['SUPER_ADMIN']
       }
     ]
   },
@@ -78,6 +90,7 @@ export const navItems: NavItem[] = [
     icon: 'currencyDollar',
     isActive: false,
     shortcut: ['f', 'f'],
+    allowedRoles: ['SUPER_ADMIN'],
     items: [
       {
         title: 'Revenue Dashboard',
@@ -92,22 +105,10 @@ export const navItems: NavItem[] = [
         shortcut: ['t', 't']
       },
       {
-        title: 'Commissions & Fees',
-        url: '/admin/finance/fees',
-        icon: 'receipt',
-        shortcut: ['c', 'f']
-      },
-      {
-        title: 'Tax Compliance',
-        url: '/admin/finance/taxes',
-        icon: 'fileText',
-        shortcut: ['t', 'c']
-      },
-      {
-        title: 'Financial Reports',
-        url: '/admin/finance/reports',
-        icon: 'chartBar',
-        shortcut: ['f', 'r']
+        title: 'Top Performing Listings',
+        url: '/admin/finance/top-listings',
+        icon: 'star',
+        shortcut: ['t', 'l']
       }
     ]
   },
@@ -117,36 +118,13 @@ export const navItems: NavItem[] = [
     icon: 'home',
     isActive: false,
     shortcut: ['p', 'p'],
+    allowedRoles: ['SUPER_ADMIN'],
     items: [
       {
         title: 'Property Directory',
         url: '/admin/properties/directory',
         icon: 'building',
         shortcut: ['p', 'd']
-      },
-      {
-        title: 'Performance Metrics',
-        url: '/admin/properties/performance',
-        icon: 'chartBar',
-        shortcut: ['p', 'm']
-      },
-      {
-        title: 'Occupancy Tracking',
-        url: '/admin/properties/occupancy',
-        icon: 'users',
-        shortcut: ['o', 't']
-      },
-      {
-        title: 'Pricing Optimization',
-        url: '/admin/properties/pricing',
-        icon: 'tag',
-        shortcut: ['p', 'o']
-      },
-      {
-        title: 'Booking Management',
-        url: '/admin/properties/bookings',
-        icon: 'calendar',
-        shortcut: ['b', 'm']
       }
     ]
   },
@@ -156,6 +134,7 @@ export const navItems: NavItem[] = [
     icon: 'monitor',
     isActive: false,
     shortcut: ['s', 'm'],
+    allowedRoles: ['SUPER_ADMIN'],
     items: [
       {
         title: 'System Health',
@@ -164,67 +143,10 @@ export const navItems: NavItem[] = [
         shortcut: ['s', 'h']
       },
       {
-        title: 'Server Metrics',
-        url: '/admin/monitoring/servers',
-        icon: 'server',
-        shortcut: ['s', 'm']
-      },
-      {
-        title: 'Database Performance',
-        url: '/admin/monitoring/database',
-        icon: 'database',
-        shortcut: ['d', 'p']
-      },
-      {
-        title: 'API Monitoring',
-        url: '/admin/monitoring/api',
-        icon: 'api',
-        shortcut: ['a', 'm']
-      },
-      {
-        title: 'Error Tracking',
-        url: '/admin/monitoring/errors',
-        icon: 'alertTriangle',
-        shortcut: ['e', 't']
-      },
-      {
-        title: 'Security Logs',
-        url: '/admin/monitoring/security',
+        title: 'Audit Logs',
+        url: '/admin/monitoring/audit-logs',
         icon: 'shieldAlert',
-        shortcut: ['s', 'l']
-      }
-    ]
-  },
-  {
-    title: 'Advanced Analytics',
-    url: '/admin/analytics',
-    icon: 'chartBar',
-    isActive: false,
-    shortcut: ['a', 'a'],
-    items: [
-      {
-        title: 'Analytics Dashboard',
-        url: '/admin/analytics',
-        icon: 'chartLine',
-        shortcut: ['a', 'd']
-      },
-      {
-        title: 'Reports',
-        url: '/admin/analytics/reports',
-        icon: 'fileText',
-        shortcut: ['a', 'r']
-      },
-      {
-        title: 'Custom Dashboards',
-        url: '/admin/analytics/dashboards',
-        icon: 'grid3X3',
-        shortcut: ['a', 'c']
-      },
-      {
-        title: 'Data Export',
-        url: '/admin/analytics/export',
-        icon: 'download',
-        shortcut: ['a', 'e']
+        shortcut: ['a', 'l']
       }
     ]
   },
@@ -234,10 +156,11 @@ export const navItems: NavItem[] = [
     icon: 'settings',
     isActive: false,
     shortcut: ['s', 's'],
+    allowedRoles: ['SUPER_ADMIN'],
     items: [
       {
         title: 'General Settings',
-        url: '/admin/settings',
+        url: '/admin/settings/general',
         icon: 'settings',
         shortcut: ['g', 's']
       },
@@ -248,22 +171,10 @@ export const navItems: NavItem[] = [
         shortcut: ['f', 'f']
       },
       {
-        title: 'Email Templates',
-        url: '/admin/settings/email-templates',
-        icon: 'mail',
-        shortcut: ['e', 't']
-      },
-      {
-        title: 'Security',
-        url: '/admin/settings/security',
-        icon: 'shield',
-        shortcut: ['s', 's']
-      },
-      {
-        title: 'Payments & Taxes',
-        url: '/admin/settings/payments',
-        icon: 'creditCard',
-        shortcut: ['p', 's']
+        title: 'System Backup',
+        url: '/admin/settings/backup',
+        icon: 'database',
+        shortcut: ['s', 'b']
       }
     ]
   },
@@ -280,14 +191,7 @@ export const navItems: NavItem[] = [
         shortcut: ['p', 'p']
       },
       {
-        title: 'Billing',
-        url: '/admin/billing',
-        icon: 'billing',
-        shortcut: ['b', 'b'],
-        access: { requireOrg: true }
-      },
-      {
-        title: 'Sign Out',
+        title: 'Logout',
         shortcut: ['l', 'o'],
         url: '#logout',
         icon: 'login'

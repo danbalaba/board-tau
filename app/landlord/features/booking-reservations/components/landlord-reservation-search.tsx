@@ -39,8 +39,8 @@ export function LandlordReservationSearch({
       const filtered = reservations
         .filter(r => 
           r.listing.title.toLowerCase().includes(q) || 
-          (r.user.name?.toLowerCase() || '').includes(q) || 
-          r.user.email.toLowerCase().includes(q)
+          ((r.user?.name || r.guestName)?.toLowerCase() || '').includes(q) || 
+          ((r.user?.email || r.guestContact) || '').toLowerCase().includes(q)
         )
         .slice(0, 5);
       setSuggestions(filtered);
@@ -103,7 +103,7 @@ export function LandlordReservationSearch({
                 <button
                   key={res.id}
                   onClick={() => {
-                    setSearchQuery(res.user.name || res.user.email);
+                    setSearchQuery((res.user?.name || res.guestName) || (res.user?.email || res.guestContact) || '');
                     setIsFocused(false);
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-primary/5 text-left transition-colors group/item"
@@ -117,7 +117,7 @@ export function LandlordReservationSearch({
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs font-bold text-gray-900 dark:text-white truncate">
-                      {res.user.name || 'Anonymous Tenant'}
+                      {(res.user?.name || res.guestName) || 'Anonymous Tenant'}
                     </span>
                     <span className="text-[10px] text-gray-500 truncate font-medium">
                       {res.listing.title} • {res.status}

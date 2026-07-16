@@ -23,6 +23,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
 import { prepareDataForExport, exportToCSV, exportToExcel } from '@/utils/export-utils';
+import { DateRange } from 'react-day-picker';
 import { LandlordBookingSearch } from './landlord-booking-search';
 import { Booking } from '../hooks/use-booking-logic';
 import {
@@ -81,10 +82,23 @@ export function LandlordBookingHeader({
     { value: 'failed', label: 'Failed', icon: IconAlertCircle },
   ], []);
 
-  const handleGenerateCSV = async () => {
-    const reportData = prepareDataForExport(rawBookings, 'booking');
-    const totalRevenue = rawBookings.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
-    const totalBookings = rawBookings.length;
+  const handleGenerateCSV = async (dateRange?: DateRange) => {
+    let exportData = rawBookings;
+    if (dateRange?.from) {
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to;
+      exportData = exportData.filter(b => {
+        const createdAt = new Date(b.createdAt);
+        if (toDate) {
+          return createdAt >= fromDate && createdAt <= toDate;
+        }
+        return createdAt >= fromDate;
+      });
+    }
+
+    const reportData = prepareDataForExport(exportData, 'booking');
+    const totalRevenue = exportData.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+    const totalBookings = exportData.length;
     const metadata = {
       reportTitle: 'Booking & Revenue Business Report',
       reportId: `BTAU-BOOK-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
@@ -97,10 +111,23 @@ export function LandlordBookingHeader({
     exportToCSV(reportData, `Booking_Report_${new Date().toLocaleDateString()}`, metadata);
   };
 
-  const handleGenerateExcel = async () => {
-    const reportData = prepareDataForExport(rawBookings, 'booking');
-    const totalRevenue = rawBookings.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
-    const totalBookings = rawBookings.length;
+  const handleGenerateExcel = async (dateRange?: DateRange) => {
+    let exportData = rawBookings;
+    if (dateRange?.from) {
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to;
+      exportData = exportData.filter(b => {
+        const createdAt = new Date(b.createdAt);
+        if (toDate) {
+          return createdAt >= fromDate && createdAt <= toDate;
+        }
+        return createdAt >= fromDate;
+      });
+    }
+
+    const reportData = prepareDataForExport(exportData, 'booking');
+    const totalRevenue = exportData.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+    const totalBookings = exportData.length;
     const metadata = {
       reportTitle: 'Booking & Revenue Business Report',
       reportId: `BTAU-BOOK-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,

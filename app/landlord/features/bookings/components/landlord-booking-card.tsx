@@ -115,15 +115,23 @@ export function LandlordBookingCard({
             </h3>
             
             <div className="flex items-center gap-3 mb-6 bg-gray-50 dark:bg-gray-800/50 p-2.5 rounded-2xl border border-gray-100/50 dark:border-gray-800 w-fit">
-              <Avatar 
-                src={booking.user.image} 
-                name={booking.user.name} 
-                className="w-10 h-10 rounded-xl" 
-              />
+              {booking.isWalkIn ? (
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-black">
+                  {booking.guestName?.charAt(0)?.toUpperCase() || 'W'}
+                </div>
+              ) : (
+                <Avatar 
+                  src={booking.user?.image} 
+                  name={booking.user?.name} 
+                  className="w-10 h-10 rounded-xl" 
+                />
+              )}
               <div>
-                <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5 leading-none">Current Guest</p>
+                <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5 leading-none">
+                  {booking.isWalkIn ? 'Walk-in Guest' : 'Current Guest'}
+                </p>
                 <p className="text-sm font-black text-gray-900 dark:text-gray-100 max-w-[150px] sm:max-w-[200px] truncate leading-none text-blue-600 dark:text-blue-400">
-                  {booking.user.name || 'Anonymous'}
+                  {booking.isWalkIn ? booking.guestName : (booking.user?.name || 'Anonymous')}
                 </p>
               </div>
             </div>

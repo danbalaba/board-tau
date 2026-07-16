@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useEdgeStore } from "@/lib/edgestore";
@@ -20,6 +21,8 @@ export interface FormData {
   profilePhoto: File | null;
   idAttachment: File | null;
   paymentMethod: string;
+  isSoloBuyout: boolean;
+  otp: string;
 }
 
 export const useInquiryLogic = (
@@ -32,7 +35,7 @@ export const useInquiryLogic = (
   const router = useRouter();
   const responsiveToast = useResponsiveToast();
   const { edgestore } = useEdgeStore();
-  const { isProcessing, validateSelfie, validateID, faceEngine, idEngine } = useKYC();
+  const { isProcessing, faceEngine, idEngine } = useKYC();
 
   // Step & Image State
   const [currentStep, setCurrentStep] = useState(1);
@@ -65,8 +68,22 @@ export const useInquiryLogic = (
     to: undefined,
   });
   const [showCalendar, setShowCalendar] = useState(false);
+  
+  // OTP State
+  const [isOTPVerified, setIsOTPVerified] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [otpAttemptLimitReached, setOtpAttemptLimitReached] = useState(false);
+  const [lockoutCountdown, setLockoutCountdown] = useState(0);
 
-  const totalSteps = 7;
+  useEffect(() => {
+    // Fetch user email for OTP
+    fetch('/api/auth/session').then(res => res.json()).then(data => {
+      if (data?.user?.email) setUserEmail(data.user.email);
+    });
+  }, []);
+
+  const totalSteps = 8;
 
   const {
     register,
@@ -92,11 +109,13 @@ export const useInquiryLogic = (
       profilePhoto: null,
       idAttachment: null,
       paymentMethod: '',
+      isSoloBuyout: false,
+      otp: '',
     },
   });
 
   // Watch for step completion checks
-  const watchedValues = watch(['paymentMethod', 'moveInDate', 'checkOutDate', 'role', 'contactMethod', 'contactInfo', 'message', 'occupantsCount']);
+  const watchedValues = watch(['paymentMethod', 'moveInDate', 'checkOutDate', 'role', 'contactMethod', 'contactInfo', 'message', 'occupantsCount', 'isSoloBuyout']);
 
   // Effect 1: Reset ALL blink state ONLY when entering step 5 or selfie is cleared
   useEffect(() => {
@@ -270,11 +289,12 @@ export const useInquiryLogic = (
     switch (step) {
       case 1: return !!values.paymentMethod && !errors.paymentMethod;
       case 2: return !!values.moveInDate && !!values.checkOutDate && !!values.role && !!values.contactMethod && !!values.contactInfo && !hasOverlap && !errors.moveInDate && !errors.checkOutDate && !errors.role && !errors.contactMethod && !errors.contactInfo;
-      case 3: return !!values.message && values.message.length >= 10 && !errors.message;
+      case 3: return !errors.message;
       case 4: return hasReadGuidelines;
       case 5: return capturedSelfie !== null;
       case 6: return capturedID !== null;
-      case 7: return true;
+      case 7: return !!values.otp && values.otp.length === 6;
+      case 8: return true;
       default: return false;
     }
   };
@@ -286,6 +306,7 @@ export const useInquiryLogic = (
     if (currentStep === 1) fieldsToValidate = ['paymentMethod'];
     if (currentStep === 2) fieldsToValidate = ['moveInDate', 'checkOutDate', 'role', 'contactMethod', 'contactInfo'];
     if (currentStep === 3) fieldsToValidate = ['message'];
+    if (currentStep === 7) fieldsToValidate = ['otp'];
 
     const hasData = isStepCompleted(currentStep);
     
@@ -295,6 +316,56 @@ export const useInquiryLogic = (
       : true;
 
     if (!isValid || !hasData) {
+      return;
+    }
+
+    // Entering Step 7: Send initial OTP automatically
+    if (currentStep === 6 && isValid && hasData) {
+      if (!isOTPVerified) {
+        // Send in background so we don't block the UI transition
+        axios.post('/api/inquiries/otp/send', { email: userEmail })
+          .then(() => responsiveToast.success("Security code sent to your email!"))
+          .catch(() => {}); // Suppress error, step 7 allows manual resend
+      }
+    }
+
+    // Completing Step 7: Verify OTP
+    if (currentStep === 7 && isValid && hasData && !isOTPVerified) {
+      try {
+        const { isProcessing: _setLoading } = (window as any)._setIsProcessing || {};
+        if (_setLoading) _setLoading(true);
+        
+        await axios.post('/api/inquiries/otp/verify', { email: userEmail, otp: getValues('otp') });
+        setIsOTPVerified(true);
+        responsiveToast.success("Identity verified successfully!");
+        setDirection(1);
+        setCurrentStep(8);
+      } catch (error: any) {
+        const msg = error.response?.data?.error || error.message;
+        
+        const countdownMatch = msg.match(/Please try again in (\d+) second\(s\)/);
+        if (countdownMatch) {
+          const countdownSeconds = parseInt(countdownMatch[1]);
+          setLockoutCountdown(countdownSeconds);
+          setOtpAttemptLimitReached(true);
+          responsiveToast.error(msg, {
+            duration: Math.min(countdownSeconds, 5) * 1000, // Max 5 seconds toast
+          });
+        } else if (msg.includes("attempt(s) remaining")) {
+          // Show remaining attempts with shorter duration
+          responsiveToast.error(msg, { duration: 3000 });
+        } else {
+          responsiveToast.error(msg);
+        }
+        
+        // If suspended by brute force, immediately kick them to lockout
+        if (msg.includes('AccountSuspended')) {
+           window.location.href = '/auth/suspended?secure=1';
+        }
+      } finally {
+        const { isProcessing: _setLoading } = (window as any)._setIsProcessing || {};
+        if (_setLoading) _setLoading(false);
+      }
       return;
     }
 
@@ -387,6 +458,9 @@ export const useInquiryLogic = (
     watchedValues,
     isStepCompleted, handleNextStep, handlePrevStep,
     handleCaptureSelfie, handleCaptureID, toggleCamera,
-    activeStay
+    activeStay, userEmail,
+    resendCooldown, setResendCooldown,
+    otpAttemptLimitReached, setOtpAttemptLimitReached,
+    lockoutCountdown, setLockoutCountdown
   };
 };

@@ -1,16 +1,39 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
+import redis, { cache } from "@/lib/redis";
+import { Ratelimit } from "@upstash/ratelimit";
 
 export const runtime = "edge";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
+const ratelimit = new Ratelimit({
+  redis: redis,
+  limiter: Ratelimit.slidingWindow(10, "1 m"),
+  analytics: true,
+});
+
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
+    const { success } = await ratelimit.limit(`ai_suggest_ratelimit_${ip}`);
+    
+    if (!success) {
+      return NextResponse.json({ suggestions: [] }, { status: 429 });
+    }
+    
     const { listings, searchParams } = await req.json();
 
     if (!listings || listings.length === 0) {
       return NextResponse.json({ suggestions: [] });
+    }
+
+    const listingIds = listings.map((l: any) => l.id).sort().join("_");
+    const cacheKey = cache.generateKey("ai:suggest", { ids: listingIds, params: searchParams });
+    const cachedData = await cache.get(cacheKey);
+
+    if (cachedData) {
+      return NextResponse.json(cachedData);
     }
 
     // Build a compact listing summary for the prompt (avoid sending too much data)
@@ -61,6 +84,9 @@ Return ONLY a valid JSON array with no extra text:
     }
 
     const suggestions = JSON.parse(jsonMatch[0]);
+    if (suggestions && suggestions.length > 0) {
+      await cache.set(cacheKey, { suggestions }, 86400);
+    }
     return NextResponse.json({ suggestions });
   } catch (err: any) {
     console.error("AI Suggest API Error:", err.message);

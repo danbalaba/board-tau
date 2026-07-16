@@ -1,5 +1,5 @@
 import React from "react";
-
+import { Metadata } from "next";
 import EmptyState from "@/components/common/EmptyState";
 import ListingGallery from "@/components/listings/detail/ListingGallery";
 import ListingHeader from "@/components/listings/detail/ListingHeader";
@@ -15,6 +15,41 @@ import { calculateAverageRating } from "@/utils/helper";
 
 interface IParams {
   listingId: string;
+}
+
+export async function generateMetadata({ params }: { params: Promise<IParams> }): Promise<Metadata> {
+  const { listingId } = await params;
+  const listing = await getListingById(listingId);
+
+  if (!listing) {
+    return {
+      title: "Listing Not Found",
+      description: "The boarding house you are looking for does not exist.",
+    };
+  }
+
+  const title = `${listing.title} | BoardTAU`;
+  // Clean description for meta tags (max 160 chars is standard for SEO)
+  const description = listing.description.length > 155 
+    ? listing.description.substring(0, 155) + "..." 
+    : listing.description;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: listing.imageSrc }],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [listing.imageSrc],
+    },
+  };
 }
 
 const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
@@ -76,23 +111,54 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
       }))
     : [{ url: imageSrc, caption: title, order: 0 }];
 
-  const category = categories.find((cate) =>
+  const activeCategories = categories.filter((cate) =>
     listing.categories?.some((lc: any) => lc.category?.name === cate.value)
   );
 
-  const categoryData = category
-    ? {
+  const categoriesData = activeCategories.length > 0
+    ? activeCategories.map((category) => ({
         label: category.label,
         description: category.description,
         value: category.value,
-      }
-    : null;
+      }))
+    : [];
 
   // Guaranteed true average based on fetched reviews
   const actualRating = calculateAverageRating(listing.reviews || [], listing.rating);
 
+  // JSON-LD Schema Markup for Google Rich Snippets
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Accommodation",
+    "name": title,
+    "image": imageSrc,
+    "description": description,
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": region,
+      "addressRegion": "Tarlac",
+      "addressCountry": "PH"
+    },
+    "aggregateRating": reviewCount > 0 ? {
+      "@type": "AggregateRating",
+      "ratingValue": actualRating > 0 ? actualRating : 4.8,
+      "reviewCount": reviewCount
+    } : undefined,
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "PHP",
+      "price": price,
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-900 transition-colors duration-300">
+      {/* Schema Markup */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      
       {/* Gallery Section - Full Width */}
       <ListingGallery title={title} images={normalizedImages} listingId={id} hasFavorited={favoriteIds.includes(id)} />
 
@@ -107,7 +173,7 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
           reviewCount={listing.reviews?.length || 0}
           listingId={id}
           hasFavorited={favoriteIds.includes(id)}
-          category={categoryData}
+          categories={categoriesData}
         />
 
         {/* Main Content Grid */}
@@ -118,7 +184,7 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
             user={currentUser}
             title={title}
             owner={owner}
-            category={categoryData}
+            categories={categoriesData}
             description={description}
             roomCount={roomCount}
             bathroomCount={bathroomCount}

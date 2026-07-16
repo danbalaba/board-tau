@@ -55,11 +55,11 @@ export function ReviewTable({ reviews, onApprove, onReject, onView }: ReviewTabl
       <Table>
         <TableHeader className="bg-muted/30">
           <TableRow className="border-none hover:bg-transparent">
-            <TableHead className="text-[10px] uppercase font-black tracking-widest py-6 px-10">Entity & Author</TableHead>
-            <TableHead className="text-[10px] uppercase font-black tracking-widest py-6">Reputation</TableHead>
-            <TableHead className="text-[10px] uppercase font-black tracking-widest py-6">Sentiment Narrative</TableHead>
-            <TableHead className="text-[10px] uppercase font-black tracking-widest py-6">History</TableHead>
-            <TableHead className="text-[10px] uppercase font-black tracking-widest py-6 text-right pr-6">Moderation Control</TableHead>
+            <TableHead className="text-[10px] uppercase font-black tracking-widest py-6 px-10">Property & User</TableHead>
+            <TableHead className="text-[10px] uppercase font-black tracking-widest py-6">Rating</TableHead>
+            <TableHead className="text-[10px] uppercase font-black tracking-widest py-6">Review</TableHead>
+            <TableHead className="text-[10px] uppercase font-black tracking-widest py-6">Date</TableHead>
+            <TableHead className="text-[10px] uppercase font-black tracking-widest py-6 text-right pr-6">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -84,7 +84,7 @@ export function ReviewTable({ reviews, onApprove, onReject, onView }: ReviewTabl
               <TableCell className="py-5">
                 <div className="flex flex-col gap-1.5">
                   {renderStars(review.rating)}
-                  <span className="text-[9px] font-black uppercase text-amber-500/80 tracking-widest italic">{review.rating}.0 Tier</span>
+                  <span className="text-[9px] font-black uppercase text-amber-500/80 tracking-widest italic">{review.rating}.0 Rating</span>
                 </div>
               </TableCell>
 
@@ -94,7 +94,7 @@ export function ReviewTable({ reviews, onApprove, onReject, onView }: ReviewTabl
                     "{review.comment}"
                   </p>
                   {review.comment.length > 50 && (
-                    <span className="text-[9px] font-black text-primary/50 uppercase tracking-[0.2em]">Read Expanded Sentiment</span>
+                    <span className="text-[9px] font-black text-primary/50 uppercase tracking-[0.2em]">Read More</span>
                   )}
                 </div>
               </TableCell>

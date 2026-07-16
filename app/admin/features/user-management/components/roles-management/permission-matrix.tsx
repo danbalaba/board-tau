@@ -43,13 +43,27 @@ export function PermissionMatrix({ permissions, roles, loading }: PermissionMatr
   const [moduleFilter, setModuleFilter] = React.useState<string[]>([]);
   const [sortBy, setSortBy] = React.useState<string>('module');
 
-  const availableModules = Array.from(new Set(permissions.map((p: any) => p.module))).filter(Boolean) as string[];
+  const getModuleColor = (module: string) => {
+    switch (module?.toUpperCase()) {
+      case 'ADMIN': return 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20';
+      case 'LANDLORD': return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
+      case 'USER': return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
+      default: return 'bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20';
+    }
+  };
+
+  const availableModules = Array.from(new Set(permissions.map((p: any) => p.module?.toUpperCase()))).filter(Boolean) as string[];
+
+  const formatModuleName = (mod: string) => {
+    if (mod === 'ADMIN') return 'SYSTEM ADMIN';
+    return mod;
+  };
 
   const filteredPermissions = React.useMemo(() => {
     let result = permissions.filter((p: any) => {
       const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            p.description?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesModule = moduleFilter.length === 0 || moduleFilter.includes(p.module);
+      const matchesModule = moduleFilter.length === 0 || moduleFilter.includes(p.module?.toUpperCase());
       return matchesSearch && matchesModule;
     });
 
@@ -73,8 +87,16 @@ export function PermissionMatrix({ permissions, roles, loading }: PermissionMatr
             <IconShieldExclamation className="w-6 h-6 text-blue-500" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">Permissions Matrix</h3>
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Comprehensive registry of system-wide access controls</p>
+            <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">Permissions</h3>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1 mb-3">View and manage all available permissions in the system</p>
+            
+            <div className="flex flex-wrap items-center gap-4 text-[9px] font-black uppercase tracking-widest text-gray-500">
+              <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]" /> Create</span>
+              <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_4px_rgba(59,130,246,0.5)]" /> Read</span>
+              <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_4px_rgba(245,158,11,0.5)]" /> Update</span>
+              <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_4px_rgba(244,63,94,0.5)]" /> Delete</span>
+              <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-gray-400" /> Other</span>
+            </div>
           </div>
         </div>
 
@@ -119,7 +141,7 @@ export function PermissionMatrix({ permissions, roles, loading }: PermissionMatr
                     }}
                     className="text-xs font-bold rounded-xl"
                   >
-                    {module}
+                    {formatModuleName(module)}
                   </DropdownMenuCheckboxItem>
                 ))}
               </DropdownMenuContent>
@@ -187,8 +209,8 @@ export function PermissionMatrix({ permissions, roles, loading }: PermissionMatr
                         )} />
                         <div>
                           <p className="font-black text-sm text-gray-900 dark:text-white">{permission.name}</p>
-                          <Badge variant="outline" className="mt-1.5 h-5 text-[9px] font-black uppercase tracking-widest px-2 border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 text-gray-500">
-                            {permission.module}
+                          <Badge variant="outline" className={cn("mt-1.5 h-5 text-[9px] font-black uppercase tracking-widest px-2 border", getModuleColor(permission.module))}>
+                            {formatModuleName(permission.module?.toUpperCase())}
                           </Badge>
                         </div>
                       </div>

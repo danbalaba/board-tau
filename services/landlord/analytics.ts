@@ -84,15 +84,15 @@ export const getLandlordDashboardStats = async () => {
         where: { userId: landlord.id, status: "active" },
         select: { id: true }
       });
-      const listingIds = activeListings.map(l => l.id);
+      const listingIds = activeListings.map((l: any) => l.id);
 
       const allRooms = await db.room.findMany({
         where: { listingId: { in: listingIds } },
         select: { id: true, capacity: true }
       });
       
-      const roomIds = allRooms.map(r => r.id);
-      const totalCapacity = allRooms.reduce((sum, r) => sum + r.capacity, 0);
+      const roomIds = allRooms.map((r: any) => r.id);
+      const totalCapacity = allRooms.reduce((sum: any, r: any) => sum + r.capacity, 0);
 
       // 2. Get ALL active reservations for these rooms in ONE query
       const now = new Date();
@@ -108,12 +108,12 @@ export const getLandlordDashboardStats = async () => {
 
       // 3. Group and sum in memory (O(N) instead of O(N^2))
       const resCounts: Record<string, number> = {};
-      activeReservations.forEach(r => {
+      activeReservations.forEach((r: any) => {
         resCounts[r.roomId] = (resCounts[r.roomId] || 0) + 1;
       });
 
       let occupiedRooms = 0;
-      allRooms.forEach(room => {
+      allRooms.forEach((room: any) => {
         occupiedRooms += Math.min(resCounts[room.id] || 0, room.capacity);
       });
 
@@ -223,7 +223,7 @@ export const getPropertyPerformance = async (propertyId: string) => {
   const monthlyData = Array(6).fill(0);
   const now = new Date();
 
-  monthlyBookings.forEach((booking) => {
+  monthlyBookings.forEach((booking: any) => {
     const bookingMonth = booking.createdAt.getMonth();
     const bookingYear = booking.createdAt.getFullYear();
     const currentMonth = now.getMonth();
@@ -296,9 +296,9 @@ export const getRevenueReport = async (period: "month" | "quarter" | "year" = "m
 
   const totalRevenue = totalStats._sum.totalPrice || 0;
   const bookingsCount = totalStats._count.id;
-  const listingTitleMap = new Map(listings.map(l => [l.id, l.title]));
+  const listingTitleMap = new Map(listings.map((l: any) => [l.id, l.title]));
 
-  const revenueByProperty = revenueByPropertyRaw.map(r => ({
+  const revenueByProperty = revenueByPropertyRaw.map((r: any) => ({
     title: listingTitleMap.get(r.listingId) || 'Unknown Property',
     amount: r._sum.totalPrice || 0,
   }));
@@ -310,7 +310,7 @@ export const getRevenueReport = async (period: "month" | "quarter" | "year" = "m
   });
 
   const monthlyBreakdown: Record<string, number> = {};
-  bookingDates.forEach((booking) => {
+  bookingDates.forEach((booking: any) => {
     const key = `${booking.createdAt.getFullYear()}-${String(
       booking.createdAt.getMonth() + 1
     ).padStart(2, "0")}`;
@@ -368,7 +368,7 @@ export const getOccupancyReport = async (propertyId?: string) => {
 
   // Calculate total days booked using stored durationInDays when available
   let totalBookedDays = 0;
-  bookings.forEach((booking) => {
+  bookings.forEach((booking: any) => {
     if (booking.durationInDays > 0) {
       totalBookedDays += booking.durationInDays;
     } else {
@@ -378,7 +378,7 @@ export const getOccupancyReport = async (propertyId?: string) => {
     }
   });
 
-  const totalSlots = rooms.reduce((sum, room) => sum + room.capacity, 0);
+  const totalSlots = rooms.reduce((sum: any, room: any) => sum + room.capacity, 0);
   const occupancyRate = totalSlots > 0 ? (totalBookedDays / (totalSlots * 365)) * 100 : 0;
 
   return {
@@ -421,7 +421,7 @@ export const getDailyRevenueHistory = async (days: number = 30) => {
     dailyData[key] = { date: key, revenue: 0, bookings: 0 };
   }
 
-  bookings.forEach((booking) => {
+  bookings.forEach((booking: any) => {
     const key = booking.createdAt.toISOString().split('T')[0];
     if (dailyData[key]) {
       dailyData[key].revenue += booking.totalPrice;
@@ -474,26 +474,26 @@ export const getMonthlyRevenueByProperty = async (months: number = 6) => {
     date.setMonth(date.getMonth() - i);
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     monthlyData[key] = {};
-    listings.forEach(listing => {
+    listings.forEach((listing: any) => {
       monthlyData[key][listing.id] = 0;
     });
   }
 
-  bookings.forEach((booking) => {
+  bookings.forEach((booking: any) => {
     const key = `${booking.createdAt.getFullYear()}-${String(booking.createdAt.getMonth() + 1).padStart(2, '0')}`;
     if (monthlyData[key] && monthlyData[key][booking.listingId] !== undefined) {
       monthlyData[key][booking.listingId] += booking.totalPrice;
     }
   });
 
-  const listingMap = listings.reduce((acc, l) => ({ ...acc, [l.id]: l.title }), {} as Record<string, string>);
+  const listingMap = listings.reduce((acc: any, l: any) => ({ ...acc, [l.id]: l.title }), {} as Record<string, string>);
 
   return {
     monthlyData: Object.entries(monthlyData).map(([date, revenues]) => ({
       date,
       ...revenues,
     })).sort((a, b) => a.date.localeCompare(b.date)),
-    listings: listings.map(l => ({ id: l.id, title: l.title })),
+    listings: listings.map((l: any) => ({ id: l.id, title: l.title })),
     listingMap,
   };
 };
@@ -531,7 +531,7 @@ export const getGrowthTrendData = async (months: number = 6) => {
     monthlyData[key] = { date: key, bookings: 0, revenue: 0 };
   }
 
-  bookings.forEach((booking) => {
+  bookings.forEach((booking: any) => {
     const key = `${booking.createdAt.getFullYear()}-${String(booking.createdAt.getMonth() + 1).padStart(2, '0')}`;
     if (monthlyData[key]) {
       monthlyData[key].bookings += 1;
@@ -555,7 +555,7 @@ export const getPropertyTypeBreakdown = async () => {
 
   const typeCounts: Record<string, number> = {};
   const listingCategoryMap = new Map<string, string>();
-  properties.forEach(p => {
+  properties.forEach((p: any) => {
     const type = Array.isArray(p.category) ? p.category.join(', ') : 'Other';
     typeCounts[type] = (typeCounts[type] || 0) + 1;
     listingCategoryMap.set(p.id, type);
@@ -574,7 +574,7 @@ export const getPropertyTypeBreakdown = async () => {
 
   // Map listing revenue to category type in memory (O(N), not O(N) queries)
   const revenueByType: Record<string, number> = {};
-  revenueByListing.forEach(r => {
+  revenueByListing.forEach((r: any) => {
     const type = listingCategoryMap.get(r.listingId) || 'Other';
     revenueByType[type] = (revenueByType[type] || 0) + (r._sum.totalPrice || 0);
   });
@@ -601,8 +601,8 @@ export const getRatingDistribution = async () => {
     _count: { id: true },
   });
 
-  const ratingMap = new Map(ratingGroups.map(r => [r.rating, r._count.id]));
-  const total = ratingGroups.reduce((sum, r) => sum + r._count.id, 0);
+  const ratingMap = new Map<number, number>(ratingGroups.map((r: any) => [r.rating, r._count.id]));
+  const total = ratingGroups.reduce((sum: any, r: any) => sum + r._count.id, 0);
 
   return [1, 2, 3, 4, 5].map(rating => {
     const value = ratingMap.get(rating) || 0;
@@ -622,7 +622,7 @@ export const getAllPropertiesPerformance = async () => {
     select: { id: true, title: true },
   });
 
-  const listingIds = listings.map(l => l.id);
+  const listingIds = listings.map((l: any) => l.id);
 
   // Optimized Bulk Aggregation
   const [inquiryStats, reservationStats] = await Promise.all([
@@ -643,8 +643,8 @@ export const getAllPropertiesPerformance = async () => {
   ]);
 
   // Create lookup maps for O(1) merging
-  const inquiryMap = inquiryStats.reduce((acc, curr) => ({ ...acc, [curr.listingId]: curr._count.id }), {} as any);
-  const resMap = reservationStats.reduce((acc, curr) => ({
+  const inquiryMap = inquiryStats.reduce((acc: any, curr: any) => ({ ...acc, [curr.listingId]: curr._count.id }), {} as any);
+  const resMap = reservationStats.reduce((acc: any, curr: any) => ({
     ...acc, 
     [curr.listingId]: { 
       bookings: curr._count.id, 
@@ -652,7 +652,7 @@ export const getAllPropertiesPerformance = async () => {
     }
   }), {} as any);
 
-  return listings.map(listing => ({
+  return listings.map((listing: any) => ({
     name: listing.title,
     inquiries: inquiryMap[listing.id] || 0,
     bookings: resMap[listing.id]?.bookings || 0,
@@ -690,7 +690,7 @@ export const getInquirySourceBreakdown = async (months: number = 6) => {
     monthlyData[key] = { date: key, direct: 0, email: 0, social: 0 };
   }
 
-  inquiries.forEach((inquiry) => {
+  inquiries.forEach((inquiry: any) => {
     const key = `${inquiry.createdAt.getFullYear()}-${String(inquiry.createdAt.getMonth() + 1).padStart(2, '0')}`;
     if (monthlyData[key]) {
       // In-memory counters instead of O(N^2) filter

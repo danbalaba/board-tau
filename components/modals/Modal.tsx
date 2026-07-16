@@ -44,6 +44,7 @@ interface ModalProps {
   width?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   hasFixedFooter?: boolean;
   closeOnOutsideClick?: boolean;
+  noPadding?: boolean;
 }
 
 interface TriggerProps {
@@ -73,7 +74,7 @@ const Modal: FC<ModalProps> & {
   Trigger: typeof Trigger;
   Window: typeof Window;
   WindowHeader: typeof WindowHeader;
-} = ({ children, isOpen, onClose, title, width = 'md', hasFixedFooter, closeOnOutsideClick = true }) => {
+} = ({ children, isOpen, onClose, title, width = 'md', hasFixedFooter, closeOnOutsideClick = true, noPadding = false }) => {
   // Simplified API for direct control (no context)
   if (isOpen !== undefined) {
     const isClient = useIsClient();
@@ -113,11 +114,11 @@ const Modal: FC<ModalProps> & {
     }, [isClient, isOpen]);
 
     const widthClasses = {
-      xs: 'md:w-[320px]',
-      sm: 'md:w-[400px]',
-      md: 'md:w-[500px]',
-      lg: 'md:w-[800px]',
-      xl: 'md:w-[1100px]'
+      xs: 'md:w-[320px] lg:w-[320px]',
+      sm: 'md:w-[400px] lg:w-[400px]',
+      md: 'md:w-[500px] lg:w-[500px]',
+      lg: 'md:w-[800px] lg:w-[800px]',
+      xl: 'md:w-[1100px] lg:w-[1100px]'
     };
 
     if (!isClient) return null;
@@ -163,7 +164,7 @@ const Modal: FC<ModalProps> & {
                   </button>
                 </header>
               )}
-              <div className={hasFixedFooter ? "" : "p-6"}>
+              <div className={hasFixedFooter || noPadding ? "" : "p-6"}>
                 {children}
               </div>
             </motion.div>

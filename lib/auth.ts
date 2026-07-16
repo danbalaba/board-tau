@@ -7,6 +7,7 @@ import FacebookProvider from "next-auth/providers/facebook";
 import { db } from "./db";
 import { validateEmail, validatePassword, sanitizeInput } from "./validators";
 import { triggerLoginSecurityAlert } from "@/services/auth-security";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(db),
@@ -14,6 +15,7 @@ export const authOptions: AuthOptions = {
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID as string,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
+      allowDangerousEmailAccountLinking: true,
       profile(profile) {
         return {
           id: profile.id,
@@ -26,6 +28,7 @@ export const authOptions: AuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      allowDangerousEmailAccountLinking: true,
       profile(profile) {
         return {
           id: profile.sub,
@@ -84,9 +87,17 @@ export const authOptions: AuthOptions = {
           throw new Error('AccountLocked');
         }
 
+        // 3. Strike System / Admin Suspension Check
+        if (user.isPermanentlyBanned) {
+          throw new Error('AccountBanned');
+        }
+        if (user.isActive === false) {
+          throw new Error('AccountSuspended');
+        }
+
         if (!user.password) throw new Error("Invalid credentials");
 
-        // 3. Skip email verification for admin users
+        // 4. Skip email verification for admin users
         if (!user.emailVerified && user.role !== "ADMIN") {
           throw new Error("Email not verified. Please verify your email first.");
         }
@@ -152,11 +163,19 @@ export const authOptions: AuthOptions = {
       if (user.email) {
         const dbUser = await db.user.findUnique({
           where: { email: user.email },
-          select: { loginLockoutUntil: true }
+          select: { loginLockoutUntil: true, isActive: true, isPermanentlyBanned: true }
         });
         
         if (dbUser?.loginLockoutUntil && dbUser.loginLockoutUntil > new Date()) {
           throw new Error(`AccountLocked:${user.email}`);
+        }
+        
+        // Strike System / Admin Suspension Check for OAuth
+        if (dbUser?.isPermanentlyBanned) {
+          throw new Error(`AccountBanned:${user.email}`);
+        }
+        if (dbUser?.isActive === false) {
+          throw new Error(`AccountSuspended:${user.email}`);
         }
       }
 
@@ -198,70 +217,17 @@ export const authOptions: AuthOptions = {
 
         if (existingUser) {
           console.log("🔐 Existing user found:", existingUser.id);
-          // Check if existing user has any accounts linked
-          const existingAccounts = await db.account.findMany({
-            where: { userId: existingUser.id }
-          });
-
-          console.log("🔐 Existing accounts for user:", existingAccounts.map(acc => ({ provider: acc.provider, id: acc.providerAccountId })));
-
-          // If user has accounts, check if current provider is already linked
-          if (existingAccounts.length > 0) {
-            const isCurrentProviderLinked = existingAccounts.some(
-              (acc) => acc.provider === account?.provider
-            );
-
-            if (!isCurrentProviderLinked) {
-              console.log("🔐 Account not linked - creating new account record for existing user");
-              // Link the account to existing user instead of throwing error
-              await db.account.create({
-                data: {
-                  userId: existingUser.id,
-                  type: account.type,
-                  provider: account.provider,
-                  providerAccountId: account.providerAccountId,
-                  refresh_token: account.refresh_token,
-                  access_token: account.access_token,
-                  expires_at: account.expires_at,
-                  token_type: account.token_type,
-                  scope: account.scope,
-                  id_token: account.id_token,
-                  session_state: account.session_state,
-                },
-              });
-              console.log("🔐 Account linked successfully");
-            }
-          } else {
-            console.log("🔐 User exists but has no accounts - creating new account record");
-            // Create account for user with no existing accounts
-            await db.account.create({
-              data: {
-                userId: existingUser.id,
-                type: account.type,
-                provider: account.provider,
-                providerAccountId: account.providerAccountId,
-                refresh_token: account.refresh_token,
-                access_token: account.access_token,
-                expires_at: account.expires_at,
-                token_type: account.token_type,
-                scope: account.scope,
-                id_token: account.id_token,
-                session_state: account.session_state,
-              },
-            });
-          }
-
+          
           // Ensure emailVerified is set for OAuth users
           if (!existingUser.emailVerified) {
             console.log("🔐 Updating emailVerified for existing user");
             await db.user.update({
               where: { id: existingUser.id },
-              data: { emailVerified: new Date() } as any // Type assertion to fix TypeScript error
+              data: { emailVerified: new Date() } as any
             });
           }
 
-          // Return true to indicate successful sign in
-          console.log("🔐 Existing user sign in successful");
+          console.log("🔐 Existing user sign in successful (Native linking handles the rest)");
           return true;
         }
 
@@ -281,6 +247,26 @@ export const authOptions: AuthOptions = {
       }
 
       console.log("🔐 Default sign in return true");
+
+      // Capture sign-in event server-side (fire-and-forget)
+      if (user.id) {
+        try {
+          const posthog = getPostHogClient();
+          posthog.identify({
+            distinctId: user.id,
+            properties: { name: user.name, role: (user as any).role },
+          });
+          posthog.capture({
+            distinctId: user.id,
+            event: "user_signed_in",
+            properties: { provider: account?.provider ?? "unknown" },
+          });
+          await posthog.flush();
+        } catch (phErr) {
+          console.error("PostHog sign-in capture failed:", phErr);
+        }
+      }
+
       return true;
     },
 
@@ -321,12 +307,12 @@ export const authOptions: AuthOptions = {
         } as any;
       }
 
-      // 🔐 SECURITY CHECK: Verify securityVersion against DB on every refresh
+      // 🔐 SECURITY CHECK: Verify securityVersion and active status against DB on every refresh
       if (token.id) {
         try {
           const dbUser = await db.user.findUnique({
             where: { id: token.id as string },
-            select: { securityVersion: true, role: true }
+            select: { securityVersion: true, role: true, isActive: true, isPermanentlyBanned: true }
           });
 
           if (!dbUser) return null as any;
@@ -338,6 +324,12 @@ export const authOptions: AuthOptions = {
             return { isInvalid: true } as any;
           }
           
+          // 🔐 STRIKE SYSTEM / OTP BRUTE FORCE: Global Session Invalidation
+          if (dbUser.isActive === false || dbUser.isPermanentlyBanned === true) {
+            console.log(`🔐 Global Logout: Account suspended or banned for user ${token.id}`);
+            return { isInvalid: true } as any;
+          }
+
           if (!token.role) {
             token.role = dbUser.role;
           }

@@ -20,6 +20,7 @@ import {
 import { cn } from '@/utils/helper';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
 import { prepareDataForExport, exportToCSV, exportToExcel } from '@/utils/export-utils';
+import { DateRange } from 'react-day-picker';
 import { LandlordInquirySearch } from './landlord-inquiry-search';
 import { Inquiry } from '../hooks/use-inquiry-logic';
 import {
@@ -59,10 +60,23 @@ export function LandlordInquiryHeader({
   isArchived,
   onToggleArchived
 }: LandlordInquiryHeaderProps) {
-  const handleGenerateCSV = async () => {
-    const reportData = prepareDataForExport(rawInquiries, 'inquiry');
-    const totalInquiries = rawInquiries.length;
-    const uniqueListings = new Set(rawInquiries.map(i => i.listingId)).size;
+  const handleGenerateCSV = async (dateRange?: DateRange) => {
+    let exportData = rawInquiries;
+    if (dateRange?.from) {
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to;
+      exportData = exportData.filter(i => {
+        const createdAt = new Date(i.createdAt);
+        if (toDate) {
+          return createdAt >= fromDate && createdAt <= toDate;
+        }
+        return createdAt >= fromDate;
+      });
+    }
+
+    const reportData = prepareDataForExport(exportData, 'inquiry');
+    const totalInquiries = exportData.length;
+    const uniqueListings = new Set(exportData.map(i => i.listingId)).size;
     const metadata = {
       reportTitle: 'Tenant Inquiry Business Report',
       reportId: `BTAU-INQ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
@@ -75,10 +89,23 @@ export function LandlordInquiryHeader({
     exportToCSV(reportData, `Inquiry_Report_${new Date().toLocaleDateString()}`, metadata);
   };
 
-  const handleGenerateExcel = async () => {
-    const reportData = prepareDataForExport(rawInquiries, 'inquiry');
-    const totalInquiries = rawInquiries.length;
-    const uniqueListings = new Set(rawInquiries.map(i => i.listingId)).size;
+  const handleGenerateExcel = async (dateRange?: DateRange) => {
+    let exportData = rawInquiries;
+    if (dateRange?.from) {
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to;
+      exportData = exportData.filter(i => {
+        const createdAt = new Date(i.createdAt);
+        if (toDate) {
+          return createdAt >= fromDate && createdAt <= toDate;
+        }
+        return createdAt >= fromDate;
+      });
+    }
+
+    const reportData = prepareDataForExport(exportData, 'inquiry');
+    const totalInquiries = exportData.length;
+    const uniqueListings = new Set(exportData.map(i => i.listingId)).size;
     const metadata = {
       reportTitle: 'Tenant Inquiry Business Report',
       reportId: `BTAU-INQ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,

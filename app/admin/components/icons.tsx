@@ -60,7 +60,8 @@ import {
   IconBell,
   IconClock,
   IconAlertCircle,
-  IconExternalLink
+  IconExternalLink,
+  IconSearch
 } from '@tabler/icons-react';
 
 export type Icon = React.ComponentType<IconProps>;
@@ -130,5 +131,6 @@ export const Icons: Record<string, Icon> = {
   notification: IconBell,
   clock: IconClock,
   alertCircle: IconAlertCircle,
-  externalLink: IconExternalLink
+  externalLink: IconExternalLink,
+  search: IconSearch
 };

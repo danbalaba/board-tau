@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'ADMIN') {
+    if (!session || (session.user?.role !== 'ADMIN' && session.user?.role !== 'SUPER_ADMIN')) {
       return NextResponse.json(
         ApiResponseFormatter.error('Unauthorized', 'You must be an admin to access this resource'),
         { status: 401 }
@@ -52,6 +52,7 @@ export async function GET(req: NextRequest) {
       totalReservations,
       averageRating,
       topProperties,
+      engagementTrend,
       revenueTrend,
       propertyDistribution,
       occupancyTrends,
@@ -62,51 +63,89 @@ export async function GET(req: NextRequest) {
       db.user.count({ where: { createdAt: { gte: startDate, lte: now } } }),
       db.user.count({
         where: {
-          lastLogin: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-          isActive: true,
-          deletedAt: null,
+          role: 'LANDLORD',
+          createdAt: { gte: startDate, lte: now }
         },
       }),
       // Properties
       db.listing.count(),
       db.listing.count({ where: { createdAt: { gte: startDate, lte: now } } }),
-      // Revenue
-      db.reservation.aggregate({
+      // Revenue (sum of room reservation fees for paid reservations)
+      db.reservation.findMany({
         where: { paymentStatus: 'PAID', createdAt: { gte: startDate, lte: now } },
-        _sum: { totalPrice: true },
-      }).then(result => result._sum.totalPrice || 0),
+        select: { room: { select: { reservationFee: true } } },
+      }).then((reservations: any) => reservations.reduce((sum: any, res: any) => sum + (res.room?.reservationFee || 0), 0)),
       // Reservations
       db.reservation.count({ where: { createdAt: { gte: startDate, lte: now } } }),
       // Reviews
       db.review.aggregate({
         where: { status: 'approved', createdAt: { gte: startDate, lte: now } },
         _avg: { rating: true },
-      }).then(result => (result._avg.rating || 0).toFixed(1)),
-      // Top properties
-      db.reservation.groupBy({
-        by: ['listingId'],
-        where: { paymentStatus: 'PAID', createdAt: { gte: startDate, lte: now } },
-        _sum: { totalPrice: true },
-        orderBy: { _sum: { totalPrice: 'desc' } },
-        take: 5,
-      }).then(data => Promise.all(
-        data.map(async item => {
-          const listing = await db.listing.findUnique({ where: { id: item.listingId } });
-          return {
-            listingId: item.listingId,
-            listingTitle: listing?.title || 'Unknown Property',
-            revenue: item._sum.totalPrice || 0,
-          };
-        })
-      )),
-      // Revenue & Bookings Trend
+      }).then((result: any) => (result._avg.rating || 0).toFixed(1)),
+      // Top properties (by reservation fee)
       db.reservation.findMany({
         where: { paymentStatus: 'PAID', createdAt: { gte: startDate, lte: now } },
-        select: { createdAt: true, totalPrice: true },
+        select: { listingId: true, room: { select: { reservationFee: true } } }
+      }).then(async (data: any) => {
+        const listingRevenue: Record<string, number> = {};
+        data.forEach((res: any) => {
+          listingRevenue[res.listingId] = (listingRevenue[res.listingId] || 0) + (res.room?.reservationFee || 0);
+        });
+        const sortedListings = Object.entries(listingRevenue).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        return Promise.all(sortedListings.map(async ([listingId, revenue]) => {
+          const listing = await db.listing.findUnique({ where: { id: listingId } });
+          return {
+            listingId,
+            listingTitle: listing?.title || 'Unknown Property',
+            revenue,
+          };
+        }));
+      }),
+      // Platform Engagement Trend
+      Promise.all([
+        db.user.findMany({
+          where: { createdAt: { gte: startDate, lte: now } },
+          select: { createdAt: true },
+        }),
+        db.listing.findMany({
+          where: { createdAt: { gte: startDate, lte: now } },
+          select: { createdAt: true },
+        }),
+        db.inquiry.findMany({
+          where: { createdAt: { gte: startDate, lte: now } },
+          select: { createdAt: true },
+        }),
+      ]).then(([users, listings, inquiries]) => {
+        const events = [
+          ...users.map((u: any) => ({ date: u.createdAt, type: 'users' as const })),
+          ...listings.map((l: any) => ({ date: l.createdAt, type: 'listings' as const })),
+          ...inquiries.map((i: any) => ({ date: i.createdAt, type: 'inquiries' as const })),
+        ].sort((a, b) => a.date.getTime() - b.date.getTime());
+
+        const groups: Record<string, { month: string, users: number, listings: number, inquiries: number }> = {};
+        
+        events.forEach(event => {
+          const date = new Date(event.date);
+          const label = range === '1y' 
+            ? date.toLocaleString('default', { month: 'short' })
+            : date.toLocaleDateString('default', { month: 'short', day: 'numeric' });
+          
+          if (!groups[label]) {
+            groups[label] = { month: label, users: 0, listings: 0, inquiries: 0 };
+          }
+          groups[label][event.type] += 1;
+        });
+
+        return Object.values(groups);
+      }),
+      // Revenue & Bookings Trend (Restored for executive dashboard)
+      db.reservation.findMany({
+        where: { paymentStatus: 'PAID', createdAt: { gte: startDate, lte: now } },
+        select: { createdAt: true, room: { select: { reservationFee: true } } },
         orderBy: { createdAt: 'asc' },
-      }).then(reservations => {
+      }).then((reservations: any) => {
         const groups: Record<string, { month: string, revenue: number, bookings: number }> = {};
-        reservations.forEach(res => {
+        reservations.forEach((res: any) => {
           const date = new Date(res.createdAt);
           const label = range === '1y' 
             ? date.toLocaleString('default', { month: 'short' })
@@ -115,22 +154,21 @@ export async function GET(req: NextRequest) {
           if (!groups[label]) {
             groups[label] = { month: label, revenue: 0, bookings: 0 };
           }
-          groups[label].revenue += res.totalPrice;
+          groups[label].revenue += (res.room?.reservationFee || 0);
           groups[label].bookings += 1;
         });
         return Object.values(groups);
       }),
-
       // Property Distribution by Category
       db.listing.findMany({
         select: { category: true },
-      }).then(listings => {
+      }).then((listings: any) => {
         const counts: Record<string, number> = {};
-        listings.forEach(l => {
+        listings.forEach((l: any) => {
           const cat = l.category[0] || 'Other';
           counts[cat] = (counts[cat] || 0) + 1;
         });
-        const colors = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+        const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e']; // blue, emerald, amber, violet, rose
         return Object.entries(counts).map(([name, value], i) => ({
           name,
           value,
@@ -141,7 +179,7 @@ export async function GET(req: NextRequest) {
       // Occupancy Trends (Current Snapshot)
       db.room.aggregate({
         _sum: { capacity: true, availableSlots: true },
-      }).then(result => {
+      }).then((result: any) => {
         const total = result._sum.capacity || 0;
         const available = result._sum.availableSlots || 0;
         const occupied = total - available;
@@ -171,26 +209,27 @@ export async function GET(req: NextRequest) {
           orderBy: { createdAt: 'desc' },
           include: { 
             user: { select: { name: true, email: true, image: true } }, 
-            listing: { select: { title: true } } 
+            listing: { select: { title: true } },
+            room: { select: { reservationFee: true } }
           },
         }),
       ]).then(([hosts, listings, reservations]) => {
         const activities = [
-          ...hosts.map(h => ({
+          ...hosts.map((h: any) => ({
             id: h.id,
             type: 'host',
             title: 'New Host Application',
             description: `${h.user.name || 'A user'} submitted an application`,
             createdAt: h.createdAt,
           })),
-          ...listings.map(l => ({
+          ...listings.map((l: any) => ({
             id: l.id,
             type: 'property',
             title: 'New Property Listed',
             description: l.title,
             createdAt: l.createdAt,
           })),
-          ...reservations.map(r => ({
+          ...reservations.map((r: any) => ({
             id: r.id,
             type: 'booking',
             title: 'New Booking',
@@ -199,14 +238,21 @@ export async function GET(req: NextRequest) {
           })),
         ];
 
-        const recentSales = reservations.map(r => ({
-          id: r.id,
-          name: r.user.name || 'Unknown User',
-          email: r.user.email || 'user@example.com',
-          avatar: r.user.image || '',
-          amount: `+$${r.totalPrice.toLocaleString()}`,
-          fallback: (r.user.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
-        }));
+        const recentSales = reservations.map((r: any) => {
+          const isWalkIn = r.isWalkIn;
+          const displayName = isWalkIn ? (r.guestName || 'Walk-In Guest') : (r.user?.name || 'Unknown User');
+          const displayContact = isWalkIn ? (r.guestContact || 'No contact provided') : (r.user?.email || 'user@example.com');
+          const displayAvatar = isWalkIn ? (r.guestPhotoUrl || '') : (r.user?.image || '');
+
+          return {
+            id: r.id,
+            name: displayName,
+            email: displayContact,
+            avatar: displayAvatar,
+            amount: `₱${(r.room?.reservationFee || 0).toLocaleString()}`,
+            fallback: displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2),
+          };
+        });
 
         return {
           activities: activities
@@ -229,29 +275,31 @@ export async function GET(req: NextRequest) {
     });
 
     // Calculate growth percentages
-    const previousPeriodStart = new Date(startDate);
-    previousPeriodStart.setDate(previousPeriodStart.getDate() - (now.getDate() - startDate.getDate()));
+    const timeDiff = now.getTime() - startDate.getTime();
+    const previousPeriodStart = new Date(startDate.getTime() - timeDiff);
     
-    const [previousPeriodUsers, previousPeriodRevenue] = await Promise.all([
+    const [previousPeriodUsers, previousPeriodRevenue, previousPeriodActiveUsers] = await Promise.all([
       db.user.count({
         where: { createdAt: { gte: previousPeriodStart, lte: startDate } },
       }),
-      db.reservation.aggregate({
+      db.reservation.findMany({
         where: {
           paymentStatus: 'PAID',
           createdAt: { gte: previousPeriodStart, lte: startDate },
         },
-        _sum: { totalPrice: true },
-      }).then(result => result._sum.totalPrice || 0),
+        select: { room: { select: { reservationFee: true } } },
+      }).then((reservations: any) => reservations.reduce((sum: any, res: any) => sum + (res.room?.reservationFee || 0), 0)),
+      db.user.count({
+        where: {
+          role: 'LANDLORD',
+          createdAt: { gte: previousPeriodStart, lte: startDate },
+        },
+      }),
     ]);
 
-    const userGrowthPercentage = previousPeriodUsers > 0
-      ? Math.round(((newUsers - previousPeriodUsers) / previousPeriodUsers) * 100)
-      : 100;
-
-    const revenueGrowthPercentage = previousPeriodRevenue > 0
-      ? Math.round(((totalRevenue - previousPeriodRevenue) / previousPeriodRevenue) * 100)
-      : 100;
+    const userDelta = newUsers - previousPeriodUsers;
+    const revenueDelta = totalRevenue - previousPeriodRevenue;
+    const newLandlordsDelta = activeUsers - previousPeriodActiveUsers;
 
     // Transform data for response
     const overviewData = {
@@ -259,17 +307,19 @@ export async function GET(req: NextRequest) {
       metrics: {
         totalUsers,
         newUsers,
-        activeUsers,
+        newLandlords: activeUsers,
         totalListings,
         newListings,
         totalRevenue,
         totalReservations,
         averageRating: parseFloat(averageRating as any),
-        userGrowthPercentage,
-        revenueGrowthPercentage,
+        userGrowthPercentage: userDelta,
+        revenueGrowthPercentage: revenueDelta,
+        newLandlordsGrowthPercentage: newLandlordsDelta,
       },
       topProperties,
       charts: {
+        engagement: engagementTrend,
         revenue: revenueTrend,
         propertyDistribution,
         occupancy: occupancyTrends,

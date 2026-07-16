@@ -7,7 +7,7 @@ import Dropzone, {
   type DropzoneProps,
   type FileRejection
 } from 'react-dropzone';
-import { toast } from 'sonner';
+import { toast } from '@/app/admin/components/ui/sonner';
 
 import { Button } from "./ui/button";
 import { Progress } from "./ui/progress";
@@ -170,12 +170,11 @@ export function FileUploader(props: FileUploaderProps) {
         const target =
           updatedFiles.length > 0 ? `${updatedFiles.length} files` : `file`;
 
-        toast.promise(onUpload(updatedFiles), {
+        toast.promise(onUpload(updatedFiles).then(() => {
+          setFiles([]);
+        }), {
           loading: `Uploading ${target}...`,
-          success: () => {
-            setFiles([]);
-            return `${target} uploaded`;
-          },
+          success: `${target} uploaded`,
           error: `Failed to upload ${target}`
         });
       }

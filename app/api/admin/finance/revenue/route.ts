@@ -9,9 +9,9 @@ export async function GET(req: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'ADMIN') {
+    if (!session || session.user?.role !== 'SUPER_ADMIN') {
       return NextResponse.json(
-        ApiResponseFormatter.error('Unauthorized', 'You must be an admin to access this resource'),
+        ApiResponseFormatter.error('Unauthorized', 'You must be a super admin to access this resource'),
         { status: 401 }
       );
     }
@@ -44,14 +44,15 @@ export async function GET(req: NextRequest) {
     // Fetch revenue data
     const [totalRevenue, allReservations, topProperties] = await Promise.all([
       // Total revenue
-      db.reservation.aggregate({
+      db.reservation.findMany({
         where: {
           paymentStatus: 'PAID',
           createdAt: { gte: startDate, lte: now },
         },
-        _sum: { totalPrice: true },
-      }),
-      // Fetch reservations to group manually for better date handling
+        select: { room: { select: { reservationFee: true } } },
+      }).then((reservations: any) => reservations.reduce((sum: any, res: any) => sum + (res.room?.reservationFee || 0), 0)),
+      
+      // Fetch reservations to group manually
       db.reservation.findMany({
         where: {
           paymentStatus: 'PAID',
@@ -59,10 +60,11 @@ export async function GET(req: NextRequest) {
         },
         select: {
           createdAt: true,
-          totalPrice: true,
+          room: { select: { reservationFee: true } },
         },
         orderBy: { createdAt: 'asc' },
       }),
+      
       // Top properties by revenue
       db.reservation.groupBy({
         by: ['listingId'],
@@ -73,8 +75,8 @@ export async function GET(req: NextRequest) {
         _sum: { totalPrice: true },
         orderBy: { _sum: { totalPrice: 'desc' } },
         take: 10,
-      }).then(data => Promise.all(
-        data.map(async item => {
+      }).then((data: any) => Promise.all(
+        data.map(async (item: any) => {
           const listing = await db.listing.findUnique({
             where: { id: item.listingId },
             include: { user: true },
@@ -93,20 +95,21 @@ export async function GET(req: NextRequest) {
     const dailyMap = new Map<string, { revenue: number, bookings: number }>();
     const monthlyMap = new Map<string, { revenue: number, bookings: number }>();
 
-    allReservations.forEach(res => {
+    allReservations.forEach((res: any) => {
       const date = new Date(res.createdAt);
+      const fee = res.room?.reservationFee || 0;
       
       // Daily
       const dateKey = date.toISOString().split('T')[0];
       const daily = dailyMap.get(dateKey) || { revenue: 0, bookings: 0 };
-      daily.revenue += res.totalPrice;
+      daily.revenue += fee;
       daily.bookings += 1;
       dailyMap.set(dateKey, daily);
 
       // Monthly
       const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
       const monthly = monthlyMap.get(monthKey) || { revenue: 0, bookings: 0 };
-      monthly.revenue += res.totalPrice;
+      monthly.revenue += fee;
       monthly.bookings += 1;
       monthlyMap.set(monthKey, monthly);
     });
@@ -114,7 +117,7 @@ export async function GET(req: NextRequest) {
     const dailyRevenue = Array.from(dailyMap.entries())
       .map(([date, data]) => ({
         date,
-        month: date, // For chart X-axis
+        month: date,
         revenue: data.revenue,
         bookings: data.bookings
       }))
@@ -130,12 +133,12 @@ export async function GET(req: NextRequest) {
 
     // Calculate average daily revenue
     const daysInRange = Math.ceil((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    const averageDailyRevenue = daysInRange > 0 ? (totalRevenue._sum.totalPrice || 0) / daysInRange : 0;
+    const averageDailyRevenue = daysInRange > 0 ? totalRevenue / daysInRange : 0;
 
     // Transform data for response
     const revenueData = {
       timeRange: range,
-      totalRevenue: totalRevenue._sum.totalPrice || 0,
+      totalRevenue: totalRevenue,
       averageDailyRevenue: parseFloat(averageDailyRevenue.toFixed(2)),
       dailyRevenue,
       monthlyRevenue,

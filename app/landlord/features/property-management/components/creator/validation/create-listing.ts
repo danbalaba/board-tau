@@ -96,9 +96,6 @@ const validateEssentials = (info: any, errors: ValidationError[]) => {
   if (!info.description || info.description.length < 100) {
     errors.push({ field: 'propertyInfo.description', message: 'Marketing narrative must be at least 100 characters' });
   }
-  if (!info.category) {
-    errors.push({ field: 'propertyInfo.category', message: 'Please select a primary category' });
-  }
   const price = Number(info.price);
   if (!price || price < 500) {
     errors.push({ field: 'propertyInfo.price', message: 'Please enter a valid starting price (min ₱500)' });

@@ -3,8 +3,7 @@ import { createPortal } from "react-dom";
 import Modal from "../modals/Modal";
 import { X, Star, Calendar, MessageSquare, Info, Home, MapPin, Clock, Play, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { markEntityNotificationsAsRead } from "@/services/notification";
-import { Notification } from "@prisma/client";
+import { NotificationItem } from "@/context/NotificationContext";
 import Avatar from "@/components/common/Avatar";
 import SafeImage from "@/components/common/SafeImage";
 
@@ -48,13 +47,15 @@ interface ReviewDetailsModalProps {
   review: Review;
   isOpen: boolean;
   onClose: () => void;
-  notification?: Notification;
+  onMarkAsRead?: () => void;
+  notification?: NotificationItem;
 }
 
 const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
   review,
   isOpen,
   onClose,
+  onMarkAsRead,
   notification,
 }) => {
   const [selectedMediaIdx, setSelectedMediaIdx] = React.useState<number | null>(null);
@@ -108,13 +109,11 @@ const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
 
   React.useEffect(() => {
     if (isOpen && notification) {
-      // Support for older notifications that didn't include the exact review ID
-      const entityToMark = notification.link === "/my-reviews" ? "/my-reviews" : review.id;
-      markEntityNotificationsAsRead("review", entityToMark).then(() => {
-        window.dispatchEvent(new Event("notification-cleared"));
-      });
+      if (onMarkAsRead) {
+        onMarkAsRead();
+      }
     }
-  }, [isOpen, notification, review.id]);
+  }, [isOpen, notification, onMarkAsRead]);
 
   if (!isOpen) return null;
 

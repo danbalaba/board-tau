@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/services/user";
 import { pusherServer } from "@/lib/pusher";
 import { sendNewMessageEmail } from "@/services/email/notifications";
 import { encryptMessage, decryptMessage } from "@/lib/encryption";
+import { createNotification } from "@/services/notification";
+import { hasPermission } from "@/lib/rbac";
 
 const MAX_MESSAGE_LENGTH = 2000;
 
@@ -87,7 +89,7 @@ export async function GET(request: NextRequest) {
     take: limit,
   });
 
-  const decryptedMessages = messages.map(msg => ({
+  const decryptedMessages = messages.map((msg: any) => ({
     ...msg,
     content: decryptMessage(msg.content)
   }));
@@ -100,6 +102,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user?.id) return jsonError("Unauthorized", 401);
+
+  const permitted = await hasPermission(user.id, "SEND_MESSAGES");
+  if (!permitted) return jsonError("Forbidden: Missing permission SEND_MESSAGES", 403);
 
   let body: { listingId?: string; receiverId?: string; content?: string };
   try {
@@ -144,14 +149,12 @@ export async function POST(request: NextRequest) {
     ? `/landlord/messages?listingId=${listingId}&tenantId=${user.id}`
     : `/messages?listingId=${listingId}&otherUserId=${user.id}`;
 
-  await db.notification.create({
-    data: {
-      userId: receiverId,
-      type: "message",
-      title: isReceiverLandlord ? `Leasing Inquiry: ${can.listingTitle}` : "New message from host",
-      description: `${user.name || "Someone"}: ${preview}`,
-      link: deepLink,
-    },
+  await createNotification({
+    userId: receiverId,
+    type: "message",
+    title: isReceiverLandlord ? `Leasing Inquiry: ${can.listingTitle}` : "New message from host",
+    description: `${user.name || "Someone"}: ${preview}`,
+    link: deepLink,
   });
 
   // 3. Trigger Email Notification (Prioritized before Pusher to ensure delivery)

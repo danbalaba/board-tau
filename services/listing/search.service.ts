@@ -102,7 +102,7 @@ function buildScoringEngine(params: any) {
   if (params.backupPower === "true") scoreConditions.push({ $cond: [{ $eq: ["$features_doc.backupPower", true] }, 10, 0] });
   if (params.nearTransport === "true") scoreConditions.push({ $cond: [{ $eq: ["$features_doc.nearTransport", true] }, 10, 0] });
 
-  scoreConditions.push({ $multiply: [{ $ifNull: ["$rating", 4.8] }, 2] });
+  scoreConditions.push({ $multiply: [{ $ifNull: ["$rating", 3.5] }, 2] });
 
   return {
     $addFields: {
@@ -127,7 +127,7 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
           : (Number(isRelaxed ? 20 : (params.distance || 10))) * 1000);
         
         const earlyMatch: any = { status: "active" };
-        if (params.category) earlyMatch.category = { $in: [params.category] };
+        if (params.category) earlyMatch.category = { $in: Array.isArray(params.category) ? params.category : [params.category] };
 
         pipeline.push({
           $geoNear: {
@@ -140,7 +140,7 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
         });
       } else {
         const baseMatch: any = { status: "active" };
-        if (params.category) baseMatch.category = { $in: [params.category] };
+        if (params.category) baseMatch.category = { $in: Array.isArray(params.category) ? params.category : [params.category] };
         pipeline.push({ $match: baseMatch });
       }
 
@@ -158,8 +158,7 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
       pipeline.push({
         $project: {
           _rules: 0,
-          _features: 0,
-          rooms_list: 0
+          _features: 0
         }
       });
 
@@ -181,7 +180,14 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
         ...doc,
         id: doc._id['$oid'] || doc._id.toString(),
         _id: undefined,
-        rooms: doc.rooms_list || [],
+        rooms: (doc.rooms_list || []).map((r: any) => ({
+          ...r,
+          id: r._id?.['$oid'] || r._id?.toString(),
+          _id: undefined,
+          price: unwrapMongoNumber(r.price) ?? r.price,
+          capacity: unwrapMongoNumber(r.capacity),
+          availableSlots: unwrapMongoNumber(r.availableSlots),
+        })),
         categories: (doc.category || []).map((c: string) => ({ name: c, label: c })),
         rating: unwrapMongoNumber(doc.rating),
         reviewCount: unwrapMongoNumber(doc.reviewCount) ?? 0,
@@ -199,9 +205,6 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
         return await runPipeline(searchParams, true);
       }
 
-      // HI-2 OPTIMIZATION: Removed blocking AI logic from hot path.
-      // Callers should use enrichSearchResultsWithAI asynchronously.
-      
       await cache.set(cacheKey, result, 300);
       return result;
     } catch (err: any) {
@@ -213,69 +216,51 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
   return await runPipeline(searchParams, false);
 }
 
-/**
- * HI-2 FIX: Asynchronous AI enrichment for search results.
- * This runs in a separate process/fetch to prevent blocking the initial result set.
- */
-export async function enrichSearchResultsWithAI(
-  results: any[],
-  searchParams: Record<string, string>
-) {
-  if (results.length === 0) return [];
+export async function executeComplexSearchCount(searchParams: Record<string, string>) {
+  const cacheKey = cache.generateKey("search_count", searchParams);
+  const cached = await cache.get(cacheKey);
 
-  const buildTemplateReason = (listing: any, p: any): string => {
-    const reasons = [];
-    if (p.roomType) reasons.push(`Has ${p.roomType.toLowerCase()} rooms available`);
-    if (listing.amenities_list?.includes("WiFi")) reasons.push("with fast WiFi");
-    if (listing.price && p.maxPrice && listing.price <= Number(p.maxPrice)) reasons.push("fits your budget");
-    if (listing.rating && listing.rating >= 4.5) reasons.push("highly rated by students");
-    return reasons.length > 0 ? reasons.join(" · ") + "." : "A great alternative close to your location.";
-  };
+  if (cached) return cached;
 
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const pipeline: any[] = [];
+    
+    if (searchParams.originLat && searchParams.originLng) {
+      const radiusInMeters = (searchParams.isUnlimitedDistance === "true" 
+        ? 1000000 
+        : (Number(searchParams.distance || 10)) * 1000);
+      
+      const earlyMatch: any = { status: "active" };
+      if (searchParams.category) earlyMatch.category = { $in: Array.isArray(searchParams.category) ? searchParams.category : [searchParams.category] };
 
-    const userQuery = [
-      searchParams.roomType, 
-      searchParams.amenities, 
-      searchParams.maxPrice ? `budget up to ₱${searchParams.maxPrice}` : ""
-    ].filter(Boolean).join(", ") || "a comfortable place";
-
-    const top6 = results.slice(0, 6);
-    const listingSummaries = top6.map((l: any, i: number) =>
-      `${i + 1}. ID:"${l.id}" | "${l.title}" | ₱${l.price}/mo | Amenities: ${(l.amenities_list || []).slice(0, 4).join(", ")}`
-    ).join("\n");
-
-    const prompt = `Student searched for: "${userQuery}". No exact matches. 
-      Provide ONE short sentence (max 8 words) for each alternative listing explaining why it's a good match.
-      Return ONLY JSON: [{ "id": "listing_id", "reason": "reason" }]
-      Listings:
-      ${listingSummaries}`;
-
-    const aiResponse = await Promise.race([
-      model.generateContent(prompt),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("AI_TIMEOUT")), 4500))
-    ]) as any;
-
-    const text = aiResponse.response.text().trim();
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-
-    if (jsonMatch) {
-      const suggestions = JSON.parse(jsonMatch[0]);
-      const reasonMap = new Map(suggestions.map((s: any) => [s.id, s.reason]));
-      return results.map((listing: any) => ({
-        ...listing,
-        aiHighlight: reasonMap.get(listing.id) || buildTemplateReason(listing, searchParams),
-      }));
+      pipeline.push({
+        $geoNear: {
+          near: { type: "Point", coordinates: [Number(searchParams.originLng), Number(searchParams.originLat)] },
+          distanceField: "distanceToCollege",
+          maxDistance: radiusInMeters,
+          spherical: true,
+          query: earlyMatch
+        }
+      });
+    } else {
+      const baseMatch: any = { status: "active" };
+      if (searchParams.category) baseMatch.category = { $in: Array.isArray(searchParams.category) ? searchParams.category : [searchParams.category] };
+      pipeline.push({ $match: baseMatch });
     }
-  } catch (aiErr: any) {
-    console.error("AI_ENRICHMENT_FAILED:", aiErr.message);
-  }
 
-  // Fallback to templates if AI fails
-  return results.map((listing: any) => ({
-    ...listing,
-    aiHighlight: buildTemplateReason(listing, searchParams),
-  }));
+    pipeline.push(...JOIN_STAGES);
+    pipeline.push(buildHardFilters(searchParams, false));
+    pipeline.push({ $count: "totalMatches" });
+
+    const rawResults = await prisma.listing.aggregateRaw({ pipeline }) as unknown as any[];
+    
+    const count = rawResults.length > 0 ? rawResults[0].totalMatches : 0;
+    const result = { count };
+
+    await cache.set(cacheKey, result, 60); // Cache count for 60 seconds
+    return result;
+  } catch (err: any) {
+    console.error("SEARCH_COUNT_FAILURE:", err.message);
+    return { count: 0, error: true };
+  }
 }

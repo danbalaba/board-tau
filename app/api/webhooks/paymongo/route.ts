@@ -33,14 +33,19 @@ export async function POST(req: Request) {
         });
 
         if (inquiry) {
-          // 1. ATOMIC STATUS UPDATE: Only proceed if the reservation is still PENDING_PAYMENT
           let updatedReservation;
           try {
+            const pendingReservation = await db.reservation.findFirst({
+              where: { inquiryId: inquiryId, status: "PENDING_PAYMENT" }
+            });
+            
+            if (!pendingReservation) {
+              console.log(`ℹ️ PayMongo: Reservation ${inquiryId} already finalized. Skipping inventory update.`);
+              return NextResponse.json({ ok: true });
+            }
+
             updatedReservation = await db.reservation.update({
-              where: { 
-                inquiryId: inquiryId,
-                status: "PENDING_PAYMENT" 
-              },
+              where: { id: pendingReservation.id },
               data: {
                 status: "RESERVED",
                 paymentStatus: "PAID",
@@ -52,7 +57,7 @@ export async function POST(req: Request) {
               }
             });
           } catch (error) {
-            console.log(`ℹ️ PayMongo: Reservation ${inquiryId} already finalized. Skipping inventory update.`);
+            console.log(`ℹ️ PayMongo: Reservation update error. Skipping.`);
             return NextResponse.json({ ok: true });
           }
 
@@ -92,9 +97,9 @@ export async function POST(req: Request) {
             });
 
             // Tenant Email & In-app
-            if (updatedReservation.user.email) {
+            if (updatedReservation.user?.email) {
               await sendReservationNotificationEmail(
-                updatedReservation.user,
+                updatedReservation.user!,
                 updatedReservation.listing,
                 "RESERVED",
                 "Booking Confirmed!",
@@ -103,7 +108,7 @@ export async function POST(req: Request) {
 
               // In-app for Tenant
               await createNotification({
-                userId: updatedReservation.userId,
+                userId: updatedReservation.userId!,
                 type: 'reservation',
                 title: 'Booking Confirmed!',
                 description: `Payment successful! Your reservation for ${updatedReservation.listing.title} is now secured.`,
@@ -115,7 +120,7 @@ export async function POST(req: Request) {
             if (landlord && landlord.email) {
               await sendReservationFeeEmail(
                 landlord,
-                updatedReservation.user,
+                updatedReservation.user!,
                 updatedReservation.listing,
                 updatedReservation.totalPrice
               );
@@ -125,7 +130,7 @@ export async function POST(req: Request) {
                 userId: updatedReservation.listing.userId,
                 type: 'reservation',
                 title: 'New Confirmed Reservation',
-                description: `${updatedReservation.user.name} has secured their reservation for ${updatedReservation.listing.title} via PayMongo.`,
+                description: `${updatedReservation.user?.name} has secured their reservation for ${updatedReservation.listing.title} via PayMongo.`,
                 link: `/landlord/reservations`
               });
             }
@@ -140,7 +145,7 @@ export async function POST(req: Request) {
         if (inquiryId) {
           console.log(`Checkout session expired for inquiry: ${inquiryId}`);
           // Mark the reservation as EXPIRED
-          await db.reservation.update({
+          await db.reservation.updateMany({
             where: { inquiryId: inquiryId },
             data: {
               status: "EXPIRED",
@@ -153,7 +158,7 @@ export async function POST(req: Request) {
       case "payment.failed":
         if (inquiryId) {
           console.log(`Payment failed for inquiry: ${inquiryId}`);
-          await db.reservation.update({
+          await db.reservation.updateMany({
             where: { inquiryId: inquiryId },
             data: {
               status: "PENDING_PAYMENT", // Keep it pending so they can try again

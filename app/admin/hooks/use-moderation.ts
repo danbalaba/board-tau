@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -30,19 +30,42 @@ export interface ModerationItem {
   createdAt: string;
 }
 
+export interface ModerationLogItem {
+  id: string;
+  adminId: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  entityTitle: string | null;
+  notes: string | null;
+  createdAt: string;
+  admin: {
+    name: string;
+    email: string;
+    image: string | null;
+  };
+}
+
+export interface ModerationQueueData {
+  pendingItems: ModerationItem[];
+  recentLogs: ModerationLogItem[];
+}
+
 export interface ModerationQueryParams {
   page?: number;
   perPage?: number;
   entityType?: string;
+  isArchived?: boolean;
 }
 
 export function useModerationQueue(params?: ModerationQueryParams) {
-  const { page = 1, perPage = 10, entityType = '' } = params || {};
+  const { page = 1, perPage = 10, entityType = '', isArchived } = params || {};
 
   const queryString = new URLSearchParams({
     page: page.toString(),
     perPage: perPage.toString(),
     ...(entityType && { entityType }),
+    ...(isArchived !== undefined && { isArchived: isArchived.toString() }),
   }).toString();
 
   return useQuery({
@@ -55,7 +78,7 @@ export function useModerationQueue(params?: ModerationQueryParams) {
         throw new Error(errorData.message || 'Failed to fetch moderation queue');
       }
 
-      const data: ApiResponse<ModerationItem[]> = await response.json();
+      const data: ApiResponse<ModerationQueueData> = await response.json();
 
       if (!data.success) {
         throw new Error(data.message || 'Failed to fetch moderation queue');
@@ -64,16 +87,17 @@ export function useModerationQueue(params?: ModerationQueryParams) {
       return data;
     },
     refetchInterval: 30000, // Refetch every 30 seconds
+    placeholderData: keepPreviousData,
   });
 }
 
 export function useHostApplications(params?: ModerationQueryParams) {
-  const { page = 1, perPage = 10, entityType = '' } = params || {};
+  const { page = 1, perPage = 10, entityType = '', isArchived } = params || {};
 
   const queryString = new URLSearchParams({
     page: page.toString(),
     perPage: perPage.toString(),
-    status: 'pending',
+    ...(isArchived ? { isArchived: 'true' } : { status: 'pending' }),
   }).toString();
 
   return useQuery({
@@ -85,16 +109,17 @@ export function useHostApplications(params?: ModerationQueryParams) {
       if (!data.success) throw new Error(data.message || 'Failed to fetch host applications');
       return data;
     },
+    placeholderData: keepPreviousData,
   });
 }
 
 export function useListingsReview(params?: ModerationQueryParams) {
-  const { page = 1, perPage = 10 } = params || {};
+  const { page = 1, perPage = 10, isArchived } = params || {};
 
   const queryString = new URLSearchParams({
     page: page.toString(),
     perPage: perPage.toString(),
-    status: 'pending',
+    ...(isArchived ? { isArchived: 'true' } : { status: 'pending' }),
   }).toString();
 
   return useQuery({
@@ -106,16 +131,17 @@ export function useListingsReview(params?: ModerationQueryParams) {
       if (!data.success) throw new Error(data.message || 'Failed to fetch listings for review');
       return data;
     },
+    placeholderData: keepPreviousData,
   });
 }
 
 export function useReviewsModeration(params?: ModerationQueryParams) {
-  const { page = 1, perPage = 10 } = params || {};
+  const { page = 1, perPage = 10, isArchived } = params || {};
 
   const queryString = new URLSearchParams({
     page: page.toString(),
     perPage: perPage.toString(),
-    status: 'pending',
+    ...(isArchived ? { isArchived: 'true' } : { status: 'pending' }),
   }).toString();
 
   return useQuery({
@@ -127,6 +153,7 @@ export function useReviewsModeration(params?: ModerationQueryParams) {
       if (!data.success) throw new Error(data.message || 'Failed to fetch reviews for moderation');
       return data;
     },
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -139,11 +166,13 @@ export function useModerationDecision() {
       entityType,
       action,
       reason,
+      banUser,
     }: {
       id: string;
       entityType: 'listing' | 'review' | 'hostApplication';
-      action: 'approve' | 'reject';
+      action: 'approve' | 'reject' | 'archive';
       reason?: string;
+      banUser?: boolean;
     }) => {
       // Map entityType to the correct endpoint
       let endpoint = '';
@@ -156,7 +185,7 @@ export function useModerationDecision() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ action, reason }),
+        body: JSON.stringify({ action, reason, banUser }),
       });
 
       if (!response.ok) {
@@ -169,6 +198,45 @@ export function useModerationDecision() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['moderation-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['listings-review'] });
+      queryClient.invalidateQueries({ queryKey: ['reviews-moderation'] });
+      queryClient.invalidateQueries({ queryKey: ['host-applications'] });
+    },
+  });
+}
+
+export function useModerationDelete() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      entityType,
+    }: {
+      id: string;
+      entityType: 'listing' | 'review' | 'hostApplication';
+    }) => {
+      let endpoint = '';
+      if (entityType === 'hostApplication') endpoint = `/api/admin/moderation/hosts/${id}`;
+      else if (entityType === 'listing') endpoint = `/api/admin/moderation/listings/${id}`;
+      else if (entityType === 'review') endpoint = `/api/admin/moderation/reviews/${id}`;
+
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete item');
+      }
+
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['moderation-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['listings-review'] });
+      queryClient.invalidateQueries({ queryKey: ['reviews-moderation'] });
+      queryClient.invalidateQueries({ queryKey: ['host-applications'] });
     },
   });
 }

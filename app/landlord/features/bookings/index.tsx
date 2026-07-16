@@ -11,8 +11,8 @@ import { useBookingLogic, Booking } from './hooks/use-booking-logic';
 import { LandlordBookingHeader } from './components/landlord-booking-header';
 import { LandlordBookingCard } from './components/landlord-booking-card';
 import { LandlordBookingDetailsModal } from './components/landlord-booking-details-modal';
-import { useLoadMore } from '@/hooks/useLoadMore';
 import { useSearchParams } from 'next/navigation';
+import { LandlordPagination } from '../shared/landlord-pagination';
 import LandlordArchiveModal from '../inquiry-center/components/landlord-inquiry-archive-modal';
 
 interface LandlordBookingsProps {
@@ -40,6 +40,11 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
   const {
     nextCursor,
     isLoadingMore,
+    totalBookings,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    setItemsPerPage,
     selectedStatus,
     setSelectedStatus,
     selectedPaymentStatus,
@@ -58,7 +63,7 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
     handleUpdateStatus,
     handleLoadMore,
     handleGenerateReport,
-    isUpdatingStatus,
+    updatingId,
     isLoading
   } = useBookingLogic(bookings.bookings, bookings.nextCursor);
 
@@ -96,22 +101,15 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
     setRecordToArchive(null);
   };
 
-  const { ref: loadMoreRef } = useLoadMore(
-    handleLoadMore,
-    !!nextCursor,
-    isLoadingMore,
-    false
-  );
-
   useRegisterActions(
     rawBookings.map((booking) => ({
       id: `booking-${booking.id}`,
-      name: `Booking: ${booking.user.name || 'Anonymous Guest'}`,
+      name: `Booking: ${(booking.user?.name || booking.guestName) || 'Anonymous Guest'}`,
       subtitle: `Property: ${booking.listing.title} • ${booking.status}`,
-      keywords: `booking guest tenant stay ${booking.user.name} ${booking.listing.title}`,
+      keywords: `booking guest tenant stay ${(booking.user?.name || booking.guestName)} ${booking.listing.title}`,
       section: 'Bookings',
       perform: () => {
-        setSearchQuery(booking.user.name || booking.user.email);
+        setSearchQuery((booking.user?.name || booking.guestName) || (booking.user?.email || booking.guestContact) || '');
       },
       icon: <IconCalendarStats size={18} />
     })),
@@ -161,7 +159,7 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
               {filteredBookings.length > 0 && (
                 <div className="flex items-center gap-2 mb-6">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                    Showing {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}
+                    Showing {totalBookings} booking{totalBookings !== 1 ? 's' : ''}
                   </span>
                   <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
                 </div>
@@ -185,7 +183,7 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
                         statusColors={statusColors}
                         paymentStatusColors={paymentStatusColors}
                         onUpdateStatus={handleUpdateStatus}
-                        isUpdatingStatus={isUpdatingStatus}
+                        isUpdatingStatus={updatingId === booking.id}
                         onViewDetails={handleOpenDetails}
                         onArchive={() => {
                           setRecordToArchive(booking);
@@ -193,38 +191,20 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
                         }}
                       />
                     ))}
-                    {/* Scroll Sentinel */}
-                    <div ref={loadMoreRef} className="h-1 col-span-full opacity-0 pointer-events-none" />
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {nextCursor && (
-                <div className="flex flex-col items-center gap-4 pt-12 pb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-[2px] bg-gradient-to-r from-transparent to-gray-200 dark:to-gray-800" />
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                        {isLoadingMore ? 'Loading more bookings...' : 'More bookings available'}
-                      </span>
-                    </div>
-                    <div className="w-12 h-[2px] bg-gradient-to-l from-transparent to-gray-200 dark:to-gray-800" />
-                  </div>
+              <LandlordPagination 
+                currentPage={currentPage}
+                totalPages={Math.ceil(totalBookings / itemsPerPage)}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={setItemsPerPage}
+                totalItems={totalBookings}
+                itemName="bookings"
+              />
 
-                  <Button 
-                    outline 
-                    className="rounded-2xl px-12 py-4 group hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/5 border-2 border-gray-100 dark:border-gray-800" 
-                    onClick={handleLoadMore} 
-                    isLoading={isLoadingMore}
-                  >
-                    <span className="flex items-center gap-2 uppercase font-black tracking-[0.2em] text-[10px]">
-                      {isLoadingMore ? 'Loading...' : 'Load More'}
-                      <IconChevronDown className="group-hover:translate-y-0.5 transition-transform" size={14} />
-                    </span>
-                  </Button>
-                </div>
-              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -237,7 +217,7 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
               isOpen={isModalOpen}
               onClose={() => setIsModalOpen(false)}
               onUpdateStatus={handleUpdateStatus}
-              isUpdatingStatus={isUpdatingStatus}
+              isUpdatingStatus={updatingId === selectedBooking.id}
             />
           )}
 
@@ -250,8 +230,8 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
               isRestore={recordToArchive.isArchived}
               title={recordToArchive.isArchived ? 'Restore Booking' : 'Archive Booking'}
               description={recordToArchive.isArchived 
-                ? `Move the booking for "${recordToArchive.user.name || recordToArchive.user.email}" back to your active list.`
-                : `Move the booking for "${recordToArchive.user.name || recordToArchive.user.email}" to your archive.`
+                ? `Move the booking for "${(recordToArchive.user?.name || recordToArchive.guestName) || (recordToArchive.user?.email || recordToArchive.guestContact)}" back to your active list.`
+                : `Move the booking for "${(recordToArchive.user?.name || recordToArchive.guestName) || (recordToArchive.user?.email || recordToArchive.guestContact)}" to your archive.`
               }
             />
           )}

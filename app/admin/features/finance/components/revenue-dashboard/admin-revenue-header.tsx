@@ -1,9 +1,40 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { IconCurrencyDollar, IconCalendarEvent, IconFileExport } from '@tabler/icons-react';
+import { IconCurrencyDollar, IconCalendarEvent, IconFileExport, IconFileSpreadsheet, IconFileTypeCsv, IconFileTypePdf } from '@tabler/icons-react';
 import { Button } from '@/app/admin/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/app/admin/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/app/admin/components/ui/dropdown-menu';
+import Skeleton from '@/components/common/Skeleton';
 
-export function AdminRevenueHeader() {
+interface AdminRevenueHeaderProps {
+  isLoading?: boolean;
+  range?: string;
+  onRangeChange?: (value: string) => void;
+  onExport?: (format: 'CSV' | 'EXCEL' | 'PDF') => void;
+}
+
+export function AdminRevenueHeader({ 
+  isLoading,
+  range = '30d',
+  onRangeChange,
+  onExport
+}: AdminRevenueHeaderProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -15,35 +46,95 @@ export function AdminRevenueHeader() {
       
       <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          <div className="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center text-emerald-500 border border-gray-100 dark:border-gray-700">
-            <IconCurrencyDollar size={28} stroke={2.5} />
-          </div>
-          <div>
-            <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight flex items-center gap-3">
-              Financial Control
-            </h1>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-[0.2em]">
-                Global revenue distribution and profit margins
-              </p>
-            </div>
-          </div>
+          {isLoading ? (
+            <>
+              <Skeleton className="w-14 h-14 rounded-2xl" />
+              <div>
+                <Skeleton className="h-8 w-48 mb-2 rounded-lg" />
+                <Skeleton className="h-4 w-64 rounded-md" />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center text-emerald-500 border border-gray-100 dark:border-gray-700">
+                <IconCurrencyDollar size={28} stroke={2.5} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight flex items-center gap-3">
+                  Financial Control
+                </h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <p className="text-[11px] text-gray-500 font-bold uppercase tracking-[0.2em]">
+                    Global revenue distribution and profit margins
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-3 self-end md:self-auto">
-          <Button
-            variant="outline"
-            className="h-12 px-6 gap-2 rounded-2xl border-gray-200/60 dark:border-gray-700/60 shadow-sm text-[10px] font-black uppercase tracking-[0.2em]"
-          >
-            <IconCalendarEvent size={16} className="text-emerald-500" /> Quarter View
-          </Button>
-          
-          <Button
-            className="h-12 px-6 gap-2 rounded-2xl bg-gray-900 hover:bg-emerald-600 dark:bg-white dark:text-gray-900 dark:hover:bg-emerald-600 text-white shadow-xl shadow-emerald-500/10 text-[10px] font-black uppercase tracking-[0.2em] transition-all"
-          >
-            <IconFileExport size={16} /> Export
-          </Button>
+          {isLoading ? (
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-12 w-[140px] rounded-2xl" />
+              <Skeleton className="h-12 w-[100px] rounded-2xl" />
+            </div>
+          ) : (
+            <>
+              {onRangeChange && (
+                <Select value={range} onValueChange={onRangeChange}>
+                  <SelectTrigger className="h-12 px-6 gap-2 rounded-2xl border-emerald-200/60 dark:border-emerald-700/60 bg-emerald-50/50 dark:bg-emerald-900/20 shadow-sm text-[10px] font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-800/40 w-[180px]">
+                    <IconCalendarEvent size={16} className="text-emerald-500 shrink-0" /> 
+                    <SelectValue placeholder="Select Range" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl border-none shadow-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl">
+                    <SelectGroup>
+                      <SelectLabel className="text-[9px] font-black uppercase tracking-widest text-gray-400">Time Period</SelectLabel>
+                      <SelectItem value="7d" className="text-xs font-bold rounded-xl cursor-pointer">Last 7 Days</SelectItem>
+                      <SelectItem value="30d" className="text-xs font-bold rounded-xl cursor-pointer">Last 30 Days</SelectItem>
+                      <SelectItem value="90d" className="text-xs font-bold rounded-xl cursor-pointer">Last 90 Days</SelectItem>
+                      <SelectItem value="1y" className="text-xs font-bold rounded-xl cursor-pointer">Past Year</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+              
+              {onExport && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="h-12 px-6 gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-xl shadow-emerald-500/20 text-[10px] font-black uppercase tracking-[0.2em] transition-all">
+                      <IconFileExport size={16} /> Export
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 rounded-2xl border-none shadow-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl p-2">
+                    <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-gray-400">Export Report</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem onClick={() => onExport('CSV')} className="gap-3 p-3 rounded-xl cursor-pointer focus:bg-emerald-50 dark:focus:bg-emerald-900/20 focus:text-emerald-600 dark:focus:text-emerald-400 font-bold text-xs">
+                        <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
+                          <IconFileTypeCsv size={16} stroke={2.5} />
+                        </div>
+                        Export as CSV
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onExport('EXCEL')} className="gap-3 p-3 rounded-xl cursor-pointer focus:bg-green-50 dark:focus:bg-green-900/20 focus:text-green-600 dark:focus:text-green-400 font-bold text-xs">
+                        <div className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400">
+                          <IconFileSpreadsheet size={16} stroke={2.5} />
+                        </div>
+                        Export as Excel
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onExport('PDF')} className="gap-3 p-3 rounded-xl cursor-pointer focus:bg-rose-50 dark:focus:bg-rose-900/20 focus:text-rose-600 dark:focus:text-rose-400 font-bold text-xs">
+                        <div className="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400">
+                          <IconFileTypePdf size={16} stroke={2.5} />
+                        </div>
+                        Export as PDF
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </>
+          )}
         </div>
       </div>
     </motion.div>

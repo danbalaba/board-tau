@@ -4,6 +4,8 @@ import Modal from "../modals/Modal";
 import { X, Calendar, CreditCard, Info, Clock, Home, MapPin, CheckCircle as IconCircleCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
 import { cn } from "@/utils/helper";
+import { generateConfirmationSlipPDF } from "@/utils/slipGenerator";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 
 interface ReservationListing {
   id: string;
@@ -48,8 +50,7 @@ interface Reservation {
   room: ReservationRoom;
 }
 
-import { markEntityNotificationsAsRead } from "@/services/notification";
-import { Notification } from "@prisma/client";
+import { NotificationItem } from "@/context/NotificationContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -61,7 +62,8 @@ interface ReservationDetailsModalProps {
   onClose: () => void;
   onPayNow?: () => void;
   onCancel?: () => void;
-  notification?: Notification;
+  onMarkAsRead?: () => void;
+  notification?: NotificationItem;
 }
 
 const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
@@ -71,9 +73,11 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
   onClose,
   onPayNow,
   onCancel,
+  onMarkAsRead,
   notification,
 }) => {
   const router = useRouter();
+  const responsiveToast = useResponsiveToast();
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
   const [activeNotification, setActiveNotification] = React.useState(notification);
   
@@ -81,15 +85,18 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
   React.useEffect(() => {
     if (notification && !activeNotification) {
       setActiveNotification(notification);
-      
+    }
+  }, [notification, activeNotification]);
+
+  React.useEffect(() => {
+    if (activeNotification) {
       // Auto-dismiss after 8 seconds so the user can finish reading
       const timer = setTimeout(() => {
         setActiveNotification(undefined);
       }, 8000);
-
       return () => clearTimeout(timer);
     }
-  }, [notification, activeNotification]);
+  }, [activeNotification]);
 
   // Reset activeNotification when the modal is closed so it's fresh for next time
   React.useEffect(() => {
@@ -100,12 +107,11 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
 
   React.useEffect(() => {
     if (isOpen && activeNotification) {
-      // Use the raw reservation.id to ensure the best matching
-      markEntityNotificationsAsRead("reservation", reservation.id).then(() => {
-        window.dispatchEvent(new Event("notification-cleared"));
-      });
+      if (onMarkAsRead) {
+        onMarkAsRead();
+      }
     }
-  }, [isOpen, activeNotification, reservation.id]);
+  }, [isOpen, activeNotification, onMarkAsRead]);
   const images = reservation.room.images || [];
 
   const formatDate = (dateString: string) => {
@@ -432,7 +438,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
         
         <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
           <button
-            className="px-4 sm:px-10 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-gray-900 dark:bg-gray-100 dark:text-gray-900 rounded-2xl hover:bg-primary dark:hover:bg-primary hover:text-white dark:hover:text-white shadow-xl shadow-gray-900/10 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2 group/msg"
+            className="px-4 sm:px-10 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-primary bg-primary/10 dark:bg-primary/20 hover:bg-primary/20 dark:hover:bg-primary/30 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2 group/msg"
             onClick={() => router.push(`/messages?listingId=${reservation.listingId}&otherUserId=${landlordId}`)}
           >
             <Mail size={14} strokeWidth={3} className="group-hover/msg:rotate-6 transition-transform" />
@@ -446,6 +452,26 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
             >
               <X size={14} strokeWidth={3} className="group-hover/cancel:rotate-12 transition-transform" />
               <span className="truncate">Cancel</span>
+            </button>
+          )}
+
+          {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
+            <button
+              className="px-4 sm:px-10 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-emerald-600 rounded-2xl hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/pass"
+              onClick={() => {
+                // Determine tenant details. Since it's from tenant dashboard, use the current user's data.
+                // It's not explicitly in reservation for tenant (userId is known), but if guestName is there use it
+                const name = (reservation as any).guestName || "Tenant";
+                const email = "tenant@example.com"; // placeholder if email is missing from reservation
+                
+                responsiveToast.loading("Generating your Boarding Pass...");
+                generateConfirmationSlipPDF(reservation, name, email)
+                  .then(() => responsiveToast.success("Confirmation Slip downloaded successfully!"))
+                  .catch(() => responsiveToast.error("Failed to generate Confirmation Slip."));
+              }}
+            >
+              <IconCircleCheck size={14} strokeWidth={3} className="group-hover/pass:scale-110 transition-transform" />
+              <span className="truncate">Download Pass</span>
             </button>
           )}
           

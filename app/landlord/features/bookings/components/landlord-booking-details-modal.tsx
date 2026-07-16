@@ -115,12 +115,12 @@ export function LandlordBookingDetailsModal({
                 <div className="relative flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800 backdrop-blur-sm">
                   <div className="flex items-center gap-5">
                      <Avatar 
-                        src={booking.user.image} 
-                        name={booking.user.name} 
+                        src={(booking.user?.image || booking.guestPhotoUrl)} 
+                        name={(booking.user?.name || booking.guestName)} 
                         className="w-16 h-16 rounded-[1.25rem] shadow-2xl border-4 border-white dark:border-gray-800" 
                      />
                      <div>
-                        <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-none mb-2">{booking.user.name || 'Anonymous Guest'}</h3>
+                        <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-none mb-2">{(booking.user?.name || booking.guestName) || 'Anonymous Guest'}</h3>
                         <div className="flex items-center gap-2">
                           <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ongoing Stay</p>
@@ -205,7 +205,7 @@ export function LandlordBookingDetailsModal({
                         <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-50 dark:border-gray-800/50 shadow-sm">
                           <IconMail size={16} className="text-primary" />
                           <span className="text-xs font-bold text-gray-600 dark:text-gray-300 truncate">
-                            {booking.user.email}
+                            {(booking.user?.email || booking.guestContact)}
                           </span>
                         </div>
                         <div className="flex items-start gap-3 p-4 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
@@ -283,8 +283,8 @@ export function LandlordBookingDetailsModal({
                           detail: {
                             listingId: booking.listing.id,
                             tenantId: booking.user.id,
-                            tenantName: booking.user.name || 'Tenant',
-                            tenantImage: booking.user.image || '',
+                            tenantName: (booking.user?.name || booking.guestName) || 'Tenant',
+                            tenantImage: (booking.user?.image || booking.guestPhotoUrl) || '',
                             listingTitle: booking.listing.title,
                             listingImage: listingImg || ''
                           }
@@ -294,7 +294,7 @@ export function LandlordBookingDetailsModal({
                       }}
                     >
                       <IconMail size={18} className="group-hover/chat:scale-110 transition-transform text-primary" />
-                      Chat with {booking.user.name || 'Tenant'}
+                      Chat with {(booking.user?.name || booking.guestName) || 'Tenant'}
                     </Button>
                   </div>
 

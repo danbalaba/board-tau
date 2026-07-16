@@ -11,6 +11,22 @@ import HeartButton from "../favorites/HeartButton";
 import SafeImage from "../common/SafeImage";
 import { formatPrice, calculateAverageRating } from "@/utils/helper";
 import ListingMenu from "./ListingMenu";
+import { usePathname } from "next/navigation";
+import { useCompareStore } from "@/hooks/use-compare-store";
+import { CheckSquare, Square, ChevronLeft, ChevronRight } from "lucide-react";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
+import HelpTooltip from "@/components/common/HelpTooltip";
+
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+// @ts-ignore
+import 'swiper/css';
+// @ts-ignore
+import 'swiper/css/navigation';
+// @ts-ignore
+import 'swiper/css/pagination';
+
+let lastToastTime = 0;
 
 interface ListingCardProps {
   data: Listing;
@@ -24,6 +40,7 @@ interface ListingCardProps {
   matchScore?: number; // New: optional AI match score
   aiHighlight?: string; // New: optional AI reasoning text
   isHighlighted?: boolean; // New: for visual focus/notifications
+  onClickOverride?: (e: React.MouseEvent) => void; // New: override default Link behavior
 }
 
 const ListingCard: React.FC<ListingCardProps> = ({
@@ -32,8 +49,13 @@ const ListingCard: React.FC<ListingCardProps> = ({
   hasFavorited,
   matchScore,
   aiHighlight,
-  isHighlighted
+  isHighlighted,
+  onClickOverride
 }) => {
+  const pathname = usePathname();
+  const { selectedListingIds, addListing, removeListing } = useCompareStore();
+  const toast = useResponsiveToast();
+  
   const price = reservation ? reservation.totalPrice : data?.price;
 
   let reservationDate: string | undefined;
@@ -58,12 +80,10 @@ const ListingCard: React.FC<ListingCardProps> = ({
   const hasRooms = totalRooms > 0;
 
   // Category label
-  const categories: any[] = (data as any).categories || [];
-  const categoryLabel =
-    categories?.[0]?.category?.label ||
-    categories?.[0]?.label ||
-    categories?.[0]?.name ||
-    null;
+  const categoryData = Array.isArray(data.category) 
+    ? data.category 
+    : (typeof data.category === 'string' ? [data.category] : []);
+  const displayCategories = categoryData.slice(0, 2); // Max 2 categories on card
 
   // Smart Badges Logic
   const isNew =
@@ -105,20 +125,63 @@ const ListingCard: React.FC<ListingCardProps> = ({
     return null;
   }, [data, rooms]);
 
+  const allImages = React.useMemo(() => {
+    let images: string[] = [];
+    if (data.imageSrc) images.push(getImageUrl(data.imageSrc));
+    
+    const galleryImages = (data as any).images || [];
+    if (galleryImages.length > 0) {
+      const gUrls = galleryImages.map(getImageUrl).filter(Boolean);
+      images = [...images, ...gUrls];
+    }
+    
+    // Deduplicate
+    return Array.from(new Set(images));
+  }, [data]);
+
+  const isCompareMode = pathname === "/favorites";
+  const isSelectedForCompare = selectedListingIds.includes(data.id);
+
+  const handleCompareClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isSelectedForCompare) {
+      removeListing(data.id);
+    } else {
+      if (selectedListingIds.length < 3) {
+        addListing(data.id);
+      } else {
+        const now = Date.now();
+        if (now - lastToastTime > 3000) {
+          lastToastTime = now;
+          toast.warning(
+            { title: "Limit Reached", description: "You can only compare up to 3 listings at a time!" },
+            { id: "compare-limit" }
+          );
+        }
+      }
+    }
+  };
+
+  const CardWrapper = onClickOverride ? 'div' : Link;
+  const wrapperProps = onClickOverride 
+    ? { onClick: onClickOverride, className: "block h-full cursor-pointer" }
+    : { href: `/listings/${data.id}`, className: "block h-full cursor-pointer" };
+
   return (
-    <div className="relative group/card h-full">
-      <Link href={`/listings/${data.id}`} className="block h-full cursor-pointer">
+    <div className="relative group/card h-full z-10 hover:z-[100]">
+      <CardWrapper {...wrapperProps as any}>
         <motion.div
-          className="flex flex-col gap-0 w-full h-full p-2 md:p-2.5 bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-[1.5rem] md:rounded-[2rem] group-hover/card:bg-emerald-50/50 dark:group-hover/card:bg-slate-800/60 group-hover/card:border-emerald-500/30 group-hover/card:shadow-2xl group-hover/card:shadow-emerald-900/5"
+          className="flex flex-col gap-0 w-full h-full p-2 md:p-2.5 bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-[1.5rem] md:rounded-[2rem] group-hover/card:bg-primary/5 dark:group-hover/card:bg-slate-800/60 group-hover/card:border-primary/30 group-hover/card:shadow-2xl group-hover/card:shadow-primary/5"
           initial={{ opacity: 0, y: 15 }}
           animate={isHighlighted ? { 
             opacity: 1, 
             y: 0,
             scale: [1, 1.03, 1],
             boxShadow: [
-              "0 0 0 rgba(16, 185, 129, 0)",
-              "0 15px 35px rgba(16, 185, 129, 0.25)",
-              "0 0 0 rgba(16, 185, 129, 0)"
+              "0 0 0 rgba(var(--primary), 0)",
+              "0 15px 35px rgba(var(--primary), 0.25)",
+              "0 0 0 rgba(var(--primary), 0)"
             ]
           } : { opacity: 1, y: 0 }}
           whileHover={{ y: -8 }}
@@ -140,15 +203,47 @@ const ListingCard: React.FC<ListingCardProps> = ({
           }}
         >
           {/* ── Image Container (Screenshot Layout) ── */}
-          <div className="relative overflow-hidden rounded-[1.5rem] aspect-[5/4] bg-slate-100 dark:bg-slate-900 shadow-inner">
-            <SafeImage
-              src={displayImage}
-              alt={data.title}
-            />
+          <div className="relative overflow-hidden rounded-[1.5rem] aspect-[5/4] bg-slate-100 dark:bg-slate-900 shadow-inner group/swiper">
+            {allImages.length > 1 ? (
+              <Swiper
+                modules={[Navigation, Pagination]}
+                navigation={{
+                  prevEl: `.swiper-prev-${data.id}`,
+                  nextEl: `.swiper-next-${data.id}`,
+                }}
+                pagination={{ clickable: true, dynamicBullets: true }}
+                className="w-full h-full pb-0 custom-card-swiper"
+              >
+                {allImages.map((imgUrl, idx) => (
+                  <SwiperSlide key={idx} className="h-full w-full">
+                    <SafeImage src={imgUrl} alt={`${data.title} - Image ${idx + 1}`} />
+                  </SwiperSlide>
+                ))}
+                
+                {/* Custom Nav Buttons */}
+                <div 
+                  className={`swiper-prev-${data.id} absolute left-2 top-1/2 -translate-y-1/2 z-[60] w-7 h-7 bg-white/90 dark:bg-slate-900/90 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-opacity hover:scale-110`}
+                  onClick={(e: any) => { e.preventDefault(); e.stopPropagation(); }}
+                >
+                  <ChevronLeft size={16} className="text-slate-800 dark:text-primary -ml-0.5" />
+                </div>
+                <div 
+                  className={`swiper-next-${data.id} absolute right-2 top-1/2 -translate-y-1/2 z-[60] w-7 h-7 bg-white/90 dark:bg-slate-900/90 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-opacity hover:scale-110`}
+                  onClick={(e: any) => { e.preventDefault(); e.stopPropagation(); }}
+                >
+                  <ChevronRight size={16} className="text-slate-800 dark:text-primary -mr-0.5" />
+                </div>
+              </Swiper>
+            ) : (
+              <SafeImage
+                src={displayImage}
+                alt={data.title}
+              />
+            )}
 
             <div className="absolute top-3 left-3 z-20 flex flex-col gap-1">
               {isNew && (
-                <div className="bg-emerald-500/90 backdrop-blur-md text-white px-2 py-0.5 rounded-md shadow-lg text-[8px] font-black uppercase tracking-wider w-fit flex items-center gap-1 border border-white/20">
+                <div className="bg-primary/90 backdrop-blur-md text-white px-2 py-0.5 rounded-md shadow-lg text-[8px] font-black uppercase tracking-wider w-fit flex items-center gap-1 border border-white/20">
                   <Sparkles size={8} />
                   NEW
                 </div>
@@ -173,30 +268,46 @@ const ListingCard: React.FC<ListingCardProps> = ({
               )}
             </div>
 
-            {/* Favorites Button */}
-            <div className="absolute top-3 right-3 z-20">
+            {/* Top Right Actions */}
+            <div className="absolute top-3 right-3 z-30 flex flex-col gap-2 items-end">
               <HeartButton
                 listingId={data.id}
                 hasFavorited={hasFavorited}
               />
+              
+              {/* Compare Button */}
+              {isCompareMode && (
+                <button 
+                  type="button"
+                  onClick={handleCompareClick}
+                  className={`p-1.5 rounded-full backdrop-blur-md transition flex items-center justify-center ${
+                    isSelectedForCompare 
+                      ? "bg-primary text-white shadow-lg border border-primary/50" 
+                      : "bg-white/80 dark:bg-slate-800/80 hover:bg-white text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700"
+                  }`}
+                  title={isSelectedForCompare ? "Remove from compare" : "Add to compare"}
+                >
+                  {isSelectedForCompare ? <CheckSquare size={16} /> : <Square size={16} />}
+                </button>
+              )}
             </div>
 
             {/* Bottom Controls Overlay (Badges + Price) */}
             <div className="absolute bottom-3 left-3 right-3 z-10 flex items-end justify-between gap-2">
               {/* Left Side: Category */}
-              <div className="flex items-center gap-1.5 ">
-                {categoryLabel && (
-                  <div className="bg-slate-900/80 dark:bg-slate-900/80 backdrop-blur-md text-white border border-white/10 dark:border-slate-700 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider">
-                    {categoryLabel}
+              <div className="flex items-center gap-1.5 flex-wrap max-w-[60%]">
+                {displayCategories.map((cat: string, idx: number) => (
+                  <div key={idx} className="bg-slate-900/80 dark:bg-slate-900/80 backdrop-blur-md text-white border border-white/10 dark:border-slate-700 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider">
+                    {cat}
                   </div>
-                )}
+                ))}
               </div>
 
               {/* Right Side: Price Pill */}
-              <div className="bg-slate-900/90 backdrop-blur-md text-white px-2 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/10 dark:border-slate-700/50 shadow-2xl flex items-center gap-1 font-black text-[10px] md:text-xs">
-                <span className="text-emerald-500">₱</span>
+              <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-900 dark:text-white px-2 py-1 md:px-3 md:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-2xl flex items-center gap-1 font-black text-[10px] md:text-xs">
+                <span className="text-primary">₱</span>
                 <span>{formatPrice(price)}</span>
-                {!reservation && <span className="text-[7px] md:text-[8px] text-slate-400 font-normal">/mo</span>}
+                {!reservation && <span className="text-[7px] md:text-[8px] text-slate-500 dark:text-slate-400 font-normal">/mo</span>}
               </div>
             </div>
           </div>
@@ -224,8 +335,8 @@ const ListingCard: React.FC<ListingCardProps> = ({
                 <span className="truncate">{data?.region}</span>
               </div>
               <div className="flex items-center gap-1 text-[9px] md:text-[11px] font-bold shrink-0">
-                <DoorOpen size={10} className={availableRooms > 0 ? "text-emerald-500 md:w-[11px] md:h-[11px]" : "text-slate-500 md:w-[11px] md:h-[11px]"} />
-                <span className={availableRooms > 0 ? "text-emerald-600 dark:text-emerald-500" : "text-slate-500"}>
+                <DoorOpen size={10} className={availableRooms > 0 ? "text-primary md:w-[11px] md:h-[11px]" : "text-slate-500 md:w-[11px] md:h-[11px]"} />
+                <span className={availableRooms > 0 ? "text-primary dark:text-primary" : "text-slate-500"}>
                   {availableRooms > 0 ? `${availableRooms} Units` : "No Units"}
                 </span>
               </div>
@@ -233,17 +344,21 @@ const ListingCard: React.FC<ListingCardProps> = ({
 
             {/* AI Reasoning (Subtle & Themed) */}
             {aiHighlight ? (
-              <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium line-clamp-1 italic">
-                ✨ "{aiHighlight}"
-              </p>
+              <HelpTooltip text={aiHighlight}>
+                <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium line-clamp-1 italic text-left w-full cursor-help">
+                  ✨ "{aiHighlight}"
+                </p>
+              </HelpTooltip>
             ) : (
-              <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 line-clamp-1 italic">
-                {data.description || "Premium choice in " + data.region}
-              </p>
+              <HelpTooltip text={data.description || "Premium choice in " + data.region}>
+                <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 line-clamp-1 italic text-left w-full cursor-help">
+                  {data.description || "Premium choice in " + data.region}
+                </p>
+              </HelpTooltip>
             )}
           </div>
         </motion.div>
-      </Link>
+      </CardWrapper>
     </div>
 
 
@@ -258,7 +373,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 
 export function ListingSkeleton() {
   return (
-    <div className="col-span-1 p-2 border border-transparent dark:border-neutral-800 rounded-3xl">
+    <div className="col-span-1 group/card p-1 sm:p-2 sm:hover:bg-slate-50 sm:dark:hover:bg-slate-800/50 rounded-[2rem] transition-colors relative z-10 hover:z-[100]">
       <div className="flex flex-col gap-0 w-full animate-pulse-slow">
         <div className="aspect-[5/4] rounded-[1.25rem] overflow-hidden mb-4">
           <Skeleton height="100%" width="100%" containerClassName="block h-full" borderRadius="1.25rem" />

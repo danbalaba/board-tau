@@ -121,11 +121,17 @@ export const handleStripeWebhook = async (session: any) => {
   // 1. ATOMIC STATUS UPDATE: Only proceed if the reservation is still PENDING_PAYMENT
   let updatedReservation;
   try {
+    const pendingReservation = await db.reservation.findFirst({
+      where: { inquiryId: inquiryId, status: "PENDING_PAYMENT" }
+    });
+    
+    if (!pendingReservation) {
+      console.log(`ℹ️ Webhook: Reservation ${inquiryId} already finalized. Skipping inventory update.`);
+      return { success: true };
+    }
+
     updatedReservation = await db.reservation.update({
-      where: {
-        inquiryId: inquiryId,
-        status: "PENDING_PAYMENT"
-      },
+      where: { id: pendingReservation.id },
       data: {
         status: "RESERVED",
         paymentStatus: "PAID",
@@ -137,7 +143,7 @@ export const handleStripeWebhook = async (session: any) => {
       }
     });
   } catch (error) {
-    console.log(`ℹ️ Webhook: Reservation ${inquiryId} already finalized. Skipping inventory update.`);
+    console.log(`ℹ️ Webhook: Reservation update error. Skipping.`);
     return { success: true };
   }
 
@@ -194,9 +200,9 @@ export const handleStripeWebhook = async (session: any) => {
     });
 
     // Notify Tenant Email & In-app
-    if (updatedReservation.user.email) {
+    if (updatedReservation.user?.email) {
       await sendReservationNotificationEmail(
-        updatedReservation.user,
+        updatedReservation.user!,
         updatedReservation.listing,
         "RESERVED",
         "Booking Confirmed!",
@@ -205,7 +211,7 @@ export const handleStripeWebhook = async (session: any) => {
 
       // In-app for Tenant
       await createNotification({
-        userId: updatedReservation.userId,
+        userId: updatedReservation.userId!,
         type: 'reservation',
         title: 'Booking Confirmed!',
         description: `Your reservation for ${updatedReservation.listing.title} is now secured and confirmed.`,
@@ -217,7 +223,7 @@ export const handleStripeWebhook = async (session: any) => {
     if (landlord && landlord.email) {
       await sendReservationFeeEmail(
         landlord,
-        updatedReservation.user,
+        updatedReservation.user!,
         updatedReservation.listing,
         updatedReservation.totalPrice
       );
@@ -227,7 +233,7 @@ export const handleStripeWebhook = async (session: any) => {
         userId: updatedReservation.listing.userId,
         type: 'reservation',
         title: 'New Confirmed Reservation',
-        description: `${updatedReservation.user.name} has secured their reservation for ${updatedReservation.listing.title} via Stripe.`,
+        description: `${updatedReservation.user?.name} has secured their reservation for ${updatedReservation.listing.title} via Stripe.`,
         link: `/landlord/reservations`
       });
     }

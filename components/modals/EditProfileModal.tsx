@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { UserProfile } from "@/services/user/profile";
+import { UserProfile } from "@/types/profile";
 import Button from "@/components/common/Button";
 import ModalInput from "@/components/inputs/ModalInput";
 import Textarea from "@/components/inputs/Textarea";

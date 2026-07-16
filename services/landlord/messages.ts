@@ -45,7 +45,7 @@ export async function getLandlordConversations() {
 
   // 2. Identify unique pairs and who the "tenant" is
   const uniquePairs = new Map<string, { listingId: string; tenantId: string }>();
-  conversationsData.forEach(item => {
+  conversationsData.forEach((item: any) => {
     const tenantId = item.senderId === landlordId ? item.receiverId : item.senderId;
     const key = `${item.listingId}_${tenantId}`;
     if (!uniquePairs.has(key)) {
@@ -209,7 +209,7 @@ export async function getConversationHistory(listingId: string, tenantId: string
     }
   });
 
-  const decryptedMessages = messages.map(msg => ({
+  const decryptedMessages = messages.map((msg: any) => ({
     ...msg,
     content: decryptMessage(msg.content)
   }));

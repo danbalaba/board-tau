@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { handleStripeWebhook } from '@/services/payments/stripe';
+import { getPostHogClient } from '@/lib/posthog-server';
 
 export async function POST(req: Request) {
   if (!stripe) {
@@ -37,6 +38,23 @@ export async function POST(req: Request) {
         const session = event.data.object as Stripe.Checkout.Session;
         console.log(`✅ Checkout completed: ${session.id}`);
         await handleStripeWebhook(session);
+        // Track completed payment; use client_reference_id as distinct ID when available
+        try {
+          const posthog = getPostHogClient();
+          const distinctId = session.client_reference_id || session.customer_email || session.id;
+          posthog.capture({
+            distinctId,
+            event: "payment_completed",
+            properties: {
+              stripe_session_id: session.id,
+              amount_total: session.amount_total,
+              currency: session.currency,
+            },
+          });
+          await posthog.flush();
+        } catch (phErr) {
+          console.error("PostHog payment_completed capture failed:", phErr);
+        }
         break;
 
       case 'checkout.session.expired':

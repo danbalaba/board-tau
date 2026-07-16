@@ -27,6 +27,7 @@ interface InquiryReceiptProps {
   reservationFee: number;
   baseFee: number;
   message?: string;
+  isSoloBuyout?: boolean;
   trackInquiryLink: string;
 }
 
@@ -44,6 +45,7 @@ export const InquiryReceipt = ({
   reservationFee = 0,
   baseFee = 0,
   message = "",
+  isSoloBuyout = false,
   trackInquiryLink = `${baseUrl}/inquiries`,
 }: InquiryReceiptProps) => {
   const styles = {
@@ -183,7 +185,7 @@ export const InquiryReceipt = ({
                 </Column>
                 <Column>
                   <Text style={styles.label}>Occupants</Text>
-                  <Text style={styles.value}>{occupantsCount} Person(s)</Text>
+                  <Text style={styles.value}>{isSoloBuyout ? 'Solo Buyout' : `${occupantsCount} Person(s)`}</Text>
                 </Column>
               </Row>
               <Section style={{ borderTop: "1px solid #334155", paddingTop: "16px", marginTop: "10px" }}>
@@ -206,7 +208,7 @@ export const InquiryReceipt = ({
                       fontWeight: "700",
                       margin: "0" 
                     }}>
-                      {occupantsCount} {occupantsCount === 1 ? 'Person' : 'Persons'} × ₱{baseFee.toLocaleString()}
+                      {isSoloBuyout ? 'Full Room Buyout' : `${occupantsCount} ${occupantsCount === 1 ? 'Person' : 'Persons'}`} × ₱{baseFee.toLocaleString()}
                     </Text>
                   </Column>
                 </Row>

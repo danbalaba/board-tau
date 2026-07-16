@@ -246,7 +246,7 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 shrink-0 relative z-30 bg-white dark:bg-gray-900">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h2 className="text-2xl font-bold text-text-primary dark:text-gray-100 uppercase tracking-tight">
+              <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-1">
                 Available Rooms
               </h2>
               <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-1 uppercase tracking-widest opacity-60">
@@ -391,10 +391,10 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
                     {/* Status Badge */}
                     <div className="absolute top-4 right-4 z-10">
                       <div
-                        className={`px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest backdrop-blur-md border border-white/20 shadow-lg flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest backdrop-blur-md border shadow-lg flex items-center gap-1.5 ${
                           room.status === "AVAILABLE"
-                            ? "bg-emerald-500/90 text-white"
-                            : "bg-rose-500/90 text-white"
+                            ? "bg-primary/60 border-white/30 text-white"
+                            : "bg-rose-500/60 border-white/30 text-white"
                         }`}
                       >
                         {room.status === "AVAILABLE" ? <CheckCircle2 size={10} /> : <XCircle size={10} />}

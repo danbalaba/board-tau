@@ -5,7 +5,7 @@ import { useTheme } from 'next-themes';
 
 interface FooterPageLayoutProps {
   title: string;
-  description: string;
+  description?: string;
   lastUpdated?: string;
   children: ReactNode;
 }
@@ -23,29 +23,32 @@ export default function FooterPageLayout({
     setMounted(true);
   }, []);
 
-  // Use a default styling before mounting to avoid hydration mismatch, then apply theme
   const isDark = mounted ? theme === 'dark' : false;
 
   return (
-    <div className={`min-h-screen ${mounted ? (isDark ? 'bg-[#0f0f0f] text-gray-200' : 'bg-gray-50 text-gray-800') : 'bg-gray-50 text-gray-800'}`}>
-      <div className={`pt-20 pb-16 ${mounted ? (isDark ? 'bg-gradient-to-b from-gray-900 to-[#0f0f0f] border-b border-gray-800' : 'bg-white border-b border-gray-200 shadow-sm') : 'bg-white border-b border-gray-200 shadow-sm'}`}>
-        <div className="container mx-auto px-4 max-w-4xl pt-8 pb-4">
-          <h1 className={`text-4xl md:text-5xl font-extrabold tracking-tight mb-4 ${mounted ? (isDark ? 'text-white' : 'text-gray-900') : 'text-gray-900'}`}>
+    <div className={`min-h-screen ${isDark ? 'bg-slate-900 text-slate-300' : 'bg-white text-[#222222]'}`}>
+      {/* Simple Header */}
+      <div className={`pt-24 pb-8 ${isDark ? 'border-slate-800' : 'border-[#dddddd]'}`}>
+        <div className="container mx-auto px-6 md:px-10 lg:px-20 max-w-5xl">
+          <h1 className={`text-3xl md:text-4xl font-semibold mb-3 ${isDark ? 'text-white' : 'text-[#222222]'}`}>
             {title}
           </h1>
-          <p className={`text-lg md:text-xl font-medium max-w-2xl ${mounted ? (isDark ? 'text-gray-400' : 'text-gray-500') : 'text-gray-500'}`}>
-            {description}
-          </p>
+          {description && (
+            <p className={`text-base md:text-lg ${isDark ? 'text-slate-400' : 'text-[#717171]'}`}>
+              {description}
+            </p>
+          )}
           {lastUpdated && (
-            <p className={`mt-6 text-sm font-semibold tracking-wider uppercase ${mounted ? (isDark ? 'text-gray-500' : 'text-gray-400') : 'text-gray-400'}`}>
+            <p className={`mt-4 text-sm font-medium ${isDark ? 'text-[#717171]' : 'text-[#717171]'}`}>
               Last updated: {lastUpdated}
             </p>
           )}
         </div>
       </div>
 
-      <div className="container mx-auto px-4 max-w-4xl py-12">
-        <div className={`space-y-6 text-base md:text-lg leading-relaxed ${mounted ? (isDark ? 'text-gray-300' : 'text-gray-700') : 'text-gray-700'}`}>
+      {/* Content Area */}
+      <div className="container mx-auto px-6 md:px-10 lg:px-20 max-w-5xl py-8 mb-20">
+        <div className={`prose prose-lg max-w-none ${isDark ? 'prose-invert prose-p:text-slate-300 prose-headings:text-white prose-a:text-white hover:prose-a:text-slate-400' : 'prose-p:text-[#222222] prose-headings:text-[#222222] prose-a:text-black hover:prose-a:text-gray-600'}`}>
           {children}
         </div>
       </div>

@@ -4,13 +4,12 @@ import React, { useState, useEffect } from "react";
 import { Heart, CalendarCheck, Home, LogIn, UserPlus, MessageCircle, Star, ClipboardList } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { User } from "next-auth";
-import { getUnreadNotificationStats } from "@/services/notification";
-
 import Modal from "@/components/modals/Modal";
 import AuthModal from "@/components/modals/AuthModal";
 import HostApplicationModal from "@/components/modals/HostApplicationModal";
 import Menu from "@/components/common/Menu";
 import Avatar from "@/components/common/Avatar";
+import { useNotification } from "@/context/NotificationContext";
 
 
 interface MobileBottomBarProps {
@@ -22,7 +21,8 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [scrollDirection, setScrollDirection] = useState<"up" | "down" | "">("");
   const [lastY, setLastY] = useState(0);
-  const [unreadStats, setUnreadStats] = useState<{ total: number; byType: Record<string, number> } | null>(null);
+
+  const { unreadStats } = useNotification();
 
   // Implement scroll direction tracking
   useEffect(() => {
@@ -49,17 +49,6 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
   const redirect = (url: string) => {
     router.push(url);
   };
-
-  useEffect(() => {
-    if (!user) return;
-    const fetchStats = async () => {
-      const stats = await getUnreadNotificationStats();
-      if (stats) setUnreadStats(stats);
-    };
-    fetchStats();
-    const interval = setInterval(fetchStats, 10000);
-    return () => clearInterval(interval);
-  }, [user]);
 
   return (
     <div

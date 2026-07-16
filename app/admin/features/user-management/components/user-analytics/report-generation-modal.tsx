@@ -22,7 +22,7 @@ import {
   IconLoader2 
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+import { toast } from '@/app/admin/components/ui/sonner';
 
 interface ReportGenerationModalProps {
   open: boolean;

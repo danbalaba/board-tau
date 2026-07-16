@@ -6,7 +6,13 @@ export const metadata: Metadata = {
   description: 'Expanding and vetting the platform\'s property host network',
 };
 
-export default function HostApplicationsPage() {
+import { requireAdmin } from '@/lib/admin';
+import { requirePagePermission } from '@/lib/rbac';
+
+export default async function HostApplicationsPage() {
+  const admin = await requireAdmin();
+  await requirePagePermission(admin.id, "MODERATE_HOSTS");
+
   return (
     <div className="flex-1 flex flex-col">
       <HostApplicationsDashboard />

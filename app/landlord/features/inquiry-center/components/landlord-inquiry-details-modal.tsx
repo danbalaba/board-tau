@@ -165,6 +165,26 @@ export function LandlordInquiryDetailsModal({
                 {/* Main Content Layout */}
                 <div className="space-y-6">
                   
+                  {inquiry.isSoloBuyout && (
+                    <motion.div 
+                      variants={{
+                        hidden: { opacity: 0, y: -10 },
+                        visible: { opacity: 1, y: 0 }
+                      }}
+                      className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-4"
+                    >
+                      <div className="p-3 bg-amber-500 rounded-xl text-white">
+                        <IconEye size={24} />
+                      </div>
+                      <div>
+                        <p className="font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest text-xs">Solo Buyout Request</p>
+                        <p className="text-sm font-medium text-amber-700 dark:text-amber-400 leading-relaxed mt-1">
+                          This tenant is reserving all <span className="font-bold">{(inquiry.room as any)?.capacity} bedspaces</span> for solo privacy. Please do not accept any other tenants for this room.
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+
                   {/* Property & Stay Overview */}
                   <motion.div 
                     variants={{
@@ -235,6 +255,11 @@ export function LandlordInquiryDetailsModal({
                         </h4>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
                           Space: <span className="text-primary">{inquiry.room?.name || 'Full Unit'}</span>
+                          {inquiry.isSoloBuyout && (
+                            <span className="ml-2 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[8px] font-black uppercase tracking-widest whitespace-nowrap">
+                              Solo Buyout
+                            </span>
+                          )}
                         </p>
                         
                         <div className="mt-4 space-y-2">
@@ -289,10 +314,10 @@ export function LandlordInquiryDetailsModal({
                   >
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 flex items-center gap-2 mb-3">
                       <IconMessage size={14} />
-                      Tenant Message
+                      Special Request
                     </span>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 leading-relaxed italic">
-                      "{inquiry.message || "No specific message provided. Interested in the property."}"
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm italic">
+                      "{inquiry.message || "No special requests provided."}"
                     </p>
                   </motion.div>
 

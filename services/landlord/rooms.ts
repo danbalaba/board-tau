@@ -38,8 +38,6 @@ export async function getLandlordRooms(args?: {
 
     const rooms = await db.room.findMany({
       where,
-      take: batchSize + 1,
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       include: {
         listing: {
           select: {
@@ -56,11 +54,7 @@ export async function getLandlordRooms(args?: {
       orderBy
     });
 
-    const hasMore = rooms.length > batchSize;
-    const nextCursor = hasMore ? rooms[batchSize - 1].id : null;
-    const list = rooms.slice(0, batchSize);
-
-    const formattedRooms = list.map((room) => ({
+    const formattedRooms = rooms.map((room: any) => ({
       ...room,
       createdAt: room.createdAt.toISOString(),
       updatedAt: room.updatedAt.toISOString(),
@@ -69,12 +63,12 @@ export async function getLandlordRooms(args?: {
       propertyRegion: room.listing.region,
       propertyStatus: room.listing.status,
       imageSrc: room.images[0]?.url || null,
-      images: room.images.map(img => img.url),
+      images: room.images.map((img: any) => img.url),
     }));
 
     return {
       rooms: formattedRooms,
-      nextCursor
+      nextCursor: null
     };
   } catch (error: any) {
     console.error("Error fetching landlord rooms:", error);

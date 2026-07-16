@@ -6,25 +6,7 @@ import { sanitizeInput } from "@/lib/validators";
 import { isForbiddenPassword } from "@/lib/password-blacklist";
 import bcrypt from 'bcryptjs';
 import { sendPasswordChangeEmail } from "@/services/email/notifications";
-
-export interface UserProfile {
-  id: string;
-  name: string | null;
-  email: string;
-  image: string | null;
-  phoneNumber: string | null;
-  businessName: string | null;
-  address: string | null;
-  role: Role;
-  emailVerified: Date | null;
-  lastLogin: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-  bio: string | null;
-  city: string | null;
-  region: string | null;
-  hasPassword?: boolean;
-}
+import { UserProfile } from "@/types/profile";
 
 // Server-side function to get user profile
 export async function getUserProfile(): Promise<UserProfile> {
@@ -131,23 +113,6 @@ export async function updateUserProfile(data: Partial<UserProfile>): Promise<Use
   return updatedUser as UserProfile;
 }
 
-// Client-side function to update user profile
-export async function updateUserProfileClient(data: Partial<UserProfile>): Promise<UserProfile> {
-  const response = await fetch('/api/user/profile', {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to update profile');
-  }
-
-  return await response.json();
-}
 
 // Server-side function to change user password
 export async function changeUserPassword(oldPassword: string, newPassword: string): Promise<void> {
@@ -208,8 +173,8 @@ export async function changeUserPassword(oldPassword: string, newPassword: strin
   // We check the new password against the current and history
   const isPreviouslyUsed = await Promise.all(
     user.passwordHistory
-      .filter((hash): hash is string => hash !== null)
-      .map((oldHash) => bcrypt.compare(newPassword, oldHash))
+      .filter((hash: any): hash is string => hash !== null)
+      .map((oldHash: any) => bcrypt.compare(newPassword, oldHash))
   );
 
   if (isPreviouslyUsed.some(match => match)) {
@@ -244,18 +209,3 @@ export async function changeUserPassword(oldPassword: string, newPassword: strin
   });
 }
 
-// Client-side function to change user password
-export async function changeUserPasswordClient(oldPassword: string, newPassword: string): Promise<void> {
-  const response = await fetch('/api/user/change-password', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ oldPassword, newPassword }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to change password');
-  }
-}

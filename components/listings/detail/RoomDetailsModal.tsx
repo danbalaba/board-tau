@@ -164,7 +164,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
           initial="hidden"
           animate="show"
           exit="exit"
-          className="fixed inset-0 z-[99999] flex items-center justify-center p-4 md:p-8 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-md"
+          className="fixed inset-0 z-[9900] flex items-center justify-center p-4 md:p-8 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-md"
           onClick={onClose}
         >
           {/* Ambient glow orbs */}
@@ -456,10 +456,13 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
                         No Vacancy
                       </button>
                     ) : (
-                      <div className="py-4 rounded-2xl bg-primary/10 text-primary font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 text-center px-4">
+                      <button
+                        onClick={onInquire}
+                        className="w-full py-4 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 text-center px-4"
+                      >
                         <Shield size={14} />
                         Sign in to Inquire
-                      </div>
+                      </button>
                     )}
 
                     <button

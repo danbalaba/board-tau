@@ -48,38 +48,62 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   --background-rgb: 248, 250, 249;
   --surface-rgb: 255, 255, 255;
   --border-rgb: 229, 231, 235;
-  
+
   --primary-color: #2f7d6d;
   --primary-light-color: #d8e6e3;
   --primary-dark-color: #1e5146;
-  
+
   /* Chart colors - for landlord/frontend */
-  --color-chart-1: 0.47 0.35 148; /* Green */
-  --color-chart-2: 0.58 0.21 260.84; /* Blue */
-  --color-chart-3: 0.81 0.17 75.35; /* Orange */
-  --color-chart-4: 0.56 0 0; /* Gray */
-  --color-chart-5: 0.92 0 0; /* Light gray */
-  
+  --color-chart-1: 0.47 0.35 148;
+  /* Green */
+  --color-chart-2: 0.58 0.21 260.84;
+  /* Blue */
+  --color-chart-3: 0.81 0.17 75.35;
+  /* Orange */
+  --color-chart-4: 0.56 0 0;
+  /* Gray */
+  --color-chart-5: 0.92 0 0;
+  /* Light gray */
+
   /* Chart specific colors */
-  --color-revenue: oklch(0.58 0.21 260.84); /* Blue */
-  --color-bookings: oklch(0.47 0.35 148); /* Green */
-  --color-apartments: oklch(0.47 0.35 148); /* Green */
-  --color-condos: oklch(0.58 0.21 260.84); /* Blue */
-  --color-houses: oklch(0.81 0.17 75.35); /* Orange */
-  --color-studios: oklch(0.56 0 0); /* Gray */
-  --color-other: oklch(0.92 0 0); /* Light gray */
-  --color-5stars: oklch(0.47 0.35 148); /* Green */
-  --color-4stars: oklch(0.58 0.21 260.84); /* Blue */
-  --color-3stars: oklch(0.81 0.17 75.35); /* Orange */
-  --color-2stars: oklch(0.56 0 0); /* Gray */
-  --color-1star: oklch(0.92 0 0); /* Light gray */
-  --color-direct: oklch(0.47 0.35 148); /* Green */
-  --color-email: oklch(0.58 0.21 260.84); /* Blue */
-  --color-social: oklch(0.81 0.17 75.35); /* Orange */
-  --color-value: oklch(0.47 0.35 148); /* Green */
-  --color-propertyA: oklch(0.47 0.35 148); /* Green */
-  --color-propertyB: oklch(0.58 0.21 260.84); /* Blue */
-  --color-propertyC: oklch(0.81 0.17 75.35); /* Orange */
+  --color-revenue: oklch(0.58 0.21 260.84);
+  /* Blue */
+  --color-bookings: oklch(0.47 0.35 148);
+  /* Green */
+  --color-apartments: oklch(0.47 0.35 148);
+  /* Green */
+  --color-condos: oklch(0.58 0.21 260.84);
+  /* Blue */
+  --color-houses: oklch(0.81 0.17 75.35);
+  /* Orange */
+  --color-studios: oklch(0.56 0 0);
+  /* Gray */
+  --color-other: oklch(0.92 0 0);
+  /* Light gray */
+  --color-5stars: oklch(0.47 0.35 148);
+  /* Green */
+  --color-4stars: oklch(0.58 0.21 260.84);
+  /* Blue */
+  --color-3stars: oklch(0.81 0.17 75.35);
+  /* Orange */
+  --color-2stars: oklch(0.56 0 0);
+  /* Gray */
+  --color-1star: oklch(0.92 0 0);
+  /* Light gray */
+  --color-direct: oklch(0.47 0.35 148);
+  /* Green */
+  --color-email: oklch(0.58 0.21 260.84);
+  /* Blue */
+  --color-social: oklch(0.81 0.17 75.35);
+  /* Orange */
+  --color-value: oklch(0.47 0.35 148);
+  /* Green */
+  --color-propertyA: oklch(0.47 0.35 148);
+  /* Green */
+  --color-propertyB: oklch(0.58 0.21 260.84);
+  /* Blue */
+  --color-propertyC: oklch(0.81 0.17 75.35);
+  /* Orange */
 }
 
 /* ===== UTILITIES ===== */
@@ -88,8 +112,10 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 }
 
 .hide-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 /* Custom scrollbar utility */
@@ -117,79 +143,138 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 
 html.dark {
   --foreground-rgb: 248, 250, 252;
-  --background-rgb: 15, 23, 42; /* slate-900 */
-  --surface-rgb: 30, 41, 59; /* slate-800 */
-  --border-rgb: 51, 65, 85; /* slate-700 */
+  --background-rgb: 15, 23, 42;
+  /* slate-900 */
+  --surface-rgb: 30, 41, 59;
+  /* slate-800 */
+  --border-rgb: 51, 65, 85;
+  /* slate-700 */
   --text-color: rgb(248, 250, 252);
   --text-secondary: rgb(203, 213, 225);
   --text-muted: rgb(148, 163, 184);
   --text-light: rgb(100, 116, 139);
-  
+
   /* Chart colors for dark mode - landlord/frontend */
-  --color-chart-1: 0.47 0.35 148; /* Green */
-  --color-chart-2: 0.58 0.21 260.84; /* Blue */
-  --color-chart-3: 0.81 0.17 75.35; /* Orange */
-  --color-chart-4: 0.44 0 0; /* Dark gray */
-  --color-chart-5: 0.56 0 0; /* Medium gray */
-  
+  --color-chart-1: 0.47 0.35 148;
+  /* Green */
+  --color-chart-2: 0.58 0.21 260.84;
+  /* Blue */
+  --color-chart-3: 0.81 0.17 75.35;
+  /* Orange */
+  --color-chart-4: 0.44 0 0;
+  /* Dark gray */
+  --color-chart-5: 0.56 0 0;
+  /* Medium gray */
+
   /* Chart specific colors for dark mode */
-  --color-revenue: oklch(0.58 0.21 260.84); /* Blue */
-  --color-bookings: oklch(0.47 0.35 148); /* Green */
-  --color-apartments: oklch(0.47 0.35 148); /* Green */
-  --color-condos: oklch(0.58 0.21 260.84); /* Blue */
-  --color-houses: oklch(0.81 0.17 75.35); /* Orange */
-  --color-studios: oklch(0.44 0 0); /* Dark gray */
-  --color-other: oklch(0.56 0 0); /* Medium gray */
-  --color-5stars: oklch(0.47 0.35 148); /* Green */
-  --color-4stars: oklch(0.58 0.21 260.84); /* Blue */
-  --color-3stars: oklch(0.81 0.17 75.35); /* Orange */
-  --color-2stars: oklch(0.44 0 0); /* Dark gray */
-  --color-1star: oklch(0.56 0 0); /* Medium gray */
-  --color-direct: oklch(0.47 0.35 148); /* Green */
-  --color-email: oklch(0.58 0.21 260.84); /* Blue */
-  --color-social: oklch(0.81 0.17 75.35); /* Orange */
-  --color-value: oklch(0.47 0.35 148); /* Green */
-  --color-propertyA: oklch(0.47 0.35 148); /* Green */
-  --color-propertyB: oklch(0.58 0.21 260.84); /* Blue */
-  --color-propertyC: oklch(0.81 0.17 75.35); /* Orange */
+  --color-revenue: oklch(0.58 0.21 260.84);
+  /* Blue */
+  --color-bookings: oklch(0.47 0.35 148);
+  /* Green */
+  --color-apartments: oklch(0.47 0.35 148);
+  /* Green */
+  --color-condos: oklch(0.58 0.21 260.84);
+  /* Blue */
+  --color-houses: oklch(0.81 0.17 75.35);
+  /* Orange */
+  --color-studios: oklch(0.44 0 0);
+  /* Dark gray */
+  --color-other: oklch(0.56 0 0);
+  /* Medium gray */
+  --color-5stars: oklch(0.47 0.35 148);
+  /* Green */
+  --color-4stars: oklch(0.58 0.21 260.84);
+  /* Blue */
+  --color-3stars: oklch(0.81 0.17 75.35);
+  /* Orange */
+  --color-2stars: oklch(0.44 0 0);
+  /* Dark gray */
+  --color-1star: oklch(0.56 0 0);
+  /* Medium gray */
+  --color-direct: oklch(0.47 0.35 148);
+  /* Green */
+  --color-email: oklch(0.58 0.21 260.84);
+  /* Blue */
+  --color-social: oklch(0.81 0.17 75.35);
+  /* Orange */
+  --color-value: oklch(0.47 0.35 148);
+  /* Green */
+  --color-propertyA: oklch(0.47 0.35 148);
+  /* Green */
+  --color-propertyB: oklch(0.58 0.21 260.84);
+  /* Blue */
+  --color-propertyC: oklch(0.81 0.17 75.35);
+  /* Orange */
 }
 
 /* Admin theme styles - Only apply when data-theme attribute is present */
 html[data-theme] {
-  --color-background: 0.98 0 0; /* #f8faf9 */
-  --color-foreground: 0.12 0 0; /* #111827 */
-  --color-card: 0.99 0 0; /* #fafafa */
-  --color-card-foreground: 0.12 0 0; /* #111827 */
-  --color-popover: 0.98 0 0; /* #f8faf9 */
-  --color-popover-foreground: 0.12 0 0; /* #111827 */
-  --color-primary: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
-  --color-primary-foreground: 0.98 0 0; /* #f8faf9 */
-  --color-secondary: 0.94 0 0; /* #f3f4f6 */
-  --color-secondary-foreground: 0.12 0 0; /* #111827 */
-  --color-muted: 0.96 0 0; /* #f3f4f6 */
-  --color-muted-foreground: 0.44 0 0; /* #6b7280 */
-  --color-accent: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
-  --color-accent-foreground: 0.98 0 0; /* #f8faf9 */
-  --color-destructive: 0.63 0.19 23.03; /* rgb(239 68 68) */
-  --color-destructive-foreground: 0.98 0 0; /* #f8faf9 */
-  --color-border: 0.92 0 0; /* #e5e7eb */
-  --color-input: 0.94 0 0; /* #f3f4f6 */
-  --color-ring: 0.47 0.35 148; /* #2f7d6d */
-  --color-sidebar: 0.98 0 0; /* #f8faf9 */
-  --color-sidebar-foreground: 0.12 0 0; /* #111827 */
-  --color-sidebar-primary: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
-  --color-sidebar-primary-foreground: 0.98 0 0; /* #f8faf9 */
-  --color-sidebar-accent: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
-  --color-sidebar-accent-foreground: 0.98 0 0; /* #f8faf9 */
-  --color-sidebar-border: 0.92 0 0; /* #e5e7eb */
-  --color-sidebar-ring: 0.47 0.35 148; /* #2f7d6d */
+  --color-background: 0.98 0 0;
+  /* #f8faf9 */
+  --color-foreground: 0.12 0 0;
+  /* #111827 */
+  --color-card: 0.99 0 0;
+  /* #fafafa */
+  --color-card-foreground: 0.12 0 0;
+  /* #111827 */
+  --color-popover: 0.98 0 0;
+  /* #f8faf9 */
+  --color-popover-foreground: 0.12 0 0;
+  /* #111827 */
+  --color-primary: 0.47 0.35 148;
+  /* #2f7d6d - BoardTAU Green */
+  --color-primary-foreground: 0.98 0 0;
+  /* #f8faf9 */
+  --color-secondary: 0.94 0 0;
+  /* #f3f4f6 */
+  --color-secondary-foreground: 0.12 0 0;
+  /* #111827 */
+  --color-muted: 0.96 0 0;
+  /* #f3f4f6 */
+  --color-muted-foreground: 0.44 0 0;
+  /* #6b7280 */
+  --color-accent: 0.47 0.35 148;
+  /* #2f7d6d - BoardTAU Green */
+  --color-accent-foreground: 0.98 0 0;
+  /* #f8faf9 */
+  --color-destructive: 0.63 0.19 23.03;
+  /* rgb(239 68 68) */
+  --color-destructive-foreground: 0.98 0 0;
+  /* #f8faf9 */
+  --color-border: 0.92 0 0;
+  /* #e5e7eb */
+  --color-input: 0.94 0 0;
+  /* #f3f4f6 */
+  --color-ring: 0.47 0.35 148;
+  /* #2f7d6d */
+  --color-sidebar: 0.98 0 0;
+  /* #f8faf9 */
+  --color-sidebar-foreground: 0.12 0 0;
+  /* #111827 */
+  --color-sidebar-primary: 0.47 0.35 148;
+  /* #2f7d6d - BoardTAU Green */
+  --color-sidebar-primary-foreground: 0.98 0 0;
+  /* #f8faf9 */
+  --color-sidebar-accent: 0.47 0.35 148;
+  /* #2f7d6d - BoardTAU Green */
+  --color-sidebar-accent-foreground: 0.98 0 0;
+  /* #f8faf9 */
+  --color-sidebar-border: 0.92 0 0;
+  /* #e5e7eb */
+  --color-sidebar-ring: 0.47 0.35 148;
+  /* #2f7d6d */
 
   /* Chart colors - with green accents */
-  --color-chart-1: 0.47 0.35 148; /* Green */
-  --color-chart-2: 0.58 0.21 260.84; /* Blue */
-  --color-chart-3: 0.81 0.17 75.35; /* Orange */
-  --color-chart-4: 0.56 0 0; /* Gray */
-  --color-chart-5: 0.92 0 0; /* Light gray */
+  --color-chart-1: 0.47 0.35 148;
+  /* Green */
+  --color-chart-2: 0.58 0.21 260.84;
+  /* Blue */
+  --color-chart-3: 0.81 0.17 75.35;
+  /* Orange */
+  --color-chart-4: 0.56 0 0;
+  /* Gray */
+  --color-chart-5: 0.92 0 0;
+  /* Light gray */
 
   /* Border radius */
   --radius-sm: 0.25rem;
@@ -200,50 +285,112 @@ html[data-theme] {
 
 /* Admin dark mode default colors */
 html[data-theme].dark {
-  --color-background: 0.20 0 0; /* #1e293b - slate-800 (blueish dark) */
-  --color-foreground: 0.98 0 0; /* #f8fafc */
-  --color-card: 0.22 0 0; /* #334155 - slate-700 */
-  --color-card-foreground: 0.98 0 0; /* #f8fafc */
-  --color-popover: 0.22 0 0; /* #334155 - slate-700 */
-  --color-popover-foreground: 0.98 0 0; /* #f8fafc */
-  --color-primary: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
-  --color-primary-foreground: 0.98 0 0; /* #f8fafc */
-  --color-secondary: 0.25 0 0; /* #475569 - slate-600 */
-  --color-secondary-foreground: 0.98 0 0; /* #f8fafc */
-  --color-muted: 0.23 0 0; /* #475569 - slate-600 */
-  --color-muted-foreground: 0.72 0 0; /* #cbd5e1 */
-  --color-accent: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
-  --color-accent-foreground: 0.98 0 0; /* #f8fafc */
-  --color-destructive: 0.69 0.2 23.91; /* rgb(239 68 68) */
-  --color-destructive-foreground: 0.20 0 0; /* #1e293b */
-  --color-border: 0.26 0 0; /* #475569 - slate-600 */
-  --color-input: 0.32 0 0; /* #64748b - slate-500 */
-  --color-ring: 0.47 0.35 148; /* #2f7d6d */
-  --color-sidebar: 0.20 0 0; /* #1e293b - slate-800 */
-  --color-sidebar-foreground: 0.98 0 0; /* #f8fafc */
-  --color-sidebar-primary: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
-  --color-sidebar-primary-foreground: 0.98 0 0; /* #f8fafc */
-  --color-sidebar-accent: 0.47 0.35 148; /* #2f7d6d - BoardTAU Green */
-  --color-sidebar-accent-foreground: 0.98 0 0; /* #f8fafc */
-  --color-sidebar-border: 0.26 0 0; /* #475569 - slate-600 */
-  --color-sidebar-ring: 0.47 0.35 148; /* #2f7d6d */
+  --color-background: 0.20 0 0;
+  /* #1e293b - slate-800 (blueish dark) */
+  --color-foreground: 0.98 0 0;
+  /* #f8fafc */
+  --color-card: 0.22 0 0;
+  /* #334155 - slate-700 */
+  --color-card-foreground: 0.98 0 0;
+  /* #f8fafc */
+  --color-popover: 0.22 0 0;
+  /* #334155 - slate-700 */
+  --color-popover-foreground: 0.98 0 0;
+  /* #f8fafc */
+  --color-primary: 0.47 0.35 148;
+  /* #2f7d6d - BoardTAU Green */
+  --color-primary-foreground: 0.98 0 0;
+  /* #f8fafc */
+  --color-secondary: 0.25 0 0;
+  /* #475569 - slate-600 */
+  --color-secondary-foreground: 0.98 0 0;
+  /* #f8fafc */
+  --color-muted: 0.23 0 0;
+  /* #475569 - slate-600 */
+  --color-muted-foreground: 0.72 0 0;
+  /* #cbd5e1 */
+  --color-accent: 0.47 0.35 148;
+  /* #2f7d6d - BoardTAU Green */
+  --color-accent-foreground: 0.98 0 0;
+  /* #f8fafc */
+  --color-destructive: 0.69 0.2 23.91;
+  /* rgb(239 68 68) */
+  --color-destructive-foreground: 0.20 0 0;
+  /* #1e293b */
+  --color-border: 0.26 0 0;
+  /* #475569 - slate-600 */
+  --color-input: 0.32 0 0;
+  /* #64748b - slate-500 */
+  --color-ring: 0.47 0.35 148;
+  /* #2f7d6d */
+  --color-sidebar: 0.20 0 0;
+  /* #1e293b - slate-800 */
+  --color-sidebar-foreground: 0.98 0 0;
+  /* #f8fafc */
+  --color-sidebar-primary: 0.47 0.35 148;
+  /* #2f7d6d - BoardTAU Green */
+  --color-sidebar-primary-foreground: 0.98 0 0;
+  /* #f8fafc */
+  --color-sidebar-accent: 0.47 0.35 148;
+  /* #2f7d6d - BoardTAU Green */
+  --color-sidebar-accent-foreground: 0.98 0 0;
+  /* #f8fafc */
+  --color-sidebar-border: 0.26 0 0;
+  /* #475569 - slate-600 */
+  --color-sidebar-ring: 0.47 0.35 148;
+  /* #2f7d6d */
 
   /* Chart colors for dark mode */
-  --color-chart-1: 0.47 0.35 148; /* Green */
-  --color-chart-2: 0.58 0.21 260.84; /* Blue */
-  --color-chart-3: 0.81 0.17 75.35; /* Orange */
-  --color-chart-4: 0.44 0 0; /* Dark gray */
-  --color-chart-5: 0.56 0 0; /* Medium gray */
+  --color-chart-1: 0.47 0.35 148;
+  /* Green */
+  --color-chart-2: 0.58 0.21 260.84;
+  /* Blue */
+  --color-chart-3: 0.81 0.17 75.35;
+  /* Orange */
+  --color-chart-4: 0.44 0 0;
+  /* Dark gray */
+  --color-chart-5: 0.56 0 0;
+  /* Medium gray */
 }
 
 body {
-  overflow-x: hidden;
-  overflow-y: scroll;
+  overflow-x: hidden !important;
+  overflow-y: scroll !important;
+  scrollbar-gutter: stable !important;
+  padding-right: 0 !important;
+  margin-right: 0 !important;
   scroll-behavior: smooth;
   background-color: rgb(var(--background-rgb));
   color: rgb(var(--foreground-rgb));
   transition: color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     background-color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  /* Native App CSS Touches */
+  -webkit-tap-highlight-color: transparent; /* Remove blue tap highlight */
+  overscroll-behavior-y: none; /* Prevent pull-to-refresh bounce */
+  padding-bottom: env(safe-area-inset-bottom); /* iOS Safe area padding */
+}
+
+/* Prevent Radix UI scroll lock from adding inline padding which shifts layout on Windows */
+:root {
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+body[data-scroll-locked], 
+html[data-scroll-locked],
+[data-radix-scroll-area-viewport] {
+  padding-right: 0 !important;
+  margin-right: 0 !important;
+  pointer-events: auto !important;
+  overflow-y: scroll !important;
+}
+
+/* Disable text selection on interactive elements */
+button, 
+a, 
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* View Transition Reveal Effect - Premium circular ripple */
@@ -266,6 +413,7 @@ body {
     clip-path: circle(0% at var(--x, 50%) var(--y, 50%));
     opacity: 0.8;
   }
+
   to {
     clip-path: circle(150% at var(--x, 50%) var(--y, 50%));
     opacity: 1;
@@ -281,8 +429,13 @@ body {
 }
 
 @keyframes fade-out {
-  from { opacity: 1; }
-  to { opacity: 0.95; }
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.95;
+  }
 }
 
 /* Admin theme body styles - Only apply when data-theme attribute is present */
@@ -336,41 +489,53 @@ html[data-theme] body {
 
   /* Skeleton shimmer */
   .shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(229, 231, 235, 0.4) 0%,
-      rgba(229, 231, 235, 0.8) 50%,
-      rgba(229, 231, 235, 0.4) 100%
-    );
+    background: linear-gradient(90deg,
+        rgba(229, 231, 235, 0.4) 0%,
+        rgba(229, 231, 235, 0.8) 50%,
+        rgba(229, 231, 235, 0.4) 100%);
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
   }
 
   html.dark:not([data-theme]) .shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(55, 65, 81, 0.4) 0%,
-      rgba(75, 85, 99, 0.6) 50%,
-      rgba(55, 65, 81, 0.4) 100%
-    );
+    background: linear-gradient(90deg,
+        rgba(55, 65, 81, 0.4) 0%,
+        rgba(75, 85, 99, 0.6) 50%,
+        rgba(55, 65, 81, 0.4) 100%);
   }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
   }
+
   50% {
     box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
   }
@@ -381,20 +546,17 @@ html[data-theme] body {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
 }
 
 @layer components {
+
   /* ===== SOLID SEARCH BAR ===== */
   .search-bar-trigger {
-    @apply relative w-full px-2 md:px-4 py-1.5 md:py-2
-           rounded-pill cursor-pointer
-           transition-all duration-300 ease-out
-           hover:scale-[1.01] active:scale-[0.99]
-           border border-gray-200 dark:border-gray-700
-           mx-auto;
+    @apply relative w-full px-2 md:px-4 py-1.5 md:py-2 rounded-pill cursor-pointer transition-all duration-300 ease-out hover:scale-[1.01] active:scale-[0.99] border border-gray-200 dark:border-gray-700 mx-auto;
     background: rgb(var(--surface-rgb));
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4);
     font-size: 14px;
@@ -440,20 +602,55 @@ html[data-theme] body {
 }
 
 @keyframes shake-horizontal {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-  20%, 40%, 60%, 80% { transform: translateX(5px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
 }
 
 @keyframes glow-error {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.5); }
-  50% { box-shadow: 0 0 15px 5px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 1); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    border-color: rgba(239, 68, 68, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 15px 5px rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 1);
+  }
 }
 
 .animate-shake {
-  animation: shake-horizontal 0.6s cubic-bezier(.36,.07,.19,.97) both;
+  animation: shake-horizontal 0.6s cubic-bezier(.36, .07, .19, .97) both;
 }
 
 .animate-glow-error {
   animation: glow-error 1.5s ease-in-out infinite;
+}
+
+/* Swiper Customizations */
+.swiper-pagination-bullet-active {
+  background-color: var(--primary-color) !important;
+}
+.swiper-pagination-bullet {
+  background-color: #e2e8f0;
+  opacity: 0.8;
 }

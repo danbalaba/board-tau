@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Heading from "@/components/common/Heading";
 import { Search, Filter, ArrowUpDown, Clock, Star, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
@@ -8,8 +8,7 @@ import ModernSelect from "@/components/common/ModernSelect";
 import ModernLoader from "@/components/common/ModernLoader";
 import ReviewCard from "./ReviewCard";
 import ReviewDetailsModal from "./ReviewDetailsModal";
-import { getUnreadNotifications } from "@/services/notification";
-import { Notification } from "@prisma/client";
+import { useNotification } from "@/context/NotificationContext";
 
 interface ReviewListing {
   id: string;
@@ -74,29 +73,29 @@ const ReviewsClient: React.FC<ReviewsClientProps> = ({ initialReviews }) => {
   const [starFilter, setStarFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
-  const [unreadNotifications, setUnreadNotifications] = useState<Notification[]>([]);
+  const searchParams = useSearchParams();
+  const { notifications, markAsRead } = useNotification();
+  const unreadNotifications = notifications.filter(n => !n.isRead && n.type === "review");
   const [isLoading, setIsLoading] = useState(true);
+  const hasAutoOpened = React.useRef(false);
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      const data = await getUnreadNotifications();
-      setUnreadNotifications(data);
-      
-      // Artificial delay for that "Premium" feel
-      setTimeout(() => setIsLoading(false), 800);
-    };
-    fetchNotifications();
-
-    // Listen for notification-cleared event to sync state immediately
-    const handleNotificationCleared = () => {
-      fetchNotifications();
-    };
-
-    window.addEventListener("notification-cleared", handleNotificationCleared);
-    return () => {
-      window.removeEventListener("notification-cleared", handleNotificationCleared);
-    };
+    // Artificial delay for that "Premium" feel
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
   }, []);
+
+  // Auto-open modal if ID is in URL
+  useEffect(() => {
+    const id = searchParams.get("id");
+    if (id && !hasAutoOpened.current && initialReviews.length > 0) {
+      const review = initialReviews.find(r => r.id === id);
+      if (review) {
+        setSelectedReview(review);
+        hasAutoOpened.current = true;
+      }
+    }
+  }, [searchParams, initialReviews]);
 
   const filteredReviews = useMemo(() => {
     let filtered = [...initialReviews];
@@ -212,11 +211,13 @@ const ReviewsClient: React.FC<ReviewsClientProps> = ({ initialReviews }) => {
                 n.link.includes(selectedReview.id) || (n.type === "review" && n.link === "/my-reviews")
               )}
               onClose={() => {
-                setUnreadNotifications(prev => prev.filter(n => 
-                  !(n.link.includes(selectedReview.id) || (n.type === "review" && n.link === "/my-reviews"))
-                ));
                 setSelectedReview(null);
-                router.refresh();
+              }}
+              onMarkAsRead={() => {
+                const notif = unreadNotifications.find(n => 
+                  n.link.includes(selectedReview.id) || (n.type === "review" && n.link === "/my-reviews")
+                );
+                if (notif) markAsRead(notif.id, "review");
               }}
             />
           )}

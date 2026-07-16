@@ -12,7 +12,7 @@ import { LandlordPropertyCard } from './components/landlord-property-card';
 import { LandlordPropertyDetailsModal } from './components/landlord-property-details-modal';
 import { LandlordPropertyDeleteModal } from './components/landlord-property-delete-modal';
 import { LandlordPropertyArchiveModal } from './components/landlord-property-archive-modal';
-import { useLoadMore } from '@/hooks/useLoadMore';
+import { LandlordPagination } from '../shared/landlord-pagination';
 import Link from 'next/link';
 import { Button } from '@/app/admin/components/ui/button';
 
@@ -36,8 +36,11 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
   const router = useRouter();
   const {
     listings,
-    nextCursor,
-    isLoadingMore,
+    totalListings,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    setItemsPerPage,
     deleteModalOpen,
     setDeleteModalOpen,
     viewModalOpen,
@@ -60,19 +63,11 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
     setIsArchived,
     uniqueCategories,
     handleConfirmDelete,
-    handleLoadMore,
     handleGenerateReport,
     handleClearFilters,
     handleConfirmArchive,
     isLoading
   } = usePropertyLogic(properties.listings, properties.nextCursor);
-
-  const { ref: loadMoreRef } = useLoadMore(
-    handleLoadMore,
-    !!nextCursor,
-    isLoadingMore,
-    false
-  );
 
   useRegisterActions(
     [
@@ -147,7 +142,7 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
               {listings.length > 0 && (
                 <div className="flex items-center gap-2 mb-6">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                    {isArchived ? 'Archived Portfolio' : 'Active Portfolio'} ({listings.length} Listing{listings.length !== 1 ? 's' : ''})
+                    {isArchived ? 'Archived Portfolio' : 'Active Portfolio'} ({totalListings} Listing{totalListings !== 1 ? 's' : ''})
                   </span>
                   <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
                 </div>
@@ -208,37 +203,18 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
                       onArchive={(p) => { setSelectedProperty(p); setArchiveModalOpen(true); }}
                     />
                   ))}
-                  {/* Scroll Sentinel for Infinite Loading */}
-                  <div ref={loadMoreRef} className="h-10 w-full col-span-full opacity-0 pointer-events-none" />
                 </div>
               )}
 
-              {nextCursor && (
-                <div className="flex flex-col items-center gap-4 pt-12 pb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-[2px] bg-gradient-to-r from-transparent to-gray-200 dark:to-gray-800" />
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                        {isLoadingMore ? 'Loading more listings...' : 'More listings available'}
-                      </span>
-                    </div>
-                    <div className="w-12 h-[2px] bg-gradient-to-l from-transparent to-gray-200 dark:to-gray-800" />
-                  </div>
-                  
-                  <Button 
-                    outline 
-                    className="rounded-2xl px-12 py-4 group hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/5 border-2 border-gray-100 dark:border-gray-800" 
-                    onClick={handleLoadMore} 
-                    isLoading={isLoadingMore}
-                  >
-                    <span className="flex items-center gap-2 uppercase font-black tracking-[0.2em] text-[10px]">
-                      {isLoadingMore ? 'Loading...' : 'Load More'}
-                      <IconChevronDown size={14} className="group-hover:translate-y-0.5 transition-transform" />
-                    </span>
-                  </Button>
-                </div>
-              )}
+              <LandlordPagination 
+                currentPage={currentPage}
+                totalPages={Math.ceil(totalListings / itemsPerPage)}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={setItemsPerPage}
+                totalItems={totalListings}
+                itemName="properties"
+              />
             </motion.div>
           )}
         </AnimatePresence>

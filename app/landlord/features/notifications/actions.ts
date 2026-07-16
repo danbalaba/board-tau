@@ -38,7 +38,7 @@ export async function getLandlordNotifications(page: number = 0, limit: number =
     db.notification.count({ where: { userId, isRead: false, isArchived: false } })
   ]);
 
-  const notifications: NotificationItem[] = dbNotifications.map(n => ({
+  const notifications: NotificationItem[] = dbNotifications.map((n: any) => ({
     id: n.id,
     type: n.type as NotificationType,
     title: n.title,

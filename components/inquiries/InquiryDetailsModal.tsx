@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import SafeImage from "@/components/common/SafeImage";
 import { useRouter } from "next/navigation";
 import { cn } from "@/utils/helper";
-import { markEntityNotificationsAsRead } from "@/services/notification";
 import { getSafeImageSrcString } from "@/components/modals/inquiry-modal/InquiryModalUtils";
 
 interface InquiryListing {
@@ -27,6 +26,7 @@ interface InquiryRoom {
     id: string;
     name: string;
     price: number;
+    capacity: number;
     roomType: string;
     images: Array<{
         id: string;
@@ -48,6 +48,7 @@ interface Inquiry {
     status: string;
     paymentStatus: string;
     reservationFee: number;
+    isSoloBuyout?: boolean;
     isApproved: boolean;
     createdAt: string;
     updatedAt: string;
@@ -58,7 +59,7 @@ interface Inquiry {
     room: InquiryRoom;
 }
 
-import { Notification } from "@prisma/client";
+import { NotificationItem } from "@/context/NotificationContext";
 
 interface InquiryDetailsModalProps {
     inquiry: Inquiry;
@@ -66,7 +67,8 @@ interface InquiryDetailsModalProps {
     currentUserId: string;
     onClose: () => void;
     onCancel?: () => void;
-    notification?: Notification;
+    onMarkAsRead?: () => void;
+    notification?: NotificationItem;
 }
 
 const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
@@ -75,6 +77,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
     currentUserId,
     onClose,
     onCancel,
+    onMarkAsRead,
     notification,
 }) => {
     const router = useRouter();
@@ -86,15 +89,18 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
     React.useEffect(() => {
         if (notification && !activeNotification) {
             setActiveNotification(notification);
+        }
+    }, [notification]); // Only depend on notification
 
-            // Auto-dismiss after 8 seconds so the user can finish reading
+    // Auto-dismiss after 8 seconds so the user can finish reading
+    React.useEffect(() => {
+        if (activeNotification) {
             const timer = setTimeout(() => {
                 setActiveNotification(undefined);
             }, 8000);
-
             return () => clearTimeout(timer);
         }
-    }, [notification, activeNotification]);
+    }, [activeNotification]);
 
     // Reset activeNotification when the modal is closed so it's fresh for next time
     React.useEffect(() => {
@@ -104,13 +110,16 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
     }, [isOpen]);
 
     React.useEffect(() => {
-        if (isOpen) {
-            markEntityNotificationsAsRead("inquiry", inquiry.id).then(() => {
-                window.dispatchEvent(new Event("notification-cleared"));
-            });
+        if (isOpen && activeNotification) {
+            if (onMarkAsRead) {
+                onMarkAsRead();
+            }
         }
-    }, [isOpen, inquiry.id]);
-    const images = inquiry.room.images || [];
+    }, [isOpen, activeNotification, onMarkAsRead]);
+
+    if (!isOpen || !inquiry) return null;
+
+    const images = inquiry.room?.images || [];
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString("en-US", {
@@ -152,8 +161,6 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
     ].filter(Boolean).join(", ");
 
     const landlordId = String((inquiry.listing as any)?.userId || "").trim();
-
-    if (!isOpen) return null;
 
     return (
         <>
@@ -332,7 +339,9 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                                             <div className="flex flex-col">
                                                 <span className="text-[10px] font-black text-primary dark:text-primary-light uppercase tracking-widest">Reservation Fee</span>
                                                 <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400">
-                                                    {inquiry.occupantsCount} {inquiry.occupantsCount === 1 ? 'Person' : 'People'} × ₱{((inquiry.room as any).reservationFee || ((inquiry as any).reservationFee / (inquiry.occupantsCount || 1))).toLocaleString()}
+                                                    {inquiry.isSoloBuyout 
+                                                      ? `Full Room Buyout` 
+                                                      : `${inquiry.occupantsCount} ${inquiry.occupantsCount === 1 ? 'Person' : 'People'}`} × ₱{((inquiry.room as any).reservationFee || ((inquiry as any).reservationFee / (inquiry.isSoloBuyout ? inquiry.room.capacity : (inquiry.occupantsCount || 1)))).toLocaleString()}
                                                 </span>
                                             </div>
                                         </div>
@@ -390,7 +399,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                                             </div>
                                             <div className="flex flex-col">
                                                 <span className="text-[10px] block font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Occupants</span>
-                                                <span className="text-sm font-black text-gray-900 dark:text-white">{inquiry.occupantsCount === 1 ? "Solo Occupant" : `${inquiry.occupantsCount} Occupants`}</span>
+                                                <span className="text-sm font-black text-gray-900 dark:text-white">{inquiry.isSoloBuyout ? "Solo Buyout" : (inquiry.occupantsCount === 1 ? "Solo Occupant" : `${inquiry.occupantsCount} Occupants`)}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -398,7 +407,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
 
                                 {inquiry.message && (
                                     <div className="bg-white dark:bg-gray-800 rounded-[32px] p-6 shadow-sm border border-gray-100 dark:border-gray-700/50">
-                                        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Message to Host</h3>
+                                        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Special Request</h3>
                                         <div className="p-5 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border-l-[6px] border-primary italic text-sm font-medium text-gray-600 dark:text-gray-300 leading-relaxed">
                                             "{inquiry.message}"
                                         </div>
@@ -465,7 +474,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                     
                     <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
                         <button
-                            className="px-4 sm:px-10 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-gray-900 dark:bg-gray-100 dark:text-gray-900 rounded-2xl hover:bg-primary dark:hover:bg-primary hover:text-white dark:hover:text-white shadow-xl shadow-gray-900/10 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2 group/msg"
+                            className="px-4 sm:px-10 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-primary bg-primary/10 dark:bg-primary/20 hover:bg-primary/20 dark:hover:bg-primary/30 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2 group/msg"
                             onClick={() => router.push(`/messages?listingId=${inquiry.listingId}&otherUserId=${landlordId}`)}
                         >
                             <Mail size={14} strokeWidth={3} className="group-hover/msg:rotate-6 transition-transform" />

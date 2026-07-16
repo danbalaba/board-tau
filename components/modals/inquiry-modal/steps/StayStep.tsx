@@ -39,7 +39,10 @@ const StayStep: React.FC<StayStepProps> = ({
   const contactMethod = watch('contactMethod');
   
   const hasOverlap = activeStay && moveInDate && new Date(moveInDate) < new Date(activeStay.endDate);
+  const isSoloBuyout = watch('isSoloBuyout');
+
   const handleOccupantsChange = (value: number) => {
+    if (isSoloBuyout) return; // Prevent changing occupants if solo buyout is checked
     setValue('occupantsCount', value, { shouldValidate: true });
   };
   
@@ -78,9 +81,6 @@ const StayStep: React.FC<StayStepProps> = ({
 
           if (!validatePhoneNumber(value)) {
             return "Please enter a valid phone number (e.g. 09123456789 or +63...)";
-          }
-          if (!isCleanString(value)) {
-            return "Please remove special characters (< > { } [ ])";
           }
           return true;
         }
@@ -228,7 +228,7 @@ const StayStep: React.FC<StayStepProps> = ({
               <button
                 type="button"
                 onClick={() => handleOccupantsChange(Math.max(1, getValues('occupantsCount') - 1))}
-                disabled={getValues('occupantsCount') <= 1}
+                disabled={getValues('occupantsCount') <= 1 || isSoloBuyout}
                 className="w-10 h-10 rounded-full border border-gray-300 dark:border-gray-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <FaChevronLeft size={14} />
@@ -239,7 +239,7 @@ const StayStep: React.FC<StayStepProps> = ({
               <button
                 type="button"
                 onClick={() => handleOccupantsChange(Math.min(room.availableSlots, getValues('occupantsCount') + 1))}
-                disabled={getValues('occupantsCount') >= room.availableSlots}
+                disabled={getValues('occupantsCount') >= room.availableSlots || isSoloBuyout}
                 className="w-10 h-10 rounded-full border border-gray-300 dark:border-gray-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <FaChevronRight size={14} />
@@ -248,6 +248,38 @@ const StayStep: React.FC<StayStepProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Solo Buyout Feature */}
+        {room.roomType === 'BEDSPACE' && room.availableSlots === room.capacity && room.capacity > 1 && (
+          <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-xl transition-all duration-300 hover:bg-primary/10">
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <div className="relative flex items-center justify-center mt-0.5">
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 border-2 border-gray-300 dark:border-gray-600 rounded-md appearance-none checked:bg-primary checked:border-primary transition-all cursor-pointer peer"
+                  {...register("isSoloBuyout", {
+                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                      if (e.target.checked) {
+                        setValue('occupantsCount', 1, { shouldValidate: true });
+                      }
+                    }
+                  })}
+                />
+                <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none text-white">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                </div>
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+                  Rent Entire Room (Solo Occupancy)
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Book all {room.capacity} beds for yourself to ensure maximum privacy. You will pay the full room reservation fee, but you will be the only occupant.
+                </p>
+              </div>
+            </label>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

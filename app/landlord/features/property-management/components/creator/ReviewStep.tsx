@@ -222,12 +222,8 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ watch, control, onBack }) => {
               <ReviewField label="Public Listing Name" value={watch('propertyInfo.propertyName')} darkValue />
             </div>
             <ReviewField 
-              label="Main Category" 
-              value={
-                Array.isArray(watch('propertyInfo.category')) 
-                  ? (watch('propertyInfo.category') || []).join(' • ') 
-                  : watch('propertyInfo.category') || 'None'
-              } 
+              label="System Category" 
+              value="Categories will be automatically assigned by the system upon submission." 
             />
             <ReviewField label="Floor Pricing" value={`₱${watch('propertyInfo.price') || '0'}`} />
             <div className="sm:col-span-2">

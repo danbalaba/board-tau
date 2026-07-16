@@ -3,8 +3,12 @@ import { redirect } from 'next/navigation';
 
 export default async function Dashboard() {
   // Require admin authentication
-  await requireAdmin();
+  const user = await requireAdmin();
 
-  // Redirect to overview page
-  redirect('/admin/overview');
+  // Redirect based on role
+  if (user.role === 'SUPER_ADMIN') {
+    redirect('/admin/overview');
+  } else {
+    redirect('/admin/dashboard');
+  }
 }

@@ -153,7 +153,7 @@ export const getFallbackListings = async (parsedQuery: any) => {
 
   // PRIORITY 4: Relax distance filter (max 2x original or 20km, whichever is smaller)
   const MAX_FALLBACK_DISTANCE = 20;
-  fallbackCandidates = fallbackCandidates.filter((listing) => {
+  fallbackCandidates = fallbackCandidates.filter((listing: any) => {
     if ((listing as any).latitude == null || (listing as any).longitude == null) return false;
     const dist = haversineKm(lat, lng, (listing as any).latitude, (listing as any).longitude);
     const maxAllowedDist = distance ? Math.min(distance * 2, MAX_FALLBACK_DISTANCE) : MAX_FALLBACK_DISTANCE;
@@ -174,7 +174,7 @@ export const getFallbackListings = async (parsedQuery: any) => {
   }
 
   // Calculate fallback scores with strict prioritization
-  const scoredFallbackListings = fallbackCandidates.map((listing) => {
+  const scoredFallbackListings = fallbackCandidates.map((listing: any) => {
     const distanceKm = haversineKm(lat, lng, (listing as any).latitude || 0, (listing as any).longitude || 0);
     let score = 0;
 

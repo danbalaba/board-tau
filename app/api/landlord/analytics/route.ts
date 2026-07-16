@@ -8,6 +8,15 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
+    const { getCurrentUser } = await import('@/services/user');
+    const { hasPermission } = await import('@/lib/rbac');
+    
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+
+    const permitted = await hasPermission(user.id, "VIEW_DASHBOARD");
+    if (!permitted) return NextResponse.json({ success: false, error: 'Forbidden: Missing VIEW_DASHBOARD' }, { status: 403 });
+
     const searchParams = request.nextUrl.searchParams;
     const type = searchParams.get("type");
     const propertyId = searchParams.get("propertyId");

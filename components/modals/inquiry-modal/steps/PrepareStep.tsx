@@ -78,13 +78,13 @@ const PrepareStep: React.FC<PrepareStepProps> = ({
             </div>
 
             <div className="flex flex-col items-center gap-4 pt-4 mt-2 border-t border-gray-100 dark:border-gray-800">
-               <button 
+              <button 
                 type="button"
                 onClick={() => setHasReadGuidelines(!hasReadGuidelines)}
                 className={`w-full max-w-sm py-4 rounded-2xl flex items-center justify-center gap-3 font-black text-xs uppercase tracking-widest transition-all transform active:scale-95 shadow-xl ${
                   hasReadGuidelines 
-                    ? 'bg-emerald-500 text-white shadow-emerald-500/20' 
-                    : 'bg-primary text-white shadow-primary/20 hover:bg-primary/90'
+                    ? 'bg-primary text-white shadow-primary/20 hover:bg-primary/90' 
+                    : 'bg-gray-500 dark:bg-gray-600 text-white shadow-gray-500/20 hover:bg-gray-600 dark:hover:bg-gray-500'
                 }`}
               >
                 {hasReadGuidelines ? (

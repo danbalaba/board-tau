@@ -4,14 +4,14 @@ import React, { useState, useEffect } from 'react';
 import Modal from '@/components/modals/Modal';
 import { Button } from '@/app/admin/components/ui/button';
 import { 
-  IconUser, 
-  IconBuilding, 
-  IconCheck, 
-  IconX,
-  IconMessageCircle,
-  IconStarFilled,
-  IconCalendarEvent
-} from '@tabler/icons-react';
+  User, 
+  Building, 
+  Check, 
+  X,
+  MessageCircle,
+  Star,
+  Calendar
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -22,7 +22,7 @@ interface AdminReviewModalProps {
   review: any | null;
   isOpen: boolean;
   onClose: () => void;
-  onDecision: (id: string, action: 'approve' | 'reject', reason?: string) => void;
+  onDecision: (id: string, action: 'approve' | 'reject', reason?: string, banUser?: boolean) => void;
   isDeciding?: boolean;
 }
 
@@ -42,12 +42,14 @@ export function AdminReviewModal({
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [customReason, setCustomReason] = useState("");
+  const [banUser, setBanUser] = useState(false);
 
   useEffect(() => {
     if (isOpen && review) {
       setIsInitialLoading(true);
       setShowRejectConfirm(false);
       setCustomReason("");
+      setBanUser(false);
       
       const timer = setTimeout(() => setIsInitialLoading(false), 600);
       return () => clearTimeout(timer);
@@ -57,7 +59,7 @@ export function AdminReviewModal({
   if (!review) return null;
 
   const handleAction = async (action: 'approve' | 'reject', reason?: string) => {
-    onDecision(review.id, action, reason);
+    onDecision(review.id, action, reason, banUser);
   };
 
   const PREDEFINED_REASONS = [
@@ -68,7 +70,7 @@ export function AdminReviewModal({
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Content Moderation" width="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Review Details" width="lg">
       <div className="p-8 space-y-8 bg-white dark:bg-gray-900 overflow-hidden relative">
         
         <AnimatePresence mode="wait">
@@ -81,7 +83,7 @@ export function AdminReviewModal({
               className="h-96 flex flex-col items-center justify-center gap-4"
             >
               <div className="w-12 h-12 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading Sentiment Data...</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading Review Data...</p>
             </motion.div>
           ) : (
             <motion.div
@@ -103,11 +105,11 @@ export function AdminReviewModal({
                   <div className="flex flex-col">
                     <div className="flex items-center justify-between mb-6">
                       <div>
-                        <h3 className="text-xl font-black text-gray-900 dark:text-white mb-1">Remove Feedback</h3>
+                        <h3 className="text-xl font-black text-gray-900 dark:text-white mb-1">Remove Review</h3>
                         <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Provide a reason for moderation</p>
                       </div>
                       <button onClick={() => setShowRejectConfirm(false)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-                        <IconX size={20} />
+                        <X size={20} />
                       </button>
                     </div>
 
@@ -132,6 +134,19 @@ export function AdminReviewModal({
                       />
                     </div>
 
+                    <div className="flex items-center gap-3 mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20">
+                      <input 
+                        type="checkbox" 
+                        id="banUser" 
+                        checked={banUser} 
+                        onChange={(e) => setBanUser(e.target.checked)} 
+                        className="w-5 h-5 rounded border-rose-300 text-rose-500 focus:ring-rose-500" 
+                      />
+                      <label htmlFor="banUser" className="text-sm font-bold text-rose-700 dark:text-rose-400 cursor-pointer">
+                        Also suspend the user who posted this review
+                      </label>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                       <Button
                         variant="outline"
@@ -141,7 +156,7 @@ export function AdminReviewModal({
                         Cancel
                       </Button>
                       <Button
-                        disabled={isDeciding || !customReason.trim()}
+                        disabled={isDeciding || (!customReason.trim() && !PREDEFINED_REASONS.includes(customReason))}
                         onClick={() => handleAction('reject', customReason)}
                         className="rounded-xl py-6 h-auto text-xs font-black uppercase tracking-widest shadow-lg bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20"
                       >
@@ -173,7 +188,7 @@ export function AdminReviewModal({
                      <div>
                         <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-none mb-2">{review.user?.name || 'Anonymous User'}</h3>
                         <div className="flex items-center gap-2">
-                          <IconCalendarEvent size={12} className="text-gray-400" />
+                          <Calendar size={12} className="text-gray-400" />
                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                             {format(new Date(review.createdAt), 'MMM d, yyyy')}
                           </p>
@@ -198,11 +213,11 @@ export function AdminReviewModal({
                   className="bg-gray-50/30 dark:bg-gray-800/30 p-5 rounded-3xl border border-gray-100/50 dark:border-gray-800/50 flex flex-col gap-3"
                 >
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2 mb-2">
-                    <IconBuilding size={14} /> Subject Entity
+                    <Building size={14} /> Property
                   </span>
                   <div>
                     <p className="text-sm font-black text-gray-900 dark:text-white">{review.listing?.title || 'Unknown Property'}</p>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Target Property</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Property Name</p>
                   </div>
                 </motion.div>
 
@@ -212,12 +227,12 @@ export function AdminReviewModal({
                   className="bg-amber-500/5 dark:bg-amber-500/10 p-6 rounded-3xl border border-amber-500/20 relative"
                 >
                   <div className="absolute top-6 right-6 flex items-center gap-1 bg-white dark:bg-gray-900 px-3 py-1.5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
-                    <IconStarFilled size={16} className="text-amber-500" />
+                    <Star size={16} className="text-amber-500 fill-amber-500" />
                     <span className="text-sm font-black text-gray-900 dark:text-white">{review.rating?.toFixed(1) || '0.0'}</span>
                   </div>
 
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 flex items-center gap-2 mb-4">
-                    <IconMessageCircle size={14} /> User Feedback
+                    <MessageCircle size={14} /> Review
                   </span>
                   
                   <div className="mt-6 text-gray-800 dark:text-gray-200 font-medium leading-relaxed italic border-l-4 border-amber-500/30 pl-4">
@@ -230,31 +245,31 @@ export function AdminReviewModal({
                       {review.cleanliness && (
                         <div>
                           <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Cleanliness</p>
-                          <div className="flex gap-0.5">{Array.from({length: 5}).map((_, i) => <IconStarFilled key={i} size={10} className={i < review.cleanliness ? "text-amber-500" : "text-gray-300 dark:text-gray-700"} />)}</div>
+                          <div className="flex gap-0.5">{Array.from({length: 5}).map((_, i) => <Star key={i} size={10} className={i < review.cleanliness ? "text-amber-500 fill-amber-500" : "text-gray-300 dark:text-gray-700 fill-gray-300 dark:fill-gray-700"} />)}</div>
                         </div>
                       )}
                       {review.accuracy && (
                         <div>
                           <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Accuracy</p>
-                          <div className="flex gap-0.5">{Array.from({length: 5}).map((_, i) => <IconStarFilled key={i} size={10} className={i < review.accuracy ? "text-amber-500" : "text-gray-300 dark:text-gray-700"} />)}</div>
+                          <div className="flex gap-0.5">{Array.from({length: 5}).map((_, i) => <Star key={i} size={10} className={i < review.accuracy ? "text-amber-500 fill-amber-500" : "text-gray-300 dark:text-gray-700 fill-gray-300 dark:fill-gray-700"} />)}</div>
                         </div>
                       )}
                       {review.communication && (
                         <div>
                           <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Communication</p>
-                          <div className="flex gap-0.5">{Array.from({length: 5}).map((_, i) => <IconStarFilled key={i} size={10} className={i < review.communication ? "text-amber-500" : "text-gray-300 dark:text-gray-700"} />)}</div>
+                          <div className="flex gap-0.5">{Array.from({length: 5}).map((_, i) => <Star key={i} size={10} className={i < review.communication ? "text-amber-500 fill-amber-500" : "text-gray-300 dark:text-gray-700 fill-gray-300 dark:fill-gray-700"} />)}</div>
                         </div>
                       )}
                       {review.location && (
                         <div>
                           <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Location</p>
-                          <div className="flex gap-0.5">{Array.from({length: 5}).map((_, i) => <IconStarFilled key={i} size={10} className={i < review.location ? "text-amber-500" : "text-gray-300 dark:text-gray-700"} />)}</div>
+                          <div className="flex gap-0.5">{Array.from({length: 5}).map((_, i) => <Star key={i} size={10} className={i < review.location ? "text-amber-500 fill-amber-500" : "text-gray-300 dark:text-gray-700 fill-gray-300 dark:fill-gray-700"} />)}</div>
                         </div>
                       )}
                       {review.value && (
                         <div>
                           <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Value</p>
-                          <div className="flex gap-0.5">{Array.from({length: 5}).map((_, i) => <IconStarFilled key={i} size={10} className={i < review.value ? "text-amber-500" : "text-gray-300 dark:text-gray-700"} />)}</div>
+                          <div className="flex gap-0.5">{Array.from({length: 5}).map((_, i) => <Star key={i} size={10} className={i < review.value ? "text-amber-500 fill-amber-500" : "text-gray-300 dark:text-gray-700 fill-gray-300 dark:fill-gray-700"} />)}</div>
                         </div>
                       )}
                     </div>
@@ -268,7 +283,7 @@ export function AdminReviewModal({
                 className="pt-8 border-t border-gray-100 dark:border-gray-800"
               >
                 <div className="flex items-center justify-between mb-6">
-                  <h4 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">Moderation Action</h4>
+                  <h4 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">Decision</h4>
                   <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800 mx-6"></div>
                 </div>
                 
@@ -280,8 +295,8 @@ export function AdminReviewModal({
                       disabled={isDeciding}
                     >
                       <span className="flex items-center justify-center gap-2">
-                        <IconCheck size={18} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
-                        Approve Content
+                        <Check size={18} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
+                        Approve
                       </span>
                     </Button>
                     <Button 
@@ -291,8 +306,8 @@ export function AdminReviewModal({
                       disabled={isDeciding}
                     >
                       <span className="flex items-center justify-center gap-2">
-                         <IconX size={18} strokeWidth={3} className="group-hover:rotate-90 transition-transform" /> 
-                         Remove Content
+                         <X size={18} strokeWidth={3} className="group-hover:rotate-90 transition-transform" /> 
+                         Remove
                       </span>
                     </Button>
                   </div>

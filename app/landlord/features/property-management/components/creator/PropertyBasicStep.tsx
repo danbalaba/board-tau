@@ -228,37 +228,15 @@ const PropertyBasicStep: React.FC<PropertyBasicStepProps> = ({ register, errors,
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-            <div>
+            <div className="flex flex-col justify-center">
               <label className="block text-[11px] font-black uppercase tracking-widest text-primary mb-2 ml-1 flex items-center gap-2">
                 <Tag size={14} className="rotate-90" />
                 Property Category
               </label>
-              <div className="relative" id="propertyInfo.category">
-                <Controller
-                  name="propertyInfo.category"
-                  control={control}
-                  rules={{ required: "Required" }}
-                  render={({ field }) => (
-                    <ReactSelect
-                      {...field}
-                      options={CATEGORY_LIST.map(c => ({ value: c.value, label: c.label }))}
-                      value={field.value ? { value: field.value, label: CATEGORY_LIST.find(c => c.value === field.value)?.label || field.value } : null}
-                      onChange={(selected: any) => field.onChange(selected ? selected.value : '')}
-                      placeholder="Select primary category"
-                      classNames={{
-                        control: (state) => `!bg-white dark:!bg-gray-800 !border ${state.isFocused ? '!border-primary !ring-1 !ring-primary shadow-lg shadow-primary/10' : '!border-gray-200 dark:!border-gray-700'} !rounded-2xl !p-[5px] !shadow-sm transition-all text-[15px]`,
-                        singleValue: () => `!text-text-primary dark:!text-gray-100 font-bold`,
-                        menu: () => `!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-700 !shadow-2xl !rounded-2xl !mt-2 z-[60] overflow-hidden`,
-                        menuList: () => `!p-0 !bg-white dark:!bg-gray-800`,
-                        option: (state) => `!cursor-pointer ${state.isSelected ? '!bg-primary/10 !text-primary font-black' : state.isFocused ? '!bg-gray-100 dark:!bg-gray-700 !text-text-primary dark:!text-gray-100' : '!bg-transparent dark:!bg-transparent !text-text-primary dark:!text-gray-100'} !px-4 !py-3 !text-xs uppercase tracking-widest transition-colors`,
-                      }}
-                      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-                      styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-                      instanceId="category-select"
-                    />
-                  )}
-                />
-                {errors?.propertyInfo?.category && <p className="mt-1.5 text-xs text-red-500 font-bold">{errors.propertyInfo.category.message}</p>}
+              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700/50">
+                <p className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                  Categories are automatically assigned by our system based on your property's price, amenities, and rules to ensure accurate tagging for students.
+                </p>
               </div>
             </div>
             <div>

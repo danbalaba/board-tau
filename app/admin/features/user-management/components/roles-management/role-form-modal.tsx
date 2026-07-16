@@ -43,6 +43,7 @@ export function RoleFormModal({
     description: '',
     permissions: [] as string[]
   });
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   React.useEffect(() => {
     if (!open) return;
@@ -87,9 +88,18 @@ export function RoleFormModal({
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const filteredPermissions = React.useMemo(() => {
+    if (!searchQuery) return permissions;
+    const lowerQuery = searchQuery.toLowerCase();
+    return permissions.filter((p: any) => 
+      p.name.toLowerCase().includes(lowerQuery) || 
+      p.description?.toLowerCase().includes(lowerQuery)
+    );
+  }, [permissions, searchQuery]);
+
   const modules = React.useMemo(() => 
-    Array.from(new Set(permissions.map((p: any) => p.module))),
-    [permissions]
+    Array.from(new Set(filteredPermissions.map((p: any) => p.module))),
+    [filteredPermissions]
   );
 
   return (
@@ -139,11 +149,18 @@ export function RoleFormModal({
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">Permissions Matrix</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">Assign Permissions</Label>
                 <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-widest h-6 px-3 bg-emerald-500/10 text-emerald-500 border-none rounded-lg">
                   {formData.permissions.length} selected
                 </Badge>
               </div>
+              
+              <Input 
+                placeholder="Search permissions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-10 rounded-xl bg-white/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 focus-visible:ring-emerald-500/20 text-sm shadow-sm"
+              />
               
               <ScrollArea className="h-[300px] w-full rounded-3xl border border-gray-100 dark:border-gray-800 bg-white/40 dark:bg-gray-800/40 p-5 shadow-inner">
                 {permissionsLoading ? (
@@ -160,7 +177,7 @@ export function RoleFormModal({
                           </h4>
                         </div>
                         <div className="grid grid-cols-1 gap-2.5">
-                          {permissions.filter((p: any) => p.module === module).map((permission: any) => {
+                          {filteredPermissions.filter((p: any) => p.module === module).map((permission: any) => {
                             const isSelected = formData.permissions.includes(permission.name);
                             return (
                               <div 
@@ -196,7 +213,7 @@ export function RoleFormModal({
               </ScrollArea>
               <div className="flex items-start gap-2 text-[10px] text-emerald-600/80 dark:text-emerald-400/80 bg-emerald-500/5 p-3 rounded-xl border border-emerald-500/10 mt-4">
                 <IconInfoCircle className="w-4 h-4 shrink-0" />
-                <span className="font-bold leading-relaxed tracking-widest uppercase">Selected permissions will be applied immediately upon role update. Please ensure proper security auditing.</span>
+                <span className="font-bold leading-relaxed tracking-widest uppercase">Selected permissions will be applied immediately when saving. Please review before proceeding.</span>
               </div>
             </div>
           </div>

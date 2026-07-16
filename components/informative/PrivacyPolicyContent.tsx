@@ -1,66 +1,47 @@
 import FooterPageLayout from '@/components/layout/FooterPageLayout';
-import { FaUserLock, FaDatabase, FaCookieBite, FaShareAlt } from 'react-icons/fa';
 
 export default function PrivacyPolicyContent() {
   return (
     <FooterPageLayout
       title="Privacy Policy"
-      description="Transparent, straightforward outlines on how BoardTAU securely collects and protects your digital footprint."
-      lastUpdated="April 2026"
+      lastUpdated="January 1, 2026"
     >
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-        <div>
-          <h2 className="text-4xl font-extrabold mb-6 dark:text-white">Your data stays yours.</h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
-            We operate BoardTAU tightly as a Capstone project. As such, our data collection protocols are strictly tied to providing necessary functionalities. We don't sell data. We don't share profiles to advertisers.
+      <div className="space-y-6">
+        <section>
+          <h2 className="text-2xl font-bold mb-4">1. Commitment to Privacy</h2>
+          <p>
+            BoardTAU is deeply committed to protecting your privacy and personal information. This Privacy Policy outlines our data practices in strict compliance with the Philippine Data Privacy Act of 2012 (RA 10173). It details what information we collect, how it is secured, and how it is utilized to facilitate boarding house reservations.
           </p>
-          <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-2xl border border-green-200 dark:border-green-900/50">
-            <h4 className="font-bold text-green-800 dark:text-green-400 mb-2">Our Promise</h4>
-            <p className="text-green-700 dark:text-green-500 text-sm">
-              We employ advanced hashing for passwords and maintain SSL encryption across the entire application to ensure absolutely zero intercept vulnerabilities.
-            </p>
-          </div>
-        </div>
+        </section>
 
-        <div className="space-y-6">
-          
-          <div className="flex gap-4 group">
-            <div className="mt-1">
-              <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full group-hover:scale-110 transition-transform">
-                <FaDatabase className="text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm group-hover:shadow-md transition-shadow flex-1">
-              <h4 className="font-bold text-lg dark:text-white mb-1">What we collect</h4>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">Basic identities (email, name) and system usage data for algorithm matching.</p>
-            </div>
-          </div>
+        <section>
+          <h2 className="text-2xl font-bold mb-4">2. Information Collection and Identity Verification</h2>
+          <p className="mb-4">
+            To maintain a secure community and prevent fraud, BoardTAU enforces a strict <strong>Know Your Customer (KYC)</strong> process. We collect necessary identification data, which is verified using advanced biometric liveness detection (via MediaPipe). This ensures that all students, faculty, and landlords on the platform are legitimate individuals.
+          </p>
+          <p>
+            All highly sensitive documents, such as student IDs, government IDs, and landlord business permits, are securely uploaded and stored in <strong>EdgeStore</strong>, a specialized cloud storage solution with robust access controls.
+          </p>
+        </section>
 
-          <div className="flex gap-4 group">
-            <div className="mt-1">
-              <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-full group-hover:scale-110 transition-transform">
-                <FaUserLock className="text-purple-600 dark:text-purple-400" />
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm group-hover:shadow-md transition-shadow flex-1">
-              <h4 className="font-bold text-lg dark:text-white mb-1">3rd Party Logins</h4>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">If using Google/OAuth, we only extract minimal authorized tokens to finalize logins.</p>
-            </div>
-          </div>
+        <section>
+          <h2 className="text-2xl font-bold mb-4">3. Data Security and Encryption</h2>
+          <p className="mb-4">
+            We implement enterprise-grade security protocols to safeguard your data:
+          </p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li><strong>Authentication:</strong> Passwords are securely hashed using bcrypt (12 salt rounds), ensuring they cannot be reverse-engineered. Session management is strictly handled by NextAuth.</li>
+            <li><strong>Message Encryption:</strong> All real-time communications between tenants and landlords via our messaging system are secured using <strong>AES-256-GCM encryption</strong>. Your conversations remain strictly private.</li>
+            <li><strong>Payment Data:</strong> BoardTAU does not store your credit card or e-wallet details. All transactions are securely routed through our PCI-compliant payment gateways, Stripe and PayMongo.</li>
+          </ul>
+        </section>
 
-          <div className="flex gap-4 group">
-            <div className="mt-1">
-              <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-full group-hover:scale-110 transition-transform">
-                <FaCookieBite className="text-yellow-600 dark:text-yellow-400" />
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm group-hover:shadow-md transition-shadow flex-1">
-              <h4 className="font-bold text-lg dark:text-white mb-1">Strict Cookies</h4>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">We only utilize essential session cookies needed to maintain login continuity.</p>
-            </div>
-          </div>
-
-        </div>
+        <section>
+          <h2 className="text-2xl font-bold mb-4">4. Data Usage and Sharing</h2>
+          <p>
+            Your information is used exclusively to facilitate your use of the BoardTAU platform—such as processing inquiries, generating reservation slips, and updating room availability. We do not sell your data to third parties. Information is only shared between a tenant and a landlord upon an approved inquiry to finalize a booking.
+          </p>
+        </section>
       </div>
     </FooterPageLayout>
   );

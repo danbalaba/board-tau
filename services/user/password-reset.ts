@@ -177,7 +177,7 @@ export const resetPassword = async (token: string, password: string) => {
 
     // 🛡️ Heritage Check: Ensure not using a past password
     const isPastPassword = await Promise.all(
-      user.passwordHistory.map((oldHash) => bcrypt.compare(password, oldHash))
+      user.passwordHistory.map((oldHash: any) => bcrypt.compare(password, oldHash))
     );
 
     if (isPastPassword.some(match => match)) {

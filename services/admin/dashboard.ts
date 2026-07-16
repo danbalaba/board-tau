@@ -32,9 +32,9 @@ export async function getAdminDashboardStats() {
     }),
   ]);
 
-  const students = userCounts.find((g) => g.role === "USER")?._count.id ?? 0;
-  const landlords = userCounts.find((g) => g.role === "LANDLORD")?._count.id ?? 0;
-  const admins = userCounts.find((g) => g.role === "ADMIN")?._count.id ?? 0;
+  const students = userCounts.find((g: any) => g.role === "USER")?._count.id ?? 0;
+  const landlords = userCounts.find((g: any) => g.role === "LANDLORD")?._count.id ?? 0;
+  const admins = userCounts.find((g: any) => g.role === "ADMIN")?._count.id ?? 0;
 
   return {
     totalUsers: students + landlords + admins,

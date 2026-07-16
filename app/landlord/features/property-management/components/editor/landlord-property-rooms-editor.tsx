@@ -273,7 +273,7 @@ export function LandlordPropertyRoomsEditor({
                       </div>
                       
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {roomAmenities.filter((a: any) => a.applicableTo.includes(room.roomType)).map((amenity: any) => {
+                        {roomAmenities.filter((a: any) => !a.applicableTo || a.applicableTo.includes(room.roomType)).map((amenity: any) => {
                           const isSelected = room.amenities.includes(amenity.value);
                           const Icon = amenity.icon;
                           return (

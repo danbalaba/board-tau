@@ -90,8 +90,7 @@ interface ReservationsClientProps {
     userId: string;
 }
 
-import { getUnreadNotifications } from "@/services/notification";
-import { Notification } from "@prisma/client";
+import { useNotification } from "@/context/NotificationContext";
 
 const ReservationsClient: React.FC<ReservationsClientProps> = ({
     initialReservations,
@@ -102,33 +101,14 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
 
     const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
     const [filteredReservations, setFilteredReservations] = useState<Reservation[]>(initialReservations);
-    const [unreadNotifications, setUnreadNotifications] = useState<Notification[]>([]);
+    const { notifications, markAsRead } = useNotification();
+    const unreadNotifications = notifications.filter(n => !n.isRead && n.type === "reservation");
 
     // Sync state with server props when router.refresh() is called
     useEffect(() => {
         setReservations(initialReservations);
     }, [initialReservations]);
 
-    useEffect(() => {
-        const fetchNotifications = async () => {
-            const data = await getUnreadNotifications();
-            setUnreadNotifications(data);
-        };
-        fetchNotifications();
-
-        // Listen for notification-cleared/added events to sync state immediately
-        const handleNotificationSync = () => {
-            fetchNotifications();
-            router.refresh();
-        };
-
-        window.addEventListener("notification-cleared", handleNotificationSync);
-        window.addEventListener("sync-notifications", handleNotificationSync);
-        return () => {
-            window.removeEventListener("notification-cleared", handleNotificationSync);
-            window.removeEventListener("sync-notifications", handleNotificationSync);
-        };
-    }, []);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
     const [sortBy, setSortBy] = useState("newest");
@@ -185,13 +165,11 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                         // 3. Force a refresh to show the "RESERVED" badge instantly
                         router.refresh();
 
-                        // 4. ALSO manually refetch notifications so the red dot updates show!
-                        getUnreadNotifications().then(data => setUnreadNotifications(data));
+                        router.refresh();
                     } else {
                         // Already sync-ed or no pending found, just refresh
                         router.refresh();
                         toast.dismiss(toastId);
-                        getUnreadNotifications().then(data => setUnreadNotifications(data));
                     }
                 } catch (error) {
                     console.error("Sync error:", error);
@@ -207,17 +185,20 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
         }
     }, [statusParam, isMounted, router]);
 
+    const hasAutoOpened = React.useRef(false);
+    
     // Auto-open modal if ID param exists (for notifications)
     useEffect(() => {
         const id = searchParams.get("id");
-        if (id && reservations.length > 0 && isMounted) {
+        if (id && reservations.length > 0 && isMounted && !hasAutoOpened.current) {
             const reservation = reservations.find(r => r.id === id);
-            if (reservation && !showDetailsModal) {
+            if (reservation) {
                 setSelectedReservation(reservation);
                 setShowDetailsModal(true);
+                hasAutoOpened.current = true;
             }
         }
-    }, [searchParams, reservations, showDetailsModal, isMounted]);
+    }, [searchParams, reservations, isMounted]);
 
     // Handle Loading state during filtering/sorting/searching
     useEffect(() => {
@@ -476,10 +457,11 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                     currentUserId={userId}
                     notification={unreadNotifications.find(n => n.link.includes(selectedReservation.id))}
                     onClose={() => {
-                        // Optimistically clear the notification for this specific reservation
-                        setUnreadNotifications(prev => prev.filter(n => !n.link.includes(selectedReservation.id)));
                         setShowDetailsModal(false);
-                        router.refresh();
+                    }}
+                    onMarkAsRead={() => {
+                        const notif = unreadNotifications.find(n => n.link.includes(selectedReservation.id));
+                        if (notif) markAsRead(notif.id, "reservation");
                     }}
                     onPayNow={() => {
                         setShowDetailsModal(false);

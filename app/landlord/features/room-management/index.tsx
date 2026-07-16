@@ -15,7 +15,7 @@ import { LandlordRoomAddModal } from './components/landlord-room-add-modal';
 import LandlordRoomEditModal from './components/landlord-room-edit-modal';
 import { useRoomLogic, Room } from './hooks/use-room-logic';
 import { LandlordRoomCard } from './components/landlord-room-card';
-import { useLoadMore } from '@/hooks/useLoadMore';
+import { LandlordPagination } from '../shared/landlord-pagination';
 
 const statusColors: Record<string, string> = {
   AVAILABLE: 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
@@ -37,6 +37,10 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
   const {
     rooms,
     totalCount,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    setItemsPerPage,
     sortBy,
     setSortBy,
     viewMode,
@@ -70,13 +74,9 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
     isDeleting,
     isArchiving,
     isLoading,
-    hasMore,
-    isLoadingMore,
-    handleLoadMore,
   } = useRoomLogic(initialData.rooms, initialData.nextCursor);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const { ref: loadMoreRef } = useLoadMore(handleLoadMore, hasMore, isLoadingMore, false);
 
   return (
     <div className="space-y-8 p-1 pb-12 max-w-[1600px] mx-auto animate-in fade-in duration-700">
@@ -131,7 +131,7 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
               {totalCount > 0 && (
                 <div className="flex items-center gap-2 mb-6">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                    {isArchived ? 'Archived Units' : 'Active Units'} ({rooms.length} of {totalCount})
+                    {isArchived ? 'Archived Units' : 'Active Units'} ({totalCount})
                   </span>
                   <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
                 </div>
@@ -187,38 +187,17 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
                         onArchive={(r) => { setSelectedRoom(r); setArchiveModalOpen(true); }}
                       />
                     ))}
-
-                    {/* Intersection Observer Sentinel */}
-                    <div ref={loadMoreRef} className="h-10 w-full col-span-full opacity-0 pointer-events-none" />
                   </div>
 
-                  {/* Load More Section */}
-                  {hasMore && (
-                    <div className="flex flex-col items-center gap-4 pt-12 pb-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-[2px] bg-gradient-to-r from-transparent to-gray-200 dark:to-gray-800" />
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                            {isLoadingMore ? 'Loading more...' : `${totalCount - rooms.length} more units`}
-                          </span>
-                        </div>
-                        <div className="w-12 h-[2px] bg-gradient-to-l from-transparent to-gray-200 dark:to-gray-800" />
-                      </div>
-
-                      <Button
-                        outline
-                        className="rounded-2xl px-12 py-4 group hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/5 border-2 border-gray-100 dark:border-gray-800"
-                        onClick={handleLoadMore}
-                        isLoading={isLoadingMore}
-                      >
-                        <span className="flex items-center gap-2 uppercase font-black tracking-[0.2em] text-[10px]">
-                          {isLoadingMore ? 'Loading...' : 'Load More'}
-                          <TablerChevron size={14} className="group-hover:translate-y-0.5 transition-transform" />
-                        </span>
-                      </Button>
-                    </div>
-                  )}
+                  <LandlordPagination 
+                    currentPage={currentPage}
+                    totalPages={Math.ceil(totalCount / itemsPerPage)}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                    onItemsPerPageChange={setItemsPerPage}
+                    totalItems={totalCount}
+                    itemName="units"
+                  />
                 </>
               )}
             </motion.div>

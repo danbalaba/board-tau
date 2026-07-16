@@ -8,7 +8,13 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
+import { requireLandlord } from '@/lib/landlord';
+import { requirePagePermission } from '@/lib/rbac';
+
 export default async function LandlordRoomsPage() {
+  const user = await requireLandlord();
+  await requirePagePermission(user.id, "VIEW_ROOMS");
+
   const result = await getLandlordRooms({ isArchived: false });
 
   return <LandlordRoomManagementHub initialData={result as any} />;
