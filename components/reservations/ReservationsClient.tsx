@@ -178,7 +178,9 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                         toast.dismiss(toastId);
                     }
                 } catch (error) {
-                    console.error("Sync error:", error);
+                    if (process.env.NODE_ENV !== 'test') {
+                        console.error("Sync error:", error);
+                    }
                     toast.error("Still processing... Try refreshing manually in a bit.", { id: toastId });
                 }
             };
