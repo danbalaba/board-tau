@@ -174,7 +174,7 @@ function SidebarItem({ item, pathname, state, onLogout }: { item: NavItem; pathn
         <SidebarMenuItem>
           <CollapsibleTrigger asChild>
             <button
-              style={{ appearance: 'none', WebkitAppearance: 'none', border: 'none', background: 'transparent', outline: 'none', boxShadow: 'none' }}
+              style={{ appearance: 'none', WebkitAppearance: 'none', border: 'none', outline: 'none', boxShadow: 'none' }}
               className={cn(
                 "group relative flex items-center w-full h-12 rounded-2xl transition-all duration-500 cursor-pointer",
                 state === 'collapsed' ? "px-0 justify-center mx-auto w-9" : "px-5",
@@ -242,9 +242,11 @@ function SidebarItem({ item, pathname, state, onLogout }: { item: NavItem; pathn
                             isActive={isSubActive}
                             className={cn(
                               "min-h-9 h-auto py-2 rounded-lg transition-all duration-300 w-full",
-                              isSubActive
-                                ? "bg-primary/10 text-primary font-bold shadow-sm"
-                                : "text-gray-500 hover:text-primary hover:bg-gray-100/50 dark:hover:bg-white/5"
+                              subItem.url === '#logout' 
+                                ? "text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                : isSubActive
+                                  ? "bg-primary/10 text-primary font-bold shadow-sm"
+                                  : "text-gray-500 hover:text-primary hover:bg-gray-100/50 dark:hover:bg-white/5"
                             )}
                           >
                             {subItem.url === '#logout' ? (

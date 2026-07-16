@@ -39,6 +39,11 @@ export function DataTableFacetedFilter<TData, TValue>({
   multiple
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const [open, setOpen] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const columnFilterValue = column?.getFilterValue();
   const selectedValues = React.useMemo(
@@ -78,8 +83,8 @@ export function DataTableFacetedFilter<TData, TValue>({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant='outline' size='sm' className='h-8 border-solid bg-background shadow-xs hover:bg-primary hover:text-white transition-all duration-200'>
-          {selectedValues?.size > 0 ? (
+        <Button variant='outline' size='sm' className='h-9 rounded-full bg-white/50 dark:bg-gray-900/50 backdrop-blur-md shadow-sm border-gray-200 dark:border-gray-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/30 transition-all duration-200 text-[13px] font-medium'>
+          {mounted && selectedValues?.size > 0 ? (
             <div
               role='button'
               aria-label={`Clear ${title} filter`}
@@ -93,7 +98,7 @@ export function DataTableFacetedFilter<TData, TValue>({
             <PlusCircle className="w-3.5 h-3.5 mr-1" />
           )}
           <span className="text-xs font-semibold">{title}</span>
-          {selectedValues?.size > 0 && (
+          {mounted && selectedValues?.size > 0 && (
             <>
               <Separator
                 orientation='vertical'
@@ -101,7 +106,7 @@ export function DataTableFacetedFilter<TData, TValue>({
               />
               <Badge
                 variant='secondary'
-                className='rounded-sm px-1 font-normal lg:hidden'
+                className='rounded-full px-1.5 bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border-0 font-medium lg:hidden'
               >
                 {selectedValues.size}
               </Badge>
@@ -109,7 +114,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                 {selectedValues.size > 2 ? (
                   <Badge
                     variant='secondary'
-                    className='rounded-sm px-1 font-normal'
+                    className='rounded-full px-2 bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border-0 font-medium'
                   >
                     {selectedValues.size} selected
                   </Badge>
@@ -120,7 +125,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                       <Badge
                         variant='secondary'
                         key={option.value}
-                        className='rounded-sm px-1 font-normal'
+                        className='rounded-full px-2 bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border-0 font-medium'
                       >
                         {option.label}
                       </Badge>
@@ -131,11 +136,22 @@ export function DataTableFacetedFilter<TData, TValue>({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className='w-[12.5rem] p-0' align='start'>
-        <Command>
+      <PopoverContent className='w-[14rem] p-1.5 rounded-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-100 dark:border-gray-800 shadow-2xl' align='start'>
+        <Command filter={(value, search) => {
+          if (value.toLowerCase().includes(search.toLowerCase())) return 1;
+          return 0;
+        }}>
           <CommandInput placeholder={title} />
           <CommandList className='max-h-full'>
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty className="py-6 text-center text-sm">
+              <div className="flex flex-col items-center justify-center space-y-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50 dark:bg-white/10">
+                  <XCircle className="h-5 w-5 text-muted-foreground dark:text-gray-400" />
+                </div>
+                <div className="font-semibold text-muted-foreground dark:text-gray-200">No matches found</div>
+                <p className="text-xs text-muted-foreground/70 dark:text-gray-400">Try a different search term.</p>
+              </div>
+            </CommandEmpty>
             <CommandGroup className='max-h-[18.75rem] overflow-x-hidden overflow-y-auto'>
               {options.map((option) => {
                 const isSelected = selectedValues.has(option.value);
@@ -143,19 +159,21 @@ export function DataTableFacetedFilter<TData, TValue>({
                 return (
                   <CommandItem
                     key={option.value}
+                    value={option.label}
                     onSelect={() => onItemSelect(option, isSelected)}
+                    className="group"
                   >
                     <div
                       className={cn(
-                        'border-primary flex size-4 items-center justify-center rounded-sm border',
+                        'flex size-4 items-center justify-center rounded-[4px] border transition-all duration-200',
                         isSelected
-                          ? 'bg-primary'
-                          : 'opacity-50 [&_svg]:invisible'
+                          ? 'bg-emerald-500 border-emerald-500 text-white'
+                          : 'border-gray-300 dark:border-gray-600 opacity-50 [&_svg]:invisible group-hover:border-emerald-500/50'
                       )}
                     >
-                      <CheckIcon />
+                      <CheckIcon className="size-3 font-bold" />
                     </div>
-                    {option.icon && <option.icon />}
+                    {option.icon && <option.icon className="mr-2 size-4" />}
                     <span className='truncate'>{option.label}</span>
                     {option.count && (
                       <span className='ml-auto font-mono text-xs'>
