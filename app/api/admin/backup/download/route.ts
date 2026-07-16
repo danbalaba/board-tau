@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { db } from '@/lib/db';
 import { decryptMessage } from '@/lib/encryption';
 
 export async function GET(req: NextRequest) {
@@ -11,19 +12,40 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. Get the EdgeStore URL from query params
+    // 2. Get the log ID from query params
     const { searchParams } = new URL(req.url);
-    const fileUrl = searchParams.get('url');
+    const logId = searchParams.get('id');
 
-    if (!fileUrl) {
-      return NextResponse.json({ error: 'Missing url parameter' }, { status: 400 });
+    if (!logId) {
+      return NextResponse.json({ error: 'Missing id parameter' }, { status: 400 });
     }
 
-    // 3. The URL stored in the DB is AES-256-GCM encrypted — decrypt it server-side
-    //    The raw EdgeStore URL is never exposed to the browser at any point
-    const rawUrl = decryptMessage(fileUrl);
+    // 3. Retrieve the backup activity log from the database
+    const log = await db.adminActivityLog.findUnique({
+      where: { id: logId },
+    });
 
-    // 4. Validate the decrypted URL strictly belongs to EdgeStore (security check to prevent SSRF)
+    if (!log || !log.details) {
+      return NextResponse.json({ error: 'Backup log not found' }, { status: 404 });
+    }
+
+    // 4. Parse the details containing the encrypted URL
+    let details: any;
+    try {
+      details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+    } catch (e) {
+      return NextResponse.json({ error: 'Invalid backup log details' }, { status: 400 });
+    }
+
+    const encryptedUrl = details.url;
+    if (!encryptedUrl) {
+      return NextResponse.json({ error: 'Backup download reference missing' }, { status: 400 });
+    }
+
+    // 5. Decrypt the URL server-side (the raw URL is never exposed to the client)
+    const rawUrl = decryptMessage(encryptedUrl);
+
+    // 6. Validate the decrypted URL strictly belongs to EdgeStore (security check to prevent SSRF)
     let urlObj: URL;
     try {
       urlObj = new URL(rawUrl);
@@ -54,7 +76,7 @@ export async function GET(req: NextRequest) {
       ? `/${folder1}/${folder2}/${folder3}/${fileBaseName}.json`
       : `/${folder1}/${folder2}/${fileBaseName}.json`;
 
-    // 5. Reconstruct the URL using strictly hardcoded string literals to prevent SSRF and clear CodeQL taint tracking
+    // Reconstruct the URL using strictly hardcoded string literals to prevent SSRF and clear CodeQL taint tracking
     let safeUrl = '';
     if (urlObj.hostname === 'files.edgestore.dev') {
       safeUrl = `https://files.edgestore.dev${safePath}`;
@@ -65,6 +87,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid or tampered file reference' }, { status: 400 });
     }
 
+    // 7. Directly fetch the file server-to-server
     const fileRes = await fetch(safeUrl);
     
     if (!fileRes.ok) {
@@ -72,11 +95,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch file from storage' }, { status: 502 });
     }
 
-    // 6. Decrypt the file content before sending it to the user
+    // 8. Decrypt the file content before sending it to the user
     const encryptedContent = await fileRes.text();
     const decryptedContent = decryptMessage(encryptedContent);
 
-    // 7. Stream the decrypted file back to the browser as a download
+    // 9. Stream the decrypted file back to the browser as a download
     const downloadName = fileBaseName ? `${fileBaseName}.json` : 'backup.json';
     return new NextResponse(decryptedContent, {
       status: 200,

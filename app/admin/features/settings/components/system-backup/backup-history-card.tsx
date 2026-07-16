@@ -176,10 +176,10 @@ export function BackupHistoryCard() {
                         </p>
                       </div>
                       
-                      {log.url && (
+                      {log.id && (
                         <button
                           onClick={async () => {
-                            const res = await fetch(`/api/admin/backup/download?url=${encodeURIComponent(log.url)}`);
+                            const res = await fetch(`/api/admin/backup/download?id=${log.id}`);
                             if (!res.ok) {
                               toast.error('Failed to prepare download');
                               return;
