@@ -1,0 +1,277 @@
+<html><head><meta charset="utf-8"/><title>BoardTAU Test Report</title><style type="text/css">:root {
+  --text-primary: #111;
+  --text-secondary: #4f4f4f;
+  --success: #006633;
+  --success-bright: #80ffbf;
+  --danger: #cc071e;
+  --danger-bright: #fbdfe0;
+  --warning: #995c00;
+  --warning-bright: #ffeea8;
+  --panel: #eee;
+  --border: #949494;
+  --disabled: #6b6b6b;
+}
+
+html,
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+}
+body {
+  padding: 2rem 1rem;
+}
+.jesthtml-content {
+  margin: 0 auto;
+  max-width: 70rem;
+}
+header {
+  display: flex;
+  align-items: center;
+}
+#title {
+  margin: 0;
+  flex-grow: 1;
+}
+#logo {
+  height: 4rem;
+}
+#timestamp {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+#metadata-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.additional-information-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/** SUMMARY */
+#summary {
+  color: var(--text-primary);
+  display: flex;
+  font-family: monospace;
+  font-size: 1rem;
+}
+#summary > div {
+  margin-right: 0.5rem;
+  background: var(--panel);
+  padding: 1rem;
+  min-width: 15rem;
+}
+#summary > div:last-child {
+  margin-right: 0;
+}
+@media only screen and (max-width: 720px) {
+  #summary {
+    flex-direction: column;
+  }
+  #summary > div {
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+  #summary > div:first-child {
+    margin-top: 0;
+  }
+}
+
+.summary-total {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.summary-passed {
+  color: var(--success);
+  border-left: 0.4rem solid var(--success);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-failed,
+.summary-obsolete-snapshots {
+  color: var(--danger);
+  border-left: 0.4rem solid var(--danger);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-pending {
+  color: var(--warning);
+  border-left: 0.4rem solid var(--warning);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-empty {
+  color: var(--disabled);
+  border-left: 0.4rem solid var(--disabled);
+  margin-bottom: 0.15rem;
+}
+
+.test-result {
+  padding: 1rem;
+  margin-bottom: 0.25rem;
+}
+.test-result:last-child {
+  border: 0;
+}
+.test-result.passed {
+  background-color: var(--success-bright);
+  color: var(--success);
+}
+.test-result.failed {
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.test-result.pending {
+  background-color: var(--warning-bright);
+  color: var(--warning);
+}
+
+.test-info {
+  display: flex;
+  justify-content: space-between;
+}
+.test-suitename {
+  width: 20%;
+  text-align: left;
+  font-weight: bold;
+  word-break: break-word;
+}
+.test-title {
+  width: 40%;
+  text-align: left;
+  font-style: italic;
+}
+.test-status {
+  width: 20%;
+  text-align: right;
+}
+.test-duration {
+  width: 10%;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.failureMessages {
+  padding: 0 1rem;
+  margin-top: 1rem;
+  border-top: 1px dashed var(--danger);
+}
+.failureMessages.suiteFailure {
+  border-top: none;
+}
+.failureMsg {
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.suite-container {
+  margin-bottom: 1rem;
+}
+.suite-info {
+  padding: 1rem;
+  background-color: var(--panel);
+  color: var(--text-secondary);
+  border: 0.15rem solid;
+  border-color: var(--panel);
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.suite-info:hover {
+  border-color: var(--border);
+  cursor: pointer;
+}
+.suite-info .suite-path {
+  word-break: break-all;
+  flex-grow: 1;
+  font-family: monospace;
+  font-size: 1rem;
+}
+.suite-info .suite-time {
+  margin-left: 1rem;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.85rem;
+}
+.suite-info .suite-time.warn {
+  background-color: var(--danger);
+  color: #fff;
+}
+.suite-info:before {
+  content: "\2303";
+  display: inline-block;
+  margin-right: 1rem;
+  transform: rotate(180deg) translateY(0.15rem);
+}
+.suite-container[open] .suite-info:before {
+  transform: rotate(0deg) translateY(0.15rem);
+}
+
+/* CONSOLE LOGS */
+.suite-consolelog {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--panel);
+}
+.suite-consolelog-header {
+  font-weight: bold;
+}
+.suite-consolelog-item {
+  padding: 0.5rem;
+}
+.suite-consolelog-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-consolelog-item-origin {
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+.suite-consolelog-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+/* OBSOLETE SNAPSHOTS */
+.suite-obsolete-snapshots {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.suite-obsolete-snapshots-header {
+  font-weight: bold;
+}
+.suite-obsolete-snapshots-item {
+  padding: 0.5rem;
+}
+.suite-obsolete-snapshots-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-obsolete-snapshots-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+</style></head><body><main class="jesthtml-content"><header><h1 id="title">BoardTAU Test Report</h1></header><section id="metadata-container"><div id="timestamp">Started: 2026-07-15 19:13:39</div><div id="summary"><div id="suite-summary"><div class="summary-total">Suites (31)</div><div class="summary-passed ">18 passed</div><div class="summary-failed ">13 failed</div><div class="summary-pending  summary-empty">0 pending</div></div><div id="test-summary"><div class="summary-total">Tests (129)</div><div class="summary-passed ">93 passed</div><div class="summary-failed ">36 failed</div><div class="summary-pending  summary-empty">0 pending</div></div></div></section><details id="suite-1" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\hooks\__tests__\use-property-logic.test.ts</div><div class="suite-time">3.003s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">usePropertyLogic</div><div class="test-title">initializes with properties and correct default states</div><div class="test-status">passed</div><div class="test-duration">0.072s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">usePropertyLogic</div><div class="test-title">filters by category</div><div class="test-status">passed</div><div class="test-duration">0.017s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">usePropertyLogic</div><div class="test-title">filters by search query</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">usePropertyLogic</div><div class="test-title">debounces search input into search query</div><div class="test-status">failed</div><div class="test-duration">0.028s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">usePropertyLogic</div><div class="test-title">sorts properties</div><div class="test-status">passed</div><div class="test-duration">0.01s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">usePropertyLogic</div><div class="test-title">clears filters</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">usePropertyLogic</div><div class="test-title">handles delete mutation</div><div class="test-status">passed</div><div class="test-duration">0.009s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">usePropertyLogic</div><div class="test-title">handles archive mutation</div><div class="test-status">passed</div><div class="test-duration">0.018s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">usePropertyLogic</div><div class="test-title">generates report successfully</div><div class="test-status">passed</div><div class="test-duration">0.177s</div></div></div></div></details><details id="suite-2" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\__tests__\landlord-property-card.test.tsx</div><div class="suite-time">3.512s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyCard &gt; Grid View</div><div class="test-title">renders property details in grid mode</div><div class="test-status">failed</div><div class="test-duration">0.388s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyCard &gt; Grid View</div><div class="test-title">triggers onView when Preview button is clicked</div><div class="test-status">failed</div><div class="test-duration">0.046s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyCard &gt; Grid View</div><div class="test-title">triggers onArchive when Archive button is clicked</div><div class="test-status">failed</div><div class="test-duration">0.015s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyCard &gt; Grid View</div><div class="test-title">renders Delete Permanent when property is archived</div><div class="test-status">failed</div><div class="test-duration">0.016s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyCard &gt; List View</div><div class="test-title">renders property details in list mode</div><div class="test-status">failed</div><div class="test-duration">0.012s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyCard &gt; List View</div><div class="test-title">triggers actions from list view buttons</div><div class="test-status">failed</div><div class="test-duration">0.013s</div></div></div></div></details><details id="suite-3" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\__tests__\landlord-property-header.test.tsx</div><div class="suite-time">4.188s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyHeader</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.311s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyHeader</div><div class="test-title">calls setViewMode when view toggles are clicked</div><div class="test-status">passed</div><div class="test-duration">0.405s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyHeader</div><div class="test-title">generates CSV and Excel reports</div><div class="test-status">passed</div><div class="test-duration">0.2s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyHeader</div><div class="test-title">shows active category and changes it</div><div class="test-status">failed</div><div class="test-duration">0.188s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyHeader</div><div class="test-title">shows clear button when filters are active and clears them</div><div class="test-status">passed</div><div class="test-duration">0.149s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyHeader</div><div class="test-title">toggles archived view</div><div class="test-status">passed</div><div class="test-duration">0.108s</div></div></div></div></details><details id="suite-4" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\__tests__\index.test.tsx</div><div class="suite-time">4.309s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyManagement Index</div><div class="test-title">renders correctly with properties</div><div class="test-status">failed</div><div class="test-duration">0.327s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyManagement Index</div><div class="test-title">shows empty state when no properties</div><div class="test-status">passed</div><div class="test-duration">0.09s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyManagement Index</div><div class="test-title">opens details modal when card view is clicked</div><div class="test-status">failed</div><div class="test-duration">0.006s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyManagement Index</div><div class="test-title">opens delete modal when card delete is clicked</div><div class="test-status">failed</div><div class="test-duration">0.006s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyManagement Index</div><div class="test-title">opens archive modal when card archive is clicked</div><div class="test-status">failed</div><div class="test-duration">0.037s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyManagement Index</div><div class="test-title">renders modals when state is true</div><div class="test-status">failed</div><div class="test-duration">0.016s</div></div></div></div></details><details id="suite-5" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\editor\__tests__\landlord-property-location-form.test.tsx</div><div class="suite-time">4.473s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyLocationForm</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.33s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyLocationForm</div><div class="test-title">handles manual mode toggle</div><div class="test-status">passed</div><div class="test-duration">0.148s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyLocationForm</div><div class="test-title">triggers geocode on map click</div><div class="test-status">failed</div><div class="test-duration">1.169s</div></div></div></div></details><details id="suite-6" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\__tests__\landlord-property-details-modal.test.tsx</div><div class="suite-time">4.627s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyDetailsModal</div><div class="test-title">renders property details</div><div class="test-status">passed</div><div class="test-duration">0.115s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyDetailsModal</div><div class="test-title">renders content after loading</div><div class="test-status">failed</div><div class="test-duration">1.171s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyDetailsModal</div><div class="test-title">calls onClose when dismiss button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.346s</div></div></div></div></details><details id="suite-7" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\creator\__tests__\ReviewStep.test.tsx</div><div class="suite-time">2.218s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">ReviewStep</div><div class="test-title">renders all sections</div><div class="test-status">failed</div><div class="test-duration">0.153s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">ReviewStep</div><div class="test-title">displays form data correctly</div><div class="test-status">failed</div><div class="test-duration">0.03s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">ReviewStep</div><div class="test-title">renders amenities, rules, and features</div><div class="test-status">failed</div><div class="test-duration">0.014s</div></div></div></div></details><details id="suite-8" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\creator\__tests__\CustomSharedAmenityModal.test.tsx</div><div class="suite-time">1.038s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">CustomSharedAmenityModal</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.05s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">CustomSharedAmenityModal</div><div class="test-title">can submit custom shared amenity</div><div class="test-status">passed</div><div class="test-duration">0.028s</div></div></div></div></details><details id="suite-9" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\creator\__tests__\CustomFeatureModal.test.tsx</div><div class="suite-time">1.319s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">CustomFeatureModal</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.044s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">CustomFeatureModal</div><div class="test-title">can submit custom feature</div><div class="test-status">passed</div><div class="test-duration">0.05s</div></div></div></div></details><details id="suite-10" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\editor\__tests__\landlord-property-rooms-editor.test.tsx</div><div class="suite-time">1.448s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyRoomsEditor</div><div class="test-title">renders correctly</div><div class="test-status">failed</div><div class="test-duration">0.061s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyRoomsEditor</div><div class="test-title">calls addRoom when Add Another Room is clicked</div><div class="test-status">failed</div><div class="test-duration">0.009s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyRoomsEditor</div><div class="test-title">calls onOpenBulkModal</div><div class="test-status">failed</div><div class="test-duration">0.011s</div></div></div></div></details><details id="suite-11" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\creator\__tests__\CustomAmenityModal.test.tsx</div><div class="suite-time">1.458s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">CustomAmenityModal</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.116s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">CustomAmenityModal</div><div class="test-title">can type custom amenity name</div><div class="test-status">passed</div><div class="test-duration">0.057s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">CustomAmenityModal</div><div class="test-title">can submit custom amenity</div><div class="test-status">passed</div><div class="test-duration">0.093s</div></div></div></div></details><details id="suite-12" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\creator\__tests__\PropertyConfigStep.test.tsx</div><div class="suite-time">2.586s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">PropertyConfigStep</div><div class="test-title">renders setup header</div><div class="test-status">failed</div><div class="test-duration">0.177s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">PropertyConfigStep</div><div class="test-title">renders structure inputs</div><div class="test-status">failed</div><div class="test-duration">0.057s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">PropertyConfigStep</div><div class="test-title">renders rules and preferences</div><div class="test-status">failed</div><div class="test-duration">0.063s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">PropertyConfigStep</div><div class="test-title">renders premium features</div><div class="test-status">failed</div><div class="test-duration">0.06s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">PropertyConfigStep</div><div class="test-title">renders shared amenities</div><div class="test-status">failed</div><div class="test-duration">0.107s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">PropertyConfigStep</div><div class="test-title">opens custom rule modal</div><div class="test-status">failed</div><div class="test-duration">0.063s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">PropertyConfigStep</div><div class="test-title">opens custom feature modal</div><div class="test-status">failed</div><div class="test-duration">0.042s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">PropertyConfigStep</div><div class="test-title">opens custom amenity modal</div><div class="test-status">failed</div><div class="test-duration">0.056s</div></div></div></div></details><details id="suite-13" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\creator\__tests__\RoomConfigStep.test.tsx</div><div class="suite-time warn">6.606s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">RoomConfigStep</div><div class="test-title">renders correctly with one room</div><div class="test-status">failed</div><div class="test-duration">0.882s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomConfigStep</div><div class="test-title">adds a new unit</div><div class="test-status">passed</div><div class="test-duration">0.623s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomConfigStep</div><div class="test-title">can open bulk configure modal</div><div class="test-status">passed</div><div class="test-duration">0.242s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomConfigStep</div><div class="test-title">applies bulk config</div><div class="test-status">passed</div><div class="test-duration">1.148s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomConfigStep</div><div class="test-title">copies and pastes configuration</div><div class="test-status">passed</div><div class="test-duration">0.45s</div></div></div></div></details><details id="suite-14" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\__tests__\landlord-property-creator.test.tsx</div><div class="suite-time">1.508s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyCreator</div><div class="test-title">renders wizard header</div><div class="test-status">failed</div><div class="test-duration">0.082s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyCreator</div><div class="test-title">renders the first step by default</div><div class="test-status">failed</div><div class="test-duration">0.017s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyCreator</div><div class="test-title">renders navigation buttons</div><div class="test-status">failed</div><div class="test-duration">0.022s</div></div></div></div></details><details id="suite-15" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\creator\__tests__\CustomRuleModal.test.tsx</div><div class="suite-time">1.371s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">CustomRuleModal</div><div class="test-title">renders correctly</div><div class="test-status">failed</div><div class="test-duration">0.057s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">CustomRuleModal</div><div class="test-title">can submit custom rule</div><div class="test-status">failed</div><div class="test-duration">0.014s</div></div></div></div></details><details id="suite-16" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\__tests__\landlord-property-delete-modal.test.tsx</div><div class="suite-time">1.532s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyDeleteModal</div><div class="test-title">renders nothing when isOpen is false</div><div class="test-status">passed</div><div class="test-duration">0.012s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyDeleteModal</div><div class="test-title">renders modal content when open</div><div class="test-status">passed</div><div class="test-duration">0.029s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyDeleteModal</div><div class="test-title">calls onClose when cancel button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.036s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyDeleteModal</div><div class="test-title">calls onConfirm when confirm button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.025s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordPropertyDeleteModal</div><div class="test-title">shows loading state when isDeleting is true</div><div class="test-status">failed</div><div class="test-duration">0.047s</div></div></div></div></details><details id="suite-17" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\__tests__\landlord-property-search.test.tsx</div><div class="suite-time">1.398s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertySearch</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.032s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertySearch</div><div class="test-title">calls setSearchQuery on input change</div><div class="test-status">passed</div><div class="test-duration">0.036s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertySearch</div><div class="test-title">clears search query when clear button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.112s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertySearch</div><div class="test-title">shows suggestions on focus if query length &gt;= 2</div><div class="test-status">passed</div><div class="test-duration">0.071s</div></div></div></div></details><details id="suite-18" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\creator\__tests__\PropertyBasicStep.test.tsx</div><div class="suite-time">2.362s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">PropertyBasicStep</div><div class="test-title">renders business identity section</div><div class="test-status">passed</div><div class="test-duration">0.317s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PropertyBasicStep</div><div class="test-title">renders input fields for business info</div><div class="test-status">passed</div><div class="test-duration">0.128s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PropertyBasicStep</div><div class="test-title">renders property essentials section</div><div class="test-status">passed</div><div class="test-duration">0.2s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PropertyBasicStep</div><div class="test-title">allows typing into text fields</div><div class="test-status">passed</div><div class="test-duration">0.181s</div></div></div></div></details><details id="suite-19" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\creator\__tests__\BulkConfigureModal.test.tsx</div><div class="suite-time">2.238s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">BulkConfigureModal</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.145s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BulkConfigureModal</div><div class="test-title">validates empty submission</div><div class="test-status">passed</div><div class="test-duration">0.139s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BulkConfigureModal</div><div class="test-title">can fill form and apply</div><div class="test-status">passed</div><div class="test-duration">0.575s</div></div></div></div></details><details id="suite-20" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\hooks\__tests__\use-property-editor-logic.test.ts</div><div class="suite-time">1.662s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">usePropertyEditorLogic</div><div class="test-title">initializes with mapped initial data</div><div class="test-status">passed</div><div class="test-duration">0.036s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">usePropertyEditorLogic</div><div class="test-title">handles tracking dirty state and undo/reset</div><div class="test-status">passed</div><div class="test-duration">0.066s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">usePropertyEditorLogic</div><div class="test-title">adds and removes rooms</div><div class="test-status">passed</div><div class="test-duration">0.021s</div></div></div></div></details><details id="suite-21" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\editor\__tests__\landlord-property-basics-form.test.tsx</div><div class="suite-time">1.752s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyBasicsForm</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.089s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyBasicsForm</div><div class="test-title">calls setFormData on input change</div><div class="test-status">passed</div><div class="test-duration">0.034s</div></div></div></div></details><details id="suite-22" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\creator\__tests__\DocumentsStep.test.tsx</div><div class="suite-time">1.399s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">DocumentsStep</div><div class="test-title">renders all document fields</div><div class="test-status">passed</div><div class="test-duration">0.038s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">DocumentsStep</div><div class="test-title">handles file selection</div><div class="test-status">passed</div><div class="test-duration">0.043s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">DocumentsStep</div><div class="test-title">handles preview</div><div class="test-status">passed</div><div class="test-duration">0.024s</div></div></div></div></details><details id="suite-23" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\__tests__\landlord-property-archive-modal.test.tsx</div><div class="suite-time">1.678s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyArchiveModal</div><div class="test-title">renders nothing when property is null</div><div class="test-status">passed</div><div class="test-duration">0.017s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyArchiveModal</div><div class="test-title">renders nothing when isOpen is false</div><div class="test-status">passed</div><div class="test-duration">0.015s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyArchiveModal</div><div class="test-title">renders Archive content when property is active</div><div class="test-status">passed</div><div class="test-duration">0.058s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyArchiveModal</div><div class="test-title">renders Restore content when property is archived</div><div class="test-status">passed</div><div class="test-duration">0.022s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyArchiveModal</div><div class="test-title">calls onClose when cancel is clicked</div><div class="test-status">passed</div><div class="test-duration">0.027s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyArchiveModal</div><div class="test-title">calls onConfirm when confirm is clicked</div><div class="test-status">passed</div><div class="test-duration">0.025s</div></div></div></div></details><details id="suite-24" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\hooks\__tests__\use-property-creator-logic.test.ts</div><div class="suite-time">1.292s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">usePropertyCreatorLogic</div><div class="test-title">initializes with default values and sets isMounted to true</div><div class="test-status">passed</div><div class="test-duration">0.033s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">usePropertyCreatorLogic</div><div class="test-title">can navigate backward</div><div class="test-status">passed</div><div class="test-duration">0.022s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">usePropertyCreatorLogic</div><div class="test-title">updates coordinates on location select</div><div class="test-status">passed</div><div class="test-duration">0.009s</div></div></div></div></details><details id="suite-25" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\editor\__tests__\landlord-property-media-uploader.test.tsx</div><div class="suite-time">1.361s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyMediaUploader</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.04s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyMediaUploader</div><div class="test-title">calls deleteExistingImage when remove is clicked</div><div class="test-status">passed</div><div class="test-duration">0.034s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyMediaUploader</div><div class="test-title">calls handleImageChange when file is selected</div><div class="test-status">passed</div><div class="test-duration">0.023s</div></div></div></div></details><details id="suite-26" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\editor\__tests__\landlord-property-amenities-selector.test.tsx</div><div class="suite-time">1.912s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyAmenitiesSelector</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.119s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyAmenitiesSelector</div><div class="test-title">toggles standard amenity</div><div class="test-status">passed</div><div class="test-duration">0.039s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyAmenitiesSelector</div><div class="test-title">calls onAddCustom</div><div class="test-status">passed</div><div class="test-duration">0.04s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyAmenitiesSelector</div><div class="test-title">toggles custom amenity</div><div class="test-status">passed</div><div class="test-duration">0.094s</div></div></div></div></details><details id="suite-27" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\creator\__tests__\PropertyImagesStep.test.tsx</div><div class="suite-time">1.561s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">PropertyImagesStep</div><div class="test-title">renders property categories</div><div class="test-status">passed</div><div class="test-duration">0.143s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PropertyImagesStep</div><div class="test-title">renders room gallery sections</div><div class="test-status">passed</div><div class="test-duration">0.09s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PropertyImagesStep</div><div class="test-title">can trigger file upload click on property</div><div class="test-status">passed</div><div class="test-duration">0.073s</div></div></div></div></details><details id="suite-28" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\__tests__\landlord-property-editor.test.tsx</div><div class="suite-time">1.423s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyEditor</div><div class="test-title">renders all sections</div><div class="test-status">passed</div><div class="test-duration">0.075s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyEditor</div><div class="test-title">renders header with save buttons when dirty</div><div class="test-status">passed</div><div class="test-duration">0.054s</div></div></div></div></details><details id="suite-29" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\editor\__tests__\landlord-property-rules-config.test.tsx</div><div class="suite-time">1.386s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyRulesConfig</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.036s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyRulesConfig</div><div class="test-title">handles checkbox toggle for rules</div><div class="test-status">passed</div><div class="test-duration">0.042s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyRulesConfig</div><div class="test-title">calls onAddCustomRule</div><div class="test-status">passed</div><div class="test-duration">0.018s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordPropertyRulesConfig</div><div class="test-title">calls onAddCustomFeature</div><div class="test-status">passed</div><div class="test-duration">0.042s</div></div></div></div></details><details id="suite-30" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\creator\validation\__tests__\create-listing.test.ts</div><div class="suite-time">0.493s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">create-listing validation</div><div class="test-title">validates step 0 (PROPERTY_BASICS)</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">create-listing validation</div><div class="test-title">fails step 0 with invalid data</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">create-listing validation</div><div class="test-title">validates step 1 (LOCATION)</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">create-listing validation</div><div class="test-title">fails step 1 with invalid data</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">create-listing validation</div><div class="test-title">validates step 2 (PROPERTY CONFIGURATION)</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">create-listing validation</div><div class="test-title">validates step 3 (ROOM INVENTORY)</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">create-listing validation</div><div class="test-title">fails step 3 with invalid room data</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">create-listing validation</div><div class="test-title">validates step 4 (IMAGES)</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">create-listing validation</div><div class="test-title">fails step 4 with missing images</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">create-listing validation</div><div class="test-title">validates step 5 (DOCUMENTS)</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div></div></details><details id="suite-31" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\property-management\components\editor\__tests__\shared-ui.test.tsx</div><div class="suite-time">1.361s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">shared-ui &gt; LocalCheckbox</div><div class="test-title">renders checkbox correctly</div><div class="test-status">passed</div><div class="test-duration">0.011s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">shared-ui &gt; LocalCheckbox</div><div class="test-title">calls onChange when clicked</div><div class="test-status">passed</div><div class="test-duration">0.037s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">shared-ui &gt; PropertyFormSection</div><div class="test-title">renders section and calls setActiveSection</div><div class="test-status">passed</div><div class="test-duration">0.009s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">shared-ui &gt; PropertyEditorHeader</div><div class="test-title">renders header for editing state</div><div class="test-status">passed</div><div class="test-duration">0.004s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">shared-ui &gt; PropertyEditorHeader</div><div class="test-title">renders header for creating state</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">shared-ui &gt; PropertyEditorHeader</div><div class="test-title">disables button when submitting</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div></div></details></main></body></html>

@@ -26,7 +26,9 @@ export function useInquiryDetailLogic(inquiry: any) {
         toast.error(`Failed to update status.`, { id: toastId });
       }
     } catch (error) {
-      console.error('Error responding:', error);
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error responding:', error);
+      }
       toast.error('An unexpected error occurred.', { id: toastId });
     } finally {
       setIsResponding(false);

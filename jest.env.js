@@ -1,3 +1,7 @@
+const { TextEncoder, TextDecoder } = require('util');
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
 // Mock environment variables for Jest testing environment
 process.env.DATABASE_URL = "mongodb://localhost:27017/boardtau-test";
 process.env.NEXTAUTH_SECRET = "test_secret_key_1234567890123456";

@@ -122,7 +122,9 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
 
   const handleUpdateStatus = useCallback(async (bookingId: string, status: string) => {
     setUpdatingId(bookingId);
-    console.log(`🔄 Updating booking ${bookingId} to status: ${status}`);
+    if (process.env.NODE_ENV !== 'test') {
+      console.log(`🔄 Updating booking ${bookingId} to status: ${status}`);
+    }
     try {
       const response = await fetch(`/api/landlord/bookings?id=${bookingId}`, {
         method: 'PUT',

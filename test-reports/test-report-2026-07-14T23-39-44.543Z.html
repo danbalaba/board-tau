@@ -1,0 +1,277 @@
+<html><head><meta charset="utf-8"/><title>BoardTAU Test Report</title><style type="text/css">:root {
+  --text-primary: #111;
+  --text-secondary: #4f4f4f;
+  --success: #006633;
+  --success-bright: #80ffbf;
+  --danger: #cc071e;
+  --danger-bright: #fbdfe0;
+  --warning: #995c00;
+  --warning-bright: #ffeea8;
+  --panel: #eee;
+  --border: #949494;
+  --disabled: #6b6b6b;
+}
+
+html,
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+}
+body {
+  padding: 2rem 1rem;
+}
+.jesthtml-content {
+  margin: 0 auto;
+  max-width: 70rem;
+}
+header {
+  display: flex;
+  align-items: center;
+}
+#title {
+  margin: 0;
+  flex-grow: 1;
+}
+#logo {
+  height: 4rem;
+}
+#timestamp {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+#metadata-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.additional-information-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/** SUMMARY */
+#summary {
+  color: var(--text-primary);
+  display: flex;
+  font-family: monospace;
+  font-size: 1rem;
+}
+#summary > div {
+  margin-right: 0.5rem;
+  background: var(--panel);
+  padding: 1rem;
+  min-width: 15rem;
+}
+#summary > div:last-child {
+  margin-right: 0;
+}
+@media only screen and (max-width: 720px) {
+  #summary {
+    flex-direction: column;
+  }
+  #summary > div {
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+  #summary > div:first-child {
+    margin-top: 0;
+  }
+}
+
+.summary-total {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.summary-passed {
+  color: var(--success);
+  border-left: 0.4rem solid var(--success);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-failed,
+.summary-obsolete-snapshots {
+  color: var(--danger);
+  border-left: 0.4rem solid var(--danger);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-pending {
+  color: var(--warning);
+  border-left: 0.4rem solid var(--warning);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-empty {
+  color: var(--disabled);
+  border-left: 0.4rem solid var(--disabled);
+  margin-bottom: 0.15rem;
+}
+
+.test-result {
+  padding: 1rem;
+  margin-bottom: 0.25rem;
+}
+.test-result:last-child {
+  border: 0;
+}
+.test-result.passed {
+  background-color: var(--success-bright);
+  color: var(--success);
+}
+.test-result.failed {
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.test-result.pending {
+  background-color: var(--warning-bright);
+  color: var(--warning);
+}
+
+.test-info {
+  display: flex;
+  justify-content: space-between;
+}
+.test-suitename {
+  width: 20%;
+  text-align: left;
+  font-weight: bold;
+  word-break: break-word;
+}
+.test-title {
+  width: 40%;
+  text-align: left;
+  font-style: italic;
+}
+.test-status {
+  width: 20%;
+  text-align: right;
+}
+.test-duration {
+  width: 10%;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.failureMessages {
+  padding: 0 1rem;
+  margin-top: 1rem;
+  border-top: 1px dashed var(--danger);
+}
+.failureMessages.suiteFailure {
+  border-top: none;
+}
+.failureMsg {
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.suite-container {
+  margin-bottom: 1rem;
+}
+.suite-info {
+  padding: 1rem;
+  background-color: var(--panel);
+  color: var(--text-secondary);
+  border: 0.15rem solid;
+  border-color: var(--panel);
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.suite-info:hover {
+  border-color: var(--border);
+  cursor: pointer;
+}
+.suite-info .suite-path {
+  word-break: break-all;
+  flex-grow: 1;
+  font-family: monospace;
+  font-size: 1rem;
+}
+.suite-info .suite-time {
+  margin-left: 1rem;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.85rem;
+}
+.suite-info .suite-time.warn {
+  background-color: var(--danger);
+  color: #fff;
+}
+.suite-info:before {
+  content: "\2303";
+  display: inline-block;
+  margin-right: 1rem;
+  transform: rotate(180deg) translateY(0.15rem);
+}
+.suite-container[open] .suite-info:before {
+  transform: rotate(0deg) translateY(0.15rem);
+}
+
+/* CONSOLE LOGS */
+.suite-consolelog {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--panel);
+}
+.suite-consolelog-header {
+  font-weight: bold;
+}
+.suite-consolelog-item {
+  padding: 0.5rem;
+}
+.suite-consolelog-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-consolelog-item-origin {
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+.suite-consolelog-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+/* OBSOLETE SNAPSHOTS */
+.suite-obsolete-snapshots {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.suite-obsolete-snapshots-header {
+  font-weight: bold;
+}
+.suite-obsolete-snapshots-item {
+  padding: 0.5rem;
+}
+.suite-obsolete-snapshots-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-obsolete-snapshots-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+</style></head><body><main class="jesthtml-content"><header><h1 id="title">BoardTAU Test Report</h1></header><section id="metadata-container"><div id="timestamp">Started: 2026-07-15 07:39:48</div><div id="summary"><div id="suite-summary"><div class="summary-total">Suites (18)</div><div class="summary-passed ">16 passed</div><div class="summary-failed ">2 failed</div><div class="summary-pending  summary-empty">0 pending</div></div><div id="test-summary"><div class="summary-total">Tests (83)</div><div class="summary-passed ">76 passed</div><div class="summary-failed ">7 failed</div><div class="summary-pending  summary-empty">0 pending</div></div></div></section><details id="suite-1" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\detail\__tests__\ListingReservation.test.tsx</div><div class="suite-time">4.095s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingReservation</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.439s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingReservation</div><div class="test-title">calls setMoveInMonth when month input changes</div><div class="test-status">passed</div><div class="test-duration">0.075s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingReservation</div><div class="test-title">calls setStayDuration when duration select changes</div><div class="test-status">passed</div><div class="test-duration">0.047s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingReservation</div><div class="test-title">calls onSubmit when button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.049s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingReservation</div><div class="test-title">shows loading state when isLoading is true</div><div class="test-status">passed</div><div class="test-duration">0.066s</div></div></div></div></details><details id="suite-2" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\detail\__tests__\ListingReviews.test.tsx</div><div class="suite-time">4.32s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingReviews</div><div class="test-title">renders reviews correctly</div><div class="test-status">passed</div><div class="test-duration">0.339s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingReviews</div><div class="test-title">shows no reviews UI if reviews array is empty</div><div class="test-status">passed</div><div class="test-duration">0.017s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingReviews</div><div class="test-title">handles liking a review</div><div class="test-status">passed</div><div class="test-duration">0.126s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingReviews</div><div class="test-title">shows error if liking without being logged in</div><div class="test-status">passed</div><div class="test-duration">0.138s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingReviews</div><div class="test-title">sorts reviews correctly</div><div class="test-status">passed</div><div class="test-duration">0.106s</div></div></div></div></details><details id="suite-3" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\detail\__tests__\ListingDetailsClient.test.tsx</div><div class="suite-time">4.323s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingDetailsClient Component</div><div class="test-title">renders property overview correctly</div><div class="test-status">passed</div><div class="test-duration">0.297s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingDetailsClient Component</div><div class="test-title">renders categories and description</div><div class="test-status">passed</div><div class="test-duration">0.175s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingDetailsClient Component</div><div class="test-title">renders amenities correctly</div><div class="test-status">passed</div><div class="test-duration">0.148s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingDetailsClient Component</div><div class="test-title">renders features and rules</div><div class="test-status">passed</div><div class="test-duration">0.078s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingDetailsClient Component</div><div class="test-title">scrolls to available rooms when clicking "Available Rooms" text</div><div class="test-status">passed</div><div class="test-duration">0.051s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingDetailsClient Component</div><div class="test-title">fetches active stay on mount</div><div class="test-status">passed</div><div class="test-duration">0.036s</div></div></div></div></details><details id="suite-4" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\detail\__tests__\AvailableRoomsSection.test.tsx</div><div class="suite-time">4.857s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">AvailableRoomsSection</div><div class="test-title">renders tabs based on available room types</div><div class="test-status">passed</div><div class="test-duration">0.663s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">AvailableRoomsSection</div><div class="test-title">shows only solo rooms by default (since they exist)</div><div class="test-status">passed</div><div class="test-duration">0.183s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">AvailableRoomsSection</div><div class="test-title">switches to bedspace tab</div><div class="test-status">passed</div><div class="test-duration">0.198s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">AvailableRoomsSection</div><div class="test-title">shows View All Rooms button if more than 5 rooms of active tab</div><div class="test-status">passed</div><div class="test-duration">0.213s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">AvailableRoomsSection</div><div class="test-title">opens details modal when Preview is clicked</div><div class="test-status">passed</div><div class="test-duration">0.123s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">AvailableRoomsSection</div><div class="test-title">opens inquiry modal when Inquire Now is clicked for authenticated user</div><div class="test-status">passed</div><div class="test-duration">0.253s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">AvailableRoomsSection</div><div class="test-title">shows auth modal when Inquire Now is clicked for unauthenticated user</div><div class="test-status">passed</div><div class="test-duration">0.194s</div></div></div></div></details><details id="suite-5" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\detail\__tests__\ListingGallery.test.tsx</div><div class="suite-time warn">5.079s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingGallery Component</div><div class="test-title">renders a fallback if no images are provided</div><div class="test-status">passed</div><div class="test-duration">0.079s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingGallery Component</div><div class="test-title">renders initial grid of images</div><div class="test-status">passed</div><div class="test-duration">0.258s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingGallery Component</div><div class="test-title">opens modal when clicking "Show all photos"</div><div class="test-status">passed</div><div class="test-duration">0.183s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingGallery Component</div><div class="test-title">filters by category in the modal</div><div class="test-status">passed</div><div class="test-duration">0.086s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingGallery Component</div><div class="test-title">opens share modal</div><div class="test-status">passed</div><div class="test-duration">1.335s</div></div></div></div></details><details id="suite-6" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\__tests__\ListingCard.test.tsx</div><div class="suite-time warn">5.604s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">ListingCard Component</div><div class="test-title">renders listing title and region</div><div class="test-status">failed</div><div class="test-duration">0.267s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">ListingCard Component</div><div class="test-title">renders price correctly</div><div class="test-status">failed</div><div class="test-duration">0.026s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">ListingCard Component</div><div class="test-title">renders reservation details if reservation prop provided</div><div class="test-status">failed</div><div class="test-duration">0.052s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">ListingCard Component</div><div class="test-title">displays NEW, TOP RATED, and VERIFIED badges when applicable</div><div class="test-status">failed</div><div class="test-duration">0.071s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">ListingCard Component</div><div class="test-title">handles compare click correctly in /favorites path</div><div class="test-status">failed</div><div class="test-duration">0.105s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">ListingCard Component</div><div class="test-title">shows warning when trying to compare more than 3 listings</div><div class="test-status">failed</div><div class="test-duration">0.022s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingCard Component</div><div class="test-title">renders ListingSkeleton without crashing</div><div class="test-status">passed</div><div class="test-duration">0.04s</div></div></div></div></details><details id="suite-7" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\detail\__tests__\ListingRecommendations.test.tsx</div><div class="suite-time">1.762s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingRecommendations</div><div class="test-title">renders loading skeletons initially</div><div class="test-status">passed</div><div class="test-duration">0.021s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingRecommendations</div><div class="test-title">renders carousel when data is loaded</div><div class="test-status">passed</div><div class="test-duration">0.042s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingRecommendations</div><div class="test-title">renders nothing when no recommendations</div><div class="test-status">passed</div><div class="test-duration">0.038s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingRecommendations</div><div class="test-title">handles API error gracefully</div><div class="test-status">passed</div><div class="test-duration">0.032s</div></div></div></div></details><details id="suite-8" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\__tests__\ListingMenu.test.tsx</div><div class="suite-time">2.107s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingMenu</div><div class="test-title">renders nothing on / or /favorites</div><div class="test-status">passed</div><div class="test-duration">0.009s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingMenu</div><div class="test-title">renders menu on /reservations</div><div class="test-status">passed</div><div class="test-duration">0.047s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingMenu</div><div class="test-title">opens menu and triggers delete confirmation</div><div class="test-status">passed</div><div class="test-duration">0.114s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingMenu</div><div class="test-title">handles successful reservation cancellation</div><div class="test-status">passed</div><div class="test-duration">0.125s</div></div></div></div></details><details id="suite-9" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\detail\__tests__\RoomDetailsModal.test.tsx</div><div class="suite-time">2.331s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomDetailsModal Component</div><div class="test-title">does not render if isOpen is false</div><div class="test-status">passed</div><div class="test-duration">0.015s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomDetailsModal Component</div><div class="test-title">renders room details correctly when open</div><div class="test-status">passed</div><div class="test-duration">0.174s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomDetailsModal Component</div><div class="test-title">displays pricing and capacity correctly</div><div class="test-status">passed</div><div class="test-duration">0.086s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomDetailsModal Component</div><div class="test-title">renders the "Send Inquiry" button if user is present and available</div><div class="test-status">passed</div><div class="test-duration">0.073s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomDetailsModal Component</div><div class="test-title">renders "Sign in to Inquire" button if user is not present</div><div class="test-status">passed</div><div class="test-duration">0.051s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomDetailsModal Component</div><div class="test-title">renders "No Vacancy" button if room is not available</div><div class="test-status">passed</div><div class="test-duration">0.046s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomDetailsModal Component</div><div class="test-title">calls onClose when close button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.057s</div></div></div></div></details><details id="suite-10" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\detail\__tests__\ListingHeader.test.tsx</div><div class="suite-time warn">6.803s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingHeader</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.18s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingHeader</div><div class="test-title">shows BoardTAU Choice if rating is 4.9 and 5+ reviews</div><div class="test-status">passed</div><div class="test-duration">0.031s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingHeader</div><div class="test-title">opens share modal when share button clicked</div><div class="test-status">passed</div><div class="test-duration">0.116s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingHeader</div><div class="test-title">handles copy link action</div><div class="test-status">passed</div><div class="test-duration">1.518s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingHeader</div><div class="test-title">handles email share action</div><div class="test-status">passed</div><div class="test-duration">1.378s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingHeader</div><div class="test-title">handles reviews click scrolling</div><div class="test-status">passed</div><div class="test-duration">0.023s</div></div></div></div></details><details id="suite-11" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\detail\__tests__\RoomTooltip.test.tsx</div><div class="suite-time">1.728s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomTooltip</div><div class="test-title">renders correctly when visible</div><div class="test-status">passed</div><div class="test-duration">0.069s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomTooltip</div><div class="test-title">renders nothing when not visible</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomTooltip</div><div class="test-title">calls onViewDetails when clicking View Details</div><div class="test-status">passed</div><div class="test-duration">0.034s</div></div></div></div></details><details id="suite-12" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\__tests__\LoadMore.test.tsx</div><div class="suite-time">1.436s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadMore</div><div class="test-title">renders listings correctly</div><div class="test-status">passed</div><div class="test-duration">0.021s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadMore</div><div class="test-title">renders skeletons while pending</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadMore</div><div class="test-title">renders skeletons while fetching next page</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadMore</div><div class="test-title">renders error message on error</div><div class="test-status">passed</div><div class="test-duration">0.012s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadMore</div><div class="test-title">passes correctly to useLoadMore</div><div class="test-status">passed</div><div class="test-duration">0.013s</div></div></div></div></details><details id="suite-13" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\__tests__\ListingsGrid.test.tsx</div><div class="suite-time">1.19s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingsGrid Component</div><div class="test-title">renders listings initially</div><div class="test-status">passed</div><div class="test-duration">0.051s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingsGrid Component</div><div class="test-title">renders LoadMore when nextCursor is provided</div><div class="test-status">passed</div><div class="test-duration">0.009s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingsGrid Component</div><div class="test-title">calls AI enrichment when searchParams are present</div><div class="test-status">passed</div><div class="test-duration">0.036s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingsGrid Component</div><div class="test-title">does not call AI enrichment if listings already have aiHighlight</div><div class="test-status">passed</div><div class="test-duration">0.013s</div></div></div></div></details><details id="suite-14" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\detail\__tests__\ListingCategory.test.tsx</div><div class="suite-time">1.378s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingCategory</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.011s</div></div></div></div></details><details id="suite-15" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\detail\__tests__\AllRoomsModal.test.tsx</div><div class="suite-time">2.662s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">AllRoomsModal</div><div class="test-title">renders nothing if isOpen is false</div><div class="test-status">passed</div><div class="test-duration">0.033s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">AllRoomsModal</div><div class="test-title">renders rooms correctly</div><div class="test-status">passed</div><div class="test-duration">0.104s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">AllRoomsModal</div><div class="test-title">filters rooms by room type</div><div class="test-status">passed</div><div class="test-duration">0.506s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">AllRoomsModal</div><div class="test-title">calls onViewDetails when clicking Details button</div><div class="test-status">passed</div><div class="test-duration">0.048s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">AllRoomsModal</div><div class="test-title">calls onInquire when clicking Inquire button on available room</div><div class="test-status">passed</div><div class="test-duration">0.046s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">AllRoomsModal</div><div class="test-title">disables inquire button for unavailable room</div><div class="test-status">passed</div><div class="test-duration">0.112s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">AllRoomsModal</div><div class="test-title">shows error toast when inquiring without user</div><div class="test-status">passed</div><div class="test-duration">0.031s</div></div></div></div></details><details id="suite-16" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\__tests__\LoadingGrid.test.tsx</div><div class="suite-time">1.061s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadingGrid</div><div class="test-title">renders default number of skeletons (8)</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadingGrid</div><div class="test-title">renders specified number of skeletons</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadingGrid</div><div class="test-title">renders container with correct grid classes</div><div class="test-status">passed</div><div class="test-duration">0.004s</div></div></div></div></details><details id="suite-17" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\detail\__tests__\ListingHead.test.tsx</div><div class="suite-time">1.022s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingHead Component</div><div class="test-title">renders correctly when favorited</div><div class="test-status">passed</div><div class="test-duration">0.01s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingHead Component</div><div class="test-title">renders correctly when not favorited</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div></div></details><details id="suite-18" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\listings\detail\__tests__\ListingInfo.test.tsx</div><div class="suite-time">1.185s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">ListingInfo</div><div class="test-title">renders all information correctly</div><div class="test-status">failed</div><div class="test-duration">0.047s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ListingInfo</div><div class="test-title">renders correctly without category</div><div class="test-status">passed</div><div class="test-duration">0.009s</div></div></div></div></details></main></body></html>

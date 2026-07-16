@@ -96,7 +96,7 @@ const Input: React.FC<InputProps> = ({
                   ...validationRules
                 })
               : {
-                  value: value || '',
+                  ...(value !== undefined ? { value } : {}),
                   onChange: externalOnChange
                 }
             )}
@@ -210,7 +210,7 @@ const Input: React.FC<InputProps> = ({
                 ...validationRules
               })
             : {
-                value: value || '',
+                ...(value !== undefined ? { value } : {}),
                 onChange: externalOnChange
               }
           )}

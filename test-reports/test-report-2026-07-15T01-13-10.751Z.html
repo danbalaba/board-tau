@@ -1,0 +1,277 @@
+<html><head><meta charset="utf-8"/><title>BoardTAU Test Report</title><style type="text/css">:root {
+  --text-primary: #111;
+  --text-secondary: #4f4f4f;
+  --success: #006633;
+  --success-bright: #80ffbf;
+  --danger: #cc071e;
+  --danger-bright: #fbdfe0;
+  --warning: #995c00;
+  --warning-bright: #ffeea8;
+  --panel: #eee;
+  --border: #949494;
+  --disabled: #6b6b6b;
+}
+
+html,
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+}
+body {
+  padding: 2rem 1rem;
+}
+.jesthtml-content {
+  margin: 0 auto;
+  max-width: 70rem;
+}
+header {
+  display: flex;
+  align-items: center;
+}
+#title {
+  margin: 0;
+  flex-grow: 1;
+}
+#logo {
+  height: 4rem;
+}
+#timestamp {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+#metadata-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.additional-information-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/** SUMMARY */
+#summary {
+  color: var(--text-primary);
+  display: flex;
+  font-family: monospace;
+  font-size: 1rem;
+}
+#summary > div {
+  margin-right: 0.5rem;
+  background: var(--panel);
+  padding: 1rem;
+  min-width: 15rem;
+}
+#summary > div:last-child {
+  margin-right: 0;
+}
+@media only screen and (max-width: 720px) {
+  #summary {
+    flex-direction: column;
+  }
+  #summary > div {
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+  #summary > div:first-child {
+    margin-top: 0;
+  }
+}
+
+.summary-total {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.summary-passed {
+  color: var(--success);
+  border-left: 0.4rem solid var(--success);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-failed,
+.summary-obsolete-snapshots {
+  color: var(--danger);
+  border-left: 0.4rem solid var(--danger);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-pending {
+  color: var(--warning);
+  border-left: 0.4rem solid var(--warning);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-empty {
+  color: var(--disabled);
+  border-left: 0.4rem solid var(--disabled);
+  margin-bottom: 0.15rem;
+}
+
+.test-result {
+  padding: 1rem;
+  margin-bottom: 0.25rem;
+}
+.test-result:last-child {
+  border: 0;
+}
+.test-result.passed {
+  background-color: var(--success-bright);
+  color: var(--success);
+}
+.test-result.failed {
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.test-result.pending {
+  background-color: var(--warning-bright);
+  color: var(--warning);
+}
+
+.test-info {
+  display: flex;
+  justify-content: space-between;
+}
+.test-suitename {
+  width: 20%;
+  text-align: left;
+  font-weight: bold;
+  word-break: break-word;
+}
+.test-title {
+  width: 40%;
+  text-align: left;
+  font-style: italic;
+}
+.test-status {
+  width: 20%;
+  text-align: right;
+}
+.test-duration {
+  width: 10%;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.failureMessages {
+  padding: 0 1rem;
+  margin-top: 1rem;
+  border-top: 1px dashed var(--danger);
+}
+.failureMessages.suiteFailure {
+  border-top: none;
+}
+.failureMsg {
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.suite-container {
+  margin-bottom: 1rem;
+}
+.suite-info {
+  padding: 1rem;
+  background-color: var(--panel);
+  color: var(--text-secondary);
+  border: 0.15rem solid;
+  border-color: var(--panel);
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.suite-info:hover {
+  border-color: var(--border);
+  cursor: pointer;
+}
+.suite-info .suite-path {
+  word-break: break-all;
+  flex-grow: 1;
+  font-family: monospace;
+  font-size: 1rem;
+}
+.suite-info .suite-time {
+  margin-left: 1rem;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.85rem;
+}
+.suite-info .suite-time.warn {
+  background-color: var(--danger);
+  color: #fff;
+}
+.suite-info:before {
+  content: "\2303";
+  display: inline-block;
+  margin-right: 1rem;
+  transform: rotate(180deg) translateY(0.15rem);
+}
+.suite-container[open] .suite-info:before {
+  transform: rotate(0deg) translateY(0.15rem);
+}
+
+/* CONSOLE LOGS */
+.suite-consolelog {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--panel);
+}
+.suite-consolelog-header {
+  font-weight: bold;
+}
+.suite-consolelog-item {
+  padding: 0.5rem;
+}
+.suite-consolelog-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-consolelog-item-origin {
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+.suite-consolelog-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+/* OBSOLETE SNAPSHOTS */
+.suite-obsolete-snapshots {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.suite-obsolete-snapshots-header {
+  font-weight: bold;
+}
+.suite-obsolete-snapshots-item {
+  padding: 0.5rem;
+}
+.suite-obsolete-snapshots-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-obsolete-snapshots-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+</style></head><body><main class="jesthtml-content"><header><h1 id="title">BoardTAU Test Report</h1></header><section id="metadata-container"><div id="timestamp">Started: 2026-07-15 09:13:17</div><div id="summary"><div id="suite-summary"><div class="summary-total">Suites (12)</div><div class="summary-passed ">11 passed</div><div class="summary-failed ">1 failed</div><div class="summary-pending  summary-empty">0 pending</div></div><div id="test-summary"><div class="summary-total">Tests (100)</div><div class="summary-passed ">99 passed</div><div class="summary-failed ">1 failed</div><div class="summary-pending  summary-empty">0 pending</div></div></div></section><details id="suite-1" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\modals\inquiry-modal\steps\__tests__\PaymentStep.test.tsx</div><div class="suite-time">4.887s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">PaymentStep</div><div class="test-title">renders all payment options</div><div class="test-status">passed</div><div class="test-duration">0.255s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PaymentStep</div><div class="test-title">applies active styles to the selected payment method</div><div class="test-status">passed</div><div class="test-duration">0.023s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PaymentStep</div><div class="test-title">displays error message when there is a validation error</div><div class="test-status">passed</div><div class="test-duration">0.033s</div></div></div></div></details><details id="suite-2" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\modals\inquiry-modal\steps\__tests__\IDStep.test.tsx</div><div class="suite-time warn">6.038s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">IDStep Component</div><div class="test-title">renders the webcam initially when no ID is captured</div><div class="test-status">passed</div><div class="test-duration">0.278s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">IDStep Component</div><div class="test-title">displays 'Physical Presence Required' when a phone screen is detected</div><div class="test-status">passed</div><div class="test-duration">0.06s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">IDStep Component</div><div class="test-title">displays 'Ready to Scan' when ID is aligned</div><div class="test-status">passed</div><div class="test-duration">0.035s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">IDStep Component</div><div class="test-title">calls toggleCamera when switch camera button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.046s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">IDStep Component</div><div class="test-title">renders the captured ID when capturedID is present</div><div class="test-status">passed</div><div class="test-duration">0.151s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">IDStep Component</div><div class="test-title">allows clearing the captured ID</div><div class="test-status">passed</div><div class="test-duration">0.194s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">IDStep Component</div><div class="test-title">does not apply rotation class when facingMode is user</div><div class="test-status">passed</div><div class="test-duration">0.051s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">IDStep Component</div><div class="test-title">applies processing classes to the capture button when isProcessing is true</div><div class="test-status">passed</div><div class="test-duration">0.103s</div></div></div></div></details><details id="suite-3" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\modals\inquiry-modal\components\__tests__\ModernInquirySelect.test.tsx</div><div class="suite-time warn">5.903s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ModernInquirySelect</div><div class="test-title">renders with placeholder and label</div><div class="test-status">passed</div><div class="test-duration">0.235s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ModernInquirySelect</div><div class="test-title">renders selected option</div><div class="test-status">passed</div><div class="test-duration">0.018s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ModernInquirySelect</div><div class="test-title">opens and closes dropdown on click</div><div class="test-status">passed</div><div class="test-duration">0.261s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ModernInquirySelect</div><div class="test-title">calls onChange and closes when an option is selected</div><div class="test-status">passed</div><div class="test-duration">0.321s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ModernInquirySelect</div><div class="test-title">displays error message when error prop is provided</div><div class="test-status">passed</div><div class="test-duration">0.011s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ModernInquirySelect</div><div class="test-title">closes when clicking outside</div><div class="test-status">passed</div><div class="test-duration">0.084s</div></div></div></div></details><details id="suite-4" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\modals\inquiry-modal\__tests__\useInquiryLogic.test.ts</div><div class="suite-time warn">6.821s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook</div><div class="test-title">initializes with step 1</div><div class="test-status">passed</div><div class="test-duration">0.071s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; Navigation (handleNextStep / handlePrevStep)</div><div class="test-title">does not advance to step 2 if paymentMethod is missing</div><div class="test-status">failed</div><div class="test-duration">0.029s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; Navigation (handleNextStep / handlePrevStep)</div><div class="test-title">advances to step 2 if paymentMethod is present</div><div class="test-status">passed</div><div class="test-duration">0.014s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; Navigation (handleNextStep / handlePrevStep)</div><div class="test-title">goes back to previous step</div><div class="test-status">passed</div><div class="test-duration">0.028s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; isStepCompleted</div><div class="test-title">returns true for step 3 if message is long enough</div><div class="test-status">passed</div><div class="test-duration">0.021s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; isStepCompleted</div><div class="test-title">returns false for step 3 if message has errors</div><div class="test-status">passed</div><div class="test-duration">0.014s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; isStepCompleted</div><div class="test-title">returns true for step 4 if guidelines read</div><div class="test-status">passed</div><div class="test-duration">0.004s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; isStepCompleted</div><div class="test-title">evaluates step 2 completion correctly</div><div class="test-status">passed</div><div class="test-duration">0.011s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; isStepCompleted</div><div class="test-title">evaluates steps 5, 6, 7, and default correctly</div><div class="test-status">passed</div><div class="test-duration">0.023s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; DateRange Sync</div><div class="test-title">syncs dateRange to moveInDate and checkOutDate via setValue</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; Camera &amp; Capture</div><div class="test-title">toggles camera facing mode</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; Camera &amp; Capture</div><div class="test-title">rejects selfie if liveness check (blink) hasn't passed</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; Camera &amp; Capture</div><div class="test-title">executes the full KYC blink detection loop and succeeds</div><div class="test-status">passed</div><div class="test-duration">0.017s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; Camera &amp; Capture</div><div class="test-title">executes the ID persistence buffer loop</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; Camera &amp; Capture</div><div class="test-title">handles ID capture successfully</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; Camera &amp; Capture</div><div class="test-title">handles selfie capture successfully after blinking</div><div class="test-status">passed</div><div class="test-duration">0.018s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; Camera &amp; Capture</div><div class="test-title">handles ID capture failure</div><div class="test-status">passed</div><div class="test-duration">0.013s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; Form Submission</div><div class="test-title">submits the form data and uploads images</div><div class="test-status">passed</div><div class="test-duration">0.015s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryLogic hook &gt; Form Submission</div><div class="test-title">handles form submission errors gracefully</div><div class="test-status">passed</div><div class="test-duration">0.005s</div></div></div></div></details><details id="suite-5" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\modals\inquiry-modal\steps\__tests__\ReviewStep.test.tsx</div><div class="suite-time warn">7.605s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewStep Component</div><div class="test-title">renders summary details correctly</div><div class="test-status">passed</div><div class="test-duration">0.342s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewStep Component</div><div class="test-title">calculates Solo Buyout fee correctly</div><div class="test-status">passed</div><div class="test-duration">0.037s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewStep Component</div><div class="test-title">renders captured images and opens preview portal</div><div class="test-status">passed</div><div class="test-duration">0.235s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewStep Component</div><div class="test-title">opens preview when ID is clicked and closes when backdrop is clicked</div><div class="test-status">passed</div><div class="test-duration">0.144s</div></div></div></div></details><details id="suite-6" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\modals\inquiry-modal\__tests__\InquiryModalUtils.test.ts</div><div class="suite-time">1.124s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModalUtils &gt; getSafeImageSrc</div><div class="test-title">returns empty string if file is null</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModalUtils &gt; getSafeImageSrc</div><div class="test-title">returns safe blob url for valid image file</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModalUtils &gt; getSafeImageSrc</div><div class="test-title">returns empty string if URL.createObjectURL throws an error</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModalUtils &gt; getSafeImageSrc</div><div class="test-title">returns empty string for unsafe file types</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModalUtils &gt; getSafeImageSrcString</div><div class="test-title">allows https urls</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModalUtils &gt; getSafeImageSrcString</div><div class="test-title">allows relative urls</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModalUtils &gt; getSafeImageSrcString</div><div class="test-title">returns empty string for malicious javascript: urls</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModalUtils &gt; getSafeImageSrcString</div><div class="test-title">returns empty string for unsafe characters</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModalUtils &gt; base64ToFile</div><div class="test-title">converts a base64 string to a File object</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div></div></details><details id="suite-7" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\modals\inquiry-modal\steps\__tests__\NoteStep.test.tsx</div><div class="suite-time">2.124s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">NoteStep Component</div><div class="test-title">renders the message textarea</div><div class="test-status">passed</div><div class="test-duration">0.048s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">NoteStep Component</div><div class="test-title">displays validation error messages when present</div><div class="test-status">passed</div><div class="test-duration">0.013s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">NoteStep Component</div><div class="test-title">displays XSS validation error message</div><div class="test-status">passed</div><div class="test-duration">0.022s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">NoteStep Component</div><div class="test-title">executes validation rules correctly</div><div class="test-status">passed</div><div class="test-duration">0.015s</div></div></div></div></details><details id="suite-8" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\modals\inquiry-modal\steps\__tests__\SelfieStep.test.tsx</div><div class="suite-time">3.229s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">SelfieStep Component</div><div class="test-title">renders the webcam initially when no selfie is captured</div><div class="test-status">passed</div><div class="test-duration">0.069s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">SelfieStep Component</div><div class="test-title">displays 'Please Blink to Continue' when face is aligned but not blinked</div><div class="test-status">passed</div><div class="test-duration">0.056s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">SelfieStep Component</div><div class="test-title">displays 'Liveness Confirmed' when face is aligned and blinked</div><div class="test-status">passed</div><div class="test-duration">0.095s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">SelfieStep Component</div><div class="test-title">calls toggleCamera when switch camera button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.082s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">SelfieStep Component</div><div class="test-title">renders the captured selfie when capturedSelfie is present</div><div class="test-status">passed</div><div class="test-duration">0.038s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">SelfieStep Component</div><div class="test-title">allows clearing the captured selfie</div><div class="test-status">passed</div><div class="test-duration">0.061s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">SelfieStep Component</div><div class="test-title">applies rotation class when facingMode is environment</div><div class="test-status">passed</div><div class="test-duration">0.027s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">SelfieStep Component</div><div class="test-title">applies processing classes to the capture button when isProcessing is true</div><div class="test-status">passed</div><div class="test-duration">0.064s</div></div></div></div></details><details id="suite-9" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\modals\inquiry-modal\steps\__tests__\PrepareStep.test.tsx</div><div class="suite-time">2.65s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">PrepareStep Component</div><div class="test-title">renders the guidelines view initially</div><div class="test-status">passed</div><div class="test-duration">0.057s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PrepareStep Component</div><div class="test-title">clicks the link to show accepted IDs list</div><div class="test-status">passed</div><div class="test-duration">0.038s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PrepareStep Component</div><div class="test-title">clicks the 'I UNDERSTAND &amp; I'M READY' button</div><div class="test-status">passed</div><div class="test-duration">0.052s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PrepareStep Component</div><div class="test-title">shows different button text if hasReadGuidelines is true</div><div class="test-status">passed</div><div class="test-duration">0.029s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PrepareStep Component &gt; ID List View</div><div class="test-title">renders the ID list when isShowingIDList is true</div><div class="test-status">passed</div><div class="test-duration">0.117s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PrepareStep Component &gt; ID List View</div><div class="test-title">displays Primary IDs by default</div><div class="test-status">passed</div><div class="test-duration">0.045s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PrepareStep Component &gt; ID List View</div><div class="test-title">displays Secondary IDs when tab is selected</div><div class="test-status">passed</div><div class="test-duration">0.051s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PrepareStep Component &gt; ID List View</div><div class="test-title">calls setSelectedIDTab when tab is clicked</div><div class="test-status">passed</div><div class="test-duration">0.028s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PrepareStep Component &gt; ID List View</div><div class="test-title">calls setIsShowingIDList and setHasReadGuidelines when 'Understood' button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.042s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PrepareStep Component &gt; ID List View</div><div class="test-title">closes the ID list when back or close buttons are clicked</div><div class="test-status">passed</div><div class="test-duration">0.028s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">PrepareStep Component &gt; ID List View</div><div class="test-title">calls setSelectedIDTab when primary tab is clicked</div><div class="test-status">passed</div><div class="test-duration">0.028s</div></div></div></div></details><details id="suite-10" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\modals\inquiry-modal\validation\__tests__\security.test.ts</div><div class="suite-time">1.239s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">security validations &gt; sanitizeSecurityString</div><div class="test-title">escapes HTML characters</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">security validations &gt; sanitizeSecurityString</div><div class="test-title">removes SQL keywords</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">security validations &gt; sanitizeSecurityString</div><div class="test-title">handles empty strings</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">security validations &gt; validateStrictChars</div><div class="test-title">allows numbers, hyphens, and underscores</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">security validations &gt; validateStrictChars</div><div class="test-title">rejects letters and special characters</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">security validations &gt; validateStrictChars</div><div class="test-title">allows empty strings</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">security validations &gt; isCleanString</div><div class="test-title">allows clean strings</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">security validations &gt; isCleanString</div><div class="test-title">rejects suspicious characters</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">security validations &gt; isCleanString</div><div class="test-title">allows empty strings</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">security validations &gt; validatePhoneNumber</div><div class="test-title">allows valid PH mobile numbers</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">security validations &gt; validatePhoneNumber</div><div class="test-title">allows formatted phone numbers by stripping spaces/hyphens</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">security validations &gt; validatePhoneNumber</div><div class="test-title">allows international numbers</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">security validations &gt; validatePhoneNumber</div><div class="test-title">rejects invalid numbers</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div></div></details><details id="suite-11" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\modals\__tests__\InquiryModal.test.tsx</div><div class="suite-time warn">9.637s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModal Component</div><div class="test-title">renders the modal and shows step 1 correctly</div><div class="test-status">passed</div><div class="test-duration">0.382s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModal Component</div><div class="test-title">calls onClose when the close button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.176s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModal Component</div><div class="test-title">calls handleNextStep when Continue is clicked on a completed step</div><div class="test-status">passed</div><div class="test-duration">0.065s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModal Component</div><div class="test-title">renders all steps and success overlay</div><div class="test-status">passed</div><div class="test-duration">0.072s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModal Component</div><div class="test-title">toggles mobile details and image carousel</div><div class="test-status">passed</div><div class="test-duration">0.341s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">InquiryModal Component</div><div class="test-title">covers remaining step renders</div><div class="test-status">passed</div><div class="test-duration">0.27s</div></div></div></div></details><details id="suite-12" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\modals\inquiry-modal\steps\__tests__\StayStep.test.tsx</div><div class="suite-time warn">11.243s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">StayStep Component</div><div class="test-title">renders correctly with default values</div><div class="test-status">passed</div><div class="test-duration">0.088s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">StayStep Component</div><div class="test-title">handles occupant count increment and decrement</div><div class="test-status">passed</div><div class="test-duration">0.085s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">StayStep Component</div><div class="test-title">renders solo buyout option when conditions are met</div><div class="test-status">passed</div><div class="test-duration">0.014s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">StayStep Component</div><div class="test-title">hides solo buyout if availableSlots &lt; capacity</div><div class="test-status">passed</div><div class="test-duration">0.015s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">StayStep Component</div><div class="test-title">renders contact info input dynamically based on contact method</div><div class="test-status">passed</div><div class="test-duration">0.669s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">StayStep Component</div><div class="test-title">displays active stay overlap warning</div><div class="test-status">passed</div><div class="test-duration">0.026s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">StayStep Component</div><div class="test-title">handles calendar opening, closing, and clearing dates</div><div class="test-status">passed</div><div class="test-duration">0.118s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">StayStep Component</div><div class="test-title">updates occupant count when solo buyout is checked</div><div class="test-status">passed</div><div class="test-duration">0.055s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">StayStep Component</div><div class="test-title">validates contact methods correctly</div><div class="test-status">passed</div><div class="test-duration">0.503s</div></div></div></div></details></main></body></html>
