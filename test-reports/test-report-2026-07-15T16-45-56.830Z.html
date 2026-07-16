@@ -1,0 +1,277 @@
+<html><head><meta charset="utf-8"/><title>BoardTAU Test Report</title><style type="text/css">:root {
+  --text-primary: #111;
+  --text-secondary: #4f4f4f;
+  --success: #006633;
+  --success-bright: #80ffbf;
+  --danger: #cc071e;
+  --danger-bright: #fbdfe0;
+  --warning: #995c00;
+  --warning-bright: #ffeea8;
+  --panel: #eee;
+  --border: #949494;
+  --disabled: #6b6b6b;
+}
+
+html,
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+}
+body {
+  padding: 2rem 1rem;
+}
+.jesthtml-content {
+  margin: 0 auto;
+  max-width: 70rem;
+}
+header {
+  display: flex;
+  align-items: center;
+}
+#title {
+  margin: 0;
+  flex-grow: 1;
+}
+#logo {
+  height: 4rem;
+}
+#timestamp {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+#metadata-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.additional-information-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/** SUMMARY */
+#summary {
+  color: var(--text-primary);
+  display: flex;
+  font-family: monospace;
+  font-size: 1rem;
+}
+#summary > div {
+  margin-right: 0.5rem;
+  background: var(--panel);
+  padding: 1rem;
+  min-width: 15rem;
+}
+#summary > div:last-child {
+  margin-right: 0;
+}
+@media only screen and (max-width: 720px) {
+  #summary {
+    flex-direction: column;
+  }
+  #summary > div {
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+  #summary > div:first-child {
+    margin-top: 0;
+  }
+}
+
+.summary-total {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.summary-passed {
+  color: var(--success);
+  border-left: 0.4rem solid var(--success);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-failed,
+.summary-obsolete-snapshots {
+  color: var(--danger);
+  border-left: 0.4rem solid var(--danger);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-pending {
+  color: var(--warning);
+  border-left: 0.4rem solid var(--warning);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-empty {
+  color: var(--disabled);
+  border-left: 0.4rem solid var(--disabled);
+  margin-bottom: 0.15rem;
+}
+
+.test-result {
+  padding: 1rem;
+  margin-bottom: 0.25rem;
+}
+.test-result:last-child {
+  border: 0;
+}
+.test-result.passed {
+  background-color: var(--success-bright);
+  color: var(--success);
+}
+.test-result.failed {
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.test-result.pending {
+  background-color: var(--warning-bright);
+  color: var(--warning);
+}
+
+.test-info {
+  display: flex;
+  justify-content: space-between;
+}
+.test-suitename {
+  width: 20%;
+  text-align: left;
+  font-weight: bold;
+  word-break: break-word;
+}
+.test-title {
+  width: 40%;
+  text-align: left;
+  font-style: italic;
+}
+.test-status {
+  width: 20%;
+  text-align: right;
+}
+.test-duration {
+  width: 10%;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.failureMessages {
+  padding: 0 1rem;
+  margin-top: 1rem;
+  border-top: 1px dashed var(--danger);
+}
+.failureMessages.suiteFailure {
+  border-top: none;
+}
+.failureMsg {
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.suite-container {
+  margin-bottom: 1rem;
+}
+.suite-info {
+  padding: 1rem;
+  background-color: var(--panel);
+  color: var(--text-secondary);
+  border: 0.15rem solid;
+  border-color: var(--panel);
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.suite-info:hover {
+  border-color: var(--border);
+  cursor: pointer;
+}
+.suite-info .suite-path {
+  word-break: break-all;
+  flex-grow: 1;
+  font-family: monospace;
+  font-size: 1rem;
+}
+.suite-info .suite-time {
+  margin-left: 1rem;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.85rem;
+}
+.suite-info .suite-time.warn {
+  background-color: var(--danger);
+  color: #fff;
+}
+.suite-info:before {
+  content: "\2303";
+  display: inline-block;
+  margin-right: 1rem;
+  transform: rotate(180deg) translateY(0.15rem);
+}
+.suite-container[open] .suite-info:before {
+  transform: rotate(0deg) translateY(0.15rem);
+}
+
+/* CONSOLE LOGS */
+.suite-consolelog {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--panel);
+}
+.suite-consolelog-header {
+  font-weight: bold;
+}
+.suite-consolelog-item {
+  padding: 0.5rem;
+}
+.suite-consolelog-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-consolelog-item-origin {
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+.suite-consolelog-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+/* OBSOLETE SNAPSHOTS */
+.suite-obsolete-snapshots {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.suite-obsolete-snapshots-header {
+  font-weight: bold;
+}
+.suite-obsolete-snapshots-item {
+  padding: 0.5rem;
+}
+.suite-obsolete-snapshots-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-obsolete-snapshots-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+</style></head><body><main class="jesthtml-content"><header><h1 id="title">BoardTAU Test Report</h1></header><section id="metadata-container"><div id="timestamp">Started: 2026-07-16 00:46:02</div><div id="summary"><div id="suite-summary"><div class="summary-total">Suites (10)</div><div class="summary-passed ">7 passed</div><div class="summary-failed ">3 failed</div><div class="summary-pending  summary-empty">0 pending</div></div><div id="test-summary"><div class="summary-total">Tests (56)</div><div class="summary-passed ">52 passed</div><div class="summary-failed ">4 failed</div><div class="summary-pending  summary-empty">0 pending</div></div></div></section><details id="suite-1" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\inquiry-center\hooks\__tests__\use-inquiry-detail-logic.test.ts</div><div class="suite-time">3.08s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">useInquiryDetailLogic</div><div class="test-title">initializes with isResponding as false</div><div class="test-status">passed</div><div class="test-duration">0.044s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">useInquiryDetailLogic</div><div class="test-title">handles successful response</div><div class="test-status">failed</div><div class="test-duration">0.014s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">useInquiryDetailLogic</div><div class="test-title">handles failed response</div><div class="test-status">failed</div><div class="test-duration">0.01s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">useInquiryDetailLogic</div><div class="test-title">handles fetch error</div><div class="test-status">failed</div><div class="test-duration">0.061s</div></div></div></div></details><details id="suite-2" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\inquiry-center\components\__tests__\landlord-inquiry-search.test.tsx</div><div class="suite-time">3.381s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquirySearch</div><div class="test-title">renders input correctly</div><div class="test-status">passed</div><div class="test-duration">0.116s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquirySearch</div><div class="test-title">updates local query and calls setSearchQuery</div><div class="test-status">passed</div><div class="test-duration">0.041s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordInquirySearch</div><div class="test-title">shows clear button when there is a query and clears on click</div><div class="test-status">failed</div><div class="test-duration">0.025s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquirySearch</div><div class="test-title">shows suggestions on focus if query matches</div><div class="test-status">passed</div><div class="test-duration">0.079s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquirySearch</div><div class="test-title">sets query to suggestion user name when clicked</div><div class="test-status">passed</div><div class="test-duration">0.042s</div></div></div></div></details><details id="suite-3" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\inquiry-center\components\__tests__\landlord-inquiry-modals.test.tsx</div><div class="suite-time">3.453s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryModals</div><div class="test-title">renders nothing when not client</div><div class="test-status">passed</div><div class="test-duration">0.057s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryModals</div><div class="test-title">renders archive modal when archiveModalOpen is true</div><div class="test-status">passed</div><div class="test-duration">0.041s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryModals</div><div class="test-title">renders details modal when viewModalOpen is true</div><div class="test-status">passed</div><div class="test-duration">0.015s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryModals</div><div class="test-title">renders delete modal when deleteModalOpen is true</div><div class="test-status">passed</div><div class="test-duration">0.019s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryModals</div><div class="test-title">renders reject modal when rejectModalOpen is true</div><div class="test-status">passed</div><div class="test-duration">0.053s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryModals</div><div class="test-title">calls handleConfirmDelete when delete is confirmed</div><div class="test-status">passed</div><div class="test-duration">0.03s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryModals</div><div class="test-title">calls handleConfirmArchive from archive modal</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryModals</div><div class="test-title">handles reject flow correctly</div><div class="test-status">passed</div><div class="test-duration">0.137s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryModals</div><div class="test-title">handles custom reject flow correctly</div><div class="test-status">passed</div><div class="test-duration">0.112s</div></div></div></div></details><details id="suite-4" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\inquiry-center\components\__tests__\landlord-inquiry-decline-modal.test.tsx</div><div class="suite-time">3.564s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryDeclineModal</div><div class="test-title">renders correctly when open</div><div class="test-status">passed</div><div class="test-duration">0.103s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryDeclineModal</div><div class="test-title">does not render when isOpen is false</div><div class="test-status">passed</div><div class="test-duration">0.011s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryDeclineModal</div><div class="test-title">calls onClose when cancel button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.023s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryDeclineModal</div><div class="test-title">disables confirm button initially</div><div class="test-status">passed</div><div class="test-duration">0.037s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryDeclineModal</div><div class="test-title">enables confirm button when a quick reason is selected</div><div class="test-status">passed</div><div class="test-duration">0.03s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryDeclineModal</div><div class="test-title">calls onConfirm with the selected quick reason</div><div class="test-status">passed</div><div class="test-duration">0.048s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryDeclineModal</div><div class="test-title">enables confirm button when custom reason is typed</div><div class="test-status">passed</div><div class="test-duration">0.131s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryDeclineModal</div><div class="test-title">shows loading state on confirm button when isLoading is true</div><div class="test-status">passed</div><div class="test-duration">0.272s</div></div></div></div></details><details id="suite-5" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\inquiry-center\components\__tests__\landlord-inquiry-header.test.tsx</div><div class="suite-time">3.602s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryHeader</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.119s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryHeader</div><div class="test-title">calls setSearchQuery on search input change</div><div class="test-status">passed</div><div class="test-duration">0.045s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryHeader</div><div class="test-title">calls setSortBy when sort option is clicked</div><div class="test-status">passed</div><div class="test-duration">0.043s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryHeader</div><div class="test-title">calls setSelectedStatus when status option is clicked</div><div class="test-status">passed</div><div class="test-duration">0.039s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryHeader</div><div class="test-title">calls onToggleArchived when archive toggle is clicked</div><div class="test-status">passed</div><div class="test-duration">0.044s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryHeader</div><div class="test-title">calls setViewMode when grid/list toggles are clicked</div><div class="test-status">passed</div><div class="test-duration">0.358s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryHeader</div><div class="test-title">handles report generation callbacks</div><div class="test-status">passed</div><div class="test-duration">0.047s</div></div></div></div></details><details id="suite-6" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\inquiry-center\components\__tests__\landlord-inquiry-card.test.tsx</div><div class="suite-time">3.683s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryCard</div><div class="test-title">renders correctly in grid mode</div><div class="test-status">passed</div><div class="test-duration">0.495s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryCard</div><div class="test-title">calls onViewDetails when Details button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.06s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryCard</div><div class="test-title">calls handleRespond with APPROVED when Approve is clicked</div><div class="test-status">passed</div><div class="test-duration">0.026s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryCard</div><div class="test-title">calls onReject when Reject is clicked</div><div class="test-status">passed</div><div class="test-duration">0.028s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryCard</div><div class="test-title">renders correctly in list mode</div><div class="test-status">passed</div><div class="test-duration">0.037s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryCard</div><div class="test-title">calls onArchive when archive button is clicked in list mode</div><div class="test-status">passed</div><div class="test-duration">0.025s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryCard</div><div class="test-title">calls onDelete when delete button is clicked in list mode (for archived)</div><div class="test-status">passed</div><div class="test-duration">0.027s</div></div></div></div></details><details id="suite-7" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\inquiry-center\__tests__\index.test.tsx</div><div class="suite-time">0.915s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryCenter</div><div class="test-title">renders loading state when isLoading is true</div><div class="test-status">passed</div><div class="test-duration">0.017s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryCenter</div><div class="test-title">renders empty state when there are no filtered inquiries</div><div class="test-status">passed</div><div class="test-duration">0.009s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryCenter</div><div class="test-title">renders inquiry cards and pagination when there are filtered inquiries</div><div class="test-status">passed</div><div class="test-duration">0.028s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryCenter</div><div class="test-title">opens view modal if search params has id and it exists in rawInquiries</div><div class="test-status">passed</div><div class="test-duration">0.014s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryCenter</div><div class="test-title">registers kbar actions based on rawInquiries</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div></div></details><details id="suite-8" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\inquiry-center\components\__tests__\landlord-inquiry-archive-modal.test.tsx</div><div class="suite-time">1.326s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordArchiveModal</div><div class="test-title">renders correctly when open</div><div class="test-status">passed</div><div class="test-duration">0.061s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordArchiveModal</div><div class="test-title">renders restore variant when isRestore is true</div><div class="test-status">passed</div><div class="test-duration">0.017s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordArchiveModal</div><div class="test-title">does not render when isOpen is false</div><div class="test-status">passed</div><div class="test-duration">0.011s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordArchiveModal</div><div class="test-title">calls onClose when Go Back button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.02s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordArchiveModal</div><div class="test-title">calls onConfirm when confirm button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.01s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordArchiveModal</div><div class="test-title">disables buttons when isArchiving is true</div><div class="test-status">passed</div><div class="test-duration">0.099s</div></div></div></div></details><details id="suite-9" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\inquiry-center\components\__tests__\landlord-inquiry-details-modal.test.tsx</div><div class="suite-time">4.741s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryDetailsModal</div><div class="test-title">renders loading state initially</div><div class="test-status">passed</div><div class="test-duration">0.131s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryDetailsModal</div><div class="test-title">renders details after loading completes</div><div class="test-status">passed</div><div class="test-duration">0.109s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryDetailsModal</div><div class="test-title">calls onUpdateStatus when Approve is clicked</div><div class="test-status">passed</div><div class="test-duration">0.037s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryDetailsModal</div><div class="test-title">opens decline modal and processes decline</div><div class="test-status">passed</div><div class="test-duration">0.059s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordInquiryDetailsModal</div><div class="test-title">shows decision already made for non-pending inquiries</div><div class="test-status">passed</div><div class="test-duration">0.051s</div></div></div></div></details><details id="suite-10" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\inquiry-center\hooks\__tests__\use-inquiry-logic.test.ts</div><div class="suite-time">0s</div></summary><div class="suite-tests"/></details></main></body></html>

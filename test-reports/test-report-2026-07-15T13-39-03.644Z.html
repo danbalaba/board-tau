@@ -1,0 +1,277 @@
+<html><head><meta charset="utf-8"/><title>BoardTAU Test Report</title><style type="text/css">:root {
+  --text-primary: #111;
+  --text-secondary: #4f4f4f;
+  --success: #006633;
+  --success-bright: #80ffbf;
+  --danger: #cc071e;
+  --danger-bright: #fbdfe0;
+  --warning: #995c00;
+  --warning-bright: #ffeea8;
+  --panel: #eee;
+  --border: #949494;
+  --disabled: #6b6b6b;
+}
+
+html,
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+}
+body {
+  padding: 2rem 1rem;
+}
+.jesthtml-content {
+  margin: 0 auto;
+  max-width: 70rem;
+}
+header {
+  display: flex;
+  align-items: center;
+}
+#title {
+  margin: 0;
+  flex-grow: 1;
+}
+#logo {
+  height: 4rem;
+}
+#timestamp {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+#metadata-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.additional-information-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/** SUMMARY */
+#summary {
+  color: var(--text-primary);
+  display: flex;
+  font-family: monospace;
+  font-size: 1rem;
+}
+#summary > div {
+  margin-right: 0.5rem;
+  background: var(--panel);
+  padding: 1rem;
+  min-width: 15rem;
+}
+#summary > div:last-child {
+  margin-right: 0;
+}
+@media only screen and (max-width: 720px) {
+  #summary {
+    flex-direction: column;
+  }
+  #summary > div {
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+  #summary > div:first-child {
+    margin-top: 0;
+  }
+}
+
+.summary-total {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.summary-passed {
+  color: var(--success);
+  border-left: 0.4rem solid var(--success);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-failed,
+.summary-obsolete-snapshots {
+  color: var(--danger);
+  border-left: 0.4rem solid var(--danger);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-pending {
+  color: var(--warning);
+  border-left: 0.4rem solid var(--warning);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-empty {
+  color: var(--disabled);
+  border-left: 0.4rem solid var(--disabled);
+  margin-bottom: 0.15rem;
+}
+
+.test-result {
+  padding: 1rem;
+  margin-bottom: 0.25rem;
+}
+.test-result:last-child {
+  border: 0;
+}
+.test-result.passed {
+  background-color: var(--success-bright);
+  color: var(--success);
+}
+.test-result.failed {
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.test-result.pending {
+  background-color: var(--warning-bright);
+  color: var(--warning);
+}
+
+.test-info {
+  display: flex;
+  justify-content: space-between;
+}
+.test-suitename {
+  width: 20%;
+  text-align: left;
+  font-weight: bold;
+  word-break: break-word;
+}
+.test-title {
+  width: 40%;
+  text-align: left;
+  font-style: italic;
+}
+.test-status {
+  width: 20%;
+  text-align: right;
+}
+.test-duration {
+  width: 10%;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.failureMessages {
+  padding: 0 1rem;
+  margin-top: 1rem;
+  border-top: 1px dashed var(--danger);
+}
+.failureMessages.suiteFailure {
+  border-top: none;
+}
+.failureMsg {
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.suite-container {
+  margin-bottom: 1rem;
+}
+.suite-info {
+  padding: 1rem;
+  background-color: var(--panel);
+  color: var(--text-secondary);
+  border: 0.15rem solid;
+  border-color: var(--panel);
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.suite-info:hover {
+  border-color: var(--border);
+  cursor: pointer;
+}
+.suite-info .suite-path {
+  word-break: break-all;
+  flex-grow: 1;
+  font-family: monospace;
+  font-size: 1rem;
+}
+.suite-info .suite-time {
+  margin-left: 1rem;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.85rem;
+}
+.suite-info .suite-time.warn {
+  background-color: var(--danger);
+  color: #fff;
+}
+.suite-info:before {
+  content: "\2303";
+  display: inline-block;
+  margin-right: 1rem;
+  transform: rotate(180deg) translateY(0.15rem);
+}
+.suite-container[open] .suite-info:before {
+  transform: rotate(0deg) translateY(0.15rem);
+}
+
+/* CONSOLE LOGS */
+.suite-consolelog {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--panel);
+}
+.suite-consolelog-header {
+  font-weight: bold;
+}
+.suite-consolelog-item {
+  padding: 0.5rem;
+}
+.suite-consolelog-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-consolelog-item-origin {
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+.suite-consolelog-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+/* OBSOLETE SNAPSHOTS */
+.suite-obsolete-snapshots {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.suite-obsolete-snapshots-header {
+  font-weight: bold;
+}
+.suite-obsolete-snapshots-item {
+  padding: 0.5rem;
+}
+.suite-obsolete-snapshots-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-obsolete-snapshots-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+</style></head><body><main class="jesthtml-content"><header><h1 id="title">BoardTAU Test Report</h1></header><section id="metadata-container"><div id="timestamp">Started: 2026-07-15 21:39:12</div><div id="summary"><div id="suite-summary"><div class="summary-total">Suites (16)</div><div class="summary-passed ">4 passed</div><div class="summary-failed ">12 failed</div><div class="summary-pending  summary-empty">0 pending</div></div><div id="test-summary"><div class="summary-total">Tests (50)</div><div class="summary-passed ">25 passed</div><div class="summary-failed ">25 failed</div><div class="summary-pending  summary-empty">0 pending</div></div></div></section><details id="suite-1" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\hooks\__tests__\use-edit-room.test.ts</div><div class="suite-time warn">7.013s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">useEditRoom</div><div class="test-title">hydrates initial form state</div><div class="test-status">passed</div><div class="test-duration">0.05s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useEditRoom</div><div class="test-title">tracks dirty state and handles changes</div><div class="test-status">passed</div><div class="test-duration">0.009s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useEditRoom</div><div class="test-title">handles undo functionality</div><div class="test-status">passed</div><div class="test-duration">0.009s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useEditRoom</div><div class="test-title">resets form when roomType changes</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useEditRoom</div><div class="test-title">toggles amenities correctly</div><div class="test-status">passed</div><div class="test-duration">0.009s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useEditRoom</div><div class="test-title">handles submit validation failure</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div></div></details><details id="suite-2" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\hooks\__tests__\use-room-logic.test.ts</div><div class="suite-time warn">7.199s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">useRoomLogic</div><div class="test-title">initializes with default values</div><div class="test-status">passed</div><div class="test-duration">0.152s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useRoomLogic</div><div class="test-title">filters by archived status</div><div class="test-status">passed</div><div class="test-duration">0.014s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useRoomLogic</div><div class="test-title">handles search input with debounce</div><div class="test-status">passed</div><div class="test-duration">0.059s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useRoomLogic</div><div class="test-title">toggles view mode</div><div class="test-status">passed</div><div class="test-duration">0.012s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">useRoomLogic</div><div class="test-title">clears filters</div><div class="test-status">passed</div><div class="test-duration">0.034s</div></div></div></div></details><details id="suite-3" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\components\__tests__\landlord-room-card.test.tsx</div><div class="suite-time warn">7.84s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomCard</div><div class="test-title">renders correctly in grid mode</div><div class="test-status">failed</div><div class="test-duration">0.177s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomCard</div><div class="test-title">renders correctly in list mode</div><div class="test-status">failed</div><div class="test-duration">0.025s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomCard</div><div class="test-title">calls onView when view button is clicked</div><div class="test-status">failed</div><div class="test-duration">0.008s</div></div></div></div></details><details id="suite-4" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\components\__tests__\landlord-room-search.test.tsx</div><div class="suite-time warn">8.244s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomSearch</div><div class="test-title">renders search input and filters</div><div class="test-status">failed</div><div class="test-duration">0.121s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomSearch</div><div class="test-title">calls setSearchQuery on input change</div><div class="test-status">failed</div><div class="test-duration">0.039s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomSearch</div><div class="test-title">toggles archive filter</div><div class="test-status">failed</div><div class="test-duration">0.488s</div></div></div></div></details><details id="suite-5" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\components\__tests__\landlord-room-archive-modal.test.tsx</div><div class="suite-time">2.695s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordRoomArchiveModal</div><div class="test-title">renders archive modal content</div><div class="test-status">passed</div><div class="test-duration">0.131s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordRoomArchiveModal</div><div class="test-title">calls onClose when cancel is clicked</div><div class="test-status">passed</div><div class="test-duration">0.019s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomArchiveModal</div><div class="test-title">calls onConfirm when confirm is clicked</div><div class="test-status">failed</div><div class="test-duration">0.016s</div></div></div></div></details><details id="suite-6" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\components\__tests__\landlord-room-edit-modal.test.tsx</div><div class="suite-time warn">10.061s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomEditModal</div><div class="test-title">renders the edit modal content</div><div class="test-status">failed</div><div class="test-duration">0.115s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomEditModal</div><div class="test-title">calls onClose when cancel is clicked</div><div class="test-status">failed</div><div class="test-duration">0.004s</div></div></div></div></details><details id="suite-7" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\components\__tests__\landlord-room-delete-modal.test.tsx</div><div class="suite-time">2.02s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomDeleteModal</div><div class="test-title">renders delete modal content</div><div class="test-status">failed</div><div class="test-duration">0.158s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordRoomDeleteModal</div><div class="test-title">calls onClose when cancel is clicked</div><div class="test-status">passed</div><div class="test-duration">0.018s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomDeleteModal</div><div class="test-title">calls onConfirm when confirm is clicked</div><div class="test-status">failed</div><div class="test-duration">0.062s</div></div></div></div></details><details id="suite-8" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\hooks\__tests__\use-room-validation.test.ts</div><div class="suite-time warn">8.111s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Room Validation Schema</div><div class="test-title">validates a correct payload</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Room Validation Schema</div><div class="test-title">fails if listingId is missing</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Room Validation Schema</div><div class="test-title">fails if name is too short</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Room Validation Schema</div><div class="test-title">fails if description is less than 20 chars</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Room Validation Schema</div><div class="test-title">fails if price is less than 1</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Room Validation Schema</div><div class="test-title">fails if capacity is less than 1</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Room Validation Schema</div><div class="test-title">fails if images are missing</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div></div></details><details id="suite-9" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\components\__tests__\landlord-room-add-modal.test.tsx</div><div class="suite-time warn">11.337s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomAddModal</div><div class="test-title">renders the add modal content step 1</div><div class="test-status">failed</div><div class="test-duration">0.055s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomAddModal</div><div class="test-title">calls onClose when cancel is clicked</div><div class="test-status">failed</div><div class="test-duration">0.009s</div></div></div></div></details><details id="suite-10" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\components\__tests__\landlord-room-details-modal.test.tsx</div><div class="suite-time warn">8.658s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomDetailsModal</div><div class="test-title">renders room details</div><div class="test-status">failed</div><div class="test-duration">0.21s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomDetailsModal</div><div class="test-title">calls onClose when close button is clicked</div><div class="test-status">failed</div><div class="test-duration">0.011s</div></div></div></div></details><details id="suite-11" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\components\__tests__\RoomAddModernSelect.test.tsx</div><div class="suite-time warn">9.64s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomAddModernSelect</div><div class="test-title">renders with placeholder</div><div class="test-status">passed</div><div class="test-duration">0.091s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">RoomAddModernSelect</div><div class="test-title">toggles dropdown when clicked</div><div class="test-status">failed</div><div class="test-duration">0.329s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">RoomAddModernSelect</div><div class="test-title">calls onChange when an option is selected</div><div class="test-status">failed</div><div class="test-duration">0.101s</div></div></div></div></details><details id="suite-12" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\components\__tests__\CustomRoomAmenityModal.test.tsx</div><div class="suite-time">1.67s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">CustomRoomAmenityModal</div><div class="test-title">renders modal content correctly</div><div class="test-status">failed</div><div class="test-duration">0.005s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">CustomRoomAmenityModal</div><div class="test-title">calls onAdd when submitted</div><div class="test-status">failed</div><div class="test-duration">0.003s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">CustomRoomAmenityModal</div><div class="test-title">calls onClose when cancel is clicked</div><div class="test-status">failed</div><div class="test-duration">0.015s</div></div></div></div></details><details id="suite-13" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\components\__tests__\RoomManagementCustomAmenity.test.tsx</div><div class="suite-time">1.337s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomManagementCustomAmenity</div><div class="test-title">renders correctly</div><div class="test-status">passed</div><div class="test-duration">0.095s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">RoomManagementCustomAmenity</div><div class="test-title">calls onAddAmenity when Confirm button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.093s</div></div></div></div></details><details id="suite-14" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\components\__tests__\landlord-room-header.test.tsx</div><div class="suite-time warn">14.365s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomHeader</div><div class="test-title">renders correctly</div><div class="test-status">failed</div><div class="test-duration">0.188s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LandlordRoomHeader</div><div class="test-title">calls onAdd when Add Room is clicked</div><div class="test-status">passed</div><div class="test-duration">0.046s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">LandlordRoomHeader</div><div class="test-title">calls onGenerateReport when Generate Report is clicked</div><div class="test-status">failed</div><div class="test-duration">0.205s</div></div></div></div></details><details id="suite-15" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\__tests__\index.test.tsx</div><div class="suite-time warn">27.153s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">RoomManagementDashboard</div><div class="test-title">renders the dashboard header and search</div><div class="test-status">failed</div><div class="test-duration">0.089s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">RoomManagementDashboard</div><div class="test-title">renders the room list</div><div class="test-status">failed</div><div class="test-duration">0.005s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">RoomManagementDashboard</div><div class="test-title">renders empty state when no rooms match</div><div class="test-status">failed</div><div class="test-duration">0.009s</div></div></div></div></details><details id="suite-16" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\app\landlord\features\room-management\hooks\__tests__\use-add-room-modal.test.ts</div><div class="suite-time">0s</div></summary><div class="suite-tests"/></details></main></body></html>

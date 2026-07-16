@@ -1,0 +1,277 @@
+<html><head><meta charset="utf-8"/><title>BoardTAU Test Report</title><style type="text/css">:root {
+  --text-primary: #111;
+  --text-secondary: #4f4f4f;
+  --success: #006633;
+  --success-bright: #80ffbf;
+  --danger: #cc071e;
+  --danger-bright: #fbdfe0;
+  --warning: #995c00;
+  --warning-bright: #ffeea8;
+  --panel: #eee;
+  --border: #949494;
+  --disabled: #6b6b6b;
+}
+
+html,
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+}
+body {
+  padding: 2rem 1rem;
+}
+.jesthtml-content {
+  margin: 0 auto;
+  max-width: 70rem;
+}
+header {
+  display: flex;
+  align-items: center;
+}
+#title {
+  margin: 0;
+  flex-grow: 1;
+}
+#logo {
+  height: 4rem;
+}
+#timestamp {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+#metadata-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.additional-information-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/** SUMMARY */
+#summary {
+  color: var(--text-primary);
+  display: flex;
+  font-family: monospace;
+  font-size: 1rem;
+}
+#summary > div {
+  margin-right: 0.5rem;
+  background: var(--panel);
+  padding: 1rem;
+  min-width: 15rem;
+}
+#summary > div:last-child {
+  margin-right: 0;
+}
+@media only screen and (max-width: 720px) {
+  #summary {
+    flex-direction: column;
+  }
+  #summary > div {
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+  #summary > div:first-child {
+    margin-top: 0;
+  }
+}
+
+.summary-total {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.summary-passed {
+  color: var(--success);
+  border-left: 0.4rem solid var(--success);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-failed,
+.summary-obsolete-snapshots {
+  color: var(--danger);
+  border-left: 0.4rem solid var(--danger);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-pending {
+  color: var(--warning);
+  border-left: 0.4rem solid var(--warning);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-empty {
+  color: var(--disabled);
+  border-left: 0.4rem solid var(--disabled);
+  margin-bottom: 0.15rem;
+}
+
+.test-result {
+  padding: 1rem;
+  margin-bottom: 0.25rem;
+}
+.test-result:last-child {
+  border: 0;
+}
+.test-result.passed {
+  background-color: var(--success-bright);
+  color: var(--success);
+}
+.test-result.failed {
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.test-result.pending {
+  background-color: var(--warning-bright);
+  color: var(--warning);
+}
+
+.test-info {
+  display: flex;
+  justify-content: space-between;
+}
+.test-suitename {
+  width: 20%;
+  text-align: left;
+  font-weight: bold;
+  word-break: break-word;
+}
+.test-title {
+  width: 40%;
+  text-align: left;
+  font-style: italic;
+}
+.test-status {
+  width: 20%;
+  text-align: right;
+}
+.test-duration {
+  width: 10%;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.failureMessages {
+  padding: 0 1rem;
+  margin-top: 1rem;
+  border-top: 1px dashed var(--danger);
+}
+.failureMessages.suiteFailure {
+  border-top: none;
+}
+.failureMsg {
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.suite-container {
+  margin-bottom: 1rem;
+}
+.suite-info {
+  padding: 1rem;
+  background-color: var(--panel);
+  color: var(--text-secondary);
+  border: 0.15rem solid;
+  border-color: var(--panel);
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.suite-info:hover {
+  border-color: var(--border);
+  cursor: pointer;
+}
+.suite-info .suite-path {
+  word-break: break-all;
+  flex-grow: 1;
+  font-family: monospace;
+  font-size: 1rem;
+}
+.suite-info .suite-time {
+  margin-left: 1rem;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.85rem;
+}
+.suite-info .suite-time.warn {
+  background-color: var(--danger);
+  color: #fff;
+}
+.suite-info:before {
+  content: "\2303";
+  display: inline-block;
+  margin-right: 1rem;
+  transform: rotate(180deg) translateY(0.15rem);
+}
+.suite-container[open] .suite-info:before {
+  transform: rotate(0deg) translateY(0.15rem);
+}
+
+/* CONSOLE LOGS */
+.suite-consolelog {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--panel);
+}
+.suite-consolelog-header {
+  font-weight: bold;
+}
+.suite-consolelog-item {
+  padding: 0.5rem;
+}
+.suite-consolelog-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-consolelog-item-origin {
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+.suite-consolelog-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+/* OBSOLETE SNAPSHOTS */
+.suite-obsolete-snapshots {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.suite-obsolete-snapshots-header {
+  font-weight: bold;
+}
+.suite-obsolete-snapshots-item {
+  padding: 0.5rem;
+}
+.suite-obsolete-snapshots-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-obsolete-snapshots-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+</style></head><body><main class="jesthtml-content"><header><h1 id="title">BoardTAU Test Report</h1></header><section id="metadata-container"><div id="timestamp">Started: 2026-07-15 10:14:01</div><div id="summary"><div id="suite-summary"><div class="summary-total">Suites (4)</div><div class="summary-passed ">1 passed</div><div class="summary-failed ">3 failed</div><div class="summary-pending  summary-empty">0 pending</div></div><div id="test-summary"><div class="summary-total">Tests (24)</div><div class="summary-passed ">19 passed</div><div class="summary-failed ">5 failed</div><div class="summary-pending  summary-empty">0 pending</div></div></div></section><details id="suite-1" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\reviews\__tests__\ReviewCard.test.tsx</div><div class="suite-time">2.935s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewCard</div><div class="test-title">renders review details correctly</div><div class="test-status">passed</div><div class="test-duration">0.238s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">ReviewCard</div><div class="test-title">displays response badge if response exists</div><div class="test-status">failed</div><div class="test-duration">0.067s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewCard</div><div class="test-title">displays NEW MESSAGE notification if hasNotification is true</div><div class="test-status">passed</div><div class="test-duration">0.043s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewCard</div><div class="test-title">calls onViewDetails when Details button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.27s</div></div></div></div></details><details id="suite-2" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\reviews\__tests__\ReviewDetailsModal.test.tsx</div><div class="suite-time">3.226s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewDetailsModal</div><div class="test-title">renders nothing if not open</div><div class="test-status">passed</div><div class="test-duration">0.054s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewDetailsModal</div><div class="test-title">renders review details when open</div><div class="test-status">passed</div><div class="test-duration">0.254s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewDetailsModal</div><div class="test-title">calls onClose when Close button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.169s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewDetailsModal</div><div class="test-title">calls onMarkAsRead when notification is present</div><div class="test-status">passed</div><div class="test-duration">0.085s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewDetailsModal</div><div class="test-title">handles mobile expand toggle</div><div class="test-status">passed</div><div class="test-duration">0.228s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewDetailsModal</div><div class="test-title">opens fullscreen media viewer</div><div class="test-status">passed</div><div class="test-duration">0.071s</div></div></div></div></details><details id="suite-3" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\reviews\__tests__\ReviewsClient.test.tsx</div><div class="suite-time">3.436s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewsClient</div><div class="test-title">renders list of reviews after loading</div><div class="test-status">passed</div><div class="test-duration">0.285s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewsClient</div><div class="test-title">opens review details modal when view is clicked</div><div class="test-status">passed</div><div class="test-duration">0.089s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">ReviewsClient</div><div class="test-title">filters reviews by search query</div><div class="test-status">failed</div><div class="test-duration">0.104s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewsClient</div><div class="test-title">filters reviews by star rating</div><div class="test-status">passed</div><div class="test-duration">0.039s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewsClient</div><div class="test-title">sorts reviews by rating high</div><div class="test-status">passed</div><div class="test-duration">0.041s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">ReviewsClient</div><div class="test-title">auto-opens modal from search params</div><div class="test-status">failed</div><div class="test-duration">0.093s</div></div></div></div></details><details id="suite-4" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\components\modals\__tests__\ReviewModal.test.tsx</div><div class="suite-time warn">5.844s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewModal Component</div><div class="test-title">renders nothing when isOpen is false</div><div class="test-status">passed</div><div class="test-duration">0.309s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewModal Component</div><div class="test-title">renders step 1 initially and shows categories</div><div class="test-status">passed</div><div class="test-duration">0.135s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewModal Component</div><div class="test-title">progresses to step 2 when Next is clicked</div><div class="test-status">passed</div><div class="test-duration">0.111s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewModal Component</div><div class="test-title">validates comment length in step 2</div><div class="test-status">passed</div><div class="test-duration">0.142s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewModal Component</div><div class="test-title">progresses to step 3 with a valid comment</div><div class="test-status">passed</div><div class="test-duration">0.132s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">ReviewModal Component</div><div class="test-title">allows skipping the review</div><div class="test-status">failed</div><div class="test-duration">1.056s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ReviewModal Component</div><div class="test-title">submits the review successfully at step 3</div><div class="test-status">passed</div><div class="test-duration">0.091s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">ReviewModal Component</div><div class="test-title">handles submission error gracefully</div><div class="test-status">failed</div><div class="test-duration">1.104s</div></div></div></div></details></main></body></html>

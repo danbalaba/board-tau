@@ -1,0 +1,277 @@
+<html><head><meta charset="utf-8"/><title>BoardTAU Test Report</title><style type="text/css">:root {
+  --text-primary: #111;
+  --text-secondary: #4f4f4f;
+  --success: #006633;
+  --success-bright: #80ffbf;
+  --danger: #cc071e;
+  --danger-bright: #fbdfe0;
+  --warning: #995c00;
+  --warning-bright: #ffeea8;
+  --panel: #eee;
+  --border: #949494;
+  --disabled: #6b6b6b;
+}
+
+html,
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+}
+body {
+  padding: 2rem 1rem;
+}
+.jesthtml-content {
+  margin: 0 auto;
+  max-width: 70rem;
+}
+header {
+  display: flex;
+  align-items: center;
+}
+#title {
+  margin: 0;
+  flex-grow: 1;
+}
+#logo {
+  height: 4rem;
+}
+#timestamp {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+#metadata-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.additional-information-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/** SUMMARY */
+#summary {
+  color: var(--text-primary);
+  display: flex;
+  font-family: monospace;
+  font-size: 1rem;
+}
+#summary > div {
+  margin-right: 0.5rem;
+  background: var(--panel);
+  padding: 1rem;
+  min-width: 15rem;
+}
+#summary > div:last-child {
+  margin-right: 0;
+}
+@media only screen and (max-width: 720px) {
+  #summary {
+    flex-direction: column;
+  }
+  #summary > div {
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+  #summary > div:first-child {
+    margin-top: 0;
+  }
+}
+
+.summary-total {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.summary-passed {
+  color: var(--success);
+  border-left: 0.4rem solid var(--success);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-failed,
+.summary-obsolete-snapshots {
+  color: var(--danger);
+  border-left: 0.4rem solid var(--danger);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-pending {
+  color: var(--warning);
+  border-left: 0.4rem solid var(--warning);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-empty {
+  color: var(--disabled);
+  border-left: 0.4rem solid var(--disabled);
+  margin-bottom: 0.15rem;
+}
+
+.test-result {
+  padding: 1rem;
+  margin-bottom: 0.25rem;
+}
+.test-result:last-child {
+  border: 0;
+}
+.test-result.passed {
+  background-color: var(--success-bright);
+  color: var(--success);
+}
+.test-result.failed {
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.test-result.pending {
+  background-color: var(--warning-bright);
+  color: var(--warning);
+}
+
+.test-info {
+  display: flex;
+  justify-content: space-between;
+}
+.test-suitename {
+  width: 20%;
+  text-align: left;
+  font-weight: bold;
+  word-break: break-word;
+}
+.test-title {
+  width: 40%;
+  text-align: left;
+  font-style: italic;
+}
+.test-status {
+  width: 20%;
+  text-align: right;
+}
+.test-duration {
+  width: 10%;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.failureMessages {
+  padding: 0 1rem;
+  margin-top: 1rem;
+  border-top: 1px dashed var(--danger);
+}
+.failureMessages.suiteFailure {
+  border-top: none;
+}
+.failureMsg {
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.suite-container {
+  margin-bottom: 1rem;
+}
+.suite-info {
+  padding: 1rem;
+  background-color: var(--panel);
+  color: var(--text-secondary);
+  border: 0.15rem solid;
+  border-color: var(--panel);
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.suite-info:hover {
+  border-color: var(--border);
+  cursor: pointer;
+}
+.suite-info .suite-path {
+  word-break: break-all;
+  flex-grow: 1;
+  font-family: monospace;
+  font-size: 1rem;
+}
+.suite-info .suite-time {
+  margin-left: 1rem;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.85rem;
+}
+.suite-info .suite-time.warn {
+  background-color: var(--danger);
+  color: #fff;
+}
+.suite-info:before {
+  content: "\2303";
+  display: inline-block;
+  margin-right: 1rem;
+  transform: rotate(180deg) translateY(0.15rem);
+}
+.suite-container[open] .suite-info:before {
+  transform: rotate(0deg) translateY(0.15rem);
+}
+
+/* CONSOLE LOGS */
+.suite-consolelog {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--panel);
+}
+.suite-consolelog-header {
+  font-weight: bold;
+}
+.suite-consolelog-item {
+  padding: 0.5rem;
+}
+.suite-consolelog-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-consolelog-item-origin {
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+.suite-consolelog-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+/* OBSOLETE SNAPSHOTS */
+.suite-obsolete-snapshots {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.suite-obsolete-snapshots-header {
+  font-weight: bold;
+}
+.suite-obsolete-snapshots-item {
+  padding: 0.5rem;
+}
+.suite-obsolete-snapshots-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-obsolete-snapshots-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+</style></head><body><main class="jesthtml-content"><header><h1 id="title">BoardTAU Test Report</h1></header><section id="metadata-container"><div id="timestamp">Started: 2026-07-12 08:50:02</div><div id="summary"><div id="suite-summary"><div class="summary-total">Suites (1)</div><div class="summary-passed ">1 passed</div><div class="summary-failed  summary-empty">0 failed</div><div class="summary-pending  summary-empty">0 pending</div></div><div id="test-summary"><div class="summary-total">Tests (27)</div><div class="summary-passed ">27 passed</div><div class="summary-failed  summary-empty">0 failed</div><div class="summary-pending  summary-empty">0 pending</div></div></div></section><details id="suite-1" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\asus\Capstone\BoardTAU\services\listing\__tests__\search.integration.test.ts</div><div class="suite-time">3.354s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 1. Price &amp; Room Type Matrix (Strict Boundaries)</div><div class="test-title">Extremely low budget solo (should trigger AI fallback)</div><div class="test-status">passed</div><div class="test-duration">0.572s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 1. Price &amp; Room Type Matrix (Strict Boundaries)</div><div class="test-title">Standard budget solo</div><div class="test-status">passed</div><div class="test-duration">0.06s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 1. Price &amp; Room Type Matrix (Strict Boundaries)</div><div class="test-title">High budget solo</div><div class="test-status">passed</div><div class="test-duration">0.108s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 1. Price &amp; Room Type Matrix (Strict Boundaries)</div><div class="test-title">Impossible bedspace budget (fallback)</div><div class="test-status">passed</div><div class="test-duration">0.109s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 1. Price &amp; Room Type Matrix (Strict Boundaries)</div><div class="test-title">Standard bedspace budget</div><div class="test-status">passed</div><div class="test-duration">0.056s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 1. Price &amp; Room Type Matrix (Strict Boundaries)</div><div class="test-title">High budget bedspace</div><div class="test-status">passed</div><div class="test-duration">0.071s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 1. Price &amp; Room Type Matrix (Strict Boundaries)</div><div class="test-title">Any room under 2000</div><div class="test-status">passed</div><div class="test-duration">0.059s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 1. Price &amp; Room Type Matrix (Strict Boundaries)</div><div class="test-title">Any room under 500 (fallback)</div><div class="test-status">passed</div><div class="test-duration">0.109s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 2. Strict Rules &amp; Listing Amenities</div><div class="test-title">Strict female, no visitors</div><div class="test-status">passed</div><div class="test-duration">0.061s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 2. Strict Rules &amp; Listing Amenities</div><div class="test-title">Male only, no curfew</div><div class="test-status">passed</div><div class="test-duration">0.114s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 2. Strict Rules &amp; Listing Amenities</div><div class="test-title">Pet friendly, non-smoking</div><div class="test-status">passed</div><div class="test-duration">0.066s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 2. Strict Rules &amp; Listing Amenities</div><div class="test-title">Has WiFi and AC</div><div class="test-status">passed</div><div class="test-duration">0.113s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 2. Strict Rules &amp; Listing Amenities</div><div class="test-title">Parking, laundry, female only</div><div class="test-status">passed</div><div class="test-duration">0.115s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 2. Strict Rules &amp; Listing Amenities</div><div class="test-title">Contradiction (Female AND Male Only) - Should fallback</div><div class="test-status">passed</div><div class="test-duration">0.059s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 3. Room Specifics (Capacity, Slots, Amenities)</div><div class="test-title">Solo room with exactly 1 slot open</div><div class="test-status">passed</div><div class="test-duration">0.069s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 3. Room Specifics (Capacity, Slots, Amenities)</div><div class="test-title">4-person room with at least 2 slots</div><div class="test-status">passed</div><div class="test-duration">0.069s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 3. Room Specifics (Capacity, Slots, Amenities)</div><div class="test-title">Rooms strictly using BUNK beds</div><div class="test-status">passed</div><div class="test-duration">0.069s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 3. Room Specifics (Capacity, Slots, Amenities)</div><div class="test-title">Solo rooms with Single beds</div><div class="test-status">passed</div><div class="test-duration">0.066s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 3. Room Specifics (Capacity, Slots, Amenities)</div><div class="test-title">Room has own bathroom and AC</div><div class="test-status">passed</div><div class="test-duration">0.126s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 3. Room Specifics (Capacity, Slots, Amenities)</div><div class="test-title">Empty 4-slot room with wifi and locker</div><div class="test-status">passed</div><div class="test-duration">0.111s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 4. Advanced Safety Features</div><div class="test-title">Highly secure (24/7 + CCTV)</div><div class="test-status">passed</div><div class="test-duration">0.072s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 4. Advanced Safety Features</div><div class="test-title">Safe from natural disasters/fire</div><div class="test-status">passed</div><div class="test-duration">0.07s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 4. Advanced Safety Features</div><div class="test-title">Convenient (Power + Transport)</div><div class="test-status">passed</div><div class="test-duration">0.072s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 4. Advanced Safety Features</div><div class="test-title">Maximum safety requirements</div><div class="test-status">passed</div><div class="test-duration">0.069s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 5. Maximum Complexity (The Unicorn Searches)</div><div class="test-title">Expensive Solo Apartment, Pet Friendly, Secure</div><div class="test-status">passed</div><div class="test-duration">0.092s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 5. Maximum Complexity (The Unicorn Searches)</div><div class="test-title">Ultra-budget strict female student bedspace with wifi/water/cctv</div><div class="test-status">passed</div><div class="test-duration">0.094s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">BoardTAU Search &amp; Filtering Engine - Database Integration Tests &gt; 5. Maximum Complexity (The Unicorn Searches)</div><div class="test-title">Distance-based geo search (within 2km of Tarlac coordinates)</div><div class="test-status">passed</div><div class="test-duration">0.089s</div></div></div></div></details></main></body></html>
