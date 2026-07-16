@@ -13,6 +13,7 @@ const mockMapInstance = {
   addLayer: jest.fn().mockReturnThis(),
   removeLayer: jest.fn().mockReturnThis(),
   on: jest.fn().mockReturnThis(),
+  off: jest.fn().mockReturnThis(),
   flyTo: jest.fn().mockReturnThis(),
   remove: jest.fn().mockReturnThis(),
   distance: jest.fn().mockReturnValue(100),
