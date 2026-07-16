@@ -158,7 +158,13 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
 
                     // 2. Call the manual sync API to force update the DB
                     const response = await fetch("/api/reservations/sync-payment");
-                    const data = await response.json();
+                    if (!response) {
+                        throw new Error("No response received from sync-payment API");
+                    }
+                    const data = typeof response.json === "function" ? await response.json() : null;
+                    if (!data) {
+                        throw new Error("Invalid or empty response from sync-payment API");
+                    }
 
                     if (data.success) {
                         toast.success("Payment Received! Your room is now RESERVED.", { id: toastId, duration: 5000 });
