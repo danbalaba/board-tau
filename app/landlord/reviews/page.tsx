@@ -7,8 +7,11 @@ export const metadata = {
   description: 'Manage property reviews',
 };
 
+import { requirePagePermission } from '@/lib/rbac';
+
 export default async function LandlordReviewsPage() {
-  await requireLandlord();
+  const user = await requireLandlord();
+  await requirePagePermission(user.id, "RESPOND_REVIEW");
   const reviews = await getLandlordReviews();
 
   return <LandlordReviews reviews={reviews as any} />;

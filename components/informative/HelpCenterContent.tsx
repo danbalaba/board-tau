@@ -1,84 +1,99 @@
-import FooterPageLayout from '@/components/layout/FooterPageLayout';
-import { FaSearch, FaUserGraduate, FaHome, FaShieldAlt, FaQuestionCircle } from 'react-icons/fa';
+'use client';
+
+import React from 'react';
+import { useTheme } from 'next-themes';
+import { Search, UserCircle, CreditCard, ShieldCheck, Settings, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default function HelpCenterContent() {
+  const { theme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDark = mounted ? theme === 'dark' : false;
+
+  const categories = [
+    { name: 'Account Access', icon: <UserCircle className="w-5 h-5 text-blue-500" />, href: '/support/contact' },
+    { name: 'Checkout & Billing', icon: <CreditCard className="w-5 h-5 text-purple-500" />, href: '/support/cancellation-policy' },
+    { name: 'Host Management', icon: <Settings className="w-5 h-5 text-green-500" />, href: '/hosting/guidelines' },
+    { name: 'Account Security', icon: <ShieldCheck className="w-5 h-5 text-red-500" />, href: '/support/safety-guidelines' },
+  ];
+
+  const popularArticles = [
+    { title: 'What is the Identity Verification (KYC) process?', href: '/support/safety-guidelines' },
+    { title: 'How do I pay my reservation fee securely? (Stripe & PayMongo)', href: '/legal/terms' },
+    { title: 'What is the step-by-step booking workflow?', href: '/about/capstone' },
+    { title: 'How does BoardTAU protect my messages and data?', href: '/legal/privacy' },
+    { title: 'How do I list my property and verify my business permit?', href: '/hosting/guidelines' },
+    { title: 'Can landlords process walk-in bookings manually?', href: '/hosting/responsibilities' },
+  ];
+
   return (
-    <FooterPageLayout
-      title="Help Center"
-      description="Find answers to commonly asked questions and learn how to use BoardTAU to its fullest potential."
-      lastUpdated="April 2026"
-    >
-      {/* Search Bar Section */}
-      <div className="relative -mt-6 mb-12 max-w-2xl group">
-        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <FaSearch className="text-gray-400 group-hover:text-green-500 transition-colors" />
-        </div>
-        <input
-          type="text"
-          className="w-full pl-12 pr-4 py-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all duration-300 hover:shadow-md text-lg dark:text-gray-200"
-          placeholder="Search for articles, guides, or questions..."
-        />
-        <div className="absolute right-2 top-2">
-          <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg font-medium active:scale-95">
-            Search
-          </button>
-        </div>
-      </div>
-
-      <section className="mb-16">
-        <h2 className="text-3xl font-extrabold mb-8 dark:text-white">Browse by Topic</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          
-          <div className="group cursor-pointer p-6 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 shadow-sm hover:shadow-xl hover:border-green-500/50 dark:hover:border-green-500/50 transition-all duration-300 hover:-translate-y-2 flex flex-col items-center text-center">
-            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300">
-              <FaUserGraduate className="text-4xl text-green-600 dark:text-green-400" />
-            </div>
-            <h3 className="font-bold text-lg mb-2 dark:text-gray-200">For Students</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Everything you need to find the perfect boarding house securely.</p>
-          </div>
-
-          <div className="group cursor-pointer p-6 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 shadow-sm hover:shadow-xl hover:border-blue-500/50 dark:hover:border-blue-500/50 transition-all duration-300 hover:-translate-y-2 flex flex-col items-center text-center">
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300">
-              <FaHome className="text-4xl text-blue-600 dark:text-blue-400" />
-            </div>
-            <h3 className="font-bold text-lg mb-2 dark:text-gray-200">For Landlords</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Manage listings, handle bookings, and maximize your earnings.</p>
-          </div>
-
-          <div className="group cursor-pointer p-6 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 shadow-sm hover:shadow-xl hover:border-purple-500/50 dark:hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-2 flex flex-col items-center text-center">
-            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300">
-              <FaShieldAlt className="text-4xl text-purple-600 dark:text-purple-400" />
-            </div>
-            <h3 className="font-bold text-lg mb-2 dark:text-gray-200">Trust & Safety</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Guidelines and best practices to stay safe on our platform.</p>
-          </div>
-
-          <div className="group cursor-pointer p-6 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 shadow-sm hover:shadow-xl hover:border-orange-500/50 dark:hover:border-orange-500/50 transition-all duration-300 hover:-translate-y-2 flex flex-col items-center text-center">
-            <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300">
-              <FaQuestionCircle className="text-4xl text-orange-600 dark:text-orange-400" />
-            </div>
-            <h3 className="font-bold text-lg mb-2 dark:text-gray-200">General FAQ</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Answers to the most common setup and account queries.</p>
-          </div>
-
-        </div>
-      </section>
-
-      <div className="bg-gradient-to-r from-gray-900 to-gray-800 dark:from-black dark:to-gray-900 rounded-3xl p-8 md:p-12 text-center text-white relative overflow-hidden shadow-2xl">
-        <div className="absolute inset-0 opacity-20 pointer-events-none bg-[url('https://picsum.photos/seed/boardtausf/1200/400')] bg-cover bg-center"></div>
-        <div className="relative z-10">
-          <h2 className="text-3xl font-bold mb-4">Still need help?</h2>
-          <p className="text-gray-300 mb-8 max-w-xl mx-auto text-lg hover:text-white transition-colors duration-300">
-            Our support team is available 24/7 to assist you. Don't hesitate to reach out if you can't find what you're looking for.
-          </p>
-          <Link href="/support/contact">
-            <button className="bg-white text-gray-900 hover:bg-green-50 font-bold px-8 py-4 rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] hover:-translate-y-1 active:scale-95">
-              Contact Support
+    <div className={`min-h-screen ${isDark ? 'bg-slate-900 text-slate-300' : 'bg-gray-50 text-gray-800'}`}>
+      
+      {/* Hero Section with Search */}
+      <div className={`pt-24 pb-16 px-6 ${isDark ? 'bg-slate-800' : 'bg-white'} border-b ${isDark ? 'border-slate-700' : 'border-gray-200'} text-center`}>
+        <div className="container mx-auto max-w-4xl">
+          <h1 className={`text-4xl font-bold mb-8 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            How can we help you?
+          </h1>
+          <div className="relative max-w-2xl mx-auto flex shadow-sm rounded-lg overflow-hidden">
+            <input 
+              type="text" 
+              placeholder="Search knowledgebase..." 
+              className={`w-full py-4 pl-6 pr-4 outline-none border-y border-l ${isDark ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'}`}
+            />
+            <button className="bg-red-500 hover:bg-red-600 text-white px-8 font-medium transition-colors border-y border-r border-red-500">
+              Search
             </button>
-          </Link>
+          </div>
         </div>
       </div>
-    </FooterPageLayout>
+
+      {/* Main Content Area */}
+      <div className="container mx-auto max-w-5xl px-6 py-12">
+        
+        <h2 className={`text-2xl font-bold text-center mb-8 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          General Support
+        </h2>
+
+        {/* Category Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+          {categories.map((cat, idx) => (
+            <Link key={idx} href={cat.href}>
+              <div className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 cursor-pointer ${isDark ? 'bg-slate-800 border-slate-700 hover:border-slate-500' : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'}`}>
+                <div className="flex items-center gap-3">
+                  {cat.icon}
+                  <span className={`font-medium text-sm ${isDark ? 'text-slate-200' : 'text-gray-700'}`}>{cat.name}</span>
+                </div>
+                <ArrowRight className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-gray-400'}`} />
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* Popular Articles */}
+        <h2 className={`text-xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          Popular articles
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 mb-20">
+          {popularArticles.map((article, idx) => (
+            <Link key={idx} href={article.href}>
+              <div className={`flex items-center justify-between py-4 border-b ${isDark ? 'border-slate-700 hover:bg-slate-800/50' : 'border-gray-200 hover:bg-gray-100/50'} transition-colors group cursor-pointer -mx-4 px-4 rounded-lg`}>
+                <span className={`text-sm ${isDark ? 'text-slate-300 group-hover:text-white' : 'text-gray-700 group-hover:text-black'}`}>
+                  {article.title}
+                </span>
+                <ArrowRight className={`w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity ${isDark ? 'text-slate-400' : 'text-gray-500'}`} />
+              </div>
+            </Link>
+          ))}
+        </div>
+
+      </div>
+    </div>
   );
 }

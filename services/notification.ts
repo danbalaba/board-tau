@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
 import { revalidatePath } from "next/cache";
 import { cache } from "@/lib/redis";
+import { pusherServer } from "@/lib/pusher";
 
 export type NotificationType = "inquiry" | "reservation" | "review" | "message";
 
@@ -39,6 +40,13 @@ export async function createNotification({
     
     // HI-2 FIX: Invalidate notification stats cache
     await cache.del(`notifications:stats:${userId}`);
+
+    // Trigger Pusher event for real-time updates
+    await pusherServer.trigger(
+      `private-user-${userId}`,
+      "new-notification",
+      notification
+    );
 
     return { success: true, notification };
   } catch (error) {
@@ -172,7 +180,7 @@ export async function markEntityNotificationsAsRead(type: NotificationType, enti
       await db.notification.updateMany({
         where: {
           id: {
-            in: notifications.map((n) => n.id),
+            in: notifications.map((n: any) => n.id),
           },
         },
         data: {

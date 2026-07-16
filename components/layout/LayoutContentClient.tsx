@@ -8,9 +8,11 @@ import AuthErrorHandler from '@/components/auth/AuthErrorHandler';
 import MobileBottomBar from '@/components/layout/MobileBottomBar';
 import RightSwipePanel from '@/components/navbar/RightSwipePanel';
 import UserBackToTop from '@/components/common/UserBackToTop';
+import ChatBot from '@/components/ui/ChatBot';
 import { User } from 'next-auth';
 import { useLoadingStore } from '@/hooks/use-loading-store';
 import UltimateLogoutOverlay from '@/components/navbar/UltimateLogoutOverlay';
+import CompareFloatingBar from '@/components/compare/CompareFloatingBar';
 
 interface LayoutContentClientProps {
   children: React.ReactNode;
@@ -58,6 +60,8 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
       {!isListingDetail && <MobileBottomBar user={user} />}
       <RightSwipePanel user={user} />
       <UserBackToTop />
+      <ChatBot />
+      <CompareFloatingBar />
       
       {/* Global Logout Overlay */}
       {isLoggingOut && <UltimateLogoutOverlay userName={user?.name} />}

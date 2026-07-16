@@ -12,18 +12,25 @@ import { LandlordReservationHeader } from './components/landlord-reservation-hea
 import { LandlordReservationCard } from './components/landlord-reservation-card';
 import { LandlordReservationDetailsModal } from './components/landlord-reservation-details-modal';
 import { useSearchParams } from 'next/navigation';
-import { useLoadMore } from '@/hooks/useLoadMore';
+import { LandlordPagination } from '../shared/landlord-pagination';
 import LandlordArchiveModal from '../inquiry-center/components/landlord-inquiry-archive-modal';
+import LandlordWalkInModal from './components/walk-in/landlord-walk-in-modal';
 
-const PAGE_SIZE = 12;
 
 interface LandlordBookingReservationsProps {
   reservations: ReservationRequest[];
+  landlordId: string;
+  listings: any[];
 }
 
-export default function LandlordBookingReservations({ reservations }: LandlordBookingReservationsProps) {
+export default function LandlordBookingReservations({ reservations, landlordId, listings }: LandlordBookingReservationsProps) {
   const {
     filteredReservations,
+    totalReservations,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    setItemsPerPage,
     selectedStatus,
     setSelectedStatus,
     sortBy,
@@ -38,7 +45,7 @@ export default function LandlordBookingReservations({ reservations }: LandlordBo
     handleToggleArchiveRecord,
     handleUpdateStatus,
     handleGenerateReport,
-    isUpdating,
+    updatingId,
     isLoading
   } = useReservationLogic(reservations);
 
@@ -48,29 +55,7 @@ export default function LandlordBookingReservations({ reservations }: LandlordBo
   const [recordToArchive, setRecordToArchive] = useState<ReservationRequest | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
   const [mounted, setMounted] = useState(false);
-
-  // Client-side pagination
-  const [page, setPage] = useState(1);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-
-  const paginatedReservations = filteredReservations.slice(0, page * PAGE_SIZE);
-  const hasMore = paginatedReservations.length < filteredReservations.length;
-
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [filteredReservations.length, selectedStatus, sortBy, searchQuery]);
-
-  const handleLoadMore = useCallback(() => {
-    if (isLoadingMore || !hasMore) return;
-    setIsLoadingMore(true);
-    setTimeout(() => {
-      setPage(prev => prev + 1);
-      setIsLoadingMore(false);
-    }, 150);
-  }, [isLoadingMore, hasMore]);
-
-  const { ref: loadMoreRef } = useLoadMore(handleLoadMore, hasMore, isLoadingMore, false);
+  const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
 
   const searchParams = useSearchParams();
 
@@ -103,12 +88,12 @@ export default function LandlordBookingReservations({ reservations }: LandlordBo
   useRegisterActions(
     rawReservations.map((res) => ({
       id: `reservation-${res.id}`,
-      name: `Reservation: ${res.user.name || 'Anonymous Tenant'}`,
+      name: `Reservation: ${(res.user?.name || res.guestName) || 'Anonymous Tenant'}`,
       subtitle: `Property: ${res.listing.title} • ${res.status}`,
-      keywords: `reservation tenant stay ${res.user.name} ${res.listing.title}`,
+      keywords: `reservation tenant stay ${(res.user?.name || res.guestName)} ${res.listing.title}`,
       section: 'Reservations',
       perform: () => {
-        setSearchQuery(res.user.name || res.user.email);
+        setSearchQuery((res.user?.name || res.guestName) || (res.user?.email || res.guestContact) || '');
       },
       icon: <IconCalendarCheck size={18} />
     })),
@@ -130,6 +115,7 @@ export default function LandlordBookingReservations({ reservations }: LandlordBo
         rawReservations={rawReservations}
         isArchived={isArchived}
         onToggleArchived={handleToggleArchivedView}
+        onCreateWalkIn={() => setIsWalkInModalOpen(true)}
       />
 
       <div className="min-h-[400px] relative">
@@ -156,7 +142,7 @@ export default function LandlordBookingReservations({ reservations }: LandlordBo
               {filteredReservations.length > 0 && (
                 <div className="flex items-center gap-2 mb-6">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                    Showing {paginatedReservations.length} of {filteredReservations.length} reservation{filteredReservations.length !== 1 ? 's' : ''}
+                    Showing {totalReservations} reservation{totalReservations !== 1 ? 's' : ''}
                   </span>
                   <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
                 </div>
@@ -181,14 +167,14 @@ export default function LandlordBookingReservations({ reservations }: LandlordBo
                       ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                       : "space-y-4"
                   )}>
-                    {paginatedReservations.map((reservation, idx) => (
+                    {filteredReservations.map((reservation, idx) => (
                       <LandlordReservationCard 
                         key={`${viewMode}-${reservation.id}`}
                         reservation={reservation}
                         idx={idx}
                         viewMode={viewMode}
                         onUpdateStatus={handleUpdateStatus}
-                        isUpdating={isUpdating}
+                        isUpdating={updatingId === reservation.id}
                         onViewDetails={handleOpenDetails}
                         onArchive={() => {
                           setRecordToArchive(reservation);
@@ -196,36 +182,19 @@ export default function LandlordBookingReservations({ reservations }: LandlordBo
                         }}
                       />
                     ))}
-                    {/* Scroll Sentinel */}
-                    <div ref={loadMoreRef} className="h-10 col-span-full opacity-0 pointer-events-none" />
                   </div>
 
-                  {hasMore && (
-                    <div className="flex flex-col items-center gap-4 pt-12 pb-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-[2px] bg-gradient-to-r from-transparent to-gray-200 dark:to-gray-800" />
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                            {isLoadingMore ? 'Loading more reservations...' : `${filteredReservations.length - paginatedReservations.length} more reservations`}
-                          </span>
-                        </div>
-                        <div className="w-12 h-[2px] bg-gradient-to-l from-transparent to-gray-200 dark:to-gray-800" />
-                      </div>
+                  <LandlordPagination 
+                    currentPage={currentPage}
+                    totalPages={Math.ceil(totalReservations / itemsPerPage)}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                    onItemsPerPageChange={setItemsPerPage}
+                    totalItems={totalReservations}
+                    itemName="reservations"
+                  />
 
-                      <Button
-                        outline
-                        className="rounded-2xl px-12 py-4 group hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/5 border-2 border-gray-100 dark:border-gray-800"
-                        onClick={handleLoadMore}
-                        isLoading={isLoadingMore}
-                      >
-                        <span className="flex items-center gap-2 uppercase font-black tracking-[0.2em] text-[10px]">
-                          {isLoadingMore ? 'Loading...' : 'Load More'}
-                          <IconChevronDown className="group-hover:translate-y-0.5 transition-transform" size={14} />
-                        </span>
-                      </Button>
-                    </div>
-                  )}
+
                 </>
               )}
             </motion.div>
@@ -253,11 +222,21 @@ export default function LandlordBookingReservations({ reservations }: LandlordBo
               isRestore={recordToArchive.isArchived}
               title={recordToArchive.isArchived ? 'Restore Reservation' : 'Archive Reservation'}
               description={recordToArchive.isArchived 
-                ? `Move the reservation for "${recordToArchive.user.name || recordToArchive.user.email}" back to your active list.`
-                : `Move the reservation for "${recordToArchive.user.name || recordToArchive.user.email}" to your archive for record keeping.`
+                ? `Move the reservation for "${recordToArchive.user?.name || 'Walk-in Guest'}" back to your active list.`
+                : `Move the reservation for "${recordToArchive.user?.name || 'Walk-in Guest'}" to your archive for record keeping.`
               }
             />
           )}
+
+          <LandlordWalkInModal
+            isOpen={isWalkInModalOpen}
+            onClose={() => setIsWalkInModalOpen(false)}
+            landlordId={landlordId}
+            listings={listings}
+            onSuccess={() => {
+              window.location.reload();
+            }}
+          />
         </>,
         document.body
       )}

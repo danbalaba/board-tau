@@ -6,7 +6,6 @@ import { Heart, CalendarCheck, Home, User as UserIcon, LogOut, MessageCircle, St
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { User } from "next-auth";
-import { getUnreadNotificationStats } from "@/services/notification";
 
 import Modal from "@/components/modals/Modal";
 import AuthModal from "@/components/modals/AuthModal";
@@ -15,6 +14,7 @@ import ConfirmModal from "@/components/common/ConfirmModal";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { useMenuPanel } from "@/hooks/use-menu-panel";
 import { useLoadingStore } from "@/hooks/use-loading-store";
+import { useNotification } from "@/context/NotificationContext";
 
 
 interface RightSwipePanelProps {
@@ -24,7 +24,7 @@ interface RightSwipePanelProps {
 const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
   const router = useRouter();
   const { isOpen, onOpen, onClose } = useMenuPanel();
-  const [unreadStats, setUnreadStats] = useState<{ total: number; byType: Record<string, number> } | null>(null);
+  const { unreadStats } = useNotification();
   const { isLoggingOut, setIsLoggingOut } = useLoadingStore();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isInteractable, setIsInteractable] = useState(false);
@@ -38,17 +38,6 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
       setIsInteractable(false);
     }
   }, [isOpen]);
-
-  useEffect(() => {
-    if (!user?.id) return;
-    const fetchStats = async () => {
-      const stats = await getUnreadNotificationStats();
-      if (stats) setUnreadStats(stats);
-    };
-    fetchStats();
-    const interval = setInterval(fetchStats, 10000);
-    return () => clearInterval(interval);
-  }, [user?.id]);
 
   const redirect = (url: string) => {
     onClose();

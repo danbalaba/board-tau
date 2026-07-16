@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'ADMIN') {
+    if (!session || (session.user?.role !== 'ADMIN' && session.user?.role !== 'SUPER_ADMIN')) {
       return NextResponse.json(
         ApiResponseFormatter.error('Unauthorized', 'You must be an admin to access this resource'),
         { status: 401 }
@@ -88,13 +88,13 @@ export async function GET(req: NextRequest) {
     const totalReservations = reservations.length;
     const totalReviews = reviews.length;
     const averageRating = reviews.length > 0
-      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      ? reviews.reduce((sum: any, review: any) => sum + review.rating, 0) / reviews.length
       : 0;
     const totalRevenue = revenue._sum.totalPrice || 0;
 
     // Calculate daily revenue trends
     const revenueMap = new Map<string, { revenue: number, bookings: number }>();
-    reservations.forEach(res => {
+    reservations.forEach((res: any) => {
       const dateKey = new Date(res.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       const current = revenueMap.get(dateKey) || { revenue: 0, bookings: 0 };
       if (res.paymentStatus === 'PAID') current.revenue += res.totalPrice;
@@ -134,13 +134,13 @@ export async function GET(req: NextRequest) {
     const occupancyRate = totalRoomsCount > 0 ? (totalOccupiedCount / totalRoomsCount) * 100 : 0;
 
     // Calculate occupancy statistics
-    const confirmedCount = reservations.filter(r => r.status === ReservationStatus.RESERVED).length;
-    const checkedInCount = reservations.filter(r => r.status === ReservationStatus.CHECKED_IN).length;
-    const completedCount = reservations.filter(r => r.status === ReservationStatus.COMPLETED).length;
-    const pendingCount = reservations.filter(r => r.status === ReservationStatus.PENDING_PAYMENT).length;
-    const cancelledCount = reservations.filter(r => r.status === ReservationStatus.CANCELLED).length;
+    const confirmedCount = reservations.filter((r: any) => r.status === ReservationStatus.RESERVED).length;
+    const checkedInCount = reservations.filter((r: any) => r.status === ReservationStatus.CHECKED_IN).length;
+    const completedCount = reservations.filter((r: any) => r.status === ReservationStatus.COMPLETED).length;
+    const pendingCount = reservations.filter((r: any) => r.status === ReservationStatus.PENDING_PAYMENT).length;
+    const cancelledCount = reservations.filter((r: any) => r.status === ReservationStatus.CANCELLED).length;
 
-    const totalDays = reservations.reduce((sum, r) => sum + (r.durationInDays || 0), 0);
+    const totalDays = reservations.reduce((sum: any, r: any) => sum + (r.durationInDays || 0), 0);
     const averageStay = reservations.length > 0 ? Math.round(totalDays / reservations.length) : 0;
 
     // Pricing optimization data

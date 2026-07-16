@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
-import { updateUserProfileClient } from '@/services/user/profile';
+import { updateUserProfileClient } from '@/services/client/profile.client';
 import { useEdgeStore } from '@/lib/edgestore';
 import { validateName, validatePhoneNumber } from '@/lib/validators';
 import { useLandlordProfileStore } from './use-landlord-profile-store';

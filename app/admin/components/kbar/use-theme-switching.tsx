@@ -1,5 +1,6 @@
 import { useRegisterActions } from 'kbar';
 import { useTheme } from 'next-themes';
+import { IconPalette, IconSun, IconMoon } from '@tabler/icons-react';
 
 const useThemeSwitching = () => {
   const { theme, setTheme } = useTheme();
@@ -11,20 +12,23 @@ const useThemeSwitching = () => {
   const themeAction = [
     {
       id: 'toggleTheme',
-      name: 'Toggle Theme',
-      section: 'Theme',
+      name: 'Switch Appearance',
+      section: 'Appearance',
+      icon: <IconPalette size={18} />,
       perform: toggleTheme
     },
     {
       id: 'setLightTheme',
-      name: 'Set Light Theme',
-      section: 'Theme',
+      name: 'Light Mode',
+      section: 'Appearance',
+      icon: <IconSun size={18} />,
       perform: () => setTheme('light')
     },
     {
       id: 'setDarkTheme',
-      name: 'Set Dark Theme',
-      section: 'Theme',
+      name: 'Dark Mode',
+      section: 'Appearance',
+      icon: <IconMoon size={18} />,
       perform: () => setTheme('dark')
     }
   ];

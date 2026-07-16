@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Logo from "./Logo";
 import UserMenu from "./UserMenu";
+import NotificationBell from "./NotificationBell";
 import { ThemeToggle } from "../layout/ThemeToggle";
 import Search from "./Search";
 import MobileSearch from "./MobileSearch";
@@ -91,7 +92,7 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
 
           {/* Search bar - mobile: full width, desktop: absolute center */}
           {isHomePage && (
-            <div className="flex-1 px-4 md:absolute md:left-1/2 md:transform md:-translate-x-1/2 md:px-8">
+            <div className="flex-1 px-4 md:absolute md:left-1/2 md:transform md:-translate-x-1/2 md:px-8 md:w-max w-full">
               <motion.div
                 variants={floatIn("up")}
                 initial="hidden"
@@ -107,13 +108,13 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
                   delayChildren: 0.05,
                   staggerChildren: 0.03
                 }}
-                className="flex flex-row items-center justify-center w-full mx-auto"
+                className="flex flex-row items-center justify-center md:w-max w-full mx-auto"
                 style={{
                   maxWidth: isScrolled && mounted && typeof window !== 'undefined' && !window.matchMedia('(max-width: 768px)').matches ? '600px' : '100%'
                 }}
               >
                 {/* Desktop search */}
-                <div className="hidden md:flex flex-row justify-center w-full">
+                <div className="hidden md:flex flex-row justify-center w-max">
                   <Search compact={true} />
                 </div>
 
@@ -127,6 +128,13 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
 
           {/* Desktop: Theme toggle + User menu right */}
           <div className={`${isHomePage ? "hidden md:flex" : "flex"} items-center gap-1`}>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <NotificationBell user={user} />
+            </motion.div>
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}

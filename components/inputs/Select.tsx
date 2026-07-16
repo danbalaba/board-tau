@@ -4,6 +4,7 @@ import { useTheme } from "next-themes";
 import { FieldErrors } from "react-hook-form";
 import { motion } from "framer-motion";
 import { cn } from "@/utils/helper";
+import HelpTooltip from "@/components/common/HelpTooltip";
 
 interface SelectProps {
   id: string;
@@ -18,6 +19,7 @@ interface SelectProps {
   className?: string;
   placeholder?: string;
   isSearchable?: boolean;
+  helpText?: string;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -31,6 +33,7 @@ const Select: React.FC<SelectProps> = ({
   className,
   placeholder = "Select an option...",
   isSearchable = false,
+  helpText,
 }) => {
   const { theme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -65,14 +68,14 @@ const Select: React.FC<SelectProps> = ({
     }),
     menu: (provided) => ({
       ...provided,
-      position: isMenuOpen ? "static" : "absolute",
+      position: "absolute",
       backgroundColor: theme === "dark" ? "#1f2937" : "#ffffff",
       borderRadius: "12px",
       marginTop: "8px",
       padding: "8px",
-      boxShadow: isMenuOpen ? "none" : "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
       border: theme === "dark" ? "1px solid #374151" : "1px solid #e5e7eb",
-      zIndex: 50,
+      zIndex: 9999,
       width: "100%",
     }),
     option: (provided, state) => ({
@@ -110,15 +113,12 @@ const Select: React.FC<SelectProps> = ({
         transition={{ duration: 0.3, ease: "easeInOut" }}
     >
       {label && (
-        <label
-          htmlFor={id}
-          className={cn(
-            "block text-sm font-semibold mb-2 transition-all duration-200",
-            error ? "text-red-500" : "text-zinc-600 dark:text-zinc-400"
-          )}
-        >
-          {label}
-        </label>
+        <div className="flex items-center mb-1">
+          <label className="text-sm font-semibold text-text-primary block ml-1">
+            {label}
+          </label>
+          {helpText && <HelpTooltip text={helpText} />}
+        </div>
       )}
       
       <ReactSelect

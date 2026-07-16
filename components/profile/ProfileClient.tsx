@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { User, Mail, Phone, Building, Edit2, LogOut, Lock, Camera, ArrowRight, ShieldCheck, MapPin } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { UserProfile, updateUserProfileClient } from "@/services/user/profile";
+import { UserProfile } from "@/types/profile";
+import { updateUserProfileClient } from "@/services/client/profile.client";
 import Button from "@/components/common/Button";
 import Input from "@/components/inputs/Input";
 import Avatar from "@/components/common/Avatar";

@@ -1,5 +1,5 @@
-import { BarGraphSkeleton } from "../../features/overview/components/bar-graph-skeleton";
+import Skeleton from "@/components/common/Skeleton";
 
 export default function Loading() {
-  return <BarGraphSkeleton />;
+  return <Skeleton className="h-[350px] w-full rounded-[3rem]" />;
 }

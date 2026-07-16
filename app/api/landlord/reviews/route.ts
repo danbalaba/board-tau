@@ -4,9 +4,16 @@ import {
   getReviewDetails,
   respondToReview,
 } from "@/services/landlord/reviews";
+import { hasPermission } from "@/lib/rbac";
+import { getCurrentUser } from "@/services/user";
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    const permitted = await hasPermission(user.id, "RESPOND_REVIEW");
+    if (!permitted) return NextResponse.json({ success: false, error: 'Forbidden: Missing RESPOND_REVIEW' }, { status: 403 });
+
     const searchParams = request.nextUrl.searchParams;
     const cursor = searchParams.get("cursor") || undefined;
     const status = searchParams.get("status") || undefined;
@@ -41,6 +48,11 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    const permitted = await hasPermission(user.id, "RESPOND_REVIEW");
+    if (!permitted) return NextResponse.json({ success: false, error: 'Forbidden: Missing RESPOND_REVIEW' }, { status: 403 });
+
     const { searchParams } = new URL(request.url);
     const reviewId = searchParams.get("id");
 

@@ -9,7 +9,7 @@ import Menu from "../common/Menu";
 import Modal from "../modals/Modal";
 import ConfirmDelete from "../common/ConfirmDelete";
 
-import { deleteReservation } from "@/services//user/reservations";
+import { deleteReservation } from "@/services/user/reservations";
 
 const pathNameDict: { [x: string]: string } = {
   "/reservations": "Cancel reservation",

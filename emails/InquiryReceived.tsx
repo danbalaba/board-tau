@@ -24,6 +24,7 @@ interface InquiryReceivedProps {
   baseFee: number;
   tenantName: string;
   message: string;
+  isSoloBuyout?: boolean;
   manageInquiriesLink: string;
 }
 
@@ -38,6 +39,7 @@ export const InquiryReceived = ({
   baseFee = 0,
   tenantName = "Student",
   message = "No message provided.",
+  isSoloBuyout = false,
   manageInquiriesLink = `${baseUrl}/landlord/inquiries`,
 }: InquiryReceivedProps) => {
   const styles = {
@@ -189,7 +191,7 @@ export const InquiryReceived = ({
               <Row style={{ marginBottom: "16px" }}>
                 <Column>
                   <Text style={styles.label}>Occupants</Text>
-                  <Text style={styles.value}>{occupantsCount} Person(s)</Text>
+                  <Text style={styles.value}>{isSoloBuyout ? 'Solo Buyout' : `${occupantsCount} Person(s)`}</Text>
                 </Column>
                 <Column />
               </Row>
@@ -214,7 +216,7 @@ export const InquiryReceived = ({
                       fontWeight: "700",
                       margin: "0" 
                     }}>
-                      {occupantsCount} {occupantsCount === 1 ? 'Person' : 'Persons'} × ₱{baseFee.toLocaleString()}
+                      {isSoloBuyout ? 'Full Room Buyout' : `${occupantsCount} ${occupantsCount === 1 ? 'Person' : 'Persons'}`} × ₱{baseFee.toLocaleString()}
                     </Text>
                   </Column>
                 </Row>

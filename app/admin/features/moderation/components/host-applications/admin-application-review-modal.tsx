@@ -4,17 +4,17 @@ import React, { useState, useEffect } from 'react';
 import Modal from '@/components/modals/Modal';
 import { Button } from '@/app/admin/components/ui/button';
 import { 
-  IconUser, 
-  IconBuilding, 
-  IconCheck, 
-  IconX,
-  IconClock,
-  IconShieldCheck,
-  IconId,
-  IconFileText,
-  IconEye,
-  IconPhone
-} from '@tabler/icons-react';
+  User, 
+  Building, 
+  Check, 
+  X,
+  Clock,
+  ShieldCheck,
+  IdCard,
+  FileText,
+  Eye,
+  Phone
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -74,7 +74,7 @@ export function AdminApplicationReviewModal({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title="Identity Verification" width="lg">
+      <Modal isOpen={isOpen} onClose={onClose} title="Application Review" width="lg">
         <div className="p-8 space-y-8 bg-white dark:bg-gray-900 overflow-hidden">
           
           <AnimatePresence mode="wait">
@@ -87,7 +87,7 @@ export function AdminApplicationReviewModal({
                 className="h-96 flex flex-col items-center justify-center gap-4"
               >
                 <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading Identity Data...</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading Application Data...</p>
               </motion.div>
             ) : (
               <motion.div
@@ -109,11 +109,11 @@ export function AdminApplicationReviewModal({
                     <div className="flex flex-col">
                       <div className="flex items-center justify-between mb-6">
                         <div>
-                          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-1">Reject Identity</h3>
+                          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-1">Reject Application</h3>
                           <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Provide a reason for the rejection</p>
                         </div>
                         <button onClick={() => setShowRejectConfirm(false)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-                          <IconX size={20} />
+                          <X size={20} />
                         </button>
                       </div>
 
@@ -202,7 +202,7 @@ export function AdminApplicationReviewModal({
                     className="bg-gray-50/30 dark:bg-gray-800/30 p-5 rounded-3xl border border-gray-100/50 dark:border-gray-800/50 flex flex-col gap-3"
                   >
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2 mb-2">
-                      <IconUser size={14} /> User Details
+                      <User size={14} /> User Details
                     </span>
                     <div className="space-y-3">
                       <div>
@@ -222,7 +222,7 @@ export function AdminApplicationReviewModal({
                     className="bg-amber-500/5 dark:bg-amber-500/10 p-5 rounded-3xl border border-amber-500/10 flex flex-col gap-3"
                   >
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 flex items-center gap-2 mb-2">
-                      <IconBuilding size={14} /> Business Identity
+                      <Building size={14} /> Business Information
                     </span>
                     <div className="space-y-3">
                       <div>
@@ -242,7 +242,7 @@ export function AdminApplicationReviewModal({
                     className="col-span-1 md:col-span-2 bg-gray-50/30 dark:bg-gray-800/30 p-5 rounded-3xl border border-gray-100/50 dark:border-gray-800/50 flex flex-col gap-4"
                   >
                     <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] flex items-center gap-1.5">
-                      <IconShieldCheck size={14} /> Verification Documents
+                      <ShieldCheck size={14} /> Verification Documents
                     </span>
                     
                     <div className="flex flex-wrap gap-4">
@@ -258,7 +258,7 @@ export function AdminApplicationReviewModal({
                                className="w-full h-full object-cover transition-transform group-hover:scale-110" 
                              />
                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <IconEye size={20} className="text-white" />
+                                <Eye size={20} className="text-white" />
                              </div>
                              <div className="absolute bottom-0 inset-x-0 bg-black/60 text-[8px] text-white font-bold text-center py-1">SELFIE</div>
                           </div>
@@ -276,7 +276,7 @@ export function AdminApplicationReviewModal({
                                className="w-full h-full object-cover transition-transform group-hover:scale-110" 
                              />
                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <IconEye size={20} className="text-white" />
+                                <Eye size={20} className="text-white" />
                              </div>
                              <div className="absolute bottom-0 inset-x-0 bg-black/60 text-[8px] text-white font-bold text-center py-1">GOV ID</div>
                           </div>
@@ -294,7 +294,7 @@ export function AdminApplicationReviewModal({
                                className="w-full h-full object-cover transition-transform group-hover:scale-110" 
                              />
                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <IconEye size={20} className="text-white" />
+                                <Eye size={20} className="text-white" />
                              </div>
                              <div className="absolute bottom-0 inset-x-0 bg-black/60 text-[8px] text-white font-bold text-center py-1">PERMIT</div>
                           </div>
@@ -312,7 +312,7 @@ export function AdminApplicationReviewModal({
                                className="w-full h-full object-cover transition-transform group-hover:scale-110" 
                              />
                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <IconEye size={20} className="text-white" />
+                                <Eye size={20} className="text-white" />
                              </div>
                              <div className="absolute bottom-0 inset-x-0 bg-black/60 text-[8px] text-white font-bold text-center py-1">FIRE CERT</div>
                           </div>
@@ -327,7 +327,7 @@ export function AdminApplicationReviewModal({
                   className="pt-8 border-t border-gray-100 dark:border-gray-800"
                 >
                   <div className="flex items-center justify-between mb-6">
-                    <h4 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">Verification Decision</h4>
+                    <h4 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">Decision</h4>
                     <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800 mx-6"></div>
                   </div>
                   
@@ -339,8 +339,8 @@ export function AdminApplicationReviewModal({
                         disabled={isDeciding}
                       >
                         <span className="flex items-center justify-center gap-2">
-                          <IconCheck size={18} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
-                          Verify & Authorize
+                          <Check size={18} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
+                          Approve Application
                         </span>
                       </Button>
                       <Button 
@@ -350,8 +350,8 @@ export function AdminApplicationReviewModal({
                         disabled={isDeciding}
                       >
                         <span className="flex items-center justify-center gap-2">
-                           <IconX size={18} strokeWidth={3} className="group-hover:rotate-90 transition-transform" /> 
-                           Reject Identity
+                           <X size={18} strokeWidth={3} className="group-hover:rotate-90 transition-transform" /> 
+                           Reject Application
                         </span>
                       </Button>
                     </div>
@@ -364,9 +364,9 @@ export function AdminApplicationReviewModal({
                   )}
                   
                   <div className="mt-6 flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl">
-                    <IconClock size={12} className="text-gray-400" />
+                    <Clock size={12} className="text-gray-400" />
                     <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest text-center px-4">
-                      Authorizing will grant this user Landlord privileges platform-wide.
+                      Approving will grant this user Landlord privileges platform-wide.
                     </p>
                   </div>
                 </motion.div>
@@ -394,7 +394,7 @@ export function AdminApplicationReviewModal({
                 onClick={() => setPreviewImage(null)}
                 className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all z-10"
               >
-                <IconX size={24} />
+                <X size={24} />
               </motion.button>
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}

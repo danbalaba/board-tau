@@ -1,56 +1,159 @@
+'use client';
+
 import React from 'react';
 import { motion } from 'framer-motion';
-import { IconUsers, IconUserPlus, IconRefresh } from '@tabler/icons-react';
+import { Users, UserPlus, RefreshCw, Download, Calendar, ChevronDown } from 'lucide-react';
+import { IconFileTypePdf, IconTable, IconFileTypeCsv } from '@tabler/icons-react';
 import { Button } from '@/app/admin/components/ui/button';
+import { useSession } from 'next-auth/react';
+import { cn } from '@/lib/utils';
+import Skeleton from '@/components/common/Skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/app/admin/components/ui/dropdown-menu';
 
 interface AdminUserHeaderProps {
-  onSync: () => void;
-  onProvision: () => void;
+  onRefresh: () => void;
+  onExport: (format: 'CSV' | 'EXCEL' | 'PDF') => void;
+  isFetching?: boolean;
+  isLoading?: boolean;
+  range: string;
+  onRangeChange: (range: string) => void;
 }
 
-export function AdminUserHeader({ onSync, onProvision }: AdminUserHeaderProps) {
+const DATE_RANGES = [
+  { value: '7d', label: 'Last 7 Days' },
+  { value: '30d', label: 'Last 30 Days' },
+  { value: '90d', label: 'Last 90 Days' },
+  { value: '1y', label: 'Past Year' },
+];
+
+export function AdminUserHeader({ onRefresh, onExport, isFetching, isLoading, range, onRangeChange }: AdminUserHeaderProps) {
+  const { data: session } = useSession();
+  const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
+  const rangeLabel = DATE_RANGES.find(r => r.value === range)?.label ?? 'Last 30 Days';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative p-8 rounded-[3rem] border border-blue-500/10 shadow-xl overflow-hidden bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl"
+      className="relative p-8 rounded-[3rem] border border-emerald-500/10 shadow-xl overflow-hidden bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5 pointer-events-none" />
-      <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/5 blur-[100px] rounded-full pointer-events-none" />
-      
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-teal-500/10 pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/20 blur-[100px] rounded-full pointer-events-none" />
+
       <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        {/* Title */}
         <div className="flex items-center gap-5">
-          <div className="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center text-blue-500 border border-gray-100 dark:border-gray-700">
-            <IconUsers size={28} stroke={2.5} />
-          </div>
-          <div>
-            <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight flex items-center gap-3">
-              Identity Management
-            </h1>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-[0.2em]">
-                Orchestrate user accounts, access levels and security profiles
-              </p>
-            </div>
-          </div>
+          {(isLoading || isFetching) ? (
+            <>
+              <Skeleton className="w-14 h-14 rounded-2xl" />
+              <div>
+                <Skeleton className="h-8 w-48 mb-2 rounded-lg" />
+                <Skeleton className="h-3 w-64 rounded-md" />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center text-emerald-500 border border-gray-100 dark:border-gray-700">
+                <Users size={28} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight">
+                  User Directory
+                </h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <p className="text-[11px] text-gray-500 font-bold uppercase tracking-[0.2em]">
+                    Manage platform users and access
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
-        <div className="flex items-center gap-3 self-end md:self-auto">
-          <Button
-            variant="outline"
-            onClick={onSync}
-            className="h-12 px-6 gap-2 rounded-2xl border-gray-200/60 dark:border-gray-700/60 shadow-sm text-[10px] font-black uppercase tracking-[0.2em]"
-          >
-            <IconRefresh size={16} className="text-blue-500" /> Sync State
-          </Button>
-          
-          <Button
-            onClick={onProvision}
-            className="h-12 px-6 gap-2 rounded-2xl bg-gray-900 hover:bg-blue-600 dark:bg-white dark:text-gray-900 dark:hover:bg-blue-600 text-white shadow-xl shadow-blue-500/10 text-[10px] font-black uppercase tracking-[0.2em] transition-all"
-          >
-            <IconUserPlus size={16} /> Provision User
-          </Button>
+        {/* Actions */}
+        <div className="flex items-center gap-3 self-end md:self-auto flex-wrap">
+          {(isLoading || isFetching) ? (
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-12 w-[140px] rounded-2xl" />
+              <Skeleton className="h-12 w-12 rounded-2xl" />
+              {isSuperAdmin && (
+                <>
+                  <Skeleton className="h-12 w-[110px] rounded-2xl" />
+                  <Skeleton className="h-12 w-[130px] rounded-2xl" />
+                </>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Date Range */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="h-12 px-5 gap-2 rounded-2xl border-emerald-200/60 dark:border-emerald-700/60 bg-emerald-50/50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 shadow-sm text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-100 dark:hover:bg-emerald-800/40 hover:text-emerald-900 dark:hover:text-emerald-300">
+                    <Calendar size={16} className="text-emerald-500" />
+                    {rangeLabel}
+                    <ChevronDown size={14} className="opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-100 dark:border-gray-800 rounded-2xl p-2 shadow-2xl">
+                  {DATE_RANGES.map(item => (
+                    <DropdownMenuItem
+                      key={item.value}
+                      onClick={() => onRangeChange(item.value)}
+                      className={cn(
+                        'text-[10px] font-black py-3 uppercase tracking-widest cursor-pointer rounded-xl mb-1',
+                        range === item.value ? 'bg-emerald-500/10 text-emerald-600' : 'text-gray-500'
+                      )}
+                    >
+                      {item.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Refresh */}
+                <Button
+                  variant="outline"
+                  onClick={onRefresh}
+                  className="h-12 w-12 p-0 shadow-sm rounded-2xl border-gray-200/60 dark:border-gray-700/60 bg-white/50 dark:bg-gray-800/50 hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all duration-200 group"
+                >
+                  <RefreshCw size={18} className={cn("text-gray-500 dark:text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors", isFetching && "animate-spin [animation-duration:2s]")} />
+                </Button>
+
+                {/* Export - Only visible to Super Admin */}
+                {isSuperAdmin && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="h-12 px-6 gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-xl shadow-emerald-500/20 font-black uppercase text-[10px] tracking-[0.2em] transition-all relative z-10">
+                        <Download size={16} />
+                        Export
+                        <ChevronDown size={14} className="opacity-70" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-100 dark:border-gray-800 rounded-2xl p-2 shadow-2xl">
+                      <DropdownMenuItem onClick={() => onExport('PDF')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-all text-sm font-semibold text-gray-700 dark:text-gray-300 dark:hover:text-white group cursor-pointer mb-1">
+                        <IconFileTypePdf className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform" />
+                        PDF Document
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onExport('EXCEL')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-all text-sm font-semibold text-gray-700 dark:text-gray-300 dark:hover:text-white group cursor-pointer mb-1">
+                        <IconTable className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
+                        Excel
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onExport('CSV')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-all text-sm font-semibold text-gray-700 dark:text-gray-300 dark:hover:text-white group cursor-pointer">
+                        <IconFileTypeCsv className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform" />
+                        CSV Data
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </motion.div>

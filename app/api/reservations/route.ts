@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
 import { createNotification } from "@/services/notification";
+import { hasPermission } from "@/lib/rbac";
 
 export async function POST(request: Request) {
   try {
@@ -9,6 +10,11 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const permitted = await hasPermission(user.id, "CREATE_INQUIRY");
+    if (!permitted) {
+      return NextResponse.json({ error: "Forbidden: Missing permission CREATE_INQUIRY" }, { status: 403 });
     }
 
     const data = await request.json();
@@ -80,6 +86,11 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const permitted = await hasPermission(user.id, "MANAGE_RESERVATIONS");
+    if (!permitted) {
+      return NextResponse.json({ error: "Forbidden: Missing permission MANAGE_RESERVATIONS" }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
@@ -141,6 +152,11 @@ export async function GET(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const permitted = await hasPermission(user.id, "MANAGE_RESERVATIONS");
+    if (!permitted) {
+      return NextResponse.json({ error: "Forbidden: Missing permission MANAGE_RESERVATIONS" }, { status: 403 });
     }
 
     // Get all reservation requests for the landlord's listings

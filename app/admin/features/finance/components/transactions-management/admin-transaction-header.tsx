@@ -9,6 +9,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from '@/app/admin/components/ui/dropdown-menu';
 import { IconChevronDown } from '@tabler/icons-react';
 
@@ -21,6 +23,7 @@ interface AdminTransactionHeaderProps {
   setViewMode: (val: 'grid' | 'list') => void;
   handleRefresh: () => void;
   isLoading: boolean;
+  onExport: (format: 'CSV' | 'EXCEL' | 'PDF') => void;
 }
 
 export function AdminTransactionHeader({
@@ -31,7 +34,8 @@ export function AdminTransactionHeader({
   viewMode,
   setViewMode,
   handleRefresh,
-  isLoading
+  isLoading,
+  onExport
 }: AdminTransactionHeaderProps) {
   return (
     <motion.div
@@ -87,16 +91,34 @@ export function AdminTransactionHeader({
               variant="outline"
               size="icon"
               onClick={handleRefresh}
-              className={cn("h-12 w-12 rounded-2xl border-gray-200/60 dark:border-gray-700/60 shadow-sm", isLoading && "animate-spin")}
+              className={cn(
+                "h-12 w-12 rounded-2xl border-gray-200/60 dark:border-gray-700/60 bg-white/50 dark:bg-gray-800/50 hover:bg-blue-500/10 hover:border-blue-500/30 transition-all duration-200 group shadow-sm",
+                isLoading && "animate-spin [animation-duration:2s]"
+              )}
             >
-              <IconRefresh className="w-5 h-5 text-blue-500" />
+              <IconRefresh className="w-5 h-5 text-blue-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
             </Button>
             
-            <Button
-              className="h-12 px-6 gap-2 rounded-2xl bg-gray-900 hover:bg-blue-600 dark:bg-white dark:text-gray-900 dark:hover:bg-blue-600 text-white shadow-xl shadow-blue-500/10 text-[10px] font-black uppercase tracking-[0.2em] transition-all"
-            >
-              <IconDownload size={16} /> Export Ledger
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="h-12 px-6 gap-2 rounded-2xl bg-gray-900 hover:bg-blue-600 dark:bg-white dark:text-gray-900 dark:hover:bg-blue-600 text-white shadow-xl shadow-blue-500/10 text-[10px] font-black uppercase tracking-[0.2em] transition-all">
+                  <IconDownload size={16} /> Export Ledger
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 rounded-2xl border-none shadow-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl p-2">
+                <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-gray-400">Export Report</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
+                <DropdownMenuItem onClick={() => onExport('CSV')} className="gap-3 p-3 rounded-xl cursor-pointer font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800">
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('EXCEL')} className="gap-3 p-3 rounded-xl cursor-pointer font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800">
+                  Export as Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport('PDF')} className="gap-3 p-3 rounded-xl cursor-pointer font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800">
+                  Export as PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 

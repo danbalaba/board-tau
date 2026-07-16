@@ -24,10 +24,10 @@ Welcome to BoardTAU! We appreciate your interest in contributing to our project.
 
 2. **Install dependencies**
    ```bash
-   npm ci
+   npm install
    ```
    > [!NOTE]
-   > Always use `npm ci` instead of `npm install` to prevent lock file modifications. Peer dependency conflicts are handled automatically via our `.npmrc` configuration.
+   > Use `npm install` to set up dependencies. Peer dependency conflicts and overrides (such as PostCSS and uuid) are handled automatically via our `.npmrc` and `package.json` overrides config.
 
 3. **Set up environment variables**
    Create a `.env` file in the root directory with the required variables. See `.env.example` for a template.

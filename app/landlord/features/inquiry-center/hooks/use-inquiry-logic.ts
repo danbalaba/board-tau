@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
+import { DateRange } from 'react-day-picker';
 import { toast } from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -25,6 +26,7 @@ export interface Inquiry {
   status: string;
   rejectionReason?: string | null;
   isArchived: boolean;
+  isSoloBuyout?: boolean;
   createdAt: string | Date;
   listing: {
     id: string;
@@ -58,13 +60,18 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [archiveModalOpen, setArchiveModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isResponding, setIsResponding] = useState(false);
+  const [respondingId, setRespondingId] = useState<string | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,6 +87,11 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     // For now, I'll just clear the local listings to force a fresh view if needed,
     // though the best way would be to refetch from server.
   }, [isArchived]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedStatus, sortBy, isArchived]);
 
   const handleToggleArchived = useCallback(async () => {
     const newArchivedState = !isArchived;
@@ -122,6 +134,11 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     });
     return result;
   }, [selectedStatus, listings, searchQuery, sortBy]);
+
+  const paginatedInquiries = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredInquiries.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredInquiries, currentPage, itemsPerPage]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!selectedInquiry) return;
@@ -180,7 +197,7 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
   }, [selectedInquiry, success, toastError]);
 
   const handleRespond = useCallback(async (inquiryId: string, status: "APPROVED" | "REJECTED", message?: string) => {
-    setIsResponding(true);
+    setRespondingId(inquiryId);
     const loadingToast = toast.loading(`${status === "APPROVED" ? "Approving" : "Rejecting"} inquiry...`);
     try {
       const response = await fetch(`/api/landlord/inquiries?id=${inquiryId}`, {
@@ -199,7 +216,7 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     } catch (error) {
       toastError("An error occurred.");
     } finally {
-      setIsResponding(false);
+      setRespondingId(null);
       toast.dismiss(loadingToast);
     }
   }, [router]);
@@ -226,43 +243,75 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     }
   }, [nextCursor, isLoadingMore]);
 
-  const handleGenerateReport = async () => {
+  const handleGenerateReport = async (dateRange?: DateRange) => {
     try {
-      const totalInquiries = filteredInquiries.length;
-      const pendingCount = filteredInquiries.filter(i => i.status === 'PENDING').length;
-      const approvedCount = filteredInquiries.filter(i => i.status === 'APPROVED').length;
-      const uniqueListings = new Set(filteredInquiries.map(i => i.listingId)).size;
+      let exportData = filteredInquiries;
+      if (dateRange?.from) {
+        const fromDate = dateRange.from;
+        const toDate = dateRange.to;
+        exportData = exportData.filter(i => {
+          const createdAt = new Date(i.createdAt);
+          if (toDate) {
+            return createdAt >= fromDate && createdAt <= toDate;
+          }
+          return createdAt >= fromDate;
+        });
+      }
 
-      const summaryData = [
-        { 
-          label: 'Total Inquiries', 
-          value: `${totalInquiries}`,
-          subValue: 'Total engagement'
-        },
-        { 
-          label: 'Engagement Rate', 
-          value: `${uniqueListings} Properties`,
-          subValue: 'Receiving interest'
-        },
-        { 
-          label: 'Response Status', 
-          value: `${approvedCount} Approved`,
-          subValue: `${pendingCount} Pending response`
-        }
-      ];
+      const totalInquiries = exportData.length;
+      let summaryData: any[] = [];
+      let subtitle = `Auditing engagement for ${totalInquiries} potential tenants`;
 
-      const columns = ['Listing Title', 'Tenant Name', 'Status', 'Date Received'];
-      const data = filteredInquiries.map(i => [
+      if (selectedStatus === 'PENDING') {
+        const uniqueProperties = new Set(exportData.map(i => i.listingId)).size;
+        summaryData = [
+          { label: 'Unanswered Inquiries', value: `${totalInquiries}` },
+          { label: 'Need to Answer', value: `${uniqueProperties} Properties` },
+          { label: 'Status', value: `Pending Action` }
+        ];
+        subtitle = `Auditing pending inquiries for ${totalInquiries} tenants`;
+      } 
+      else if (selectedStatus === 'APPROVED') {
+        summaryData = [
+          { label: 'Approved Inquiries', value: `${totalInquiries}` },
+          { label: 'Potential Tenants', value: `${totalInquiries}` },
+          { label: 'Status', value: `Approved` }
+        ];
+        subtitle = `Auditing approved inquiries for ${totalInquiries} tenants`;
+      }
+      else if (selectedStatus === 'REJECTED') {
+        summaryData = [
+          { label: 'Rejected Inquiries', value: `${totalInquiries}` },
+          { label: 'Total Rejected', value: `${totalInquiries}` },
+          { label: 'Status', value: `Rejected` }
+        ];
+        subtitle = `Auditing rejected inquiries for ${totalInquiries} tenants`;
+      }
+      else {
+        // Global 'all' view
+        const uniqueListings = new Set(exportData.map(i => i.listingId)).size;
+        const pendingCount = exportData.filter(i => i.status === 'PENDING').length;
+        
+        summaryData = [
+          { label: 'Total Inquiries', value: `${totalInquiries}` },
+          { label: 'Properties Inquired', value: `${uniqueListings}` },
+          { label: 'Need to Answer', value: `${pendingCount}` }
+        ];
+      }
+
+      const columns = ['Listing', 'Tenant', 'Status', 'Date', 'Message'];
+      const data = exportData.map((i) => [
         i.listing.title,
-        i.user.name || i.user.email,
-        i.status.toUpperCase(),
-        new Date(i.createdAt).toLocaleDateString()
+        i.user?.name || i.user?.email || 'Guest',
+        i.status,
+        new Date(i.createdAt).toLocaleDateString(),
+        (i.message || 'N/A').length > 50 ? `${(i.message || '').substring(0, 50)}...` : (i.message || 'N/A'),
       ]);
 
       await generateTablePDF('Inquiries_Report', columns, data, {
-        title: 'Tenant Inquiry Business Report',
-        subtitle: `Auditing response performance for ${totalInquiries} tenant leads`,
-        author: 'Landlord Relationship Management',
+        title: 'Tenant Inquiries Business Report',
+        subtitle: subtitle,
+        author: 'Landlord Inquiry Management',
         summaryData: summaryData
       });
       
@@ -274,7 +323,12 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
   };
 
   return {
-    filteredInquiries,
+    filteredInquiries: paginatedInquiries,
+    totalInquiries: filteredInquiries.length,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    setItemsPerPage,
     selectedStatus,
     setSelectedStatus,
     viewMode,
@@ -294,7 +348,7 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     archiveModalOpen,
     setArchiveModalOpen,
     isDeleting,
-    isResponding,
+    respondingId,
     isArchiving,
     isLoadingMore,
     nextCursor,

@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { ApiResponseFormatter } from '@/lib/api-response';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'ADMIN') {
-      return NextResponse.json(ApiResponseFormatter.error('Unauthorized'), { status: 401 });
+    if (!session || session.user?.role !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     let settings = await db.siteSettings.findFirst();
-
+    
+    // Create default settings if none exist
     if (!settings) {
-      // Create default settings if none exist
       settings = await db.siteSettings.create({
         data: {
           siteName: 'BoardTAU',
@@ -23,46 +22,50 @@ export async function GET(req: NextRequest) {
           enableEmailNotifications: true,
           enablePushNotifications: false,
           enableAnalytics: true,
-          enableCookies: true
+          enableCookies: true,
         }
       });
     }
 
-    return NextResponse.json(ApiResponseFormatter.success(settings));
-  } catch (error) {
-    console.error('Settings fetch error:', error);
-    return NextResponse.json(ApiResponseFormatter.error('Internal Server Error'), { status: 500 });
+    return NextResponse.json(settings);
+  } catch (error: any) {
+    return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'ADMIN') {
-      return NextResponse.json(ApiResponseFormatter.error('Unauthorized'), { status: 401 });
+    if (!session || session.user?.role !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await req.json();
-    
-    // Sanitize input: remove ID and timestamp fields if they exist in body
-    const { id, updatedAt, ...settingsData } = body;
+    const existing = await db.siteSettings.findFirst();
 
-    let settings = await db.siteSettings.findFirst();
-
-    if (settings) {
+    let settings;
+    if (existing) {
       settings = await db.siteSettings.update({
-        where: { id: settings.id },
-        data: settingsData
+        where: { id: existing.id },
+        data: body,
       });
     } else {
       settings = await db.siteSettings.create({
-        data: settingsData
+        data: body,
       });
     }
 
-    return NextResponse.json(ApiResponseFormatter.success(settings, 'Settings updated successfully'));
-  } catch (error) {
-    console.error('Settings update error:', error);
-    return NextResponse.json(ApiResponseFormatter.error('Internal Server Error'), { status: 500 });
+    await db.adminActivityLog.create({
+      data: {
+        adminId: session.user.id,
+        action: 'UPDATE_SITE_SETTINGS',
+        entityType: 'SiteSettings',
+        details: JSON.stringify(body),
+      }
+    });
+
+    return NextResponse.json(settings);
+  } catch (error: any) {
+    return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
   }
 }

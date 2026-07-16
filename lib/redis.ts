@@ -5,7 +5,29 @@ import { Redis } from '@upstash/redis';
  * This is the gold standard for Next.js/Vercel as it handles
  * stateless connections via HTTP, preventing connection leaks.
  */
-const redis = Redis.fromEnv();
+let redis: Redis;
+
+try {
+  // Only attempt to initialize if the env variables are present to prevent build-time crashes in CI environments
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+  } else {
+    // Fallback/Mock client for build time or development without Redis credentials
+    redis = new Redis({
+      url: 'https://placeholder-redis.upstash.io',
+      token: 'placeholder-token',
+    });
+  }
+} catch (e) {
+  // Fail-safe initialization
+  redis = new Redis({
+    url: 'https://placeholder-redis.upstash.io',
+    token: 'placeholder-token',
+  });
+}
 
 // Date reviver for JSON.parse to handle ISO date strings
 const dateReviver = (_key: string, value: any) => {

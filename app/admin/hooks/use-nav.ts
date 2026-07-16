@@ -8,6 +8,7 @@
  */
 
 import { useMemo } from 'react';
+import { useSession } from 'next-auth/react';
 
 import type { NavItem } from '@/types';
 
@@ -18,20 +19,31 @@ import type { NavItem } from '@/types';
  * @returns Filtered items
  */
 export function useFilteredNavItems(items: NavItem[]) {
-  // For admin users, we return all navigation items without filtering
-  // since admin has full access to all features
+  const { data: session } = useSession();
+  const userRole = session?.user?.role;
+
   const filteredItems = useMemo(() => {
-    return items.map((item) => {
-      // If item has children, include them all (no filtering)
-      if (item.items && item.items.length > 0) {
-        return {
-          ...item,
-          items: item.items
-        };
-      }
-      return item;
-    });
-  }, [items]);
+    const filterNavItems = (navItems: NavItem[]): NavItem[] => {
+      return navItems
+        .filter((item) => {
+          if (item.allowedRoles && !item.allowedRoles.includes(userRole ?? '')) {
+            return false;
+          }
+          return true;
+        })
+        .map((item) => {
+          if (item.items && item.items.length > 0) {
+            return {
+              ...item,
+              items: filterNavItems(item.items)
+            };
+          }
+          return item;
+        });
+    };
+
+    return filterNavItems(items);
+  }, [items, userRole]);
 
   return filteredItems;
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { RefreshCcw, ArrowLeft } from "lucide-react";
+import { WifiOff, ArrowLeft, RefreshCw } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function OfflinePage() {
   const handleRefresh = () => {
@@ -11,91 +11,71 @@ export default function OfflinePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))] p-6 text-center transition-colors duration-300">
-      <div className="max-w-md w-full animate-in fade-in zoom-in duration-700">
-        {/* Custom SVG Mascot (Transparent, No Background) */}
-        <div className="relative mb-12 mx-auto w-fit animate-float">
-          <div className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full -z-10" />
-          <svg
-            width="240"
-            height="240"
-            viewBox="0 0 240 240"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="drop-shadow-2xl"
-          >
-            {/* House Body */}
-            <path d="M40 100L120 40L200 100V180C200 191.046 191.046 200 180 200H60C48.9543 200 40 191.046 40 180V100Z" fill="rgb(var(--surface-rgb))" stroke="currentColor" strokeWidth="4"/>
-            <path d="M30 110L120 40L210 110" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
-            
-            {/* Window Eye */}
-            <circle cx="90" cy="120" r="15" fill="currentColor" opacity="0.1" stroke="currentColor" strokeWidth="2"/>
-            <circle cx="90" cy="120" r="5" fill="currentColor"/>
-            
-            {/* Door Mouth */}
-            <rect x="115" y="150" width="30" height="40" rx="4" stroke="currentColor" strokeWidth="3" fill="currentColor" opacity="0.05"/>
-            <circle cx="138" cy="170" r="2" fill="currentColor"/>
-            
-            {/* Antenna */}
-            <path d="M180 80L210 50" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <circle cx="210" cy="50" r="4" fill="currentColor"/>
-            <path d="M200 65C205 60 215 60 220 65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.5"/>
-            
-            {/* Disconnected Plug */}
-            <path d="M60 200V230H30" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none"/>
-            <rect x="15" y="222" width="15" height="15" rx="2" fill="currentColor"/>
-            <path d="M10 226V233" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M5 226V233" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-        </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-6 relative overflow-hidden">
+      {/* Background ambient light */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] -z-10 pointer-events-none" />
 
-        {/* Text Content */}
-        <div className="space-y-4 mb-10">
-          <h1 className="text-6xl font-black text-orange-500 tracking-tighter uppercase italic">
-            Ops!
-          </h1>
-          <h2 className="text-2xl font-bold font-outfit">
-            Something went wrong
-          </h2>
-          <p className="text-[rgb(var(--text-secondary))] text-lg leading-relaxed max-w-[300px] mx-auto">
-            Try refreshing the page or checking your internet connection.
-          </p>
-        </div>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="max-w-md w-full backdrop-blur-xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/50 dark:border-slate-800/50 p-10 rounded-[2.5rem] shadow-2xl flex flex-col items-center text-center relative overflow-hidden"
+      >
+        {/* Decorative top gradient line */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
 
-        {/* Action Buttons */}
-        <div className="space-y-4 w-full max-w-[280px] mx-auto">
+        <motion.div 
+          initial={{ scale: 0.8 }}
+          animate={{ scale: 1 }}
+          transition={{ 
+            type: "spring", 
+            stiffness: 200, 
+            damping: 15,
+            delay: 0.2
+          }}
+          className="relative mb-8"
+        >
+          <div className="w-24 h-24 bg-rose-500/10 dark:bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center border border-rose-500/20 shadow-inner">
+            <WifiOff size={40} strokeWidth={2.5} />
+          </div>
+          {/* Pulsing ring */}
+          <motion.div 
+            animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-0 rounded-full border-2 border-rose-500/30"
+          />
+        </motion.div>
+
+        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-3 font-outfit">
+          You're offline
+        </h1>
+        
+        <p className="text-slate-500 dark:text-slate-400 text-[15px] leading-relaxed mb-8 px-4">
+          It looks like you've lost your internet connection. You can still view some of your previously loaded content, or try reconnecting.
+        </p>
+
+        <div className="w-full flex flex-col gap-3">
           <button
             onClick={handleRefresh}
-            className="w-full py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-primary/20"
+            className="w-full py-3.5 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-primary/25"
           >
-            <RefreshCcw size={20} />
-            Refresh page
+            <RefreshCw size={18} />
+            Try again
           </button>
           
           <Link
             href="/"
-            className="flex items-center justify-center gap-2 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--foreground-rgb))] transition-colors font-medium"
+            className="w-full py-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={18} />
             Back to Home
           </Link>
         </div>
-      </div>
+      </motion.div>
       
-      {/* Aesthetic Footer */}
-      <div className="fixed bottom-8 text-[rgb(var(--text-light))] text-sm font-medium tracking-widest uppercase opacity-50">
-        BoardTAU • Offline Mode
+      <div className="fixed bottom-8 text-slate-400 dark:text-slate-600 text-xs font-bold tracking-[0.2em] uppercase">
+        BoardTAU • PWA
       </div>
-
-      <style jsx global>{`
-        @keyframes bounce-slow {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-15px); }
-        }
-        .animate-bounce-slow {
-          animation: bounce-slow 4s ease-in-out infinite;
-        }
-      `}</style>
     </div>
   );
 }

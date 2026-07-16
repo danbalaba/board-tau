@@ -14,6 +14,7 @@ import PaymentStep from "./inquiry-modal/steps/PaymentStep";
 import StayStep from "./inquiry-modal/steps/StayStep";
 import NoteStep from "./inquiry-modal/steps/NoteStep";
 import PrepareStep from "./inquiry-modal/steps/PrepareStep";
+import OTPVerifyStep from "./inquiry-modal/steps/OTPVerifyStep";
 import ReviewStep from "./inquiry-modal/steps/ReviewStep";
 
 import dynamic from "next/dynamic";
@@ -80,7 +81,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
       />
       
       <div className="flex justify-between items-center relative z-10">
-        {[1, 2, 3, 4, 5, 6, 7].map((step) => (
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((step) => (
           <div key={step} className="flex flex-col items-center gap-2 md:gap-2.5">
             <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold transition-all duration-500 transform ${
               logic.currentStep === step 
@@ -94,7 +95,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
             <span className={`text-[8px] md:text-[9px] font-bold uppercase tracking-widest hidden md:block transition-colors duration-300 ${
               logic.currentStep === step ? "text-primary" : logic.currentStep > step ? "text-primary/60" : "text-gray-400"
             }`}>
-              {step === 1 ? "Pay" : step === 2 ? "Stay" : step === 3 ? "Note" : step === 4 ? "Prepare" : step === 5 ? "Selfie" : step === 6 ? "ID" : "Review"}
+              {step === 1 ? "Pay" : step === 2 ? "Stay" : step === 3 ? "Note" : step === 4 ? "Prepare" : step === 5 ? "Selfie" : step === 6 ? "ID" : step === 7 ? "Verify" : "Review"}
             </span>
           </div>
         ))}
@@ -117,7 +118,22 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                       />;
       case 5: return <SelfieStep {...logic} isProcessing={logic.isProcessing} />;
       case 6: return <IDStep {...logic} isProcessing={logic.isProcessing} />;
-      case 7: return <ReviewStep watchedValues={logic.watchedValues} capturedSelfie={logic.capturedSelfie} capturedID={logic.capturedID} room={room} />;
+      case 7: return <OTPVerifyStep 
+                        register={logic.register as any} 
+                        errors={logic.errors} 
+                        watch={logic.watch as any} 
+                        setValue={logic.setValue as any} 
+                        isProcessing={logic.isProcessing} 
+                        setIsProcessing={(val: any) => {(window as any)._setIsProcessing = val;}} // Hack to allow handleNextStep to control loading
+                        userEmail={logic.userEmail} 
+                        resendCooldown={logic.resendCooldown}
+                        setResendCooldown={logic.setResendCooldown}
+                        otpAttemptLimitReached={logic.otpAttemptLimitReached}
+                        setOtpAttemptLimitReached={logic.setOtpAttemptLimitReached}
+                        lockoutCountdown={logic.lockoutCountdown}
+                        setLockoutCountdown={logic.setLockoutCountdown}
+                      />;
+      case 8: return <ReviewStep watchedValues={logic.watchedValues} capturedSelfie={logic.capturedSelfie} capturedID={logic.capturedID} room={room} />;
       default: return null;
     }
   };
@@ -201,9 +217,9 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                         <div className="bg-primary/5 dark:bg-primary/10 p-3 rounded-xl border border-primary/10">
                           <div className="flex justify-between items-center mb-1">
                             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Total Reservation Fee</span>
-                            <span className="text-sm font-black text-primary">₱ {(room.reservationFee * (logic.getValues('occupantsCount') || 1)).toLocaleString()}</span>
+                            <span className="text-sm font-black text-primary">₱ {(room.reservationFee * (logic.watchedValues?.[8] ? room.capacity : (Number(logic.watchedValues?.[7]) || 1))).toLocaleString()}</span>
                           </div>
-                          <p className="text-[9px] text-gray-400 font-medium italic">Calculated as ₱ {room.reservationFee.toLocaleString()} x {logic.getValues('occupantsCount') || 1} occupants</p>
+                          <p className="text-[9px] text-gray-400 font-medium italic">Calculated as ₱ {room.reservationFee.toLocaleString()} x {logic.watchedValues?.[8] ? `${room.capacity} (Full Room Buyout)` : `${logic.watchedValues?.[7] || 1} occupants`}</p>
                         </div>
                       </div>
                     </motion.div>
@@ -288,9 +304,9 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                             <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-xl border border-primary/10 mt-4">
                                 <div className="flex justify-between items-center mb-1">
                                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Total Reservation Fee</span>
-                                    <span className="text-sm font-black text-primary">₱ {(room.reservationFee * (logic.getValues('occupantsCount') || 1)).toLocaleString()}</span>
+                                    <span className="text-sm font-black text-primary">₱ {(room.reservationFee * (logic.watchedValues?.[8] ? room.capacity : (Number(logic.watchedValues?.[7]) || 1))).toLocaleString()}</span>
                                 </div>
-                                <p className="text-[9px] text-gray-400 font-medium italic">Calculated as ₱ {room.reservationFee.toLocaleString()} x {logic.getValues('occupantsCount') || 1} occupants</p>
+                                <p className="text-[9px] text-gray-400 font-medium italic">Calculated as ₱ {room.reservationFee.toLocaleString()} x {logic.watchedValues?.[8] ? `${room.capacity} (Full Room Buyout)` : `${logic.watchedValues?.[7] || 1} occupants`}</p>
                             </div>
                         </div>
 
@@ -333,14 +349,18 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
               <button
                 type="button"
                 onClick={logic.handleNextStep}
-                disabled={!logic.isStepCompleted(logic.currentStep)}
+                disabled={!logic.isStepCompleted(logic.currentStep) || logic.isProcessing || (logic.currentStep === 7 && logic.otpAttemptLimitReached)}
                 className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black text-sm transition-all active:scale-95 flex-1 ${
-                  logic.isStepCompleted(logic.currentStep)
+                  logic.isStepCompleted(logic.currentStep) && !logic.isProcessing && !(logic.currentStep === 7 && logic.otpAttemptLimitReached)
                     ? 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/25'
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                CONTINUE <FaChevronRight size={12} />
+                {logic.isProcessing && logic.currentStep === 7 ? (
+                  <><Loader2 className="w-4 h-4 animate-spin mr-1" /> VERIFYING...</>
+                ) : (
+                  <>CONTINUE <FaChevronRight size={12} /></>
+                )}
               </button>
             ) : (
               <button

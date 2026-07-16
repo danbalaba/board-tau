@@ -17,6 +17,12 @@ const admin = {
   password: "Password@123",
 };
 
+const superAdmin = {
+  name: "BoardTAU Super Admin",
+  email: "superadmin@boardtau.test",
+  password: "Password@123",
+};
+
 const studentNames = ["Maria Santos", "Juan Cruz", "Angela Garcia", "Pedro Reyes", "Kristine Dizon", "Robert Lee"];
 
 // LOAD SOURCE DATA
@@ -55,6 +61,19 @@ async function main() {
       ...admin,
       password: hashedPassword,
       role: "ADMIN",
+      emailVerified: new Date(),
+      city: "Tarlac City",
+      region: "Tarlac",
+      lastLogin: new Date()
+    }
+  });
+
+  // Create Super Admin
+  await prisma.user.create({
+    data: {
+      ...superAdmin,
+      password: hashedPassword,
+      role: "SUPER_ADMIN",
       emailVerified: new Date(),
       city: "Tarlac City",
       region: "Tarlac",

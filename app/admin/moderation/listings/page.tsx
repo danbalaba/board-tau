@@ -6,7 +6,13 @@ export const metadata: Metadata = {
   description: 'Vetting and authorizing property listing assets for platform release',
 };
 
-export default function ListingsReviewPage() {
+import { requireAdmin } from '@/lib/admin';
+import { requirePagePermission } from '@/lib/rbac';
+
+export default async function ListingsReviewPage() {
+  const admin = await requireAdmin();
+  await requirePagePermission(admin.id, "MODERATE_LISTINGS");
+
   return (
     <div className="flex-1 flex flex-col">
       <ListingsReviewDashboard />

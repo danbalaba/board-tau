@@ -73,7 +73,7 @@ export const getLandlordBookings = async (args?: {
   });
 
   const nextCursor = reservations.length > 20 ? reservations[20 - 1].id : null;
-  const list = reservations.slice(0, 20).map(reservation => ({
+  const list = reservations.slice(0, 20).map((reservation: any) => ({
     ...reservation,
     moveInDate: reservation.startDate,
     stayDuration: (reservation as any).durationInDays || 0,
@@ -223,7 +223,7 @@ export const updateBookingStatus = async (
     }
   }) as any;
 
-  // Notify the user about the booking status update
+  // Notify the user about the booking status update IF they are a registered user
   let title = "Booking Update";
   let description = `Your booking for ${updatedBooking.listing.title} has been updated to ${status.replace('_', ' ')}.`;
 
@@ -238,31 +238,26 @@ export const updateBookingStatus = async (
     description = `We hope you enjoyed your stay at ${updatedBooking.listing.title}. Don't forget to leave a review!`;
   }
 
-  const notifications = [
-    createNotification({
-      userId: booking.userId,
-      type: "reservation",
-      title,
-      description,
-      link: `/reservations?id=${updatedBooking.id}`,
-    })
-  ];
+  const notifications = [];
 
-  if (status === "CHECKED_IN") {
+  if (booking.userId) {
     notifications.push(
       createNotification({
-        userId: updatedBooking.listing.userId,
+        userId: booking.userId,
         type: "reservation",
-        title: "Check-in Successful",
-        description: `${updatedBooking.user.name || 'A guest'} has been checked in to ${updatedBooking.listing.title}.`,
-        link: "/landlord/bookings",
+        title,
+        description,
+        link: `/reservations?id=${updatedBooking.id}`,
       })
     );
   }
 
-  await Promise.all(notifications);
 
-  // 3. Send Email Notification to Tenant
+  if (notifications.length > 0) {
+    await Promise.all(notifications);
+  }
+
+  // 3. Send Email Notification to Tenant (ONLY if they have an email)
   try {
     if (updatedBooking.user && updatedBooking.user.email) {
       await sendReservationNotificationEmail(
@@ -276,18 +271,22 @@ export const updateBookingStatus = async (
 
     // 4. Special case: Notify Landlord of check-in via email
     if (status === "CHECKED_IN") {
-      const landlord = await db.user.findUnique({
+      const landlordUser = await db.user.findUnique({
         where: { id: updatedBooking.listing.userId },
         select: { email: true, name: true }
       });
 
-      if (landlord && landlord.email) {
+      if (landlordUser && landlordUser.email) {
+        const guestName = updatedBooking.isWalkIn 
+          ? updatedBooking.guestName || 'A walk-in guest' 
+          : updatedBooking.user?.name || 'A guest';
+
         await sendReservationNotificationEmail(
-          landlord,
+          landlordUser,
           updatedBooking.listing,
           status,
           "Check-in Successful",
-          `${updatedBooking.user.name || 'A guest'} has been successfully checked in to your property.`,
+          `${guestName} has been successfully checked in to your property.`,
           true,
           `${baseUrl}/landlord/bookings`
         );

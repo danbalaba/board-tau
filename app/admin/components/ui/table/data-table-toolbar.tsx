@@ -10,7 +10,6 @@ import { DataTableViewOptions } from "./data-table-view-options";
 import { Button } from "../button";
 import { Input } from "../input";
 import { cn } from "../../../lib/utils";
-import { Cross2Icon } from '@radix-ui/react-icons';
 import { SearchIcon, X } from 'lucide-react';
 
 interface DataTableToolbarProps<TData> extends React.ComponentProps<'div'> {
@@ -39,7 +38,7 @@ export function DataTableToolbar<TData>({
       role='toolbar'
       aria-orientation='horizontal'
       className={cn(
-        'flex w-full items-center justify-between gap-2 p-1 px-3 mb-4 bg-muted/20 rounded-lg border border-border/10 h-12',
+        'flex w-full items-center justify-between gap-2 p-2 px-4 mb-4 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-[1.5rem] border border-gray-100 dark:border-gray-800 shadow-sm min-h-12',
         className
       )}
       {...props}
@@ -78,6 +77,29 @@ function DataTableToolbarFilter<TData>({
 }: DataTableToolbarFilterProps<TData>) {
   const columnMeta = column.columnDef.meta;
 
+  // Local state so text inputs feel instant while debouncing the actual API call
+  const [inputValue, setInputValue] = React.useState<string>(
+    (column.getFilterValue() as string) ?? ''
+  );
+
+  // Sync external resets (e.g., "Clear Filters" button) back to local input state
+  const externalValue = (column.getFilterValue() as string) ?? '';
+  React.useEffect(() => {
+    if (columnMeta?.variant === 'text' && externalValue !== inputValue) {
+      setInputValue(externalValue);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalValue]);
+
+  // 500ms debounce before pushing the filter value to the table (and to the server)
+  React.useEffect(() => {
+    if (columnMeta?.variant !== 'text') return;
+    const timer = setTimeout(() => {
+      column.setFilterValue(inputValue || undefined);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [inputValue, column, columnMeta?.variant]);
+
   const onFilterRender = React.useCallback(() => {
     if (!columnMeta?.variant) return null;
 
@@ -85,13 +107,26 @@ function DataTableToolbarFilter<TData>({
       case 'text':
         return (
           <div className="relative group">
-            <SearchIcon className="absolute left-2.5 top-2.5 h-3 w-3 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
             <Input
               placeholder={columnMeta.placeholder ?? columnMeta.label}
-              value={(column.getFilterValue() as string) ?? ''}
-              onChange={(event) => column.setFilterValue(event.target.value)}
-              className='h-8 w-40 lg:w-64 pl-8 text-xs bg-background/80 shadow-none border-solid focus-visible:ring-1'
+              value={inputValue}
+              onChange={(event) => setInputValue(event.target.value)}
+              className='h-9 w-40 lg:w-56 pl-9 pr-8 text-[13px] bg-white/50 dark:bg-gray-900/50 backdrop-blur-md rounded-full shadow-sm border-gray-200 dark:border-gray-800 focus-visible:ring-emerald-500/30 focus-visible:border-emerald-500 focus-visible:ring-2 transition-all duration-200 text-gray-700 dark:text-gray-200'
             />
+            {inputValue && (
+              <button
+                type="button"
+                onClick={() => {
+                  setInputValue('');
+                  column.setFilterValue(undefined);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                aria-label="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         );
 
@@ -146,7 +181,7 @@ function DataTableToolbarFilter<TData>({
       default:
         return null;
     }
-  }, [column, columnMeta]);
+  }, [column, columnMeta, inputValue]);
 
   return onFilterRender();
 }

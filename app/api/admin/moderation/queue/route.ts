@@ -9,12 +9,19 @@ export async function GET(req: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'ADMIN') {
+    if (!session || (session.user?.role !== 'ADMIN' && session.user?.role !== 'SUPER_ADMIN')) {
       return NextResponse.json(
         ApiResponseFormatter.error('Unauthorized', 'You must be an admin to access this resource'),
         { status: 401 }
       );
     }
+
+    const { hasPermission } = await import("@/lib/rbac");
+    const permitted = await hasPermission(session.user.id, "VIEW_MODERATION_QUEUE");
+    if (!permitted) return NextResponse.json(
+      ApiResponseFormatter.error('Forbidden', 'Missing permission VIEW_MODERATION_QUEUE'),
+      { status: 403 }
+    );
 
     // Parse query parameters
     const { searchParams } = new URL(req.url);
@@ -32,7 +39,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch pending items with count
-    const [pendingItems, total] = await Promise.all([
+    const [pendingItems, counts, recentLogs] = await Promise.all([
       // Fetch all pending moderation items from different models
       (async () => {
         const [hostApplications, listings, reviews] = await Promise.all([
@@ -40,7 +47,7 @@ export async function GET(req: NextRequest) {
             where: { status: 'pending' },
             include: { user: true },
             orderBy: { createdAt: 'desc' },
-          }).then(items => items.map(item => ({
+          }).then((items: any) => items.map((item: any) => ({
             id: item.id,
             entityType: 'hostApplication',
             title: `Host Application: ${item.user?.name}`,
@@ -53,7 +60,7 @@ export async function GET(req: NextRequest) {
             where: { status: 'pending' },
             include: { user: true },
             orderBy: { createdAt: 'desc' },
-          }).then(items => items.map(item => ({
+          }).then((items: any) => items.map((item: any) => ({
             id: item.id,
             entityType: 'listing',
             title: item.title,
@@ -66,7 +73,7 @@ export async function GET(req: NextRequest) {
             where: { status: 'pending' },
             include: { user: true, listing: true },
             orderBy: { createdAt: 'desc' },
-          }).then(items => items.map(item => ({
+          }).then((items: any) => items.map((item: any) => ({
             id: item.id,
             entityType: 'review',
             title: `Review: ${item.listing?.title}`,
@@ -81,23 +88,56 @@ export async function GET(req: NextRequest) {
           .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
           .slice(skip, skip + perPage);
       })(),
-      // Get total count
+      // Get individual counts
       (async () => {
-        const [hostCount, listingCount, reviewCount] = await Promise.all([
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        const [
+          hostCount, listingCount, reviewCount,
+          hostCountLastWeek, listingCountLastWeek, reviewCountLastWeek
+        ] = await Promise.all([
           db.hostApplication.count({ where: { status: 'pending' } }),
           db.listing.count({ where: { status: 'pending' } }),
           db.review.count({ where: { status: 'pending' } }),
+          db.hostApplication.count({ where: { status: 'pending', createdAt: { lt: sevenDaysAgo } } }),
+          db.listing.count({ where: { status: 'pending', createdAt: { lt: sevenDaysAgo } } }),
+          db.review.count({ where: { status: 'pending', createdAt: { lt: sevenDaysAgo } } }),
         ]);
-        return hostCount + listingCount + reviewCount;
+        return {
+          hostCount,
+          listingCount,
+          reviewCount,
+          total: hostCount + listingCount + reviewCount,
+          hostCountLastWeek,
+          listingCountLastWeek,
+          reviewCountLastWeek,
+          totalLastWeek: hostCountLastWeek + listingCountLastWeek + reviewCountLastWeek
+        };
       })(),
+      // Fetch recent Moderation Logs
+      db.moderationLog.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        include: { admin: { select: { name: true, email: true, image: true } } }
+      })
     ]);
 
     return NextResponse.json(
-      ApiResponseFormatter.success(pendingItems, 'Moderation queue fetched successfully', {
-        total,
+      ApiResponseFormatter.success({ pendingItems, recentLogs }, 'Moderation queue fetched successfully', {
+        total: counts.total,
         page,
         perPage,
-        totalPages: Math.ceil(total / perPage),
+        totalPages: Math.ceil(counts.total / perPage),
+        stats: {
+          pendingHosts: counts.hostCount,
+          pendingListings: counts.listingCount,
+          pendingReviews: counts.reviewCount,
+          pendingHostsLastWeek: counts.hostCountLastWeek,
+          pendingListingsLastWeek: counts.listingCountLastWeek,
+          pendingReviewsLastWeek: counts.reviewCountLastWeek,
+          totalLastWeek: counts.totalLastWeek
+        }
       })
     );
   } catch (error) {

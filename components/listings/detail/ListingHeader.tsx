@@ -16,10 +16,10 @@ interface ListingHeaderProps {
   reviewCount: number;
   listingId: string;
   hasFavorited: boolean;
-  category?: {
+  categories?: {
     label: string;
     value: string;
-  } | null;
+  }[] | null;
 }
 
 const SHARE_BUTTONS: { label: string; icon: React.ElementType; action: string }[] = [
@@ -39,9 +39,8 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
   reviewCount,
   listingId,
   hasFavorited,
-  category,
+  categories: listingCategories,
 }) => {
-  const CategoryIcon = category ? categories.find(c => c.value === category.value)?.icon : null;
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -140,15 +139,19 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
               </motion.div>
             )}
 
-            {category && (
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 text-xs font-black uppercase tracking-widest shadow-sm"
-              >
-                {CategoryIcon && <CategoryIcon size={14} className="text-blue-500" />}
-                {category.label}
-              </motion.div>
-            )}
+            {listingCategories && listingCategories.map((cat, idx) => {
+              const CategoryIcon = categories.find(c => c.value === cat.value)?.icon;
+              return (
+                <motion.div
+                  key={idx}
+                  whileHover={{ scale: 1.05 }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 text-xs font-black uppercase tracking-widest shadow-sm"
+                >
+                  {CategoryIcon && <CategoryIcon size={14} className="text-blue-500" />}
+                  {cat.label}
+                </motion.div>
+              );
+            })}
           </div>
 
           {/* Title, Location & Action Buttons Row */}

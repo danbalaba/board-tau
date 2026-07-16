@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Heading from "@/components/common/Heading";
 import InquiryCard from "@/components/inquiries/InquiryCard";
 import InquiryDetailsModal from "@/components/inquiries/InquiryDetailsModal";
@@ -30,8 +30,7 @@ import ModernSelect from "@/components/common/ModernSelect";
 import ModernLoader from "@/components/common/ModernLoader";
 import Modal from "@/components/modals/Modal";
 import ConfirmModal from "@/components/common/ConfirmModal";
-import { getUnreadNotifications } from "@/services/notification";
-import { Notification } from "@prisma/client";
+import { useNotification } from "@/context/NotificationContext";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -56,6 +55,7 @@ interface InquiryRoom {
   id: string;
   name: string;
   price: number;
+  capacity: number;
   roomType: string;
   images: Array<{
     id: string;
@@ -78,6 +78,7 @@ interface Inquiry {
   paymentStatus: string;
   isApproved: boolean;
   reservationFee: number;
+  isSoloBuyout?: boolean;
   createdAt: string;
   updatedAt: string;
   rejectionReason?: string;
@@ -109,11 +110,14 @@ const sortOptions = [
 
 export default function InquiriesClient({ initialInquiries, currentUserId }: InquiriesClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { notifications, markAsRead } = useNotification();
   const [inquiries, setInquiries] = useState<Inquiry[]>(initialInquiries);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortBy, setSortBy] = useState("newest");
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,25 +128,21 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
   const [cancelReason, setCancelReason] = useState("");
   const [inquiryToCancel, setInquiryToCancel] = useState<Inquiry | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState<Notification[]>([]);
+  const unreadNotifications = notifications.filter(n => !n.isRead && n.type === "inquiry");
+  const hasAutoOpened = useRef(false);
 
+  // Auto-open modal if ID is in URL
   useEffect(() => {
-    const fetchNotifications = async () => {
-      const data = await getUnreadNotifications();
-      setUnreadNotifications(data);
-    };
-    fetchNotifications();
-
-    // Listen for notification-cleared event to sync state immediately
-    const handleNotificationCleared = () => {
-      fetchNotifications();
-    };
-
-    window.addEventListener("notification-cleared", handleNotificationCleared);
-    return () => {
-      window.removeEventListener("notification-cleared", handleNotificationCleared);
-    };
-  }, []);
+    const inquiryIdFromUrl = searchParams.get("id");
+    if (inquiryIdFromUrl && !hasAutoOpened.current && inquiries.length > 0) {
+      const match = inquiries.find(i => i.id === inquiryIdFromUrl);
+      if (match) {
+        setSelectedInquiry(match);
+        setShowDetailsModal(true);
+        hasAutoOpened.current = true;
+      }
+    }
+  }, [searchParams, inquiries]);
 
   useEffect(() => {
     // Air-gap buffer (800ms) to ensure root dots loader is completely gone
@@ -353,7 +353,10 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
                     <InquiryCard
                       inquiry={inquiry}
                       hasNotification={hasNotification}
-                      onViewDetails={() => setSelectedInquiry(inquiry)}
+                      onViewDetails={() => {
+                        setSelectedInquiry(inquiry);
+                        setShowDetailsModal(true);
+                      }}
                       onCancel={
                         inquiry.status === "PENDING"
                           ? () => handleCancelClick(inquiry)
@@ -367,25 +370,27 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
           )}
 
           {/* Inquiry Details Modal */}
-          {selectedInquiry && (
-            <InquiryDetailsModal
-              inquiry={selectedInquiry}
-              isOpen={!!selectedInquiry}
-              currentUserId={currentUserId}
-              notification={unreadNotifications.find(n => n.link.includes(selectedInquiry.id))}
-              onClose={() => {
-                // Optimistically clear the notification for this specific inquiry
-                setUnreadNotifications(prev => prev.filter(n => !n.link.includes(selectedInquiry.id)));
-                setSelectedInquiry(null);
-                router.refresh();
-              }}
-              onCancel={
-                selectedInquiry.status === "PENDING"
-                  ? () => handleCancelClick(selectedInquiry)
-                  : undefined
+          <InquiryDetailsModal
+            inquiry={selectedInquiry || inquiries[0] || ({} as any)}
+            isOpen={showDetailsModal}
+            currentUserId={currentUserId}
+            notification={selectedInquiry ? unreadNotifications.find(n => n.link.includes(selectedInquiry.id)) : undefined}
+            onClose={() => {
+              setShowDetailsModal(false);
+              setTimeout(() => setSelectedInquiry(null), 300);
+            }}
+            onMarkAsRead={() => {
+              if (selectedInquiry) {
+                const notif = unreadNotifications.find(n => n.link.includes(selectedInquiry.id));
+                if (notif) markAsRead(notif.id, "inquiry");
               }
-            />
-          )}
+            }}
+            onCancel={
+              selectedInquiry?.status === "PENDING"
+                ? () => handleCancelClick(selectedInquiry)
+                : undefined
+            }
+          />
 
           {/* Global Cancellation Confirmation */}
           <Modal 

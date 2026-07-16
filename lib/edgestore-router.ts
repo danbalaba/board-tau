@@ -58,6 +58,32 @@ export const edgeStoreRouter = es.router({
         { userId: { path: "owner" } },
       ],
     }),
+
+  systemBackups: es
+    .fileBucket({
+      maxSize: 1024 * 1024 * 50,
+      accept: ['application/json'],
+    })
+    .beforeUpload(({ ctx }) => {
+      return ctx.userId !== 'unauthenticated' && ctx.role === 'SUPER_ADMIN';
+    })
+    .accessControl({
+      OR: [
+        { role: { eq: 'SUPER_ADMIN' } },
+      ],
+    }),
+
+  // New bucket for cron-generated backups — no accessControl so server can fetch
+  // Security is enforced by: (1) beforeUpload guard + (2) our API session check on download
+  cronBackups: es
+    .fileBucket({
+      maxSize: 1024 * 1024 * 50,
+      accept: ['application/json'],
+    })
+    .beforeUpload(({ ctx }) => {
+      // Only allow the cron system (which passes SUPER_ADMIN role) to upload
+      return ctx.role === 'SUPER_ADMIN';
+    }),
 });
 
 export type EdgeStoreRouter = typeof edgeStoreRouter;

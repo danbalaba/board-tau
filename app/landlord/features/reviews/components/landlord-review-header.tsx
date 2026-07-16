@@ -25,6 +25,7 @@ import {
 } from '@/app/admin/components/ui/dropdown-menu';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
 import { prepareDataForExport, exportToCSV, exportToExcel } from '@/utils/export-utils';
+import { DateRange } from 'react-day-picker';
 import { LandlordReviewSearch } from './landlord-review-search';
 import { Review } from '../hooks/use-review-logic';
 
@@ -53,11 +54,24 @@ export function LandlordReviewHeader({
   setSearchQuery,
   rawReviews
 }: LandlordReviewHeaderProps) {
-  const handleGenerateCSV = async () => {
-    const reportData = prepareDataForExport(rawReviews, 'review');
-    const totalReviews = rawReviews.length;
+  const handleGenerateCSV = async (dateRange?: DateRange) => {
+    let exportData = rawReviews;
+    if (dateRange?.from) {
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to;
+      exportData = exportData.filter(r => {
+        const createdAt = new Date(r.createdAt);
+        if (toDate) {
+          return createdAt >= fromDate && createdAt <= toDate;
+        }
+        return createdAt >= fromDate;
+      });
+    }
+
+    const reportData = prepareDataForExport(exportData, 'review');
+    const totalReviews = exportData.length;
     const avgRating = totalReviews > 0 
-      ? rawReviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews 
+      ? exportData.reduce((acc, r) => acc + r.rating, 0) / totalReviews 
       : 0;
     const metadata = {
       reportTitle: 'Property Reputation Business Report',
@@ -71,11 +85,24 @@ export function LandlordReviewHeader({
     exportToCSV(reportData, `Review_Report_${new Date().toLocaleDateString()}`, metadata);
   };
 
-  const handleGenerateExcel = async () => {
-    const reportData = prepareDataForExport(rawReviews, 'review');
-    const totalReviews = rawReviews.length;
+  const handleGenerateExcel = async (dateRange?: DateRange) => {
+    let exportData = rawReviews;
+    if (dateRange?.from) {
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to;
+      exportData = exportData.filter(r => {
+        const createdAt = new Date(r.createdAt);
+        if (toDate) {
+          return createdAt >= fromDate && createdAt <= toDate;
+        }
+        return createdAt >= fromDate;
+      });
+    }
+
+    const reportData = prepareDataForExport(exportData, 'review');
+    const totalReviews = exportData.length;
     const avgRating = totalReviews > 0 
-      ? rawReviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews 
+      ? exportData.reduce((acc, r) => acc + r.rating, 0) / totalReviews 
       : 0;
     const metadata = {
       reportTitle: 'Property Reputation Business Report',

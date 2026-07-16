@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
 import { hasPermission } from "@/lib/rbac";
 import { sendInquirySubmissionEmail, sendInquiryReceiptEmail } from "@/services/email/notifications";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function POST(request: Request) {
   try {
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
       idAttachmentUrl,
       paymentMethod,
       contactInfo,
+      isSoloBuyout,
     } = data;
 
     // Validate required fields
@@ -119,14 +121,15 @@ export async function POST(request: Request) {
         roomId,
         moveInDate: startDate,
         checkOutDate: endDate,
-        occupantsCount: occupantsCount || 1,
+        occupantsCount: isSoloBuyout ? 1 : (occupantsCount || 1),
         role: roleEnum as any,
         message: message || "",
         profilePhotoUrl: profilePhotoUrl || null,
         idAttachmentUrl: idAttachmentUrl || null,
         paymentMethod: paymentMethod || null,
         contactInfo: contactInfo || null,
-        reservationFee: ((room as any).reservationFee || 0) * (occupantsCount || 1), // Multiplier logic added
+        isSoloBuyout: isSoloBuyout || false,
+        reservationFee: ((room as any).reservationFee || 0) * (isSoloBuyout ? room.capacity : (occupantsCount || 1)),
         status: "PENDING",
         paymentStatus: "UNPAID",
       },
@@ -175,6 +178,25 @@ export async function POST(request: Request) {
       // We don't block the inquiry if notification fails, just log it
     }
 
+    // Track inquiry creation server-side
+    try {
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: user.id,
+        event: "inquiry_created",
+        properties: {
+          listing_id: listingId,
+          room_id: roomId,
+          occupants_count: occupantsCount,
+          payment_method: paymentMethod,
+          is_solo_buyout: isSoloBuyout,
+        },
+      });
+      await posthog.flush();
+    } catch (phErr) {
+      console.error("PostHog inquiry_created capture failed:", phErr);
+    }
+
     console.log("Inquiry created successfully:", inquiry);
     return NextResponse.json(inquiry);
   } catch (error: any) {
@@ -189,6 +211,11 @@ export async function GET(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const canView = await hasPermission(user.id, 'VIEW_INQUIRIES');
+    if (!canView) {
+      return NextResponse.json({ error: "Forbidden", message: "Missing permission VIEW_INQUIRIES" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);

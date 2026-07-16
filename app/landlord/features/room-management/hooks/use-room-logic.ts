@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { DateRange } from 'react-day-picker';
 
 export interface Room {
   id: string;
@@ -54,8 +55,12 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
     capacity: 'all',
     isArchived: false,
     sortBy: 'newest',
-    searchQuery: ''
+    searchQuery: '',
   });
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // --- Search with debounce ---
   const [searchInput, setSearchInput] = useState('');
@@ -68,6 +73,11 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
       setFilters(prev => ({ ...prev, searchQuery: val }));
     }, 300);
   }, []);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
 
   const queryClient = useQueryClient();
 
@@ -212,6 +222,11 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
     return rooms.filter(r => !!r.isArchived === filters.isArchived);
   }, [rooms, filters.isArchived]);
 
+  const paginatedRooms = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredRooms.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredRooms, currentPage, itemsPerPage]);
+
   const archiveMutation = useMutation({
     mutationFn: async ({ id, isArchived }: { id: string; isArchived: boolean }) => {
       const res = await fetch(`/api/landlord/rooms/${id}/archive`, {
@@ -246,7 +261,7 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
   };
 
   const hasMore = !!hasNextPage;
-  const totalCount = rooms.length; // Approximate local total
+  const totalCount = filteredRooms.length; // Approximate local total
 
   const handleLoadMore = useCallback(async () => {
     if (!hasNextPage || isFetchingNextPage) return;
@@ -292,33 +307,57 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
     setSearchInput('');
   }, []);
 
-  const handleGenerateReport = async () => {
+  const handleGenerateReport = async (dateRange?: DateRange) => {
     try {
-      const result = filteredRooms;
-      const totalUnits = result.length;
-      const totalCapacity = result.reduce((acc, r) => acc + (r.capacity || 0), 0);
-      const avgPrice = result.length > 0 ? result.reduce((acc, r) => acc + r.price, 0) / result.length : 0;
+      let exportData = filteredRooms;
+      if (dateRange?.from) {
+        const fromDate = dateRange.from;
+        const toDate = dateRange.to;
+        exportData = exportData.filter(r => {
+          const createdAt = new Date(r.createdAt);
+          if (toDate) {
+            return createdAt >= fromDate && createdAt <= toDate;
+          }
+          return createdAt >= fromDate;
+        });
+      }
 
-      const summaryData = [
-        { 
-          label: 'Room Inventory', 
-          value: `${totalUnits} Units`,
-          subValue: 'Total managed'
-        },
-        { 
-          label: 'Total Capacity', 
-          value: `${totalCapacity} Pax`,
-          subValue: 'Max occupancy'
-        },
-        { 
-          label: 'Avg Rate', 
-          value: `PHP ${Math.round(avgPrice).toLocaleString()}`,
-          subValue: 'Per room/bed'
-        }
-      ];
+      const totalUnits = exportData.length;
+      let summaryData: any[] = [];
+      let subtitle = `Detailed auditing for ${totalUnits} active room listings`;
+
+      if (filters.type !== 'all') {
+        const totalCapacity = exportData.reduce((acc, r) => acc + (r.capacity || 0), 0);
+        summaryData = [
+          { label: 'Room Type', value: `${filters.type}` },
+          { label: 'Inventory', value: `${totalUnits} Units` },
+          { label: 'Capacity', value: `${totalCapacity} Pax` }
+        ];
+        subtitle = `Auditing ${filters.type} inventory for ${totalUnits} rooms`;
+      } 
+      else if (filters.property !== 'all') {
+        const avgPrice = totalUnits > 0 ? exportData.reduce((acc, r) => acc + r.price, 0) / totalUnits : 0;
+        summaryData = [
+          { label: 'Property Filter', value: `Active` },
+          { label: 'Inventory', value: `${totalUnits} Units` },
+          { label: 'Avg Rate', value: `₱${Math.round(avgPrice).toLocaleString()}` }
+        ];
+        subtitle = `Auditing property inventory for ${totalUnits} rooms`;
+      }
+      else {
+        // Global 'all' view
+        const totalCapacity = exportData.reduce((acc, r) => acc + (r.capacity || 0), 0);
+        const avgPrice = totalUnits > 0 ? exportData.reduce((acc, r) => acc + r.price, 0) / totalUnits : 0;
+        
+        summaryData = [
+          { label: 'Room Inventory', value: `${totalUnits} Units` },
+          { label: 'Total Capacity', value: `${totalCapacity} Pax` },
+          { label: 'Avg Rate', value: `₱${Math.round(avgPrice).toLocaleString()}` }
+        ];
+      }
 
       const columns = ['Room Name', 'Property', 'Type', 'Price (PHP)', 'Capacity', 'Status'];
-      const data = result.map(r => [
+      const data = exportData.map(r => [
         r.name,
         r.propertyTitle,
         r.roomType,
@@ -329,7 +368,7 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
 
       await generateTablePDF('Rooms_Report', columns, data, {
         title: 'Room Inventory Report',
-        subtitle: `Detailed auditing for ${totalUnits} active room listings`,
+        subtitle: subtitle,
         author: 'Landlord Management System',
         summaryData: summaryData
       });
@@ -343,8 +382,12 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
 
   return {
     // Room data
-    rooms: filteredRooms,
+    rooms: paginatedRooms,
     totalCount,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    setItemsPerPage,
     // Modals
     deleteModalOpen,
     setDeleteModalOpen,

@@ -3,6 +3,8 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, Calendar, CreditCard, Check, ArrowRight, Eye, X, MapPin, Star } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
+import { generateConfirmationSlipPDF } from "@/utils/slipGenerator";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 
 interface ReservationListing {
     id: string;
@@ -58,6 +60,8 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
     onReview,
     hasNotification,
 }) => {
+    const responsiveToast = useResponsiveToast();
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString("en-US", {
             year: "numeric",
@@ -265,6 +269,24 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
                         <Eye size={14} className="text-primary group-hover/btn:scale-110 transition-transform" />
                         Details
                     </button>
+
+                    {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
+                        <button
+                            onClick={() => {
+                                const name = (reservation as any).guestName || "Tenant";
+                                const email = "tenant@example.com";
+                                responsiveToast.loading("Generating Boarding Pass...");
+                                generateConfirmationSlipPDF(reservation, name, email)
+                                    .then(() => responsiveToast.success("Downloaded successfully!"))
+                                    .catch(() => responsiveToast.error("Failed to generate."));
+                            }}
+                            title="Download Confirmation Slip"
+                            className="flex-[0.5] py-2.5 px-4 font-bold text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-100 dark:border-emerald-800/30 transition-all flex justify-center items-center group/dl"
+                        >
+                            <Check size={14} className="hidden" /> {/* Keep spacing layout */}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover/dl:translate-y-0.5 transition-transform"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        </button>
+                    )}
 
                     {canPay && onPayNow && (
                         <button

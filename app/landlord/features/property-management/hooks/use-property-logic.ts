@@ -6,6 +6,7 @@ import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
 import { getAllLandlordProperties } from '@/services/landlord/properties';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { DateRange } from 'react-day-picker';
 
 export interface Property {
   id: string;
@@ -67,6 +68,10 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [isArchived, setIsArchived] = useState(false);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   
   // Modals
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -77,6 +82,11 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
   // Search state
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, categoryFilter, sortBy, isArchived]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -167,6 +177,11 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
     });
   }, [listings, sortBy, searchQuery, categoryFilter, isArchived]);
 
+  const paginatedListings = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredListings.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredListings, currentPage, itemsPerPage]);
+
   const handleConfirmArchive = async () => {
     if (!selectedProperty) return;
     await archiveMutation.mutateAsync({ 
@@ -189,22 +204,46 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
     setArchiveModalOpen(false);
   }, []);
 
-  const handleGenerateReport = async () => {
+  const handleGenerateReport = async (dateRange?: DateRange) => {
     try {
-      const allProperties = await getAllLandlordProperties();
-      // ... (Rest of report generation logic remains the same)
-      const result = [...allProperties]; // Simplified for now to avoid redundant code
-      
-      const totalValue = result.reduce((acc, p) => acc + p.price, 0);
-      const totalRooms = result.reduce((acc, p) => acc + (p.roomCount || 0), 0);
-      const summaryData = [
-        { label: 'Portfolio Value', value: `PHP ${totalValue.toLocaleString()}`, subValue: 'Total market value' },
-        { label: 'Room Inventory', value: `${totalRooms} Units`, subValue: `${result.length} Properties` },
-        { label: 'Avg Rate', value: `PHP ${Math.round(totalValue/result.length).toLocaleString()}`, subValue: 'Per listing' }
-      ];
+      let exportData = filteredListings;
+      if (dateRange?.from) {
+        const fromDate = dateRange.from;
+        const toDate = dateRange.to;
+        exportData = exportData.filter(p => {
+          const createdAt = new Date(p.createdAt);
+          if (toDate) {
+            return createdAt >= fromDate && createdAt <= toDate;
+          }
+          return createdAt >= fromDate;
+        });
+      }
+
+      const totalValue = exportData.reduce((acc, p) => acc + p.price, 0);
+      const totalRooms = exportData.reduce((acc, p) => acc + (p.roomCount || 0), 0);
+      const totalListings = exportData.length;
+      let summaryData: any[] = [];
+      let subtitle = `Comprehensive auditing report for ${totalListings} active assets`;
+
+      if (categoryFilter !== 'all') {
+        const avgPrice = totalListings > 0 ? totalValue / totalListings : 0;
+        summaryData = [
+          { label: 'Category', value: `${categoryFilter}` },
+          { label: 'Portfolio Value', value: `₱${totalValue.toLocaleString()}` },
+          { label: 'Avg Rate', value: `₱${Math.round(avgPrice).toLocaleString()}` }
+        ];
+        subtitle = `Auditing ${categoryFilter} properties for ${totalListings} assets`;
+      } else {
+        const avgPrice = totalListings > 0 ? totalValue / totalListings : 0;
+        summaryData = [
+          { label: 'Portfolio Value', value: `PHP ${totalValue.toLocaleString()}`, subValue: 'Total market value' },
+          { label: 'Room Inventory', value: `${totalRooms} Units`, subValue: `${totalListings} Properties` },
+          { label: 'Avg Rate', value: `PHP ${Math.round(avgPrice).toLocaleString()}`, subValue: 'Per listing' }
+        ];
+      }
 
       const columns = ['Title', 'Price (PHP)', 'Status', 'Rooms', 'Baths', 'Date Added'];
-      const data = result.map(p => [
+      const data = exportData.map(p => [
         p.title, p.price.toLocaleString(), p.status.toUpperCase(), 
         p.roomCount.toString(), p.bathroomCount.toString(), 
         new Date(p.createdAt).toLocaleDateString()
@@ -212,7 +251,7 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
 
       await generateTablePDF('Properties_Report', columns, data, {
         title: 'Property Portfolio Report',
-        subtitle: `Comprehensive auditing report for ${result.length} active assets`,
+        subtitle: subtitle,
         author: 'Landlord Management System',
         summaryData: summaryData
       });
@@ -223,7 +262,12 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
   };
 
   return {
-    listings: filteredListings,
+    listings: paginatedListings,
+    totalListings: filteredListings.length,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    setItemsPerPage,
     nextCursor: infiniteData?.pages[infiniteData.pages.length - 1].nextCursor,
     isLoadingMore: isFetchingNextPage,
     deleteModalOpen,

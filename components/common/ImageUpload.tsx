@@ -103,7 +103,7 @@ const getSafeImageSrc = (src: string | null | undefined): string => {
           <SpinnerMini className="w-[32px] h-[32px] text-red-600" />
         </div>
       )}
-      {image ? (
+      {getSafeImageSrc(image) ? (
         <div className="absolute inset-0 w-full h-full">
           <Image
             fill

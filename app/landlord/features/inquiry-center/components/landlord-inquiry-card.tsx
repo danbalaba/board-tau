@@ -128,7 +128,14 @@ export function LandlordInquiryCard({
           <div className="flex items-center gap-4 mb-5 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-[1.5rem] border border-gray-100 dark:border-gray-800">
             <div className="flex-1">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Room Interest</p>
-              <p className="text-sm font-black text-gray-900 dark:text-white truncate">{inquiry.room.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-black text-gray-900 dark:text-white truncate">{inquiry.room.name}</p>
+                {inquiry.isSoloBuyout && (
+                  <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[8px] font-black uppercase tracking-widest whitespace-nowrap">
+                    Solo Buyout
+                  </span>
+                )}
+              </div>
             </div>
             <div className="text-right shrink-0">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Rate</p>

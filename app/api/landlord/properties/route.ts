@@ -11,9 +11,17 @@ import {
 } from "@/services/landlord/properties";
 import { requireLandlord } from "@/lib/landlord";
 import { cache } from "@/lib/redis";
+import { hasPermission } from "@/lib/rbac";
+import { getCurrentUser } from "@/services/user";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    const permitted = await hasPermission(user.id, "VIEW_PROPERTIES");
+    if (!permitted) return NextResponse.json({ success: false, error: 'Forbidden: Missing VIEW_PROPERTIES' }, { status: 403 });
+
     const searchParams = request.nextUrl.searchParams;
     const cursor = searchParams.get("cursor") || undefined;
     const all = searchParams.get("all") === "true";
@@ -59,6 +67,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    const permitted = await hasPermission(user.id, "CREATE_PROPERTY");
+    if (!permitted) return NextResponse.json({ success: false, error: 'Forbidden: Missing CREATE_PROPERTY' }, { status: 403 });
+
     const data = await request.json();
 
     const result = await createProperty(data);
@@ -68,6 +81,22 @@ export async function POST(request: NextRequest) {
       await cache.del("landlord:properties");
       // Also invalidate listings cache since properties might be listed
       await cache.del("listings:{}");
+
+      // Track listing creation server-side
+      try {
+        const posthog = getPostHogClient();
+        posthog.capture({
+          distinctId: user.id,
+          event: "listing_created",
+          properties: {
+            listing_id: (result.data as any)?.id,
+            listing_title: (result.data as any)?.title,
+          },
+        });
+        await posthog.flush();
+      } catch (phErr) {
+        console.error("PostHog listing_created capture failed:", phErr);
+      }
 
       return NextResponse.json({
         success: true,
@@ -96,6 +125,11 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    const permitted = await hasPermission(user.id, "UPDATE_PROPERTY");
+    if (!permitted) return NextResponse.json({ success: false, error: 'Forbidden: Missing UPDATE_PROPERTY' }, { status: 403 });
+
     const { searchParams } = new URL(request.url);
     const propertyId = searchParams.get("id");
 
@@ -147,6 +181,9 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const landlord = await requireLandlord();
+    const permitted = await hasPermission(landlord.id, "UPDATE_PROPERTY");
+    if (!permitted) return NextResponse.json({ success: false, error: 'Forbidden: Missing UPDATE_PROPERTY' }, { status: 403 });
+
     const { searchParams } = new URL(request.url);
     const propertyId = searchParams.get("id");
 
@@ -186,11 +223,11 @@ export async function DELETE(request: NextRequest) {
 
     // 3. HARD DELETE FLOW (Recursive Wipe)
     // Gather all Public Images (Gallery + Thumbnail)
-    const listingImageUrls = listing.images.map(img => img.url);
+    const listingImageUrls = listing.images.map((img: any) => img.url);
     if (listing.imageSrc) listingImageUrls.push(listing.imageSrc);
     
     // Gather all Room Images
-    const roomImageUrls = listing.rooms.flatMap(room => room.images.map(img => img.url));
+    const roomImageUrls = listing.rooms.flatMap((room: any) => room.images.map((img: any) => img.url));
     const publicFileUrls = [...new Set([...listingImageUrls, ...roomImageUrls])].filter(Boolean);
 
     // Gather all Identity Documents (Legal)

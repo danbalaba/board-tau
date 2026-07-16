@@ -4,44 +4,44 @@ import React, { useState, useEffect } from 'react';
 import Modal from '@/components/modals/Modal';
 import { Button } from '@/app/admin/components/ui/button';
 import { 
-  IconUser, 
-  IconBuilding, 
-  IconCheck, 
-  IconX,
-  IconClock,
-  IconMapPin,
-  IconEye,
-  IconShieldCheck,
-  IconCurrencyPeso,
-  IconListDetails,
-  IconFileText,
-  IconAward,
-  IconBuildingCommunity,
-  IconBath,
-  IconBed,
-  IconUsers,
-  IconMaximize,
-  IconChecklist,
-  IconShieldLock,
-  IconSparkles,
-  IconWifi,
-  IconAirConditioning,
-  IconParking,
-  IconSwimming,
-  IconSmoking,
-  IconPaw,
-  IconBottle,
-  IconFlame,
-  IconBus,
-  IconWashMachine,
-  IconCooker,
-  IconDeviceTv,
-  IconBolt,
-  IconDroplet,
-  IconBook,
-  IconTent,
-  IconPhoto
-} from '@tabler/icons-react';
+  User, 
+  Building, 
+  Check, 
+  X,
+  Clock,
+  MapPin,
+  Eye,
+  ShieldCheck,
+  CircleDollarSign,
+  List,
+  FileText,
+  Award,
+  Building2,
+  Bath,
+  Bed,
+  Users,
+  Maximize,
+  ClipboardList,
+  ShieldAlert,
+  Sparkles,
+  Wifi,
+  Wind,
+  SquareParking,
+  Waves,
+  Cigarette,
+  PawPrint,
+  Wine,
+  Flame,
+  Bus,
+  WashingMachine,
+  ChefHat,
+  Tv,
+  Zap,
+  Droplets,
+  Book,
+  Dumbbell,
+  Image
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -64,18 +64,18 @@ const statusColors: Record<string, string> = {
 };
 
 const AMENITY_ICONS: Record<string, any> = {
-  'WiFi': IconWifi,
-  'Air Conditioning': IconAirConditioning,
-  'Kitchen': IconCooker,
-  'Laundry Area': IconWashMachine,
-  'Parking': IconParking,
-  'Security': IconShieldCheck,
-  'Gym': IconTent,
-  'TV': IconDeviceTv,
-  'Pool': IconSwimming,
-  'Water': IconDroplet,
-  'Electricity': IconBolt,
-  'No Curfew': IconClock,
+  'WiFi': Wifi,
+  'Air Conditioning': Wind,
+  'Kitchen': ChefHat,
+  'Laundry Area': WashingMachine,
+  'Parking': SquareParking,
+  'Security': ShieldCheck,
+  'Gym': Dumbbell,
+  'TV': Tv,
+  'Pool': Waves,
+  'Water': Droplets,
+  'Electricity': Zap,
+  'No Curfew': Clock,
 };
 
 export function AdminListingReviewModal({
@@ -138,7 +138,7 @@ export function AdminListingReviewModal({
 
   const renderAmenity = (ca: string) => {
     const [label] = ca.includes('|') ? ca.split('|') : [ca];
-    const Icon = AMENITY_ICONS[label] || IconSparkles;
+    const Icon = AMENITY_ICONS[label] || Sparkles;
     return (
       <span key={ca} className="px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/5 border border-blue-100 dark:border-blue-500/10 text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1.5 shadow-sm">
         <Icon size={12} className="opacity-70" />
@@ -150,7 +150,7 @@ export function AdminListingReviewModal({
   const renderDocumentCard = (title: string, url: string | null | undefined) => {
     if (!url) return (
       <div className="flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 h-24 text-center">
-        <IconFileText size={20} className="text-gray-300 mb-1" />
+        <FileText size={20} className="text-gray-300 mb-1" />
         <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">No {title}</span>
       </div>
     );
@@ -162,7 +162,7 @@ export function AdminListingReviewModal({
       >
         <SafeImage src={url} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt={title} />
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <IconEye size={20} className="text-white" />
+          <Eye size={20} className="text-white" />
         </div>
         <div className="absolute bottom-0 inset-x-0 bg-black/70 backdrop-blur-sm text-[8px] text-white font-black text-center py-1 uppercase tracking-widest">
           {title}
@@ -173,7 +173,7 @@ export function AdminListingReviewModal({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title="High-Fidelity Listing Audit" width="lg">
+      <Modal isOpen={isOpen} onClose={onClose} title="Listing Review" width="lg">
         {/* Modal content starts here. Redundant overflow removed to fix double scrollbar. */}
         <div className="p-8 space-y-8 bg-white dark:bg-gray-900">
           
@@ -187,7 +187,7 @@ export function AdminListingReviewModal({
                 className="h-96 flex flex-col items-center justify-center gap-4"
               >
                 <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Performing Technical Audit...</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading Listing Data...</p>
               </motion.div>
             ) : (
               <motion.div
@@ -213,7 +213,7 @@ export function AdminListingReviewModal({
                           <p className="text-xs text-gray-500 font-bold uppercase tracking-widest text-left">Issue formal rejection notice</p>
                         </div>
                         <button onClick={() => setShowRejectConfirm(false)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-                          <IconX size={20} />
+                          <X size={20} />
                         </button>
                       </div>
 
@@ -247,30 +247,36 @@ export function AdminListingReviewModal({
                 )}
 
                 {/* Section 01: Landlord Profile */}
-                <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} className="flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800">
-                  <div className="flex items-center gap-5">
-                     {listing.user?.image ? (
-                       <SafeImage src={listing.user.image} alt={listing.user.name} className="w-16 h-16 rounded-[1.25rem] shadow-xl border-2 border-white dark:border-gray-700 object-cover" />
-                     ) : (
-                       <div className="w-16 h-16 rounded-[1.25rem] shadow-xl border-2 border-white dark:border-gray-700 bg-primary/10 flex items-center justify-center text-primary text-xl font-black">{listing.user?.name?.charAt(0) || 'U'}</div>
-                     )}
-                     <div>
-                        <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-none mb-1.5">{listing.user?.name || 'Unknown Host'}</h3>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2"><IconUser size={12} className="text-primary" /> Verified Property Owner</p>
-                     </div>
+                <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-amber-500/20 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                  <div className="relative flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800 backdrop-blur-sm">
+                    <div className="flex items-center gap-5">
+                       {listing.user?.image ? (
+                         <SafeImage src={listing.user.image} alt={listing.user.name} className="w-16 h-16 rounded-[1.25rem] shadow-xl border-2 border-white dark:border-gray-700 object-cover" />
+                       ) : (
+                         <div className="w-16 h-16 rounded-[1.25rem] shadow-xl border-2 border-white dark:border-gray-700 bg-primary/10 flex items-center justify-center text-primary text-xl font-black">{listing.user?.name?.charAt(0) || 'U'}</div>
+                       )}
+                       <div>
+                          <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-none mb-1.5">{listing.user?.name || 'Unknown Host'}</h3>
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">Property Owner</p>
+                          </div>
+                       </div>
+                    </div>
+                    <span className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm", statusColors[listing.status] || 'bg-gray-100 text-gray-500')}>{listing.status}</span>
                   </div>
-                  <span className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm", statusColors[listing.status] || 'bg-gray-100 text-gray-500')}>{listing.status}</span>
                 </motion.div>
 
                 {/* Section 02: Property Assets */}
                 <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} className="space-y-4 text-left">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 flex items-center gap-2">
-                      <div className="w-1.5 h-3 bg-emerald-500 rounded-full" />
-                      Categorized Asset Inspection
+                      <div className="w-1.5 h-3 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+                      Property Images
                     </span>
                     <span className="text-[9px] font-black px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full uppercase tracking-widest border border-emerald-100 dark:border-emerald-500/20">
-                      {(listing.images?.length || 0)} Total Assets
+                      {(listing.images?.length || 0)} Total Images
                     </span>
                   </div>
 
@@ -284,16 +290,16 @@ export function AdminListingReviewModal({
                         {listing.imageSrc ? (
                           <SafeImage src={listing.imageSrc} className="w-full h-full object-cover" alt="" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300"><IconBuilding size={48} /></div>
+                          <div className="w-full h-full flex items-center justify-center text-gray-300"><Building size={48} /></div>
                         )}
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <IconEye size={32} className="text-white" />
+                          <Eye size={32} className="text-white" />
                         </div>
                         <div className="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-lg text-white text-[8px] font-black uppercase tracking-widest border border-white/10">Primary Display</div>
                       </div>
 
                       <div className="p-6 bg-amber-500/5 dark:bg-amber-500/10 rounded-[2rem] border border-amber-500/20">
-                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-3 flex items-center gap-2"><IconFileText size={14} /> Marketing Brief</p>
+                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-3 flex items-center gap-2"><FileText size={14} /> Description</p>
                         <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed italic">"{listing.description}"</p>
                       </div>
                     </div>
@@ -351,19 +357,19 @@ export function AdminListingReviewModal({
                 {/* Section 03: Business Identity */}
                 {listing.businessInfo && (
                   <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} className="bg-primary/5 dark:bg-primary/10 p-6 rounded-[2rem] border border-primary/10 text-left">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2 mb-6"><IconBuildingCommunity size={14} />Business Identity & Commitment</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2 mb-6"><Building2 size={14} />Business Identity & Commitment</span>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                        <div className="space-y-5">
                           <div><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Registered Entity Name</p><p className="text-base font-black text-gray-900 dark:text-white">{listing.businessInfo.businessName || 'Not Specified'}</p></div>
                           <div><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Business Classification</p><p className="text-xs font-bold text-primary uppercase tracking-wider">{listing.businessInfo.businessType?.replace('-', ' ') || 'General Housing'}</p></div>
                        </div>
                        <div className="p-5 bg-white dark:bg-gray-900 rounded-3xl border border-primary/10 flex items-center gap-4 shadow-sm">
-                          <div className="p-3 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-2xl"><IconAward size={24} /></div>
+                          <div className="p-3 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-2xl"><Award size={24} /></div>
                           <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Years in Industry</p><p className="text-lg font-black text-gray-900 dark:text-white">{listing.businessInfo.yearsExperience?.replace('-', ' ') || 'New'} Years</p></div>
                        </div>
                     </div>
                     {listing.businessInfo.businessDescription && (
-                      <div className="mt-8 pt-6 border-t border-primary/10"><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2"><IconAward size={14} className="text-primary" /> Corporate Mission & Vision</p><p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed italic font-medium">"{listing.businessInfo.businessDescription}"</p></div>
+                      <div className="mt-8 pt-6 border-t border-primary/10"><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Award size={14} className="text-primary" /> Corporate Mission & Vision</p><p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed italic font-medium">"{listing.businessInfo.businessDescription}"</p></div>
                     )}
                   </motion.div>
                 )}
@@ -371,8 +377,8 @@ export function AdminListingReviewModal({
                 {/* Section 04: Room Inventory Audit */}
                 <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} className="space-y-6 text-left">
                    <div className="flex items-center justify-between">
-                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500 flex items-center gap-2"><div className="w-1.5 h-3 bg-blue-500 rounded-full" />Unit-Specific Audit</span>
-                     <span className="text-[9px] font-black px-3 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full uppercase tracking-widest border border-blue-100 dark:border-blue-500/20">{listing.rooms?.length || 0} Registered Units</span>
+                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500 flex items-center gap-2"><div className="w-1.5 h-3 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.4)]" />Rooms</span>
+                     <span className="text-[9px] font-black px-3 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full uppercase tracking-widest border border-blue-100 dark:border-blue-500/20">{listing.rooms?.length || 0} Rooms</span>
                    </div>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {listing.rooms?.map((room: any) => (
@@ -388,10 +394,10 @@ export function AdminListingReviewModal({
                                  className="w-full h-full object-cover" 
                                />
                              ) : (
-                               <IconPhoto className="w-full h-full p-6 text-gray-300" />
+                               <Image className="w-full h-full p-6 text-gray-300" />
                              )}
                              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                               <IconEye size={16} className="text-white" />
+                               <Eye size={16} className="text-white" />
                              </div>
                              <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-black/60 text-[6px] font-black text-white rounded uppercase tracking-widest">{room.roomType}</div>
                            </div>
@@ -402,9 +408,9 @@ export function AdminListingReviewModal({
                                   <span className="text-[11px] font-black text-primary tracking-tighter">₱{(room.price || 0).toLocaleString()}</span>
                                 </div>
                                 <div className="flex flex-wrap gap-x-3 gap-y-1">
-                                   <div className="flex items-center gap-1 text-[8px] font-bold text-gray-400"><IconUsers size={10} className="text-blue-500" /> Cap: {room.capacity}</div>
-                                   <div className="flex items-center gap-1 text-[8px] font-bold text-gray-400"><IconBed size={10} className="text-purple-500" /> {room.bedType || 'Single'}</div>
-                                   {room.size && <div className="flex items-center gap-1 text-[8px] font-bold text-gray-400"><IconMaximize size={10} className="text-emerald-500" /> {room.size}sqm</div>}
+                                   <div className="flex items-center gap-1 text-[8px] font-bold text-gray-400"><Users size={10} className="text-blue-500" /> Cap: {room.capacity}</div>
+                                   <div className="flex items-center gap-1 text-[8px] font-bold text-gray-400"><Bed size={10} className="text-purple-500" /> {room.bedType || 'Single'}</div>
+                                   {room.size && <div className="flex items-center gap-1 text-[8px] font-bold text-gray-400"><Maximize size={10} className="text-emerald-500" /> {room.size}sqm</div>}
                                 </div>
                               </div>
                               <div className="flex flex-wrap gap-1 mt-2">
@@ -420,7 +426,7 @@ export function AdminListingReviewModal({
 
                 {/* Section 05: Compliance & Legal Assets */}
                 <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} className="space-y-6 text-left">
-                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 flex items-center gap-2"><div className="w-1.5 h-3 bg-rose-500 rounded-full" />Legal Verification Stack</span>
+                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 flex items-center gap-2"><div className="w-1.5 h-3 bg-rose-500 rounded-full shadow-[0_0_8px_rgba(244,63,94,0.4)]" />Legal Documents</span>
                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                       {renderDocumentCard('Govt ID', listing.businessInfo?.documents?.governmentId || listing.governmentIdUrl)}
                       {renderDocumentCard('Business Permit', listing.businessInfo?.documents?.businessPermit || listing.businessPermitUrl)}
@@ -435,25 +441,25 @@ export function AdminListingReviewModal({
                 <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                    {/* Rules Column */}
                    <div className="space-y-5">
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 flex items-center gap-2"><IconChecklist size={14} />House Rules & Tenant Compliance</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 flex items-center gap-2"><ClipboardList size={14} />House Rules</span>
                       <div className="space-y-2.5">
                          {[
-                           { label: 'Female Only', icon: IconUser, active: listing.rules?.femaleOnly },
-                           { label: 'Male Only', icon: IconUser, active: listing.rules?.maleOnly },
-                           { label: 'Visitors Allowed', icon: IconUsers, active: listing.rules?.visitorsAllowed },
-                           { label: 'Pets Allowed', icon: IconPaw, active: listing.rules?.petsAllowed },
-                           { label: 'Smoking Allowed', icon: IconSmoking, active: listing.rules?.smokingAllowed },
-                           { label: 'No Curfew', icon: IconClock, active: listing.rules?.noCurfew },
+                           { label: 'Female Only', icon: User, active: listing.rules?.femaleOnly },
+                           { label: 'Male Only', icon: User, active: listing.rules?.maleOnly },
+                           { label: 'Visitors Allowed', icon: Users, active: listing.rules?.visitorsAllowed },
+                           { label: 'Pets Allowed', icon: PawPrint, active: listing.rules?.petsAllowed },
+                           { label: 'Smoking Allowed', icon: Cigarette, active: listing.rules?.smokingAllowed },
+                           { label: 'No Curfew', icon: Clock, active: listing.rules?.noCurfew },
                          ].map((rule) => (
                            <div key={rule.label} className={cn("flex items-center justify-between p-3 rounded-xl border transition-all", rule.active ? "bg-white dark:bg-gray-900 border-amber-100 dark:border-amber-500/20 text-gray-900 dark:text-white shadow-sm" : "bg-transparent border-gray-100 dark:border-gray-800 text-gray-300 opacity-40")}>
                              <div className="flex items-center gap-3"><rule.icon size={14} className={rule.active ? "text-amber-500" : "text-gray-300"} /><span className="text-[9px] font-black uppercase tracking-widest">{rule.label}</span></div>
-                             {rule.active ? <IconCheck size={12} className="text-emerald-500" /> : <IconX size={12} className="text-gray-300" />}
+                             {rule.active ? <Check size={12} className="text-emerald-500" /> : <X size={12} className="text-gray-300" />}
                            </div>
                          ))}
                          {listing.rules?.customRules?.map((cr: string) => (
                             <div key={cr} className="flex items-center justify-between p-3 rounded-xl border bg-white dark:bg-gray-900 border-amber-100 dark:border-amber-500/20 text-gray-900 dark:text-white shadow-sm">
-                              <div className="flex items-center gap-3"><IconAward size={14} className="text-amber-500" /><span className="text-[9px] font-black uppercase tracking-widest">{cr.split('|')[0]}</span></div>
-                              <IconCheck size={12} className="text-emerald-500" />
+                              <div className="flex items-center gap-3"><Award size={14} className="text-amber-500" /><span className="text-[9px] font-black uppercase tracking-widest">{cr.split('|')[0]}</span></div>
+                              <Check size={12} className="text-emerald-500" />
                             </div>
                          ))}
                       </div>
@@ -461,16 +467,16 @@ export function AdminListingReviewModal({
 
                    {/* Features Column */}
                    <div className="space-y-5">
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 flex items-center gap-2"><IconShieldLock size={14} />Security Protocol & Amenities</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 flex items-center gap-2"><ShieldAlert size={14} />Features & Amenities</span>
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 gap-2">
                           {[
-                            { label: '24/7 Security', icon: IconShieldCheck, active: listing.features?.security24h },
-                            { label: 'CCTV Cameras', icon: IconEye, active: listing.features?.cctv },
-                            { label: 'Fire Safety', icon: IconFlame, active: listing.features?.fireSafety },
-                            { label: 'Near Transport', icon: IconBus, active: listing.features?.nearTransport },
-                            { label: 'Flood-Free', icon: IconSwimming, active: listing.features?.floodFree },
-                            { label: 'Backup Power', icon: IconBolt, active: listing.features?.backupPower },
+                            { label: '24/7 Security', icon: ShieldCheck, active: listing.features?.security24h },
+                            { label: 'CCTV Cameras', icon: Eye, active: listing.features?.cctv },
+                            { label: 'Fire Safety', icon: Flame, active: listing.features?.fireSafety },
+                            { label: 'Near Transport', icon: Bus, active: listing.features?.nearTransport },
+                            { label: 'Flood-Free', icon: Waves, active: listing.features?.floodFree },
+                            { label: 'Backup Power', icon: Zap, active: listing.features?.backupPower },
                           ].map((feat) => feat.active && (
                             <div key={feat.label} className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-500/5 rounded-xl border border-emerald-100 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
                                <feat.icon size={14} />
@@ -494,7 +500,7 @@ export function AdminListingReviewModal({
                 {/* Section 07: Authorized Release Action */}
                 <motion.div variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } }} className="pt-10 border-t border-gray-100 dark:border-gray-800">
                   <div className="flex items-center justify-between mb-8">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-900 dark:text-white">Moderation Executive Authority</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-900 dark:text-white">Decision</h4>
                     <div className="h-px flex-1 bg-gradient-to-r from-gray-100 via-gray-100 to-transparent dark:from-gray-800 dark:via-gray-800 mx-6"></div>
                   </div>
                   
@@ -506,8 +512,8 @@ export function AdminListingReviewModal({
                         disabled={isDeciding}
                       >
                         <span className="flex items-center justify-center gap-3">
-                          <IconCheck size={20} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
-                          Approve Listing
+                          <Check size={20} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
+                          Approve
                         </span>
                       </Button>
                       <Button 
@@ -517,22 +523,22 @@ export function AdminListingReviewModal({
                         disabled={isDeciding}
                       >
                         <span className="flex items-center justify-center gap-3">
-                           <IconX size={20} strokeWidth={3} className="group-hover:rotate-90 transition-transform" /> 
-                           Reject Submission
+                           <X size={20} strokeWidth={3} className="group-hover:rotate-90 transition-transform" /> 
+                           Reject
                         </span>
                       </Button>
                     </div>
                   ) : (
                      <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-3xl flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-700">
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-3">
-                          <IconChecklist size={16} className="text-emerald-500" />
+                          <ClipboardList size={16} className="text-emerald-500" />
                           Audit Status: <span className={listing.status === 'approved' || listing.status === 'active' ? 'text-emerald-500' : 'text-rose-500'}>{listing.status.toUpperCase()}</span>
                         </p>
                      </div>
                   )}
                   
                   <div className="mt-8 flex items-center justify-center gap-3 p-4 bg-gray-50 dark:bg-gray-800/30 rounded-2xl border border-gray-100 dark:border-gray-800/50">
-                    <IconClock size={14} className="text-amber-500 animate-pulse" />
+                    <Clock size={14} className="text-amber-500 animate-pulse" />
                     <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest text-center px-4 max-w-lg">
                       By authorizing this release, you acknowledge that all legal assets have been verified and the property meets community standards.
                     </p>

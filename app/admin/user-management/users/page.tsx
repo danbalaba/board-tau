@@ -6,6 +6,12 @@ export const metadata: Metadata = {
   description: 'Manage user accounts, roles and system permissions',
 };
 
-export default function UserManagementPage() {
+import { requireAdmin } from '@/lib/admin';
+import { requirePagePermission } from '@/lib/rbac';
+
+export default async function UserManagementPage() {
+  const admin = await requireAdmin();
+  await requirePagePermission(admin.id, "MANAGE_USERS");
+
   return <UserDirectory />;
 }

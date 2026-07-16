@@ -1,5 +1,5 @@
-import { AreaGraphSkeleton } from "../../features/overview/components/area-graph-skeleton";
+import Skeleton from "@/components/common/Skeleton";
 
 export default function Loading() {
-  return <AreaGraphSkeleton />;
+  return <Skeleton className="h-[350px] w-full rounded-[3rem]" />;
 }

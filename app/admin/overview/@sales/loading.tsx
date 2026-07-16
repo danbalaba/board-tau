@@ -1,6 +1,6 @@
-import { RecentSalesSkeleton } from "../../features/overview/components/recent-sales-skeleton";
+import Skeleton from "@/components/common/Skeleton";
 import React from 'react';
 
 export default function Loading() {
-  return <RecentSalesSkeleton />;
+  return <Skeleton className="h-[450px] w-full rounded-[3rem]" />;
 }

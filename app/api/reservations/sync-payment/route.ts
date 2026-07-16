@@ -144,9 +144,9 @@ export async function GET() {
         });
 
         // Tenant
-        if (updatedReservation.user.email) {
+        if (updatedReservation.user?.email) {
           await sendReservationNotificationEmail(
-            updatedReservation.user,
+            updatedReservation.user!,
             updatedReservation.listing,
             "RESERVED",
             "Booking Confirmed!",
@@ -155,7 +155,7 @@ export async function GET() {
 
           // Add in-app notification for the Tenant
           await createNotification({
-            userId: updatedReservation.userId,
+            userId: updatedReservation.userId!,
             type: "reservation",
             title: "Booking Confirmed!",
             description: `Success! Your payment for ${updatedReservation.listing.title} has been verified and your stay is now secured.`,
@@ -170,7 +170,7 @@ export async function GET() {
             updatedReservation.listing,
             "RESERVED",
             "New Confirmed Reservation",
-            `${updatedReservation.user.name} has finalized their payment for ${updatedReservation.listing.title}.`,
+            `${updatedReservation.user?.name} has finalized their payment for ${updatedReservation.listing.title}.`,
             true
           );
         }

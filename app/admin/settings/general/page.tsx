@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { GeneralSettings } from '@/app/admin/features/settings/components/platform-general';
+import { GeneralSettings } from '@/app/admin/features/settings/components/general';
 
 export const metadata: Metadata = {
   title: 'General Settings - BoardTAU Admin',

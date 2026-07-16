@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/services/user/user';
 import { createHostApplication, getHostApplicationByUser, getHostApplications, updateApplicationStatus } from '@/services/landlord/applications';
+import { hasPermission } from '@/lib/rbac';
+import { getPostHogClient } from '@/lib/posthog-server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,9 +15,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const permitted = await hasPermission(user.id, "CREATE_HOST_APPLICATION");
+    if (!permitted) {
+      return NextResponse.json({ success: false, error: 'Forbidden: Missing permission CREATE_HOST_APPLICATION' }, { status: 403 });
+    }
+
     const data = await request.json();
 
     const result = await createHostApplication(data);
+
+    // Track host application submission
+    try {
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: user.id,
+        event: "host_application_submitted",
+        properties: { success: result.success },
+      });
+      await posthog.flush();
+    } catch (phErr) {
+      console.error("PostHog host_application_submitted capture failed:", phErr);
+    }
 
     return NextResponse.json(result);
   } catch (error: any) {
@@ -40,6 +60,11 @@ export async function GET(request: NextRequest) {
     // Check if user is admin (for all applications) or regular user (for their application)
     // IMPORTANT: Roles are stored as uppercase ADMIN in the DB and session
     if (user.role === 'ADMIN') {
+      const canModerate = await hasPermission(user.id, "MODERATE_HOSTS");
+      if (!canModerate) {
+        return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+      }
+
       const searchParams = request.nextUrl.searchParams;
       const status = searchParams.get('status') || undefined;
       const search = searchParams.get('search') || undefined;
@@ -82,6 +107,11 @@ export async function PUT(request: NextRequest) {
         { success: false, error: 'Unauthorized: Only admins can update application status' },
         { status: 401 }
       );
+    }
+
+    const canModerate = await hasPermission(user.id, "MODERATE_HOSTS");
+    if (!canModerate) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
 
     const searchParams = request.nextUrl.searchParams;

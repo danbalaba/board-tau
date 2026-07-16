@@ -8,11 +8,11 @@ import { GiFamilyHouse } from "react-icons/gi";
 
 /** BoardTAU Step 1 — boarding house categories (multi-select). */
 export const categories = [
-  { label: "Student-Friendly", value: "Student-Friendly", icon: MdOutlineSchool, description: "Boarding houses suitable for students." },
-  { label: "Budget-Friendly", value: "Budget-Friendly", icon: MdOutlineAttachMoney, description: "Affordable options for students or working individuals." },
+  { label: "Student Friendly", value: "Student-Friendly", icon: MdOutlineSchool, description: "Boarding houses suitable for students." },
+  { label: "Budget Friendly", value: "Budget-Friendly", icon: MdOutlineAttachMoney, description: "Affordable options for students or working individuals." },
   { label: "Premium / Private", value: "Premium", icon: MdOutlineKingBed, description: "Higher-end boarding houses or private rooms." },
-  { label: "Family-Friendly", value: "Family-Friendly", icon: MdOutlineGroups, description: "Allows visitors, pets, or accommodates small families." },
-  { label: "Pet-Friendly", value: "Pet-Friendly", icon: GiFamilyHouse, description: "Explicitly allows pets." },
+  { label: "Family Friendly", value: "Family-Friendly", icon: MdOutlineGroups, description: "Allows visitors, pets, or accommodates small families." },
+  { label: "Pet Friendly", value: "Pet-Friendly", icon: GiFamilyHouse, description: "Explicitly allows pets." },
   { label: "Apartment", value: "Apartment", icon: MdOutlineKingBed, description: "Full apartment listing, not typical boarding rooms." },
   { label: "Short-Term / Flexible Lease", value: "Short-Term / Flexible Lease", icon: MdOutlineSchool, description: "Temporary stays or short-term rentals." },
   { label: "Quiet / Study Environment", value: "Quiet / Study Environment", icon: MdOutlineSchool, description: "Focused on study-friendly, noise-controlled environment." },
@@ -36,9 +36,9 @@ export const TAU_COORDINATES = [15.63518934952113, 120.41534319307087] as [numbe
 import { ROOM_TYPES, ROOM_TYPE_LABELS } from "@/data/roomTypes";
 
 export const roomTypeOptions = [
-  { value: "", label: "Choose room type" },
-  { value: ROOM_TYPES.SOLO, label: ROOM_TYPE_LABELS.SOLO },
-  { value: ROOM_TYPES.BEDSPACE, label: ROOM_TYPE_LABELS.BEDSPACE },
+  { value: "", label: "Choose room type", description: "Search for all available properties regardless of room type." },
+  { value: ROOM_TYPES.SOLO, label: ROOM_TYPE_LABELS.SOLO, description: "A private room exclusively for one person. Offers maximum privacy." },
+  { value: ROOM_TYPES.BEDSPACE, label: ROOM_TYPE_LABELS.BEDSPACE, description: "A shared room where you rent a single bed. Highly cost-effective and social." },
 ];
 
 /** Stay duration options (Step 3). */

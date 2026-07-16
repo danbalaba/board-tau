@@ -1,5 +1,33 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+export interface UserStats {
+  totalUsers: number;
+  totalUsersLastWeek: number;
+  suspendedAccounts: number;
+  suspendedLastWeek: number;
+  newThisWeek: number;
+  newLastWeek: number;
+  pendingVerification: number;
+  pendingLastWeek: number;
+}
+
+export function useUserStats() {
+  return useQuery({
+    queryKey: ['user-stats'],
+    queryFn: async (): Promise<UserStats> => {
+      const response = await fetch('/api/admin/users/stats');
+      if (!response.ok) throw new Error('Failed to fetch user stats');
+      const data = await response.json();
+      if (!data.success) throw new Error(data.message || 'Failed to fetch user stats');
+      return data.data;
+    },
+    refetchInterval: 60000,
+    retry: 2,
+  });
+}
+
+
+
 interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -36,14 +64,24 @@ export interface UsersQueryParams {
   email?: string;
   role?: string;
   status?: string;
+  dateFrom?: string;
 }
 
 export function useUsers(params?: UsersQueryParams) {
-  // For client-side filtering, we need to fetch all users
   return useQuery({
-    queryKey: ['users'], // Fixed query key to prevent refetching on search
+    queryKey: ['users', params],
     queryFn: async () => {
-      const response = await fetch('/api/admin/users?perPage=1000'); // Fetch all users
+      const searchParams = new URLSearchParams();
+      if (params?.page) searchParams.set('page', params.page.toString());
+      if (params?.perPage) searchParams.set('perPage', params.perPage.toString());
+      if (params?.search) searchParams.set('search', params.search);
+      if (params?.name) searchParams.set('name', params.name);
+      if (params?.email) searchParams.set('email', params.email);
+      if (params?.role) searchParams.set('role', params.role);
+      if (params?.status) searchParams.set('status', params.status);
+      if (params?.dateFrom) searchParams.set('dateFrom', params.dateFrom);
+
+      const response = await fetch(`/api/admin/users?${searchParams.toString()}`);
 
       if (!response.ok) {
         const errorData = await response.json();

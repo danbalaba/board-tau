@@ -7,8 +7,11 @@ export const metadata = {
   description: 'Manage your property tenants',
 };
 
+import { requirePagePermission } from '@/lib/rbac';
+
 export default async function LandlordTenantsPage() {
-  await requireLandlord();
+  const user = await requireLandlord();
+  await requirePagePermission(user.id, "VIEW_TENANT_PROFILE");
   const tenants = await getLandlordTenants();
 
   return <LandlordTenantManager tenants={tenants as any} />;

@@ -33,6 +33,7 @@ interface RoleCardListProps {
 }
 
 const roleColorMap: Record<string, { icon: React.ElementType; color: string; bg: string; accent: string }> = {
+  SUPER_ADMIN: { icon: IconShieldExclamation, color: 'text-fuchsia-500', bg: 'bg-fuchsia-500/10', accent: 'bg-fuchsia-500' },
   ADMIN: { icon: IconShieldExclamation, color: 'text-rose-500', bg: 'bg-rose-500/10', accent: 'bg-rose-500' },
   LANDLORD: { icon: IconShieldCheck, color: 'text-blue-500', bg: 'bg-blue-500/10', accent: 'bg-blue-500' },
   USER: { icon: IconUsers, color: 'text-emerald-500', bg: 'bg-emerald-500/10', accent: 'bg-emerald-500' },
@@ -53,7 +54,7 @@ export function RoleCardList({ roles, loading, onEdit, onDelete, onCreate }: Rol
         <div className="flex items-center gap-3">
           <div className="h-5 w-1 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
           <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">
-            Active Role Registry · {roles.length} Governance Groups
+            Active Roles · {roles.length} Roles
           </h3>
         </div>
         <Button
@@ -74,7 +75,7 @@ export function RoleCardList({ roles, loading, onEdit, onDelete, onCreate }: Rol
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
       >
         {roles.map((role: any) => {
-          const isSystemRole = ['ADMIN', 'LANDLORD', 'USER'].includes(role.name);
+          const isSystemRole = ['SUPER_ADMIN', 'ADMIN', 'LANDLORD', 'USER'].includes(role.name);
           const style = roleColorMap[role.name] || defaultRoleStyle;
           const Icon = style.icon;
 

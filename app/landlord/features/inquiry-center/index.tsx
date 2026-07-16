@@ -11,7 +11,7 @@ import { useInquiryLogic, Inquiry } from './hooks/use-inquiry-logic';
 import { LandlordInquiryHeader } from './components/landlord-inquiry-header';
 import { LandlordInquiryCard } from './components/landlord-inquiry-card';
 import { LandlordInquiryModals } from './components/landlord-inquiry-modals';
-import { useLoadMore } from '@/hooks/useLoadMore';
+import { LandlordPagination } from '../shared/landlord-pagination';
 
 interface LandlordInquiryCenterProps {
   inquiries: {
@@ -23,6 +23,11 @@ interface LandlordInquiryCenterProps {
 export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCenterProps) {
   const {
     filteredInquiries,
+    totalInquiries,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    setItemsPerPage,
     selectedStatus,
     setSelectedStatus,
     viewMode,
@@ -42,7 +47,7 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
     archiveModalOpen,
     setArchiveModalOpen,
     isDeleting,
-    isResponding,
+    respondingId,
     isArchiving,
     isLoadingMore,
     nextCursor,
@@ -50,20 +55,12 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
     handleConfirmArchive,
     handleRespond,
     handleConfirmReject,
-    handleLoadMore,
     handleGenerateReport,
     isArchived,
     handleToggleArchived,
     rawInquiries,
     isLoading
   } = useInquiryLogic(inquiries);
-
-  const { ref: loadMoreRef } = useLoadMore(
-    handleLoadMore,
-    !!nextCursor,
-    isLoadingMore,
-    false
-  );
 
   const searchParams = useSearchParams();
 
@@ -134,7 +131,7 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
               {filteredInquiries.length > 0 && (
                 <div className="flex items-center gap-2 mb-6">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                    Showing {filteredInquiries.length} inquir{filteredInquiries.length !== 1 ? 'ies' : 'y'}
+                    Showing {totalInquiries} inquir{totalInquiries !== 1 ? 'ies' : 'y'}
                   </span>
                   <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
                 </div>
@@ -178,7 +175,7 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
                         idx={idx}
                         viewMode={viewMode}
                         handleRespond={handleRespond}
-                        isResponding={isResponding}
+                        isResponding={respondingId === inquiry.id}
                         onArchive={() => {
                           setSelectedInquiry(inquiry);
                           setArchiveModalOpen(true);
@@ -197,38 +194,19 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
                         }}
                       />
                     ))}
-                    {/* Scroll Sentinel */}
-                    <div ref={loadMoreRef} className="h-1 col-span-full opacity-0 pointer-events-none" />
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {nextCursor && (
-                <div className="flex flex-col items-center gap-4 pt-12 pb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-[2px] bg-gradient-to-r from-transparent to-gray-200 dark:to-gray-800" />
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                        {isLoadingMore ? 'Loading more inquiries...' : 'More inquiries available'}
-                      </span>
-                    </div>
-                    <div className="w-12 h-[2px] bg-gradient-to-l from-transparent to-gray-200 dark:to-gray-800" />
-                  </div>
-
-                  <Button
-                    outline
-                    className="rounded-2xl px-12 py-4 group hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/5 border-2 border-gray-100 dark:border-gray-800"
-                    onClick={handleLoadMore}
-                    isLoading={isLoadingMore}
-                  >
-                    <span className="flex items-center gap-2 uppercase font-black tracking-[0.2em] text-[10px]">
-                      {isLoadingMore ? 'Loading...' : 'Load More'}
-                      <IconChevronDown className="group-hover:translate-y-0.5 transition-transform" size={14} strokeWidth={3} />
-                    </span>
-                  </Button>
-                </div>
-              )}
+              <LandlordPagination 
+                currentPage={currentPage}
+                totalPages={Math.ceil(totalInquiries / itemsPerPage)}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={setItemsPerPage}
+                totalItems={totalInquiries}
+                itemName="inquiries"
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -245,7 +223,7 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
         setArchiveModalOpen={setArchiveModalOpen}
         selectedInquiry={selectedInquiry}
         isDeleting={isDeleting}
-        isResponding={isResponding}
+        isResponding={respondingId !== null}
         isArchiving={isArchiving}
         handleConfirmDelete={handleConfirmDelete}
         handleConfirmArchive={handleConfirmArchive}

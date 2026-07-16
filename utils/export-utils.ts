@@ -140,8 +140,8 @@ export const prepareDataForExport = (data: any[], type: 'property' | 'room' | 'b
 
     case 'reservation':
       return data.map(item => ({
-        'Guest': item.user?.name || 'N/A',
-        'Room': item.room?.title || 'N/A',
+        'Guest': item.user?.name || item.guestName || 'N/A',
+        'Room': item.room?.name || 'N/A',
         'Dates': `${new Date(item.startDate).toLocaleDateString()} - ${new Date(item.endDate).toLocaleDateString()}`,
         'Amount': item.totalPrice,
         'Status': item.status,

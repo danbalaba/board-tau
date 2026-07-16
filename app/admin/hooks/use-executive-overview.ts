@@ -13,7 +13,7 @@ export interface ExecutiveOverview {
   metrics: {
     totalUsers: number;
     newUsers: number;
-    activeUsers: number;
+    newLandlords: number;
     totalListings: number;
     newListings: number;
     totalRevenue: number;
@@ -21,9 +21,11 @@ export interface ExecutiveOverview {
     averageRating: number;
     userGrowthPercentage: number;
     revenueGrowthPercentage: number;
+    newLandlordsGrowthPercentage: number;
   };
   topProperties: Array<{ listingId: string; listingTitle: string; revenue: number }>;
   charts: {
+    engagement: Array<{ month: string; users: number; listings: number; inquiries: number }>;
     revenue: Array<{ month: string; revenue: number; bookings: number }>;
     propertyDistribution: Array<{ name: string; value: number; color: string }>;
     occupancy: Array<{ day: string; occupancy: number }>;

@@ -5,6 +5,7 @@ import { requireLandlord } from "@/lib/landlord";
 import { LISTINGS_BATCH } from "@/utils/constants";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
+import { autoCategorizeListing } from "@/utils/categorizer";
 
 export type LandlordPropertyResult = {
   id: string;
@@ -92,7 +93,6 @@ export const getLandlordProperties = async (args?: { cursor?: string }): Promise
     where: {
       userId: landlord.id,
     },
-    take: LISTINGS_BATCH,
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -298,11 +298,9 @@ export const createProperty = async (data: any) => {
     const safeLng = latlng?.[0] ?? 120.9842;
     const safeAmenities = Array.isArray(amenities) ? amenities : [];
     const safeImages = Array.isArray(images) ? images : [];
-    const safeCategory = Array.isArray(category)
-      ? category.slice(0, 1)
-      : typeof category === 'string' && category
-        ? [category]
-        : [];
+    
+    // SERVER-SIDE AUTO-CATEGORIZATION: Overrides frontend selection
+    const safeCategory = autoCategorizeListing(data);
     const safeRooms = Array.isArray(rooms) ? rooms : [];
 
     // 1. Create base listing
@@ -548,7 +546,9 @@ export const updateProperty = async (propertyId: string, data: any) => {
     const safeLng = latlng?.[0] ?? 120.9842;
     const safeAmenities = Array.isArray(amenities) ? amenities : [];
     const safeImages = Array.isArray(images) ? images : [];
-    const safeCategory = Array.isArray(category) ? category.slice(0, 1) : [];
+    
+    // SERVER-SIDE AUTO-CATEGORIZATION: Overrides frontend selection
+    const safeCategory = autoCategorizeListing(data);
 
     // OPTIMIZATION: Only update listing if values actually changed
     const titleChanged = title !== undefined && title !== existing.title;
@@ -693,9 +693,8 @@ export const updateProperty = async (propertyId: string, data: any) => {
       );
     }
 
-    // 5. Update Categories (only if provided and changed)
-    if (category !== undefined) {
-      updatePromises.push(
+    // 5. Update Categories (always update because autoCategorizer depends on other fields)
+    updatePromises.push(
         (async () => {
           await db.listingCategory.deleteMany({ where: { listingId: propertyId } });
           const categoryPromises = safeCategory.map(async (cat: string) => {
@@ -711,7 +710,6 @@ export const updateProperty = async (propertyId: string, data: any) => {
           await Promise.all(categoryPromises);
         })()
       );
-    }
 
     // 6. Update Images (only if provided and changed)
     if (images !== undefined && safeImages.length > 0) {

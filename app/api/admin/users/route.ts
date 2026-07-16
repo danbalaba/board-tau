@@ -10,12 +10,19 @@ export async function GET(req: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'ADMIN') {
+    if (!session || (session.user?.role !== 'ADMIN' && session.user?.role !== 'SUPER_ADMIN')) {
       return NextResponse.json(
         ApiResponseFormatter.error('Unauthorized', 'You must be an admin to access this resource'),
         { status: 401 }
       );
     }
+
+    const { hasPermission } = await import("@/lib/rbac");
+    const permitted = await hasPermission(session.user.id, "MANAGE_USERS");
+    if (!permitted) return NextResponse.json(
+      ApiResponseFormatter.error('Forbidden', 'Missing permission MANAGE_USERS'),
+      { status: 403 }
+    );
 
     // Parse query parameters
     const { searchParams } = new URL(req.url);
@@ -25,45 +32,89 @@ export async function GET(req: NextRequest) {
     const role = searchParams.get('role') || '';
     const status = searchParams.get('status') || '';
 
-    // Build query conditions
-    const where: any = {};
+    // Build query conditions as an array, merged with AND at the end
+    const conditions: any[] = [];
+
+    // SECURITY: System admins (ADMIN role) must NEVER see SUPER_ADMIN or other ADMIN accounts
+    if (session.user.role === 'ADMIN') {
+      conditions.push({
+        NOT: { role: { in: ['ADMIN', 'SUPER_ADMIN'] } }
+      });
+    }
 
     // Handle search parameters
     const nameSearch = searchParams.get('name') || '';
     const emailSearch = searchParams.get('email') || '';
 
-    if (nameSearch || emailSearch) {
-      const orConditions: any[] = [];
-      if (nameSearch) {
-        orConditions.push({ name: { contains: nameSearch, mode: 'insensitive' } });
-      }
-      if (emailSearch) {
-        orConditions.push({ email: { contains: emailSearch, mode: 'insensitive' } });
-      }
-      where.OR = orConditions;
-    } else if (search) {
-      // Fallback to single search parameter for backward compatibility
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-      ];
+    if (nameSearch) {
+      conditions.push({ name: { contains: nameSearch, mode: 'insensitive' } });
+    }
+    if (emailSearch) {
+      conditions.push({ email: { contains: emailSearch, mode: 'insensitive' } });
+    }
+    if (search && !nameSearch && !emailSearch) {
+      conditions.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+        ]
+      });
     }
 
     if (role) {
-      // Allow searching by both the legacy role string or the roleId
-      where.OR = [
-        { role: role },
-        { roleRelation: { name: role } }
-      ];
+      const rolesArray = role.split(',').map(r => r.trim()).filter(Boolean);
+      if (rolesArray.length > 0) {
+        conditions.push({
+          OR: [
+            { role: { in: rolesArray } },
+            { roleRelation: { name: { in: rolesArray } } }
+          ]
+        });
+      }
     }
-    if (status === 'active') {
-      where.isActive = true;
-      where.deletedAt = null;
-    } else if (status === 'inactive') {
-      where.isActive = false;
-    } else if (status === 'suspended') {
-      where.deletedAt = { not: null };
+
+    if (status) {
+      const statusesArray = status.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+
+      // In Prisma MongoDB, { field: null } ONLY matches explicit BSON null, NOT missing fields.
+      // Use isSet:false for missing fields + null OR to cover both cases.
+      const notSuspended = { OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }] };
+      const isSuspended = { AND: [{ deletedAt: { isSet: true } }, { NOT: { deletedAt: null } }, { isPermanentlyBanned: { not: true } }] };
+      const isBanned = { AND: [{ deletedAt: { isSet: true } }, { NOT: { deletedAt: null } }, { isPermanentlyBanned: true }] };
+
+      if (statusesArray.length === 1) {
+        const s = statusesArray[0];
+        if (s === 'active') {
+          conditions.push({ NOT: { isActive: false } }); // true, null, or missing → active
+          conditions.push(notSuspended);
+        } else if (s === 'inactive') {
+          conditions.push({ isActive: false });
+          conditions.push(notSuspended);
+        } else if (s === 'suspended') {
+          conditions.push(isSuspended);
+        } else if (s === 'banned') {
+          conditions.push(isBanned);
+        }
+      } else {
+        const statusOrs: any[] = [];
+        if (statusesArray.includes('active')) {
+          statusOrs.push({ AND: [{ NOT: { isActive: false } }, notSuspended] });
+        }
+        if (statusesArray.includes('inactive')) {
+          statusOrs.push({ AND: [{ isActive: false }, notSuspended] });
+        }
+        if (statusesArray.includes('suspended')) {
+          statusOrs.push(isSuspended);
+        }
+        if (statusesArray.includes('banned')) {
+          statusOrs.push(isBanned);
+        }
+        if (statusOrs.length > 0) conditions.push({ OR: statusOrs });
+      }
     }
+
+    // Merge all conditions with AND; empty = no filter
+    const where = conditions.length > 0 ? { AND: conditions } : {};
 
     // Calculate pagination
     const skip = (page - 1) * perPage;
@@ -77,7 +128,7 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: 'desc' },
         include: {
           listings: { select: { id: true } },
-          reservations: { select: { id: true } },
+          reservations: { where: { status: 'COMPLETED' }, select: { id: true } },
           roleRelation: true, // Include the dynamic role
         },
       }),
@@ -85,19 +136,19 @@ export async function GET(req: NextRequest) {
     ]);
 
     // Transform user data
-    const transformedUsers = users.map(user => ({
+    const transformedUsers = users.map((user: any) => ({
       id: user.id,
       name: user.name,
       email: user.email,
+      image: user.image,
       role: user.roleRelation?.name || user.role, // Prioritize dynamic role
       roleId: user.roleId,
-      status: user.deletedAt ? 'suspended' : user.isActive ? 'active' : 'inactive',
+      status: user.isPermanentlyBanned ? 'banned' : user.deletedAt ? 'suspended' : (user.isActive === false) ? 'inactive' : 'active',
       joinedAt: user.createdAt,
       lastLogin: user.lastLogin,
       emailVerified: !!user.emailVerified,
       listingsCount: user.listings.length,
-      bookingsCount: user.reservations.length,
-      totalSpent: 0,
+      bookingsCount: user.reservations.length
     }));
 
     return NextResponse.json(
@@ -121,7 +172,7 @@ export async function POST(req: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'ADMIN') {
+    if (!session || (session.user?.role !== 'ADMIN' && session.user?.role !== 'SUPER_ADMIN')) {
       return NextResponse.json(
         ApiResponseFormatter.error('Unauthorized', 'You must be an admin to access this resource'),
         { status: 401 }

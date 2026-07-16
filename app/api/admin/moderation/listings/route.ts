@@ -9,12 +9,19 @@ export async function GET(req: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'ADMIN') {
+    if (!session || (session.user?.role !== 'ADMIN' && session.user?.role !== 'SUPER_ADMIN')) {
       return NextResponse.json(
         ApiResponseFormatter.error('Unauthorized', 'You must be an admin to access this resource'),
         { status: 401 }
       );
     }
+
+    const { hasPermission } = await import("@/lib/rbac");
+    const permitted = await hasPermission(session.user.id, "MODERATE_LISTINGS");
+    if (!permitted) return NextResponse.json(
+      ApiResponseFormatter.error('Forbidden', 'Missing permission MODERATE_LISTINGS'),
+      { status: 403 }
+    );
 
     // Parse query parameters
     const { searchParams } = new URL(req.url);
@@ -62,7 +69,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Transform data for response
-    const transformedListings = listings.map(listing => ({
+    const transformedListings = listings.map((listing: any) => ({
       id: listing.id,
       title: listing.title,
       description: listing.description,

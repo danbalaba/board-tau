@@ -25,6 +25,7 @@ import { cn } from '@/utils/helper';
 
 import GenerateReportButton from '@/components/common/GenerateReportButton';
 import { prepareDataForExport, exportToCSV, exportToExcel } from '@/utils/export-utils';
+import { DateRange } from 'react-day-picker';
 import { LandlordRoomSearch } from './landlord-room-search';
 import {
   DropdownMenu,
@@ -82,14 +83,27 @@ export function LandlordRoomHeader({
 }: LandlordRoomHeaderProps) {
   const hasActiveFilters = searchQuery.trim() !== '' || propertyFilter !== 'all' || typeFilter !== 'all' || capacityFilter !== 'all';
 
-  const handleGenerateCSV = async () => {
-    const reportData = prepareDataForExport(rooms, 'room');
-    const totalCapacity = rooms.reduce((acc, r) => acc + (r.capacity || 0), 0);
+  const handleGenerateCSV = async (dateRange?: DateRange) => {
+    let exportData = rooms;
+    if (dateRange?.from) {
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to;
+      exportData = exportData.filter(r => {
+        const createdAt = new Date(r.createdAt);
+        if (toDate) {
+          return createdAt >= fromDate && createdAt <= toDate;
+        }
+        return createdAt >= fromDate;
+      });
+    }
+
+    const reportData = prepareDataForExport(exportData, 'room');
+    const totalCapacity = exportData.reduce((acc, r) => acc + (r.capacity || 0), 0);
     const metadata = {
       reportTitle: 'Room Inventory Business Report',
       reportId: `BTAU-ROOM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       summary: [
-        { label: 'Room Inventory', value: `${rooms.length} Units` },
+        { label: 'Room Inventory', value: `${exportData.length} Units` },
         { label: 'Total Capacity', value: `${totalCapacity} Pax` }
       ],
       author: 'Landlord Management System'
@@ -97,14 +111,27 @@ export function LandlordRoomHeader({
     exportToCSV(reportData, `Room_Report_${new Date().toLocaleDateString()}`, metadata);
   };
 
-  const handleGenerateExcel = async () => {
-    const reportData = prepareDataForExport(rooms, 'room');
-    const totalCapacity = rooms.reduce((acc, r) => acc + (r.capacity || 0), 0);
+  const handleGenerateExcel = async (dateRange?: DateRange) => {
+    let exportData = rooms;
+    if (dateRange?.from) {
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to;
+      exportData = exportData.filter(r => {
+        const createdAt = new Date(r.createdAt);
+        if (toDate) {
+          return createdAt >= fromDate && createdAt <= toDate;
+        }
+        return createdAt >= fromDate;
+      });
+    }
+
+    const reportData = prepareDataForExport(exportData, 'room');
+    const totalCapacity = exportData.reduce((acc, r) => acc + (r.capacity || 0), 0);
     const metadata = {
       reportTitle: 'Room Inventory Business Report',
       reportId: `BTAU-ROOM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       summary: [
-        { label: 'Room Inventory', value: `${rooms.length} Units` },
+        { label: 'Room Inventory', value: `${exportData.length} Units` },
         { label: 'Total Capacity', value: `${totalCapacity} Pax` }
       ],
       author: 'Landlord Management System'
