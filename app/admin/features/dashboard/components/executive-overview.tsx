@@ -173,7 +173,7 @@ export function ExecutiveOverview() {
               <TrendingUp className="w-4 h-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${metrics?.totalRevenue?.toLocaleString()}</div>
+              <div className="text-2xl font-bold">₱{metrics?.totalRevenue?.toLocaleString()}</div>
               <div className="flex items-center mt-1">
                 {metrics?.revenueGrowthPercentage && metrics.revenueGrowthPercentage > 0 ? (
                   <ArrowUpRight className="w-3 h-3 text-emerald-500 mr-1" />
@@ -272,7 +272,7 @@ export function ExecutiveOverview() {
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
-                  tickFormatter={(value) => `$${value}`}
+                  tickFormatter={(value) => `₱${value}`}
                 />
                 <YAxis
                   yAxisId="right"

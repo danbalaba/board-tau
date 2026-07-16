@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'ADMIN') {
+    if (!session || (session.user?.role !== 'ADMIN' && session.user?.role !== 'SUPER_ADMIN')) {
       return NextResponse.json(
         {
           success: false,
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         totalPrice: true
       }
     });
-    const totalRevenue = reservations.reduce((sum, reservation) => sum + reservation.totalPrice, 0);
+    const totalRevenue = reservations.reduce((sum: any, reservation: any) => sum + reservation.totalPrice, 0);
 
     // Get active users
     const activeUsers = await db.user.count();
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       }
     });
     const averageRating = reviews.length > 0
-      ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
+      ? (reviews.reduce((sum: any, review: any) => sum + review.rating, 0) / reviews.length).toFixed(1)
       : "0";
 
     // Get monthly bookings data
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     // Transform monthly data
     const monthlyStats = new Map<string, { bookings: number; revenue: number }>();
 
-    monthlyData.forEach(reservation => {
+    monthlyData.forEach((reservation: any) => {
       const date = new Date(reservation.startDate);
       const monthYear = `${date.getFullYear()}-${date.getMonth()}`;
 

@@ -11,7 +11,7 @@ export const revalidate = 0;
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'ADMIN') {
+    if (!session || (session.user?.role !== 'ADMIN' && session.user?.role !== 'SUPER_ADMIN')) {
       return NextResponse.json(ApiResponseFormatter.error('Unauthorized'), { status: 401 });
     }
 
@@ -33,11 +33,11 @@ export async function GET(req: NextRequest) {
     });
 
     // Filter out deleted users for the dashboard
-    const activeRaw = allUsers.filter(u => u.deletedAt === null);
+    const activeRaw = allUsers.filter((u: any) => u.deletedAt === null);
 
     // 2. Role Distribution
     const rolesMap: Record<string, number> = { 'Admin': 0, 'Landlord': 0, 'User': 0 };
-    activeRaw.forEach(u => {
+    activeRaw.forEach((u: any) => {
       let r = 'User';
       const roleStr = (u.role || '').toUpperCase();
       if (roleStr === 'ADMIN') r = 'Admin';
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     // 3. User Locations (STRICT PROFILE QUERY ONLY)
     const locationMap: Record<string, number> = {};
     
-    activeRaw.forEach(user => {
+    activeRaw.forEach((user: any) => {
       const location = user.city || user.region;
       if (location) {
         locationMap[location] = (locationMap[location] || 0) + 1;
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
       .slice(0, 5);
 
     // 4. Verification Status
-    const verifiedCount = activeRaw.filter(u => u.isVerifiedLandlord).length;
+    const verifiedCount = activeRaw.filter((u: any) => u.isVerifiedLandlord).length;
     const verificationStatus = [
       { isVerifiedLandlord: true, count: verifiedCount },
       { isVerifiedLandlord: false, count: activeRaw.length - verifiedCount }
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
       const mIdx = d.getMonth();
       const mYear = d.getFullYear();
       
-      const count = activeRaw.filter(u => {
+      const count = activeRaw.filter((u: any) => {
         const cDate = new Date(u.createdAt);
         return cDate.getMonth() === mIdx && cDate.getFullYear() === mYear;
       }).length;
@@ -94,11 +94,11 @@ export async function GET(req: NextRequest) {
 
     // Calculate Active Users based on lastLogin
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const trulyActiveCount = activeRaw.filter(u => u.lastLogin && new Date(u.lastLogin) >= thirtyDaysAgo).length;
+    const trulyActiveCount = activeRaw.filter((u: any) => u.lastLogin && new Date(u.lastLogin) >= thirtyDaysAgo).length;
 
     return NextResponse.json(ApiResponseFormatter.success({
       totalUsers: activeRaw.length,
-      newUsers: activeRaw.filter(u => u.createdAt >= thirtyDaysAgo).length,
+      newUsers: activeRaw.filter((u: any) => u.createdAt >= thirtyDaysAgo).length,
       activeUsers: trulyActiveCount || Math.max(1, activeRaw.length),
       userRoles,
       verificationStatus,

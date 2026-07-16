@@ -1,128 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { ApiResponseFormatter } from '@/lib/api-response';
-import { PrismaErrorHandler } from '@/lib/prisma-error-handler';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
-  try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'ADMIN') {
-      return NextResponse.json(
-        ApiResponseFormatter.error('Unauthorized', 'You must be an admin to access this resource'),
-        { status: 401 }
-      );
-    }
-
-    // Parse query parameters
-    const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const perPage = parseInt(searchParams.get('perPage') || '10');
-    const paymentStatus = searchParams.get('paymentStatus') || '';
-    const paymentMethod = searchParams.get('paymentMethod') || '';
-    const dateRange = searchParams.get('dateRange') || '';
-
-    // Calculate pagination
-    const skip = (page - 1) * perPage;
-
-    // Build query conditions
-    const where: any = {};
-
-    if (paymentStatus) {
-      where.paymentStatus = paymentStatus;
-    }
-
-    if (paymentMethod) {
-      where.paymentMethod = paymentMethod;
-    }
-
-    if (dateRange) {
-      const [start, end] = dateRange.split(' to ');
-      if (start && end) {
-        where.createdAt = {
-          gte: new Date(start),
-          lte: new Date(end + 'T23:59:59'),
-        };
-      }
-    }
-
-    // Fetch transactions and stats
-    const [transactions, total, totalAmount, completedCount, failedCount] = await Promise.all([
-      db.reservation.findMany({
-        where,
-        include: {
-          user: true,
-          listing: true,
-          room: true,
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: perPage,
-      }),
-      db.reservation.count({ where }),
-      db.reservation.aggregate({
-        where: { ...where, paymentStatus: 'PAID' },
-        _sum: { totalPrice: true },
-      }),
-      db.reservation.count({
-        where: { ...where, paymentStatus: 'PAID' },
-      }),
-      db.reservation.count({
-        where: { ...where, paymentStatus: 'FAILED' },
-      }),
-    ]);
-
-    // Transform data for response
-    const transformedTransactions = transactions.map(transaction => ({
-      id: transaction.id,
-      userId: transaction.userId,
-      listingId: transaction.listingId,
-      roomId: transaction.roomId,
-      startDate: transaction.startDate,
-      endDate: transaction.endDate,
-      durationInDays: transaction.durationInDays,
-      totalPrice: transaction.totalPrice,
-      status: transaction.status,
-      paymentStatus: transaction.paymentStatus,
-      paymentMethod: transaction.paymentMethod,
-      paymentReference: transaction.paymentReference,
-      createdAt: transaction.createdAt,
-      updatedAt: transaction.updatedAt,
-      user: {
-        id: transaction.user.id,
-        name: transaction.user.name,
-        email: transaction.user.email,
-        image: transaction.user.image,
-      },
-      listing: {
-        id: transaction.listing.id,
-        title: transaction.listing.title,
-        description: transaction.listing.description,
-        imageSrc: transaction.listing.imageSrc,
-      },
-      room: transaction.room,
-    }));
-
-    return NextResponse.json(
-      ApiResponseFormatter.success(transformedTransactions, 'Transactions fetched successfully', {
-        total,
-        page,
-        perPage,
-        totalPages: Math.ceil(total / perPage),
-        stats: {
-          totalAmount: totalAmount._sum.totalPrice || 0,
-          completedCount,
-          failedCount,
-        }
-      })
-    );
-  } catch (error) {
-    const errorResponse = PrismaErrorHandler.handle(error);
-    return NextResponse.json(
-      ApiResponseFormatter.error(errorResponse.message, 'Failed to fetch transactions', errorResponse.details),
-      { status: errorResponse.status }
-    );
+  const session = await getServerSession(authOptions);
+  if (!session || (session.user?.role !== 'ADMIN' && session.user?.role !== 'SUPER_ADMIN')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const { searchParams } = new URL(req.url);
+  const page = Number(searchParams.get('page') ?? 1);
+  const limit = Number(searchParams.get('limit') ?? 20);
+  const paymentStatus = searchParams.get('paymentStatus') ?? undefined;
+  const paymentMethod = searchParams.get('paymentMethod') ?? undefined;
+
+  const where: any = {};
+  if (paymentStatus && paymentStatus !== 'ALL') where.paymentStatus = paymentStatus;
+  if (paymentMethod && paymentMethod !== 'ALL') where.paymentMethod = paymentMethod;
+
+  const [reservations, total] = await Promise.all([
+    db.reservation.findMany({
+      where,
+      include: {
+        user: { select: { name: true, email: true } },
+        listing: { select: { title: true } },
+        room: { select: { name: true } },
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    }),
+    db.reservation.count({ where }),
+  ]);
+
+  return NextResponse.json({ reservations, total, page, limit });
 }

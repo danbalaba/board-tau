@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'ADMIN') {
+    if (!session || (session.user?.role !== 'ADMIN' && session.user?.role !== 'SUPER_ADMIN')) {
       return NextResponse.json(
         ApiResponseFormatter.error('Unauthorized', 'You must be an admin to access this resource'),
         { status: 401 }
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     ]);
 
     // Transform data for response
-    const transformedReviews = reviews.map(review => ({
+    const transformedReviews = reviews.map((review: any) => ({
       id: review.id,
       userId: review.userId,
       listingId: review.listingId,
