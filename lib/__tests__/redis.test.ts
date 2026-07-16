@@ -10,10 +10,14 @@ jest.mock('@upstash/redis', () => {
     exists: jest.fn(),
     flushdb: jest.fn(),
   };
-  return {
-    Redis: {
-      fromEnv: jest.fn(() => mRedis)
+  class MockRedis {
+    constructor() {
+      return mRedis;
     }
+    static fromEnv = jest.fn(() => mRedis);
+  }
+  return {
+    Redis: MockRedis
   };
 });
 
