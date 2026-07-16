@@ -47,12 +47,12 @@ export async function GET(req: NextRequest) {
     const folder1 = match[1];
     const folder2 = match[2];
     const folder3 = match[3]; // Optional sub-folder (might be undefined)
-    const filename = match[4];
+    const fileBaseName = match[4];
 
     // Reconstruct the path using only the whitelisted matched segments
     const safePath = folder3 
-      ? `/${folder1}/${folder2}/${folder3}/${filename}.json`
-      : `/${folder1}/${folder2}/${filename}.json`;
+      ? `/${folder1}/${folder2}/${folder3}/${fileBaseName}.json`
+      : `/${folder1}/${folder2}/${fileBaseName}.json`;
 
     // 5. Reconstruct the URL using strictly hardcoded string literals to prevent SSRF and clear CodeQL taint tracking
     let safeUrl = '';
@@ -77,12 +77,12 @@ export async function GET(req: NextRequest) {
     const decryptedContent = decryptMessage(encryptedContent);
 
     // 7. Stream the decrypted file back to the browser as a download
-    const filename = rawUrl.split('/').pop() || 'backup.json';
+    const downloadName = fileBaseName ? `${fileBaseName}.json` : 'backup.json';
     return new NextResponse(decryptedContent, {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Disposition': `attachment; filename="${downloadName}"`,
       },
     });
   } catch (error: any) {
