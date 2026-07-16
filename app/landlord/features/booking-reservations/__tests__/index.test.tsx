@@ -79,7 +79,11 @@ jest.mock('../hooks/use-reservation-logic', () => ({
     handleGenerateReport: jest.fn(),
     isUpdating: false,
     isArchived: false,
-    handleToggleArchived: jest.fn()
+    handleToggleArchived: jest.fn(),
+    itemsPerPage: 10,
+    currentPage: 1,
+    setItemsPerPage: jest.fn(),
+    setCurrentPage: jest.fn()
   }))
 }));
 
