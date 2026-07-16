@@ -12,6 +12,7 @@ import { LoadingProvider } from "@/components/loading/LoadingContext";
 import GlobalLoadingOverlay from "@/components/loading/GlobalLoadingOverlay";
 import { NetworkStatusManager } from "@/components/common/NetworkStatusManager";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import InstallPrompt from "@/components/pwa/InstallPrompt";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL 
   ? process.env.NEXT_PUBLIC_SITE_URL 
@@ -90,6 +91,22 @@ export const metadata: Metadata = {
     },
   },
   category: "technology",
+  verification: {
+    google: "Wll_yrudzbwvo6oAY_8skac6FOpGsG7ubSyw4eH4XHk",
+  },
+  other: {
+    "geo.region": "PH-TAR",
+    "geo.placename": "Camiling, Tarlac",
+    "geo.position": "15.6888;120.4208",
+    "ICBM": "15.6888, 120.4208",
+  },
+};
+
+export const viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
 };
 
 export default function RootLayout({
@@ -113,6 +130,7 @@ export default function RootLayout({
           </Suspense>
           <LayoutContent>
             {children}
+            <InstallPrompt />
           </LayoutContent>
           <SpeedInsights />
         </Providers>

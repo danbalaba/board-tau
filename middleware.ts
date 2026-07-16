@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
   // --- HOME PAGE ROLE REDIRECT ---
   // Redirect logged-in internal roles away from the public home page instantly
   if (pathname === "/") {
-    if (token?.role === "ADMIN") {
+    if (token?.role === "ADMIN" || token?.role === "SUPER_ADMIN") {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
     if (token?.role === "LANDLORD") {
@@ -27,9 +27,35 @@ export async function middleware(request: NextRequest) {
   }
 
   // --- CUSTOM AUTH ERROR REDIRECTS ---
-  // Catch the AccountLocked error from NextAuth and redirect to our high-fidelity page
-  if (pathname.startsWith("/api/auth/error") && searchParams.get("error") === "AccountLocked") {
-    return NextResponse.redirect(new URL("/auth/locked", request.url));
+  // Catch the AccountLocked, AccountSuspended, and AccountBanned errors from NextAuth and redirect to our high-fidelity pages
+  if (pathname.startsWith("/api/auth/error")) {
+    const errorParam = searchParams.get("error");
+    if (errorParam?.startsWith("AccountLocked")) {
+      const parts = errorParam.split(":");
+      const email = parts.length > 1 ? parts[1] : "";
+      const url = new URL("/auth/locked", request.url);
+      url.searchParams.set("secure", "1");
+      if (email) url.searchParams.set("email", email);
+      return NextResponse.redirect(url);
+    }
+    if (errorParam?.startsWith("AccountSuspended")) {
+      const url = new URL("/auth/suspended", request.url);
+      url.searchParams.set("secure", "1");
+      return NextResponse.redirect(url);
+    }
+    if (errorParam?.startsWith("AccountBanned")) {
+      const url = new URL("/auth/banned", request.url);
+      url.searchParams.set("secure", "1");
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // Protect auth error pages from direct unauthorized access
+  const authErrorPages = ["/auth/locked", "/auth/suspended", "/auth/banned"];
+  if (authErrorPages.includes(pathname)) {
+    if (searchParams.get("secure") !== "1") {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
   }
 
   // --- API RATE LIMITING ---
@@ -112,9 +138,31 @@ export async function middleware(request: NextRequest) {
     }
 
     const role = token.role as string | undefined;
-    if (role !== "ADMIN") {
-      const homeUrl = new URL("/", request.url);
-      return NextResponse.redirect(homeUrl);
+    if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+      const unauthorizedUrl = new URL("/unauthorized", request.url);
+      return NextResponse.redirect(unauthorizedUrl);
+    }
+
+    // Role-based route protection
+    const SUPER_ADMIN_ONLY_ROUTES = [
+      "/admin/finance",
+      "/admin/billing",
+      "/admin/settings",
+      "/admin/monitoring",
+      "/admin/analytics",
+      "/admin/properties",
+      "/admin/overview",
+      "/admin/user-management/roles",
+      "/admin/user-management/analytics",
+    ];
+
+    const isSuperAdminRoute = SUPER_ADMIN_ONLY_ROUTES.some(route => pathname.startsWith(route));
+    if (isSuperAdminRoute && role !== "SUPER_ADMIN") {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    }
+
+    if (pathname.startsWith("/admin/dashboard") && role === "SUPER_ADMIN") {
+      return NextResponse.redirect(new URL("/admin/overview", request.url));
     }
 
     return NextResponse.next();
@@ -135,8 +183,8 @@ export async function middleware(request: NextRequest) {
 
     const role = token.role as string | undefined;
     if (role !== "LANDLORD") {
-      const homeUrl = new URL("/", request.url);
-      return NextResponse.redirect(homeUrl);
+      const unauthorizedUrl = new URL("/unauthorized", request.url);
+      return NextResponse.redirect(unauthorizedUrl);
     }
 
     return NextResponse.next();
@@ -147,6 +195,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
+    "/auth/:path*",
     "/admin/:path*", 
     "/landlord/:path*",
     "/api/:path*"
