@@ -32,15 +32,23 @@ export async function GET(req: NextRequest) {
     }
 
     const isSecure = urlObj.protocol === 'https:';
-    const isEdgeStoreHost = urlObj.hostname === 'files.edgestore.dev' || urlObj.hostname === 'edgestore.dev' || urlObj.hostname.endsWith('.edgestore.dev');
-
-    if (!isSecure || !isEdgeStoreHost) {
-      console.error('[BACKUP_DOWNLOAD] Decrypted URL is not a valid EdgeStore reference or insecure:', rawUrl.substring(0, 50));
+    if (!isSecure) {
+      console.error('[BACKUP_DOWNLOAD] Decrypted URL is not secure:', rawUrl.substring(0, 50));
       return NextResponse.json({ error: 'Invalid or tampered file reference' }, { status: 400 });
     }
 
-    // 5. Directly fetch the file server-to-server using the decrypted raw URL
-    const fileRes = await fetch(rawUrl);
+    // 5. Reconstruct the URL using strictly hardcoded string literals to prevent SSRF and clear CodeQL taint tracking
+    let safeUrl = '';
+    if (urlObj.hostname === 'files.edgestore.dev') {
+      safeUrl = `https://files.edgestore.dev${urlObj.pathname}${urlObj.search}`;
+    } else if (urlObj.hostname === 'edgestore.dev') {
+      safeUrl = `https://edgestore.dev${urlObj.pathname}${urlObj.search}`;
+    } else {
+      console.error('[BACKUP_DOWNLOAD] Hostname is not a valid EdgeStore origin:', urlObj.hostname);
+      return NextResponse.json({ error: 'Invalid or tampered file reference' }, { status: 400 });
+    }
+
+    const fileRes = await fetch(safeUrl);
     
     if (!fileRes.ok) {
       console.error('[BACKUP_DOWNLOAD] Fetch failed:', fileRes.status, fileRes.statusText);
