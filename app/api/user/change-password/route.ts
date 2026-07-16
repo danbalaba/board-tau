@@ -3,6 +3,19 @@ import { changeUserPassword } from '@/services/user/profile';
 
 export async function POST(request: NextRequest) {
   try {
+    const { getCurrentUser } = await import('@/services/user');
+    const { hasPermission } = await import('@/lib/rbac');
+    
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const permitted = await hasPermission(user.id, "UPDATE_PASSWORD");
+    if (!permitted) {
+      return NextResponse.json({ error: "Forbidden: Missing permission UPDATE_PASSWORD" }, { status: 403 });
+    }
+
     const data = await request.json();
     const { oldPassword, newPassword } = data;
 

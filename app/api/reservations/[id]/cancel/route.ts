@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
 import { sendReservationNotificationEmail } from "@/services/email/notifications";
+import { recordCancellationStrike } from "@/lib/strikes";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function PUT(
   request: Request,
@@ -64,6 +66,9 @@ export async function PUT(
       }
     });
 
+    // Record a strike for the user
+    await recordCancellationStrike(user.id, reservationId, `Cancelled reservation for ${updatedReservation.listing.title}: ${reason || "No reason specified"}`);
+
     // CRITICAL: Restore the room slot if it was in a reserved state
     if (reservation.status === "RESERVED" || reservation.status === "CHECKED_IN") {
       const occupantCount = (reservation as any).occupantsCount || 1;
@@ -91,13 +96,13 @@ export async function PUT(
           updatedReservation.listing,
           "CANCELLED",
           "Booking Withdrawn",
-          `${updatedReservation.user.name} has cancelled their reservation for ${updatedReservation.listing.title}. Reason: ${reason || 'No reason specified'}. The room is now available for others.`,
+          `${updatedReservation.user?.name} has cancelled their reservation for ${updatedReservation.listing.title}. Reason: ${reason || 'No reason specified'}. The room is now available for others.`,
           true
         );
       }
 
       // Notify Tenant (Confirmation Receipt)
-      if (updatedReservation.user && updatedReservation.user.email) {
+      if (updatedReservation.user && updatedReservation.user?.email) {
         await sendReservationNotificationEmail(
           updatedReservation.user,
           updatedReservation.listing,
@@ -109,6 +114,25 @@ export async function PUT(
       }
     } catch (e) {
       console.error("Cancel notify error:", e);
+    }
+
+    // Track reservation cancellation server-side
+    try {
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: user.id,
+        event: "reservation_cancelled",
+        properties: {
+          reservation_id: reservationId,
+          listing_id: updatedReservation.listingId,
+          listing_title: (updatedReservation as any).listing?.title,
+          previous_status: currentStatus,
+          reason: reason || "No reason specified",
+        },
+      });
+      await posthog.flush();
+    } catch (phErr) {
+      console.error("PostHog reservation_cancelled capture failed:", phErr);
     }
 
     return NextResponse.json(updatedReservation);

@@ -20,14 +20,19 @@ export async function GET(req: Request) {
 
     if (inquiry) {
       // Simulate what the webhook would do
-      // 1. ATOMIC STATUS UPDATE: Only proceed if the reservation is still PENDING_PAYMENT
       let updatedReservation;
       try {
+        const pendingReservation = await db.reservation.findFirst({
+          where: { inquiryId: inquiry.id, status: "PENDING_PAYMENT" }
+        });
+        
+        if (!pendingReservation) {
+          console.log(`ℹ️ Mock: Reservation ${inquiry.id} already finalized. Skipping inventory update.`);
+          return NextResponse.json({ success: true, message: "Already paid" });
+        }
+
         updatedReservation = await db.reservation.update({
-          where: { 
-            inquiryId: inquiry.id,
-            status: "PENDING_PAYMENT" 
-          },
+          where: { id: pendingReservation.id },
           data: {
             status: "RESERVED",
             paymentStatus: "PAID",
@@ -39,7 +44,7 @@ export async function GET(req: Request) {
           }
         });
       } catch (error) {
-        console.log(`ℹ️ Mock: Reservation ${inquiry.id} already finalized. Skipping inventory update.`);
+        console.log(`ℹ️ Mock: Reservation update error. Skipping.`);
         return NextResponse.json({ success: true, message: "Already paid" });
       }
 
@@ -78,9 +83,9 @@ export async function GET(req: Request) {
           select: { email: true, name: true }
         });
 
-        if (updatedReservation.user.email) {
+        if (updatedReservation.user?.email) {
           await sendReservationNotificationEmail(
-            updatedReservation.user,
+            updatedReservation.user!,
             updatedReservation.listing,
             "RESERVED",
             "Booking Confirmed!",
@@ -89,7 +94,7 @@ export async function GET(req: Request) {
 
           // In-app for Tenant
           await createNotification({
-            userId: updatedReservation.userId,
+            userId: updatedReservation.userId!,
             type: 'reservation',
             title: 'Booking Confirmed!',
             description: `Your reservation for ${updatedReservation.listing.title} is now secured and confirmed (Simulated).`,
@@ -103,7 +108,7 @@ export async function GET(req: Request) {
             updatedReservation.listing,
             "RESERVED",
             "New Confirmed Reservation (Mock)",
-            `${updatedReservation.user.name} has paid the reservation fee for ${updatedReservation.listing.title} using ${method}.`,
+            `${updatedReservation.user?.name} has paid the reservation fee for ${updatedReservation.listing.title} using ${method}.`,
             true
           );
 
@@ -112,7 +117,7 @@ export async function GET(req: Request) {
             userId: updatedReservation.listing.userId,
             type: 'reservation',
             title: 'New Confirmed Reservation (Mock)',
-            description: `${updatedReservation.user.name} has secured their reservation for ${updatedReservation.listing.title} via ${method}.`,
+            description: `${updatedReservation.user?.name} has secured their reservation for ${updatedReservation.listing.title} via ${method}.`,
             link: `/landlord/reservations`
           });
         }

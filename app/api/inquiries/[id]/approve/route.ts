@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
 import { sendInquiryStatusEmail } from "@/services/email/notifications";
 import { createNotification } from "@/services/notification";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function POST(
   request: Request,
@@ -111,6 +112,25 @@ export async function POST(
       }
     } catch (notifError) {
       console.error("Failed to process approval notifications:", notifError);
+    }
+
+    // Track inquiry approval for tenant and landlord
+    try {
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: inquiry.userId,
+        event: "inquiry_approved",
+        properties: {
+          inquiry_id: inquiryId,
+          listing_id: inquiry.listingId,
+          listing_title: inquiry.listing.title,
+          reservation_id: reservation.id,
+          total_price: totalPrice,
+        },
+      });
+      await posthog.flush();
+    } catch (phErr) {
+      console.error("PostHog inquiry_approved capture failed:", phErr);
     }
 
     return NextResponse.json({

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireLandlord } from "@/lib/landlord";
 import { cache } from "@/lib/redis";
 import { backendClient } from "@/lib/edgestore-server";
+import { hasPermission } from "@/lib/rbac";
 
 // GET /api/landlord/rooms/[roomId] — fetch single room details
 export async function GET(
@@ -11,6 +12,9 @@ export async function GET(
 ) {
   try {
     const landlord = await requireLandlord();
+    const permitted = await hasPermission(landlord.id, "VIEW_ROOMS");
+    if (!permitted) return NextResponse.json({ success: false, message: "Forbidden: Missing VIEW_ROOMS" }, { status: 403 });
+
     const { roomId } = await params;
 
     const room = await db.room.findFirst({
@@ -47,7 +51,7 @@ export async function GET(
       propertyRegion: room.listing.region,
       propertyStatus: room.listing.status,
       imageSrc: room.images[0]?.url || null,
-      images: room.images.map(img => img.url),
+      images: room.images.map((img: any) => img.url),
     };
 
     return NextResponse.json({ success: true, room: formattedRoom });
@@ -67,6 +71,9 @@ export async function PATCH(
 ) {
   try {
     const landlord = await requireLandlord();
+    const permitted = await hasPermission(landlord.id, "UPDATE_ROOM");
+    if (!permitted) return NextResponse.json({ success: false, message: "Forbidden: Missing UPDATE_ROOM" }, { status: 403 });
+
     const { roomId } = await params;
     const body = await request.json();
 
@@ -156,6 +163,9 @@ export async function DELETE(
 ) {
   try {
     const landlord = await requireLandlord();
+    const permitted = await hasPermission(landlord.id, "UPDATE_ROOM");
+    if (!permitted) return NextResponse.json({ success: false, message: "Forbidden: Missing UPDATE_ROOM" }, { status: 403 });
+
     const { roomId } = await params;
 
     const existing = await db.room.findFirst({
@@ -171,7 +181,7 @@ export async function DELETE(
     }
 
     // 1. Wipe all images from EdgeStore
-    const imageUrls = existing.images.map(img => img.url).filter(Boolean);
+    const imageUrls = existing.images.map((img: any) => img.url).filter(Boolean);
     
     if (imageUrls.length > 0) {
       console.log(`🛡️ SECURITY PURGE: Wiping ${imageUrls.length} images for Room ${roomId}`);
@@ -193,7 +203,7 @@ export async function DELETE(
       };
 
       await Promise.all(
-        imageUrls.map(url => {
+        imageUrls.map((url: any) => {
           const targetUrl = extractRealUrl(url);
           if (targetUrl.startsWith('http')) {
             return (backendClient.publicFiles as any).deleteFile({ url: targetUrl }).catch((err: any) => {

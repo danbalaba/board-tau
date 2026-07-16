@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
 import { sendReservationNotificationEmail } from "@/services/email/notifications";
+import { recordCancellationStrike } from "@/lib/strikes";
+import { baseUrl } from "@/services/email/constants";
 
 export async function PUT(
   request: Request,
@@ -63,6 +65,9 @@ export async function PUT(
       },
     });
 
+    // Record a strike for the user
+    await recordCancellationStrike(user.id, inquiryId, `Cancelled inquiry for ${inquiry.listing.title}: ${reason || "No reason specified"}`);
+
     // Notify Landlord of cancellation
     try {
       const landlord = await db.user.findUnique({
@@ -77,7 +82,9 @@ export async function PUT(
             "CANCELLED",
             "Inquiry Withdrawn",
             `${inquiry.user.name || 'A student'} has withdrawn their inquiry for ${inquiry.listing.title}. Reason: ${reason || 'No reason specified'}`,
-            true
+            true,
+            `${baseUrl}/landlord/inquiries`,
+            "Manage Inquiries"
          );
       }
 
@@ -94,7 +101,9 @@ export async function PUT(
             "CANCELLED",
             "Inquiry Withdrawal Receipt", // More clear
             `This email confirms that you have successfully withdrawn your inquiry for ${inquiry.listing.title}. No further action is required.`,
-            false
+            false,
+            `${baseUrl}/inquiries`,
+            "My Inquiries"
          );
       }
     } catch (emailError) {
@@ -110,3 +119,4 @@ export async function PUT(
     );
   }
 }
+

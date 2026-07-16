@@ -19,6 +19,10 @@ export async function GET(
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
+    const { hasPermission } = await import("@/lib/rbac");
+    const permitted = await hasPermission(session.user.id, "VIEW_TENANT_PROFILE");
+    if (!permitted) return NextResponse.json({ success: false, error: "Forbidden: Missing VIEW_TENANT_PROFILE" }, { status: 403 });
+
     const { tenantId } = await params;
 
     // Authorization check: Landlord must have had a message exchange with this tenant

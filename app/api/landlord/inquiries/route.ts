@@ -9,9 +9,16 @@ import {
   respondToInquiry,
   deleteInquiry,
 } from "@/services/landlord/inquiries";
+import { hasPermission } from "@/lib/rbac";
+import { getCurrentUser } from "@/services/user";
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    const permitted = await hasPermission(user.id, "MANAGE_INQUIRIES");
+    if (!permitted) return NextResponse.json({ success: false, error: 'Forbidden: Missing MANAGE_INQUIRIES' }, { status: 403 });
+
     const searchParams = request.nextUrl.searchParams;
     const cursor = searchParams.get("cursor") || undefined;
     const status = searchParams.get("status") || undefined;
@@ -37,6 +44,11 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    const permitted = await hasPermission(user.id, "MANAGE_INQUIRIES");
+    if (!permitted) return NextResponse.json({ success: false, error: 'Forbidden: Missing MANAGE_INQUIRIES' }, { status: 403 });
+
     const { searchParams } = new URL(request.url);
     const inquiryId = searchParams.get("id");
 
@@ -91,6 +103,9 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const landlord = await requireLandlord();
+    const permitted = await hasPermission(landlord.id, "MANAGE_INQUIRIES");
+    if (!permitted) return NextResponse.json({ success: false, error: 'Forbidden: Missing MANAGE_INQUIRIES' }, { status: 403 });
+
     const { searchParams } = new URL(request.url);
     const inquiryId = searchParams.get("id");
     const isPurge = searchParams.get("purge") === "true";
