@@ -7,13 +7,13 @@ jest.mock('framer-motion', () => {
   const React = require('react');
   return {
     motion: {
-      div: React.forwardRef(({ children, onDragEnd, whileTap, dragConstraints, dragElastic, dragMomentum, ...props }: any, ref: any) => {
-        // Find if this is the draggable thumb by checking drag prop
-        const isThumb = props.drag !== undefined;
+      div: React.forwardRef(({ children, onDragEnd, initial, animate, exit, drag, transition, whileHover, whileTap, whileDrag, whileFocus, whileInView, dragConstraints, dragElastic, dragMomentum, layoutId, layout, ...props }: any, ref: any) => {
+        // Find if this is the draggable thumb by checking onDragEnd prop
+        const isThumb = onDragEnd !== undefined;
         return (
-          <div 
-            ref={ref} 
-            {...props} 
+          <div
+            ref={ref}
+            {...props}
             data-testid={isThumb ? "draggable-thumb" : "motion-div"}
             onClick={isThumb ? onDragEnd : props.onClick}
           >
@@ -21,7 +21,7 @@ jest.mock('framer-motion', () => {
           </div>
         );
       }),
-      span: React.forwardRef(({ children, ...props }: any, ref: any) => (
+      span: React.forwardRef(({ children, initial, animate, exit, drag, transition, whileHover, whileTap, layoutId, layout, ...props }: any, ref: any) => (
         <span ref={ref} {...props}>{children}</span>
       )),
     },
