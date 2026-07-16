@@ -32,7 +32,8 @@ jest.mock('framer-motion', () => {
 jest.mock('next/image', () => ({
   __esModule: true,
   default: (props: any) => {
-    return <img {...props} />;
+    const { fill, priority, unoptimized, ...rest } = props;
+    return <img {...rest} />;
   },
 }));
 
