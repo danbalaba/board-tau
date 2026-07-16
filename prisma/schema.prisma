@@ -11,6 +11,7 @@ enum Role {
   USER
   ADMIN
   LANDLORD
+  SUPER_ADMIN
 }
 
 enum InquiryRole {
@@ -106,7 +107,7 @@ model User {
   favoriteIds   String[]  @default([]) @db.ObjectId
   role          Role      @default(USER)
   roleId        String?   @db.ObjectId
-  isActive      Boolean   @default(true)
+  isActive      Boolean?  @default(true)
   deletedAt     DateTime?
   isVerifiedLandlord Boolean @default(false)
   landlordApprovedAt DateTime?
@@ -124,6 +125,19 @@ model User {
   failedLoginAttempts  Int       @default(0)
   loginLockoutUntil    DateTime?
 
+  // --- Per-User Notification Preferences (Future Implementation) ---
+  notifyEmail          Boolean   @default(true)  // Receive email notifications
+  notifySms            Boolean   @default(false) // Receive SMS/mobile alerts
+  notifyInquiry        Boolean   @default(true)  // Alerts for new inquiries
+  notifyReservation    Boolean   @default(true)  // Alerts for reservation updates
+  notifyMessages       Boolean   @default(true)  // Alerts for new messages
+  notifyFinancial      Boolean   @default(true)  // Alerts for payment/financial events
+
+  // --- Strike System & Moderation ---
+  restrictedReason     String?
+  suspensionCount      Int       @default(0)
+  isPermanentlyBanned  Boolean   @default(false)
+
   roleRelation UserRole?    @relation(fields: [roleId], references: [id])
 
   createdAt DateTime @default(now())
@@ -136,11 +150,25 @@ model User {
   receivedMessages Message[] @relation("receivedMessages")
   reviews      Review[]
   adminLogs    AdminActivityLog[]
+  moderationLogs ModerationLog[]
   inquiries    Inquiry[]
   hostApplication HostApplication?
   emailOTPs    EmailOTP[]
   notifications Notification[]
   customDashboards CustomDashboard[]
+  userStrikes  UserStrike[]
+}
+
+model UserStrike {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  reason    String
+  entityId  String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model Account {
@@ -303,6 +331,7 @@ model Listing {
   amenities_list    String[]  @default([])
   amenities_tags    String[]  @default([])
   isArchived        Boolean   @default(false)
+  deletedAt         DateTime?
   businessInfo      Json?     // Supporting data for Admin Review (businessName, businessType, experience, mission)
 
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -376,13 +405,14 @@ model Inquiry {
   isArchived        Boolean   @default(false)
   rejectionReason   String?
   cancellationReason String? // Added for student-side cancellation reasons
+  isSoloBuyout      Boolean   @default(false)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
   listing           Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
   room              Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reservation       Reservation?
+  reservations      Reservation[]
 
   @@index([listingId, status, createdAt])
   @@index([listingId, userId])
@@ -390,7 +420,12 @@ model Inquiry {
 
 model Reservation {
   id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String    @db.ObjectId
+  userId            String?   @db.ObjectId
+  isWalkIn          Boolean   @default(false)
+  guestName         String?
+  guestContact      String?
+  guestPhotoUrl     String?
+  guestIdUrl        String?
   listingId         String    @db.ObjectId
   roomId            String    @db.ObjectId
   inquiryId         String?   @db.ObjectId
@@ -404,16 +439,16 @@ model Reservation {
   paymentReference  String?
   occupantsCount    Int      @default(1) // Added to track group size across the lifecycle
   cancellationReason String? // Added for professional record keeping
+  isSoloBuyout      Boolean   @default(false)
   isArchived        Boolean   @default(false)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   listing           Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
   room              Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
   inquiry           Inquiry?  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
   reviews           Review[]
-  @@unique([inquiryId])
   @@index([listingId, status, paymentStatus])
   @@index([roomId, status])
 }
@@ -445,6 +480,8 @@ model Review {
   location       Int?     // 1-5
   value          Int?     // 1-5
   status         String   @default("approved") // pending, approved, removed
+  isArchived     Boolean  @default(false)
+  deletedAt      DateTime?
   createdAt      DateTime @default(now())
   response       String?
   respondedAt    DateTime?
@@ -497,6 +534,22 @@ model AdminActivityLog {
   @@index([createdAt(sort: Desc)])
 }
 
+model ModerationLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  adminId     String   @db.ObjectId
+  action      String   // e.g. "approved", "rejected"
+  entityType  String   // "listing", "review", "hostApplication"
+  entityId    String   // String because it might refer to different collections
+  entityTitle String?  // Optional snapshot of the title/name for easy feed rendering
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  
+  @@index([createdAt(sort: Desc)])
+  @@index([entityType, entityId])
+}
+
 model EmailOTP {
   id                String    @id @default(auto()) @map("_id") @db.ObjectId
   userId            String?   @db.ObjectId
@@ -531,6 +584,7 @@ model HostApplication {
   userId          String    @db.ObjectId @unique
   status          String    @default("pending") // pending, approved, rejected
   isArchived      Boolean   @default(false)
+  deletedAt       DateTime?
   
   // Business & Contact Identity
   businessInfo    Json      // { businessName, mission, yearsExperience, businessType }
@@ -594,11 +648,10 @@ model SiteSettings {
   contactPhone     String?
   address          String?
   
-  // Feature toggles
-  enableEmailNotifications Boolean @default(true)
-  enablePushNotifications  Boolean @default(false)
-  enableAnalytics          Boolean @default(true)
-  enableCookies            Boolean @default(true)
+  // Automated Backups
+  autoBackupSchedule String  @default("none") // 'none', 'daily', 'weekly', 'monthly'
+  autoBackupTime     String  @default("02:00") // Time of day for cron job
+  backupRetention    Int     @default(5) // Number of recent backups to keep
   
   updatedAt        DateTime @updatedAt
 }
@@ -608,7 +661,16 @@ model FeatureFlag {
   name        String   @unique
   description String
   enabled     Boolean  @default(false)
-  environment String   @default("production") // development, staging, production
+  risk        String   @default("low") // low, medium, high
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model PlatformMetricSnapshot {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  date                  DateTime @unique
+  totalFeatureFlags     Int      @default(0)
+  activeFeatureFlags    Int      @default(0)
+  inactiveFeatureFlags  Int      @default(0)
+  createdAt             DateTime @default(now())
 }
