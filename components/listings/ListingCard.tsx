@@ -148,18 +148,17 @@ const ListingCard: React.FC<ListingCardProps> = ({
     if (isSelectedForCompare) {
       removeListing(data.id);
     } else {
-      if (selectedListingIds.length < 3) {
-        addListing(data.id);
-      } else {
+      if (selectedListingIds.length >= 3) {
         const now = Date.now();
         if (now - lastToastTime > 3000) {
           lastToastTime = now;
-          toast.warning(
-            { title: "Limit Reached", description: "You can only compare up to 3 listings at a time!" },
-            { id: "compare-limit" }
+          toast.info(
+            { title: "Comparison Updated", description: "The oldest listing was removed to make room for this one." },
+            { id: "compare-update" }
           );
         }
       }
+      addListing(data.id);
     }
   };
 
