@@ -50,6 +50,8 @@ interface ReservationCardProps {
     onCancel?: () => void;
     onReview?: () => void;
     hasNotification?: boolean;
+    currentUserName?: string;
+    currentUserEmail?: string;
 }
 
 const ReservationCard: React.FC<ReservationCardProps> = ({
@@ -59,6 +61,8 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
     onCancel,
     onReview,
     hasNotification,
+    currentUserName = "Tenant",
+    currentUserEmail = "tenant@example.com",
 }) => {
     const responsiveToast = useResponsiveToast();
 
@@ -273,10 +277,8 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
                     {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
                         <button
                             onClick={() => {
-                                const name = (reservation as any).guestName || "Tenant";
-                                const email = "tenant@example.com";
                                 responsiveToast.loading("Generating Boarding Pass...");
-                                generateConfirmationSlipPDF(reservation, name, email)
+                                generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail)
                                     .then(() => responsiveToast.success("Downloaded successfully!"))
                                     .catch(() => responsiveToast.error("Failed to generate."));
                             }}

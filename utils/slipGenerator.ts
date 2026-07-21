@@ -22,51 +22,6 @@ const getLogoBase64 = (): Promise<string> => {
   });
 };
 
-// A highly simplified mock QR Code generator just drawing blocks
-// It will look like a QR code on a PDF without requiring external heavy libraries
-const drawMockQRCode = (doc: any, x: number, y: number, size: number) => {
-  // Border
-  doc.setDrawColor("#000000");
-  doc.setLineWidth(0.5);
-  doc.rect(x, y, size, size);
-
-  // Corner markers
-  const markerSize = size * 0.2;
-  const positions = [
-    [x + 2, y + 2],
-    [x + size - markerSize - 2, y + 2],
-    [x + 2, y + size - markerSize - 2],
-  ];
-
-  positions.forEach(([px, py]) => {
-    doc.setFillColor("#000000");
-    doc.rect(px, py, markerSize, markerSize, "F");
-    doc.setFillColor("#ffffff");
-    doc.rect(px + 1, py + 1, markerSize - 2, markerSize - 2, "F");
-    doc.setFillColor("#000000");
-    doc.rect(px + 2, py + 2, markerSize - 4, markerSize - 4, "F");
-  });
-
-  // Random internal blocks to look like data
-  doc.setFillColor("#000000");
-  const blockCount = 15;
-  const blockSize = size / blockCount;
-  for (let i = 0; i < blockCount; i++) {
-    for (let j = 0; j < blockCount; i += 2, j += 2) {
-      if (Math.random() > 0.4) {
-        // avoid corners
-        if (
-          !(i < 5 && j < 5) &&
-          !(i > 9 && j < 5) &&
-          !(i < 5 && j > 9)
-        ) {
-          doc.rect(x + i * blockSize, y + j * blockSize, blockSize, blockSize, "F");
-        }
-      }
-    }
-  }
-};
-
 export const generateConfirmationSlipPDF = async (reservation: any, tenantName: string, tenantEmail: string) => {
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
@@ -91,8 +46,21 @@ export const generateConfirmationSlipPDF = async (reservation: any, tenantName: 
   doc.setTextColor(100);
   doc.text("BOARDING PASS / CONFIRMATION SLIP", hasLogo ? 45 : 20, 38);
 
-  // Draw Mock QR Code for Professionalism
-  drawMockQRCode(doc, 160, 20, 30);
+  // Generate Real QR Code
+  try {
+    const QRCode = (await import("qrcode")).default;
+    const verifyUrl = `https://boardtau.com/verify/${reservation.id}`;
+    const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      }
+    });
+    doc.addImage(qrDataUrl, "PNG", 160, 20, 30, 30);
+  } catch (error) {
+    console.error("Failed to generate QR code", error);
+  }
 
   // Booking Reference
   doc.setFontSize(10);

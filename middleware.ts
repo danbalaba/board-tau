@@ -77,7 +77,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/ai") || 
     pathname.startsWith("/api/host-applications") ||
     pathname.startsWith("/api/payments") ||
-    pathname.startsWith("/api/admin");
+    pathname.startsWith("/api/admin") ||
+    pathname.startsWith("/verify");
 
   if (isHighRiskRoute && !isExcludedFromLimit) {
     // 1. Identify the user (by IP)
@@ -205,6 +206,7 @@ export const config = {
     "/auth/:path*",
     "/admin/:path*", 
     "/landlord/:path*",
-    "/api/:path*"
+    "/api/:path*",
+    "/verify/:path*"
   ],
 };

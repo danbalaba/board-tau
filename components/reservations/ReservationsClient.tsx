@@ -435,6 +435,8 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                                         <ReservationCard
                                             reservation={reservation}
                                             hasNotification={hasNotification}
+                                            currentUserName={session?.user?.name || "Tenant"}
+                                            currentUserEmail={session?.user?.email || "tenant@example.com"}
                                             onViewDetails={() => handleViewDetails(reservation)}
                                             onPayNow={() => handlePayNow(reservation)}
                                             onCancel={() => handleCancelClick(reservation)}
@@ -463,6 +465,8 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                     reservation={selectedReservation}
                     isOpen={showDetailsModal}
                     currentUserId={userId}
+                    currentUserName={session?.user?.name || "Tenant"}
+                    currentUserEmail={session?.user?.email || "tenant@example.com"}
                     notification={unreadNotifications.find(n => n.link.includes(selectedReservation.id))}
                     onClose={() => {
                         setShowDetailsModal(false);
