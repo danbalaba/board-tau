@@ -88,8 +88,7 @@ export function UserDemographicsChart({ data }: UserDemographicsChartProps) {
               content={<ChartTooltipContent hideLabel className="rounded-2xl border-none shadow-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl" />} 
             />
             <ChartLegend 
-              content={<ChartLegendContent nameKey="name" />} 
-              className="mt-8 flex-wrap gap-x-6 gap-y-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500"
+              content={<ChartLegendContent nameKey="name" className="mt-8 flex-wrap gap-x-6 gap-y-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500" />} 
             />
           </PieChart>
         </ChartContainer>
