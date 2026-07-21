@@ -169,7 +169,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
     : { href: `/listings/${data.id}`, className: "block h-full cursor-pointer" };
 
   return (
-    <div className="relative group/card h-full z-10 hover:z-[100]">
+    <div className="relative group/card h-full z-10 hover:z-30">
       <CardWrapper {...wrapperProps as any}>
         <motion.div
           className="flex flex-col gap-0 w-full h-full p-2 md:p-2.5 bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-[1.5rem] md:rounded-[2rem] group-hover/card:bg-primary/5 dark:group-hover/card:bg-slate-800/60 group-hover/card:border-primary/30 group-hover/card:shadow-2xl group-hover/card:shadow-primary/5"
@@ -373,7 +373,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 
 export function ListingSkeleton() {
   return (
-    <div className="col-span-1 group/card p-1 sm:p-2 sm:hover:bg-slate-50 sm:dark:hover:bg-slate-800/50 rounded-[2rem] transition-colors relative z-10 hover:z-[100]">
+    <div className="col-span-1 group/card p-1 sm:p-2 sm:hover:bg-slate-50 sm:dark:hover:bg-slate-800/50 rounded-[2rem] transition-colors relative z-10 hover:z-30">
       <div className="flex flex-col gap-0 w-full animate-pulse-slow">
         <div className="aspect-[5/4] rounded-[1.25rem] overflow-hidden mb-4">
           <Skeleton height="100%" width="100%" containerClassName="block h-full" borderRadius="1.25rem" />
