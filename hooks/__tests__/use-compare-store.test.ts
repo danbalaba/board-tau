@@ -35,20 +35,20 @@ describe('useCompareStore', () => {
     expect(result.current.selectedListingIds).toEqual(['listing_1']);
   });
 
-  it('limits the maximum number of listings to 3', () => {
+  it('limits the maximum number of listings to 3 (drops oldest)', () => {
     const { result } = renderHook(() => useCompareStore());
 
     act(() => {
       result.current.addListing('listing_1');
       result.current.addListing('listing_2');
       result.current.addListing('listing_3');
-      result.current.addListing('listing_4'); // Should not be added
+      result.current.addListing('listing_4'); // Should drop listing_1
     });
 
     expect(result.current.selectedListingIds).toEqual([
-      'listing_1',
       'listing_2',
-      'listing_3'
+      'listing_3',
+      'listing_4'
     ]);
   });
 

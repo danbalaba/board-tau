@@ -77,6 +77,7 @@ describe('ListingCard Component', () => {
 
   const mockToast = {
     warning: jest.fn(),
+    info: jest.fn(),
   };
 
   beforeEach(() => {
@@ -144,7 +145,7 @@ describe('ListingCard Component', () => {
     
     const compareBtn = screen.getByTitle('Add to compare');
     fireEvent.click(compareBtn);
-    expect(mockToast.warning).toHaveBeenCalled();
+    expect(mockToast.info).toHaveBeenCalled();
   });
 
   it('renders ListingSkeleton without crashing', () => {
