@@ -131,7 +131,7 @@ const MessagesClient: React.FC<MessagesClientProps> = ({
   };
 
   return (
-    <section className="main-container py-0 md:py-8 flex flex-col h-full overflow-hidden">
+    <section className="w-full px-0 md:px-8 lg:px-12 py-0 md:py-8 flex flex-col h-full overflow-hidden">
       <div className="hidden md:block">
         <Heading 
           title="Messages" 

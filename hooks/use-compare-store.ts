@@ -14,8 +14,13 @@ export const useCompareStore = create<CompareStore>()(
       selectedListingIds: [],
       addListing: (id) => {
         const { selectedListingIds } = get();
-        if (selectedListingIds.length < 3 && !selectedListingIds.includes(id)) {
-          set({ selectedListingIds: [...selectedListingIds, id] });
+        if (!selectedListingIds.includes(id)) {
+          if (selectedListingIds.length >= 3) {
+            // FIFO: Remove the oldest item (at index 0) and add the new one
+            set({ selectedListingIds: [...selectedListingIds.slice(1), id] });
+          } else {
+            set({ selectedListingIds: [...selectedListingIds, id] });
+          }
         }
       },
       removeListing: (id) => {

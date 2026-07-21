@@ -29,7 +29,7 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
   const isDashboardPage = ['/inquiries', '/favorites', '/reservations', '/my-reviews', '/profile'].some(path => pathname.startsWith(path));
   
   const isMessages = pathname.startsWith('/messages');
-  const isLocked = pathname === '/auth/locked';
+  const isAuthErrorPage = ['/auth/locked', '/auth/suspended', '/auth/banned', '/blocked'].includes(pathname);
   const isInternalRole = user?.role === 'LANDLORD' || user?.role === 'ADMIN' || user?.role === 'landlord' || user?.role === 'admin';
   
   useEffect(() => {
@@ -42,7 +42,7 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
   const mobilePaddingTop = (isListingDetail || isMessages || isAuthPage || isHomePage) ? 'pt-0' : (isDashboardPage ? 'pt-6' : 'pt-24');
   
   // BLOCK public UI for Admins, Landlords, and protected paths
-  if (isAdmin || isLandlord || isLocked || isInternalRole) {
+  if (isAdmin || isLandlord || isAuthErrorPage || isInternalRole) {
     return <>{children}</>;
   }
 

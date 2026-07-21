@@ -89,10 +89,10 @@ export const authOptions: AuthOptions = {
 
         // 3. Strike System / Admin Suspension Check
         if (user.isPermanentlyBanned) {
-          throw new Error('AccountBanned');
+          throw new Error(`AccountBanned:${sanitizedEmail}`);
         }
         if (user.isActive === false) {
-          throw new Error('AccountSuspended');
+          throw new Error(`AccountSuspended:${sanitizedEmail}`);
         }
 
         if (!user.password) throw new Error("Invalid credentials");

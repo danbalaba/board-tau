@@ -80,7 +80,7 @@ module.exports = withPWA(nextConfig);
 
 const { withSentryConfig } = require("@sentry/nextjs");
 
-module.exports = withSentryConfig(module.exports, {
+const sentryOptions = {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
@@ -120,4 +120,14 @@ module.exports = withSentryConfig(module.exports, {
       removeDebugLogging: true,
     },
   },
-});
+
+  // Skip the Sentry CLI release step to avoid build failures on Vercel
+  // when the correct Sentry org/project tokens are not configured
+  dryRun: true,
+};
+
+const hasSentryToken = !!process.env.SENTRY_AUTH_TOKEN;
+
+module.exports = hasSentryToken 
+  ? withSentryConfig(module.exports, sentryOptions) 
+  : module.exports;

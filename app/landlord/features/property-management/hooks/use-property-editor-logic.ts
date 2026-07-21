@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEdgeStore } from '@/lib/edgestore';
 
 // Zod Schema based on Creator parity
 const propertySchema = z.object({
@@ -58,6 +59,8 @@ export function usePropertyEditorLogic(initialData: any) {
   const [activeSection, setActiveSection] = useState('basics');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [history, setHistory] = useState<any[]>([]);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const { edgestore } = useEdgeStore();
   
   const [formData, setFormData] = useState({
     id: initialData.id,
@@ -134,7 +137,7 @@ export function usePropertyEditorLogic(initialData: any) {
     }));
   };
 
-  const validate = () => {
+  const validate = (showUIFeedback = true) => {
     try {
       propertySchema.parse(formData);
       setErrors({});
@@ -162,19 +165,27 @@ export function usePropertyEditorLogic(initialData: any) {
 
         setErrors(nestedErrors);
         
-        // Scroll to first error
-        const firstIssue = err.issues[0];
-        const firstErrorPath = firstIssue.path.join('.');
-        const element = document.getElementsByName(firstErrorPath)[0] || document.getElementById(firstErrorPath);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (showUIFeedback) {
+          // Scroll to first error
+          const firstIssue = err.issues[0];
+          const firstErrorPath = firstIssue.path.join('.');
+          const element = document.getElementsByName(firstErrorPath)[0] || document.getElementById(firstErrorPath);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          toast.error("Please fix the validation errors.");
         }
-        
-        toast.error("Please fix the validation errors.");
       }
       return false;
     }
   };
+
+  // Real-time validation after first submit attempt
+  useEffect(() => {
+    if (hasSubmitted) {
+      validate(false);
+    }
+  }, [formData, hasSubmitted]);
 
   const [isDirty, setIsDirty] = useState(false);
   
@@ -241,14 +252,20 @@ export function usePropertyEditorLogic(initialData: any) {
 
   const updatePropertyMutation = useMutation({
     mutationFn: async (payload: any) => {
-      const response = await fetch(`/api/landlord/properties/${formData.id}`, {
+      const response = await fetch(`/api/landlord/properties?id=${formData.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update property');
+        let errorMessage = 'Failed to update property';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = `Server error: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
       return response.json();
     },
@@ -262,13 +279,47 @@ export function usePropertyEditorLogic(initialData: any) {
     }
   });
 
-  const handleSubmitForm = async () => {
+  const uploadWithRetry = async (uploadFn: () => Promise<any>, maxRetries = 2) => {
+    let lastErr;
+    for (let i = 0; i <= maxRetries; i++) {
+      try {
+        return await uploadFn();
+      } catch (err: any) {
+        lastErr = err;
+        await new Promise(r => setTimeout(r, 1000 * (i + 1))); 
+      }
+    }
+    throw lastErr;
+  };
+
+  const handleSubmitForm = () => {
+    setHasSubmitted(true);
     if (!validate()) return;
     setIsDirty(false); 
     setHistory([]); 
     
     startTransition(async () => {
-      await updatePropertyMutation.mutateAsync(formData);
+      try {
+        let newImageUrls: any[] = [];
+        if (formData.propertyFiles.length > 0) {
+          const uploadPromises = formData.propertyFiles.map(async (file) => {
+            const freshFile = new File([file], file.name, { type: file.type });
+            const res = await uploadWithRetry(() => edgestore.publicFiles.upload({ file: freshFile }));
+            return { url: res.url, category: 'General' }; 
+          });
+          newImageUrls = await Promise.all(uploadPromises);
+        }
+        
+        const payload = {
+          ...formData,
+          images: [...formData.existingImages, ...newImageUrls]
+        };
+        
+        await updatePropertyMutation.mutateAsync(payload);
+      } catch (error) {
+        console.error("Submission error:", error);
+        // Error is caught here, preventing the global error boundary crash
+      }
     });
   };
 

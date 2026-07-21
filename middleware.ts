@@ -39,13 +39,19 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
     if (errorParam?.startsWith("AccountSuspended")) {
+      const parts = errorParam.split(":");
+      const email = parts.length > 1 ? parts[1] : "";
       const url = new URL("/auth/suspended", request.url);
       url.searchParams.set("secure", "1");
+      if (email) url.searchParams.set("email", email);
       return NextResponse.redirect(url);
     }
     if (errorParam?.startsWith("AccountBanned")) {
+      const parts = errorParam.split(":");
+      const email = parts.length > 1 ? parts[1] : "";
       const url = new URL("/auth/banned", request.url);
       url.searchParams.set("secure", "1");
+      if (email) url.searchParams.set("email", email);
       return NextResponse.redirect(url);
     }
   }
@@ -71,7 +77,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/ai") || 
     pathname.startsWith("/api/host-applications") ||
     pathname.startsWith("/api/payments") ||
-    pathname.startsWith("/api/admin");
+    pathname.startsWith("/api/admin") ||
+    pathname.startsWith("/verify");
 
   if (isHighRiskRoute && !isExcludedFromLimit) {
     // 1. Identify the user (by IP)
@@ -199,6 +206,7 @@ export const config = {
     "/auth/:path*",
     "/admin/:path*", 
     "/landlord/:path*",
-    "/api/:path*"
+    "/api/:path*",
+    "/verify/:path*"
   ],
 };

@@ -14,9 +14,9 @@ import { NetworkStatusManager } from "@/components/common/NetworkStatusManager";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL 
-  ? process.env.NEXT_PUBLIC_SITE_URL 
-  : process.env.VERCEL_URL 
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
+  ? process.env.NEXT_PUBLIC_SITE_URL
+  : process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : "http://localhost:3000";
 
@@ -27,6 +27,7 @@ export const metadata: Metadata = {
     default: "BoardTAU | Boarding House System for TAU",
     template: "%s | BoardTAU",
   },
+  applicationName: "BoardTAU",
   description:
     "The official boarding house management and search platform for Tarlac Agricultural University (TAU). Find safe, affordable, and vetted accommodations near campus.",
   keywords: [
@@ -118,6 +119,18 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Theme handling is done by next-themes */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "BoardTAU",
+              "alternateName": ["Boarding House System for TAU", "TAU Housing"],
+              "url": "https://board-tau-rho.vercel.app",
+            })
+          }}
+        />
       </head>
       <body
         className={`${fontVariables} font-sans antialiased`}

@@ -16,6 +16,19 @@ jest.mock('sonner', () => ({
   },
 }));
 
+jest.mock('@edgestore/react', () => ({
+  createEdgeStoreProvider: () => ({
+    EdgeStoreProvider: ({ children }: any) => children,
+    useEdgeStore: () => ({
+      edgestore: {
+        publicFiles: {
+          upload: jest.fn().mockResolvedValue({ url: 'mocked-url' }),
+        },
+      },
+    }),
+  }),
+}));
+
 jest.mock('@tanstack/react-query', () => ({
   useMutation: ({ mutationFn, onSuccess, onError }: any) => ({
     mutateAsync: jest.fn(async (data) => {

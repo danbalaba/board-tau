@@ -58,6 +58,36 @@ const ListingCard: React.FC<ListingCardProps> = ({
   
   const price = reservation ? reservation.totalPrice : data?.price;
 
+  const [isHeld, setIsHeld] = React.useState(false);
+  const holdTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleHoldStart = () => {
+    if (typeof window !== 'undefined' && window.matchMedia("(pointer: coarse)").matches) {
+      if (holdTimeoutRef.current) clearTimeout(holdTimeoutRef.current);
+      holdTimeoutRef.current = setTimeout(() => {
+        setIsHeld(true);
+      }, 500);
+
+      // Global listeners to ensure hold ends even if children (like Swiper) stop propagation
+      const endHold = () => {
+        if (holdTimeoutRef.current) clearTimeout(holdTimeoutRef.current);
+        setIsHeld(false);
+        window.removeEventListener('touchend', endHold);
+        window.removeEventListener('touchcancel', endHold);
+        window.removeEventListener('touchmove', endHold);
+      };
+
+      window.addEventListener('touchend', endHold);
+      window.addEventListener('touchcancel', endHold);
+      window.addEventListener('touchmove', endHold);
+    }
+  };
+
+  const handleHoldEnd = () => {
+    if (holdTimeoutRef.current) clearTimeout(holdTimeoutRef.current);
+    setIsHeld(false);
+  };
+
   let reservationDate: string | undefined;
   if (reservation) {
     const start = new Date(reservation.startDate);
@@ -148,18 +178,17 @@ const ListingCard: React.FC<ListingCardProps> = ({
     if (isSelectedForCompare) {
       removeListing(data.id);
     } else {
-      if (selectedListingIds.length < 3) {
-        addListing(data.id);
-      } else {
+      if (selectedListingIds.length >= 3) {
         const now = Date.now();
         if (now - lastToastTime > 3000) {
           lastToastTime = now;
-          toast.warning(
-            { title: "Limit Reached", description: "You can only compare up to 3 listings at a time!" },
-            { id: "compare-limit" }
+          toast.info(
+            { title: "Comparison Updated", description: "The oldest listing was removed to make room for this one." },
+            { id: "compare-update" }
           );
         }
       }
+      addListing(data.id);
     }
   };
 
@@ -172,27 +201,40 @@ const ListingCard: React.FC<ListingCardProps> = ({
     <div className="relative group/card h-full z-10 hover:z-30">
       <CardWrapper {...wrapperProps as any}>
         <motion.div
-          className="flex flex-col gap-0 w-full h-full p-2 md:p-2.5 bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-[1.5rem] md:rounded-[2rem] group-hover/card:bg-primary/5 dark:group-hover/card:bg-slate-800/60 group-hover/card:border-primary/30 group-hover/card:shadow-2xl group-hover/card:shadow-primary/5"
+          onTouchStart={handleHoldStart}
+          onTouchEnd={handleHoldEnd}
+          onTouchMove={handleHoldEnd}
+          onTouchCancel={handleHoldEnd}
+          onContextMenu={(e) => {
+            if (typeof window !== 'undefined' && window.matchMedia("(pointer: coarse)").matches) {
+              e.preventDefault();
+            }
+          }}
+          className={`flex flex-col gap-0 w-full h-full p-2 md:p-2.5 bg-white dark:bg-slate-800/40 backdrop-blur-sm border rounded-[1.5rem] md:rounded-[2rem] md:group-hover/card:bg-primary/5 md:dark:group-hover/card:bg-slate-800/60 md:group-hover/card:border-primary/30 md:group-hover/card:shadow-2xl md:group-hover/card:shadow-primary/5 transition-all duration-300 ${
+            isHeld 
+              ? 'border-primary/50 shadow-2xl shadow-primary/30 bg-primary/5 dark:bg-slate-800/80 z-40' 
+              : 'border-slate-200 dark:border-slate-700/50'
+          }`}
           initial={{ opacity: 0, y: 15 }}
           animate={isHighlighted ? { 
             opacity: 1, 
             y: 0,
-            scale: [1, 1.03, 1],
+            scale: isHeld ? 1.02 : [1, 1.03, 1],
             boxShadow: [
               "0 0 0 rgba(var(--primary), 0)",
               "0 15px 35px rgba(var(--primary), 0.25)",
               "0 0 0 rgba(var(--primary), 0)"
             ]
-          } : { opacity: 1, y: 0 }}
+          } : { opacity: 1, y: 0, scale: isHeld ? 1.02 : 1 }}
           whileHover={{ y: -8 }}
           transition={{ 
             opacity: { duration: 0.3 },
             y: { duration: 0.3, type: "spring", stiffness: 300, damping: 20 },
             scale: { 
-              duration: 2, 
-              repeat: Infinity, 
+              duration: isHighlighted && !isHeld ? 2 : 0.2, 
+              repeat: isHighlighted && !isHeld ? Infinity : 0, 
               ease: "easeInOut",
-              repeatDelay: 1
+              repeatDelay: isHighlighted && !isHeld ? 1 : 0
             },
             boxShadow: { 
               duration: 2, 
@@ -344,13 +386,13 @@ const ListingCard: React.FC<ListingCardProps> = ({
 
             {/* AI Reasoning (Subtle & Themed) */}
             {aiHighlight ? (
-              <HelpTooltip text={aiHighlight}>
+              <HelpTooltip text={aiHighlight} forceVisible={isHeld}>
                 <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium line-clamp-1 italic text-left w-full cursor-help">
                   ✨ "{aiHighlight}"
                 </p>
               </HelpTooltip>
             ) : (
-              <HelpTooltip text={data.description || "Premium choice in " + data.region}>
+              <HelpTooltip text={data.description || "Premium choice in " + data.region} forceVisible={isHeld}>
                 <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 line-clamp-1 italic text-left w-full cursor-help">
                   {data.description || "Premium choice in " + data.region}
                 </p>

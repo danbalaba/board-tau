@@ -120,9 +120,9 @@ export function LandlordPropertyBasicsForm({
         <div className="absolute right-2 top-0 z-10 flex items-center justify-end">
           <div className={cn(
             "text-[9px] font-black uppercase tracking-widest transition-colors duration-500",
-            (formData.description?.length || 0) > 200 ? "text-emerald-500" : (formData.description?.length || 0) > 50 ? "text-primary" : "text-gray-400"
+            (formData.description?.length || 0) >= 100 ? "text-emerald-500" : "text-red-500"
           )}>
-            {formData.description?.length || 0} / 1000 Characters
+            {formData.description?.length || 0} / 100 minimum characters
           </div>
         </div>
         <Textarea
@@ -130,6 +130,7 @@ export function LandlordPropertyBasicsForm({
           label="Listing Description"
           value={formData.description}
           onChange={(e: any) => setFormData((prev: any) => ({ ...prev, description: e.target.value }))}
+          errors={errors}
           rows={6}
           placeholder="Visibility Tip: Be detailed! Mentioning specific landmarks near TAU or unique features of your compound helps you stand out in search results."
           className="rounded-[2rem] border-2 focus:ring-4 focus:ring-primary/5 transition-all text-[15px] p-6 bg-white dark:bg-gray-900"

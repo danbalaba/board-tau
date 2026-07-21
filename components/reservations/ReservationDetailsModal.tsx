@@ -64,6 +64,8 @@ interface ReservationDetailsModalProps {
   onCancel?: () => void;
   onMarkAsRead?: () => void;
   notification?: NotificationItem;
+  currentUserName?: string;
+  currentUserEmail?: string;
 }
 
 const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
@@ -75,6 +77,8 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
   onCancel,
   onMarkAsRead,
   notification,
+  currentUserName = "Tenant",
+  currentUserEmail = "tenant@example.com",
 }) => {
   const router = useRouter();
   const responsiveToast = useResponsiveToast();
@@ -459,13 +463,8 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
             <button
               className="px-4 sm:px-10 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-emerald-600 rounded-2xl hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/pass"
               onClick={() => {
-                // Determine tenant details. Since it's from tenant dashboard, use the current user's data.
-                // It's not explicitly in reservation for tenant (userId is known), but if guestName is there use it
-                const name = (reservation as any).guestName || "Tenant";
-                const email = "tenant@example.com"; // placeholder if email is missing from reservation
-                
                 responsiveToast.loading("Generating your Boarding Pass...");
-                generateConfirmationSlipPDF(reservation, name, email)
+                generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail)
                   .then(() => responsiveToast.success("Confirmation Slip downloaded successfully!"))
                   .catch(() => responsiveToast.error("Failed to generate Confirmation Slip."));
               }}

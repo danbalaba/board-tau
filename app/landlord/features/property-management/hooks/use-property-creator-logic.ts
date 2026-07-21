@@ -351,63 +351,75 @@ export function usePropertyCreatorLogic(initialData: any) {
     }
   });
 
+  const uploadWithRetry = async (uploadFn: () => Promise<any>, maxRetries = 2) => {
+    let lastErr;
+    for (let i = 0; i <= maxRetries; i++) {
+      try {
+        return await uploadFn();
+      } catch (err: any) {
+        lastErr = err;
+        await new Promise(r => setTimeout(r, 1000 * (i + 1))); // exponential backoff
+      }
+    }
+    throw lastErr;
+  };
+
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     
     try {
-      // 1. Upload Documents
+      // 1. Upload Documents (Parallel)
+      const docUploadPromises = Object.entries(uploadedFiles).map(async ([type, file]) => {
+        if (!(file instanceof File)) return null;
+        const freshFile = new File([file], file.name, { type: file.type });
+        const res = await uploadWithRetry(() => edgestore.identityDocs.upload({ 
+          file: freshFile,
+          input: { landlordId: "PENDING", listingId: "PENDING" }
+        }));
+        return { type, url: res.url };
+      });
+      
+      const docResults = (await Promise.all(docUploadPromises)).filter(Boolean);
       const docUrls: Record<string, string> = {};
-      for (const [type, file] of Object.entries(uploadedFiles)) {
-        if (!(file instanceof File)) continue;
-        try {
-          const freshFile = new File([file], file.name, { type: file.type });
-          const res = await edgestore.identityDocs.upload({ 
-            file: freshFile,
-            input: { landlordId: "PENDING", listingId: "PENDING" }
-          });
-          docUrls[type] = res.url;
-          // Small delay to prevent network congestion
-          await new Promise(r => setTimeout(r, 200));
-        } catch (err: any) {
-          throw err;
-        }
-      }
+      docResults.forEach(r => { if(r) docUrls[r.type] = r.url; });
 
-      // 2. Upload Property Images with Categories
-      const propertyImageUrls: { url: string, category: string }[] = [];
+      // 2. Upload Property Images with Categories (Parallel)
+      const propertyImagePromises: Promise<{ url: string, category: string } | null>[] = [];
       for (const [category, files] of Object.entries(propertyFiles)) {
         if (Array.isArray(files)) {
           for (const file of files) {
             if (!(file instanceof File)) continue;
-            try {
+            propertyImagePromises.push((async () => {
               const freshFile = new File([file], file.name, { type: file.type });
-              const res = await edgestore.publicFiles.upload({ file: freshFile });
-              propertyImageUrls.push({ url: res.url, category });
-              await new Promise(r => setTimeout(r, 200));
-            } catch (err: any) {
-              throw err;
-            }
+              const res = await uploadWithRetry(() => edgestore.publicFiles.upload({ file: freshFile }));
+              return { url: res.url, category };
+            })());
           }
         }
       }
+      const propertyImageUrls = (await Promise.all(propertyImagePromises)).filter(Boolean) as { url: string, category: string }[];
 
-      // 3. Upload Room Images
+      // 3. Upload Room Images (Parallel)
       const roomImageUrlsMap: Record<number, string[]> = {};
+      const roomUploadPromises: Promise<{ roomIndex: number, url: string } | null>[] = [];
+      
       for (const [roomIndex, files] of Object.entries(roomFiles)) {
-        const urls: string[] = [];
         for (const file of (files || [])) {
           if (!(file instanceof File)) continue;
-          try {
+          roomUploadPromises.push((async () => {
             const freshFile = new File([file], file.name, { type: file.type });
-            const res = await edgestore.publicFiles.upload({ file: freshFile });
-            urls.push(res.url);
-            await new Promise(r => setTimeout(r, 200));
-          } catch (err: any) {
-            throw err;
-          }
+            const res = await uploadWithRetry(() => edgestore.publicFiles.upload({ file: freshFile }));
+            return { roomIndex: parseInt(roomIndex), url: res.url };
+          })());
         }
-        roomImageUrlsMap[parseInt(roomIndex)] = urls;
       }
+      const roomResults = (await Promise.all(roomUploadPromises)).filter(Boolean);
+      roomResults.forEach(r => {
+        if (r) {
+          if (!roomImageUrlsMap[r.roomIndex]) roomImageUrlsMap[r.roomIndex] = [];
+          roomImageUrlsMap[r.roomIndex].push(r.url);
+        }
+      });
 
       // 4. Map Customized Rooms for the Dashboard
       const finalRooms = (data.propertyConfig.rooms || []).map((room: any, i: number) => ({
