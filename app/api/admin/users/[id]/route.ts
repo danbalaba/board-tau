@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { logAdminAction } from '@/lib/admin';
 import { sendSuspensionNoticeEmail, sendBanNoticeEmail, sendReactivationEmail } from '@/services/email/notifications';
 import { executeCascadeCancellation } from '@/services/cascade-cancellation';
+import { pusherServer } from '@/lib/pusher';
 
 export async function DELETE(
   request: NextRequest,
@@ -167,6 +168,9 @@ export async function PUT(
     // Send notifications based on status change
     if (body.status === 'active' && (!user.isActive || user.isPermanentlyBanned)) {
       await sendReactivationEmail(updatedUser);
+      if (updatedUser.email) {
+        await pusherServer.trigger(`user-status-${updatedUser.email}`, 'account-restored', { status: 'active' });
+      }
     } else if (body.status === 'suspended' && user.isActive) {
       await sendSuspensionNoticeEmail(updatedUser, "Suspended by Admin");
       await executeCascadeCancellation(id, "Suspended by Admin");
@@ -285,6 +289,9 @@ export async function PATCH(
     if (body.status) {
       if (body.status === 'active' && (!user.isActive || user.isPermanentlyBanned)) {
         await sendReactivationEmail(updatedUser);
+        if (updatedUser.email) {
+          await pusherServer.trigger(`user-status-${updatedUser.email}`, 'account-restored', { status: 'active' });
+        }
       } else if (body.status === 'suspended' && user.isActive) {
         await sendSuspensionNoticeEmail(updatedUser, "Suspended by Admin");
         await executeCascadeCancellation(id, "Suspended by Admin");

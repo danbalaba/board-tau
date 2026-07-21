@@ -5,8 +5,42 @@ import { motion } from "framer-motion";
 import { IconUserOff, IconGavel, IconArrowLeft } from "@tabler/icons-react";
 import Link from "next/link";
 import Button from "@/components/common/Button";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { pusherClient } from "@/lib/pusher-client";
+import toast from "react-hot-toast";
 
 const AccountSuspendedPage = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const email = searchParams.get("email");
+
+  useEffect(() => {
+    if (!email) return;
+    
+    const channelName = `user-status-${email}`;
+    pusherClient.subscribe(channelName);
+    
+    pusherClient.bind('account-restored', (data: any) => {
+      if (data.status === 'active') {
+        toast.success("Account Restored! Redirecting to login...", {
+          duration: 4000,
+          position: 'top-center'
+        });
+        
+        // Wait briefly for the user to read the toast, then redirect to login modal
+        setTimeout(() => {
+          router.push("/?auth=login");
+        }, 2000);
+      }
+    });
+
+    return () => {
+      pusherClient.unsubscribe(channelName);
+      pusherClient.unbind('account-restored');
+    };
+  }, [email, router]);
+
   return (
     <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center p-6 overflow-hidden relative">
       {/* Background Gradients */}
