@@ -209,7 +209,7 @@ export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
               strokeWidth={3}
               stackId="a"
             />
-            <ChartLegend content={<ChartLegendContent />} className="mt-8" />
+            <ChartLegend content={<ChartLegendContent className="mt-8" />} />
           </AreaChart>
         </ChartContainer>
       </CardContent>
