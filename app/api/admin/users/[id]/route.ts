@@ -166,17 +166,21 @@ export async function PUT(
     });
 
     // Send notifications based on status change
-    if (body.status === 'active' && (!user.isActive || user.isPermanentlyBanned)) {
-      await sendReactivationEmail(updatedUser);
-      if (updatedUser.email) {
-        await pusherServer.trigger(`user-status-${updatedUser.email}`, 'account-restored', { status: 'active' });
+    try {
+      if (body.status === 'active' && (!user.isActive || user.isPermanentlyBanned)) {
+        await sendReactivationEmail(updatedUser);
+        if (updatedUser.email) {
+          await pusherServer.trigger(`user-status-${updatedUser.email}`, 'account-restored', { status: 'active' });
+        }
+      } else if (body.status === 'suspended' && user.isActive) {
+        await sendSuspensionNoticeEmail(updatedUser, "Suspended by Admin");
+        await executeCascadeCancellation(id, "Suspended by Admin");
+      } else if (body.status === 'banned' && !user.isPermanentlyBanned) {
+        await sendBanNoticeEmail(updatedUser, "Permanently Banned by Super Admin");
+        await executeCascadeCancellation(id, "Permanently Banned by Super Admin", true);
       }
-    } else if (body.status === 'suspended' && user.isActive) {
-      await sendSuspensionNoticeEmail(updatedUser, "Suspended by Admin");
-      await executeCascadeCancellation(id, "Suspended by Admin");
-    } else if (body.status === 'banned' && !user.isPermanentlyBanned) {
-      await sendBanNoticeEmail(updatedUser, "Permanently Banned by Super Admin");
-      await executeCascadeCancellation(id, "Permanently Banned by Super Admin", true);
+    } catch (notificationError) {
+      console.error('Failed to send user update notifications:', notificationError);
     }
 
     // Log the admin action
@@ -287,17 +291,21 @@ export async function PATCH(
 
     // Send notifications based on status change
     if (body.status) {
-      if (body.status === 'active' && (!user.isActive || user.isPermanentlyBanned)) {
-        await sendReactivationEmail(updatedUser);
-        if (updatedUser.email) {
-          await pusherServer.trigger(`user-status-${updatedUser.email}`, 'account-restored', { status: 'active' });
+      try {
+        if (body.status === 'active' && (!user.isActive || user.isPermanentlyBanned)) {
+          await sendReactivationEmail(updatedUser);
+          if (updatedUser.email) {
+            await pusherServer.trigger(`user-status-${updatedUser.email}`, 'account-restored', { status: 'active' });
+          }
+        } else if (body.status === 'suspended' && user.isActive) {
+          await sendSuspensionNoticeEmail(updatedUser, "Suspended by Admin");
+          await executeCascadeCancellation(id, "Suspended by Admin");
+        } else if (body.status === 'banned' && !user.isPermanentlyBanned) {
+          await sendBanNoticeEmail(updatedUser, "Permanently Banned by Super Admin");
+          await executeCascadeCancellation(id, "Permanently Banned by Super Admin", true);
         }
-      } else if (body.status === 'suspended' && user.isActive) {
-        await sendSuspensionNoticeEmail(updatedUser, "Suspended by Admin");
-        await executeCascadeCancellation(id, "Suspended by Admin");
-      } else if (body.status === 'banned' && !user.isPermanentlyBanned) {
-        await sendBanNoticeEmail(updatedUser, "Permanently Banned by Super Admin");
-        await executeCascadeCancellation(id, "Permanently Banned by Super Admin", true);
+      } catch (notificationError) {
+        console.error('Failed to send user update notifications:', notificationError);
       }
     }
 

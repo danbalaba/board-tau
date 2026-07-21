@@ -49,7 +49,8 @@ export const generateConfirmationSlipPDF = async (reservation: any, tenantName: 
   // Generate Real QR Code
   try {
     const QRCode = (await import("qrcode")).default;
-    const verifyUrl = `https://boardtau.com/verify/${reservation.id}`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://board-tau-rho.vercel.app';
+    const verifyUrl = `${baseUrl}/verify/${reservation.id}`;
     const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
       margin: 1,
       color: {
@@ -83,7 +84,7 @@ export const generateConfirmationSlipPDF = async (reservation: any, tenantName: 
   doc.setFont("helvetica", "bold");
   doc.setTextColor("#000000");
   doc.text("TENANT DETAILS", 20, startY);
-  
+
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text(`Name: ${tenantName}`, 20, startY + 8);
@@ -92,7 +93,7 @@ export const generateConfirmationSlipPDF = async (reservation: any, tenantName: 
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.text("PROPERTY DETAILS", 110, startY);
-  
+
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text(`Listing: ${reservation.listing.title}`, 110, startY + 8);
@@ -120,7 +121,7 @@ export const generateConfirmationSlipPDF = async (reservation: any, tenantName: 
   const moveOutDate = new Date(reservation.endDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
   startY += 10;
-  
+
   // Table for Stay Details using jspdf-autotable
   autoTable(doc, {
     startY: startY,
@@ -147,14 +148,14 @@ export const generateConfirmationSlipPDF = async (reservation: any, tenantName: 
   doc.text("PAYMENT SUMMARY", 20, startY);
 
   startY += 10;
-  
+
   autoTable(doc, {
     startY: startY,
     head: [["Total Bill", "Amount Paid", "Payment Method", "Payment Reference"]],
     body: [
       [
-        `PHP ${reservation.totalPrice.toLocaleString()}`, 
-        `PHP ${reservation.totalPrice.toLocaleString()}`, 
+        `PHP ${reservation.totalPrice.toLocaleString()}`,
+        `PHP ${reservation.totalPrice.toLocaleString()}`,
         reservation.paymentMethod || "Direct Payment",
         reservation.paymentReference || "N/A"
       ]

@@ -89,7 +89,8 @@ export function CellAction({ data }: CellActionProps) {
         status: newStatus
       });
 
-      toast.success(`User ${newStatus}d successfully`);
+      const actionText = newStatus === 'active' ? 'unrestricted' : 'suspended';
+      toast.success(`User ${actionText} successfully`);
       setSuspendDialogOpen(false);
     } catch (error) {
       toast.error('Failed to update user status');
