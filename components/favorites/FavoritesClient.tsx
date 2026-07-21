@@ -177,7 +177,7 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
         <>
           {/* Favorites Grid */}
           {filteredFavorites.length === 0 ? (
-            <div className="text-center py-20 bg-gray-50/50 dark:bg-gray-900/20 rounded-[3rem] border-2 border-dashed border-gray-200 dark:border-gray-800">
+            <div className="text-center py-20 px-6 bg-gray-50/50 dark:bg-gray-900/20 rounded-[3rem] border-2 border-dashed border-gray-200 dark:border-gray-800">
               <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100 dark:border-gray-700">
                 <Search className="h-8 w-8 text-gray-300" />
               </div>
@@ -192,7 +192,7 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
               {initialFavorites.length === 0 && (
                 <Button 
                   onClick={() => router.push("/")}
-                  className="rounded-xl px-10 py-3 text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20"
+                  className="w-auto sm:w-max mx-auto rounded-xl px-10 py-3 text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20"
                 >
                   Explore Listings
                 </Button>

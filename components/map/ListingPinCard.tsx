@@ -38,11 +38,11 @@ export default function ListingPinCard({ listing, onClose, onViewDetails }: List
       {listing && (
         <motion.div
           key={listing.id}
-          initial={{ opacity: 0, y: 28, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
+          initial={{ opacity: 0, y: 28, scale: 0.95, x: "-50%" }}
+          animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+          exit={{ opacity: 0, y: 20, scale: 0.95, x: "-50%" }}
           transition={{ type: "spring", damping: 22, stiffness: 300 }}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[200] w-[92%] max-w-[360px] pointer-events-auto"
+          className="absolute bottom-6 left-1/2 z-[200] w-[92%] max-w-[360px] pointer-events-auto"
         >
           <div className="relative bg-white/98 dark:bg-gray-900/98 backdrop-blur-xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.18)] overflow-hidden border border-white/60 dark:border-gray-700/50">
 

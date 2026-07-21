@@ -106,8 +106,7 @@ export function UserGrowthChart({ data }: UserGrowthChartProps) {
             />
             <ChartTooltip content={<ChartTooltipContent className="rounded-2xl border-none shadow-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl" />} />
             <ChartLegend 
-              content={<ChartLegendContent />} 
-              className="mt-8 flex-wrap gap-x-8 gap-y-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500"
+              content={<ChartLegendContent className="mt-8 flex-wrap gap-x-8 gap-y-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500" />} 
             />
             
             {(activeMetric === 'all' || activeMetric === 'new') && (

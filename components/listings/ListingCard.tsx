@@ -169,7 +169,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
     : { href: `/listings/${data.id}`, className: "block h-full cursor-pointer" };
 
   return (
-    <div className="relative group/card h-full z-10 hover:z-[100]">
+    <div className="relative group/card h-full z-10 hover:z-30">
       <CardWrapper {...wrapperProps as any}>
         <motion.div
           className="flex flex-col gap-0 w-full h-full p-2 md:p-2.5 bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-[1.5rem] md:rounded-[2rem] group-hover/card:bg-primary/5 dark:group-hover/card:bg-slate-800/60 group-hover/card:border-primary/30 group-hover/card:shadow-2xl group-hover/card:shadow-primary/5"
@@ -293,18 +293,18 @@ const ListingCard: React.FC<ListingCardProps> = ({
             </div>
 
             {/* Bottom Controls Overlay (Badges + Price) */}
-            <div className="absolute bottom-3 left-3 right-3 z-10 flex items-end justify-between gap-2">
+            <div className="absolute bottom-6 md:bottom-3 left-3 right-3 z-10 flex items-end justify-between gap-2 pointer-events-none">
               {/* Left Side: Category */}
-              <div className="flex items-center gap-1.5 flex-wrap max-w-[60%]">
+              <div className="flex items-center gap-1.5 flex-wrap max-w-[50%]">
                 {displayCategories.map((cat: string, idx: number) => (
-                  <div key={idx} className="bg-slate-900/80 dark:bg-slate-900/80 backdrop-blur-md text-white border border-white/10 dark:border-slate-700 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider">
+                  <div key={idx} className="bg-slate-900/80 dark:bg-slate-900/80 backdrop-blur-md text-white border border-white/10 dark:border-slate-700 px-2 py-1 md:px-2.5 rounded-lg text-[8px] md:text-[9px] font-black uppercase tracking-wider truncate max-w-full">
                     {cat}
                   </div>
                 ))}
               </div>
 
               {/* Right Side: Price Pill */}
-              <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-900 dark:text-white px-2 py-1 md:px-3 md:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-2xl flex items-center gap-1 font-black text-[10px] md:text-xs">
+              <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-900 dark:text-white px-2 py-1 md:px-3 md:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-2xl flex items-center gap-1 font-black text-[10px] md:text-xs shrink-0 pointer-events-auto">
                 <span className="text-primary">₱</span>
                 <span>{formatPrice(price)}</span>
                 {!reservation && <span className="text-[7px] md:text-[8px] text-slate-500 dark:text-slate-400 font-normal">/mo</span>}
@@ -373,7 +373,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 
 export function ListingSkeleton() {
   return (
-    <div className="col-span-1 group/card p-1 sm:p-2 sm:hover:bg-slate-50 sm:dark:hover:bg-slate-800/50 rounded-[2rem] transition-colors relative z-10 hover:z-[100]">
+    <div className="col-span-1 group/card p-1 sm:p-2 sm:hover:bg-slate-50 sm:dark:hover:bg-slate-800/50 rounded-[2rem] transition-colors relative z-10 hover:z-30">
       <div className="flex flex-col gap-0 w-full animate-pulse-slow">
         <div className="aspect-[5/4] rounded-[1.25rem] overflow-hidden mb-4">
           <Skeleton height="100%" width="100%" containerClassName="block h-full" borderRadius="1.25rem" />

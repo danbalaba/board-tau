@@ -53,6 +53,7 @@ const IDStep = dynamic(() => import('../host-application/steps/IDStep'), {
 interface HostApplicationModalProps {
   isOpen?: boolean;
   onClose?: () => void;
+  onCloseModal?: () => void;
 }
 
 const STEPS_CONFIG = [
@@ -68,9 +69,15 @@ const STEPS_CONFIG = [
 
 const HostApplicationModal: React.FC<HostApplicationModalProps> = ({ 
   isOpen = true, 
-  onClose = () => {} 
+  onClose,
+  onCloseModal
 }) => {
-  const logic = useHostApplicationLogic(onClose);
+  const handleClose = () => {
+    if (onClose) onClose();
+    if (onCloseModal) onCloseModal();
+  };
+
+  const logic = useHostApplicationLogic(handleClose);
 
   const renderStepIndicator = () => (
     <div className="flex flex-col gap-4">
@@ -104,7 +111,7 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} closeOnOutsideClick={false}>
+    <Modal isOpen={isOpen} onClose={handleClose} width="xl" hasFixedFooter={true} closeOnOutsideClick={false}>
       <div className="h-[95vh] md:h-auto md:max-h-[90vh] overflow-hidden flex flex-col bg-white dark:bg-[#0f172a]">
         <div className="flex-1 min-h-0 flex overflow-hidden">
           {/* Sidebar */}
@@ -172,7 +179,7 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({
                 {STEPS_CONFIG[logic.step]?.title || "Application"}
               </h3>
               <button 
-                onClick={onClose} 
+                onClick={handleClose} 
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all text-gray-400"
               >
                 <X size={20} />

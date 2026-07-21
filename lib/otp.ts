@@ -20,51 +20,35 @@ import React from 'react';
 export const sendOTPEmail = async (email: string, otp: string) => {
   // Render the React component to HTML string
   const emailHtml = await render(React.createElement(OTPEmail, { otp }));
-  if (process.env.NODE_ENV !== 'test') {
-    console.log(`\n\n=== DEVELOPMENT OTP (CHECK HERE): ${otp} ===\n\n`);
-  }
 
-  try {
-    const response = await resend.emails.send({
-      from: `BoardTAU <${process.env.EMAIL_FROM}>`,
-      to: email,
-      subject: 'Your BoardTAU Email Verification OTP',
-      html: emailHtml,
-    });
-    
-    if (response.error) {
-       console.warn("Resend limit reached or error. Proceeding for development.", response.error);
-    }
-    return response;
-  } catch (error) {
-    console.warn("Resend threw an error. Proceeding for development.", error);
-    return { data: { id: "dev_mock_id" } };
+  const response = await resend.emails.send({
+    from: `BoardTAU <${process.env.EMAIL_FROM}>`,
+    to: email,
+    subject: 'Your BoardTAU Email Verification OTP',
+    html: emailHtml,
+  });
+  
+  if (response.error) {
+    throw new Error(response.error.message || 'Failed to send OTP email');
   }
+  return response;
 };
 
 // Send Inquiry OTP email
 export const sendInquiryOTPEmail = async (email: string, otp: string, userName: string = "User") => {
   const emailHtml = await render(React.createElement(InquiryOTPEmail, { otp, userName }));
-  if (process.env.NODE_ENV !== 'test') {
-    console.log(`\n\n=== DEVELOPMENT OTP (CHECK HERE): ${otp} ===\n\n`);
-  }
 
-  try {
-    const response = await resend.emails.send({
-      from: `BoardTAU <${process.env.EMAIL_FROM}>`,
-      to: email,
-      subject: 'Your BoardTAU Inquiry Verification OTP',
-      html: emailHtml,
-    });
+  const response = await resend.emails.send({
+    from: `BoardTAU <${process.env.EMAIL_FROM}>`,
+    to: email,
+    subject: 'Your BoardTAU Inquiry Verification OTP',
+    html: emailHtml,
+  });
 
-    if (response.error) {
-       console.warn("Resend limit reached or error. Proceeding for development.", response.error);
-    }
-    return response;
-  } catch (error) {
-    console.warn("Resend threw an error. Proceeding for development.", error);
-    return { data: { id: "dev_mock_id" } };
+  if (response.error) {
+    throw new Error(response.error.message || 'Failed to send Inquiry OTP email');
   }
+  return response;
 };
 
 

@@ -21,7 +21,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section ref={containerRef} className="relative min-h-[60vh] md:min-h-[550px] overflow-hidden">
+    <section ref={containerRef} className="relative min-h-[60vh] md:min-h-[550px] overflow-hidden pt-24 md:pt-28">
       {/* Light Mode Animated Background with Depth */}
       <motion.div
         className="absolute inset-0 hidden dark:block"

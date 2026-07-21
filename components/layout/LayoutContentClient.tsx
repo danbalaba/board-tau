@@ -24,6 +24,7 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
   const { isLoggingOut } = useLoadingStore();
   const isAdmin = pathname.startsWith('/admin');
   const isLandlord = pathname.startsWith('/landlord');
+  const isHomePage = pathname === '/';
   const isListingDetail = pathname.startsWith('/listings/') && pathname.split('/').length > 2;
   const isDashboardPage = ['/inquiries', '/favorites', '/reservations', '/my-reviews', '/profile'].some(path => pathname.startsWith(path));
   
@@ -38,7 +39,7 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
 
   const isAuthPage = pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password');
   const hideNavbarOnMobile = isListingDetail || isDashboardPage || isMessages || isAuthPage;
-  const mobilePaddingTop = (isListingDetail || isMessages || isAuthPage) ? 'pt-0' : (isDashboardPage ? 'pt-6' : 'pt-24');
+  const mobilePaddingTop = (isListingDetail || isMessages || isAuthPage || isHomePage) ? 'pt-0' : (isDashboardPage ? 'pt-6' : 'pt-24');
   
   // BLOCK public UI for Admins, Landlords, and protected paths
   if (isAdmin || isLandlord || isLocked || isInternalRole) {
@@ -51,7 +52,7 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
       <div className={hideNavbarOnMobile ? "hidden md:block" : ""}>
         <Navbar user={user} />
       </div>
-      <main className={`${isAuthPage ? 'md:pt-0' : 'md:pt-28'} ${mobilePaddingTop} ${isAuthPage ? '' : 'bg-[#F8FAF9] dark:bg-[#0f1419]'} transition-colors duration-300 ${(!isListingDetail && !isAuthPage) ? 'pb-24' : ''} ${isAuthPage ? '' : 'overflow-x-hidden'}`}>
+      <main className={`${(isAuthPage || isHomePage) ? 'md:pt-0' : 'md:pt-28'} ${mobilePaddingTop} ${isAuthPage ? '' : 'bg-[#F8FAF9] dark:bg-[#0f1419]'} transition-colors duration-300 ${(!isListingDetail && !isAuthPage) ? 'pb-24' : ''} ${isAuthPage ? '' : 'overflow-x-hidden'}`}>
         {children}
       </main>
       <div className={(isMessages || isAuthPage) ? "hidden md:block" : ""}>

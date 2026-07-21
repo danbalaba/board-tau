@@ -39,7 +39,7 @@ const UserBackToTop = () => {
           onClick={scrollToTop}
           className={cn(
             "fixed right-4 md:right-10 z-[60]",
-            "bottom-24 md:bottom-28", // Positioned nicely above ChatBot on mobile
+            "bottom-48 md:bottom-28", // Positioned nicely above ChatBot on mobile
             "p-3.5 md:p-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] backdrop-blur-xl",
             "bg-primary text-white",
             "border border-white/20",

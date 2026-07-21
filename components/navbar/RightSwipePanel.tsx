@@ -29,13 +29,40 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isInteractable, setIsInteractable] = useState(false);
 
-  // Interaction shield: Prevent accidental clicks during the opening animation
+  // Interaction shield & Body Scroll Lock
   useEffect(() => {
+    const body = document.body;
+    const rootNode = document.documentElement;
+
+    const restoreScroll = () => {
+      const top = parseFloat(body.style.top) * -1;
+      body.style.overflow = '';
+      body.style.paddingRight = '';
+      body.style.top = '';
+      body.classList.remove("fixed", "w-full");
+      if (top) {
+        window.scrollTo(0, top);
+      }
+    };
+
     if (isOpen) {
+      // Save current scroll position
+      const scrollTop = window.pageYOffset || rootNode.scrollTop || body.scrollTop;
+      
+      // Lock body scroll
+      body.style.overflow = 'hidden';
+      body.style.paddingRight = '17px'; // Compensate for scrollbar on some devices
+      body.style.top = `-${scrollTop}px`;
+      body.classList.add("fixed", "w-full");
+
       const timer = setTimeout(() => setIsInteractable(true), 500);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        restoreScroll();
+      };
     } else {
       setIsInteractable(false);
+      restoreScroll();
     }
   }, [isOpen]);
 

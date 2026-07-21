@@ -23,6 +23,7 @@ const EMBEDDED_CSS = `
     user-select: none;
     -webkit-user-select: none; 
     touch-action: pan-y;
+    height: 400px; /* Default height for mobile screens < 414px */
 }
 
 .cascade-slider_slides {

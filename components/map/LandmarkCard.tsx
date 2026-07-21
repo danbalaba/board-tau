@@ -23,11 +23,11 @@ export default function LandmarkCard({ landmark, nearbyCount, onClose, onShowLis
       {landmark && (
         <motion.div
           key={landmark.id}
-          initial={{ opacity: 0, y: 24, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 16, scale: 0.95 }}
+          initial={{ opacity: 0, y: 24, scale: 0.95, x: "-50%" }}
+          animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+          exit={{ opacity: 0, y: 16, scale: 0.95, x: "-50%" }}
           transition={{ type: "spring", damping: 22, stiffness: 280 }}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[200] w-[90%] max-w-[320px] pointer-events-auto"
+          className="absolute bottom-6 left-1/2 z-[200] w-[90%] max-w-[320px] pointer-events-auto"
         >
           <div className="relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] border border-white/60 dark:border-gray-700/60 overflow-hidden">
             

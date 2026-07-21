@@ -37,7 +37,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
   const [showListingCard, setShowListingCard] = useState(false);
   const [showSearchAreaBtn, setShowSearchAreaBtn] = useState(false);
   const [currentBounds, setCurrentBounds] = useState<any>(null);
-  const [activeView, setActiveView] = useState<SidebarViewType>("list");
+  const [activeView, setActiveView] = useState<SidebarViewType>("none");
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const { data: session, status } = useSession();
@@ -89,7 +89,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
             <FaTimes size={20} />
           </button>
 
-          <div className="w-full h-full flex flex-col md:flex-row relative md:rounded-2xl overflow-hidden shadow-2xl border md:border-white/10">
+          <div className="w-full h-full flex flex-col md:flex-row relative md:rounded-2xl overflow-hidden shadow-2xl border-0 md:border md:border-white/10">
             <MapActionSidebar 
               activeView={activeView} 
               setActiveView={setActiveView}
@@ -116,7 +116,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: "-100%", opacity: 0 }}
                   transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                  className="w-full h-[calc(100%-65px)] md:h-full md:w-[400px] bg-white dark:bg-gray-900 border-r border-border shadow-2xl flex flex-col z-[105] absolute md:left-[65px] left-0 top-0 pb-safe md:pb-0"
+                  className="w-full h-[calc(100%-65px)] md:h-full md:w-[400px] bg-white dark:bg-gray-900 md:border-r border-border shadow-2xl flex flex-col z-[105] absolute md:left-[65px] left-0 top-0 pb-safe md:pb-0"
                 >
                   {/* Inner Close button for secondary panel on mobile */}
                   <div className="md:hidden w-full flex justify-between items-center py-3 px-4 border-b border-border shadow-sm bg-white dark:bg-gray-900">
