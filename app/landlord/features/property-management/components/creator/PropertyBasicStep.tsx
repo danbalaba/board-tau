@@ -16,6 +16,9 @@ interface PropertyBasicStepProps {
 }
 
 const PropertyBasicStep: React.FC<PropertyBasicStepProps> = ({ register, errors, watch, control }) => {
+  const businessDesc = watch('businessInfo.businessDescription') || '';
+  const propertyDesc = watch('propertyInfo.description') || '';
+
   return (
     <div className="space-y-8">
       {/* Step Header */}
@@ -159,6 +162,9 @@ const PropertyBasicStep: React.FC<PropertyBasicStepProps> = ({ register, errors,
               minLength: { value: 100, message: "Mission description must be at least 100 characters" }
             }}
           />
+          <div className={`mt-1 mb-2 text-[10px] font-black tracking-wider text-right uppercase ${businessDesc.length < 100 ? 'text-red-500' : 'text-emerald-500'}`}>
+            {businessDesc.length} / 100 minimum characters
+          </div>
           {/* Mission Guide */}
           <div className="mt-3 flex gap-3 p-4 bg-sky-50/50 dark:bg-sky-900/10 rounded-2xl border border-sky-100 dark:border-sky-800/20">
             <Info size={16} className="text-sky-500 shrink-0 mt-0.5" />
@@ -215,6 +221,9 @@ const PropertyBasicStep: React.FC<PropertyBasicStepProps> = ({ register, errors,
                 minLength: { value: 100, message: "Property description must be at least 100 characters" }
               }}
             />
+            <div className={`mt-1 mb-2 text-[10px] font-black tracking-wider text-right uppercase ${propertyDesc.length < 100 ? 'text-red-500' : 'text-emerald-500'}`}>
+              {propertyDesc.length} / 100 minimum characters
+            </div>
             {/* Description Guide */}
             <div className="mt-3 flex gap-3 p-4 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-800/20">
               <Info size={16} className="text-emerald-500 shrink-0 mt-0.5" />
