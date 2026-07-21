@@ -81,7 +81,7 @@ export function CellAction({ data }: CellActionProps) {
   };
 
   const confirmSuspend = async () => {
-    const newStatus = data.status === 'suspended' || data.status === 'banned' ? 'active' : 'suspended';
+    const newStatus = ['suspended', 'banned', 'inactive'].includes(data.status) ? 'active' : 'suspended';
 
     try {
       await suspendUserMutation.mutateAsync({
@@ -166,10 +166,10 @@ export function CellAction({ data }: CellActionProps) {
           ) : (
             <DropdownMenuItem
               onClick={handleSuspendUser}
-              className={`cursor-pointer text-xs font-bold uppercase tracking-widest rounded-xl gap-2 py-2 ${data.status === 'suspended' ? 'text-emerald-600 focus:text-emerald-600 focus:bg-emerald-500/10' : 'text-orange-600 focus:text-orange-600 focus:bg-orange-500/10'}`}
+              className={`cursor-pointer text-xs font-bold uppercase tracking-widest rounded-xl gap-2 py-2 ${['suspended', 'inactive'].includes(data.status) ? 'text-emerald-600 focus:text-emerald-600 focus:bg-emerald-500/10' : 'text-orange-600 focus:text-orange-600 focus:bg-orange-500/10'}`}
             >
               <IconShieldLock className='h-4 w-4' />
-              {data.status === 'suspended' ? 'Unsuspend' : 'Suspend'} User
+              {data.status === 'suspended' ? 'Unsuspend' : data.status === 'inactive' ? 'Unrestrict' : 'Suspend'} User
             </DropdownMenuItem>
           )}
           {isSuperAdmin && (
@@ -343,26 +343,26 @@ export function CellAction({ data }: CellActionProps) {
         <AlertDialogContent className="max-w-md border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-2xl rounded-[2.5rem] p-8">
           <AlertDialogHeader className="mb-4">
             <div className="flex items-center gap-4 mb-2">
-              <div className={cn("p-3 rounded-2xl shadow-sm", data.status === 'suspended' || data.status === 'banned' ? 'bg-emerald-500/10' : 'bg-orange-500/10')}>
-                <IconShieldLock className={cn("w-6 h-6", data.status === 'suspended' || data.status === 'banned' ? 'text-emerald-500' : 'text-orange-500')} />
+              <div className={cn("p-3 rounded-2xl shadow-sm", ['suspended', 'banned', 'inactive'].includes(data.status) ? 'bg-emerald-500/10' : 'bg-orange-500/10')}>
+                <IconShieldLock className={cn("w-6 h-6", ['suspended', 'banned', 'inactive'].includes(data.status) ? 'text-emerald-500' : 'text-orange-500')} />
               </div>
               <AlertDialogTitle className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
-                {data.status === 'banned' ? 'Unban User' : data.status === 'suspended' ? 'Unsuspend User' : 'Suspend User'}
+                {data.status === 'banned' ? 'Unban User' : data.status === 'suspended' ? 'Unsuspend User' : data.status === 'inactive' ? 'Unrestrict User' : 'Suspend User'}
               </AlertDialogTitle>
             </div>
             <AlertDialogDescription className="text-xs font-bold text-gray-500 leading-relaxed pl-[3.25rem]">
-              Are you sure you want to {data.status === 'banned' ? 'unban' : data.status === 'suspended' ? 'unsuspend' : 'suspend'}{' '}
+              Are you sure you want to {data.status === 'banned' ? 'unban' : data.status === 'suspended' ? 'unsuspend' : data.status === 'inactive' ? 'unrestrict' : 'suspend'}{' '}
               <span className="font-black text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-md uppercase tracking-widest text-[10px]">{data.name}</span>?
-              {data.status === 'banned' ? ' This will lift their permanent ban and restore access.' : data.status === 'suspended' ? ' This will restore their access to all platform features.' : ' This will immediately restrict their access to all platform features.'}
+              {data.status === 'banned' ? ' This will lift their permanent ban and restore access.' : ['suspended', 'inactive'].includes(data.status) ? ' This will restore their access to all platform features.' : ' This will immediately restrict their access to all platform features.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-3 sm:gap-0 mt-4">
             <AlertDialogCancel className="rounded-xl font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 border-none bg-transparent h-12 px-6">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmSuspend}
-              className={cn("rounded-xl text-white font-black uppercase tracking-widest text-[10px] shadow-lg transition-all h-12 px-6", data.status === 'suspended' || data.status === 'banned' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20' : 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20')}
+              className={cn("rounded-xl text-white font-black uppercase tracking-widest text-[10px] shadow-lg transition-all h-12 px-6", ['suspended', 'banned', 'inactive'].includes(data.status) ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20' : 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20')}
             >
-              {data.status === 'banned' ? 'Unban' : data.status === 'suspended' ? 'Unsuspend' : 'Suspend'}
+              {data.status === 'banned' ? 'Unban' : data.status === 'suspended' ? 'Unsuspend' : data.status === 'inactive' ? 'Unrestrict' : 'Suspend'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
