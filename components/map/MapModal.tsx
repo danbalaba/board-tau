@@ -37,7 +37,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
   const [showListingCard, setShowListingCard] = useState(false);
   const [showSearchAreaBtn, setShowSearchAreaBtn] = useState(false);
   const [currentBounds, setCurrentBounds] = useState<any>(null);
-  const [activeView, setActiveView] = useState<SidebarViewType>("list");
+  const [activeView, setActiveView] = useState<SidebarViewType>("none");
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const { data: session, status } = useSession();
