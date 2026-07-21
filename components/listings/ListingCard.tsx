@@ -67,6 +67,19 @@ const ListingCard: React.FC<ListingCardProps> = ({
       holdTimeoutRef.current = setTimeout(() => {
         setIsHeld(true);
       }, 500);
+
+      // Global listeners to ensure hold ends even if children (like Swiper) stop propagation
+      const endHold = () => {
+        if (holdTimeoutRef.current) clearTimeout(holdTimeoutRef.current);
+        setIsHeld(false);
+        window.removeEventListener('touchend', endHold);
+        window.removeEventListener('touchcancel', endHold);
+        window.removeEventListener('touchmove', endHold);
+      };
+
+      window.addEventListener('touchend', endHold);
+      window.addEventListener('touchcancel', endHold);
+      window.addEventListener('touchmove', endHold);
     }
   };
 
