@@ -74,7 +74,8 @@ describe('MapModal Component', () => {
   it('renders correctly when isOpen is true', () => {
     render(<MapModal isOpen={true} onClose={mockOnClose} listings={mockListings} />);
     expect(screen.getByTestId('mock-map-action-sidebar')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-sidebar-list-view')).toBeInTheDocument(); // Default activeView is "list"
+    // activeView is "none" by default now, so list view is not shown initially
+    expect(screen.queryByTestId('mock-sidebar-list-view')).not.toBeInTheDocument();
     expect(screen.getByTestId('mock-interactive-map')).toBeInTheDocument();
   });
 
