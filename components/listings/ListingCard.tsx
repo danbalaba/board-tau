@@ -171,7 +171,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
     <div className="relative group/card h-full z-10 hover:z-30">
       <CardWrapper {...wrapperProps as any}>
         <motion.div
-          className="flex flex-col gap-0 w-full h-full p-2 md:p-2.5 bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-[1.5rem] md:rounded-[2rem] group-hover/card:bg-primary/5 dark:group-hover/card:bg-slate-800/60 group-hover/card:border-primary/30 group-hover/card:shadow-2xl group-hover/card:shadow-primary/5"
+          className="flex flex-col gap-0 w-full h-full p-2 md:p-2.5 bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-[1.5rem] md:rounded-[2rem] md:group-hover/card:bg-primary/5 md:dark:group-hover/card:bg-slate-800/60 md:group-hover/card:border-primary/30 md:group-hover/card:shadow-2xl md:group-hover/card:shadow-primary/5 transition-all duration-300"
           initial={{ opacity: 0, y: 15 }}
           animate={isHighlighted ? { 
             opacity: 1, 
