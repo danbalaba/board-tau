@@ -81,8 +81,14 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children }) => {
     }, 500); // 500ms long press
   };
 
-  const handleTouchEndOrMove = () => {
+  const handleTouchEnd = () => {
     if (touchTimeoutRef.current) clearTimeout(touchTimeoutRef.current);
+    setIsVisible(false); // Hide tooltip when finger is released
+  };
+
+  const handleTouchMove = () => {
+    if (touchTimeoutRef.current) clearTimeout(touchTimeoutRef.current);
+    setIsVisible(false); // Hide tooltip if user starts scrolling
   };
 
   useEffect(() => {
@@ -113,9 +119,9 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children }) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEndOrMove}
-      onTouchMove={handleTouchEndOrMove}
-      onTouchCancel={handleTouchEndOrMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
+      onTouchCancel={handleTouchEnd}
     >
       {children ? (
         children
