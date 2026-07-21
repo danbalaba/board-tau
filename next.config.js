@@ -120,4 +120,8 @@ module.exports = withSentryConfig(module.exports, {
       removeDebugLogging: true,
     },
   },
+
+  // Skip the Sentry CLI release step to avoid build failures on Vercel
+  // when the correct Sentry org/project tokens are not configured
+  dryRun: true,
 });
