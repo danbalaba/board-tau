@@ -270,7 +270,7 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
             transition={{ ease: "easeInOut", duration: 0.3 }}
-            className="fixed inset-0 z-50 bg-white dark:bg-gray-900 overflow-y-auto flex flex-col hide-scrollbar overscroll-none"
+            className="fixed inset-0 z-[100] bg-white dark:bg-gray-900 overflow-y-auto flex flex-col hide-scrollbar overscroll-none"
             id="scroll-container"
           >
             {/* Sticky Header */}
