@@ -271,7 +271,7 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
 
       {/* Swipe Trigger */}
       {!isOpen && (
-        <div className="fixed top-1/2 -translate-y-1/2 right-0 w-8 h-32 z-40 md:hidden group cursor-pointer flex items-center justify-end" onClick={onOpen}>
+        <div className="fixed top-1/3 -translate-y-1/2 right-0 w-8 h-32 z-40 md:hidden group cursor-pointer flex items-center justify-end" onClick={onOpen}>
           <div className="w-3 h-24 bg-neutral-900 dark:bg-white/20 rounded-l-3xl backdrop-blur-xl border-l border-t border-b border-white/20 group-hover:w-5 group-active:w-6 transition-all duration-500 shadow-[-5px_0_20px_rgba(0,0,0,0.3)] flex items-center justify-center">
             <div className="flex gap-0.5">
               <div className="w-0.5 h-8 bg-white/40 rounded-full" />
