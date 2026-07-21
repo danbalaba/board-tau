@@ -37,8 +37,8 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children, forceVisible 
       let left = rect.left + rect.width / 2;
       let transform = 'translateX(-50%)';
       let pointerLeft = '50%';
-      const screenWidth = window.innerWidth;
-      const estimatedHalfWidth = 140; // Approx half of max-w-xs (which is 320px)
+      const screenWidth = document.documentElement.clientWidth;
+      const estimatedHalfWidth = 160; // Max width is 320px, so half is 160px
 
       // Edge clamping to prevent overflow on mobile
       if (left < estimatedHalfWidth + 16) {
@@ -156,31 +156,36 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children, forceVisible 
       {isMounted && createPortal(
         <AnimatePresence>
           {isVisible && (
-            <motion.div
-              initial={{ opacity: 0, y: coords.isTop ? 5 : -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: coords.isTop ? 5 : -5 }}
-              transition={{ duration: 0.15 }}
+            <div
               style={{
                 position: 'fixed',
                 top: coords.top,
                 left: coords.left,
                 transform: coords.transform,
                 zIndex: 999999,
+                width: 'max-content',
                 maxWidth: 'calc(100vw - 32px)'
               }}
-              className="w-max p-2.5 text-[11px] leading-relaxed font-normal text-white bg-gray-800 dark:bg-gray-700 shadow-xl rounded-lg pointer-events-none"
+              className="pointer-events-none"
             >
-              <div className="relative z-10 whitespace-normal text-center">{text}</div>
-              <div 
-                style={{ left: coords.pointerLeft }}
-                className={`absolute -translate-x-1/2 border-4 border-transparent ${
-                  coords.isTop 
-                    ? 'top-full -mt-[1px] border-t-gray-800 dark:border-t-gray-700' 
-                    : 'bottom-full -mb-[1px] border-b-gray-800 dark:border-b-gray-700'
-                }`}
-              ></div>
-            </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: coords.isTop ? 5 : -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: coords.isTop ? 5 : -5 }}
+                transition={{ duration: 0.15 }}
+                className="w-full max-w-[320px] p-2.5 text-[11px] leading-relaxed font-normal text-white bg-gray-800 dark:bg-gray-700 shadow-xl rounded-lg"
+              >
+                <div className="relative z-10 whitespace-normal text-center">{text}</div>
+                <div 
+                  style={{ left: coords.pointerLeft }}
+                  className={`absolute -translate-x-1/2 border-4 border-transparent ${
+                    coords.isTop 
+                      ? 'top-full -mt-[1px] border-t-gray-800 dark:border-t-gray-700' 
+                      : 'bottom-full -mb-[1px] border-b-gray-800 dark:border-b-gray-700'
+                  }`}
+                ></div>
+              </motion.div>
+            </div>
           )}
         </AnimatePresence>,
         document.body
