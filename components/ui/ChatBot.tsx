@@ -107,7 +107,7 @@ export default function ChatBot() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9, originX: 1, originY: 1 }}
             transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
-            className="fixed bottom-24 right-4 md:bottom-[115px] md:right-10 z-[70] w-[calc(100vw-32px)] md:w-[400px] h-[550px] max-h-[80vh] flex flex-col bg-card rounded-3xl shadow-xl border border-border overflow-hidden"
+            className="fixed bottom-28 right-4 md:bottom-[115px] md:right-10 z-[70] w-[calc(100vw-32px)] md:w-[400px] h-[550px] max-h-[80vh] flex flex-col bg-card rounded-3xl shadow-xl border border-border overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 bg-gradient-to-br from-primary via-primary to-emerald-800 text-primary-foreground shadow-md z-10 relative overflow-hidden">
@@ -280,7 +280,7 @@ export default function ChatBot() {
 
       {/* Floating Toggle Button */}
       <div className={cn(
-        "fixed bottom-6 right-4 md:right-8 z-[50] transition-transform duration-300 ease-in-out",
+        "fixed bottom-28 right-4 md:bottom-8 md:right-8 z-[50] transition-transform duration-300 ease-in-out",
         isHiddenOnMobile && !isOpen ? "translate-y-48 md:translate-y-0" : "translate-y-0"
       )}>
         
