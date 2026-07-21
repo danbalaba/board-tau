@@ -10,14 +10,14 @@ export const metadata = {
   description: "Verify a BoardTAU reservation.",
 };
 
-interface VerifyPageProps {
-  params: {
+type VerifyPageProps = {
+  params: Promise<{
     id: string;
-  };
-}
+  }>;
+};
 
 export default async function VerifyPage({ params }: VerifyPageProps) {
-  const { id } = params;
+  const { id } = await params;
 
   if (!id) {
     return notFound();
