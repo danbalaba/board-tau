@@ -8,9 +8,10 @@ import { createPortal } from "react-dom";
 interface HelpTooltipProps {
   text: string;
   children?: React.ReactNode;
+  forceVisible?: boolean;
 }
 
-const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children }) => {
+const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children, forceVisible }) => {
   const [isVisible, setIsVisible] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -71,10 +72,12 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children }) => {
 
   const handleMouseLeave = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (touchTimeoutRef.current) clearTimeout(touchTimeoutRef.current);
     setIsVisible(false);
   };
 
   const handleTouchStart = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     touchTimeoutRef.current = setTimeout(() => {
       updatePosition();
       setIsVisible(true);
@@ -83,11 +86,13 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children }) => {
 
   const handleTouchEnd = () => {
     if (touchTimeoutRef.current) clearTimeout(touchTimeoutRef.current);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setIsVisible(false); // Hide tooltip when finger is released
   };
 
   const handleTouchMove = () => {
     if (touchTimeoutRef.current) clearTimeout(touchTimeoutRef.current);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setIsVisible(false); // Hide tooltip if user starts scrolling
   };
 
@@ -112,6 +117,18 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children }) => {
     }
   }, [isVisible]);
 
+  // Sync with forceVisible prop
+  useEffect(() => {
+    if (forceVisible !== undefined) {
+      if (forceVisible) {
+        updatePosition();
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+    }
+  }, [forceVisible]);
+
   return (
     <div 
       ref={triggerRef}
@@ -122,6 +139,13 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children }) => {
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchMove}
       onTouchCancel={handleTouchEnd}
+      onContextMenu={(e) => {
+        // Prevent default context menu (like text selection or magnifier) on mobile 
+        // to ensure the custom long press peek effect works cleanly.
+        if (typeof window !== 'undefined' && window.matchMedia("(pointer: coarse)").matches) {
+          e.preventDefault();
+        }
+      }}
     >
       {children ? (
         children
