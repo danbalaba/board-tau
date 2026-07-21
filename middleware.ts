@@ -39,13 +39,19 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
     if (errorParam?.startsWith("AccountSuspended")) {
+      const parts = errorParam.split(":");
+      const email = parts.length > 1 ? parts[1] : "";
       const url = new URL("/auth/suspended", request.url);
       url.searchParams.set("secure", "1");
+      if (email) url.searchParams.set("email", email);
       return NextResponse.redirect(url);
     }
     if (errorParam?.startsWith("AccountBanned")) {
+      const parts = errorParam.split(":");
+      const email = parts.length > 1 ? parts[1] : "";
       const url = new URL("/auth/banned", request.url);
       url.searchParams.set("secure", "1");
+      if (email) url.searchParams.set("email", email);
       return NextResponse.redirect(url);
     }
   }
