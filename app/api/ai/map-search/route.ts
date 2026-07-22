@@ -129,8 +129,12 @@ User query: "${query}"
       urlParams.set('amenities', foundAmenities.join(','));
     }
     
-    // Clean up query text roughly
-    let cleanQ = qLower.replace(/(find me a|looking for|under \d+|max \d+|\d+)/g, '').trim();
+    // Clean up query text roughly (filter out stop words and numbers to avoid ReDoS)
+    const stopWords = ["find", "me", "a", "looking", "for", "under", "max", "below", "with", "has", "have", "and", "boarding", "house", "places", "place"];
+    const cleanQ = qLower.split(/\s+/)
+      .filter(word => !stopWords.includes(word) && !/^\d+$/.test(word))
+      .join(" ")
+      .trim();
     if (cleanQ) urlParams.set('q', cleanQ);
     
     return NextResponse.json({

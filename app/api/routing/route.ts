@@ -14,6 +14,15 @@ export async function GET(request: Request) {
       );
     }
 
+    // SSRF Guardrail: Validate coordinates strictly match "lng,lat" float format
+    const coordRegex = /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/;
+    if (!coordRegex.test(start) || !coordRegex.test(end)) {
+      return NextResponse.json(
+        { error: 'Invalid coordinate format. Expected format: "lng,lat" (e.g., "120.4122,15.6439")' },
+        { status: 400 }
+      );
+    }
+
     const cacheKey = cache.generateKey("api:routing", { start, end });
     const cachedData = await cache.get(cacheKey);
 
