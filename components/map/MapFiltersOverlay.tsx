@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, MapPin, Building, Wifi, DollarSign, Users, SlidersHorizontal, Navigation, Map as MapIcon, History, Loader2, X } from "lucide-react";
+import { Search, MapPin, Building, Wifi, DollarSign, Users, SlidersHorizontal, Navigation, Map as MapIcon, History, Loader2, X, MousePointerClick, GraduationCap, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useAISearchStore } from "@/hooks/use-ai-search-store";
 import dynamic from "next/dynamic";
@@ -15,6 +15,7 @@ const SearchModal = dynamic(() => import("@/components/modals/SearchModal"), { s
 
 interface MapFiltersOverlayProps {
   selectedListing?: Listing | null;
+  selectedLandmark?: any | null;
   showDirections?: boolean;
   setShowDirections?: (show: boolean) => void;
   directionsPhase?: "start" | "destination" | null;
@@ -22,7 +23,8 @@ interface MapFiltersOverlayProps {
 }
 
 export default function MapFiltersOverlay({ 
-  selectedListing, 
+  selectedListing,
+  selectedLandmark,
   showDirections = false, 
   setShowDirections = () => {},
   directionsPhase = null,
@@ -53,6 +55,7 @@ export default function MapFiltersOverlay({
 
     // If we have cached parameters from a previous search, use them instantly!
     if (cachedParams) {
+      setIsAILoading(true);
       const params = new URLSearchParams(searchParams.toString());
       ['q', 'maxPrice', 'amenities', 'femaleOnly', 'category'].forEach(k => params.delete(k));
       
@@ -66,6 +69,11 @@ export default function MapFiltersOverlay({
       // Still bump the query to the top of the history list
       addQuery(queryToUse, cachedParams);
       setIsSearchFocused(false);
+      
+      // Keep loading overlay active briefly for UX consistency
+      setTimeout(() => {
+        setIsAILoading(false);
+      }, 800);
       return;
     }
 
@@ -120,7 +128,7 @@ export default function MapFiltersOverlay({
   };
 
   return (
-    <div className="absolute top-4 md:top-8 left-4 md:left-24 right-20 md:right-24 z-[101] pointer-events-none flex flex-col gap-3">
+    <div className="absolute top-4 md:top-8 left-4 md:left-24 right-20 md:right-24 z-[201] pointer-events-none flex flex-col gap-3">
       
       {/* Search Bar */}
       <motion.div 
@@ -129,7 +137,7 @@ export default function MapFiltersOverlay({
         transition={{ duration: 0.4 }}
         className="w-full max-w-md mx-auto pointer-events-auto relative"
       >
-        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-200/50 dark:border-gray-700/50 rounded-full flex items-center px-4 py-3 gap-3 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.16)]">
+        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-200/50 dark:border-gray-700/50 rounded-full flex items-center px-4 h-12 gap-3 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.16)]">
           {isAILoading ? (
             <Loader2 className="text-primary animate-spin shrink-0" size={20} />
           ) : (
@@ -155,10 +163,10 @@ export default function MapFiltersOverlay({
               </button>
             )}
           </form>
-          <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1 shrink-0"></div>
+          <div className="hidden md:block w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1 shrink-0"></div>
           <button
             onClick={() => setShowDirections(!showDirections)}
-            className={`p-2 sm:p-2.5 rounded-xl transition-all shadow-sm shrink-0 border ${
+            className={`hidden md:block p-2 sm:p-2.5 rounded-xl transition-all shadow-sm shrink-0 border ${
               showDirections 
                 ? 'bg-blue-500 border-blue-600 text-white shadow-blue-500/25' 
                 : 'bg-white/90 dark:bg-slate-800/90 border-gray-200 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-slate-700'
@@ -253,16 +261,47 @@ export default function MapFiltersOverlay({
       >
         <SearchModal onCloseModal={() => setShowSearchModal(false)} />
       </Modal>
+
+      {/* Mobile Directions FAB */}
+      <AnimatePresence>
+        {!showDirections && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="fixed bottom-24 right-4 z-[101] md:hidden pointer-events-auto"
+          >
+            <button
+              onClick={() => setShowDirections(true)}
+              className="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(59,130,246,0.5)] transition-colors border-2 border-white/20"
+              title="Get Directions"
+            >
+              <Navigation size={24} className="ml-[-2px] mb-[2px]" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Directions Panel UI */}
       <AnimatePresence>
         {showDirections && (
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="w-full max-w-md mx-auto pointer-events-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl border border-blue-200 dark:border-blue-900/50 rounded-2xl p-4 flex flex-col gap-3 relative"
+            initial={{ opacity: 0, y: 100, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 100, scale: 0.95 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            drag="y"
+            dragConstraints={{ top: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(e, { offset, velocity }) => {
+              if (offset.y > 50 || velocity.y > 200) {
+                if (setShowDirections) setShowDirections(false);
+              }
+            }}
+            className="fixed bottom-0 left-0 right-0 z-[500] md:relative md:bottom-auto md:left-auto md:right-auto w-full md:max-w-md mx-auto pointer-events-auto bg-white/98 dark:bg-slate-900/98 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-xl border-t md:border border-blue-200 dark:border-blue-900/50 rounded-t-3xl md:rounded-2xl pt-5 pb-10 px-5 md:p-4 flex flex-col gap-3"
           >
+            {/* Mobile Drag Handle Indicator */}
+            <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-1 md:hidden" />
             <div className="flex items-center justify-between mb-1">
               <h3 className="font-bold text-sm text-gray-800 dark:text-white flex items-center gap-2">
                 <Navigation size={16} className="text-blue-500" />
@@ -287,10 +326,10 @@ export default function MapFiltersOverlay({
                     : 'bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-gray-700'
                 }`}>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Starting Point</p>
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate flex items-center gap-1.5">
                     {selectedListing 
                       ? selectedListing.title 
-                      : <span className="text-blue-500 dark:text-blue-400 italic">👆 Tap a boarding house on the map</span>
+                      : <span className="text-blue-500 dark:text-blue-400 italic flex items-center gap-1.5"><MousePointerClick size={16} /> Tap a boarding house on the map</span>
                     }
                   </p>
                 </div>
@@ -309,17 +348,76 @@ export default function MapFiltersOverlay({
                     : 'bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-gray-700'
                 }`}>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Destination</p>
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate flex items-center gap-1.5">
                     {directionsPhase === "destination"
-                      ? <span className="text-green-600 dark:text-green-400 italic">🏫 Tap a college on the map</span>
-                      : (directionsPhase === null && selectedListing)
-                        ? <span className="text-gray-400 italic text-xs">Waiting for college selection...</span>
-                        : <span className="text-gray-400 italic text-xs">Select a starting point first</span>
+                      ? <span className="text-green-600 dark:text-green-400 italic flex items-center gap-1.5"><GraduationCap size={16} /> Tap a college on the map</span>
+                      : (directionsPhase === null && selectedLandmark)
+                        ? <span className="text-gray-800 dark:text-gray-200 font-semibold">{selectedLandmark.name}</span>
+                        : (directionsPhase === null && selectedListing)
+                          ? <span className="text-gray-400 italic text-xs">Waiting for college selection...</span>
+                          : <span className="text-gray-400 italic text-xs">Select a starting point first</span>
                     }
                   </p>
                 </div>
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* AI Loading Overlay */}
+      <AnimatePresence>
+        {isAILoading && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/60 dark:bg-[#020817]/70 backdrop-blur-xl pointer-events-auto"
+          >
+            {/* Top Progress Bar */}
+            <div className="absolute top-0 left-0 right-0 h-1 z-[10000]">
+              <motion.div 
+                className="h-full bg-gradient-to-r from-primary via-emerald-400 to-primary"
+                initial={{ width: "0%" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 1.5, ease: "easeInOut", repeat: Infinity }}
+              />
+            </div>
+
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="flex flex-col items-center gap-6"
+            >
+              <div className="relative flex items-center justify-center">
+                <motion.div 
+                    className="absolute -inset-6 rounded-full border border-primary/30"
+                    animate={{ scale: [1, 1.5, 1], opacity: [0.8, 0, 0.8] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                />
+                <motion.div 
+                    className="absolute -inset-10 rounded-full border border-emerald-400/20"
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                />
+                <div className="relative bg-white dark:bg-gray-800 p-4 rounded-full shadow-lg z-10 border border-gray-100 dark:border-gray-700">
+                  <Sparkles size={32} className="text-primary animate-pulse" />
+                </div>
+              </div>
+
+              <div className="flex flex-col items-center gap-2 text-center px-4">
+                  <motion.span 
+                      className="text-sm font-black uppercase tracking-[0.2em] text-primary dark:text-emerald-400"
+                      animate={{ opacity: [1, 0.6, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                      BoardTAU AI Scanning
+                  </motion.span>
+                  <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                      Finding the best matching properties based on your request...
+                  </span>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

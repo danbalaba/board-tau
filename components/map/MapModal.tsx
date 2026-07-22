@@ -93,11 +93,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
     body.style.overflow = 'hidden';
     html.style.overflow = 'hidden';
 
-    // Also block wheel/touchmove events on document so nothing leaks through
-    const preventScroll = (e: Event) => e.preventDefault();
-    document.addEventListener('wheel', preventScroll, { passive: false });
-    document.addEventListener('touchmove', preventScroll, { passive: false });
-
+    // Body lock is sufficient, removed aggressive wheel blocking.
     return () => {
       // Restore scroll
       body.style.position = '';
@@ -107,8 +103,6 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
       body.style.overflow = '';
       html.style.overflow = '';
 
-      document.removeEventListener('wheel', preventScroll);
-      document.removeEventListener('touchmove', preventScroll);
 
       window.scrollTo(0, scrollY);
     };
@@ -193,7 +187,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
           {/* Close Button (Absolute) */}
           <button
             onClick={onClose}
-            className="absolute top-4 md:top-8 right-4 md:right-8 z-[110] p-3 bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-200 rounded-full shadow-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+            className="absolute top-4 md:top-8 right-4 md:right-8 z-[110] h-12 w-12 flex items-center justify-center bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-200 rounded-full shadow-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
           >
             <FaTimes size={20} />
           </button>
@@ -286,8 +280,16 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
               {/* Floating Search & Filters Overlay */}
               <MapFiltersOverlay 
                 selectedListing={selectedListing as any}
+                selectedLandmark={selectedLandmark}
                 showDirections={showDirections}
-                setShowDirections={setShowDirections}
+                setShowDirections={(val) => {
+                  setShowDirections(val);
+                  if (val) {
+                    // When turning ON directions, clear selectedListing so Phase 1 is clean
+                    setSelectedListing(null);
+                    setSelectedLandmark(null);
+                  }
+                }}
                 directionsPhase={directionsPhase}
                 onGetDirections={(start, end) => {
                   setRouteDestination(end);
@@ -297,7 +299,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
 
               {/* "Search this area" Button */}
               <AnimatePresence>
-                {showSearchAreaBtn && onSearchArea && (
+                {showSearchAreaBtn && onSearchArea && !showDirections && (
                   <motion.button
                     key="search-area-btn"
                     initial={{ y: -50, opacity: 0, x: "-50%" }}
@@ -307,7 +309,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
                       onSearchArea(currentBounds);
                       setShowSearchAreaBtn(false);
                     }}
-                    className="absolute top-4 left-1/2 z-[200] bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-5 py-2.5 rounded-full shadow-lg font-semibold text-sm flex items-center gap-2 border border-gray-200 dark:border-gray-700 hover:scale-105 transition-transform"
+                    className="absolute top-20 left-1/2 z-[200] bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-5 py-2.5 rounded-full shadow-lg font-semibold text-sm flex items-center gap-2 border border-gray-200 dark:border-gray-700 hover:scale-105 transition-transform"
                   >
                     <FaRedo className="text-primary" />
                     Search this area
@@ -339,17 +341,22 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
                     const destLng = landmark.coords[1];
                     const destLat = landmark.coords[0];
                     setRouteDestination([destLng, destLat]);
+                    setSelectedLandmark(landmark);
                     setDirectionsPhase(null); // Done — restore all markers
                     return;
                   }
                   if (showDirections) return;
                   setSelectedLandmark(landmark);
-                  setSelectedListing(null);
                   setShowLandmarkCard(true);
+                  setShowListingCard(false);
                 }}
                 onMapMoveEnd={(bounds) => {
                   setCurrentBounds(bounds);
                   setShowSearchAreaBtn(true);
+                }}
+                onMapInteraction={() => {
+                  if (showListingCard) setShowListingCard(false);
+                  if (showLandmarkCard) setShowLandmarkCard(false);
                 }}
                 routeDestination={routeDestination}
                 directionsPhase={directionsPhase}

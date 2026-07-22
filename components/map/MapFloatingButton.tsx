@@ -23,10 +23,8 @@ export default function MapFloatingButton({ listings: initialListings }: MapFloa
   const scrollDirection = useScrollDirection();
   const isHiddenOnMobile = scrollDirection === "up" || scrollDirection === "";
 
-  // Fetch all map listings when the modal is opened
+  // Pre-fetch all map listings in the background so they are ready instantly
   useEffect(() => {
-    if (!isModalOpen) return;
-
     const fetchAllListingsForMap = async () => {
       const currentParamsStr = searchParams.toString();
       if (mapListings.length > 0 && lastFetchedParams.current === currentParamsStr) {
@@ -55,7 +53,7 @@ export default function MapFloatingButton({ listings: initialListings }: MapFloa
     };
 
     fetchAllListingsForMap();
-  }, [isModalOpen, searchParams]);
+  }, [searchParams]);
 
   return (
     <>
@@ -92,7 +90,6 @@ export default function MapFloatingButton({ listings: initialListings }: MapFloa
             const currentParams = new URLSearchParams(searchParams.toString());
             currentParams.set("isMap", "true");
             currentParams.set("limit", "200");
-            currentParams.set("_bust", Date.now().toString()); // Cache buster
             
             // Pass bounding box parameters to the backend
             currentParams.set("bounds", bounds.toBBoxString());

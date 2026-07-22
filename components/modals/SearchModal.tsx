@@ -107,7 +107,7 @@ export default function SearchModal({ onCloseModal }: { onCloseModal?: () => voi
 
   return (
     <div className="h-full md:h-[660px] w-full bg-white dark:bg-gray-900 flex flex-col font-sans overflow-hidden">
-      <Modal.WindowHeader title={`Step ${currentStepIndex} of ${totalSteps} · BoardTAU`} />
+      <Modal.WindowHeader title={`Step ${currentStepIndex} of ${totalSteps} · BoardTAU`} onClose={onCloseModal} />
       
       <ProgressBar steps={activeSteps} currentStepId={step} />
       
