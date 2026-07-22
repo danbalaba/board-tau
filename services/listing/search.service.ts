@@ -121,7 +121,28 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
     try {
       const pipeline: any[] = [];
       
-      if (params.originLat && params.originLng) {
+      if (params.bounds) {
+        // bounds format: west,south,east,north (lng,lat,lng,lat)
+        const [w, s, e, n] = params.bounds.split(',').map(Number);
+        
+        const baseMatch: any = { status: "active" };
+        if (params.category) baseMatch.category = { $in: Array.isArray(params.category) ? params.category : [params.category] };
+
+        // Security Guardrail: Validate numbers and restrict to max ~0.5 degrees diff to prevent DOS
+        if (!isNaN(w) && !isNaN(s) && !isNaN(e) && !isNaN(n) && 
+            Math.abs(e - w) <= 0.5 && Math.abs(n - s) <= 0.5) {
+          
+          baseMatch.location = {
+            $geoWithin: {
+              $box: [
+                [w, s], // bottom-left (west, south)
+                [e, n]  // top-right (east, north)
+              ]
+            }
+          };
+        }
+        pipeline.push({ $match: baseMatch });
+      } else if (params.originLat && params.originLng) {
         const radiusInMeters = (params.isUnlimitedDistance === "true" 
           ? 1000000 
           : (Number(isRelaxed ? 20 : (params.distance || 10))) * 1000);
@@ -225,7 +246,25 @@ export async function executeComplexSearchCount(searchParams: Record<string, str
   try {
     const pipeline: any[] = [];
     
-    if (searchParams.originLat && searchParams.originLng) {
+    if (searchParams.bounds) {
+      const [w, s, e, n] = searchParams.bounds.split(',').map(Number);
+      
+      const baseMatch: any = { status: "active" };
+      if (searchParams.category) baseMatch.category = { $in: Array.isArray(searchParams.category) ? searchParams.category : [searchParams.category] };
+
+      if (!isNaN(w) && !isNaN(s) && !isNaN(e) && !isNaN(n) && 
+          Math.abs(e - w) <= 0.5 && Math.abs(n - s) <= 0.5) {
+        baseMatch.location = {
+          $geoWithin: {
+            $box: [
+              [w, s],
+              [e, n]
+            ]
+          }
+        };
+      }
+      pipeline.push({ $match: baseMatch });
+    } else if (searchParams.originLat && searchParams.originLng) {
       const radiusInMeters = (searchParams.isUnlimitedDistance === "true" 
         ? 1000000 
         : (Number(searchParams.distance || 10)) * 1000);
