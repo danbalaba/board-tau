@@ -58,13 +58,22 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
 
     const map = L.map(containerRef.current, {
       zoomControl: false,
+      preferCanvas: true, // Boosts performance when rendering many layers
+      wheelPxPerZoomLevel: 120, // Smoother zooming
     }).setView(TAU_COORDINATES, 15);
     
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    const lightLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { maxZoom: 20 });
-    const darkLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 20 });
-    const satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19 });
+    const tileOptions = {
+      maxZoom: 20,
+      keepBuffer: 8,           // Drastically reduces white flashing by keeping surrounding tiles in memory
+      updateWhenIdle: false,   // Force map to fetch tiles DURING dragging instead of waiting to stop
+      updateWhenZooming: false // Smoother zooming transitions
+    };
+
+    const lightLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", tileOptions);
+    const darkLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", tileOptions);
+    const satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { ...tileOptions, maxZoom: 19 });
 
     if (resolvedTheme === "dark") darkLayer.addTo(map);
     else lightLayer.addTo(map);
