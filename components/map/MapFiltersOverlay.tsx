@@ -8,10 +8,24 @@ import { useAISearchStore } from "@/hooks/use-ai-search-store";
 import dynamic from "next/dynamic";
 import { AnimatePresence } from "framer-motion";
 import Modal from "@/components/modals/Modal";
+import { Listing } from "@prisma/client";
+import { colleges } from "@/data/colleges";
 
 const SearchModal = dynamic(() => import("@/components/modals/SearchModal"), { ssr: false });
 
-export default function MapFiltersOverlay() {
+interface MapFiltersOverlayProps {
+  selectedListing?: Listing | null;
+  showDirections?: boolean;
+  setShowDirections?: (show: boolean) => void;
+  onGetDirections?: (startLngLat: [number, number], endLngLat: [number, number]) => void;
+}
+
+export default function MapFiltersOverlay({ 
+  selectedListing, 
+  showDirections = false, 
+  setShowDirections = () => {},
+  onGetDirections = () => {}
+}: MapFiltersOverlayProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -21,7 +35,7 @@ export default function MapFiltersOverlay() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isAILoading, setIsAILoading] = useState(false);
-  const [showDirections, setShowDirections] = useState(false);
+  const [destinationCollege, setDestinationCollege] = useState("tau");
   
   const filters = [
     { id: "college", label: "Any College", icon: Building },
@@ -127,9 +141,13 @@ export default function MapFiltersOverlay() {
             />
           </form>
           <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1 shrink-0"></div>
-          <button 
+          <button
             onClick={() => setShowDirections(!showDirections)}
-            className={`p-1.5 rounded-full transition-colors shrink-0 ${showDirections ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300' : 'hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500'}`}
+            className={`p-2 sm:p-2.5 rounded-xl transition-all shadow-sm shrink-0 border ${
+              showDirections 
+                ? 'bg-blue-500 border-blue-600 text-white shadow-blue-500/25' 
+                : 'bg-white/90 dark:bg-slate-800/90 border-gray-200 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-slate-700'
+            }`}
             title="Directions"
           >
             <Navigation size={18} />
@@ -277,7 +295,7 @@ export default function MapFiltersOverlay() {
                 <div className="flex-1 bg-gray-50 dark:bg-slate-800 rounded-lg px-3 py-2 border border-gray-100 dark:border-gray-700">
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Starting Point (Click a listing)</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                    {searchParams.get("listingId") ? `Listing #${searchParams.get("listingId")?.substring(0, 5)}...` : "Select a boarding house..."}
+                    {selectedListing ? selectedListing.title : "Select a boarding house..."}
                   </p>
                 </div>
               </div>
@@ -286,11 +304,40 @@ export default function MapFiltersOverlay() {
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <MapIcon size={14} className="text-primary" />
                 </div>
-                <div className="flex-1 bg-gray-50 dark:bg-slate-800 rounded-lg px-3 py-2 border border-gray-100 dark:border-gray-700">
+                <div className="flex-1 bg-gray-50 dark:bg-slate-800 rounded-lg px-3 py-1.5 border border-gray-100 dark:border-gray-700">
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Destination</p>
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">Tarlac Agricultural University (TAU)</p>
+                  <select 
+                    value={destinationCollege}
+                    onChange={(e) => setDestinationCollege(e.target.value)}
+                    className="w-full bg-transparent text-sm font-medium text-gray-800 dark:text-gray-200 outline-none truncate cursor-pointer"
+                  >
+                    {colleges.filter(c => c.value !== 'any').map(c => (
+                      <option key={c.value} value={c.value} className="text-gray-800 dark:text-gray-200 bg-white dark:bg-slate-800">
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
+              
+              <button 
+                disabled={!selectedListing}
+                onClick={() => {
+                  if (selectedListing && selectedListing.latitude && selectedListing.longitude) {
+                    const dest = colleges.find(c => c.value === destinationCollege);
+                    if (dest) {
+                      onGetDirections([selectedListing.longitude, selectedListing.latitude], [dest.latlng[1], dest.latlng[0]]);
+                    }
+                  }
+                }}
+                className={`mt-2 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                  selectedListing 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg hover:shadow-blue-600/20 active:scale-[0.98]' 
+                    : 'bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                Get Directions
+              </button>
             </div>
           </motion.div>
         )}

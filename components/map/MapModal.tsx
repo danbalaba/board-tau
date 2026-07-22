@@ -55,6 +55,10 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
   const [currentBounds, setCurrentBounds] = useState<any>(null);
   const [activeView, setActiveView] = useState<SidebarViewType>("none");
   const [showAuthModal, setShowAuthModal] = useState(false);
+  
+  // Directions state
+  const [showDirections, setShowDirections] = useState(false);
+  const [routeDestination, setRouteDestination] = useState<[number, number] | null>(null);
 
   const { data: session, status } = useSession();
   const { error } = useResponsiveToast();
@@ -109,6 +113,11 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
       if (isOpen) restoreScroll(); 
     };
   }, [isOpen]);
+
+  // Reset route destination when directions panel is closed
+  useEffect(() => {
+    if (!showDirections) setRouteDestination(null);
+  }, [showDirections]);
 
   return (
     <>
@@ -208,7 +217,12 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
             {/* Map Area */}
             <div className="flex-1 h-full relative bg-gray-100 dark:bg-gray-900 mb-[65px] md:mb-0">
               {/* Floating Search & Filters Overlay */}
-              <MapFiltersOverlay />
+              <MapFiltersOverlay 
+                selectedListing={selectedListing as any}
+                showDirections={showDirections}
+                setShowDirections={setShowDirections}
+                onGetDirections={(start, end) => setRouteDestination(end)}
+              />
 
               {/* "Search this area" Button */}
               <AnimatePresence>
@@ -238,19 +252,25 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
                   if (found) {
                     setSelectedListing(found);
                     addRecentListing(found);
-                    setShowListingCard(true);
-                    setShowLandmarkCard(false);
+                    
+                    // Supress showing the card if we are using the directions panel!
+                    if (!showDirections) {
+                      setShowListingCard(true);
+                      setShowLandmarkCard(false);
+                    }
                   }
                 }}
                 onLandmarkClick={(landmark) => {
+                  if (showDirections) return; // Suppress clicks when directions active
                   setSelectedLandmark(landmark);
                   setSelectedListing(null);
                   setShowLandmarkCard(true);
                 }}
                 onMapMoveEnd={(bounds) => {
                   setCurrentBounds(bounds);
-                  if (!selectedListing) setShowSearchAreaBtn(true);
+                  setShowSearchAreaBtn(true);
                 }}
+                routeDestination={routeDestination}
               />
 
 

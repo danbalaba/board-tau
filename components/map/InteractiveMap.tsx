@@ -27,10 +27,11 @@ interface InteractiveMapProps {
   onLandmarkClick: (landmark: any) => void;
   listings: Listing[];
   selectedListingId?: string | null;
+  routeDestination?: [number, number] | null;
   onMapMoveEnd?: (bounds: L.LatLngBounds) => void; // For "Search this area"
 }
 
-export default function InteractiveMap({ onListingClick, onLandmarkClick, listings, selectedListingId, onMapMoveEnd }: InteractiveMapProps) {
+export default function InteractiveMap({ onListingClick, onLandmarkClick, listings, selectedListingId, routeDestination, onMapMoveEnd }: InteractiveMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const clusterGroupRef = useRef<any>(null);
@@ -294,18 +295,15 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
       clusterGroup.zoomToShowLayer(selectedMarker);
 
       // Smart Walking Distance Routing (Calculate nearest college)
-      let nearestCollege: any = null;
-      let minDistance = Infinity;
-
-      LANDMARKS.forEach(college => {
-        const dist = map.distance([selectedListing.latitude, selectedListing.longitude], college.coords);
-        if (dist < minDistance) { minDistance = dist; nearestCollege = college; }
-      });
-
-      if (nearestCollege && minDistance < 5000) { // Only draw if within 5km
+      // If explicit routing is requested via the Directions Panel
+      if (routeDestination) {
+        const dist = map.distance([selectedListing.latitude, selectedListing.longitude], routeDestination);
+        
         const fetchRoute = async () => {
           try {
-            const res = await fetch(`/api/routing?startLat=${selectedListing.latitude}&startLng=${selectedListing.longitude}&endLat=${nearestCollege.coords[0]}&endLng=${nearestCollege.coords[1]}`);
+            // IMPORTANT: OSRM expects lng,lat for coordinates!
+            const osrmUrl = `/api/routing?start=${selectedListing.longitude},${selectedListing.latitude}&end=${routeDestination[1]},${routeDestination[0]}`;
+            const res = await fetch(osrmUrl);
             const data = await res.json();
             
             if (!isActive) return;
@@ -313,20 +311,24 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
             if (routingLineRef.current) map.removeLayer(routingLineRef.current);
             if (routingBadgeRef.current) map.removeLayer(routingBadgeRef.current);
 
-            if (data.route && data.route.length > 0) {
-              routingLineRef.current = L.polyline(data.route, {
+            if (data.routes && data.routes.length > 0) {
+              const routeGeometry = data.routes[0].geometry;
+              // Decode geojson geometry for Leaflet
+              const latLngs = routeGeometry.coordinates.map((coord: number[]) => [coord[1], coord[0]] as L.LatLngTuple);
+              
+              routingLineRef.current = L.polyline(latLngs, {
                 color: '#3b82f6',
                 weight: 5,
                 opacity: 0.8,
                 className: 'animated-route'
               }).addTo(map);
               
-              const midIndex = Math.floor(data.route.length / 2);
-              const midPoint = data.route[midIndex] as L.LatLngTuple;
+              const midIndex = Math.floor(latLngs.length / 2);
+              const midPoint = latLngs[midIndex] as L.LatLngTuple;
               
               const badgeIcon = L.divIcon({
                 className: 'walking-badge',
-                html: `<div class="bg-blue-500 text-white px-2 py-1 rounded-md text-[10px] font-bold shadow-md whitespace-nowrap">🚶‍♂️ ${Math.ceil(data.duration / 60)} min walk</div>`,
+                html: `<div class="bg-blue-500 text-white px-2 py-1 rounded-md text-[10px] font-bold shadow-md whitespace-nowrap">🚶‍♂️ ${Math.ceil(data.routes[0].duration / 60)} min walk</div>`,
                 iconSize: [80, 20],
                 iconAnchor: [40, 10]
               });
@@ -338,7 +340,7 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
             if (!isActive) return;
 
             // Fallback to straight dashed line
-            routingLineRef.current = L.polyline([[selectedListing.latitude, selectedListing.longitude], nearestCollege.coords], {
+            routingLineRef.current = L.polyline([[selectedListing.latitude, selectedListing.longitude], routeDestination], {
               color: '#3b82f6',
               weight: 4,
               dashArray: '10, 10',
@@ -347,11 +349,11 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
             }).addTo(map);
 
             const midPoint = [
-              (selectedListing.latitude + nearestCollege.coords[0]) / 2,
-              (selectedListing.longitude + nearestCollege.coords[1]) / 2
+              (selectedListing.latitude + routeDestination[0]) / 2,
+              (selectedListing.longitude + routeDestination[1]) / 2
             ] as L.LatLngTuple;
 
-            const walkingMins = Math.max(1, Math.round((minDistance / 1000) * 12));
+            const walkingMins = Math.max(1, Math.round((dist / 1000) * 12));
             const badgeIcon = L.divIcon({
               className: 'walking-badge',
               html: `<div class="bg-blue-500 text-white px-2 py-1 rounded-md text-[10px] font-bold shadow-md whitespace-nowrap">🚶‍♂️ ~${walkingMins} min walk</div>`,
