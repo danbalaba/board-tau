@@ -9,7 +9,7 @@ import dynamic from "next/dynamic";
 import { AnimatePresence } from "framer-motion";
 import Modal from "@/components/modals/Modal";
 import { Listing } from "@prisma/client";
-import { colleges } from "@/data/colleges";
+
 
 const SearchModal = dynamic(() => import("@/components/modals/SearchModal"), { ssr: false });
 
@@ -17,6 +17,7 @@ interface MapFiltersOverlayProps {
   selectedListing?: Listing | null;
   showDirections?: boolean;
   setShowDirections?: (show: boolean) => void;
+  directionsPhase?: "start" | "destination" | null;
   onGetDirections?: (startLngLat: [number, number], endLngLat: [number, number]) => void;
 }
 
@@ -24,6 +25,7 @@ export default function MapFiltersOverlay({
   selectedListing, 
   showDirections = false, 
   setShowDirections = () => {},
+  directionsPhase = null,
   onGetDirections = () => {}
 }: MapFiltersOverlayProps) {
   const router = useRouter();
@@ -35,7 +37,6 @@ export default function MapFiltersOverlay({
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isAILoading, setIsAILoading] = useState(false);
-  const [destinationCollege, setDestinationCollege] = useState("tau");
   
   const filters = [
     { id: "college", label: "Any College", icon: Building },
@@ -288,56 +289,51 @@ export default function MapFiltersOverlay({
             <div className="flex flex-col gap-2 relative">
               <div className="absolute left-[15px] top-[18px] bottom-[18px] w-0.5 bg-gray-200 dark:bg-gray-700 z-0"></div>
               
+              {/* Step 1: Starting Point */}
               <div className="flex items-center gap-3 z-10">
-                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center shrink-0">
-                  <MapPin size={14} className="text-blue-600 dark:text-blue-400" />
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                  directionsPhase === "start" ? 'bg-blue-500 animate-pulse' : 'bg-blue-100 dark:bg-blue-900/50'
+                }`}>
+                  <MapPin size={14} className={directionsPhase === "start" ? 'text-white' : 'text-blue-600 dark:text-blue-400'} />
                 </div>
-                <div className="flex-1 bg-gray-50 dark:bg-slate-800 rounded-lg px-3 py-2 border border-gray-100 dark:border-gray-700">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Starting Point (Click a listing)</p>
+                <div className={`flex-1 rounded-lg px-3 py-2 border transition-colors ${
+                  directionsPhase === "start"
+                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
+                    : 'bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-gray-700'
+                }`}>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Starting Point</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                    {selectedListing ? selectedListing.title : "Select a boarding house..."}
+                    {selectedListing 
+                      ? selectedListing.title 
+                      : <span className="text-blue-500 dark:text-blue-400 italic">👆 Tap a boarding house on the map</span>
+                    }
                   </p>
                 </div>
               </div>
               
+              {/* Step 2: Destination */}
               <div className="flex items-center gap-3 z-10">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <MapIcon size={14} className="text-primary" />
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                  directionsPhase === "destination" ? 'bg-primary animate-pulse' : 'bg-primary/10'
+                }`}>
+                  <MapIcon size={14} className={directionsPhase === "destination" ? 'text-white' : 'text-primary'} />
                 </div>
-                <div className="flex-1 bg-gray-50 dark:bg-slate-800 rounded-lg px-3 py-1.5 border border-gray-100 dark:border-gray-700">
+                <div className={`flex-1 rounded-lg px-3 py-2 border transition-colors ${
+                  directionsPhase === "destination"
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+                    : 'bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-gray-700'
+                }`}>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Destination</p>
-                  <select 
-                    value={destinationCollege}
-                    onChange={(e) => setDestinationCollege(e.target.value)}
-                    className="w-full bg-transparent text-sm font-medium text-gray-800 dark:text-gray-200 outline-none truncate cursor-pointer"
-                  >
-                    {colleges.filter(c => c.value !== 'any').map(c => (
-                      <option key={c.value} value={c.value} className="text-gray-800 dark:text-gray-200 bg-white dark:bg-slate-800">
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                    {directionsPhase === "destination"
+                      ? <span className="text-green-600 dark:text-green-400 italic">🏫 Tap a college on the map</span>
+                      : (directionsPhase === null && selectedListing)
+                        ? <span className="text-gray-400 italic text-xs">Waiting for college selection...</span>
+                        : <span className="text-gray-400 italic text-xs">Select a starting point first</span>
+                    }
+                  </p>
                 </div>
               </div>
-              
-              <button 
-                disabled={!selectedListing}
-                onClick={() => {
-                  if (selectedListing && selectedListing.latitude && selectedListing.longitude) {
-                    const dest = colleges.find(c => c.value === destinationCollege);
-                    if (dest) {
-                      onGetDirections([selectedListing.longitude, selectedListing.latitude], [dest.latlng[1], dest.latlng[0]]);
-                    }
-                  }
-                }}
-                className={`mt-2 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                  selectedListing 
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg hover:shadow-blue-600/20 active:scale-[0.98]' 
-                    : 'bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                Get Directions
-              </button>
             </div>
           </motion.div>
         )}

@@ -36,18 +36,9 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
   const searchParams = useSearchParams();
   const pathname = usePathname();
   
-  const listingIdParam = searchParams.get("listingId");
-  const selectedListing = listings.find((l) => l.id === listingIdParam) || null;
-
-  const setSelectedListing = (listing: any) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (listing) {
-      params.set("listingId", listing.id);
-    } else {
-      params.delete("listingId");
-    }
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  };
+  // selectedListing is now proper React state — NOT derived from URL.
+  // This prevents stale URL params from pre-populating the directions panel on next open.
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [selectedLandmark, setSelectedLandmark] = useState<any>(null);
   const [showLandmarkCard, setShowLandmarkCard] = useState(false);
   const [showListingCard, setShowListingCard] = useState(false);
@@ -58,6 +49,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
   
   // Directions state
   const [showDirections, setShowDirections] = useState(false);
+  const [directionsPhase, setDirectionsPhase] = useState<"start" | "destination" | null>(null);
   const [routeDestination, setRouteDestination] = useState<[number, number] | null>(null);
 
   const { data: session, status } = useSession();
@@ -86,38 +78,75 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
 
   useEffect(() => {
     const body = document.body;
-    const rootNode = document.documentElement;
+    const html = document.documentElement;
 
-    const restoreScroll = () => {
-      const top = parseFloat(body.style.top || "0") * -1;
-      body.style.overflow = '';
-      body.style.paddingRight = '';
+    if (!isOpen) return;
+
+    // Save current scroll position
+    const scrollY = window.scrollY;
+
+    // Lock the body
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.overflow = 'hidden';
+    html.style.overflow = 'hidden';
+
+    // Also block wheel/touchmove events on document so nothing leaks through
+    const preventScroll = (e: Event) => e.preventDefault();
+    document.addEventListener('wheel', preventScroll, { passive: false });
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+
+    return () => {
+      // Restore scroll
+      body.style.position = '';
       body.style.top = '';
-      body.classList.remove("fixed", "w-full");
-      if (top) {
-        window.scrollTo(0, top);
-      }
-    };
+      body.style.left = '';
+      body.style.right = '';
+      body.style.overflow = '';
+      html.style.overflow = '';
 
-    if (isOpen) {
-      const scrollTop = window.pageYOffset || rootNode.scrollTop || body.scrollTop;
-      body.style.overflow = 'hidden';
-      body.style.paddingRight = '17px';
-      body.style.top = `-${scrollTop}px`;
-      body.classList.add("fixed", "w-full");
-    } else {
-      restoreScroll();
-    }
-    
-    return () => { 
-      if (isOpen) restoreScroll(); 
+      document.removeEventListener('wheel', preventScroll);
+      document.removeEventListener('touchmove', preventScroll);
+
+      window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
 
-  // Reset route destination when directions panel is closed
+
+  // When directions panel opens → enter Phase 1 (start). When closed → reset everything.
   useEffect(() => {
-    if (!showDirections) setRouteDestination(null);
+    if (showDirections) {
+      setDirectionsPhase("start");
+      setRouteDestination(null);
+    } else {
+      setDirectionsPhase(null);
+      setRouteDestination(null);
+    }
   }, [showDirections]);
+
+  // Reset ALL map state when modal closes, and clean any stale ?listingId from the URL.
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedListing(null);
+      setSelectedLandmark(null);
+      setShowLandmarkCard(false);
+      setShowListingCard(false);
+      setShowDirections(false);
+      setDirectionsPhase(null);
+      setRouteDestination(null);
+      setShowSearchAreaBtn(false);
+
+      // Clean up any stale ?listingId left in the URL from a previous session
+      const params = new URLSearchParams(searchParams.toString());
+      if (params.has("listingId")) {
+        params.delete("listingId");
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      }
+    }
+  }, [isOpen]);
+
 
   return (
     <>
@@ -221,7 +250,11 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
                 selectedListing={selectedListing as any}
                 showDirections={showDirections}
                 setShowDirections={setShowDirections}
-                onGetDirections={(start, end) => setRouteDestination(end)}
+                directionsPhase={directionsPhase}
+                onGetDirections={(start, end) => {
+                  setRouteDestination(end);
+                  setDirectionsPhase(null); // Done — show all markers again
+                }}
               />
 
               {/* "Search this area" Button */}
@@ -252,16 +285,26 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
                   if (found) {
                     setSelectedListing(found);
                     addRecentListing(found);
-                    
-                    // Supress showing the card if we are using the directions panel!
-                    if (!showDirections) {
+
+                    if (directionsPhase === "start") {
+                      // Advance to Phase 2: pick destination landmark
+                      setDirectionsPhase("destination");
+                    } else if (!showDirections) {
                       setShowListingCard(true);
                       setShowLandmarkCard(false);
                     }
                   }
                 }}
                 onLandmarkClick={(landmark) => {
-                  if (showDirections) return; // Suppress clicks when directions active
+                  if (directionsPhase === "destination") {
+                    // Phase 2 complete: use this landmark as the destination
+                    const destLng = landmark.coords[1];
+                    const destLat = landmark.coords[0];
+                    setRouteDestination([destLng, destLat]);
+                    setDirectionsPhase(null); // Done — restore all markers
+                    return;
+                  }
+                  if (showDirections) return;
                   setSelectedLandmark(landmark);
                   setSelectedListing(null);
                   setShowLandmarkCard(true);
@@ -271,6 +314,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
                   setShowSearchAreaBtn(true);
                 }}
                 routeDestination={routeDestination}
+                directionsPhase={directionsPhase}
               />
 
 

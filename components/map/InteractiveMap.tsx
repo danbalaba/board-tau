@@ -28,16 +28,18 @@ interface InteractiveMapProps {
   listings: Listing[];
   selectedListingId?: string | null;
   routeDestination?: [number, number] | null;
-  onMapMoveEnd?: (bounds: L.LatLngBounds) => void; // For "Search this area"
+  directionsPhase?: "start" | "destination" | null;
+  onMapMoveEnd?: (bounds: L.LatLngBounds) => void;
 }
 
-export default function InteractiveMap({ onListingClick, onLandmarkClick, listings, selectedListingId, routeDestination, onMapMoveEnd }: InteractiveMapProps) {
+export default function InteractiveMap({ onListingClick, onLandmarkClick, listings, selectedListingId, routeDestination, directionsPhase, onMapMoveEnd }: InteractiveMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const clusterGroupRef = useRef<any>(null);
   const radiusCircleRef = useRef<L.Circle | null>(null);
   const routingLineRef = useRef<L.Polyline | null>(null);
   const routingBadgeRef = useRef<L.Marker | null>(null);
+  const landmarkMarkersRef = useRef<L.Marker[]>([]);
   const { resolvedTheme } = useTheme();
   
   // Track manual drags to trigger "Search this area"
@@ -133,6 +135,7 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
         map.flyTo(landmark.coords, 15, { duration: 0.8 });
         onLandmarkClickRef.current(landmark);
       });
+      landmarkMarkersRef.current.push(marker);
     });
 
     // Handle map movement for "Search this area"
@@ -191,7 +194,28 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
   // Only rebuild the map when the theme changes — never on callback changes
   }, [resolvedTheme]);
 
-  // Re-render listing markers whenever listings or selectedListingId change
+  // Toggle landmark/listing marker visibility based on directionsPhase
+  useEffect(() => {
+    const map = mapRef.current;
+    const clusterGroup = clusterGroupRef.current;
+    if (!map) return;
+
+    if (directionsPhase === "start") {
+      // Phase 1: Show listings only, hide landmarks
+      landmarkMarkersRef.current.forEach(m => { if (map.hasLayer(m)) map.removeLayer(m); });
+      if (clusterGroup && !map.hasLayer(clusterGroup)) map.addLayer(clusterGroup);
+    } else if (directionsPhase === "destination") {
+      // Phase 2: Hide listings, show landmarks
+      if (clusterGroup && map.hasLayer(clusterGroup)) map.removeLayer(clusterGroup);
+      landmarkMarkersRef.current.forEach(m => { if (!map.hasLayer(m)) m.addTo(map); });
+    } else {
+      // No directions mode: show everything
+      if (clusterGroup && !map.hasLayer(clusterGroup)) map.addLayer(clusterGroup);
+      landmarkMarkersRef.current.forEach(m => { if (!map.hasLayer(m)) m.addTo(map); });
+    }
+  }, [directionsPhase]);
+
+
   useEffect(() => {
     let isActive = true;
     const map = mapRef.current;
@@ -301,8 +325,12 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
         
         const fetchRoute = async () => {
           try {
-            // IMPORTANT: OSRM expects lng,lat for coordinates!
-            const osrmUrl = `/api/routing?start=${selectedListing.longitude},${selectedListing.latitude}&end=${routeDestination[1]},${routeDestination[0]}`;
+            // OSRM expects lng,lat format for coordinates.
+            // routeDestination is stored as [lng, lat] (set by MapFiltersOverlay → onGetDirections).
+            // So pass it directly as-is: routeDestination[0]=lng, routeDestination[1]=lat
+            const startCoord = `${selectedListing.longitude},${selectedListing.latitude}`;
+            const endCoord = `${routeDestination[0]},${routeDestination[1]}`;
+            const osrmUrl = `/api/routing?start=${startCoord}&end=${endCoord}`;
             const res = await fetch(osrmUrl);
             const data = await res.json();
             
