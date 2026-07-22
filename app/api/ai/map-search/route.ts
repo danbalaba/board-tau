@@ -110,10 +110,10 @@ User query: "${query}"
     const urlParams = new URLSearchParams();
     const qLower = query.toLowerCase();
     
-    // Extract price (e.g. "under 1500", "< 2000", "1500")
-    const priceMatch = qLower.match(/(?:under|below|max|<)?\s*(\d{3,5})/);
+    // Extract price (e.g. "under 1500", "< 2000", "1500" -> extract 3-5 digit number)
+    const priceMatch = qLower.match(/\b\d{3,5}\b/);
     if (priceMatch) {
-      urlParams.set('maxPrice', priceMatch[1]);
+      urlParams.set('maxPrice', priceMatch[0]);
     }
     
     // Extract room type
