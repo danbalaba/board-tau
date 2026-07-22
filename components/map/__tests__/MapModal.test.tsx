@@ -45,6 +45,12 @@ jest.mock('../RecentsListView', () => () => <div data-testid="mock-recents-list-
 jest.mock('../../modals/Modal', () => ({ isOpen, children }: any) => isOpen ? <div data-testid="mock-modal">{children}</div> : null);
 jest.mock('../../modals/AuthModal', () => () => <div data-testid="mock-auth-modal" />);
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: jest.fn() }),
+  useSearchParams: () => new URLSearchParams(''),
+  usePathname: () => '/map',
+}));
+
 jest.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,

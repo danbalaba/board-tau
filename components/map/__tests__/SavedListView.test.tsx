@@ -12,9 +12,9 @@ jest.mock('@/services/user/favorites/favorite', () => ({
   getFavorites: jest.fn(),
 }));
 
-jest.mock('@/components/listings/ListingCard', () => {
-  return function MockListingCard({ data }: any) {
-    return <div data-testid={`mock-listing-card-${data.id}`}>{data.title}</div>;
+jest.mock('@/components/listings/CompactListingCard', () => {
+  return function MockCompactListingCard({ data }: any) {
+    return <div data-testid="compact-listing-card">{data.title}</div>;
   };
 });
 
@@ -53,7 +53,9 @@ describe('SavedListView Component', () => {
     
     render(<SavedListView onListingSelect={mockOnListingSelect} listings={mockListings} />);
     
-    expect(await screen.findByText('Listing 1', {}, { timeout: 3000 })).toBeInTheDocument();
+    const cards = await screen.findAllByTestId('compact-listing-card');
+    expect(cards.length).toBe(1);
+    expect(screen.getByText('Listing 1')).toBeInTheDocument();
     expect(screen.queryByText('Listing 2')).not.toBeInTheDocument();
   });
 });

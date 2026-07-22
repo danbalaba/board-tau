@@ -2,10 +2,10 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import SidebarListView from '../SidebarListView';
 
-jest.mock('@/components/listings/ListingCard', () => {
-  return function MockListingCard({ data, onClickOverride }: any) {
+jest.mock('@/components/listings/CompactListingCard', () => {
+  return function MockCompactListingCard({ data, onClickOverride }: any) {
     return (
-      <div data-testid={`mock-listing-card-${data.id}`} onClick={onClickOverride}>
+      <div data-testid="compact-listing-card" onClick={onClickOverride}>
         {data.title}
       </div>
     );

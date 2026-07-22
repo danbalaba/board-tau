@@ -6,6 +6,14 @@ jest.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
   },
+  AnimatePresence: ({ children }: any) => <>{children}</>,
+}));
+
+const mockReplace = jest.fn();
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: mockReplace }),
+  useSearchParams: () => new URLSearchParams(''),
+  usePathname: () => '/map',
 }));
 
 describe('MapFiltersOverlay Component', () => {
@@ -22,16 +30,11 @@ describe('MapFiltersOverlay Component', () => {
     expect(screen.getByText('Female Only')).toBeInTheDocument();
   });
 
-  it('toggles filter pill active state on click', () => {
+  it('toggles filter pill and calls router.replace', () => {
     render(<MapFiltersOverlay />);
     const collegeButton = screen.getByText('Any College');
     
     fireEvent.click(collegeButton);
-    expect(collegeButton).toHaveClass('bg-primary');
-    
-    // Toggle off
-    fireEvent.click(collegeButton);
-    // Fixed: Filter toggles correctly deactivate their active state
-    expect(collegeButton).not.toHaveClass('bg-primary');
+    expect(mockReplace).toHaveBeenCalled();
   });
 });

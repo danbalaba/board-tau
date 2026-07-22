@@ -7,10 +7,10 @@ jest.mock('@/hooks/use-recent-store', () => ({
   useRecentStore: jest.fn(),
 }));
 
-jest.mock('@/components/listings/ListingCard', () => {
-  return function MockListingCard({ data, onClickOverride }: any) {
+jest.mock('@/components/listings/CompactListingCard', () => {
+  return function MockCompactListingCard({ data, onClickOverride }: any) {
     return (
-      <div data-testid={`mock-listing-card-${data.id}`} onClick={onClickOverride}>
+      <div data-testid="compact-listing-card" onClick={onClickOverride}>
         {data.title}
       </div>
     );
@@ -52,6 +52,7 @@ describe('RecentsListView Component', () => {
     expect(screen.getByText('Listing 1')).toBeInTheDocument();
     expect(screen.queryByText('Listing 2')).not.toBeInTheDocument();
     
+    const cards = screen.getAllByTestId('compact-listing-card');
     const clearBtn = screen.getByText('Clear All');
     expect(clearBtn).toBeInTheDocument();
     
