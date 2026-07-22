@@ -27,9 +27,7 @@ jest.mock('../MapModal', () => {
   };
 });
 
-jest.mock('next/navigation', () => ({
-  useSearchParams: () => new URLSearchParams(''),
-}));
+
 
 jest.mock('framer-motion', () => ({
   motion: {
