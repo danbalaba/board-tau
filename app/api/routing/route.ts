@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-
-// Simple in-memory cache as a stand-in for Redis
-const routeCache = new Map<string, { data: any; expiry: number }>();
+import { cache } from '@/lib/redis';
 
 export async function GET(request: Request) {
   try {
@@ -16,11 +14,11 @@ export async function GET(request: Request) {
       );
     }
 
-    const cacheKey = `${start}-${end}`;
-    const cached = routeCache.get(cacheKey);
+    const cacheKey = cache.generateKey("api:routing", { start, end });
+    const cachedData = await cache.get(cacheKey);
 
-    if (cached && cached.expiry > Date.now()) {
-      return NextResponse.json(cached.data);
+    if (cachedData) {
+      return NextResponse.json(cachedData);
     }
 
     // Call OSRM API for walking route
@@ -38,13 +36,8 @@ export async function GET(request: Request) {
 
     const data = await response.json();
 
-    // Cache the result for 30 days (simplified to 30 days in ms for in-memory)
-    routeCache.set(cacheKey, {
-      data,
-      expiry: Date.now() + 30 * 24 * 60 * 60 * 1000,
-    });
-
-    // Cleanup cache periodically in a real app, or use actual Redis
+    // Cache the result for 30 days in Redis
+    await cache.set(cacheKey, data, 60 * 60 * 24 * 30);
 
     return NextResponse.json(data);
   } catch (error: any) {
