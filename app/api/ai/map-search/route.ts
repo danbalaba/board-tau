@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { cache } from '@/lib/redis';
 
 export const runtime = "edge";
 
@@ -27,6 +28,15 @@ export async function POST(request: Request) {
 
     if (query.length > 500) {
       return NextResponse.json({ error: 'Query too long' }, { status: 400 });
+    }
+
+    const normalizedQuery = query.trim().toLowerCase();
+    const cacheKey = `ai-search:${normalizedQuery}`;
+
+    // 1. Check Redis Cache First
+    const cachedResponse = await cache.get(cacheKey);
+    if (cachedResponse) {
+      return NextResponse.json(cachedResponse);
     }
 
     const prompt = `
@@ -80,11 +90,16 @@ User query: "${query}"
       urlParams.set('categories', validatedData.categories.join(','));
     }
 
-    return NextResponse.json({
+    const finalResponse = {
       success: true,
       params: Object.fromEntries(urlParams.entries()),
       rawParamsString: urlParams.toString()
-    });
+    };
+
+    // 2. Save to Redis Cache (Cache for 30 days since text parsing logic won't change)
+    await cache.set(cacheKey, finalResponse, 2592000);
+
+    return NextResponse.json(finalResponse);
 
   } catch (error: any) {
     console.error('[AI_MAP_SEARCH_ERROR]', error);
