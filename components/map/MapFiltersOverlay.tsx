@@ -120,7 +120,7 @@ export default function MapFiltersOverlay({
   };
 
   return (
-    <div className="absolute top-4 md:top-8 left-16 md:left-24 right-16 md:right-24 z-[101] pointer-events-none flex flex-col gap-3">
+    <div className="absolute top-4 md:top-8 left-4 md:left-24 right-20 md:right-24 z-[101] pointer-events-none flex flex-col gap-3">
       
       {/* Search Bar */}
       <motion.div 
