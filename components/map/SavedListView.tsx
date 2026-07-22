@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import ListingCard from "@/components/listings/ListingCard";
+import CompactListingCard from "@/components/listings/CompactListingCard";
 import { Listing } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { getFavorites } from "@/services/user/favorites/favorite";
@@ -72,9 +72,9 @@ export default function SavedListView({ onListingSelect, listings }: SavedListVi
         ) : (
           savedListings.map((listing) => (
             <div key={listing.id}>
-              <ListingCard 
+              <CompactListingCard 
                 data={listing} 
-                hasFavorited={true} 
+                hasFavorited={true}
                 onClickOverride={(e) => {
                   if ((e.target as Element).closest('button')) return;
                   onListingSelect(listing);

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import ListingCard from "@/components/listings/ListingCard";
+import CompactListingCard from "@/components/listings/CompactListingCard";
 import { Listing } from "@prisma/client";
 
 interface SidebarListViewProps {
@@ -61,11 +61,10 @@ export default function SidebarListView({ selectedLandmark, onListingSelect, lis
         ) : (
           displayListings.map((listing) => (
             <div key={listing.id}>
-              <ListingCard 
+              <CompactListingCard 
                 data={listing} 
                 hasFavorited={false} 
                 onClickOverride={(e) => {
-                  // If the user clicks the Heart button, don't open the details
                   if ((e.target as Element).closest('button')) return;
                   onListingSelect(listing);
                 }}

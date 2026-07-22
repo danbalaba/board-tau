@@ -15,6 +15,8 @@ import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { useMenuPanel } from "@/hooks/use-menu-panel";
 import { useLoadingStore } from "@/hooks/use-loading-store";
 import { useNotification } from "@/context/NotificationContext";
+import { useRecentStore } from "@/hooks/use-recent-store";
+import { useAISearchStore } from "@/hooks/use-ai-search-store";
 
 
 interface RightSwipePanelProps {
@@ -79,6 +81,14 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
   const handleLogoutConfirm = () => {
     setIsLoggingOut(true);
     setShowLogoutConfirm(false);
+    
+    // Strict clear-on-logout to prevent data leakage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('recent-listings-storage');
+      localStorage.removeItem('ai-search-history');
+      useRecentStore.getState().clearRecents();
+      useAISearchStore.getState().clearQueries();
+    }
     
     setTimeout(() => {
       signOut({ callbackUrl: "/" });

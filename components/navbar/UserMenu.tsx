@@ -17,6 +17,8 @@ import { useLoading } from "@/components/loading/LoadingContext";
 import { useMenuPanel } from "@/hooks/use-menu-panel";
 import { useLoadingStore } from "@/hooks/use-loading-store";
 import { useNotification } from "@/context/NotificationContext";
+import { useRecentStore } from "@/hooks/use-recent-store";
+import { useAISearchStore } from "@/hooks/use-ai-search-store";
 
 interface UserMenuProps {
   user?: User;
@@ -49,6 +51,15 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
   const handleLogout = () => {
     setIsLoggingOut(true);
     setShowLogoutConfirm(false);
+    
+    // Strict clear-on-logout to prevent data leakage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('recent-listings-storage');
+      localStorage.removeItem('ai-search-history');
+      // Also clear Zustand store immediately
+      useRecentStore.getState().clearRecents();
+      useAISearchStore.getState().clearQueries();
+    }
     
     // Allow the premium animation to play for 2.5 seconds before redirecting
     setTimeout(() => {
