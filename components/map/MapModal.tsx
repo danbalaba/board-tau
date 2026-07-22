@@ -179,8 +179,14 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
           <div className="w-full h-full flex flex-col md:flex-row relative md:rounded-2xl overflow-hidden shadow-2xl border-0 md:border md:border-white/10">
             <MapActionSidebar 
               activeView={activeView} 
-              setActiveView={setActiveView}
-              onMenuClick={() => setActiveView(activeView === "list" ? "none" : "list")}
+              setActiveView={(view) => {
+                setActiveView(view);
+                if (view !== "none") setSelectedListing(null);
+              }}
+              onMenuClick={() => {
+                setActiveView(activeView === "list" ? "none" : "list");
+                setSelectedListing(null);
+              }}
               onSavedClick={() => {
                 if (status !== "authenticated") {
                   error({
@@ -190,6 +196,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
                   setShowAuthModal(true);
                 } else {
                   setActiveView(activeView === "saved" ? "none" : "saved");
+                  setSelectedListing(null);
                 }
               }}
             />
