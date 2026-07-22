@@ -29,10 +29,10 @@ export default function SidebarListView({ selectedLandmark, onListingSelect, lis
     
     // Filter by 1km radius if a landmark is selected
     return listings.filter(listing => {
-      if (!listing.latitude || !listing.longitude) return false;
+      if (!listing.latitude || !listing.longitude || !selectedLandmark.coords) return false;
       const dist = getDistanceFromLatLonInKm(
-        selectedLandmark.lat, 
-        selectedLandmark.lng, 
+        selectedLandmark.coords[0], 
+        selectedLandmark.coords[1], 
         Number(listing.latitude), 
         Number(listing.longitude)
       );

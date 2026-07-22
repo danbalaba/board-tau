@@ -90,6 +90,18 @@ function buildHardFilters(params: any, isRelaxed: boolean = false) {
   if (params.smokingAllowed === "true") match["rules_doc.smokingAllowed"] = true;
   if (params.noCurfew === "true") match["rules_doc.noCurfew"] = true;
 
+  if (params.q) {
+    const regex = { $regex: params.q, $options: "i" };
+    match.$and = match.$and || [];
+    match.$and.push({
+      $or: [
+        { title: regex },
+        { description: regex },
+        { category: { $elemMatch: { $regex: params.q, $options: "i" } } }
+      ]
+    });
+  }
+
   return { $match: match };
 }
 

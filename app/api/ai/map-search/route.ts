@@ -19,8 +19,10 @@ const aiResponseSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  let query = "";
   try {
-    const { query } = await request.json();
+    const body = await request.json();
+    query = body.query;
 
     if (!query || typeof query !== 'string') {
       return NextResponse.json({ error: 'Invalid query string' }, { status: 400 });
@@ -103,9 +105,39 @@ User query: "${query}"
 
   } catch (error: any) {
     console.error('[AI_MAP_SEARCH_ERROR]', error);
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'AI returned invalid or malicious data schema', details: (error as any).errors }, { status: 502 });
+    
+    // Fallback parser when API Quota is exceeded or AI fails
+    const urlParams = new URLSearchParams();
+    const qLower = query.toLowerCase();
+    
+    // Extract price (e.g. "under 1500", "< 2000", "1500")
+    const priceMatch = qLower.match(/(?:under|below|max|<)?\s*(\d{3,5})/);
+    if (priceMatch) {
+      urlParams.set('maxPrice', priceMatch[1]);
     }
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    
+    // Extract room type
+    if (qLower.includes('solo') || qLower.includes('single')) urlParams.set('roomType', 'SOLO');
+    if (qLower.includes('bedspace') || qLower.includes('shared')) urlParams.set('roomType', 'BEDSPACE');
+    
+    // Extract basic amenities
+    const foundAmenities = [];
+    if (qLower.includes('wifi') || qLower.includes('internet')) foundAmenities.push('WiFi');
+    if (qLower.includes('ac') || qLower.includes('aircon') || qLower.includes('air conditioning')) foundAmenities.push('Air Conditioning');
+    
+    if (foundAmenities.length > 0) {
+      urlParams.set('amenities', foundAmenities.join(','));
+    }
+    
+    // Clean up query text roughly
+    let cleanQ = qLower.replace(/(find me a|looking for|under \d+|max \d+|\d+)/g, '').trim();
+    if (cleanQ) urlParams.set('q', cleanQ);
+    
+    return NextResponse.json({
+      success: true,
+      params: Object.fromEntries(urlParams.entries()),
+      rawParamsString: urlParams.toString(),
+      _fallback: true
+    });
   }
 }
