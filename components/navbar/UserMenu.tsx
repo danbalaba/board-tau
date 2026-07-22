@@ -35,6 +35,29 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
 
   const { unreadStats } = useNotification();
 
+  // Sync recent local storage arrays to database on mount if user is logged in
+  useEffect(() => {
+    if (user) {
+      const syncRecents = async () => {
+        try {
+          const recentListingIds = useRecentStore.getState().recentListings.map(l => l.id);
+          const recentSearchQueries = useAISearchStore.getState().recentQueries.map(q => q.query);
+          
+          if (recentListingIds.length > 0 || recentSearchQueries.length > 0) {
+            await fetch('/api/user/sync-recents', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ recentListingIds, recentSearchQueries })
+            });
+          }
+        } catch (e) {
+          console.error("Failed to sync recents", e);
+        }
+      };
+      syncRecents();
+    }
+  }, [user]);
+
   const handleMenuOpen = () => {
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       onOpen();

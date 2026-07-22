@@ -16,6 +16,13 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/map',
 }));
 
+jest.mock('@/hooks/use-ai-search-store', () => ({
+  useAISearchStore: () => ({
+    recentQueries: [],
+    addQuery: jest.fn(),
+  }),
+}));
+
 describe('MapFiltersOverlay Component', () => {
   it('renders the search bar and placeholder', () => {
     render(<MapFiltersOverlay />);
