@@ -71,13 +71,13 @@ export default function MapFiltersOverlay() {
       // Clear old filters before applying AI filters
       ['q', 'maxPrice', 'amenities', 'femaleOnly', 'category'].forEach(k => params.delete(k));
       
-      if (data.filters) {
-        if (data.filters.q) params.set('q', data.filters.q);
-        if (data.filters.maxPrice) params.set('maxPrice', data.filters.maxPrice.toString());
-        if (data.filters.amenities && data.filters.amenities.length > 0) params.set('amenities', data.filters.amenities.join(','));
-        if (data.filters.femaleOnly) params.set('femaleOnly', 'true');
-        if (data.filters.category && data.filters.category.length > 0) {
-          data.filters.category.forEach((c: string) => params.append('category', c));
+      if (data.params) {
+        if (data.params.q) params.set('q', data.params.q);
+        if (data.params.maxPrice) params.set('maxPrice', data.params.maxPrice.toString());
+        if (data.params.amenities && data.params.amenities.length > 0) params.set('amenities', data.params.amenities);
+        if (data.params.femaleOnly) params.set('femaleOnly', 'true');
+        if (data.params.categories && data.params.categories.length > 0) {
+          params.set('category', data.params.categories);
         }
       } else {
         // Fallback if AI fails or returns empty filters

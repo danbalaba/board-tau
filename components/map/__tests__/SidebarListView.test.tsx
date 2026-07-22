@@ -65,7 +65,7 @@ describe('SidebarListView Component', () => {
       />
     );
     
-    fireEvent.click(screen.getByTestId('mock-listing-card-1'));
+    fireEvent.click(screen.getAllByTestId('compact-listing-card')[0]);
     expect(mockOnListingSelect).toHaveBeenCalledWith(mockListings[0]);
   });
 });

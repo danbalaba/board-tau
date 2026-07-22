@@ -3,6 +3,15 @@ import { render, screen, waitFor } from '@testing-library/react';
 import SavedListView from '../SavedListView';
 import { useSession } from 'next-auth/react';
 import { getFavorites } from '@/services/user/favorites/favorite';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 jest.mock('next-auth/react', () => ({
   useSession: jest.fn(),
@@ -32,7 +41,11 @@ describe('SavedListView Component', () => {
 
   it('shows loading state initially', () => {
     (useSession as jest.Mock).mockReturnValue({ status: 'loading' });
-    render(<SavedListView onListingSelect={mockOnListingSelect} listings={mockListings} />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SavedListView onListingSelect={mockOnListingSelect} listings={mockListings} />
+      </QueryClientProvider>
+    );
     
     // Fixed: Loading state persists gracefully while fetching data
     expect(screen.getByText('Loading your saved places...')).toBeInTheDocument();
@@ -42,7 +55,11 @@ describe('SavedListView Component', () => {
     (useSession as jest.Mock).mockReturnValue({ status: 'authenticated' });
     (getFavorites as jest.Mock).mockResolvedValue([]);
     
-    render(<SavedListView onListingSelect={mockOnListingSelect} listings={mockListings} />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SavedListView onListingSelect={mockOnListingSelect} listings={mockListings} />
+      </QueryClientProvider>
+    );
     
     expect(await screen.findByText('No saved places yet', {}, { timeout: 3000 })).toBeInTheDocument();
   });
@@ -51,7 +68,11 @@ describe('SavedListView Component', () => {
     (useSession as jest.Mock).mockReturnValue({ status: 'authenticated' });
     (getFavorites as jest.Mock).mockResolvedValue(['1']);
     
-    render(<SavedListView onListingSelect={mockOnListingSelect} listings={mockListings} />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SavedListView onListingSelect={mockOnListingSelect} listings={mockListings} />
+      </QueryClientProvider>
+    );
     
     const cards = await screen.findAllByTestId('compact-listing-card');
     expect(cards.length).toBe(1);
