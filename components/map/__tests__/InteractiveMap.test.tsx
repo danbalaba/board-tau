@@ -19,6 +19,7 @@ const mockMapInstance = {
   distance: jest.fn().mockReturnValue(100),
   getContainer: jest.fn().mockReturnValue(document.createElement('div')),
   getBounds: jest.fn(),
+  hasLayer: jest.fn().mockReturnValue(false),
 };
 
 jest.mock('leaflet', () => {
@@ -39,6 +40,7 @@ jest.mock('leaflet', () => {
       addLayers: jest.fn(),
       clearLayers: jest.fn(),
       zoomToShowLayer: jest.fn(),
+      on: jest.fn().mockReturnThis(),
     })),
   };
   return L;

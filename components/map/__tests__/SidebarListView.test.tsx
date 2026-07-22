@@ -39,7 +39,7 @@ describe('SidebarListView Component', () => {
   });
 
   it('filters listings by distance when landmark is selected', () => {
-    const mockLandmark = { name: 'Test College', lat: 14.5, lng: 121 }; // Exact same location as Listing 1
+    const mockLandmark = { name: 'Test College', coords: [14.5, 121] }; // Exact same location as Listing 1
     
     render(
       <SidebarListView 

@@ -29,19 +29,17 @@ describe('MapFiltersOverlay Component', () => {
     expect(screen.getByPlaceholderText("Ask AI: 'Cheap boarding house near TAU with wifi'")).toBeInTheDocument();
   });
 
-  it('renders quick filter pills', () => {
+  it('renders search controls', () => {
     render(<MapFiltersOverlay />);
-    expect(screen.getByText('Any College')).toBeInTheDocument();
-    expect(screen.getByText('Under ₱2k')).toBeInTheDocument();
-    expect(screen.getByText('Free WiFi')).toBeInTheDocument();
-    expect(screen.getByText('Female Only')).toBeInTheDocument();
+    expect(screen.getByTitle('Directions')).toBeInTheDocument();
   });
 
-  it('toggles filter pill and calls router.replace', () => {
-    render(<MapFiltersOverlay />);
-    const collegeButton = screen.getByText('Any College');
+  it('toggles directions mode when directions button is clicked', () => {
+    const mockSetShowDirections = jest.fn();
+    render(<MapFiltersOverlay setShowDirections={mockSetShowDirections} showDirections={false} />);
+    const directionsButton = screen.getByTitle('Directions');
     
-    fireEvent.click(collegeButton);
-    expect(mockReplace).toHaveBeenCalled();
+    fireEvent.click(directionsButton);
+    expect(mockSetShowDirections).toHaveBeenCalledWith(true);
   });
 });

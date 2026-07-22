@@ -1,8 +1,6 @@
 /**
  * @jest-environment node
  */
-import { NextRequest } from 'next/server';
-import { POST } from '../route';
 
 // Mock the Google Generative AI module
 jest.mock('@google/generative-ai', () => ({
@@ -20,6 +18,18 @@ jest.mock('@google/generative-ai', () => ({
     })
   }))
 }));
+
+// Mock the Redis cache module to avoid network requests during tests
+jest.mock('@/lib/redis', () => ({
+  cache: {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue(true),
+    generateKey: jest.fn().mockReturnValue('mock-cache-key'),
+  }
+}));
+
+import { NextRequest } from 'next/server';
+import { POST } from '../route';
 
 describe('POST /api/ai/map-search', () => {
   it('should return 400 if no query is provided', async () => {
