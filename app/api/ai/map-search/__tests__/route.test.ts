@@ -4,6 +4,23 @@
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
 
+// Mock the Google Generative AI module
+jest.mock('@google/generative-ai', () => ({
+  GoogleGenerativeAI: jest.fn().mockImplementation(() => ({
+    getGenerativeModel: jest.fn().mockReturnValue({
+      generateContent: jest.fn().mockResolvedValue({
+        response: {
+          text: () => JSON.stringify({
+            maxPrice: 3000,
+            amenities: ['WiFi'],
+            roomType: 'SOLO'
+          })
+        }
+      })
+    })
+  }))
+}));
+
 describe('POST /api/ai/map-search', () => {
   it('should return 400 if no query is provided', async () => {
     const req = new NextRequest('http://localhost/api/ai/map-search', {
@@ -33,7 +50,7 @@ describe('POST /api/ai/map-search', () => {
     expect(json.error).toBe('Query too long');
   });
 
-  it('should return simulated parameters based on query', async () => {
+  it('should parse query using generative AI', async () => {
     const req = new NextRequest('http://localhost/api/ai/map-search', {
       method: 'POST',
       body: JSON.stringify({

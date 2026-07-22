@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+export const runtime = "edge";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 // Define the exact shape we expect the AI to return.
 // This prevents Prompt Injections where the AI returns arbitrary, malicious JSON.
@@ -24,32 +29,43 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Query too long' }, { status: 400 });
     }
 
-    // TODO: Connect this to your actual ChatBot/AI provider (OpenAI, Gemini, etc.)
-    // Example:
-    // const aiRawJsonString = await myAiProvider.ask(
-    //   `Extract search parameters from this text and return ONLY valid JSON matching this schema: 
-    //    { q: string, minPrice: number, maxPrice: number, roomType: "SOLO" | "BEDSPACE", amenities: string[], categories: string[] }.
-    //    Text: "${query}"`
-    // );
-    
-    // For now, we simulate a smart AI response based on the query to allow you to test it.
-    let simulatedAiResult: any = {};
-    const lowerQuery = query.toLowerCase();
-    
-    if (lowerQuery.includes('cheap') || lowerQuery.includes('budget')) {
-      simulatedAiResult.maxPrice = 3000;
-    }
-    if (lowerQuery.includes('wifi')) {
-      simulatedAiResult.amenities = ['WiFi'];
-    }
-    if (lowerQuery.includes('solo')) {
-      simulatedAiResult.roomType = 'SOLO';
+    const prompt = `
+Extract search parameters from the following user query for a boarding house search application.
+Return ONLY a valid JSON object matching this schema: 
+{ 
+  "q": "string (general search terms)", 
+  "minPrice": "number", 
+  "maxPrice": "number", 
+  "roomType": "SOLO" | "BEDSPACE", 
+  "amenities": ["string"], 
+  "categories": ["string"] 
+}
+If a value is not mentioned, omit the key. Do not include markdown formatting or extra text.
+
+User query: "${query}"
+`;
+
+    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+    const result = await model.generateContent(prompt);
+    let text = result.response.text().trim();
+
+    // Clean up potential markdown formatting from Gemini
+    if (text.startsWith('\`\`\`json')) text = text.replace('\`\`\`json', '');
+    if (text.startsWith('\`\`\`')) text = text.replace('\`\`\`', '');
+    if (text.endsWith('\`\`\`')) text = text.substring(0, text.length - 3).trim();
+
+    let aiParsedResult = {};
+    try {
+      aiParsedResult = JSON.parse(text);
+    } catch (e) {
+      console.error("Failed to parse Gemini response as JSON:", text);
+      return NextResponse.json({ error: 'AI returned invalid JSON' }, { status: 502 });
     }
 
     // STRICT VALIDATION
-    // We pass the simulated (or real) AI JSON into Zod.
+    // We pass the AI JSON into Zod.
     // If the AI hallucinated or tried to inject malicious keys, Zod will strip them or throw an error.
-    const validatedData = aiResponseSchema.parse(simulatedAiResult);
+    const validatedData = aiResponseSchema.parse(aiParsedResult);
 
     // Convert the validated object into flat URLSearchParams format for the frontend
     const urlParams = new URLSearchParams();
