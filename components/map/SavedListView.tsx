@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import CompactListingCard from "@/components/listings/CompactListingCard";
 import { Listing } from "@prisma/client";
 import { useSession } from "next-auth/react";
@@ -16,25 +17,16 @@ interface SavedListViewProps {
 
 export default function SavedListView({ onListingSelect, listings }: SavedListViewProps) {
   const { data: session, status } = useSession();
-  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchFavorites = async () => {
-      if (status === "authenticated") {
-        setIsLoading(true);
-        try {
-          const ids = await getFavorites();
-          setFavoriteIds(ids);
-        } catch (error) {
-          console.error("Failed to fetch favorites:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-    fetchFavorites();
-  }, [status]);
+  const { data: favoriteIds = [], isLoading } = useQuery({
+    queryKey: ['favorites'],
+    queryFn: async () => {
+      if (status !== "authenticated") return [];
+      return await getFavorites();
+    },
+    enabled: status === "authenticated",
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
   const savedListings = useMemo(() => {
     return listings.filter((listing) => favoriteIds.includes(listing.id));
