@@ -156,6 +156,28 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
     }
   }, [isOpen]);
 
+  // Automatically hide popups (ListingPinCard / LandmarkCard) if they are dragged out of bounds
+  useEffect(() => {
+    if (currentBounds && typeof currentBounds.getNorthEast === 'function') {
+      const ne = currentBounds.getNorthEast();
+      const sw = currentBounds.getSouthWest();
+      const isInside = (lat: number, lng: number) => {
+        return lat <= ne.lat && lat >= sw.lat && lng <= ne.lng && lng >= sw.lng;
+      };
+
+      if (showListingCard && selectedListing && selectedListing.latitude && selectedListing.longitude) {
+        if (!isInside(selectedListing.latitude, selectedListing.longitude)) {
+          setShowListingCard(false);
+        }
+      }
+
+      if (showLandmarkCard && selectedLandmark && selectedLandmark.coords) {
+        if (!isInside(selectedLandmark.coords[0], selectedLandmark.coords[1])) {
+          setShowLandmarkCard(false);
+        }
+      }
+    }
+  }, [currentBounds, showListingCard, showLandmarkCard, selectedListing, selectedLandmark]);
 
   return (
     <>
