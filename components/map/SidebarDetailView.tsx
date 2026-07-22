@@ -228,7 +228,7 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
           <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 flex flex-col gap-1">
              <DoorOpen size={18} className="text-primary" />
              <span className="text-xs text-slate-500 font-medium">Available Rooms</span>
-             <span className="font-black text-primary text-lg">{listing.rooms?.length || 0}</span>
+             <span className="font-black text-primary text-lg">{listing.rooms?.filter((r: any) => r.status?.toUpperCase() === "AVAILABLE").length || 0}</span>
           </div>
           <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-1">
              <BadgeCheck size={18} className="text-blue-500" />
