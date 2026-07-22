@@ -7,6 +7,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useAISearchStore } from "@/hooks/use-ai-search-store";
 import dynamic from "next/dynamic";
 import { AnimatePresence } from "framer-motion";
+import Modal from "@/components/modals/Modal";
 
 const SearchModal = dynamic(() => import("@/components/modals/SearchModal"), { ssr: false });
 
@@ -239,9 +240,15 @@ export default function MapFiltersOverlay() {
         }
       `}</style>
       
-      <AnimatePresence>
-        {showSearchModal && <SearchModal onCloseModal={() => setShowSearchModal(false)} />}
-      </AnimatePresence>
+      <Modal 
+        isOpen={showSearchModal} 
+        onClose={() => setShowSearchModal(false)}
+        width="lg"
+        hasFixedFooter
+        noPadding
+      >
+        <SearchModal onCloseModal={() => setShowSearchModal(false)} />
+      </Modal>
       
       {/* Directions Panel UI */}
       <AnimatePresence>
