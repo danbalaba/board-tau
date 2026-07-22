@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, MapPin, Building, Wifi, DollarSign, Users, SlidersHorizontal, Navigation, Map as MapIcon, History, Loader2 } from "lucide-react";
+import { Search, MapPin, Building, Wifi, DollarSign, Users, SlidersHorizontal, Navigation, Map as MapIcon, History, Loader2, X } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useAISearchStore } from "@/hooks/use-ai-search-store";
 import dynamic from "next/dynamic";
@@ -14,7 +14,7 @@ export default function MapFiltersOverlay() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const { recentQueries, addQuery } = useAISearchStore();
+  const { recentQueries, addQuery, removeQuery, clearQueries } = useAISearchStore();
   
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
@@ -152,8 +152,20 @@ export default function MapFiltersOverlay() {
               className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden z-50"
             >
               <div className="p-3">
-                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 px-2 uppercase tracking-wider">
-                  Recent Searches
+                <div className="flex justify-between items-center mb-2 px-2">
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Recent Searches
+                  </span>
+                  <button 
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clearQueries();
+                    }}
+                    className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                  >
+                    Clear all
+                  </button>
                 </div>
                 {recentQueries.map((q) => (
                   <div
@@ -163,10 +175,23 @@ export default function MapFiltersOverlay() {
                       setSearchQuery(q.query);
                       handleSearch({ preventDefault: () => {} } as any, q.query);
                     }}
-                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl cursor-pointer transition-colors"
+                    className="flex justify-between items-center px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl cursor-pointer transition-colors group"
                   >
-                    <History size={16} className="text-gray-400" />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">{q.query}</span>
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <History size={16} className="text-gray-400 shrink-0" />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">{q.query}</span>
+                    </div>
+                    <button
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeQuery(q.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all shrink-0"
+                      title="Remove from history"
+                    >
+                      <X size={14} />
+                    </button>
                   </div>
                 ))}
               </div>

@@ -10,6 +10,7 @@ export interface AISearchQuery {
 interface AISearchStore {
   recentQueries: AISearchQuery[];
   addQuery: (query: string) => void;
+  removeQuery: (id: string) => void;
   clearQueries: () => void;
 }
 
@@ -30,6 +31,9 @@ export const useAISearchStore = create<AISearchStore>()(
           recentQueries: [newQuery, ...filtered].slice(0, 10), // keep last 10
         };
       }),
+      removeQuery: (id) => set((state) => ({
+        recentQueries: state.recentQueries.filter((q) => q.id !== id)
+      })),
       clearQueries: () => set({ recentQueries: [] }),
     }),
     {
