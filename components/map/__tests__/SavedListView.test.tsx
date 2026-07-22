@@ -37,6 +37,7 @@ describe('SavedListView Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    queryClient.clear();
   });
 
   it('shows loading state initially', () => {

@@ -26,7 +26,7 @@ jest.mock('@/hooks/use-ai-search-store', () => ({
 describe('MapFiltersOverlay Component', () => {
   it('renders the search bar and placeholder', () => {
     render(<MapFiltersOverlay />);
-    expect(screen.getByPlaceholderText('Search landmarks, areas, or colleges...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Ask AI: 'Cheap boarding house near TAU with wifi'")).toBeInTheDocument();
   });
 
   it('renders quick filter pills', () => {
