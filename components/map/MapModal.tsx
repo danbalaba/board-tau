@@ -22,6 +22,7 @@ import Modal from "../modals/Modal";
 import { useSession } from "next-auth/react";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { useRecentStore } from "@/hooks/use-recent-store";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 interface MapModalProps {
   isOpen: boolean;
@@ -31,7 +32,22 @@ interface MapModalProps {
 }
 
 export default function MapModal({ isOpen, onClose, listings, onSearchArea }: MapModalProps) {
-  const [selectedListing, setSelectedListing] = useState<any>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  
+  const listingIdParam = searchParams.get("listingId");
+  const selectedListing = listings.find((l) => l.id === listingIdParam) || null;
+
+  const setSelectedListing = (listing: any) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (listing) {
+      params.set("listingId", listing.id);
+    } else {
+      params.delete("listingId");
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
   const [selectedLandmark, setSelectedLandmark] = useState<any>(null);
   const [showLandmarkCard, setShowLandmarkCard] = useState(false);
   const [showListingCard, setShowListingCard] = useState(false);

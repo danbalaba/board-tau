@@ -19,7 +19,7 @@ export default function MapFloatingButton({ listings: initialListings }: MapFloa
   const [mapListings, setMapListings] = useState<Listing[]>(initialListings || []);
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
-  const lastFetchedParams = useRef<string>("");
+  const lastFetchedParams = useRef<string | null>(null);
   const scrollDirection = useScrollDirection();
   const isHiddenOnMobile = scrollDirection === "up" || scrollDirection === "";
 
@@ -94,8 +94,8 @@ export default function MapFloatingButton({ listings: initialListings }: MapFloa
             currentParams.set("limit", "200");
             currentParams.set("_bust", Date.now().toString()); // Cache buster
             
-            // In a real app we would pass bounds to filter the DB
-            // currentParams.set("bounds", bounds.toBBoxString());
+            // Pass bounding box parameters to the backend
+            currentParams.set("bounds", bounds.toBBoxString());
             
             const res = await axios.get(`/api/listings?${currentParams.toString()}`);
             if (res.data?.listings) {
