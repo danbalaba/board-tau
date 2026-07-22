@@ -38,34 +38,6 @@ export default function MapFiltersOverlay({
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isAILoading, setIsAILoading] = useState(false);
   
-  const filters = [
-    { id: "college", label: "Any College", icon: Building },
-    { id: "price", label: "Under ₱2k", icon: DollarSign, isActive: searchParams.get("maxPrice") === "2000" },
-    { id: "wifi", label: "Free WiFi", icon: Wifi, isActive: searchParams.get("amenities")?.includes("WiFi") },
-    { id: "female", label: "Female Only", icon: Users, isActive: searchParams.get("femaleOnly") === "true" },
-  ];
-
-  const handleQuickFilter = (filterId: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (filterId === "price") {
-      if (params.get("maxPrice") === "2000") params.delete("maxPrice");
-      else params.set("maxPrice", "2000");
-    }
-    if (filterId === "wifi") {
-      let amenities = params.get("amenities") ? params.get("amenities")!.split(",") : [];
-      if (amenities.includes("WiFi")) amenities = amenities.filter(a => a !== "WiFi");
-      else amenities.push("WiFi");
-      if (amenities.length > 0) params.set("amenities", amenities.join(","));
-      else params.delete("amenities");
-    }
-    if (filterId === "female") {
-      if (params.get("femaleOnly") === "true") params.delete("femaleOnly");
-      else params.set("femaleOnly", "true");
-    }
-    params.set("_bust", Date.now().toString());
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  };
-
   const handleSearch = async (e: React.FormEvent, overrideQuery?: string) => {
     e.preventDefault();
     const queryToUse = overrideQuery || searchQuery;
@@ -218,35 +190,6 @@ export default function MapFiltersOverlay({
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
-
-      {/* Quick Filter Pills */}
-      <motion.div 
-        initial={{ y: -10, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-        className="w-full overflow-x-auto no-scrollbar pointer-events-auto"
-      >
-        <div className="flex items-center justify-center gap-2 px-2 pb-2 w-max mx-auto md:w-full md:mx-0">
-          {filters.map((filter) => {
-            const Icon = filter.icon;
-            const isActive = filter.isActive;
-            return (
-              <button
-                key={filter.id}
-                onClick={() => handleQuickFilter(filter.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold transition-all shadow-sm
-                  ${isActive 
-                    ? 'bg-primary border-primary text-white shadow-primary/25' 
-                    : 'bg-white/90 dark:bg-slate-800/90 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 hover:border-gray-300 backdrop-blur-sm'
-                  }`}
-              >
-                <Icon size={14} className={isActive ? 'text-white' : 'text-primary'} />
-                {filter.label}
-              </button>
-            );
-          })}
-        </div>
       </motion.div>
 
       <style jsx>{`
