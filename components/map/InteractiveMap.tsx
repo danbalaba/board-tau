@@ -398,7 +398,7 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
     }
 
     return () => { isActive = false; };
-  }, [listings, selectedListingId, onListingClick]);
+  }, [listings, selectedListingId, routeDestination]);
 
   return (
     <>
