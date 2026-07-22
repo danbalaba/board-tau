@@ -5,11 +5,12 @@ export interface AISearchQuery {
   id: string;
   query: string;
   searchedAt: number;
+  params?: Record<string, string>; // Store the parsed AI filters to save API costs
 }
 
 interface AISearchStore {
   recentQueries: AISearchQuery[];
-  addQuery: (query: string) => void;
+  addQuery: (query: string, params?: Record<string, string>) => void;
   removeQuery: (id: string) => void;
   clearQueries: () => void;
 }
@@ -18,11 +19,12 @@ export const useAISearchStore = create<AISearchStore>()(
   persist(
     (set) => ({
       recentQueries: [],
-      addQuery: (query) => set((state) => {
+      addQuery: (query, params) => set((state) => {
         const newQuery: AISearchQuery = {
           id: Date.now().toString(),
           query: query.trim(),
           searchedAt: Date.now(),
+          params: params,
         };
 
         const filtered = state.recentQueries.filter((q) => q.query.toLowerCase() !== query.toLowerCase());

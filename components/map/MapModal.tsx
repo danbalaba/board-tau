@@ -138,10 +138,19 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
       setRouteDestination(null);
       setShowSearchAreaBtn(false);
 
-      // Clean up any stale ?listingId left in the URL from a previous session
+      // Clean up any stale ?listingId and search filters left in the URL
       const params = new URLSearchParams(searchParams.toString());
-      if (params.has("listingId")) {
-        params.delete("listingId");
+      let hasChanges = false;
+      
+      const paramsToRemove = ["listingId", "q", "maxPrice", "amenities", "femaleOnly", "category"];
+      paramsToRemove.forEach(key => {
+        if (params.has(key)) {
+          params.delete(key);
+          hasChanges = true;
+        }
+      });
+
+      if (hasChanges) {
         router.replace(`${pathname}?${params.toString()}`, { scroll: false });
       }
     }

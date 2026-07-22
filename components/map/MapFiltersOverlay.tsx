@@ -37,15 +37,40 @@ export default function MapFiltersOverlay({
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isAILoading, setIsAILoading] = useState(false);
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    const params = new URLSearchParams(searchParams.toString());
+    ['q', 'maxPrice', 'amenities', 'femaleOnly', 'category'].forEach(k => params.delete(k));
+    params.set("_bust", Date.now().toString());
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
   
-  const handleSearch = async (e: React.FormEvent, overrideQuery?: string) => {
+  const handleSearch = async (e: React.FormEvent, overrideQuery?: string, cachedParams?: Record<string, string>) => {
     e.preventDefault();
     const queryToUse = overrideQuery || searchQuery;
     if (!queryToUse.trim()) return;
 
+    // If we have cached parameters from a previous search, use them instantly!
+    if (cachedParams) {
+      const params = new URLSearchParams(searchParams.toString());
+      ['q', 'maxPrice', 'amenities', 'femaleOnly', 'category'].forEach(k => params.delete(k));
+      
+      Object.entries(cachedParams).forEach(([key, val]) => {
+        if (val) params.set(key, val);
+      });
+      
+      params.set("_bust", Date.now().toString());
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      
+      // Still bump the query to the top of the history list
+      addQuery(queryToUse, cachedParams);
+      setIsSearchFocused(false);
+      return;
+    }
+
     setIsAILoading(true);
     try {
-      addQuery(queryToUse);
       // Fetch parsed filters from the AI backend
       const res = await fetch('/api/ai/map-search', {
         method: 'POST',
@@ -59,25 +84,33 @@ export default function MapFiltersOverlay({
       // Clear old filters before applying AI filters
       ['q', 'maxPrice', 'amenities', 'femaleOnly', 'category'].forEach(k => params.delete(k));
       
+      let paramsToCache: Record<string, string> = {};
+
       if (data.params) {
-        if (data.params.q) params.set('q', data.params.q);
-        if (data.params.maxPrice) params.set('maxPrice', data.params.maxPrice.toString());
-        if (data.params.amenities && data.params.amenities.length > 0) params.set('amenities', data.params.amenities);
-        if (data.params.femaleOnly) params.set('femaleOnly', 'true');
+        if (data.params.q) { params.set('q', data.params.q); paramsToCache.q = data.params.q; }
+        if (data.params.maxPrice) { params.set('maxPrice', data.params.maxPrice.toString()); paramsToCache.maxPrice = data.params.maxPrice.toString(); }
+        if (data.params.amenities && data.params.amenities.length > 0) { params.set('amenities', data.params.amenities); paramsToCache.amenities = data.params.amenities; }
+        if (data.params.femaleOnly) { params.set('femaleOnly', 'true'); paramsToCache.femaleOnly = 'true'; }
         if (data.params.categories && data.params.categories.length > 0) {
           params.set('category', data.params.categories);
+          paramsToCache.category = data.params.categories;
         }
       } else {
         // Fallback if AI fails or returns empty filters
         params.set("q", queryToUse.trim());
+        paramsToCache.q = queryToUse.trim();
       }
       
+      // Cache the result so we don't have to hit the API next time
+      addQuery(queryToUse, paramsToCache);
+
       params.set("_bust", Date.now().toString());
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
       setIsSearchFocused(false);
     } catch (error) {
       console.error("AI Search Error:", error);
       // Fallback
+      addQuery(queryToUse);
       const params = new URLSearchParams(searchParams.toString());
       params.set("q", queryToUse.trim());
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
@@ -110,8 +143,17 @@ export default function MapFiltersOverlay({
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
               placeholder="Ask AI: 'Cheap boarding house near TAU with wifi'" 
-              className="bg-transparent border-none outline-none text-sm font-medium w-full text-gray-800 dark:text-gray-100 placeholder-gray-500"
+              className="bg-transparent border-none outline-none text-sm font-medium w-full text-gray-800 dark:text-gray-100 placeholder-gray-500 pr-6"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1"
+              >
+                <X size={14} />
+              </button>
+            )}
           </form>
           <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1 shrink-0"></div>
           <button
@@ -165,7 +207,7 @@ export default function MapFiltersOverlay({
                     onMouseDown={(e) => e.preventDefault()} // Prevent blur before click
                     onClick={() => {
                       setSearchQuery(q.query);
-                      handleSearch({ preventDefault: () => {} } as any, q.query);
+                      handleSearch({ preventDefault: () => {} } as any, q.query, q.params);
                     }}
                     className="flex justify-between items-center px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl cursor-pointer transition-colors group"
                   >
