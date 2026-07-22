@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 // Simple in-memory cache as a stand-in for Redis
 const routeCache = new Map<string, { data: any; expiry: number }>();

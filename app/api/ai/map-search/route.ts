@@ -73,7 +73,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('[AI_MAP_SEARCH_ERROR]', error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'AI returned invalid or malicious data schema', details: error.errors }, { status: 502 });
+      return NextResponse.json({ error: 'AI returned invalid or malicious data schema', details: (error as any).errors }, { status: 502 });
     }
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
