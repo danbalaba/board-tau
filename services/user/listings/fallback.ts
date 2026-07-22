@@ -4,10 +4,16 @@ import { haversineKm } from "@/utils/helper";
 
 // Generate AI-ready embedding text
 const generateEmbeddingText = (listing: any): string => {
+  const amenitiesList = listing.amenities
+    ? Object.entries(listing.amenities)
+        .filter(([key, val]) => val === true && key !== "id" && key !== "listingId")
+        .map(([key]) => key.replace(/([A-Z])/g, " $1").toLowerCase().trim())
+    : [];
+
   const parts = [
     listing.title,
     listing.description,
-    ...listing.amenities,
+    ...amenitiesList,
     listing.roomType || "",
     listing.category,
     listing.femaleOnly ? "female only" : "",

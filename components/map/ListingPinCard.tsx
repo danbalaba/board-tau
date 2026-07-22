@@ -25,9 +25,8 @@ export default function ListingPinCard({ listing, onClose, onViewDetails }: List
     || listing.category?.[0]
     || "Boarding House";
 
-  const availableRooms = listing.rooms?.filter((r: any) => r.status === "available")?.length
-    ?? listing.rooms?.length
-    ?? null;
+  const availableRooms = listing.rooms?.filter((r: any) => r.status?.toUpperCase() === "AVAILABLE")?.length
+    ?? 0;
 
   const shortDesc = listing.description
     ? listing.description.slice(0, 80) + (listing.description.length > 80 ? "…" : "")

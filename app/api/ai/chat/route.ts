@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
-import redis from "@/lib/redis";
+import redis, { cache } from "@/lib/redis";
 import { Ratelimit } from "@upstash/ratelimit";
 import { captureAIGeneration } from "@/lib/posthog-ai";
 import { getCurrentUser } from "@/services/user";
@@ -25,6 +25,17 @@ export async function POST(req: Request) {
       );
     }
     const { messages, currentPath } = await req.json();
+
+    // 1. Check Redis Cache First
+    // We create a cache key based on the entire conversation history and the current path.
+    // This perfectly catches when users click predefined prompts on the same page!
+    const simplifiedMessages = messages.map((m: any) => ({ r: m.role, c: m.content }));
+    const cacheKey = cache.generateKey("ai:chat", { path: currentPath, msgs: simplifiedMessages });
+    const cachedData = await cache.get(cacheKey);
+
+    if (cachedData) {
+      return NextResponse.json(cachedData);
+    }
 
     const systemPrompt = `You are the official AI Assistant for BoardTAU, the boarding house system for Tarlac Agricultural University (TAU).
 Your goal is to help users navigate the platform, explain features, and guide them on booking rooms, completing KYC, or finding information.
@@ -90,6 +101,12 @@ CRITICAL INSTRUCTIONS FOR OUTPUT FORMAT:
 
     try {
       const parsed = JSON.parse(responseText);
+      
+      // 2. Save successful response to Cache for 24 hours
+      if (parsed && parsed.reply) {
+        await cache.set(cacheKey, parsed, 86400); // 24 hours
+      }
+
       return NextResponse.json(parsed);
     } catch(e) {
       return NextResponse.json({ reply: responseText, suggestedPrompts: [] });

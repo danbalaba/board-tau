@@ -104,8 +104,10 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
-  favoriteIds   String[]  @default([]) @db.ObjectId
-  role          Role      @default(USER)
+  favoriteIds         String[]  @default([]) @db.ObjectId
+  recentListingIds    String[]  @default([]) @db.ObjectId
+  recentSearchQueries String[]  @default([])
+  role                Role      @default(USER)
   roleId        String?   @db.ObjectId
   isActive      Boolean?  @default(true)
   deletedAt     DateTime?

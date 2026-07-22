@@ -3,6 +3,15 @@ import { render, screen, waitFor } from '@testing-library/react';
 import SavedListView from '../SavedListView';
 import { useSession } from 'next-auth/react';
 import { getFavorites } from '@/services/user/favorites/favorite';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 jest.mock('next-auth/react', () => ({
   useSession: jest.fn(),
@@ -12,9 +21,9 @@ jest.mock('@/services/user/favorites/favorite', () => ({
   getFavorites: jest.fn(),
 }));
 
-jest.mock('@/components/listings/ListingCard', () => {
-  return function MockListingCard({ data }: any) {
-    return <div data-testid={`mock-listing-card-${data.id}`}>{data.title}</div>;
+jest.mock('@/components/listings/CompactListingCard', () => {
+  return function MockCompactListingCard({ data }: any) {
+    return <div data-testid="compact-listing-card">{data.title}</div>;
   };
 });
 
@@ -28,11 +37,16 @@ describe('SavedListView Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    queryClient.clear();
   });
 
   it('shows loading state initially', () => {
     (useSession as jest.Mock).mockReturnValue({ status: 'loading' });
-    render(<SavedListView onListingSelect={mockOnListingSelect} listings={mockListings} />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SavedListView onListingSelect={mockOnListingSelect} listings={mockListings} />
+      </QueryClientProvider>
+    );
     
     // Fixed: Loading state persists gracefully while fetching data
     expect(screen.getByText('Loading your saved places...')).toBeInTheDocument();
@@ -42,7 +56,11 @@ describe('SavedListView Component', () => {
     (useSession as jest.Mock).mockReturnValue({ status: 'authenticated' });
     (getFavorites as jest.Mock).mockResolvedValue([]);
     
-    render(<SavedListView onListingSelect={mockOnListingSelect} listings={mockListings} />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SavedListView onListingSelect={mockOnListingSelect} listings={mockListings} />
+      </QueryClientProvider>
+    );
     
     expect(await screen.findByText('No saved places yet', {}, { timeout: 3000 })).toBeInTheDocument();
   });
@@ -51,9 +69,15 @@ describe('SavedListView Component', () => {
     (useSession as jest.Mock).mockReturnValue({ status: 'authenticated' });
     (getFavorites as jest.Mock).mockResolvedValue(['1']);
     
-    render(<SavedListView onListingSelect={mockOnListingSelect} listings={mockListings} />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SavedListView onListingSelect={mockOnListingSelect} listings={mockListings} />
+      </QueryClientProvider>
+    );
     
-    expect(await screen.findByText('Listing 1', {}, { timeout: 3000 })).toBeInTheDocument();
+    const cards = await screen.findAllByTestId('compact-listing-card');
+    expect(cards.length).toBe(1);
+    expect(screen.getByText('Listing 1')).toBeInTheDocument();
     expect(screen.queryByText('Listing 2')).not.toBeInTheDocument();
   });
 });

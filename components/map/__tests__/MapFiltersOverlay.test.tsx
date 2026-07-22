@@ -6,32 +6,40 @@ jest.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
   },
+  AnimatePresence: ({ children }: any) => <>{children}</>,
+}));
+
+const mockReplace = jest.fn();
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: mockReplace }),
+  useSearchParams: () => new URLSearchParams(''),
+  usePathname: () => '/map',
+}));
+
+jest.mock('@/hooks/use-ai-search-store', () => ({
+  useAISearchStore: () => ({
+    recentQueries: [],
+    addQuery: jest.fn(),
+  }),
 }));
 
 describe('MapFiltersOverlay Component', () => {
   it('renders the search bar and placeholder', () => {
     render(<MapFiltersOverlay />);
-    expect(screen.getByPlaceholderText('Search landmarks, areas, or colleges...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Ask AI: 'Cheap boarding house near TAU with wifi'")).toBeInTheDocument();
   });
 
-  it('renders quick filter pills', () => {
+  it('renders search controls', () => {
     render(<MapFiltersOverlay />);
-    expect(screen.getByText('Any College')).toBeInTheDocument();
-    expect(screen.getByText('Under ₱2k')).toBeInTheDocument();
-    expect(screen.getByText('Free WiFi')).toBeInTheDocument();
-    expect(screen.getByText('Female Only')).toBeInTheDocument();
+    expect(screen.getByTitle('Directions')).toBeInTheDocument();
   });
 
-  it('toggles filter pill active state on click', () => {
-    render(<MapFiltersOverlay />);
-    const collegeButton = screen.getByText('Any College');
+  it('toggles directions mode when directions button is clicked', () => {
+    const mockSetShowDirections = jest.fn();
+    render(<MapFiltersOverlay setShowDirections={mockSetShowDirections} showDirections={false} />);
+    const directionsButton = screen.getByTitle('Directions');
     
-    fireEvent.click(collegeButton);
-    expect(collegeButton).toHaveClass('bg-primary');
-    
-    // Toggle off
-    fireEvent.click(collegeButton);
-    // Fixed: Filter toggles correctly deactivate their active state
-    expect(collegeButton).not.toHaveClass('bg-primary');
+    fireEvent.click(directionsButton);
+    expect(mockSetShowDirections).toHaveBeenCalledWith(true);
   });
 });

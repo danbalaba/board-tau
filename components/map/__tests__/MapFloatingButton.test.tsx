@@ -27,6 +27,8 @@ jest.mock('../MapModal', () => {
   };
 });
 
+
+
 jest.mock('framer-motion', () => ({
   motion: {
     button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
@@ -41,14 +43,14 @@ describe('MapFloatingButton Component', () => {
     (axios.get as jest.Mock).mockResolvedValue({ data: { listings: [{ id: '1' }] } });
   });
 
-  it('renders the floating button correctly', () => {
+  it('renders the floating button correctly', async () => {
     render(<MapFloatingButton listings={[]} />);
-    expect(screen.getByText('Show map')).toBeInTheDocument();
+    expect(await screen.findByText('Show map')).toBeInTheDocument();
   });
 
   it('opens the map modal when clicked', async () => {
     render(<MapFloatingButton listings={[]} />);
-    const button = screen.getByText('Show map');
+    const button = await screen.findByText('Show map');
     fireEvent.click(button);
     
     expect(screen.getByTestId('mock-map-modal')).toBeInTheDocument();
@@ -60,9 +62,9 @@ describe('MapFloatingButton Component', () => {
     });
   });
 
-  it('closes the map modal', () => {
+  it('closes the map modal', async () => {
     render(<MapFloatingButton listings={[]} />);
-    fireEvent.click(screen.getByText('Show map'));
+    fireEvent.click(await screen.findByText('Show map'));
     
     expect(screen.getByTestId('mock-map-modal')).toBeInTheDocument();
     

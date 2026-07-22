@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getListings } from "@/services/user/listings";
 import { executeComplexSearch } from "@/services/listing/search.service";
+import { cache } from "@/lib/redis";
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,6 +26,20 @@ export async function GET(request: NextRequest) {
     // Logic to determine if we should use the Complex Search Engine (Heuristic)
     const isComplexSearch = !!(query.cctv || query.security24h || query.originLat || query.category);
 
+    // Generate deterministic cache key based on the sorted query parameters
+    const cacheKeyParams = Object.keys(query).sort().reduce((acc, key) => {
+      acc[key] = query[key];
+      return acc;
+    }, {} as Record<string, any>);
+    
+    const cacheKey = cache.generateKey("api:listings", cacheKeyParams);
+    
+    // Check Redis Cache First
+    const cachedData = await cache.get(cacheKey);
+    if (cachedData) {
+      return NextResponse.json(cachedData);
+    }
+
     let result;
     if (isComplexSearch) {
       const cursorStr = query.cursor as string;
@@ -40,6 +55,10 @@ export async function GET(request: NextRequest) {
     } else {
       result = await getListings(query);
     }
+
+    // Cache the result in Redis for 5 minutes (300 seconds)
+    // Short cache time because listing availability or prices might change
+    await cache.set(cacheKey, result, 300);
 
     return NextResponse.json(result);
   } catch (error) {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import ListingCard from "@/components/listings/ListingCard";
+import CompactListingCard from "@/components/listings/CompactListingCard";
 import { Listing } from "@prisma/client";
 
 interface SidebarListViewProps {
@@ -29,10 +29,10 @@ export default function SidebarListView({ selectedLandmark, onListingSelect, lis
     
     // Filter by 1km radius if a landmark is selected
     return listings.filter(listing => {
-      if (!listing.latitude || !listing.longitude) return false;
+      if (!listing.latitude || !listing.longitude || !selectedLandmark.coords) return false;
       const dist = getDistanceFromLatLonInKm(
-        selectedLandmark.lat, 
-        selectedLandmark.lng, 
+        selectedLandmark.coords[0], 
+        selectedLandmark.coords[1], 
         Number(listing.latitude), 
         Number(listing.longitude)
       );
@@ -61,11 +61,10 @@ export default function SidebarListView({ selectedLandmark, onListingSelect, lis
         ) : (
           displayListings.map((listing) => (
             <div key={listing.id}>
-              <ListingCard 
+              <CompactListingCard 
                 data={listing} 
                 hasFavorited={false} 
                 onClickOverride={(e) => {
-                  // If the user clicks the Heart button, don't open the details
                   if ((e.target as Element).closest('button')) return;
                   onListingSelect(listing);
                 }}

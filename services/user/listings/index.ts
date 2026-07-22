@@ -76,6 +76,7 @@ export const getListings = async (query?: {
                   typeof query?.categories === "string" ? [query.categories] : undefined,
 
       // Strings
+      q: query?.q,
       userId: query?.userId,
       country: query?.country,
       startDate: query?.startDate,
@@ -89,6 +90,7 @@ export const getListings = async (query?: {
     };
 
     const {
+      q,
       userId,
       country,
       startDate,
@@ -229,8 +231,16 @@ export const getListings = async (query?: {
     }
 
     if (amenities && Array.isArray(amenities) && amenities.length > 0) {
-      // Use denormalized amenities_list array
-      listingWhere.amenities_list = { hasSome: amenities };
+      const amenitiesConditions = amenities.map(am => {
+        const key = am.toLowerCase().replace(/\s+/g, '');
+        if (key === 'airconditioning' || key === 'airconditioner') return { amenities: { is: { airConditioning: true } } };
+        return { amenities: { is: { [key]: true } } };
+      });
+      
+      listingWhere.AND = [
+        ...(listingWhere.AND || []),
+        ...amenitiesConditions
+      ];
     }
 
     // Gender restrictions (listing-level)
@@ -265,6 +275,20 @@ export const getListings = async (query?: {
           },
         },
       };
+    }
+
+    // Text search fallback (q)
+    if (q) {
+      listingWhere.AND = [
+        ...(listingWhere.AND || []),
+        {
+          OR: [
+            { title: { contains: q, mode: 'insensitive' } },
+            { description: { contains: q, mode: 'insensitive' } },
+            { category: { hasSome: [q] } }
+          ]
+        }
+      ];
     }
 
     // Query listings with rooms that match all primary filters

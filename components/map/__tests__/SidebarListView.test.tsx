@@ -2,10 +2,10 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import SidebarListView from '../SidebarListView';
 
-jest.mock('@/components/listings/ListingCard', () => {
-  return function MockListingCard({ data, onClickOverride }: any) {
+jest.mock('@/components/listings/CompactListingCard', () => {
+  return function MockCompactListingCard({ data, onClickOverride }: any) {
     return (
-      <div data-testid={`mock-listing-card-${data.id}`} onClick={onClickOverride}>
+      <div data-testid="compact-listing-card" onClick={onClickOverride}>
         {data.title}
       </div>
     );
@@ -39,7 +39,7 @@ describe('SidebarListView Component', () => {
   });
 
   it('filters listings by distance when landmark is selected', () => {
-    const mockLandmark = { name: 'Test College', lat: 14.5, lng: 121 }; // Exact same location as Listing 1
+    const mockLandmark = { name: 'Test College', coords: [14.5, 121] }; // Exact same location as Listing 1
     
     render(
       <SidebarListView 
@@ -65,7 +65,7 @@ describe('SidebarListView Component', () => {
       />
     );
     
-    fireEvent.click(screen.getByTestId('mock-listing-card-1'));
+    fireEvent.click(screen.getAllByTestId('compact-listing-card')[0]);
     expect(mockOnListingSelect).toHaveBeenCalledWith(mockListings[0]);
   });
 });

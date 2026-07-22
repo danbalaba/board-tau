@@ -18,8 +18,6 @@ async function enrichSearchResultsWithAI(results: any[], searchParams: Record<st
     const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
     const searchContext = JSON.stringify(searchParams);
-
-    // We only send minimal data to Gemini to keep it fast
     const listingsMin = results.map(r => ({ id: r.id, title: r.title, description: r.description }));
 
     const prompt = `You are a matching assistant. A user searched with these parameters: ${searchContext}.
@@ -27,23 +25,32 @@ async function enrichSearchResultsWithAI(results: any[], searchParams: Record<st
     For each listing, write a short, 1-sentence "aiHighlight" explaining why it's a good match for this user's specific search.
     Return ONLY a raw JSON array of objects with "id" and "aiHighlight" fields. No markdown formatting or \`\`\`.`;
 
-    const t0 = Date.now();
-    const response = await model.generateContent(prompt);
-    const latency = (Date.now() - t0) / 1000;
-    let text = response.response.text();
+    let text = "";
+    let latency = 0;
+    
+    // Safely wrap the generation call so 429 Rate Limits don't crash the server component
+    try {
+      const t0 = Date.now();
+      const response = await model.generateContent(prompt);
+      latency = (Date.now() - t0) / 1000;
+      text = response.response.text();
+      
+      const user = await getCurrentUser();
+      await captureAIGeneration({
+        distinctId: user?.id ?? "anon:enrichment",
+        model: "gemini-3-flash-preview",
+        spanName: "ai_enrichment",
+        input: [{ role: "user", content: prompt }],
+        output: text,
+        inputTokens: response.response.usageMetadata?.promptTokenCount,
+        outputTokens: response.response.usageMetadata?.candidatesTokenCount,
+        latencySeconds: latency,
+      });
+    } catch (apiError: any) {
+      console.warn("AI Quota or API Error (safely caught):", apiError.message);
+      return results; // Return original results without highlights
+    }
 
-    // Capture LLM generation analytics
-    const user = await getCurrentUser();
-    await captureAIGeneration({
-      distinctId: user?.id ?? "anon:enrichment",
-      model: "gemini-3-flash-preview",
-      spanName: "ai_enrichment",
-      input: [{ role: "user", content: prompt }],
-      output: text,
-      inputTokens: response.response.usageMetadata?.promptTokenCount,
-      outputTokens: response.response.usageMetadata?.candidatesTokenCount,
-      latencySeconds: latency,
-    });
     text = text.replace(/^```json/g, "").replace(/```$/g, "").trim();
     
     let highlights = [];

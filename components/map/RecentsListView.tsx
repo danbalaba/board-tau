@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import ListingCard from "@/components/listings/ListingCard";
+import CompactListingCard from "@/components/listings/CompactListingCard";
 import { Listing } from "@prisma/client";
 import { useRecentStore } from "@/hooks/use-recent-store";
 import Image from "next/image";
@@ -56,9 +56,9 @@ export default function RecentsListView({ onListingSelect, listings }: RecentsLi
         ) : (
           displayListings.map((listing) => (
             <div key={listing.id}>
-              <ListingCard 
+              <CompactListingCard 
                 data={listing} 
-                hasFavorited={false} 
+                hasFavorited={false}
                 onClickOverride={(e) => {
                   if ((e.target as Element).closest('button')) return;
                   onListingSelect(listing);
