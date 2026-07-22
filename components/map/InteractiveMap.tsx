@@ -192,6 +192,7 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
 
   // Re-render listing markers whenever listings or selectedListingId change
   useEffect(() => {
+    let isActive = true;
     const map = mapRef.current;
     const clusterGroup = clusterGroupRef.current;
     if (!map || !clusterGroup || !map.getContainer()) return;
@@ -302,34 +303,71 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
       });
 
       if (nearestCollege && minDistance < 5000) { // Only draw if within 5km
-        // Draw dashed line
-        routingLineRef.current = L.polyline([[selectedListing.latitude, selectedListing.longitude], nearestCollege.coords], {
-          color: '#3b82f6', // Blue route
-          weight: 4,
-          dashArray: '10, 10',
-          opacity: 0.7,
-          className: 'animated-route'
-        }).addTo(map);
+        const fetchRoute = async () => {
+          try {
+            const res = await fetch(`/api/routing?startLat=${selectedListing.latitude}&startLng=${selectedListing.longitude}&endLat=${nearestCollege.coords[0]}&endLng=${nearestCollege.coords[1]}`);
+            const data = await res.json();
+            
+            if (!isActive) return;
 
-        // Add floating badge in the middle
-        const midPoint = [
-          (selectedListing.latitude + nearestCollege.coords[0]) / 2,
-          (selectedListing.longitude + nearestCollege.coords[1]) / 2
-        ] as L.LatLngTuple;
+            if (routingLineRef.current) map.removeLayer(routingLineRef.current);
+            if (routingBadgeRef.current) map.removeLayer(routingBadgeRef.current);
 
-        const walkingMins = Math.max(1, Math.round((minDistance / 1000) * 12)); // Approx 12 mins per km
+            if (data.route && data.route.length > 0) {
+              routingLineRef.current = L.polyline(data.route, {
+                color: '#3b82f6',
+                weight: 5,
+                opacity: 0.8,
+                className: 'animated-route'
+              }).addTo(map);
+              
+              const midIndex = Math.floor(data.route.length / 2);
+              const midPoint = data.route[midIndex] as L.LatLngTuple;
+              
+              const badgeIcon = L.divIcon({
+                className: 'walking-badge',
+                html: `<div class="bg-blue-500 text-white px-2 py-1 rounded-md text-[10px] font-bold shadow-md whitespace-nowrap">🚶‍♂️ ${Math.ceil(data.duration / 60)} min walk</div>`,
+                iconSize: [80, 20],
+                iconAnchor: [40, 10]
+              });
+              
+              routingBadgeRef.current = L.marker(midPoint, { icon: badgeIcon }).addTo(map);
+            }
+          } catch (e) {
+            console.error("Routing fetch failed:", e);
+            if (!isActive) return;
 
-        const badgeIcon = L.divIcon({
-          className: 'walking-badge',
-          html: `<div class="bg-blue-500 text-white px-2 py-1 rounded-md text-[10px] font-bold shadow-md whitespace-nowrap">🚶‍♂️ ${walkingMins} min walk</div>`,
-          iconSize: [80, 20],
-          iconAnchor: [40, 10]
-        });
+            // Fallback to straight dashed line
+            routingLineRef.current = L.polyline([[selectedListing.latitude, selectedListing.longitude], nearestCollege.coords], {
+              color: '#3b82f6',
+              weight: 4,
+              dashArray: '10, 10',
+              opacity: 0.7,
+              className: 'animated-route'
+            }).addTo(map);
 
-        routingBadgeRef.current = L.marker(midPoint, { icon: badgeIcon }).addTo(map);
+            const midPoint = [
+              (selectedListing.latitude + nearestCollege.coords[0]) / 2,
+              (selectedListing.longitude + nearestCollege.coords[1]) / 2
+            ] as L.LatLngTuple;
+
+            const walkingMins = Math.max(1, Math.round((minDistance / 1000) * 12));
+            const badgeIcon = L.divIcon({
+              className: 'walking-badge',
+              html: `<div class="bg-blue-500 text-white px-2 py-1 rounded-md text-[10px] font-bold shadow-md whitespace-nowrap">🚶‍♂️ ~${walkingMins} min walk</div>`,
+              iconSize: [80, 20],
+              iconAnchor: [40, 10]
+            });
+
+            routingBadgeRef.current = L.marker(midPoint, { icon: badgeIcon }).addTo(map);
+          }
+        };
+        
+        fetchRoute();
       }
     }
 
+    return () => { isActive = false; };
   }, [listings, selectedListingId, onListingClick]);
 
   return (
