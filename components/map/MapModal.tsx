@@ -81,9 +81,33 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
   }, [isOpen, onClose]);
 
   useEffect(() => {
-    if (isOpen) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = 'unset';
-    return () => { document.body.style.overflow = 'unset'; };
+    const body = document.body;
+    const rootNode = document.documentElement;
+
+    const restoreScroll = () => {
+      const top = parseFloat(body.style.top || "0") * -1;
+      body.style.overflow = '';
+      body.style.paddingRight = '';
+      body.style.top = '';
+      body.classList.remove("fixed", "w-full");
+      if (top) {
+        window.scrollTo(0, top);
+      }
+    };
+
+    if (isOpen) {
+      const scrollTop = window.pageYOffset || rootNode.scrollTop || body.scrollTop;
+      body.style.overflow = 'hidden';
+      body.style.paddingRight = '17px';
+      body.style.top = `-${scrollTop}px`;
+      body.classList.add("fixed", "w-full");
+    } else {
+      restoreScroll();
+    }
+    
+    return () => { 
+      if (isOpen) restoreScroll(); 
+    };
   }, [isOpen]);
 
   return (

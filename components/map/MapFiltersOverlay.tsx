@@ -106,7 +106,7 @@ export default function MapFiltersOverlay() {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-md mx-auto pointer-events-auto"
+        className="w-full max-w-md mx-auto pointer-events-auto relative"
       >
         <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-200/50 dark:border-gray-700/50 rounded-full flex items-center px-4 py-3 gap-3 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.16)]">
           {isAILoading ? (
