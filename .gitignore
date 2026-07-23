@@ -165,3 +165,5 @@ dist
 
 # Next.js SWC Compiler cache
 .swc
+
+temp_unzipped/

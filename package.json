@@ -101,6 +101,7 @@
     "kbar": "^0.1.0-beta.48",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "1.5.3",
+    "lightswind": "3.2.1",
     "lodash.debounce": "^4.0.8",
     "lodash.throttle": "^4.1.1",
     "lucide-react": "^1.16.0",
