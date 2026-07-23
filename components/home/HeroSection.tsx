@@ -1,23 +1,46 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { headlineFadeIn, subtitleFadeIn, searchBarEntrance } from "@/utils/motion";
 import SearchManager from "@/components/navbar/SearchManager";
 
 export default function HeroSection() {
   const [isScrolled, setIsScrolled] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollY } = useScroll();
-  const y1 = useTransform(scrollY, [0, 500], [0, 100]);
-  const y2 = useTransform(scrollY, [0, 500], [0, 50]);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 80);
+      const body = document.body;
+      const isLocked = body.classList.contains("fixed") || body.style.position === 'fixed' || document.documentElement.style.overflow === 'hidden';
+      let scrollTop = window.scrollY;
+      
+      if (isLocked && body.style.top) {
+        scrollTop = Math.abs(parseFloat(body.style.top)) || 0;
+      }
+
+      setIsScrolled(scrollTop > 80);
     };
+
+    // Initial check
+    handleScroll();
+
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    
+    // Also listen to DOM mutations to catch when a modal locks the body
+    const observer = new MutationObserver(() => {
+      handleScroll();
+    });
+    
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class', 'style']
+    });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      observer.disconnect();
+    };
   }, []);
 
   return (
@@ -143,7 +166,6 @@ export default function HeroSection() {
         {/* Main content with parallax */}
         <motion.div
           className="flex-1 flex flex-col items-center justify-start w-full max-w-5xl text-center pt-12 md:pt-20 pb-8 md:pb-12"
-          style={{ y: y2 }}
         >
           <motion.h1
             variants={headlineFadeIn}

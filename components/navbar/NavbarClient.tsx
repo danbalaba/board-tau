@@ -28,38 +28,63 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => {
-      // 🛠️ MODAL-AWARE SCROLL DETECTION:
-      // When a modal is open, our custom Modal implementation sets body to 'fixed' 
-      // and window.scrollY becomes 0. We must check the body's 'top' style to 
-      // find the 'real' scroll position that was saved.
+    let ignoreScrollUntil = 0;
+    let timeoutId: NodeJS.Timeout;
+
+    const checkScroll = () => {
       const body = document.body;
-      const isLocked = body.classList.contains("fixed");
+      const isLocked = body.classList.contains("fixed") || body.style.position === 'fixed' || document.documentElement.style.overflow === 'hidden';
       
       let scrollTop = window.scrollY;
       
       if (isLocked && body.style.top) {
-        // body.style.top is like "-123px", we want 123
         scrollTop = Math.abs(parseFloat(body.style.top)) || 0;
       }
 
       setIsScrolled(scrollTop > 80);
+      return isLocked;
     };
 
-    window.addEventListener("scroll", handleScroll);
+    let wasLocked = checkScroll();
+
+    const handleScrollEvent = () => {
+      if (Date.now() < ignoreScrollUntil) return;
+      checkScroll();
+    };
+
+    const handleMutation = () => {
+      const body = document.body;
+      const isCurrentlyLocked = body.classList.contains("fixed") || body.style.position === 'fixed' || document.documentElement.style.overflow === 'hidden';
+      
+      if (wasLocked && !isCurrentlyLocked) {
+        // Modal just unlocked!
+        // 1. Ignore native scroll events for 200ms to avoid reading 0px during restoration
+        ignoreScrollUntil = Date.now() + 200;
+        
+        // 2. Check scroll state after DOM settles (50ms)
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          checkScroll();
+        }, 50);
+      } else if (!wasLocked && isCurrentlyLocked) {
+        // Modal just locked! Check scroll immediately.
+        checkScroll();
+      }
+
+      wasLocked = isCurrentlyLocked;
+    };
+
+    window.addEventListener("scroll", handleScrollEvent, { passive: true });
     
-    // 💡 MutationObserver to detect when Modal adds/removes 'fixed' class to body
-    const observer = new MutationObserver(handleScroll);
+    const observer = new MutationObserver(handleMutation);
     observer.observe(document.body, { 
       attributes: true, 
       attributeFilter: ["class", "style"] 
     });
 
-    // Initial check
-    handleScroll();
-
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", handleScrollEvent);
+      clearTimeout(timeoutId);
       observer.disconnect();
     };
   }, []);
@@ -115,12 +140,12 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
               >
                 {/* Desktop search */}
                 <div className="hidden md:flex flex-row justify-center w-max">
-                  <Search compact={true} />
+                  {isScrolled && <Search compact={true} />}
                 </div>
 
                 {/* Mobile search - full width */}
                 <div className="md:hidden w-full">
-                  <MobileSearch />
+                  {isScrolled && <MobileSearch />}
                 </div>
               </motion.div>
             </div>

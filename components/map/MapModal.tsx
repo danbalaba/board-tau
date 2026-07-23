@@ -80,31 +80,27 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
     const body = document.body;
     const html = document.documentElement;
 
+    const rootNode = document.documentElement;
+
     if (!isOpen) return;
 
-    // Save current scroll position
-    const scrollY = window.scrollY;
-
-    // Lock the body
-    body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
-    body.style.left = '0';
-    body.style.right = '0';
+    // Lock logic identical to Modal.tsx
+    const scrollTop = window.pageYOffset || rootNode.scrollTop || body.scrollTop;
     body.style.overflow = 'hidden';
-    html.style.overflow = 'hidden';
+    body.style.paddingRight = '17px'; 
+    body.style.top = `-${scrollTop}px`;
+    body.classList.add("fixed", "w-full");
 
-    // Body lock is sufficient, removed aggressive wheel blocking.
     return () => {
-      // Restore scroll
-      body.style.position = '';
-      body.style.top = '';
-      body.style.left = '';
-      body.style.right = '';
+      // Restore logic identical to Modal.tsx
+      const top = parseFloat(body.style.top) * -1;
       body.style.overflow = '';
-      html.style.overflow = '';
-
-
-      window.scrollTo(0, scrollY);
+      body.style.paddingRight = '';
+      body.style.top = '';
+      body.classList.remove("fixed", "w-full");
+      if (top) {
+        window.scrollTo(0, top);
+      }
     };
   }, [isOpen]);
 
@@ -133,11 +129,11 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
       setShowSearchAreaBtn(false);
       setActiveView("none");
 
-      // Clean up any stale ?listingId and search filters left in the URL
+      // Clean up ONLY the listingId popup state, preserve the user's search filters
       const params = new URLSearchParams(searchParams.toString());
       let hasChanges = false;
       
-      const paramsToRemove = ["listingId", "q", "maxPrice", "amenities", "femaleOnly", "category"];
+      const paramsToRemove = ["listingId"];
       paramsToRemove.forEach(key => {
         if (params.has(key)) {
           params.delete(key);
@@ -146,7 +142,9 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
       });
 
       if (hasChanges) {
-        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        // Commented out to prevent Next.js router from triggering a scroll jump 
+        // which causes the Search Bar to morph during the exit animation.
+        // router.replace(`${pathname}?${params.toString()}`, { scroll: false });
       }
     }
   }, [isOpen]);
