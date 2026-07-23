@@ -41,8 +41,8 @@ const Footer: React.FC = () => {
                   className="object-contain hidden dark:block"
                 />
               </Link>
-              <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed">
-                We make finding, booking, and managing boarding houses easy and secure, because the TAU community deserves a reliable home.
+              <p className="text-[15px] text-gray-700 dark:text-slate-300 leading-relaxed font-medium max-w-sm">
+                Your trusted home away from home. We provide a seamless and secure way for the TAU community to discover, book, and manage boarding houses.
               </p>
               
               {/* Contact Information */}
