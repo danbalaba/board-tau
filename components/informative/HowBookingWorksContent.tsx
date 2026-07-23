@@ -1,14 +1,19 @@
+"use client";
 import FooterPageLayout from '@/components/layout/FooterPageLayout';
 import { FaCheckCircle, FaCalendarCheck, FaStar, FaChevronRight } from 'react-icons/fa';
+import { InteractiveCard } from '@/components/lightswind/interactive-card';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 export default function HowBookingWorksContent() {
   return (
-    <FooterPageLayout
-      title="How Booking Works"
-      description="A simple, straightforward process for securing your boarding house. Built explicitly for Tarlac Agricultural University students."
-      lastUpdated="April 2026"
-    >
+    <FooterPageLayout>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-50px" }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
       <section className="space-y-16 py-8 relative before:absolute before:inset-0 before:ml-5 md:before:mx-auto md:before:translate-x-0 before:h-full before:w-1 before:-translate-x-px md:before:-translate-x-px before:bg-gradient-to-b before:from-transparent before:via-gray-200 dark:before:via-gray-800 before:to-transparent">
         
         {/* Step 1 */}
@@ -73,17 +78,22 @@ export default function HowBookingWorksContent() {
 
       </section>
 
-      <div className="mt-12 text-center group cursor-pointer inline-block mx-auto w-full">
-        <div className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl p-8 flex items-center justify-between transition-all duration-500 hover:shadow-2xl hover:scale-[1.01]">
+      <InteractiveCard
+        className="mt-12 mx-auto w-full max-w-4xl !aspect-auto"
+        tailwindBgClass="bg-gray-900 dark:bg-white"
+        InteractiveColor="#22c55e"
+      >
+        <div className="group cursor-pointer rounded-2xl p-8 flex items-center justify-between transition-all duration-500 text-white dark:text-gray-900 relative z-20">
           <div className="text-left">
             <h2 className="text-3xl font-bold mb-2">Ready to find a place?</h2>
             <p className="text-gray-400 dark:text-gray-600">Start exploring hundreds of listings around TAU.</p>
           </div>
-          <div className="bg-green-500 p-4 rounded-full group-hover:translate-x-4 transition-transform duration-500 shadow-lg">
+          <div className="bg-green-500 p-4 rounded-full group-hover:translate-x-4 transition-transform duration-500 shadow-lg relative z-20">
             <FaChevronRight className="text-white text-2xl" />
           </div>
         </div>
-      </div>
+      </InteractiveCard>
+      </motion.div>
     </FooterPageLayout>
   );
 }

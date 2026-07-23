@@ -1,13 +1,17 @@
+"use client";
 import FooterPageLayout from '@/components/layout/FooterPageLayout';
+import { motion } from 'framer-motion';
 
 export default function CancellationPolicyContent() {
   return (
-    <FooterPageLayout
-      title="Cancellation Policy"
-      description="Understanding how cancellations and refunds work on BoardTAU."
-      lastUpdated="March 2026"
-    >
-      <div className="space-y-6">
+    <FooterPageLayout>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-50px" }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="space-y-6"
+      >
         <p>
           We understand that plans can change. BoardTAU provides a clear and standardized cancellation policy to protect both our students and our hosts. Please review these terms carefully before making a reservation.
         </p>
@@ -56,7 +60,7 @@ export default function CancellationPolicyContent() {
           <li><strong>Forfeiture of Fees:</strong> If your account is suspended or banned for violating community guidelines (including cancellation spam), any active un-started reservations will be forcefully cancelled. <strong>You will forfeit any reservation fees paid</strong>, and the landlord will retain the fee as compensation.</li>
           <li><strong>Repeat Offenses:</strong> Users who continue to abuse the system after a temporary suspension will face a permanent lifetime ban from the platform.</li>
         </ul>
-      </div>
+      </motion.div>
     </FooterPageLayout>
   );
 }
