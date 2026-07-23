@@ -131,6 +131,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
       setDirectionsPhase(null);
       setRouteDestination(null);
       setShowSearchAreaBtn(false);
+      setActiveView("none");
 
       // Clean up any stale ?listingId and search filters left in the URL
       const params = new URLSearchParams(searchParams.toString());
