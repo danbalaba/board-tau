@@ -29,6 +29,7 @@ interface InteractiveMapProps {
   selectedListingId?: string | null;
   routeDestination?: [number, number] | null;
   directionsPhase?: "start" | "destination" | null;
+  activeLandmarkForRadius?: any | null;
   onMapMoveEnd?: (bounds: L.LatLngBounds) => void;
   onMapInteraction?: () => void;
 }
@@ -96,7 +97,7 @@ const createListingIcon = (listing: any, isSelected: boolean) => {
   });
 };
 
-export default function InteractiveMap({ onListingClick, onLandmarkClick, listings, selectedListingId, routeDestination, directionsPhase, onMapMoveEnd, onMapInteraction }: InteractiveMapProps) {
+export default function InteractiveMap({ onListingClick, onLandmarkClick, listings, selectedListingId, routeDestination, directionsPhase, activeLandmarkForRadius, onMapMoveEnd, onMapInteraction }: InteractiveMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const clusterGroupRef = useRef<any>(null);
@@ -586,6 +587,38 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
 
     return () => { isActive = false; };
   }, [routeDestination, selectedListingId, listings]);
+
+  // ----------------------------------------------------------------------
+  // EFFECT D: Radius Circle for Landmarks
+  // ----------------------------------------------------------------------
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (radiusCircleRef.current) {
+      map.removeLayer(radiusCircleRef.current);
+      radiusCircleRef.current = null;
+    }
+
+    if (activeLandmarkForRadius && activeLandmarkForRadius.coords) {
+      radiusCircleRef.current = L.circle(activeLandmarkForRadius.coords, {
+        color: '#2f7d6d',
+        fillColor: '#2f7d6d',
+        fillOpacity: 0.1,
+        weight: 2,
+        dashArray: '5, 10',
+        radius: 1000 // 1km in meters
+      }).addTo(map);
+      
+      // Optionally fit bounds to circle with padding for the sidebar
+      map.fitBounds(radiusCircleRef.current.getBounds(), {
+        paddingTopLeft: [450, 50], // Extra padding on the left to avoid sidebar overlap on desktop
+        paddingBottomRight: [50, 50],
+        animate: true,
+        duration: 0.8
+      });
+    }
+  }, [activeLandmarkForRadius]);
 
   return (
     <>

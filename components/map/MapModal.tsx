@@ -320,6 +320,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
               <InteractiveMap 
                 listings={listings}
                 selectedListingId={selectedListing?.id || null}
+                activeLandmarkForRadius={activeView === "list" ? selectedLandmark : null}
                 onListingClick={(id) => {
                   const found = listings.find(l => l.id === id);
                   if (found) {
