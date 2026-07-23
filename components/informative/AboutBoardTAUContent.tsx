@@ -7,15 +7,6 @@ import { GlowingCards, GlowingCard } from '@/components/lightswind/glowing-cards
 import { motion } from 'framer-motion';
 const members = [
   {
-    id: 'jerome',
-    name: 'Jerome R. Autida',
-    role: 'Systems Analyst & Database Administrator',
-    bio: 'Jerome leads database mapping, document schemas, and system logic. He designs and optimizes query structures in MongoDB to support real-time listing analytics and reservation flows.',
-    image: '/founders/jerome-formal.png',
-    github: 'https://github.com/jeromeautida',
-    linkedin: 'https://www.linkedin.com/in/jerome-autida/',
-  },
-  {
     id: 'dan',
     name: 'Dan Richie L. Balaba',
     role: 'Project Manager & Lead Developer',
@@ -23,6 +14,15 @@ const members = [
     image: '/founders/dan-formal.png',
     github: 'https://github.com/danbalaba',
     linkedin: 'https://www.linkedin.com/in/danbalaba/',
+  },
+  {
+    id: 'jerome',
+    name: 'Jerome R. Autida',
+    role: 'Systems Analyst & Database Administrator',
+    bio: 'Jerome leads database mapping, document schemas, and system logic. He designs and optimizes query structures in MongoDB to support real-time listing analytics and reservation flows.',
+    image: '/founders/jerome-formal.png',
+    github: 'https://github.com/jeromeautida',
+    linkedin: 'https://www.linkedin.com/in/jerome-autida/',
   },
   {
     id: 'jason',
