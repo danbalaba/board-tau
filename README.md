@@ -1,68 +1,102 @@
-# BoardTAU 🎓🏡
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/images/TauBOARD-Dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="public/images/TauBOARD-Light.png">
+    <img alt="BoardTAU Logo" src="public/images/TauBOARD-Light.png" width="400">
+  </picture>
+</div>
 
+# BoardTAU 🎓🏡
 > **A Modernized and Interactive Web System for Boarding Houses Near Tarlac Agricultural University**
 
-![BoardTAU Hero Image](https://board-tau-rho.vercel.app/og-image.png)
-
-Welcome to the official repository for **BoardTAU**, a comprehensive Capstone Project designed to revolutionize how students, faculty, and staff discover, book, and manage boarding houses near Tarlac Agricultural University (TAU).
-
-**Live Website:** [https://board-tau-rho.vercel.app/](https://board-tau-rho.vercel.app/)
+**Live Platform:** [https://board-tau-rho.vercel.app/](https://board-tau-rho.vercel.app/)
 
 ---
 
-## 📖 About The Project
+## 📖 Executive Summary
+Choosing suitable accommodation is a major challenge faced by students, faculty, and staff coming from distant areas to Tarlac Agricultural University (TAU). Traditional methods of finding boarding houses—relying on posters, word-of-mouth, and door-to-door inquiries—are inefficient, lack transparency, and leave tenants vulnerable to rental scams. 
 
-Finding suitable and secure accommodation is a major challenge for the TAU community. Traditional methods are time-consuming and lack transparency. **BoardTAU** bridges the gap by providing a centralized, interactive, and intelligent platform.
+**BoardTAU** addresses this gap by providing a centralized, secure, and interactive web-based platform. Built using an enterprise-grade modern technology stack, it facilitates seamless discovery, secure booking, and efficient management of boarding houses, apartments, and dormitories within Tarlac Province.
 
-It is designed with **Adaptive Design** to work flawlessly across desktop, tablet, and mobile devices, providing dedicated features for End Users (Tenants), Landlords, System Administrators, and Super Administrators.
-
-### ✨ Key Features
-- **Intelligent Discovery:** Multi-step filtering, Interactive Map (Leaflet), and AI-Powered comparisons (Gemini).
-- **Secure Bookings:** Real-time room availability and strict booking workflows.
-- **Dual Payment Gateways:** Seamless payments via Stripe (Card) and PayMongo (GCash, Maya).
-- **Advanced Security:** Strict KYC (Know Your Customer) processes featuring biometric liveness detection (MediaPipe).
-- **Real-Time Communication:** Live in-app messaging between tenants and landlords (Pusher) with AES-256-GCM encryption.
-- **Landlord Analytics:** Automated dashboards for property performance and financial reporting.
+## 🎯 Sustainable Development Goals (SDGs)
+This Capstone Project proudly supports:
+* **SDG 9: Industry, Innovation, and Infrastructure:** By introducing a modernized, digital infrastructure to replace traditional manual housing searches.
+* **SDG 4: Quality Education:** By ensuring the academic community has convenient access to safe and affordable housing, allowing them to focus on their educational and professional priorities.
 
 ---
 
-## 🛠️ Technology Stack
+## 🌟 Core System Modules & Objectives
 
-BoardTAU is built using a modern, enterprise-grade architecture:
+The platform is designed with **Adaptive Design** for desktop and mobile, divided into four distinct user interfaces:
+
+### 1. End User (Tenant) Interface
+* **Intelligent Discovery:** Multi-step filtering based on location, price, room type, amenities, and house rules.
+* **Interactive Mapping:** Visual property discovery powered by Leaflet.
+* **AI-Powered Assistance:** Side-by-side boarding house comparisons and a Gemini-powered chatbot for data-driven recommendations.
+* **Secure Bookings:** Submit inquiries and reservation requests using biometric identity verification (MediaPipe).
+* **Digital Payments:** Secure reservation fee processing via Stripe (Credit/Debit) and PayMongo (GCash, Maya).
+
+### 2. Landlord (Property Owner) Interface
+* **Property Management:** Create and manage rich listings, including room types, bed types, and real-time availability statuses.
+* **Booking Pipeline:** Process tenant inquiries, manage check-ins, and track booking completions.
+* **Real-Time Communication:** Direct in-app messaging with potential tenants (powered by Pusher).
+* **Business Analytics:** Automated dashboards with downloadable PDF/CSV financial reports to monitor business growth.
+
+### 3. System Administrator Interface
+* **Content Moderation:** Review and approve new host applications and pending property listings.
+* **Community Standards:** Review user feedback, flag inappropriate ratings, and enforce temporary account restrictions.
+
+### 4. Super Administrator Interface
+* **Enterprise Oversight:** Manage the user directory, enforce permanent bans, and oversee role assignments.
+* **System Health:** Track platform-wide analytics, transaction logs, and operational health metrics.
+
+---
+
+## 🛠️ Technology Stack & Architecture
+
+BoardTAU migrates away from traditional legacy architectures (like PHP/MySQL) in favor of a modern, scalable, and highly secure JavaScript ecosystem.
 
 ### Frontend
-- **Framework:** Next.js 16 (App Router)
-- **UI Library:** React 19
-- **Styling:** Tailwind CSS, Radix UI, Framer Motion
-- **State Management:** Zustand, TanStack Query
+* **Framework:** Next.js 16 (App Router) for Server-Side Rendering (SSR) and optimized performance.
+* **UI/Styling:** React 19, Tailwind CSS, Radix UI, Framer Motion for adaptive, accessible, and fluid interfaces.
+* **State Management:** TanStack Query (server state caching) and Zustand (client state).
 
 ### Backend & Database
-- **Database:** MongoDB (Atlas)
-- **ORM:** Prisma
-- **Caching & Rate Limiting:** Upstash Redis
-- **Storage:** EdgeStore
+* **Database:** MongoDB (Atlas) for flexible, NoSQL document-oriented storage.
+* **ORM:** Prisma for type-safe database querying and schema management.
+* **Caching Layer:** Upstash Redis to reduce database load and accelerate frequent queries.
+* **File Storage:** EdgeStore for secure handling of high-resolution property images and KYC documents.
 
-### Integrations & AI
-- **Authentication:** NextAuth.js
-- **Generative AI:** Google Gemini (Recommendations & Chatbot)
-- **Payments:** Stripe, PayMongo
-- **Real-Time:** Pusher Websockets
-- **Computer Vision:** MediaPipe (Liveness Detection)
-- **Email:** Resend, React Email
+### Security & Integrations
+* **Authentication:** NextAuth.js with JWT session management and OTP verification (Resend + React Email).
+* **Biometric Security (KYC):** Google MediaPipe for face and blink detection (Liveness Detection).
+* **Payment Gateways:** Stripe (International) and PayMongo (Local Philippine E-wallets).
+* **Real-Time WebSockets:** Pusher with AES-256-GCM encryption for secure messaging.
+* **Artificial Intelligence:** Google Generative AI (Gemini) for the recommendation engine and chatbot.
 
 ---
 
-## 🚀 Getting Started
+## 🔬 Development Methodology
 
-Follow these instructions to set up the project locally on your machine.
+This project was developed strictly adhering to the **Agile Software Development Methodology**:
+1. **Brainstorming:** Extensive surveys and structured interviews with TAU stakeholders.
+2. **Design:** Wireframing via Figma, architecture mapping via Eraser.io, and UML/IPO modeling via MS Visio.
+3. **Development:** Iterative implementation of frontend, backend, and third-party integrations.
+4. **Testing:** Rigorous Unit Testing, Integration Testing, and a full Vulnerability and Penetration Test (VAPT) to evaluate ISO/IEC 25010 standards (Usability and Functionality).
+5. **Deployment:** Continuous Integration/Continuous Deployment (CI/CD) pipeline via Vercel.
+
+---
+
+## 🚀 Local Setup & Installation
+
+To run this Capstone Project locally for testing or further research:
 
 ### Prerequisites
-- Node.js (v20 or higher recommended)
-- Git
-- A MongoDB Database URL
-- Accounts for third-party services (Stripe, PayMongo, Pusher, Upstash, Resend, Gemini, etc.)
+* Node.js (v20+)
+* Git
+* A MongoDB Database Cluster
 
-### Installation
+### Steps
 
 1. **Clone the repository**
    ```bash
@@ -75,86 +109,73 @@ Follow these instructions to set up the project locally on your machine.
    npm install
    ```
 
-3. **Set up Environment Variables**
-   Create a `.env` file in the root directory and configure the following variables:
+3. **Configure Environment Variables**
+   Create a `.env` file in the root directory. You will need API keys for the following services:
 
    ```env
-   # Database
+   # Database & ORM
    DATABASE_URL=
 
-   # Upstash Redis (Caching)
+   # Upstash Redis (Caching & Rate Limiting)
    UPSTASH_REDIS_REST_URL=
    UPSTASH_REDIS_REST_TOKEN=
 
-   # Authentication
+   # NextAuth Authentication
    FACEBOOK_CLIENT_ID=
    FACEBOOK_CLIENT_SECRET=
    GOOGLE_CLIENT_ID=
    GOOGLE_CLIENT_SECRET=
    NEXTAUTH_SECRET=
-   
-   # Local development URLs (uncomment when developing locally)
    NEXT_PUBLIC_APP_URL=http://localhost:3000
    NEXTAUTH_URL=http://localhost:3000
 
-   # EdgeStore (File Storage)
+   # EdgeStore (Cloud Storage)
    EDGE_STORE_ACCESS_KEY=
    EDGE_STORE_SECRET_KEY=
 
-   # Stripe Payments
+   # Payment Gateways
    STRIPE_SECRET_KEY=
    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
    STRIPE_WEBHOOK_SECRET=
-
-   # PayMongo Payments
    PAYMONGO_SECRET_KEY=
    PAYMONGO_PUBLIC_KEY=
    PAYMONGO_WEBHOOK_SECRET=
 
-   # Email (Resend)
+   # Email Service (Resend)
    RESEND_API_KEY=
-   EMAIL_FROM=
+   EMAIL_FROM="BoardTAU <support@boardtau.xyz>"
    OTP_SECRET=
 
-   # Google Gemini AI
+   # Artificial Intelligence
    GEMINI_API_KEY=
 
-   # Pusher (Real-Time Messaging)
+   # Pusher (Real-Time WebSockets)
    NEXT_PUBLIC_PUSHER_APP_KEY=
    PUSHER_APP_ID=
    PUSHER_SECRET=
    NEXT_PUBLIC_PUSHER_CLUSTER=
    MESSAGE_ENCRYPTION_KEY=
 
-   # PostHog Analytics
+   # Analytics & Error Tracking
    NEXT_PUBLIC_POSTHOG_KEY=
-
-   # Sentry Error Tracking
    SENTRY_AUTH_TOKEN=
    ```
 
-4. **Initialize Prisma**
+4. **Initialize Prisma Database**
    ```bash
    npx prisma generate
    ```
 
-5. **Run the Development Server**
+5. **Start the Development Server**
    ```bash
    npm run dev
    ```
-
-6. **Open the Application**
-   Navigate to `http://localhost:3000` in your web browser.
+   *Navigate to `http://localhost:3000` to view the application.*
 
 ---
 
 ## 📬 Support & Contact
 
-If you have any questions or encounter issues, please reach out to the development team:
+**Email:** [support@boardtau.xyz](mailto:support@boardtau.xyz)
 
-**Email:** `support@boardtau.xyz`
-
-*Note: For official university inquiries regarding boarding houses, please contact the respective property owners directly through the platform.*
-
----
 *Created for Tarlac Agricultural University by Jerome R. Autida, Dan Richie L. Balaba, Marc Jason G. Gonzales, and John Roldan T. Simon (December 2026).*
