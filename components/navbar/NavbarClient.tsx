@@ -91,7 +91,7 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
 
   return (
     <header
-      className={`${!isHomePage ? "hidden md:block" : ""} fixed top-0 left-0 w-full z-50 border-b transition-all duration-300 ease-apple ${
+      className={`fixed top-0 left-0 w-full z-50 border-b transition-all duration-300 ease-apple ${!isHomePage ? "hidden md:block" : ""} ${
         isScrolled
           ? "bg-white/72 dark:bg-gray-900/72 backdrop-blur-xl border-gray-200/60 dark:border-white/10 shadow-[0_1px_0_rgba(255,255,255,0.5)] dark:shadow-[0_1px_0_rgba(255,255,255,0.06)]"
           : "bg-transparent border-transparent"
