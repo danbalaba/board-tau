@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaTimes, FaRedo, FaBars } from "react-icons/fa";
 import dynamic from "next/dynamic";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 const InteractiveMap = dynamic(() => import("./InteractiveMap"), { ssr: false });
 import SidebarListView from "./SidebarListView";
@@ -35,6 +36,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const { isOpen: isMobile } = useMediaQuery();
   
   // selectedListing is now proper React state — NOT derived from URL.
   // This prevents stale URL params from pre-populating the directions panel on next open.
@@ -80,31 +82,27 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
     const body = document.body;
     const html = document.documentElement;
 
+    const rootNode = document.documentElement;
+
     if (!isOpen) return;
 
-    // Save current scroll position
-    const scrollY = window.scrollY;
-
-    // Lock the body
-    body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
-    body.style.left = '0';
-    body.style.right = '0';
+    // Lock logic identical to Modal.tsx
+    const scrollTop = window.pageYOffset || rootNode.scrollTop || body.scrollTop;
     body.style.overflow = 'hidden';
-    html.style.overflow = 'hidden';
+    body.style.paddingRight = '17px'; 
+    body.style.top = `-${scrollTop}px`;
+    body.classList.add("fixed", "w-full");
 
-    // Body lock is sufficient, removed aggressive wheel blocking.
     return () => {
-      // Restore scroll
-      body.style.position = '';
-      body.style.top = '';
-      body.style.left = '';
-      body.style.right = '';
+      // Restore logic identical to Modal.tsx
+      const top = parseFloat(body.style.top) * -1;
       body.style.overflow = '';
-      html.style.overflow = '';
-
-
-      window.scrollTo(0, scrollY);
+      body.style.paddingRight = '';
+      body.style.top = '';
+      body.classList.remove("fixed", "w-full");
+      if (top) {
+        window.scrollTo(0, top);
+      }
     };
   }, [isOpen]);
 
@@ -131,12 +129,13 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
       setDirectionsPhase(null);
       setRouteDestination(null);
       setShowSearchAreaBtn(false);
+      setActiveView("none");
 
-      // Clean up any stale ?listingId and search filters left in the URL
+      // Clean up ONLY the listingId popup state, preserve the user's search filters
       const params = new URLSearchParams(searchParams.toString());
       let hasChanges = false;
       
-      const paramsToRemove = ["listingId", "q", "maxPrice", "amenities", "femaleOnly", "category"];
+      const paramsToRemove = ["listingId"];
       paramsToRemove.forEach(key => {
         if (params.has(key)) {
           params.delete(key);
@@ -145,7 +144,9 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
       });
 
       if (hasChanges) {
-        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        // Commented out to prevent Next.js router from triggering a scroll jump 
+        // which causes the Search Bar to morph during the exit animation.
+        // router.replace(`${pathname}?${params.toString()}`, { scroll: false });
       }
     }
   }, [isOpen]);
@@ -217,26 +218,61 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
               }}
             />
 
-            {/* Secondary Sidebar Content (Slide-out) */}
+            {/* Secondary Sidebar Content (Slide-out or Bottom Sheet) */}
             <AnimatePresence>
               {activeView !== "none" && (
                 <motion.div
                   key="sidebar-panel"
-                  initial={{ x: "-100%", opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: "-100%", opacity: 0 }}
-                  transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                  className="w-full h-[calc(100%-65px)] md:h-full md:w-[400px] bg-white dark:bg-gray-900 md:border-r border-border shadow-2xl flex flex-col z-[105] absolute md:left-[65px] left-0 top-0 pb-safe md:pb-0"
+                  initial={isMobile ? { y: "100%", opacity: 0 } : { x: "-100%", opacity: 0 }}
+                  animate={isMobile ? { y: 0, opacity: 1 } : { x: 0, opacity: 1 }}
+                  exit={isMobile ? { y: "100%", opacity: 0 } : { x: "-100%", opacity: 0 }}
+                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  drag={isMobile ? "y" : false}
+                  dragConstraints={{ top: 0 }}
+                  dragElastic={0.2}
+                  onDragEnd={(e, { offset, velocity }) => {
+                    if (isMobile && (offset.y > 100 || velocity.y > 300)) {
+                      setActiveView("none");
+                    }
+                  }}
+                  className={`
+                    w-full flex flex-col z-[105] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-2xl bg-white dark:bg-gray-900 border-border 
+                    ${isMobile 
+                      ? 'fixed bottom-[65px] left-0 right-0 h-[80vh] rounded-t-3xl border-t' 
+                      : 'absolute md:left-[72px] left-0 top-0 h-[calc(100%-65px)] md:h-full md:w-[400px] md:border-r pb-safe md:pb-0'}
+                  `}
                 >
-                  {/* Inner Close button for secondary panel on mobile */}
-                  <div className="md:hidden w-full flex justify-between items-center py-3 px-4 border-b border-border shadow-sm bg-white dark:bg-gray-900">
-                    <span className="font-bold text-gray-800 dark:text-white capitalize">
-                      {activeView}
-                    </span>
-                    <button onClick={() => setActiveView("none")} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200">
-                      <FaTimes />
-                    </button>
-                  </div>
+                  {/* Mobile Drag Handle Indicator */}
+                  {isMobile && (
+                    <div className="w-full flex flex-col items-center pt-3 pb-3 bg-white dark:bg-gray-900 rounded-t-3xl shrink-0 cursor-grab active:cursor-grabbing border-b border-gray-100 dark:border-gray-800 relative">
+                      <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mb-3" />
+                      
+                      <div className="w-full flex justify-center items-center px-4 relative h-8">
+                        <span className="font-bold text-gray-800 dark:text-white capitalize text-base tracking-wide">
+                          {activeView === "list" ? "Explore" : activeView}
+                        </span>
+                        
+                        <button 
+                          onClick={() => setActiveView("none")} 
+                          className="absolute right-4 w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"
+                        >
+                          <FaTimes size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Inner Close button for secondary panel on desktop fallback */}
+                  {!isMobile && (
+                    <div className="md:hidden w-full flex justify-between items-center py-3 px-4 border-b border-border shadow-sm bg-white dark:bg-gray-900">
+                      <span className="font-bold text-gray-800 dark:text-white capitalize">
+                        {activeView}
+                      </span>
+                      <button onClick={() => setActiveView("none")} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200">
+                        <FaTimes />
+                      </button>
+                    </div>
+                  )}
 
                   <div className="flex-1 overflow-y-auto">
                     {selectedListing ? (
@@ -320,6 +356,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
               <InteractiveMap 
                 listings={listings}
                 selectedListingId={selectedListing?.id || null}
+                activeLandmarkForRadius={activeView === "list" ? selectedLandmark : null}
                 onListingClick={(id) => {
                   const found = listings.find(l => l.id === id);
                   if (found) {

@@ -1,12 +1,17 @@
+"use client";
 import FooterPageLayout from '@/components/layout/FooterPageLayout';
+import { motion } from 'framer-motion';
 
 export default function HostingGuidelinesContent() {
   return (
-    <FooterPageLayout
-      title="Hosting Guidelines & Onboarding"
-      description="How to successfully list and verify your property on BoardTAU."
-    >
-      <div className="space-y-6">
+    <FooterPageLayout>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-50px" }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="space-y-6"
+      >
         <section>
           <h2 className="text-2xl font-bold mb-4">Host Application and Verification</h2>
           <p className="mb-4">
@@ -30,7 +35,7 @@ export default function HostingGuidelinesContent() {
             BoardTAU does not process instant bookings. All potential reservations arrive as <strong>Tenant Inquiries</strong>. You have the full authority to review the tenant's profile (who has already passed biometric KYC) and either Approve or Reject the inquiry. Once approved, the tenant will be prompted to process their digital payment via Stripe or PayMongo.
           </p>
         </section>
-      </div>
+      </motion.div>
     </FooterPageLayout>
   );
 }

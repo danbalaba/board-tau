@@ -30,7 +30,6 @@ const MobileSearch: React.FC<MobileSearchProps> = ({ layoutId = "mobile-search-b
   return (
     <Modal>
       <motion.div
-        layoutId={layoutId}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       >
         <Modal.Trigger name="search">

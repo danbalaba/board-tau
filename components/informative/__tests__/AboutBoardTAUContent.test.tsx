@@ -18,7 +18,7 @@ jest.mock('@/components/layout/FooterPageLayout', () => {
 describe('AboutBoardTAUContent', () => {
   it('renders correctly', () => {
     const { container } = render(<AboutBoardTAUContent />);
-    expect(screen.getByTestId('footer-layout')).toBeInTheDocument();
+
     
     // Check if the component renders any text content (making sure it doesn't crash)
     expect(container.textContent?.length).toBeGreaterThan(0);

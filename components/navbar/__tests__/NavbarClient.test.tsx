@@ -51,12 +51,12 @@ describe('NavbarClient', () => {
     jest.clearAllMocks();
   });
 
-  it('renders correctly on home page', () => {
+  it('renders correctly on home page (initially not scrolled)', () => {
     (usePathname as jest.Mock).mockReturnValue('/');
     render(<NavbarClient />);
     
     expect(screen.getByTestId('logo')).toBeInTheDocument();
-    expect(screen.getByTestId('desktop-search')).toBeInTheDocument();
+    expect(screen.queryByTestId('desktop-search')).not.toBeInTheDocument(); // Hidden initially
     expect(screen.getByTestId('mobile-search')).toBeInTheDocument();
     expect(screen.getByTestId('user-menu')).toBeInTheDocument();
     expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
@@ -73,19 +73,21 @@ describe('NavbarClient', () => {
     expect(screen.getByTestId('user-menu')).toBeInTheDocument();
   });
 
-  it('applies scrolled classes when window is scrolled', () => {
+  it('applies scrolled classes and shows search when window is scrolled', () => {
     (usePathname as jest.Mock).mockReturnValue('/');
     const { container } = render(<NavbarClient />);
     
     // Initially not scrolled (transparent)
     expect(container.querySelector('header')).toHaveClass('bg-transparent');
+    expect(screen.queryByTestId('desktop-search')).not.toBeInTheDocument();
 
     act(() => {
       window.scrollY = 100;
       window.dispatchEvent(new Event('scroll'));
     });
 
-    // Should apply scrolled classes
+    // Should apply scrolled classes and reveal search
     expect(container.querySelector('header')).toHaveClass('bg-white/72');
+    expect(screen.getByTestId('desktop-search')).toBeInTheDocument();
   });
 });

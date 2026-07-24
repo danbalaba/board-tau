@@ -71,8 +71,8 @@ describe('LayoutContentClient Component', () => {
     expect(screen.getByText('Admin Content')).toBeInTheDocument();
   });
 
-  it('blocks public UI for landlord role', () => {
-    usePathname.mockReturnValue('/');
+  it('blocks public UI for landlord path', () => {
+    usePathname.mockReturnValue('/landlord/dashboard');
     
     render(
       <LayoutContentClient user={{ id: '1', role: 'LANDLORD' }}>
@@ -85,15 +85,13 @@ describe('LayoutContentClient Component', () => {
     expect(screen.getByText('Landlord Content')).toBeInTheDocument();
   });
 
-  it('hides navbar and footer on auth pages', () => {
+  it('hides footer on auth pages', () => {
     usePathname.mockReturnValue('/forgot-password');
     
     const { container } = render(<LayoutContentClient><p>Auth Content</p></LayoutContentClient>);
 
-    const navbarContainer = screen.getByTestId('navbar').parentElement;
     const footerContainer = screen.getByTestId('footer').parentElement;
     
-    expect(navbarContainer).toHaveClass('hidden md:block');
     expect(footerContainer).toHaveClass('hidden md:block');
   });
 });

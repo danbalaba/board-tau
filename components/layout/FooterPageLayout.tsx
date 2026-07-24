@@ -2,12 +2,14 @@
 
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
+import { motion } from 'framer-motion';
 
 interface FooterPageLayoutProps {
-  title: string;
+  title?: string;
   description?: string;
   lastUpdated?: string;
   children: ReactNode;
+  wide?: boolean;
 }
 
 export default function FooterPageLayout({
@@ -15,6 +17,7 @@ export default function FooterPageLayout({
   description,
   lastUpdated,
   children,
+  wide = false,
 }: FooterPageLayoutProps) {
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -24,33 +27,24 @@ export default function FooterPageLayout({
   }, []);
 
   const isDark = mounted ? theme === 'dark' : false;
+  const maxWidthClass = wide ? 'max-w-7xl' : 'max-w-5xl';
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-slate-900 text-slate-300' : 'bg-white text-[#222222]'}`}>
-      {/* Simple Header */}
-      <div className={`pt-24 pb-8 ${isDark ? 'border-slate-800' : 'border-[#dddddd]'}`}>
-        <div className="container mx-auto px-6 md:px-10 lg:px-20 max-w-5xl">
-          <h1 className={`text-3xl md:text-4xl font-semibold mb-3 ${isDark ? 'text-white' : 'text-[#222222]'}`}>
-            {title}
-          </h1>
-          {description && (
-            <p className={`text-base md:text-lg ${isDark ? 'text-slate-400' : 'text-[#717171]'}`}>
-              {description}
-            </p>
-          )}
-          {lastUpdated && (
-            <p className={`mt-4 text-sm font-medium ${isDark ? 'text-[#717171]' : 'text-[#717171]'}`}>
-              Last updated: {lastUpdated}
-            </p>
-          )}
-        </div>
-      </div>
+    <div className={`min-h-screen bg-transparent transition-colors duration-300`}>
+      {/* Main content container automatically gets top padding so it doesn't collide with the navbar */}
 
-      {/* Content Area */}
-      <div className="container mx-auto px-6 md:px-10 lg:px-20 max-w-5xl py-8 mb-20">
-        <div className={`prose prose-lg max-w-none ${isDark ? 'prose-invert prose-p:text-slate-300 prose-headings:text-white prose-a:text-white hover:prose-a:text-slate-400' : 'prose-p:text-[#222222] prose-headings:text-[#222222] prose-a:text-black hover:prose-a:text-gray-600'}`}>
-          {children}
-        </div>
+      {/* Content Area wrapped in a premium card */}
+      <div className={`container mx-auto px-6 md:px-10 lg:px-20 ${maxWidthClass} pt-32 pb-12 mb-20`}>
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className={`bg-white dark:bg-slate-800/30 rounded-3xl border border-neutral-200/60 dark:border-slate-800 shadow-xl dark:shadow-2xl p-8 md:p-12 transition-all duration-300`}
+        >
+          <div className={`prose prose-lg max-w-none ${isDark ? 'prose-invert prose-p:text-slate-300 prose-headings:text-white prose-a:text-[#2f7d6d] hover:prose-a:text-[#1e5146]' : 'prose-p:text-gray-700 prose-headings:text-gray-900 prose-a:text-[#2f7d6d] hover:prose-a:text-[#1e5146]'}`}>
+            {children}
+          </div>
+        </motion.div>
       </div>
     </div>
   );

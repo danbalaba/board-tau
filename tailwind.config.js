@@ -140,5 +140,6 @@ module.exports = {
   future: {
     hoverOnlyWhenSupported: true,
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('lightswind/plugin'),require('tailwindcss-animate')],
 };

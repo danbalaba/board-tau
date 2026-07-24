@@ -1,12 +1,17 @@
+"use client";
 import FooterPageLayout from '@/components/layout/FooterPageLayout';
+import { motion } from 'framer-motion';
 
 export default function HostResponsibilitiesContent() {
   return (
-    <FooterPageLayout
-      title="Host Responsibilities & Tools"
-      description="Managing your boarding house business effectively on BoardTAU."
-    >
-      <div className="space-y-6">
+    <FooterPageLayout>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-50px" }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="space-y-6"
+      >
         <section>
           <h2 className="text-2xl font-bold mb-4">Maintaining Real-Time Availability</h2>
           <p className="mb-4">
@@ -30,7 +35,7 @@ export default function HostResponsibilitiesContent() {
             You are expected to respond to tenant inquiries and messages promptly. All communication must remain within the secure BoardTAU messaging system to protect both you and the tenant. Attempting to bypass the system's payment gateway or KYC protocols may result in the suspension of your Host privileges.
           </p>
         </section>
-      </div>
+      </motion.div>
     </FooterPageLayout>
   );
 }
