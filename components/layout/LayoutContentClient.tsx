@@ -38,18 +38,19 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
   }, [pathname]);
 
   const isAuthPage = pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password');
-  const hideNavbarOnMobile = true; // Always hide top navbar on mobile since we have bottom bar and swipe panel
+  const isFooterPage = ['/faqs', '/hosting', '/support', '/about', '/legal'].some(path => pathname.startsWith(path));
+  
   const mobilePaddingTop = (isListingDetail || isMessages || isAuthPage || isHomePage) ? 'pt-0' : (isDashboardPage ? 'pt-6' : 'pt-8');
   
   // BLOCK public UI for Admins, Landlords, and protected paths
-  if (isAdmin || isLandlord || isAuthErrorPage || isInternalRole) {
+  if (isAdmin || isLandlord || isAuthErrorPage) {
     return <>{children}</>;
   }
 
   return (
     <>
       <AuthErrorHandler />
-      <div className="hidden md:block">
+      <div className={isFooterPage ? "hidden md:block" : ""}>
         <Navbar user={user} />
       </div>
       <main className={`${(isAuthPage || isHomePage) ? 'md:pt-0' : 'md:pt-28'} ${mobilePaddingTop} ${isAuthPage ? '' : 'bg-[#F8FAF9] dark:bg-[#0f172a]'} transition-colors duration-300 ${(!isListingDetail && !isAuthPage) ? 'pb-24' : ''} ${isAuthPage ? '' : 'overflow-x-hidden'}`}>
