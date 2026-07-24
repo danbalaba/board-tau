@@ -12,6 +12,7 @@ import { LoadingProvider } from "@/components/loading/LoadingContext";
 import GlobalLoadingOverlay from "@/components/loading/GlobalLoadingOverlay";
 import { NetworkStatusManager } from "@/components/common/NetworkStatusManager";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -146,6 +147,7 @@ export default function RootLayout({
             <InstallPrompt />
           </LayoutContent>
           <SpeedInsights />
+          <Analytics />
         </Providers>
         {process.env.GA_MEASUREMENT_ID && (
           <GoogleAnalytics gaId={process.env.GA_MEASUREMENT_ID} />
