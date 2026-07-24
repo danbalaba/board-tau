@@ -173,3 +173,9 @@ BoardTAU-Capstone-Project-Chapter-1-4-Master-Template.md
 SAMPLE_UNIT TESTING/
 SAMPLE_VAPT/
 IPO/
+
+# Seeding & Sample Data
+prisma/add-second-landlord.ts
+prisma/add-super-admin.ts
+prisma/seed-real-listings.ts
+processed-real-listings.json
