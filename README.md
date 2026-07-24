@@ -1,129 +1,73 @@
-# BoardTAU: A Modernized and Interactive Web System for Boarding Houses Near Tarlac Agricultural University
+# BoardTAU 🎓🏡
 
-![BoardTAU Logo](public/logo.png)
+> **A Modernized and Interactive Web System for Boarding Houses Near Tarlac Agricultural University**
 
-## 🎯 About BoardTAU
+![BoardTAU Hero Image](https://board-tau-rho.vercel.app/og-image.png)
 
-BoardTAU is a comprehensive web-based platform designed to revolutionize the search and management of boarding houses near Tarlac Agricultural University (TAU). Our mission is to provide students, faculty, and staff with a seamless experience in finding safe, affordable, and suitable accommodations that meet their unique needs.
+Welcome to the official repository for **BoardTAU**, a comprehensive Capstone Project designed to revolutionize how students, faculty, and staff discover, book, and manage boarding houses near Tarlac Agricultural University (TAU).
 
-### 🌟 Key Features
+**Live Website:** [https://board-tau-rho.vercel.app/](https://board-tau-rho.vercel.app/)
 
-#### For Tenants
-- **Advanced Search & Filtering**: Find boarding houses by college affiliation, distance, category, price range, amenities, and more
-- **Interactive Map**: Visualize properties on an interactive map with distance calculations
-- **Comprehensive Listings**: Detailed property information with photos, amenities, room types, and ratings
-- **Inquiry System**: Direct messaging with property owners
-- **Favorites & Bookmarks**: Save properties for future reference
-- **Reviews & Ratings**: Real user reviews and ratings to help make informed decisions
+---
 
-#### For Landlords
-- **Property Management Dashboard**: Easy listing creation and management
-- **Reservation Management**: Track bookings and inquiries
-- **Analytics**: Insights into property performance and booking trends
-- **Communication Tools**: Direct messaging with potential tenants
-- **Availability Management**: Real-time availability updates
+## 📖 About The Project
 
-#### For Administrators
-- **System Dashboard**: Comprehensive overview of platform activity
-- **User Management**: Monitor and manage all user accounts
-- **Content Moderation**: Review and approve property listings and reviews
-- **Analytics**: Detailed reports on platform usage and performance
-- **System Settings**: Configure platform preferences and settings
+Finding suitable and secure accommodation is a major challenge for the TAU community. Traditional methods are time-consuming and lack transparency. **BoardTAU** bridges the gap by providing a centralized, interactive, and intelligent platform.
 
-### 🛠️ Technology Stack
+It is designed with **Adaptive Design** to work flawlessly across desktop, tablet, and mobile devices, providing dedicated features for End Users (Tenants), Landlords, System Administrators, and Super Administrators.
 
-#### 🚀 Core Frameworks
-- **Next.js 16.2.2**: React framework with server-side rendering and App Router.
-- **React 19.2.4**: Modern UI component library for building interactive interfaces.
-- **TypeScript 5.x**: Static typing for safer and more predictable development.
-- **Tailwind CSS 3.4.1**: Utility-first CSS framework for rapid and responsive styling.
+### ✨ Key Features
+- **Intelligent Discovery:** Multi-step filtering, Interactive Map (Leaflet), and AI-Powered comparisons (Gemini).
+- **Secure Bookings:** Real-time room availability and strict booking workflows.
+- **Dual Payment Gateways:** Seamless payments via Stripe (Card) and PayMongo (GCash, Maya).
+- **Advanced Security:** Strict KYC (Know Your Customer) processes featuring biometric liveness detection (MediaPipe).
+- **Real-Time Communication:** Live in-app messaging between tenants and landlords (Pusher) with AES-256-GCM encryption.
+- **Landlord Analytics:** Automated dashboards for property performance and financial reporting.
 
-#### 🗄️ Database & Backend
-- **Prisma 5.22.0**: Type-safe ORM for database management and migrations.
-- **MongoDB**: NoSQL database for flexible and scalable data storage.
-- **NextAuth.js 4.24.13**: Secure authentication and authorization (Google & Credentials).
-- **NodeMailer 8.0.4**: Robust email notification system.
+---
 
-#### 🏗️ State & Data Management
-- **TanStack React Query 5.96.1**: Powerful data fetching and server state management.
-- **Zustand 5.0.12**: Lightweight and scalable global state management.
-- **Zod 4.3.6**: TypeScript-first schema validation for forms and API responses.
-- **React Hook Form 7.71.1**: Performance-oriented form management.
+## 🛠️ Technology Stack
 
-#### 🎨 UI & Interactive Components
-- **Radix UI**: Headless UI components for accessible and high-quality interfaces.
-- **Framer Motion 12.29.3**: Professional animations and interactive transitions.
-- **Lucide React 1.7.0**: Consistent and modern icon system.
-- **Recharts 3.7.0 / Chart.js 4.5.1**: Data visualization and analytics dashboards.
-- **React Leaflet 5.0.0**: Interactive maps for property location visualization.
+BoardTAU is built using a modern, enterprise-grade architecture:
 
-#### 💳 File Storage & Payments
-- **EdgeStore 0.7.0**: Modern image and file storage solution.
-- **Stripe 20.4.1**: Secure payment processing for reservations and fees.
-- **AWS SDK 3.x**: Integration with AWS S3 and core services.
+### Frontend
+- **Framework:** Next.js 16 (App Router)
+- **UI Library:** React 19
+- **Styling:** Tailwind CSS, Radix UI, Framer Motion
+- **State Management:** Zustand, TanStack Query
 
-#### 📱 Additional Features
-- **OTP Verification**: Secure email verification for account security.
-- **Nuqs 2.8.9**: Type-safe URL search parameters for advanced filtering.
-- **Sonner 2.0.7**: Sleek and customizable toast notifications.
-- **Responsive Design**: Mobile-first experience across all devices.
+### Backend & Database
+- **Database:** MongoDB (Atlas)
+- **ORM:** Prisma
+- **Caching & Rate Limiting:** Upstash Redis
+- **Storage:** EdgeStore
+
+### Integrations & AI
+- **Authentication:** NextAuth.js
+- **Generative AI:** Google Gemini (Recommendations & Chatbot)
+- **Payments:** Stripe, PayMongo
+- **Real-Time:** Pusher Websockets
+- **Computer Vision:** MediaPipe (Liveness Detection)
+- **Email:** Resend, React Email
+
+---
 
 ## 🚀 Getting Started
 
+Follow these instructions to set up the project locally on your machine.
+
 ### Prerequisites
-
-- Node.js 18+ and npm
-- MongoDB database
-- Stripe account (for payments)
-- EdgeStore account (for file storage)
-
-### Testing Setup
-
-BoardTAU includes a comprehensive testing setup using:
-
-- **Jest**: JavaScript/TypeScript testing framework
-- **React Testing Library**: UI testing library for React
-- **Jest DOM**: Custom matchers for React DOM elements
-
-#### Available Scripts
-
-```bash
-# Run all tests
-npm run test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage report
-npm run test:coverage
-
-# Type check
-npm run type-check
-```
-
-#### Adding New Tests
-
-Create test files with the `.test.tsx` extension:
-
-```typescript
-// components/common/ComponentName.test.tsx
-import { render, screen, fireEvent } from '@testing-library/react';
-import ComponentName from './ComponentName';
-
-describe('ComponentName Component', () => {
-  it('renders correctly', () => {
-    render(<ComponentName />);
-    expect(screen.getByText('Expected Text')).toBeInTheDocument();
-  });
-});
-```
+- Node.js (v20 or higher recommended)
+- Git
+- A MongoDB Database URL
+- Accounts for third-party services (Stripe, PayMongo, Pusher, Upstash, Resend, Gemini, etc.)
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/danbalaba/board-tau-master.git
-   cd board-tau-master
+   git clone https://github.com/danbalaba/board-tau.git
+   cd board-tau
    ```
 
 2. **Install dependencies**
@@ -131,213 +75,86 @@ describe('ComponentName Component', () => {
    npm install
    ```
 
-3. **Set up environment variables**
-   Create a `.env` file in the root directory:
+3. **Set up Environment Variables**
+   Create a `.env` file in the root directory and configure the following variables:
+
    ```env
-   # Next Auth
-   NEXTAUTH_SECRET=your_nextauth_secret
+   # Database
+   DATABASE_URL=
+
+   # Upstash Redis (Caching)
+   UPSTASH_REDIS_REST_URL=
+   UPSTASH_REDIS_REST_TOKEN=
+
+   # Authentication
+   FACEBOOK_CLIENT_ID=
+   FACEBOOK_CLIENT_SECRET=
+   GOOGLE_CLIENT_ID=
+   GOOGLE_CLIENT_SECRET=
+   NEXTAUTH_SECRET=
+   
+   # Local development URLs (uncomment when developing locally)
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
    NEXTAUTH_URL=http://localhost:3000
 
-   # Database
-   DATABASE_URL=mongodb+srv://your_mongodb_uri
+   # EdgeStore (File Storage)
+   EDGE_STORE_ACCESS_KEY=
+   EDGE_STORE_SECRET_KEY=
 
-   # Stripe
-   STRIPE_API_KEY=your_stripe_secret_key
-   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-   STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+   # Stripe Payments
+   STRIPE_SECRET_KEY=
+   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+   STRIPE_WEBHOOK_SECRET=
 
-   # Email (SMTP)
-   EMAIL_SERVER=smtp.gmail.com
-   EMAIL_PORT=587
-   EMAIL_USER=your_email@gmail.com
-   EMAIL_PASSWORD=your_email_password
-   EMAIL_FROM=your_email@gmail.com
+   # PayMongo Payments
+   PAYMONGO_SECRET_KEY=
+   PAYMONGO_PUBLIC_KEY=
+   PAYMONGO_WEBHOOK_SECRET=
 
-   # EdgeStore
-   EDGE_STORE_ACCESS_KEY=your_edgestore_access_key
-   EDGE_STORE_SECRET_KEY=your_edgestore_secret_key
+   # Email (Resend)
+   RESEND_API_KEY=
+   EMAIL_FROM=
+   OTP_SECRET=
+
+   # Google Gemini AI
+   GEMINI_API_KEY=
+
+   # Pusher (Real-Time Messaging)
+   NEXT_PUBLIC_PUSHER_APP_KEY=
+   PUSHER_APP_ID=
+   PUSHER_SECRET=
+   NEXT_PUBLIC_PUSHER_CLUSTER=
+   MESSAGE_ENCRYPTION_KEY=
+
+   # PostHog Analytics
+   NEXT_PUBLIC_POSTHOG_KEY=
+
+   # Sentry Error Tracking
+   SENTRY_AUTH_TOKEN=
    ```
 
-4. **Set up the database**
+4. **Initialize Prisma**
    ```bash
    npx prisma generate
-   npx prisma db push
-   npm run seed
    ```
 
-5. **Run the development server**
+5. **Run the Development Server**
    ```bash
    npm run dev
    ```
 
-6. **Open your browser**
-   Navigate to `http://localhost:3000`
-
-## 📱 Usage
-
-### Tenant Guide
-
-1. **Create an Account**: Sign up with your email and verify your account via OTP
-2. **Search for Properties**: Use the advanced search filters to find suitable properties
-3. **Browse Listings**: View detailed property information, photos, and reviews
-4. **Send Inquiries**: Contact property owners directly through the platform
-5. **Book Properties**: Make reservations and manage your bookings
-6. **Leave Reviews**: Share your experiences with other users
-
-### Landlord Guide
-
-1. **Create a Landlord Account**: Sign up and verify your identity
-2. **Add Properties**: Create detailed property listings with photos and information
-3. **Manage Listings**: Update availability, prices, and property details
-4. **Respond to Inquiries**: Reply to tenant inquiries and booking requests
-5. **Track Bookings**: Manage reservations and track payment status
-6. **View Analytics**: Monitor property performance and booking trends
-
-### Administrator Guide
-
-1. **Access Admin Panel**: Navigate to `/admin` and log in with admin credentials
-2. **Manage Users**: Monitor and manage user accounts
-3. **Moderate Content**: Review and approve property listings and reviews
-4. **View Reports**: Access detailed analytics and performance reports
-5. **Configure Settings**: Manage platform preferences and system settings
-
-## 🎨 Features Overview
-
-### Advanced Search Filters
-
-- **College Affiliation**: Filter properties by TAU college proximity
-- **Distance**: Find properties within specific distance ranges
-- **Categories**: Student-friendly, female-only, male-only, budget, private, family
-- **Price Range**: Customizable minimum and maximum monthly rent
-- **Room Types**: Solo, shared, bed spacer
-- **Amenities**: WiFi, laundry, parking, etc.
-- **Rules & Preferences**: Female-only, male-only, pets allowed, smoking allowed, etc.
-- **Advanced Features**: 24/7 security, CCTV, fire safety, near transport, study-friendly, quiet environment, flexible lease
-
-### Interactive Map
-
-- Real-time map visualization
-- Dynamic center based on college selection
-- Distance calculations from campus
-- Property markers with details
-
-### Listing Details
-
-- Multiple high-resolution photos
-- Detailed property information
-- Amenity icons
-- Rating and review system
-- Availability calendar
-- Price breakdown
-- Room types and bed details
-
-## 📊 System Architecture
-
-### Frontend Structure
-
-```
-app/
-├── (auth)/             # Authentication pages
-├── admin/             # Admin dashboard
-├── landlord/          # Landlord dashboard
-├── listings/          # Property listing pages
-├── properties/        # Property management pages
-├── reservations/      # Booking management pages
-├── favorites/         # Saved properties
-├── legal/             # Legal pages (terms, privacy, accessibility, help)
-├── layout.tsx         # Root layout
-└── page.tsx           # Home page
-```
-
-### Backend Structure
-
-```
-app/api/
-├── auth/              # Authentication endpoints
-├── listings/          # Property listing endpoints
-├── inquiries/         # Inquiry management endpoints
-├── landlord/          # Landlord dashboard endpoints
-├── admin/             # Admin dashboard endpoints
-├── webhooks/          # Stripe webhooks
-└── edgestore/         # File storage endpoints
-```
-
-### Database Models
-
-- **User**: Tenant, Landlord, Administrator accounts
-- **Listing**: Property details, amenities, rules, pricing
-- **Reservation**: Booking information, dates, status
-- **Inquiry**: Tenant inquiries to property owners
-- **Review**: User reviews and ratings
-- **Image**: Property photos and media
-
-## 🔒 Security Features
-
-- **JWT Authentication**: Secure token-based authentication
-- **OTP Verification**: Email verification for new accounts
-- **Password Hashing**: bcryptjs for secure password storage
-- **Rate Limiting**: API endpoint protection
-- **XSS Protection**: Input sanitization and validation
-- **CSRF Protection**: Anti-cross-site request forgery measures
-
-## 📈 Performance Optimization
-
-- **Server-Side Rendering (SSR)**: Fast initial page loads
-- **Static Site Generation (SSG)**: Pre-built static pages
-- **Image Optimization**: Next.js image component
-- **Dynamic Imports**: Lazy loading for heavy components
-- **API Caching**: Response caching for frequent requests
-- **Code Splitting**: Optimized bundle sizes
-
-## 🚀 Deployment
-
-### Vercel Deployment (Recommended)
-
-1. **Push code to GitHub**: `git push origin main`
-2. **Import repository on Vercel**: Connect your GitHub repository
-3. **Configure environment variables**: Add all required environment variables
-4. **Deploy**: Vercel will automatically build and deploy your project
-
-### Traditional Deployment
-
-1. **Build the application**: `npm run build`
-2. **Start the server**: `npm start`
-3. **Configure reverse proxy**: Use Nginx or Apache to serve the application
-4. **Set up environment variables**: Ensure all variables are correctly configured
-
-## 🤝 Contributing
-
-### Getting Started
-
-1. **Create a branch**: `git checkout -b feature/your-feature`
-2. **Make changes**: Implement your feature or bug fix
-3. **Test**: Test your changes thoroughly
-4. **Commit**: `git add . && git commit -m "Description of changes"`
-5. **Push**: `git push origin feature/your-feature`
-6. **PR**: Create a Pull Request on GitHub
-
-### Contribution Guidelines
-
-- Follow the existing code style
-- Write clear, concise commit messages
-- Test your changes
-- Update documentation if needed
-- Be respectful in PR reviews
-
-## 📞 Support
-
-If you encounter any issues or have questions:
-
-1. **Check the FAQ**: Visit `/legal/help` for frequently asked questions
-2. **Contact Support**: Email support@boardtau.com
-3. **Report Bugs**: Create an issue on GitHub
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+6. **Open the Application**
+   Navigate to `http://localhost:3000` in your web browser.
 
 ---
 
-**Built with ❤️ for the TAU community**
+## 📬 Support & Contact
 
-[BoardTAU Website](https://boardtau.com) | [GitHub Repository](https://github.com/danbalaba/board-tau)
+If you have any questions or encounter issues, please reach out to the development team:
+
+**Email:** `support@boardtau.xyz`
+
+*Note: For official university inquiries regarding boarding houses, please contact the respective property owners directly through the platform.*
+
+---
+*Created for Tarlac Agricultural University by Jerome R. Autida, Dan Richie L. Balaba, Marc Jason G. Gonzales, and John Roldan T. Simon (December 2026).*
