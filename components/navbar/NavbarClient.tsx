@@ -91,7 +91,7 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
 
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 border-b transition-all duration-300 ease-apple ${
+      className={`${!isHomePage ? "hidden md:block" : ""} fixed top-0 left-0 w-full z-50 border-b transition-all duration-300 ease-apple ${
         isScrolled
           ? "bg-white/72 dark:bg-gray-900/72 backdrop-blur-xl border-gray-200/60 dark:border-white/10 shadow-[0_1px_0_rgba(255,255,255,0.5)] dark:shadow-[0_1px_0_rgba(255,255,255,0.06)]"
           : "bg-transparent border-transparent"
@@ -103,14 +103,14 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
         }`}
       >
         <div className="flex main-container flex-row items-center justify-between gap-3 md:gap-0 w-full">
-          {/* Desktop: Logo left, Mobile: hidden on home page so search takes full width */}
+          {/* Desktop: Logo left, Mobile: hidden completely */}
           <motion.div
             key={mounted ? "logo" : "logo-placeholder"}
             variants={glassFadeIn}
             initial="hidden"
             animate="show"
             transition={{ duration: 0.4 }}
-            className={`${isHomePage ? "hidden md:flex" : "flex"} items-center`}
+            className="hidden md:flex items-center"
           >
             <Logo />
           </motion.div>
@@ -142,10 +142,19 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
                 {isScrolled && <Search compact={true} />}
               </motion.div>
 
-              {/* Mobile Search (Always visible on Home Page) */}
-              <div className="md:hidden w-full flex flex-row items-center justify-center">
+              {/* Mobile Search (Only visible on scroll on Home Page) */}
+              <motion.div 
+                initial="hidden"
+                animate={{
+                  opacity: isScrolled ? 1 : 0,
+                  y: isScrolled ? 0 : -10,
+                  pointerEvents: isScrolled ? "auto" : "none"
+                }}
+                transition={{ duration: 0.3 }}
+                className="md:hidden w-full flex flex-row items-center justify-center"
+              >
                 <MobileSearch />
-              </div>
+              </motion.div>
             </div>
           )}
 
