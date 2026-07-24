@@ -195,7 +195,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
   const CardWrapper = onClickOverride ? 'div' : Link;
   const wrapperProps = onClickOverride 
     ? { onClick: onClickOverride, className: "block h-full cursor-pointer" }
-    : { href: `/listings/${data.id}`, className: "block h-full cursor-pointer" };
+    : { href: `/listings/${data.id}`, className: "block h-full cursor-pointer", prefetch: false };
 
   return (
     <div className="relative group/card h-full z-10 hover:z-30">

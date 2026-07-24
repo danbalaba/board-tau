@@ -69,7 +69,7 @@ const CompactListingCard: React.FC<CompactListingCardProps> = ({
   }
 
   return (
-    <Link href={`/listings/${data.id}`} className="block w-full">
+    <Link href={`/listings/${data.id}`} prefetch={false} className="block w-full">
       {CardContent}
     </Link>
   );
