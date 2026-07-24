@@ -173,6 +173,7 @@ BoardTAU-Capstone-Project-Chapter-1-4-Master-Template.md
 SAMPLE_UNIT TESTING/
 SAMPLE_VAPT/
 IPO/
+UML/
 
 # Seeding & Sample Data
 prisma/add-second-landlord.ts
