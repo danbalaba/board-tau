@@ -180,4 +180,5 @@ prisma/add-second-landlord.ts
 prisma/add-super-admin.ts
 prisma/add-test-user.ts
 prisma/seed-real-listings.ts
+prisma/update-passwords.ts
 processed-real-listings.json
