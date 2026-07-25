@@ -20,7 +20,7 @@ interface LayoutContentClientProps {
 }
 
 const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, user }) => {
-  const pathname = usePathname() || "";
+  const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
   const { isLoggingOut } = useLoadingStore();
   const isAdmin = pathname.startsWith('/admin');
   const isLandlord = pathname.startsWith('/landlord');

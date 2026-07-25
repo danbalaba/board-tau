@@ -94,7 +94,7 @@ const navItems = [
 import Skeleton from '@/components/common/Skeleton';
 
 export default function LandlordSidebar() {
-  const pathname = usePathname() || "";
+  const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
   const { state } = useSidebar();
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);

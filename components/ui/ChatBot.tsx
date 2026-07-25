@@ -38,7 +38,7 @@ export default function ChatBot() {
   const [showPrompts, setShowPrompts] = useState(true);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const pathname = usePathname() || "";
+  const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
   const router = useRouter();
   const isListingDetail = pathname.startsWith('/listings/') && pathname.split('/').length > 2;
   const messagesEndRef = useRef<HTMLDivElement>(null);

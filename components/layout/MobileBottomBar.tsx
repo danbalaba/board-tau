@@ -21,7 +21,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [scrollDirection, setScrollDirection] = useState<"up" | "down" | "">("");
   const [lastY, setLastY] = useState(0);
-  const pathname = usePathname() || "";
+  const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
   const isMessages = pathname.startsWith('/messages');
 
   const { unreadStats } = useNotification();
