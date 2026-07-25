@@ -226,11 +226,7 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
 
   const handleInquireClick = (room: Room) => {
     if (!user) {
-      const now = Date.now();
-      if (now - lastInquiryToastTime.current > 5000) {
-        toast.error("Please log in to inquire");
-        lastInquiryToastTime.current = now;
-      }
+      toast.error('Please log in to inquire');
       return;
     }
     onInquire(room);

@@ -185,6 +185,31 @@ const ThreeDHoverGallery: React.FC<ThreeDHoverGalleryProps> = ({
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [modalIndex, setModalIndex] = useState(0);
 
+  const cleanupRef = useRef<(() => void) | null>(null);
+  const scrollLockRef = React.useCallback((node: HTMLDivElement | null) => {
+      if (node) {
+          const preventScroll = (e: Event) => e.preventDefault();
+          node.addEventListener("wheel", preventScroll, { passive: false });
+          node.addEventListener("touchmove", preventScroll, { passive: false });
+          cleanupRef.current = () => {
+              node.removeEventListener("wheel", preventScroll);
+              node.removeEventListener("touchmove", preventScroll);
+          };
+      } else if (cleanupRef.current) {
+          cleanupRef.current();
+          cleanupRef.current = null;
+      }
+  }, []);
+
+  useEffect(() => {
+      if (selectedItem) {
+          document.body.style.overflow = "hidden";
+      } else {
+          document.body.style.overflow = "";
+      }
+      return () => { document.body.style.overflow = ""; };
+  }, [selectedItem]);
+
   useEffect(() => {
     if (autoPlay && items.length > 0) {
       if (autoPlayRef.current) clearInterval(autoPlayRef.current);
@@ -303,6 +328,7 @@ const ThreeDHoverGallery: React.FC<ThreeDHoverGalleryProps> = ({
       <AnimatePresence>
         {selectedItem && (
             <motion.div
+                ref={scrollLockRef}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}

@@ -231,6 +231,7 @@ export const createPaymentSession = async ({
        cancel_url: `${baseUrl}/listings/${listing.id}`,
        payment_method_types: ['card'],
        mode: 'payment',
+       customer_email: user?.email || undefined,
        metadata: {
          listingId,
          startDate: String(startDate),

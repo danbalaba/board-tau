@@ -141,17 +141,13 @@ export class FaceEngine {
   }
 
   /**
-   * LIVENESS CHECK: Returns raw eye blink scores for state machine tracking.
-   * Returns { left, right } scores where 0 = fully open, 1 = fully closed.
-   * The caller is responsible for tracking the blink state machine across frames.
-   * 
-   * Thresholds (tuned for typical webcam conditions):
-   *   - "Eyes closed" = score > 0.45 (genuine blink, not blur artifact)
-   *   - "Eyes open"   = score < 0.20 (clearly open, not mid-blink)
+   * LIVENESS CHECK: Returns states for randomized challenge-response liveness.
+   * Returns { blink, smile, turnLeft, turnRight }
+   * The caller tracks these to pass randomly assigned challenges.
    */
-  public async getBlinkScores(
+  public async getLivenessState(
     imageElement: HTMLVideoElement
-  ): Promise<{ left: number; right: number } | null> {
+  ): Promise<{ blink: boolean; smile: boolean; turnLeft: boolean; turnRight: boolean } | null> {
     const { face } = await this.getModels();
 
     const width = imageElement.videoWidth;
@@ -160,13 +156,43 @@ export class FaceEngine {
 
     const faceResult = face.detect(imageElement);
     if (!faceResult.faceLandmarks || faceResult.faceLandmarks.length === 0) return null;
-    if (!faceResult.faceBlendshapes || faceResult.faceBlendshapes.length === 0) return null;
 
-    const categories = faceResult.faceBlendshapes[0].categories;
-    const left = categories.find(c => c.categoryName === 'eyeBlinkLeft')?.score ?? 0;
-    const right = categories.find(c => c.categoryName === 'eyeBlinkRight')?.score ?? 0;
+    // 1. Calculate Head Yaw (Turn Left/Right)
+    const landmarks = faceResult.faceLandmarks[0];
+    const noseTip = landmarks[1];
+    const leftTragus = landmarks[234]; // Left side of face (viewer's right if mirrored)
+    const rightTragus = landmarks[454]; // Right side of face
 
-    return { left, right };
+    const leftDist = Math.abs(noseTip.x - leftTragus.x);
+    const rightDist = Math.abs(noseTip.x - rightTragus.x);
+
+    // If one side is much smaller than the other, the head is turned
+    // The user's left is mirrored, so if rightDist is small, they are looking right
+    let turnLeft = false;
+    let turnRight = false;
+    
+    // Threshold for head turn (ratio > 2.0 means significant turn)
+    if (leftDist > 0 && rightDist > 0) {
+      if (rightDist / leftDist > 2.0) turnLeft = true;
+      if (leftDist / rightDist > 2.0) turnRight = true;
+    }
+
+    // 2. Calculate Blendshapes (Blink, Smile)
+    let blink = false;
+    let smile = false;
+
+    if (faceResult.faceBlendshapes && faceResult.faceBlendshapes.length > 0) {
+      const categories = faceResult.faceBlendshapes[0].categories;
+      const leftBlink = categories.find(c => c.categoryName === 'eyeBlinkLeft')?.score ?? 0;
+      const rightBlink = categories.find(c => c.categoryName === 'eyeBlinkRight')?.score ?? 0;
+      const smileLeft = categories.find(c => c.categoryName === 'mouthSmileLeft')?.score ?? 0;
+      const smileRight = categories.find(c => c.categoryName === 'mouthSmileRight')?.score ?? 0;
+
+      if (leftBlink > 0.45 || rightBlink > 0.45) blink = true;
+      if (smileLeft > 0.5 && smileRight > 0.5) smile = true;
+    }
+
+    return { blink, smile, turnLeft, turnRight };
   }
 }
 

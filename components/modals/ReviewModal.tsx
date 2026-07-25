@@ -566,7 +566,7 @@ export default function ReviewModal({ reservation, isOpen, onClose }: ReviewModa
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} width="md" hasFixedFooter={true} closeOnOutsideClick={false}>
-        <div className="flex flex-col min-h-[85vh] max-h-[85vh] sm:min-h-0 sm:h-auto sm:max-h-[70vh] overflow-hidden">
+        <div className="flex flex-col h-[90dvh] sm:h-auto sm:max-h-[85vh] overflow-hidden">
           {/* Header */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0">
             <div className="flex items-center gap-4 ml-4">
@@ -608,50 +608,50 @@ export default function ReviewModal({ reservation, isOpen, onClose }: ReviewModa
               </AnimatePresence>
             </div>
           </div>
-        </div>
 
-        {/* Footer Actions */}
-        {!showSkipConfirm && (
-          <div className="p-4 sm:p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-100 dark:border-gray-700 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
-            {step === 1 ? (
-              <Button
-                outline
-                className="w-full sm:w-auto px-8 py-3 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-red-500 transition-colors border-transparent"
-                onClick={() => setShowSkipConfirm(true)}
-              >
-                Skip Review
-              </Button>
-            ) : (
-              <Button
-                outline
-                className="w-full sm:w-auto px-8 py-3 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors border-transparent"
-                onClick={() => setStep(step - 1)}
-                disabled={isLoading}
-              >
-                Back
-              </Button>
-            )}
-            
-            <div className="w-full sm:w-auto">
-              {step < 3 ? (
+          {/* Footer Actions */}
+          {!showSkipConfirm && (
+            <div className="p-4 pb-6 sm:p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-100 dark:border-gray-700 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
+              {step === 1 ? (
                 <Button
-                  onClick={handleNextStep}
-                  className="w-full px-10 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest text-white bg-emerald-500 hover:bg-emerald-500 border-emerald-500 rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
+                  outline
+                  className="w-full sm:w-auto px-8 py-3 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-red-500 transition-colors border-transparent"
+                  onClick={() => setShowSkipConfirm(true)}
                 >
-                  Next Step <ArrowRight size={14} strokeWidth={3} />
+                  Skip Review
                 </Button>
               ) : (
-                <Button 
-                  onClick={onSubmit} 
-                  isLoading={isLoading} 
-                  className="w-full px-10 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest text-white bg-primary rounded-2xl hover:bg-primary-dark shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                <Button
+                  outline
+                  className="w-full sm:w-auto px-8 py-3 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors border-transparent"
+                  onClick={() => setStep(step - 1)}
+                  disabled={isLoading}
                 >
-                  Submit Review
+                  Back
                 </Button>
               )}
+              
+              <div className="w-full sm:w-auto">
+                {step < 3 ? (
+                  <Button
+                    onClick={handleNextStep}
+                    className="w-full px-10 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest text-white bg-emerald-500 hover:bg-emerald-500 border-emerald-500 rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    Next Step <ArrowRight size={14} strokeWidth={3} />
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={onSubmit} 
+                    isLoading={isLoading} 
+                    className="w-full px-10 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest text-white bg-primary rounded-2xl hover:bg-primary-dark shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    Submit Review
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </Modal>
 
       {/* Media Preview Modal */}

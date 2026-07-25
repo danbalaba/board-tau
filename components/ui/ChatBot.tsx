@@ -38,8 +38,9 @@ export default function ChatBot() {
   const [showPrompts, setShowPrompts] = useState(true);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const pathname = usePathname();
+  const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
   const router = useRouter();
+  const isListingDetail = pathname.startsWith('/listings/') && pathname.split('/').length > 2;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollDirection = useScrollDirection();
   const isHiddenOnMobile = scrollDirection === "up" || scrollDirection === "";
@@ -51,6 +52,32 @@ export default function ChatBot() {
   useEffect(() => {
     if (isOpen) scrollToBottom();
   }, [messages, isOpen, isLoading]);
+
+  // Prevent background scrolling when interacting with the chatbot
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const container = document.getElementById('chatbot-wrapper');
+    if (!container) return;
+
+    const preventScroll = (e: Event) => {
+      const scrollableArea = document.getElementById('chatbot-scrollable');
+      // If the event target is inside the scrollable area, let overscroll-contain handle it
+      if (scrollableArea && scrollableArea.contains(e.target as Node)) {
+        return;
+      }
+      // Otherwise, prevent scrolling the background
+      e.preventDefault();
+    };
+
+    container.addEventListener('wheel', preventScroll, { passive: false });
+    container.addEventListener('touchmove', preventScroll, { passive: false });
+
+    return () => {
+      container.removeEventListener('wheel', preventScroll);
+      container.removeEventListener('touchmove', preventScroll);
+    };
+  }, [isOpen]);
 
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
@@ -103,11 +130,12 @@ export default function ChatBot() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            id="chatbot-wrapper"
             initial={{ opacity: 0, y: 50, scale: 0.9, originX: 1, originY: 1 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9, originX: 1, originY: 1 }}
             transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
-            className="fixed bottom-28 right-4 md:bottom-[115px] md:right-10 z-[70] w-[calc(100vw-32px)] md:w-[400px] h-[550px] max-h-[80vh] flex flex-col bg-card rounded-3xl shadow-xl border border-border overflow-hidden"
+            className="fixed inset-0 w-full h-[100dvh] rounded-none border-0 md:inset-auto md:bottom-[115px] md:right-10 z-[100] md:w-[400px] md:h-[550px] md:max-h-[80vh] flex flex-col bg-card md:rounded-3xl shadow-xl md:border md:border-border overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 bg-gradient-to-br from-primary via-primary to-emerald-800 text-primary-foreground shadow-md z-10 relative overflow-hidden">
@@ -132,7 +160,7 @@ export default function ChatBot() {
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 bg-background/50">
+            <div id="chatbot-scrollable" className="flex-1 overflow-y-auto overscroll-none p-4 space-y-4 bg-background/50">
               {messages.map((msg, idx) => (
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
@@ -280,7 +308,7 @@ export default function ChatBot() {
 
       {/* Floating Toggle Button */}
       <div className={cn(
-        "fixed bottom-28 right-4 md:bottom-8 md:right-8 z-[50] transition-transform duration-300 ease-in-out",
+        `fixed ${isListingDetail ? 'bottom-32' : 'bottom-20'} right-4 md:bottom-8 md:right-8 z-[50] transition-transform duration-300 ease-in-out`,
         isHiddenOnMobile && !isOpen ? "translate-y-48 md:translate-y-0" : "translate-y-0"
       )}>
         

@@ -1,15 +1,53 @@
 import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { contactLimiter } from '@/lib/rate-limit';
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
 
+const contactSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100, "Name is too long"),
+  email: z.string().email("Invalid email address").max(255, "Email is too long"),
+  subject: z.string().min(1, "Subject is required").max(150, "Subject is too long"),
+  message: z.string().min(1, "Message is required").max(2000, "Message is too long"),
+});
+
+// Basic HTML escaping to prevent XSS in the generated email template
+const escapeHtml = (unsafe: string) => {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
 export async function POST(req: Request) {
   try {
-    const { name, email, subject, message } = await req.json();
-
-    if (!name || !email || !subject || !message) {
-      return NextResponse.json({ error: 'All fields are required.' }, { status: 400 });
+    // 1. Rate Limiting
+    const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
+    const { success } = await contactLimiter.limit(ip);
+    
+    if (!success) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
     }
+
+    // 2. Parse and Validate Payload
+    const body = await req.json();
+    const result = contactSchema.safeParse(body);
+
+    if (!result.success) {
+      const errorMsg = result.error.issues.map((err: any) => err.message).join(', ');
+      return NextResponse.json({ error: errorMsg }, { status: 400 });
+    }
+
+    const { name, email, subject, message } = result.data;
+
+    // 3. Sanitize inputs for HTML email
+    const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
+    const safeSubject = escapeHtml(subject);
+    const safeMessage = escapeHtml(message);
 
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; padding: 24px; color: #1e293b; background-color: #f8fafc;">
@@ -23,20 +61,20 @@ export async function POST(req: Request) {
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
               <tr>
                 <td style="padding: 8px 0; color: #64748b; font-size: 14px; width: 100px;"><strong>Name:</strong></td>
-                <td style="padding: 8px 0; color: #0f172a; font-size: 14px;">${name}</td>
+                <td style="padding: 8px 0; color: #0f172a; font-size: 14px;">${safeName}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #64748b; font-size: 14px;"><strong>Email:</strong></td>
-                <td style="padding: 8px 0; color: #0f172a; font-size: 14px;"><a href="mailto:${email}" style="color: #2f7d6d; text-decoration: none;">${email}</a></td>
+                <td style="padding: 8px 0; color: #0f172a; font-size: 14px;"><a href="mailto:${safeEmail}" style="color: #2f7d6d; text-decoration: none;">${safeEmail}</a></td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #64748b; font-size: 14px;"><strong>Subject:</strong></td>
-                <td style="padding: 8px 0; color: #0f172a; font-size: 14px; font-weight: 600;">${subject}</td>
+                <td style="padding: 8px 0; color: #0f172a; font-size: 14px; font-weight: 600;">${safeSubject}</td>
               </tr>
             </table>
 
             <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 14px; line-height: 1.6; color: #334155; white-space: pre-wrap;">
-              ${message}
+${safeMessage}
             </div>
           </div>
           <div style="background-color: #f1f5f9; padding: 16px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
@@ -48,10 +86,10 @@ export async function POST(req: Request) {
 
     const response = await resend.emails.send({
       from: `BoardTAU Support <${process.env.EMAIL_FROM}>`,
-      to: 'support@boardtau.com',
-      subject: `[Support Inquiry] ${subject}`,
+      to: 'support@boardtau.xyz',
+      subject: `[Support Inquiry] ${safeSubject}`,
       html: emailHtml,
-      replyTo: email,
+      replyTo: safeEmail,
     });
 
     if (response.error) {

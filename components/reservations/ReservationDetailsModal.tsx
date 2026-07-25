@@ -440,58 +440,62 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
           Go Back
         </button>
         
-        <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-          <button
-            className="px-4 sm:px-10 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-primary bg-primary/10 dark:bg-primary/20 hover:bg-primary/20 dark:hover:bg-primary/30 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2 group/msg"
-            onClick={() => router.push(`/messages?listingId=${reservation.listingId}&otherUserId=${landlordId}`)}
-          >
-            <Mail size={14} strokeWidth={3} className="group-hover/msg:rotate-6 transition-transform" />
-            <span className="truncate">Chat Landlord</span>
-          </button>
+        <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:gap-3">
+          {/* Top row: Chat Landlord + Download Pass (or Cancel / Pay Now) */}
+          <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+            <button
+              className="py-3 px-4 sm:px-10 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-primary bg-primary/10 dark:bg-primary/20 hover:bg-primary/20 dark:hover:bg-primary/30 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2 group/msg"
+              onClick={() => router.push(`/messages?listingId=${reservation.listingId}&otherUserId=${landlordId}`)}
+            >
+              <Mail size={14} strokeWidth={3} className="group-hover/msg:rotate-6 transition-transform" />
+              <span className="truncate">Chat Landlord</span>
+            </button>
 
-          {canCancel && onCancel && (
-            <button
-              className="px-4 sm:px-10 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-rose-600 bg-rose-50 dark:bg-rose-900/20 border-2 border-rose-100 dark:border-rose-800/50 rounded-2xl hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-all active:scale-95 flex items-center justify-center gap-2 group/cancel"
-              onClick={onCancel}
-            >
-              <X size={14} strokeWidth={3} className="group-hover/cancel:rotate-12 transition-transform" />
-              <span className="truncate">Cancel</span>
-            </button>
-          )}
-
-          {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
-            <button
-              className="px-4 sm:px-10 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-emerald-600 rounded-2xl hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/pass"
-              onClick={() => {
-                responsiveToast.loading("Generating your Boarding Pass...");
-                generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail)
-                  .then(() => responsiveToast.success("Confirmation Slip downloaded successfully!"))
-                  .catch(() => responsiveToast.error("Failed to generate Confirmation Slip."));
-              }}
-            >
-              <IconCircleCheck size={14} strokeWidth={3} className="group-hover/pass:scale-110 transition-transform" />
-              <span className="truncate">Download Pass</span>
-            </button>
-          )}
-          
-          {canPay && onPayNow && (
-            <button
-              className="col-span-2 sm:col-span-1 px-4 sm:px-10 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-primary rounded-2xl hover:bg-primary-dark shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/pay"
-              onClick={onPayNow}
-            >
-              <CreditCard size={14} strokeWidth={3} className="group-hover/pay:translate-x-0.5 transition-transform" /> 
-              <span className="truncate">Pay Now</span>
-            </button>
-          )}
-          
-          {reservation.status === "COMPLETED" && (
+            {canCancel && onCancel && (
               <button
-                  className="px-4 sm:px-10 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-emerald-600 rounded-2xl hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/app"
-                  onClick={() => router.push(`/listings/${reservation.listingId}`)}
+                className="py-3 px-4 sm:px-10 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-rose-600 bg-rose-50 dark:bg-rose-900/20 border-2 border-rose-100 dark:border-rose-800/50 rounded-2xl hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-all active:scale-95 flex items-center justify-center gap-2 group/cancel"
+                onClick={onCancel}
               >
-                  <IconCircleCheck size={14} strokeWidth={3} className="group-hover/app:scale-110 transition-transform" />
-                  <span className="truncate">View Listing</span>
+                <X size={14} strokeWidth={3} className="group-hover/cancel:rotate-12 transition-transform" />
+                <span className="truncate">Cancel</span>
               </button>
+            )}
+
+            {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
+              <button
+                className="py-3 px-4 sm:px-10 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-emerald-600 rounded-2xl hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/pass"
+                onClick={() => {
+                  responsiveToast.loading("Generating your Boarding Pass...");
+                  generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail)
+                    .then(() => responsiveToast.success("Confirmation Slip downloaded successfully!"))
+                    .catch(() => responsiveToast.error("Failed to generate Confirmation Slip."));
+                }}
+              >
+                <IconCircleCheck size={14} strokeWidth={3} className="group-hover/pass:scale-110 transition-transform" />
+                <span className="truncate">Download Pass</span>
+              </button>
+            )}
+
+            {canPay && onPayNow && (
+              <button
+                className="col-span-2 sm:col-span-1 py-3 px-4 sm:px-10 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-primary rounded-2xl hover:bg-primary-dark shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/pay"
+                onClick={onPayNow}
+              >
+                <CreditCard size={14} strokeWidth={3} className="group-hover/pay:translate-x-0.5 transition-transform" />
+                <span className="truncate">Pay Now</span>
+              </button>
+            )}
+          </div>
+
+          {/* View Listing — full width row on mobile when COMPLETED (3 buttons exist) */}
+          {reservation.status === "COMPLETED" && (
+            <button
+              className="w-full sm:w-auto py-3 px-4 sm:px-10 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-emerald-600 rounded-2xl hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/app"
+              onClick={() => router.push(`/listings/${reservation.listingId}`)}
+            >
+              <IconCircleCheck size={14} strokeWidth={3} className="group-hover/app:scale-110 transition-transform" />
+              <span className="truncate">View Listing</span>
+            </button>
           )}
         </div>
       </div>

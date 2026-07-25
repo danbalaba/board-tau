@@ -40,3 +40,12 @@ export const adminLimiter = new Ratelimit({
   analytics: true,
   prefix: "ratelimit:admin",
 });
+
+// 5. Contact Form Limiter: Very strict limit to prevent email spam/bots
+// 3 requests per 1 minute
+export const contactLimiter = new Ratelimit({
+  redis: redis,
+  limiter: Ratelimit.slidingWindow(3, "1 m"),
+  analytics: true,
+  prefix: "ratelimit:contact",
+});

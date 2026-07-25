@@ -4,10 +4,21 @@ import { useTheme } from 'next-themes';
 import { motion } from 'framer-motion';
 import { GlowingCards, GlowingCard } from '@/components/lightswind/glowing-cards';
 import { Mail, HelpCircle, Tag, Key, MessageSquare, ShieldAlert, CheckCircle } from 'lucide-react';
+import ContactSupportModal from '@/components/modals/ContactSupportModal';
 
 export default function ContactSupportContent() {
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalSubject, setModalSubject] = useState('');
+
+  const [modalTitle, setModalTitle] = useState('Contact Support');
+
+  const openModal = (subject: string, title: string = 'Contact Support') => {
+    setModalSubject(subject);
+    setModalTitle(title);
+    setIsModalOpen(true);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -18,6 +29,7 @@ export default function ContactSupportContent() {
   const isDark = mounted ? theme === 'dark' : false;
 
   return (
+    <>
     <div className={`min-h-screen ${isDark ? 'bg-slate-900 text-slate-300' : 'bg-gray-50 text-gray-800'}`}>
       
       {/* Hero Header matching About/Help Center */}
@@ -85,9 +97,9 @@ export default function ContactSupportContent() {
               <p className="text-gray-600 dark:text-slate-400 mb-6 flex-grow">
                 To ask or resolve basic general BoardTAU-related questions.
               </p>
-              <a href="mailto:support@boardtau.xyz" className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-50 dark:bg-slate-800 hover:bg-primary/5 dark:hover:bg-primary/10 text-primary font-semibold rounded-lg transition-colors border border-gray-200 dark:border-slate-700">
+              <button onClick={() => openModal('General Support', 'General Support')} className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-50 dark:bg-slate-800 hover:bg-primary/5 dark:hover:bg-primary/10 text-primary font-semibold rounded-lg transition-colors border border-gray-200 dark:border-slate-700 cursor-pointer">
                 <Mail className="w-4 h-4" /> support@boardtau.xyz
-              </a>
+              </button>
             </GlowingCard>
 
             <GlowingCard glowColor="var(--primary-color, #2f7d6d)" className="flex flex-col h-full bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 shadow-sm">
@@ -100,9 +112,9 @@ export default function ContactSupportContent() {
               <p className="text-gray-600 dark:text-slate-400 mb-6 flex-grow">
                 To ask questions about features, capabilities, or pricing of BoardTAU plans.
               </p>
-              <a href="mailto:sales@boardtau.xyz" className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-50 dark:bg-slate-800 hover:bg-primary/5 dark:hover:bg-primary/10 text-primary font-semibold rounded-lg transition-colors border border-gray-200 dark:border-slate-700">
+              <button onClick={() => openModal('Pre-Sales Inquiry', 'Pre-Sales Support')} className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-50 dark:bg-slate-800 hover:bg-primary/5 dark:hover:bg-primary/10 text-primary font-semibold rounded-lg transition-colors border border-gray-200 dark:border-slate-700 cursor-pointer">
                 <Mail className="w-4 h-4" /> sales@boardtau.xyz
-              </a>
+              </button>
             </GlowingCard>
 
             <GlowingCard glowColor="var(--primary-color, #2f7d6d)" className="flex flex-col h-full bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 shadow-sm">
@@ -115,9 +127,9 @@ export default function ContactSupportContent() {
               <p className="text-gray-600 dark:text-slate-400 mb-6 flex-grow">
                 To address payment-related issues, invoices, refunds, and account limits.
               </p>
-              <a href="mailto:billing@boardtau.xyz" className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-50 dark:bg-slate-800 hover:bg-primary/5 dark:hover:bg-primary/10 text-primary font-semibold rounded-lg transition-colors border border-gray-200 dark:border-slate-700">
+              <button onClick={() => openModal('Billing Support', 'Billing Support')} className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-50 dark:bg-slate-800 hover:bg-primary/5 dark:hover:bg-primary/10 text-primary font-semibold rounded-lg transition-colors border border-gray-200 dark:border-slate-700 cursor-pointer">
                 <Mail className="w-4 h-4" /> billing@boardtau.xyz
-              </a>
+              </button>
             </GlowingCard>
           </GlowingCards>
         </motion.div>
@@ -148,9 +160,9 @@ export default function ContactSupportContent() {
               <p className="text-gray-600 dark:text-slate-400 mb-6 flex-grow">
                 For media inquiries, interviews, or content partnerships with BoardTAU.
               </p>
-              <a href="mailto:pr@boardtau.xyz" className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-50 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-600 dark:text-amber-400 font-semibold rounded-lg transition-colors border border-gray-200 dark:border-slate-700">
+              <button onClick={() => openModal('Press and Media', 'Press & Media Inquiries')} className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-50 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-600 dark:text-amber-400 font-semibold rounded-lg transition-colors border border-gray-200 dark:border-slate-700 cursor-pointer">
                 <Mail className="w-4 h-4" /> pr@boardtau.xyz
-              </a>
+              </button>
             </GlowingCard>
 
             <GlowingCard glowColor="#ef4444" className="flex flex-col h-full bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 shadow-sm">
@@ -163,9 +175,9 @@ export default function ContactSupportContent() {
               <p className="text-gray-600 dark:text-slate-400 mb-6 flex-grow">
                 To report fake listings, spam, scams, or other terms of service violations.
               </p>
-              <a href="mailto:abuse@boardtau.xyz" className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 font-semibold rounded-lg transition-colors border border-gray-200 dark:border-slate-700">
+              <button onClick={() => openModal('Report Abuse', 'Report Abuse')} className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 font-semibold rounded-lg transition-colors border border-gray-200 dark:border-slate-700 cursor-pointer">
                 <Mail className="w-4 h-4" /> abuse@boardtau.xyz
-              </a>
+              </button>
             </GlowingCard>
 
             <GlowingCard glowColor="#3b82f6" className="flex flex-col h-full bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 shadow-sm">
@@ -178,14 +190,22 @@ export default function ContactSupportContent() {
               <p className="text-gray-600 dark:text-slate-400 mb-6 flex-grow">
                 For legal matters, data privacy requests, or law enforcement inquiries.
               </p>
-              <a href="mailto:legal@boardtau.xyz" className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-semibold rounded-lg transition-colors border border-gray-200 dark:border-slate-700">
+              <button onClick={() => openModal('Legal Compliance', 'Legal Compliance')} className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-semibold rounded-lg transition-colors border border-gray-200 dark:border-slate-700 cursor-pointer">
                 <Mail className="w-4 h-4" /> legal@boardtau.xyz
-              </a>
+              </button>
             </GlowingCard>
           </GlowingCards>
         </motion.div>
 
       </div>
     </div>
+
+      <ContactSupportModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialSubject={modalSubject}
+        title={modalTitle}
+      />
+    </>
   );
 }

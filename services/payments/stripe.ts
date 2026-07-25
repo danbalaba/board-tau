@@ -64,6 +64,7 @@ export const createStripeCheckoutSession = async (inquiryId: string) => {
     cancel_url: `${baseUrl}/listings/${inquiry.listingId}`,
     payment_method_types: ['card'],
     mode: 'payment',
+    customer_email: user?.email || undefined,
     metadata: {
       inquiryId,
       listingId: inquiry.listingId,

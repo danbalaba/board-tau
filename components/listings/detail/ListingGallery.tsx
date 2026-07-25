@@ -112,10 +112,26 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
         window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(pageUrl)}`);
         break;
       case "messages":
-        window.open(`sms:?&body=${encodeURIComponent(`${title} — ${pageUrl}`)}`);
+        window.open(`sms:?body=${encodeURIComponent(`${title} — ${pageUrl}`)}`);
         break;
     }
   };
+
+  const cleanupRef = useRef<(() => void) | null>(null);
+  const scrollLockRef = React.useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      const preventScroll = (e: Event) => e.preventDefault();
+      node.addEventListener("wheel", preventScroll, { passive: false });
+      node.addEventListener("touchmove", preventScroll, { passive: false });
+      cleanupRef.current = () => {
+        node.removeEventListener("wheel", preventScroll);
+        node.removeEventListener("touchmove", preventScroll);
+      };
+    } else if (cleanupRef.current) {
+      cleanupRef.current();
+      cleanupRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     if (thumbnailScrollRef.current) {
@@ -194,7 +210,22 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
 
         <div className="flex items-center gap-3 pointer-events-auto">
           <button
-            onClick={() => setShowShareModal(true)}
+            onClick={async () => {
+              if (navigator.share) {
+                try {
+                  await navigator.share({
+                    title: title,
+                    url: window.location.href
+                  });
+                } catch (err) {
+                  if ((err as Error).name !== 'AbortError') {
+                    setShowShareModal(true);
+                  }
+                }
+              } else {
+                setShowShareModal(true);
+              }
+            }}
             className="w-10 h-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-full shadow-md border border-gray-200/50 dark:border-gray-700/50 flex items-center justify-center active:scale-95 transition-all outline-none"
           >
             <Share size={18} strokeWidth={2.5} className="text-gray-900 dark:text-gray-100" />
@@ -397,6 +428,7 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
       <AnimatePresence>
         {showShareModal && (
           <motion.div
+            ref={scrollLockRef}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

@@ -9,6 +9,7 @@ import { DateRange } from "react-day-picker";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import Webcam from "react-webcam";
 import { base64ToFile } from "./InquiryModalUtils";
+import { faceMatcher } from "@/lib/mediapipe/face-matcher";
 
 export interface FormData {
   moveInDate: string;
@@ -48,10 +49,8 @@ export const useInquiryLogic = (
   const [isFaceAligned, setIsFaceAligned] = useState(false);
   const [isIDAligned, setIsIDAligned] = useState(false);
   const [isPhoneDetected, setIsPhoneDetected] = useState(false);
-  const [hasUserBlinked, setHasUserBlinked] = useState(false);
-  // Blink state machine: tracks the full Open→Closed→Open cycle
-  const blinkPhase = useRef<'idle' | 'eye_closed' | 'confirmed'>('idle');
-  const consecutiveClosedFrames = useRef(0);  // Must sustain 2 frames to avoid blur spikes
+  const [livenessStatus, setLivenessStatus] = useState<'idle' | 'passed'>('idle');
+  const [activeChallenges, setActiveChallenges] = useState<('blink' | 'smile' | 'turnLeft' | 'turnRight')[]>([]);
   const consecutiveFaceFailures = useRef(0);  // Resets liveness if face disappears
   const consecutiveIDFailures = useRef(0);    // Buffer for ID detection jitter
   const [hasReadGuidelines, setHasReadGuidelines] = useState(false);
@@ -117,17 +116,21 @@ export const useInquiryLogic = (
   // Watch for step completion checks
   const watchedValues = watch(['paymentMethod', 'moveInDate', 'checkOutDate', 'role', 'contactMethod', 'contactInfo', 'message', 'occupantsCount', 'isSoloBuyout']);
 
-  // Effect 1: Reset ALL blink state ONLY when entering step 5 or selfie is cleared
+  // Effect 1: Reset ALL liveness state ONLY when entering step 5 or selfie is cleared
   useEffect(() => {
     if (currentStep === 5 && !capturedSelfie) {
-      setHasUserBlinked(false);
-      blinkPhase.current = 'idle';
-      consecutiveClosedFrames.current = 0;
+      setLivenessStatus('idle');
+      
+      // Pick 2 random challenges
+      const challenges: ('blink' | 'smile' | 'turnLeft' | 'turnRight')[] = ['blink', 'smile', 'turnLeft', 'turnRight'];
+      const shuffled = [...challenges].sort(() => 0.5 - Math.random());
+      setActiveChallenges(shuffled.slice(0, 2));
+      
       consecutiveFaceFailures.current = 0;
     }
   }, [currentStep, capturedSelfie]);
 
-  // Effect 2: Real-time scanning loop (hasUserBlinked intentionally NOT in deps)
+  // Effect 2: Real-time scanning loop
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (currentStep === 5 && !capturedSelfie && !isProcessing) {
@@ -140,54 +143,50 @@ export const useInquiryLogic = (
 
           // FACE-LOSS DETECTION: Reset liveness if face disappears for 3+ consecutive polls (600ms)
           // Catches: user switches from real face to phone photo AFTER confirming liveness
-          if (blinkPhase.current === 'confirmed') {
+          if (livenessStatus === 'passed') {
             if (!result.isValid) {
               consecutiveFaceFailures.current += 1;
               if (consecutiveFaceFailures.current >= 3) {
-                // Face gone too long — reset everything, require a new blink
-                blinkPhase.current = 'idle';
-                consecutiveClosedFrames.current = 0;
+                setLivenessStatus('idle');
+                const challenges: ('blink' | 'smile' | 'turnLeft' | 'turnRight')[] = ['blink', 'smile', 'turnLeft', 'turnRight'];
+                const shuffled = [...challenges].sort(() => 0.5 - Math.random());
+                setActiveChallenges(shuffled.slice(0, 2));
                 consecutiveFaceFailures.current = 0;
-                setHasUserBlinked(false);
               }
             } else {
               consecutiveFaceFailures.current = 0; // Face back in frame, reset counter
             }
-            return; // Skip blink detection once confirmed (unless reset above)
+            return; // Skip liveness detection once confirmed (unless reset above)
           }
 
-          // 3-Phase Blink State Machine
-          const scores = await faceEngine.getBlinkScores(video);
-          if (scores) {
-            // Threshold 0.60: high enough to block zoom-blur spikes (which peak ~0.45-0.55)
-            const bothClosed = scores.left > 0.60 && scores.right > 0.60;
-            const bothOpen   = scores.left < 0.20 && scores.right < 0.20;
-
-            if (blinkPhase.current === 'idle') {
-              if (bothClosed) {
-                consecutiveClosedFrames.current += 1;
-                // Require 2 consecutive closed frames (400ms) — blur lasts only ~1 frame
-                if (consecutiveClosedFrames.current >= 2) {
-                  blinkPhase.current = 'eye_closed';
-                  consecutiveClosedFrames.current = 0;
-                }
+          // Check active challenge
+          const state = await faceEngine.getLivenessState(video);
+          if (state && livenessStatus === 'idle' && activeChallenges.length > 0) {
+            const currentChallenge = activeChallenges[0];
+            
+            // Require the state to be present and explicitly held
+            if (
+              (currentChallenge === 'blink' && state.blink) ||
+              (currentChallenge === 'smile' && state.smile) ||
+              (currentChallenge === 'turnLeft' && state.turnLeft) ||
+              (currentChallenge === 'turnRight' && state.turnRight)
+            ) {
+              if (activeChallenges.length > 1) {
+                // Move to next challenge
+                setActiveChallenges(prev => prev.slice(1));
               } else {
-                consecutiveClosedFrames.current = 0; // Reset if not sustained
+                // All challenges passed
+                setLivenessStatus('passed');
               }
-            } else if (blinkPhase.current === 'eye_closed' && bothOpen) {
-              // Phase 2→3: Full open→close→open cycle confirmed — fires ONCE
-              blinkPhase.current = 'confirmed';
               consecutiveFaceFailures.current = 0;
-              setHasUserBlinked(true);
             }
           }
         }
       }, 200);
     }
     return () => clearInterval(interval);
-  // ⚠️ hasUserBlinked deliberately excluded — adding it would cause a reset loop
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, capturedSelfie, isProcessing, faceEngine]);
+  }, [currentStep, capturedSelfie, isProcessing, faceEngine, activeChallenges, livenessStatus]);
 
 
   useEffect(() => {
@@ -231,9 +230,9 @@ export const useInquiryLogic = (
     const video = webcamRef.current?.video;
     if (!video) return;
 
-    // LIVENESS GATE: User must have blinked to prove they are real
-    if (!hasUserBlinked) {
-      responsiveToast.error("Liveness check required. Please blink naturally to prove you're real.");
+    // LIVENESS GATE: User must have passed the active challenge
+    if (livenessStatus !== 'passed') {
+      responsiveToast.error("Liveness check required. Please perform the requested action to prove you're real.");
       return;
     }
 
@@ -269,11 +268,62 @@ export const useInquiryLogic = (
       return;
     }
 
-    // Only if the LIVE frame passed all checks, save the screenshot
+    // Capture the ID screenshot
     const imageSrc = webcamRef.current?.getScreenshot();
     if (imageSrc) {
-      setCapturedID(imageSrc);
-      responsiveToast.success("ID card detected!");
+      if (!capturedSelfie) {
+        responsiveToast.error("Selfie not found. Please complete the selfie step first.");
+        return;
+      }
+
+      const _setLoading = (window as any)._setIsProcessing;
+      if (_setLoading) _setLoading(true);
+
+      try {
+        // Load images into Image elements for face-api
+        const loadImage = (src: string): Promise<HTMLImageElement> => {
+          return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = src;
+          });
+        };
+
+        const [selfieImg, idImg] = await Promise.all([
+          loadImage(capturedSelfie),
+          loadImage(imageSrc)
+        ]);
+
+        const [selfieDescriptor, idDescriptor] = await Promise.all([
+          faceMatcher.getFaceDescriptor(selfieImg),
+          faceMatcher.getFaceDescriptor(idImg, 0.2) // Explicitly lower threshold for ID
+        ]);
+
+        if (!selfieDescriptor) {
+          responsiveToast.error("Could not verify your live selfie. Please retake it.");
+          return;
+        }
+
+        if (!idDescriptor) {
+          responsiveToast.error("Could not detect a face on your ID card. Please hold it closer and ensure it's well-lit.");
+          return;
+        }
+
+        const distance = faceMatcher.getFaceDistance(selfieDescriptor, idDescriptor);
+        if (distance > 0.6) {
+          responsiveToast.error(`Face mismatch (dist: ${distance.toFixed(2)}). The ID does not match the selfie.`);
+          return;
+        }
+
+        setCapturedID(imageSrc);
+        responsiveToast.success("ID card matched successfully!");
+      } catch (error) {
+        console.error("Face matching error:", error);
+        responsiveToast.error("Failed to perform face matching.");
+      } finally {
+        if (_setLoading) _setLoading(false);
+      }
     }
   };
 
@@ -447,7 +497,7 @@ export const useInquiryLogic = (
     capturedSelfie, setCapturedSelfie,
     setIsFaceAligned,
     capturedID, setCapturedID,
-    hasUserBlinked,
+    livenessStatus, activeChallenge: activeChallenges[0] || 'blink',
     setIsIDAligned, setIsPhoneDetected,
     facingMode, isFlashActive, direction,
     dateRange, setDateRange,

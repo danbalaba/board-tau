@@ -103,7 +103,7 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({
       case 2: return <PropertyEvidenceStep register={logic.register} errors={logic.errors} watch={logic.watch} setValue={logic.setValue} facadeFile={logic.facadeFile} setFacadeFile={logic.setFacadeFile} />;
       case 3: return <LegalDocumentsStep permitFile={logic.permitFile} setPermitFile={logic.setPermitFile} fireSafetyFile={logic.fireSafetyFile} setFireSafetyFile={logic.setFireSafetyFile} />;
       case 4: return <PrepareStep hasReadGuidelines={logic.hasReadGuidelines} setHasReadGuidelines={logic.setHasReadGuidelines} />;
-      case 5: return <SelfieStep capturedSelfie={logic.capturedSelfie} setCapturedSelfie={logic.setCapturedSelfie} webcamRef={logic.webcamRef as React.RefObject<Webcam>} facingMode={logic.facingMode} isFaceAligned={logic.isFaceAligned} hasUserBlinked={logic.hasUserBlinked} setIsFaceAligned={logic.setIsFaceAligned} isProcessing={logic.isProcessing} isFlashActive={logic.isFlashActive} toggleCamera={() => logic.setFacingMode(prev => prev === 'user' ? 'environment' : 'user')} handleCaptureSelfie={logic.handleCaptureSelfie} />;
+      case 5: return <SelfieStep capturedSelfie={logic.capturedSelfie} setCapturedSelfie={logic.setCapturedSelfie} webcamRef={logic.webcamRef as React.RefObject<Webcam>} facingMode={logic.facingMode} isFaceAligned={logic.isFaceAligned} livenessStatus={logic.livenessStatus} activeChallenge={logic.activeChallenge} setIsFaceAligned={logic.setIsFaceAligned} isProcessing={logic.isProcessing} isFlashActive={logic.isFlashActive} toggleCamera={() => logic.setFacingMode(prev => prev === 'user' ? 'environment' : 'user')} handleCaptureSelfie={logic.handleCaptureSelfie} />;
       case 6: return <IDStep capturedID={logic.capturedID} setCapturedID={logic.setCapturedID} webcamRef={logic.webcamRef as React.RefObject<Webcam>} facingMode={logic.facingMode} isIDAligned={logic.isIDAligned} setIsIDAligned={logic.setIsIDAligned} isProcessing={logic.isProcessing} isFlashActive={logic.isFlashActive} toggleCamera={() => logic.setFacingMode(prev => prev === 'user' ? 'environment' : 'user')} handleCaptureID={logic.handleCaptureID} isPhoneDetected={logic.isPhoneDetected} />;
       case 7: return <ReviewStep watch={logic.watch} onBack={logic.prevStep} capturedSelfie={logic.capturedSelfie} capturedID={logic.capturedID} facadeFile={logic.facadeFile} permitFile={logic.permitFile} fireSafetyFile={logic.fireSafetyFile} />;
       default: return null;
@@ -116,10 +116,10 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({
         <div className="flex-1 min-h-0 flex overflow-hidden">
           {/* Sidebar */}
           {!logic.submitted && (
-            <div className="w-[280px] bg-[#1e293b] hidden lg:flex flex-col shrink-0 relative overflow-hidden">
+            <div className="w-[280px] bg-gray-50 border-r border-gray-100 dark:border-none dark:bg-[#1e293b] hidden lg:flex flex-col shrink-0 relative overflow-hidden">
               {/* Sidebar Header */}
               <div className="p-8 pb-10">
-                <h2 className="text-lg font-bold text-white tracking-tight">Host Application</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Host Application</h2>
               </div>
               
               <div className="flex-1 px-4 space-y-1 relative z-10">
@@ -129,8 +129,8 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({
                     className={cn(
                       "relative p-3 rounded-xl transition-all duration-300 flex items-center gap-4 cursor-default group",
                       logic.step === idx 
-                        ? "bg-emerald-500/10 text-emerald-400" 
-                        : "text-gray-400 hover:text-gray-200"
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
+                        : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
                     )}
                   >
                     {/* Active Indicator Bar */}
@@ -145,7 +145,7 @@ const HostApplicationModal: React.FC<HostApplicationModalProps> = ({
                       "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500",
                       logic.step === idx 
                         ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
-                        : "bg-gray-800 text-gray-500 group-hover:bg-gray-700"
+                        : "bg-gray-200 text-gray-500 group-hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-500 dark:group-hover:bg-gray-700"
                     )}>
                       <stepConfig.icon size={16} />
                     </div>

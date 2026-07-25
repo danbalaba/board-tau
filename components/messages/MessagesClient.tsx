@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import Heading from "@/components/common/Heading";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { useNotification } from "@/context/NotificationContext";
+import { IconChevronLeft } from "@tabler/icons-react";
 
 interface MessagesClientProps {
   initialConversations: TenantConversation[];
@@ -45,7 +46,7 @@ const MessagesClient: React.FC<MessagesClientProps> = ({
   } = useMessages(initialConversations, currentUserId);
   const { notifications, markAsRead } = useNotification();
 
-  const [mobileView, setMobileView] = useState<"list" | "chat">("chat");
+  const [mobileView, setMobileView] = useState<"list" | "chat">("list");
   const [showInfo, setShowInfo] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -102,13 +103,7 @@ const MessagesClient: React.FC<MessagesClientProps> = ({
     }
   }, [searchParams, conversations, setActiveConversation]);
 
-  // Auto-select the first conversation on mobile if none is selected
-  useEffect(() => {
-    if (isMobile && !activeConversation && conversations.length > 0 && !hasAutoSelected.current) {
-      setActiveConversation(conversations[0]);
-      setMobileView("chat");
-    }
-  }, [isMobile, activeConversation, conversations, setActiveConversation]);
+  // We no longer auto-select the first conversation on mobile so the user sees their inbox list first.
 
   // Clear unread notifications from context when a conversation is active
   useEffect(() => {
@@ -120,7 +115,8 @@ const MessagesClient: React.FC<MessagesClientProps> = ({
     }
   }, [activeConversation, notifications, markAsRead]);
 
-  // Handle Double Tap for Quick Return
+  // Quick Return to chat via visible floating tab on the right edge
+  // Also supporting the original Double Tap on the right edge for additional navigation
   const lastTap = useRef<number>(0);
   const handleDoubleTap = () => {
     const now = Date.now();
@@ -131,21 +127,13 @@ const MessagesClient: React.FC<MessagesClientProps> = ({
   };
 
   return (
-    <section className="w-full px-0 md:px-8 lg:px-12 py-0 md:py-8 flex flex-col h-full overflow-hidden">
-      <div className="hidden md:block">
-        <Heading 
-          title="Messages" 
-          subtitle="Stay connected with your landlords and boarding house owners"
-          backBtn 
-        />
-      </div>
-      
-      <div className="flex h-[calc(100dvh-80px)] md:h-[calc(100vh-220px)] max-h-[900px] md:mt-8 bg-white dark:bg-gray-900 overflow-hidden md:rounded-[2.5rem] md:border border-gray-100 dark:border-gray-800 shadow-glass relative">
+    <section className="w-full px-0 md:px-8 lg:px-12 py-0 md:py-4 flex flex-col h-full overflow-hidden">
+      <div className="w-full flex h-[calc(100dvh-80px)] fixed inset-0 bottom-[80px] md:relative md:inset-auto md:h-[calc(100vh-120px)] max-h-[900px] md:mt-0 bg-white dark:bg-gray-900 overflow-hidden md:rounded-[2.5rem] md:border border-gray-100 dark:border-gray-800 shadow-glass z-0 md:z-auto">
       {/* Sidebar - Conversations List */}
       <motion.div 
         className={cn(
           "w-full md:w-[380px] h-full md:flex-shrink-0 transition-all z-20 relative min-w-0",
-          activeConversation && mobileView === "chat" ? "hidden md:flex" : "flex"
+          mobileView === "chat" ? "hidden md:flex" : "flex"
         )}
         drag={isMobile ? "x" : false}
         dragConstraints={{ left: 0, right: 0 }}
@@ -169,11 +157,24 @@ const MessagesClient: React.FC<MessagesClientProps> = ({
           isLoading={false}
         />
 
-        {/* Double Tap Quick-Return Zone (The Line) */}
-        {isMobile && activeConversation && (
+        {/* Quick-Return Tab (Visible on mobile when viewing list but a chat is active) */}
+        {isMobile && activeConversation && mobileView === "list" && (
+          <div 
+            onClick={() => setMobileView("chat")}
+            className="absolute top-1/2 right-0 -translate-y-1/2 bg-white dark:bg-gray-800 shadow-[0_4px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-gray-700 border-r-0 rounded-l-2xl py-3 px-1 z-30 cursor-pointer active:bg-gray-50 flex items-center justify-center animate-pulse-slow"
+          >
+            <div className="flex flex-col items-center gap-1 opacity-60">
+              <div className="w-1 h-6 bg-gray-400 dark:bg-gray-500 rounded-full" />
+              <IconChevronLeft className="w-4 h-4 text-gray-500 dark:text-gray-400 rotate-180 -ml-0.5" />
+            </div>
+          </div>
+        )}
+
+        {/* Double Tap Quick-Return Zone (Additional Navigation) */}
+        {isMobile && activeConversation && mobileView === "list" && (
           <div 
             onClick={handleDoubleTap}
-            className="absolute top-0 right-0 w-12 h-full z-30 cursor-pointer active:bg-primary/10 transition-colors"
+            className="absolute top-0 right-0 w-12 h-full z-20 cursor-pointer active:bg-primary/10 transition-colors"
             title="Double tap to return to chat"
           />
         )}
@@ -181,23 +182,27 @@ const MessagesClient: React.FC<MessagesClientProps> = ({
 
       {/* Main Chat Area */}
       <motion.div 
-        className="flex-1 h-full min-w-0 flex"
-        drag={isMobile ? "x" : false}
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.05}
-        onDragEnd={(_, info) => {
-          if (!isMobile) return;
-          // Swipe Right to go to list
-          if (info.offset.x > 40) {
-            setMobileView("list");
-          }
-        }}
-        style={{ touchAction: 'pan-y' }}
+        className={cn(
+          "flex-1 h-full min-w-0 transition-all relative",
+          mobileView === "list" ? "hidden md:flex" : "flex"
+        )}
       >
-        <div className={cn(
-          "flex-1 h-full min-w-0 transition-all",
-          !activeConversation && mobileView === "list" ? "hidden md:flex" : "flex"
-        )}>
+        {/* Native-feeling Edge Swipe Zone to go back */}
+        {isMobile && mobileView === "chat" && (
+          <motion.div
+            className="absolute top-0 left-0 w-6 h-full z-30 touch-pan-y"
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.05}
+            onDragEnd={(_, info) => {
+              if (info.offset.x > 40) {
+                setMobileView("list");
+              }
+            }}
+          />
+        )}
+
+        <div className="flex-1 h-full min-w-0 flex transition-all">
           <ChatView 
             activeConversation={activeConversation}
             messages={messages}

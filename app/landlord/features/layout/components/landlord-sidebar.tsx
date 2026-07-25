@@ -94,7 +94,7 @@ const navItems = [
 import Skeleton from '@/components/common/Skeleton';
 
 export default function LandlordSidebar() {
-  const pathname = usePathname();
+  const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
   const { state } = useSidebar();
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -114,12 +114,12 @@ export default function LandlordSidebar() {
       collapsible='icon'
       className={cn(
         'border-r border-gray-200/50 dark:border-gray-800/50 bg-white/70 dark:bg-gray-950/70 backdrop-blur-xl',
-        mounted && 'transition-all duration-500 ease-in-out'
+        mounted && 'transition-[width,padding] duration-500 ease-in-out'
       )}
     >
       <SidebarHeader className={cn(
         'pt-8 px-8 pb-4 mb-4 overflow-hidden',
-        mounted && 'transition-all duration-500 ease-in-out',
+        mounted && 'transition-[padding] duration-500 ease-in-out',
         state === 'collapsed' && 'pt-4 px-2 pb-2 mb-2'
       )}>
         {!mounted ? (
@@ -168,7 +168,7 @@ export default function LandlordSidebar() {
 
       <SidebarContent className={cn(
         'px-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
-        mounted && 'transition-all duration-500 ease-in-out',
+        mounted && 'transition-[padding] duration-500 ease-in-out',
         state === 'collapsed' && 'px-0'
       )}>
         <SidebarGroup>
@@ -254,7 +254,7 @@ export default function LandlordSidebar() {
 
       <SidebarFooter className={cn(
         'p-8 mt-auto border-t border-gray-100/50 dark:border-gray-800/50 bg-gray-50/30 dark:bg-white/5 overflow-hidden',
-        mounted && 'transition-all duration-500 ease-in-out',
+        mounted && 'transition-[padding] duration-500 ease-in-out',
         state === 'collapsed' && 'p-2'
       )}>
         {!mounted ? (

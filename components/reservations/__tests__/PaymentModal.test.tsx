@@ -77,10 +77,11 @@ describe('PaymentModal', () => {
     render(<PaymentModal reservation={mockReservation} isOpen={true} onClose={() => {}} />);
     
     // Default method should be GCASH as per mockReservation
-    const gcashRadio = screen.getByDisplayValue('GCASH') as HTMLInputElement;
+    const gcashRadios = screen.getAllByDisplayValue('GCASH');
+    const gcashRadio = gcashRadios[0] as HTMLInputElement;
     expect(gcashRadio.checked).toBe(true);
 
-    const slideConfirmBtn = screen.getByTestId('slide-confirm');
+    const slideConfirmBtn = screen.getAllByTestId('slide-confirm')[0];
     fireEvent.click(slideConfirmBtn);
 
     await waitFor(() => {
@@ -99,7 +100,7 @@ describe('PaymentModal', () => {
 
     render(<PaymentModal reservation={mockReservation} isOpen={true} onClose={onClose} onPaymentSuccess={onPaymentSuccess} />);
     
-    const slideConfirmBtn = screen.getByTestId('slide-confirm');
+    const slideConfirmBtn = screen.getAllByTestId('slide-confirm')[0];
     fireEvent.click(slideConfirmBtn);
 
     await waitFor(() => {
@@ -117,7 +118,7 @@ describe('PaymentModal', () => {
 
     render(<PaymentModal reservation={mockReservation} isOpen={true} onClose={() => {}} />);
     
-    const slideConfirmBtn = screen.getByTestId('slide-confirm');
+    const slideConfirmBtn = screen.getAllByTestId('slide-confirm')[0];
     fireEvent.click(slideConfirmBtn);
 
     await waitFor(() => {

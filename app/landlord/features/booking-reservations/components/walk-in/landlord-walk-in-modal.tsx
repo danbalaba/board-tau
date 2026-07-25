@@ -38,8 +38,12 @@ const LandlordWalkInModal: React.FC<LandlordWalkInModalProps> = ({
 
   // Prevent scroll when modal is open
   useEffect(() => {
-    if (isOpen) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "auto";
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+      modal.resetState();
+    }
     return () => { document.body.style.overflow = "auto"; };
   }, [isOpen]);
 
@@ -110,7 +114,8 @@ const LandlordWalkInModal: React.FC<LandlordWalkInModalProps> = ({
             webcamRef={modal.webcamRef}
             facingMode={modal.facingMode}
             isFaceAligned={modal.isFaceAligned}
-            hasUserBlinked={modal.hasUserBlinked}
+            livenessStatus={modal.livenessStatus}
+            activeChallenge={modal.activeChallenge}
             setIsFaceAligned={modal.setIsFaceAligned}
             isProcessing={modal.isProcessing}
             isFlashActive={modal.isFlashActive}

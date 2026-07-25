@@ -45,90 +45,38 @@ export default function HeroSection() {
 
   return (
     <section ref={containerRef} className="relative min-h-[60vh] md:min-h-[550px] overflow-hidden pt-24 md:pt-28">
-      {/* Light Mode Animated Background with Depth */}
-      <motion.div
-        className="absolute inset-0 hidden dark:block"
-        animate={{
-          background: [
-            "linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #0f172a 50%, #1e293b 75%, #0f172a 100%)",
-            "linear-gradient(135deg, #1e293b 0%, #0f172a 25%, #1e293b 50%, #0f172a 75%, #1e293b 100%)",
-            "linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #0f172a 50%, #1e293b 75%, #0f172a 100%)"
-          ]
-        }}
-        transition={{ duration: 12, repeat: Infinity, repeatType: "reverse" }}
-      />
+      {/* Dark Mode Static Background */}
+      <div className="absolute inset-0 hidden dark:block bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a]" />
 
       {/* Light Mode - Bold Base Gradient Atmosphere */}
-      <motion.div
-        className="absolute inset-0 dark:hidden"
-        animate={{
-          background: [
-            "linear-gradient(135deg, #e6f4f1 0%, #f0f9ff 25%, #f8fafc 50%, #f0f9ff 75%, #e6f4f1 100%)",
-            "linear-gradient(135deg, #f0f9ff 0%, #f8fafc 25%, #e6f4f1 50%, #f8fafc 75%, #f0f9ff 100%)",
-            "linear-gradient(135deg, #e6f4f1 0%, #f0f9ff 25%, #f8fafc 50%, #f0f9ff 75%, #e6f4f1 100%)"
-          ]
-        }}
-        transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
-      />
+      <div className="absolute inset-0 dark:hidden bg-gradient-to-br from-[#e6f4f1] via-[#f0f9ff] to-[#f8fafc]" />
 
       {/* Light Mode - Intense Green Glow Layer */}
-      <motion.div
-        className="absolute inset-0 dark:hidden opacity-[0.25]"
-        animate={{
-          background: [
-            "radial-gradient(ellipse at 20% 35%, #86efac 0%, transparent 55%)",
-            "radial-gradient(ellipse at 80% 65%, #bbf7d0 0%, transparent 55%)",
-            "radial-gradient(ellipse at 50% 20%, #86efac 0%, transparent 55%)"
-          ]
-        }}
-        transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
+      <div 
+        className="absolute inset-0 dark:hidden opacity-[0.25] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 20% 35%, #86efac 0%, transparent 55%)" }}
       />
 
       {/* Light Mode - Vibrant Blue Atmospheric Layer */}
-      <motion.div
-        className="absolute inset-0 dark:hidden opacity-[0.2]"
-        animate={{
-          background: [
-            "radial-gradient(ellipse at 90% 90%, #7dd3fc 0%, transparent 60%)",
-            "radial-gradient(ellipse at 10% 10%, #bae6fd 0%, transparent 60%)",
-            "radial-gradient(ellipse at 70% 80%, #7dd3fc 0%, transparent 60%)"
-          ]
-        }}
-        transition={{ duration: 20, repeat: Infinity, repeatType: "reverse" }}
+      <div 
+        className="absolute inset-0 dark:hidden opacity-[0.2] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 90% 90%, #7dd3fc 0%, transparent 60%)" }}
       />
 
       {/* Light Mode - Blurred Green Shape Behind Headline */}
-      <motion.div
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[600px] dark:hidden blur-[120px] opacity-[0.45]"
-        animate={{
-          background: [
-            "radial-gradient(ellipse, #bbf7d0 0%, transparent 70%)",
-            "radial-gradient(ellipse, #86efac 0%, transparent 70%)",
-            "radial-gradient(ellipse, #bbf7d0 0%, transparent 70%)"
-          ],
-          scale: [1, 1.15, 1],
-          y: [0, -25, 0]
-        }}
-        transition={{ duration: 12, repeat: Infinity, repeatType: "reverse" }}
+      <div 
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[1000px] h-[600px] dark:hidden blur-[80px] md:blur-[120px] opacity-[0.45] pointer-events-none transform-gpu"
+        style={{ background: "radial-gradient(ellipse, #bbf7d0 0%, transparent 70%)" }}
       />
 
       {/* Light Mode - Blurred Blue Shape Behind Search Bar */}
-      <motion.div
-        className="absolute bottom-32 left-1/2 -translate-x-1/2 w-[900px] h-[400px] dark:hidden blur-[100px] opacity-[0.4]"
-        animate={{
-          background: [
-            "radial-gradient(ellipse, #bae6fd 0%, transparent 70%)",
-            "radial-gradient(ellipse, #7dd3fc 0%, transparent 70%)",
-            "radial-gradient(ellipse, #bae6fd 0%, transparent 70%)"
-          ],
-          scale: [1, 1.1, 1],
-          y: [0, 15, 0]
-        }}
-        transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
+      <div 
+        className="absolute bottom-32 left-1/2 -translate-x-1/2 w-full max-w-[900px] h-[400px] dark:hidden blur-[70px] md:blur-[100px] opacity-[0.4] pointer-events-none transform-gpu"
+        style={{ background: "radial-gradient(ellipse, #bae6fd 0%, transparent 70%)" }}
       />
 
       {/* Enhanced Vignette */}
-      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/20 dark:to-black/30" />
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/20 dark:to-black/30 pointer-events-none" />
 
       {/* Noise Texture - More Visible */}
       <div
@@ -139,24 +87,10 @@ export default function HeroSection() {
       />
 
       {/* Main Radial Highlight Behind Headline */}
-      <motion.div
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1400px] h-[1400px] bg-gradient-radial from-white/50 to-transparent dark:from-gray-800/40 rounded-full blur-3xl pointer-events-none"
-        animate={{
-          scale: [1, 1.1, 1],
-          opacity: [0.8, 1, 0.8]
-        }}
-        transition={{ duration: 8, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-      />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] md:w-[1400px] h-[800px] md:h-[1400px] bg-white/40 dark:bg-gray-800/30 rounded-full blur-[80px] md:blur-[120px] pointer-events-none transform-gpu opacity-80" />
 
       {/* Secondary Radial Light for Search Bar */}
-      <motion.div
-        className="absolute bottom-32 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-radial from-white/40 to-transparent dark:from-gray-800/30 rounded-full blur-2xl pointer-events-none"
-        animate={{
-          y: [0, -20, 0],
-          opacity: [0.7, 1, 0.7]
-        }}
-        transition={{ duration: 6, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-      />
+      <div className="absolute bottom-32 left-1/2 -translate-x-1/2 w-[600px] md:w-[1000px] h-[400px] md:h-[600px] bg-white/40 dark:bg-gray-800/20 rounded-full blur-[60px] md:blur-[100px] pointer-events-none transform-gpu opacity-80" />
 
       <motion.div
         className="relative main-container h-full min-h-[60vh] md:min-h-[550px] flex flex-col items-center"

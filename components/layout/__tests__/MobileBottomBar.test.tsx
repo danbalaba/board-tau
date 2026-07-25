@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useNotification } from '@/context/NotificationContext';
 
 jest.mock('next/navigation', () => ({
-  useRouter: jest.fn()
+  useRouter: jest.fn(),
+  usePathname: jest.fn(() => '/')
 }));
 
 jest.mock('@/context/NotificationContext', () => ({

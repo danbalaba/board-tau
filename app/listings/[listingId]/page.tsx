@@ -126,28 +126,64 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
   // Guaranteed true average based on fetched reviews
   const actualRating = calculateAverageRating(listing.reviews || [], listing.rating);
 
-  // JSON-LD Schema Markup for Google Rich Snippets
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://board-tau-rho.vercel.app";
+
+  // JSON-LD Schema Markup for Google Rich Snippets (LodgingBusiness = qualifies for star ratings in search)
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Accommodation",
+    "@type": "LodgingBusiness",
     "name": title,
-    "image": imageSrc,
+    "image": [imageSrc, ...(images?.map((img: any) => img.url) || [])].filter(Boolean),
     "description": description,
+    "url": `${baseUrl}/listings/${id}`,
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": region,
+      "streetAddress": region,
+      "addressLocality": "Camiling",
       "addressRegion": "Tarlac",
-      "addressCountry": "PH"
+      "addressCountry": "PH",
+      "postalCode": "2306"
     },
-    "aggregateRating": reviewCount > 0 ? {
-      "@type": "AggregateRating",
-      "ratingValue": actualRating > 0 ? actualRating : 4.8,
-      "reviewCount": reviewCount
-    } : undefined,
+    ...(latitude && longitude ? {
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": latitude,
+        "longitude": longitude
+      }
+    } : {}),
+    ...(reviewCount > 0 ? {
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": actualRating > 0 ? actualRating.toFixed(1) : "4.8",
+        "reviewCount": reviewCount,
+        "bestRating": "5",
+        "worstRating": "1"
+      }
+    } : {}),
+    "priceRange": `₱${price}/month`,
     "offers": {
       "@type": "Offer",
       "priceCurrency": "PHP",
       "price": price,
+      "priceSpecification": {
+        "@type": "UnitPriceSpecification",
+        "price": price,
+        "priceCurrency": "PHP",
+        "unitText": "MON"
+      },
+      "availability": "https://schema.org/InStock",
+      "url": `${baseUrl}/listings/${id}`
+    },
+    "amenityFeature": amenities.map((a) => ({
+      "@type": "LocationFeatureSpecification",
+      "name": a,
+      "value": true
+    })),
+    "numberOfRooms": roomCount,
+    "numberOfBathroomsTotal": bathroomCount,
+    "starRating": {
+      "@type": "Rating",
+      "ratingValue": actualRating > 0 ? actualRating.toFixed(1) : "4.8"
     }
   };
 

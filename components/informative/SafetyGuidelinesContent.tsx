@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ShieldCheck, 
@@ -13,8 +13,10 @@ import {
 } from 'lucide-react';
 import { GlowingCards, GlowingCard } from '@/components/lightswind/glowing-cards';
 import { InteractiveCard } from '@/components/lightswind/interactive-card';
+import ContactSupportModal from '@/components/modals/ContactSupportModal';
 
 export default function SafetyGuidelinesContent() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const guidelines = [
     {
       icon: ScanFace,
@@ -43,6 +45,7 @@ export default function SafetyGuidelinesContent() {
   ];
 
   return (
+    <>
     <div className="min-h-screen bg-[#f8faf9] dark:bg-slate-900 text-gray-900 dark:text-slate-100 transition-colors duration-300">
       {/* Hero Header */}
       <div className="pt-32 pb-16 text-center border-b border-neutral-200/50 dark:border-slate-800">
@@ -141,17 +144,25 @@ export default function SafetyGuidelinesContent() {
               </p>
             </div>
             <div className="pt-4">
-              <a
-                href="mailto:abuse@boardtau.xyz"
+            <button
+                onClick={() => setIsModalOpen(true)}
                 className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-8 py-4 rounded-xl font-bold shadow-md transition-all duration-300 hover:scale-[1.02] relative z-20 cursor-pointer"
               >
-                Report to abuse@boardtau.xyz <ArrowRight className="w-5 h-5" />
-              </a>
+                Report Suspicious Activity <ArrowRight className="w-5 h-5" />
+              </button>
             </div>
           </motion.div>
         </InteractiveCard>
 
       </div>
     </div>
+
+      <ContactSupportModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialSubject="Report Suspicious Activity"
+        title="Report Suspicious Activity"
+      />
+    </>
   );
 }

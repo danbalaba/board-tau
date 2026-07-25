@@ -164,7 +164,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
           initial="hidden"
           animate="show"
           exit="exit"
-          className="fixed inset-0 z-[9900] flex items-center justify-center p-4 md:p-8 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-md"
+          className="fixed inset-0 z-[10500] flex items-center justify-center p-4 md:p-8 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-md"
           onClick={onClose}
         >
           {/* Ambient glow orbs */}

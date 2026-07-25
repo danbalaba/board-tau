@@ -56,7 +56,7 @@ export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProp
 
   const [modalMode, setModalMode] = useState<'account' | 'security' | 'all'>('all');
 
-  const pathname = usePathname();
+  const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
   const kbar = useKBar();
 
   // Show search bar on all landlord management pages

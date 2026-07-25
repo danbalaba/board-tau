@@ -20,7 +20,7 @@ interface LayoutContentClientProps {
 }
 
 const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, user }) => {
-  const pathname = usePathname();
+  const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
   const { isLoggingOut } = useLoadingStore();
   const isAdmin = pathname.startsWith('/admin');
   const isLandlord = pathname.startsWith('/landlord');
@@ -42,6 +42,29 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
   
   const mobilePaddingTop = (isListingDetail || isMessages || isAuthPage || isHomePage) ? 'pt-0' : (isDashboardPage ? 'pt-6' : 'pt-8');
   
+  useEffect(() => {
+    // Lock body scroll on the messages page for mobile to simulate a native app feel
+    if (isMessages) {
+      const checkScrollLock = () => {
+        if (window.innerWidth < 768) {
+          document.body.style.overflow = 'hidden';
+        } else {
+          document.body.style.overflow = '';
+        }
+      };
+      
+      checkScrollLock();
+      window.addEventListener('resize', checkScrollLock);
+      
+      return () => {
+        window.removeEventListener('resize', checkScrollLock);
+        document.body.style.overflow = '';
+      };
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [isMessages]);
+  
   // BLOCK public UI for Admins, Landlords, and protected paths
   if (isAdmin || isLandlord || isAuthErrorPage) {
     return <>{children}</>;
@@ -53,7 +76,7 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
       <div className={isFooterPage ? "hidden md:block" : ""}>
         <Navbar user={user} />
       </div>
-      <main className={`${(isAuthPage || isHomePage) ? 'md:pt-0' : 'md:pt-28'} ${mobilePaddingTop} ${isAuthPage ? '' : 'bg-[#F8FAF9] dark:bg-[#0f172a]'} transition-colors duration-300 ${(!isListingDetail && !isAuthPage) ? 'pb-24' : ''} ${isAuthPage ? '' : 'overflow-x-hidden'}`}>
+      <main className={`${(isAuthPage || isHomePage) ? 'md:pt-0' : 'md:pt-28'} ${mobilePaddingTop} ${isAuthPage ? '' : 'bg-[#F8FAF9] dark:bg-[#0f172a]'} transition-colors duration-300 ${(!isListingDetail && !isAuthPage && !isMessages) ? 'pb-24' : ''} ${isAuthPage ? '' : 'overflow-x-hidden'}`}>
         {children}
       </main>
       <div className={(isMessages || isAuthPage) ? "hidden md:block" : ""}>
