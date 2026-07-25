@@ -1,12 +1,14 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Accessibility, ArrowRight } from 'lucide-react';
 import { InteractiveCard } from '@/components/lightswind/interactive-card';
 import Link from 'next/link';
+import ContactSupportModal from '@/components/modals/ContactSupportModal';
 
 export default function AccessibilitySupportContent() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const sections = [
     {
       title: "1. Our Commitment",
@@ -29,11 +31,12 @@ export default function AccessibilitySupportContent() {
     {
       title: "4. Feedback and Assistance",
       content: "We are constantly working to improve our platform. If you experience any difficulty in accessing any part of this website, or if you have suggestions on how we can improve our accessibility features, please let us know.",
-      link: { text: "accessibility@boardtau.xyz", href: "mailto:accessibility@boardtau.xyz" }
+      link: { text: "Contact Support", href: "/support/contact?subject=Accessibility" }
     }
   ];
 
   return (
+    <>
     <div className="min-h-screen bg-[#f8faf9] dark:bg-slate-900 text-gray-900 dark:text-slate-100 transition-colors duration-300">
       {/* Hero Header */}
       <div className="pt-32 pb-16 text-center border-b border-neutral-200/50 dark:border-slate-800">
@@ -94,9 +97,12 @@ export default function AccessibilitySupportContent() {
               )}
               {section.link && (
                 <div className="pt-2">
-                  <a href={section.link.href} className="text-[#2f7d6d] font-semibold hover:underline text-lg">
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="text-[#2f7d6d] font-semibold hover:underline text-lg cursor-pointer"
+                  >
                     {section.link.text}
-                  </a>
+                  </button>
                 </div>
               )}
             </section>
@@ -129,7 +135,7 @@ export default function AccessibilitySupportContent() {
             </div>
             <div className="pt-4">
               <Link
-                href="/support/faqs"
+                href="/support/contact"
                 className="inline-flex items-center gap-2 bg-[#2f7d6d] hover:bg-[#1e5146] text-white px-8 py-4 rounded-xl font-bold shadow-md transition-all duration-300 hover:scale-[1.02] relative z-20"
               >
                 Contact Support <ArrowRight className="w-5 h-5" />
@@ -140,5 +146,13 @@ export default function AccessibilitySupportContent() {
 
       </div>
     </div>
+
+      <ContactSupportModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialSubject="Accessibility Support"
+        title="Contact Support"
+      />
+    </>
   );
 }

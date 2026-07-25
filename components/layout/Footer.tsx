@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail } from 'lucide-react';
@@ -10,10 +10,12 @@ import { useSession } from 'next-auth/react';
 import Modal from '../modals/Modal';
 import AuthModal from '../modals/AuthModal';
 import HostApplicationModal from '../modals/HostApplicationModal';
+import ContactSupportModal from '../modals/ContactSupportModal';
 
 const Footer: React.FC = () => {
   const { data: session } = useSession();
   const currentUser = session?.user;
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
   return (
     <>
@@ -45,16 +47,16 @@ const Footer: React.FC = () => {
                 Your trusted home away from home. We provide a seamless and secure way for the TAU community to discover, book, and manage boarding houses.
               </p>
               
-              {/* Contact Information */}
-              <div className="flex flex-col space-y-1">
-                <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold">Contact Support</span>
-                <a 
-                  href="mailto:support@boardtau.com" 
-                  className="flex items-center gap-2 text-sm font-medium text-[#2f7d6d] hover:underline"
+              {/* Contact Support CTA */}
+              <div className="flex flex-col space-y-3 pt-1">
+                <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold">Need Help?</span>
+                <button
+                  onClick={() => setIsSupportModalOpen(true)}
+                  className="bg-[#2f7d6d] hover:bg-[#1e5146] text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm transition-all duration-300 hover:scale-[1.02] inline-flex items-center gap-2 w-fit cursor-pointer"
                 >
                   <Mail className="w-4 h-4" />
-                  support@boardtau.com
-                </a>
+                  Contact Support
+                </button>
               </div>
 
               {/* Social Media Icons (Squircle Buttons in Brand Green) */}
@@ -249,6 +251,12 @@ const Footer: React.FC = () => {
 
         </div>
       </footer>
+      
+      <ContactSupportModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
+        title="Contact Support"
+      />
     </>
   );
 };

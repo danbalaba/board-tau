@@ -1,7 +1,9 @@
 "use client";
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, Fingerprint, Heart, AlertTriangle, ArrowRight } from 'lucide-react';
 import { InteractiveCard } from '@/components/lightswind/interactive-card';
+import ContactSupportModal from '@/components/modals/ContactSupportModal';
 
 const standards = [
   {
@@ -51,7 +53,9 @@ const standards = [
 ];
 
 export default function CommunityStandardsContent() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   return (
+    <>
     <div className="min-h-screen bg-[#f8faf9] dark:bg-slate-900 text-gray-900 dark:text-slate-100 transition-colors duration-300">
 
       {/* Hero Header */}
@@ -141,15 +145,23 @@ export default function CommunityStandardsContent() {
             <p className="text-gray-500 dark:text-slate-400 text-sm md:text-base max-w-lg mx-auto mb-6">
               Report violations directly to our moderation team. We act quickly to protect the community.
             </p>
-            <a
-              href="mailto:abuse@boardtau.xyz"
+            <button
+              onClick={() => setIsModalOpen(true)}
               className="inline-flex items-center gap-2 bg-[#2f7d6d] hover:bg-[#1e5146] text-white px-6 py-3 rounded-xl font-semibold shadow-md transition-all duration-300 hover:scale-[1.02] relative z-20 cursor-pointer"
             >
               Report a Violation <ArrowRight className="w-4 h-4" />
-            </a>
+            </button>
           </motion.div>
         </InteractiveCard>
       </div>
     </div>
+
+      <ContactSupportModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialSubject="Report Abuse / Community Violation"
+        title="Report a Violation"
+      />
+    </>
   );
 }
