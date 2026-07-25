@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 
 const UserBackToTop = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
   const isListingDetail = pathname.startsWith('/listings/') && pathname.split('/').length > 2;
 
   useEffect(() => {
