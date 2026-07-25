@@ -28,22 +28,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Only include PUBLIC routes that search engines can actually see.
   // Private routes (favorites, profile, messages, inquiries) should NEVER be in the sitemap.
   const staticRoutes = [
-    "",
-    "/listings",
-    "/about",
-    "/about/mission",
-    "/about/contact",
-    "/about/capstone",
-    "/hosting/community-standards",
-    "/legal/terms",
-    "/legal/privacy",
-    "/support/help-center",
-    "/support/contact",
-  ].map((route) => ({
+    // Core pages
+    { route: "", priority: 1.0 },
+    { route: "/listings", priority: 0.9 },
+    { route: "/faqs", priority: 0.8 },
+
+    // About section
+    { route: "/about", priority: 0.8 },
+    { route: "/about/boardtau", priority: 0.8 },
+    { route: "/about/contact", priority: 0.7 },
+
+    // Hosting / Host information
+    { route: "/hosting/community-standards", priority: 0.7 },
+    { route: "/hosting/guidelines", priority: 0.7 },
+    { route: "/hosting/responsibilities", priority: 0.7 },
+    { route: "/hosting/safety", priority: 0.7 },
+
+    // Legal
+    { route: "/legal/terms", priority: 0.6 },
+    { route: "/legal/privacy", priority: 0.6 },
+    { route: "/legal/accessibility", priority: 0.5 },
+    { route: "/legal/help", priority: 0.5 },
+
+    // Support
+    { route: "/support/help-center", priority: 0.7 },
+    { route: "/support/contact", priority: 0.7 },
+    { route: "/support/cancellation-policy", priority: 0.6 },
+    { route: "/support/how-booking-works", priority: 0.7 },
+    { route: "/support/safety-guidelines", priority: 0.6 },
+  ].map(({ route, priority }) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date().toISOString(),
-    changeFrequency: "daily" as const,
-    priority: route === "" ? 1 : 0.8,
+    changeFrequency: (priority >= 0.9 ? "daily" : "weekly") as "daily" | "weekly",
+    priority,
   }));
 
   return [...staticRoutes, ...listingRoutes];
