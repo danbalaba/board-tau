@@ -63,6 +63,26 @@ jest.mock("react-hook-form", () => ({
 describe("useInquiryLogic hook", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Mock Image for JSDOM
+    global.Image = class {
+      onload: () => void;
+      onerror: () => void;
+      _src: string;
+      constructor() {
+        this.onload = () => {};
+        this.onerror = () => {};
+        this._src = "";
+      }
+      set src(value: string) {
+        this._src = value;
+        setTimeout(() => this.onload(), 0);
+      }
+      get src() {
+        return this._src;
+      }
+    } as any;
+
     global.fetch = jest.fn().mockResolvedValue({
       json: jest.fn().mockResolvedValue({ user: { email: "test@example.com" } })
     }) as any;
