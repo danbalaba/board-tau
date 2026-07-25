@@ -1,9 +1,11 @@
 import Pusher from "pusher";
 
+const cleanEnv = (val: string | undefined) => (val || "").replace(/['"]/g, '');
+
 export const pusherServer = new Pusher({
-  appId: process.env.PUSHER_APP_ID!,
-  key: process.env.NEXT_PUBLIC_PUSHER_APP_KEY!,
-  secret: process.env.PUSHER_SECRET!,
-  cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+  appId: cleanEnv(process.env.PUSHER_APP_ID),
+  key: cleanEnv(process.env.NEXT_PUBLIC_PUSHER_APP_KEY),
+  secret: cleanEnv(process.env.PUSHER_SECRET),
+  cluster: cleanEnv(process.env.NEXT_PUBLIC_PUSHER_CLUSTER),
   useTLS: true,
 });
