@@ -335,18 +335,18 @@ const ListingCard: React.FC<ListingCardProps> = ({
             </div>
 
             {/* Bottom Controls Overlay (Badges + Price) */}
-            <div className="absolute bottom-6 md:bottom-3 left-3 right-3 z-10 flex items-end justify-between gap-2 pointer-events-none">
+            <div className="absolute bottom-6 md:bottom-3 left-2 right-2 md:left-3 md:right-3 z-10 flex flex-col md:flex-row md:items-end justify-end md:justify-between gap-1 md:gap-2 pointer-events-none">
               {/* Left Side: Category */}
-              <div className="flex items-center gap-1.5 flex-wrap max-w-[50%]">
+              <div className="flex items-center gap-1.5 flex-wrap max-w-[80%] md:max-w-[50%] self-start">
                 {displayCategories.map((cat: string, idx: number) => (
-                  <div key={idx} className="bg-slate-900/80 dark:bg-slate-900/80 backdrop-blur-md text-white border border-white/10 dark:border-slate-700 px-2 py-1 md:px-2.5 rounded-lg text-[8px] md:text-[9px] font-black uppercase tracking-wider truncate max-w-full">
+                  <div key={idx} className="bg-slate-900/80 dark:bg-slate-900/80 backdrop-blur-md text-white border border-white/10 dark:border-slate-700 px-1.5 py-0.5 md:px-2.5 md:py-1 rounded-md md:rounded-lg text-[7px] md:text-[9px] font-black uppercase tracking-wider truncate max-w-full">
                     {cat}
                   </div>
                 ))}
               </div>
 
               {/* Right Side: Price Pill */}
-              <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-900 dark:text-white px-2 py-1 md:px-3 md:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-2xl flex items-center gap-1 font-black text-[10px] md:text-xs shrink-0 pointer-events-auto">
+              <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-900 dark:text-white px-1.5 py-0.5 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-2xl flex items-center gap-0.5 md:gap-1 font-black text-[9px] md:text-xs shrink-0 pointer-events-auto self-start md:self-auto">
                 <span className="text-primary">₱</span>
                 <span>{formatPrice(price)}</span>
                 {!reservation && <span className="text-[7px] md:text-[8px] text-slate-500 dark:text-slate-400 font-normal">/mo</span>}
