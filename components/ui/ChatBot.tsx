@@ -52,6 +52,32 @@ export default function ChatBot() {
     if (isOpen) scrollToBottom();
   }, [messages, isOpen, isLoading]);
 
+  // Prevent background scrolling when interacting with the chatbot
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const container = document.getElementById('chatbot-wrapper');
+    if (!container) return;
+
+    const preventScroll = (e: Event) => {
+      const scrollableArea = document.getElementById('chatbot-scrollable');
+      // If the event target is inside the scrollable area, let overscroll-contain handle it
+      if (scrollableArea && scrollableArea.contains(e.target as Node)) {
+        return;
+      }
+      // Otherwise, prevent scrolling the background
+      e.preventDefault();
+    };
+
+    container.addEventListener('wheel', preventScroll, { passive: false });
+    container.addEventListener('touchmove', preventScroll, { passive: false });
+
+    return () => {
+      container.removeEventListener('wheel', preventScroll);
+      container.removeEventListener('touchmove', preventScroll);
+    };
+  }, [isOpen]);
+
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
 
@@ -103,6 +129,7 @@ export default function ChatBot() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            id="chatbot-wrapper"
             initial={{ opacity: 0, y: 50, scale: 0.9, originX: 1, originY: 1 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9, originX: 1, originY: 1 }}
@@ -132,7 +159,7 @@ export default function ChatBot() {
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 bg-background/50">
+            <div id="chatbot-scrollable" className="flex-1 overflow-y-auto overscroll-none p-4 space-y-4 bg-background/50">
               {messages.map((msg, idx) => (
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
