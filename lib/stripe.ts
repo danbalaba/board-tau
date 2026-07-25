@@ -1,9 +1,12 @@
 import Stripe from 'stripe'
 
-// Check if Stripe secret key is provided
-const hasStripeConfig = process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.length > 0 && !process.env.STRIPE_SECRET_KEY.startsWith('pk_')
+const cleanEnv = (val: string | undefined) => (val || "").replace(/['"]/g, '');
+const stripeSecretKey = cleanEnv(process.env.STRIPE_SECRET_KEY);
 
-export const stripe = hasStripeConfig ? new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+// Check if Stripe secret key is provided
+const hasStripeConfig = stripeSecretKey.length > 0 && !stripeSecretKey.startsWith('pk_');
+
+export const stripe = hasStripeConfig ? new Stripe(stripeSecretKey, {
   apiVersion: "2026-06-24.dahlia",
   typescript: true,
 }) : null
