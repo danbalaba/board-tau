@@ -457,7 +457,12 @@ export const TeamCarousel: React.FC<TeamCarouselProps> = ({
           )}
           {/* Social Links */}
           {(members[currentIndex].github || members[currentIndex].linkedin) && (
-            <div className="flex justify-center gap-4 mt-5">
+            <div 
+              className="flex justify-center gap-4 mt-5 relative z-50"
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+            >
               {members[currentIndex].github && (
                 <a
                   href={members[currentIndex].github}
