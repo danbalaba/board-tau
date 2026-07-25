@@ -187,8 +187,9 @@ describe("FaceEngine", () => {
 
     it("returns null if no blendshapes", async () => {
       const video = createMockVideo();
+      const landmarks = Array(470).fill({ x: 0.5, y: 0.5 });
       mockFaceLandmarker.detect.mockReturnValue({ 
-        faceLandmarks: [[]],
+        faceLandmarks: [landmarks],
         faceBlendshapes: []
       });
       const result = await engine.getLivenessState(video);
@@ -198,8 +199,11 @@ describe("FaceEngine", () => {
 
     it("returns blink state if blink score is high", async () => {
       const video = createMockVideo();
+      
+      const landmarks = Array(470).fill({ x: 0.5, y: 0.5 });
+      
       mockFaceLandmarker.detect.mockReturnValue({ 
-        faceLandmarks: [[{x:0, y:0}]],
+        faceLandmarks: [landmarks],
         faceBlendshapes: [{
           categories: [
             { categoryName: 'eyeBlinkLeft', score: 0.7 },
