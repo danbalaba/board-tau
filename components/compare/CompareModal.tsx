@@ -152,15 +152,31 @@ export default function CompareModal({ isOpen, onClose, listingIds }: CompareMod
     }
   }, [isOpen, listingIds]);
 
+  const cleanupRef = React.useRef<(() => void) | null>(null);
+  const scrollLockRef = React.useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      const preventScroll = (e: Event) => e.preventDefault();
+      node.addEventListener("wheel", preventScroll, { passive: false });
+      node.addEventListener("touchmove", preventScroll, { passive: false });
+      cleanupRef.current = () => {
+        node.removeEventListener("wheel", preventScroll);
+        node.removeEventListener("touchmove", preventScroll);
+      };
+    } else if (cleanupRef.current) {
+      cleanupRef.current();
+      cleanupRef.current = null;
+    }
+  }, []);
+
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = "";
     }
     return () => {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 
@@ -169,6 +185,7 @@ export default function CompareModal({ isOpen, onClose, listingIds }: CompareMod
   return (
     <AnimatePresence>
       <motion.div
+        ref={scrollLockRef}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -215,8 +232,7 @@ export default function CompareModal({ isOpen, onClose, listingIds }: CompareMod
           {/* Content Area */}
           <div className="flex-1 flex overflow-hidden">
             
-            {/* Left Side: Data Sheet */}
-            <div className={`flex-1 overflow-x-auto overflow-y-auto snap-x snap-mandatory custom-scrollbar ${activeTab === "DATA" ? "block" : "hidden"} md:block p-4 md:p-6 bg-[#F8FAF9] dark:bg-[#0f1419]`}>
+            <div className={`flex-1 overflow-x-auto overflow-y-hidden snap-x snap-mandatory custom-scrollbar ${activeTab === "DATA" ? "block" : "hidden"} md:block p-4 md:p-6 bg-[#F8FAF9] dark:bg-[#0f1419]`}>
               {isLoading ? (
                 <div className="h-full flex flex-col items-center justify-center text-primary">
                   <Loader2 className="animate-spin w-10 h-10 mb-4" />
@@ -361,7 +377,11 @@ export default function CompareModal({ isOpen, onClose, listingIds }: CompareMod
                         </div>
 
                         {/* Scrollable Content */}
-                        <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6 custom-scrollbar">
+                        <div
+                          className="flex-1 overflow-y-auto p-5 flex flex-col gap-6 custom-scrollbar"
+                          onWheel={(e) => e.stopPropagation()}
+                          onTouchMove={(e) => e.stopPropagation()}
+                        >
                           
                           {/* Rating & Host Info */}
                           <div className="flex items-center justify-between gap-2">
@@ -548,7 +568,12 @@ export default function CompareModal({ isOpen, onClose, listingIds }: CompareMod
                  <p className="text-xs text-slate-500 mt-1">Ask me anything about these properties!</p>
                </div>
                
-               <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar bg-slate-50/50 dark:bg-slate-900/50">
+               <div
+                 ref={chatScrollRef}
+                 className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar bg-slate-50/50 dark:bg-slate-900/50"
+                 onWheel={(e) => e.stopPropagation()}
+                 onTouchMove={(e) => e.stopPropagation()}
+               >
                  {messages.map((msg, idx) => (
                    <motion.div 
                      initial={{ opacity: 0, y: 10 }}

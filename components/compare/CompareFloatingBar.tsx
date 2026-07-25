@@ -36,7 +36,7 @@ export default function CompareFloatingBar() {
             className="fixed bottom-6 inset-x-0 mx-auto z-[100] w-[90%] max-w-md bg-white dark:bg-slate-900 shadow-2xl rounded-2xl border border-slate-200 dark:border-slate-800 p-3 flex items-center justify-between"
           >
           <div className="flex items-center gap-3">
-            <div className="bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-foreground font-bold w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+            <div className="bg-primary/10 dark:bg-primary text-primary dark:text-white font-bold w-8 h-8 rounded-full flex items-center justify-center shrink-0">
               {count}
             </div>
             <div className="flex flex-col">
