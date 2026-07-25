@@ -65,10 +65,10 @@ export const metadata: Metadata = {
     siteName: "BoardTAU",
     images: [
       {
-        url: "/images/TauBOARD-Dark.png",
+        url: "/images/og-preview.png",
         width: 1200,
         height: 630,
-        alt: "BoardTAU - Modern Housing System",
+        alt: "BoardTAU - Find your perfect boarding house near Tarlac Agricultural University",
       },
     ],
     locale: "en_US",
@@ -78,7 +78,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "BoardTAU | Find Your Next Home near TAU",
     description: "Discover the best boarding houses near Tarlac Agricultural University.",
-    images: ["/images/TauBOARD-Dark.png"],
+    images: ["/images/og-preview.png"],
     creator: "@boardtau",
   },
   robots: {
