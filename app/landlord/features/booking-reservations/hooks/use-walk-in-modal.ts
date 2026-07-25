@@ -38,14 +38,13 @@ export const useWalkInModal = (
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // KYC States (Reused strictly from Inquiry logic)
+  // KYC States
   const webcamRef = useRef<Webcam>(null);
+  const [livenessStatus, setLivenessStatus] = useState<'idle' | 'passed'>('idle');
+  const [activeChallenges, setActiveChallenges] = useState<('blink' | 'smile' | 'turnLeft' | 'turnRight')[]>([]);
   const [isFaceAligned, setIsFaceAligned] = useState(false);
   const [isIDAligned, setIsIDAligned] = useState(false);
   const [isPhoneDetected, setIsPhoneDetected] = useState(false);
-  const [hasUserBlinked, setHasUserBlinked] = useState(false);
-  const blinkPhase = useRef<'idle' | 'eye_closed' | 'confirmed'>('idle');
-  const consecutiveClosedFrames = useRef(0);
   const consecutiveFaceFailures = useRef(0);
   const consecutiveIDFailures = useRef(0);
   const [capturedSelfie, setCapturedSelfie] = useState<string | null>(null);
@@ -98,18 +97,19 @@ export const useWalkInModal = (
     setIsFaceAligned(false);
     setIsIDAligned(false);
     setIsPhoneDetected(false);
-    setHasUserBlinked(false);
+    setLivenessStatus('idle');
     setCapturedSelfie(null);
     setCapturedID(null);
     setDateRange({ from: undefined, to: undefined });
   };
 
-  // Reset blink state on Selfie step
+  // Reset Liveness State on Step 3
   useEffect(() => {
     if (currentStep === 3 && !capturedSelfie) {
-      setHasUserBlinked(false);
-      blinkPhase.current = 'idle';
-      consecutiveClosedFrames.current = 0;
+      setLivenessStatus('idle');
+      const challenges: ('blink' | 'smile' | 'turnLeft' | 'turnRight')[] = ['blink', 'smile', 'turnLeft', 'turnRight'];
+      const shuffled = [...challenges].sort(() => 0.5 - Math.random());
+      setActiveChallenges(shuffled.slice(0, 2));
       consecutiveFaceFailures.current = 0;
     }
   }, [currentStep, capturedSelfie]);
@@ -124,14 +124,15 @@ export const useWalkInModal = (
           const result = await faceEngine.validateFace(video);
           setIsFaceAligned(result.isValid);
 
-          if (blinkPhase.current === 'confirmed') {
+          if (livenessStatus === 'passed') {
             if (!result.isValid) {
               consecutiveFaceFailures.current += 1;
               if (consecutiveFaceFailures.current >= 3) {
-                blinkPhase.current = 'idle';
-                consecutiveClosedFrames.current = 0;
+                setLivenessStatus('idle');
+                const challenges: ('blink' | 'smile' | 'turnLeft' | 'turnRight')[] = ['blink', 'smile', 'turnLeft', 'turnRight'];
+                const shuffled = [...challenges].sort(() => 0.5 - Math.random());
+                setActiveChallenges(shuffled.slice(0, 2));
                 consecutiveFaceFailures.current = 0;
-                setHasUserBlinked(false);
               }
             } else {
               consecutiveFaceFailures.current = 0;
@@ -139,32 +140,28 @@ export const useWalkInModal = (
             return;
           }
 
-          const scores = await faceEngine.getBlinkScores(video);
-          if (scores) {
-            const bothClosed = scores.left > 0.60 && scores.right > 0.60;
-            const bothOpen   = scores.left < 0.20 && scores.right < 0.20;
-
-            if (blinkPhase.current === 'idle') {
-              if (bothClosed) {
-                consecutiveClosedFrames.current += 1;
-                if (consecutiveClosedFrames.current >= 2) {
-                  blinkPhase.current = 'eye_closed';
-                  consecutiveClosedFrames.current = 0;
-                }
+          const state = await faceEngine.getLivenessState(video);
+          if (state && livenessStatus === 'idle' && activeChallenges.length > 0) {
+            const currentChallenge = activeChallenges[0];
+            if (
+              (currentChallenge === 'blink' && state.blink) ||
+              (currentChallenge === 'smile' && state.smile) ||
+              (currentChallenge === 'turnLeft' && state.turnLeft) ||
+              (currentChallenge === 'turnRight' && state.turnRight)
+            ) {
+              if (activeChallenges.length > 1) {
+                setActiveChallenges(prev => prev.slice(1));
               } else {
-                consecutiveClosedFrames.current = 0;
+                setLivenessStatus('passed');
               }
-            } else if (blinkPhase.current === 'eye_closed' && bothOpen) {
-              blinkPhase.current = 'confirmed';
               consecutiveFaceFailures.current = 0;
-              setHasUserBlinked(true);
             }
           }
         }
       }, 200);
     }
     return () => clearInterval(interval);
-  }, [currentStep, capturedSelfie, isProcessing, faceEngine]);
+  }, [currentStep, capturedSelfie, isProcessing, faceEngine, activeChallenges, livenessStatus]);
 
   // Real-time ID scanning loop
   useEffect(() => {
@@ -210,8 +207,8 @@ export const useWalkInModal = (
     const video = webcamRef.current?.video;
     if (!video) return;
 
-    if (!hasUserBlinked) {
-      responsiveToast.error({ title: "Verification Failed", description: "Liveness check required. Please blink naturally to prove you're real." });
+    if (livenessStatus !== 'passed') {
+      responsiveToast.error({ title: "Verification Failed", description: "Please perform the requested action to prove you are real." });
       return;
     }
 
@@ -372,7 +369,8 @@ export const useWalkInModal = (
     capturedSelfie, setCapturedSelfie,
     setIsFaceAligned,
     capturedID, setCapturedID,
-    hasUserBlinked,
+    livenessStatus,
+    activeChallenge: activeChallenges[0] || 'blink',
     setIsIDAligned, setIsPhoneDetected,
     facingMode, isFlashActive, direction,
     showCalendar, setShowCalendar,

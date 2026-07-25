@@ -58,7 +58,9 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
   const webcamRef = useRef<Webcam>(null);
   const [capturedSelfie, setCapturedSelfie] = useState<string | null>(null);
   const [capturedID, setCapturedID] = useState<string | null>(null);
-  const [hasUserBlinked, setHasUserBlinked] = useState(false);
+  const [livenessStatus, setLivenessStatus] = useState<'idle' | 'passed'>('idle');
+  const [activeChallenges, setActiveChallenges] = useState<('blink' | 'smile' | 'turnLeft' | 'turnRight')[]>([]);
+  const consecutiveFaceFailures = useRef(0);
   const [isFaceAligned, setIsFaceAligned] = useState(false);
   const [isIDAligned, setIsIDAligned] = useState(false);
   const [isPhoneDetected, setIsPhoneDetected] = useState(false);
@@ -79,7 +81,16 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
     }
   });
 
-  // Optimized Biometric Loops for Low-Spec Hardware
+  useEffect(() => {
+    if (step === 5 && !capturedSelfie) {
+      setLivenessStatus('idle');
+      const challenges: ('blink' | 'smile' | 'turnLeft' | 'turnRight')[] = ['blink', 'smile', 'turnLeft', 'turnRight'];
+      const shuffled = [...challenges].sort(() => 0.5 - Math.random());
+      setActiveChallenges(shuffled.slice(0, 2));
+      consecutiveFaceFailures.current = 0;
+    }
+  }, [step, capturedSelfie]);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     const isSelfieStep = step === 5;
@@ -93,9 +104,38 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
             const result = await faceEngine.validateFace(video);
             setIsFaceAligned(result.isValid);
             
-            const scores = await faceEngine.getBlinkScores(video);
-            if (scores && (scores.left > 0.6 || scores.right > 0.6)) {
-              setHasUserBlinked(true);
+            if (livenessStatus === 'passed') {
+              if (!result.isValid) {
+                consecutiveFaceFailures.current += 1;
+                if (consecutiveFaceFailures.current >= 3) {
+                  setLivenessStatus('idle');
+                  const challenges: ('blink' | 'smile' | 'turnLeft' | 'turnRight')[] = ['blink', 'smile', 'turnLeft', 'turnRight'];
+                  const shuffled = [...challenges].sort(() => 0.5 - Math.random());
+                  setActiveChallenges(shuffled.slice(0, 2));
+                  consecutiveFaceFailures.current = 0;
+                }
+              } else {
+                consecutiveFaceFailures.current = 0;
+              }
+              return;
+            }
+
+            const state = await faceEngine.getLivenessState(video);
+            if (state && livenessStatus === 'idle' && activeChallenges.length > 0) {
+              const currentChallenge = activeChallenges[0];
+              if (
+                (currentChallenge === 'blink' && state.blink) ||
+                (currentChallenge === 'smile' && state.smile) ||
+                (currentChallenge === 'turnLeft' && state.turnLeft) ||
+                (currentChallenge === 'turnRight' && state.turnRight)
+              ) {
+                if (activeChallenges.length > 1) {
+                  setActiveChallenges(prev => prev.slice(1));
+                } else {
+                  setLivenessStatus('passed');
+                }
+                consecutiveFaceFailures.current = 0;
+              }
             }
           } catch (e) {
             console.error("Selfie engine error:", e);
@@ -104,7 +144,7 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
       }, 400); // Throttled to 400ms for performance
     }
     return () => clearInterval(interval);
-  }, [step, capturedSelfie, isProcessing, faceEngine]);
+  }, [step, capturedSelfie, isProcessing, faceEngine, activeChallenges, livenessStatus]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -130,8 +170,8 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
 
   // Handlers
   const handleCaptureSelfie = async () => {
-    if (!hasUserBlinked) {
-      toast.error("Please blink naturally to prove you are real.");
+    if (livenessStatus !== 'passed') {
+      toast.error("Please perform the requested action to prove you are real.");
       return;
     }
     setIsFlashActive(true);
@@ -242,7 +282,8 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
     webcamRef,
     capturedSelfie, setCapturedSelfie,
     capturedID, setCapturedID,
-    hasUserBlinked,
+    livenessStatus,
+    activeChallenge: activeChallenges[0] || 'blink',
     isFaceAligned, setIsFaceAligned, 
     isIDAligned, setIsIDAligned,
     isPhoneDetected,

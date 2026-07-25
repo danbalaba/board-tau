@@ -29,7 +29,8 @@ describe("SelfieStep Component", () => {
     webcamRef: mockWebcamRef,
     facingMode: "user" as const,
     isFaceAligned: false,
-    hasUserBlinked: false,
+    livenessStatus: 'idle' as const,
+    activeChallenge: 'blink' as const,
     setIsFaceAligned: mockSetIsFaceAligned,
     isProcessing: false,
     isFlashActive: false,
@@ -50,18 +51,18 @@ describe("SelfieStep Component", () => {
   });
 
   it("displays 'Please Blink to Continue' when face is aligned but not blinked", () => {
-    render(<SelfieStep {...defaultProps} isFaceAligned={true} hasUserBlinked={false} />);
+    render(<SelfieStep {...defaultProps} isFaceAligned={true} livenessStatus="idle" />);
 
     expect(screen.getByText(/Please Blink to Continue/i)).toBeInTheDocument();
     
-    // Capture button should show 'Blink to Unlock' and be disabled
-    const captureBtn = screen.getByText("Blink to Unlock");
+    // Capture button should show 'Follow Prompt' and be disabled
+    const captureBtn = screen.getByText("Follow Prompt");
     expect(captureBtn).toBeInTheDocument();
     expect(captureBtn).toBeDisabled();
   });
 
   it("displays 'Liveness Confirmed' when face is aligned and blinked", () => {
-    render(<SelfieStep {...defaultProps} isFaceAligned={true} hasUserBlinked={true} />);
+    render(<SelfieStep {...defaultProps} isFaceAligned={true} livenessStatus="passed" />);
 
     expect(screen.getByText(/Liveness Confirmed/i)).toBeInTheDocument();
     

@@ -171,17 +171,17 @@ describe("FaceEngine", () => {
     });
   });
 
-  describe("getBlinkScores", () => {
+  describe("getLivenessState", () => {
     it("returns null if video has no dimensions", async () => {
       const video = createMockVideo(0, 0);
-      const result = await engine.getBlinkScores(video);
+      const result = await engine.getLivenessState(video);
       expect(result).toBeNull();
     });
 
     it("returns null if no face detected", async () => {
       const video = createMockVideo();
       mockFaceLandmarker.detect.mockReturnValue({ faceLandmarks: [] });
-      const result = await engine.getBlinkScores(video);
+      const result = await engine.getLivenessState(video);
       expect(result).toBeNull();
     });
 
@@ -191,14 +191,15 @@ describe("FaceEngine", () => {
         faceLandmarks: [[]],
         faceBlendshapes: []
       });
-      const result = await engine.getBlinkScores(video);
-      expect(result).toBeNull();
+      const result = await engine.getLivenessState(video);
+      // getLivenessState still returns a state object even without blendshapes (just all false)
+      expect(result).toEqual({ blink: false, smile: false, turnLeft: false, turnRight: false });
     });
 
-    it("returns left and right blink scores", async () => {
+    it("returns blink state if blink score is high", async () => {
       const video = createMockVideo();
       mockFaceLandmarker.detect.mockReturnValue({ 
-        faceLandmarks: [[]],
+        faceLandmarks: [[{x:0, y:0}]],
         faceBlendshapes: [{
           categories: [
             { categoryName: 'eyeBlinkLeft', score: 0.7 },
@@ -206,8 +207,8 @@ describe("FaceEngine", () => {
           ]
         }]
       });
-      const result = await engine.getBlinkScores(video);
-      expect(result).toEqual({ left: 0.7, right: 0.8 });
+      const result = await engine.getLivenessState(video);
+      expect(result).toEqual({ blink: true, smile: false, turnLeft: false, turnRight: false });
     });
   });
 });

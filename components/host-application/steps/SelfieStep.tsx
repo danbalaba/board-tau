@@ -21,7 +21,8 @@ interface SelfieStepProps {
   webcamRef: React.RefObject<Webcam>;
   facingMode: "user" | "environment";
   isFaceAligned: boolean;
-  hasUserBlinked: boolean;
+  livenessStatus: 'idle' | 'passed';
+  activeChallenge: 'blink' | 'smile' | 'turnLeft' | 'turnRight';
   setIsFaceAligned: (val: boolean) => void;
   isProcessing: boolean;
   isFlashActive: boolean;
@@ -35,7 +36,8 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
   webcamRef,
   facingMode,
   isFaceAligned,
-  hasUserBlinked,
+  livenessStatus,
+  activeChallenge,
   setIsFaceAligned,
   isProcessing,
   isFlashActive,
@@ -104,7 +106,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
             {/* Top-Middle Notification System */}
             <div className="absolute top-0 left-0 right-0 z-50 pointer-events-none flex justify-center">
               <AnimatePresence mode="wait">
-                {isFaceAligned && hasUserBlinked && !isProcessing ? (
+                {isFaceAligned && livenessStatus === 'passed' && !isProcessing ? (
                   <motion.div 
                     key="face-centered"
                     initial={{ y: -60, opacity: 0 }}
@@ -115,7 +117,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                      <div className="w-2 h-2 bg-white rounded-full animate-ping" />
                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Liveness Confirmed ✓</span>
                   </motion.div>
-                ) : isFaceAligned && !hasUserBlinked && !isProcessing ? (
+                ) : isFaceAligned && livenessStatus === 'idle' && !isProcessing ? (
                   <motion.div
                     key="blink-prompt"
                     initial={{ y: -60, opacity: 0 }}
@@ -130,7 +132,12 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                     >
                       <Eye size={20} className="text-white" />
                     </motion.span>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Please Blink to Continue</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+                      {activeChallenge === 'blink' && 'Please Blink to Continue'}
+                      {activeChallenge === 'smile' && 'Please Smile to Continue'}
+                      {activeChallenge === 'turnLeft' && 'Turn Head Left to Continue'}
+                      {activeChallenge === 'turnRight' && 'Turn Head Right to Continue'}
+                    </span>
                   </motion.div>
                 ) : null}
               </AnimatePresence>
@@ -176,9 +183,9 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
               
               <button
                 onClick={handleCaptureSelfie}
-                disabled={isProcessing || !hasUserBlinked}
+                disabled={isProcessing || livenessStatus !== 'passed'}
                 className={`w-20 h-20 rounded-full border-4 flex items-center justify-center transition-all ${
-                  isFaceAligned && hasUserBlinked 
+                  isFaceAligned && livenessStatus === 'passed' 
                     ? "border-primary bg-primary text-white scale-110 shadow-xl shadow-primary/30" 
                     : "border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed"
                 }`}
