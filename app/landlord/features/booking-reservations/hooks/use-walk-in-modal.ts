@@ -69,6 +69,7 @@ export const useWalkInModal = (
     watch,
     control,
     clearErrors,
+    reset,
   } = useForm<WalkInFormData>({
     mode: 'onChange',
     defaultValues: {
@@ -85,6 +86,23 @@ export const useWalkInModal = (
   });
 
   const watchedValues = watch();
+
+  const resetState = () => {
+    reset();
+    setCurrentStep(1);
+    setSubmitted(false);
+    setIsUploading(false);
+    setDirection(0);
+    setShowCalendar(false);
+    setCurrentImageIndex(0);
+    setIsFaceAligned(false);
+    setIsIDAligned(false);
+    setIsPhoneDetected(false);
+    setHasUserBlinked(false);
+    setCapturedSelfie(null);
+    setCapturedID(null);
+    setDateRange({ from: undefined, to: undefined });
+  };
 
   // Reset blink state on Selfie step
   useEffect(() => {
@@ -365,6 +383,7 @@ export const useWalkInModal = (
     errors, setValue, getValues, trigger, watch, control, clearErrors,
     watchedValues,
     isStepCompleted, handleNextStep, handlePrevStep,
-    handleCaptureSelfie, handleCaptureID, toggleCamera
+    handleCaptureSelfie, handleCaptureID, toggleCamera,
+    resetState
   };
 };
