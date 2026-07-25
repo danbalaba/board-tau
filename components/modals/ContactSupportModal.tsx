@@ -153,6 +153,7 @@ export default function ContactSupportModal({ isOpen, onClose, initialSubject = 
                     <input
                       type="text"
                       required
+                      maxLength={100}
                       value={name}
                       onChange={e => setName(e.target.value)}
                       placeholder="John Doe"
@@ -165,6 +166,7 @@ export default function ContactSupportModal({ isOpen, onClose, initialSubject = 
                     <input
                       type="email"
                       required
+                      maxLength={255}
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       placeholder="john@example.com"
@@ -177,6 +179,7 @@ export default function ContactSupportModal({ isOpen, onClose, initialSubject = 
                     <input
                       type="text"
                       required
+                      maxLength={150}
                       value={subject}
                       onChange={e => setSubject(e.target.value)}
                       placeholder="Booking issue, Listing validation error, etc."
@@ -188,6 +191,7 @@ export default function ContactSupportModal({ isOpen, onClose, initialSubject = 
                     <label className="text-xs font-semibold text-gray-500 dark:text-slate-400">Message</label>
                     <textarea
                       required
+                      maxLength={2000}
                       rows={4}
                       value={message}
                       onChange={e => setMessage(e.target.value)}
