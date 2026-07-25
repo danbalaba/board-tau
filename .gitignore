@@ -182,3 +182,6 @@ prisma/add-test-user.ts
 prisma/seed-real-listings.ts
 prisma/update-passwords.ts
 processed-real-listings.json
+
+# Reports
+posthog-setup-report.md
