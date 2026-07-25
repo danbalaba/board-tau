@@ -183,7 +183,7 @@ export const StrikeWarningEmail = ({
               </Text>
             </Section>
 
-            <Link href={`${baseUrl}/terms`} style={styles.button}>
+            <Link href={`${baseUrl}/legal/terms`} style={styles.button}>
               Review Policies
             </Link>
           </Section>

@@ -176,7 +176,7 @@ export const BanNoticeEmail = ({
               </Text>
             </Section>
 
-            <Link href="mailto:support@boardtau.com" style={styles.button}>
+            <Link href={`${baseUrl}/support/contact`} style={styles.button}>
               Contact Support
             </Link>
           </Section>
