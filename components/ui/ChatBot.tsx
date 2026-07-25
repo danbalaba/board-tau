@@ -134,7 +134,7 @@ export default function ChatBot() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9, originX: 1, originY: 1 }}
             transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
-            className="fixed bottom-28 right-4 md:bottom-[115px] md:right-10 z-[70] w-[calc(100vw-32px)] md:w-[400px] h-[550px] max-h-[80vh] flex flex-col bg-card rounded-3xl shadow-xl border border-border overflow-hidden"
+            className="fixed inset-0 w-full h-[100dvh] rounded-none border-0 md:inset-auto md:bottom-[115px] md:right-10 z-[100] md:w-[400px] md:h-[550px] md:max-h-[80vh] flex flex-col bg-card md:rounded-3xl shadow-xl md:border md:border-border overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 bg-gradient-to-br from-primary via-primary to-emerald-800 text-primary-foreground shadow-md z-10 relative overflow-hidden">
