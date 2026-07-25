@@ -186,3 +186,6 @@ processed-real-listings.json
 # Reports and Documentation
 posthog-setup-report.md
 docs/
+
+# Binaries
+stripe.exe
