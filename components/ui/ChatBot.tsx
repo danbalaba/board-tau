@@ -307,7 +307,7 @@ export default function ChatBot() {
 
       {/* Floating Toggle Button */}
       <div className={cn(
-        "fixed bottom-28 right-4 md:bottom-8 md:right-8 z-[50] transition-transform duration-300 ease-in-out",
+        "fixed bottom-20 right-4 md:bottom-8 md:right-8 z-[50] transition-transform duration-300 ease-in-out",
         isHiddenOnMobile && !isOpen ? "translate-y-48 md:translate-y-0" : "translate-y-0"
       )}>
         
