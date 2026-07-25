@@ -10,7 +10,8 @@ interface SelfieStepProps {
   webcamRef: React.RefObject<Webcam | null>;
   facingMode: "user" | "environment";
   isFaceAligned: boolean;
-  hasUserBlinked: boolean;
+  livenessStatus: 'idle' | 'passed';
+  activeChallenge: 'blink' | 'smile' | 'turnLeft' | 'turnRight';
   setIsFaceAligned: (val: boolean) => void;
   isProcessing: boolean;
   isFlashActive: boolean;
@@ -21,7 +22,7 @@ interface SelfieStepProps {
 const SelfieStep: React.FC<SelfieStepProps> = ({
   capturedSelfie, setCapturedSelfie,
   webcamRef, facingMode,
-  isFaceAligned, hasUserBlinked, setIsFaceAligned,
+  isFaceAligned, livenessStatus, activeChallenge, setIsFaceAligned,
   isProcessing, isFlashActive,
   toggleCamera, handleCaptureSelfie
 }) => {
@@ -90,7 +91,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
               {/* Top-Middle Notification System */}
               <div className="absolute top-0 left-0 right-0 z-50 pointer-events-none flex justify-center">
                 <AnimatePresence mode="wait">
-                  {isFaceAligned && hasUserBlinked && !isProcessing ? (
+                  {isFaceAligned && livenessStatus === 'passed' && !isProcessing ? (
                     <motion.div
                       key="face-centered"
                       initial={{ y: -60, opacity: 0 }}
@@ -101,7 +102,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                        <div className="w-2 h-2 bg-white rounded-full animate-ping" />
                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Liveness Confirmed ✓</span>
                     </motion.div>
-                  ) : isFaceAligned && !hasUserBlinked && !isProcessing ? (
+                  ) : isFaceAligned && livenessStatus === 'idle' && !isProcessing ? (
                     <motion.div
                       key="blink-prompt"
                       initial={{ y: -60, opacity: 0 }}
@@ -116,7 +117,12 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                       >
                         <Eye size={20} className="text-white" />
                       </motion.span>
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Please Blink to Continue</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+                        {activeChallenge === 'blink' && 'Please Blink to Continue'}
+                        {activeChallenge === 'smile' && 'Please Smile to Continue'}
+                        {activeChallenge === 'turnLeft' && 'Turn Head Left to Continue'}
+                        {activeChallenge === 'turnRight' && 'Turn Head Right to Continue'}
+                      </span>
                     </motion.div>
                   ) : null}
                 </AnimatePresence>
@@ -161,16 +167,16 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                  <button
                   type="button"
                   onClick={handleCaptureSelfie}
-                  disabled={isProcessing || !isFaceAligned || !hasUserBlinked}
+                  disabled={isProcessing || !isFaceAligned || livenessStatus !== 'passed'}
                   className={`px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl flex items-center gap-3 transition-all transform active:scale-95 border-4 border-white/10
                     ${ isProcessing ? 'opacity-0 scale-50' :
-                       (isFaceAligned && hasUserBlinked)
+                       (isFaceAligned && livenessStatus === 'passed')
                          ? 'bg-emerald-500 text-white hover:bg-emerald-400 hover:scale-110 cursor-pointer'
                          : 'bg-white/30 text-white/50 cursor-not-allowed scale-95'
                     }`}
                  >
                    <FaCamera size={16} />
-                   {isFaceAligned && !hasUserBlinked ? 'Blink to Unlock' : 'Capture Selfie'}
+                   {isFaceAligned && livenessStatus === 'idle' ? 'Follow Prompt' : 'Capture Selfie'}
                  </button>
               </div>
             </>
