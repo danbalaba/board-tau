@@ -225,14 +225,6 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
   const maxPrice = Math.max(...rooms.map(r => r.price), 0);
 
   const handleInquireClick = (room: Room) => {
-    if (!user) {
-      const now = Date.now();
-      if (now - lastInquiryToastTime.current > 5000) {
-        toast.error("Please log in to inquire");
-        lastInquiryToastTime.current = now;
-      }
-      return;
-    }
     onInquire(room);
   };
 
