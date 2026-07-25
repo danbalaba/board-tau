@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 
     const response = await resend.emails.send({
       from: `BoardTAU Support <${process.env.EMAIL_FROM}>`,
-      to: 'support@boardtau.com',
+      to: 'support@boardtau.xyz',
       subject: `[Support Inquiry] ${subject}`,
       html: emailHtml,
       replyTo: email,
