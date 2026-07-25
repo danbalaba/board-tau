@@ -76,24 +76,19 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children, forceVisible 
     setIsVisible(false);
   };
 
-  const handleTouchStart = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    touchTimeoutRef.current = setTimeout(() => {
-      updatePosition();
-      setIsVisible(true);
-    }, 500); // 500ms long press
-  };
-
-  const handleTouchEnd = () => {
-    if (touchTimeoutRef.current) clearTimeout(touchTimeoutRef.current);
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsVisible(false); // Hide tooltip when finger is released
-  };
-
-  const handleTouchMove = () => {
-    if (touchTimeoutRef.current) clearTimeout(touchTimeoutRef.current);
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsVisible(false); // Hide tooltip if user starts scrolling
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    // On touch devices, toggle visibility on click. 
+    // On desktop, it just stops propagation (hover handles visibility).
+    if (typeof window !== 'undefined' && window.matchMedia("(pointer: coarse)").matches) {
+      if (!isVisible) {
+        updatePosition();
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+    }
   };
 
   useEffect(() => {
@@ -135,10 +130,7 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children, forceVisible 
       className={`relative flex items-center justify-center z-50 ${children ? 'w-full' : 'ml-1.5'} select-none`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchMove={handleTouchMove}
-      onTouchCancel={handleTouchEnd}
+      onClick={handleClick}
       onContextMenu={(e) => {
         // Prevent default context menu (like text selection or magnifier) on mobile 
         // to ensure the custom long press peek effect works cleanly.
