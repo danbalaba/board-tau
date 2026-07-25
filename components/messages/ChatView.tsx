@@ -155,13 +155,15 @@ const ChatView: React.FC<ChatViewProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-white dark:bg-gray-900">
+    <div className="flex-1 flex flex-col h-full bg-white dark:bg-gray-900 w-full max-w-[100vw] overflow-hidden">
       {/* Header */}
-      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white/80 dark:bg-gray-900/80 backdrop-blur-md z-10">
-        <div className="flex items-center gap-4">
+      <div 
+        className="px-6 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white/80 dark:bg-gray-900/80 backdrop-blur-md z-10 gap-2 w-full"
+      >
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
           <button 
             onClick={onBack}
-            className="md:hidden p-2 -ml-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="md:hidden p-2 -ml-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors shrink-0"
           >
             <IconChevronLeft size={24} />
           </button>
@@ -169,7 +171,7 @@ const ChatView: React.FC<ChatViewProps> = ({
           <Avatar 
             src={activeConversation.landlordImage} 
             name={activeConversation.landlordName} 
-            className="w-10 h-10 rounded-xl"
+            className="w-10 h-10 rounded-xl shrink-0"
           />
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-black text-gray-900 dark:text-white leading-none mb-1 truncate">
@@ -181,7 +183,7 @@ const ChatView: React.FC<ChatViewProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 relative">
+        <div className="flex items-center gap-2 relative shrink-0">
           <button 
              onClick={onToggleInfo}
              className={cn(
@@ -317,7 +319,7 @@ const ChatView: React.FC<ChatViewProps> = ({
       {/* Messages List */}
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-6 space-y-4 scroll-smooth"
+        className="flex-1 overflow-y-auto p-6 space-y-4 scroll-smooth w-full"
       >
         {isLoading ? (
           <div className="space-y-6">
@@ -388,7 +390,9 @@ const ChatView: React.FC<ChatViewProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="p-4 sm:p-6 pt-2">
+      <div 
+        className="px-6 pb-8 pt-2 w-full"
+      >
         {activeConversation.isArchived || activeConversation.isPendingArchive ? (
           <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/20 rounded-[2rem] p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">

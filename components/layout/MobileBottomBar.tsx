@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Heart, CalendarCheck, Home, LogIn, UserPlus, MessageCircle, Star, ClipboardList } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { User } from "next-auth";
 import Modal from "@/components/modals/Modal";
 import AuthModal from "@/components/modals/AuthModal";
@@ -21,6 +21,8 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [scrollDirection, setScrollDirection] = useState<"up" | "down" | "">("");
   const [lastY, setLastY] = useState(0);
+  const pathname = usePathname();
+  const isMessages = pathname.startsWith('/messages');
 
   const { unreadStats } = useNotification();
 
@@ -44,7 +46,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastY]);
 
-  const isHidden = scrollDirection === "down";
+  const isHidden = !isMessages && scrollDirection === "down";
 
   const redirect = (url: string) => {
     router.push(url);
