@@ -183,5 +183,6 @@ prisma/seed-real-listings.ts
 prisma/update-passwords.ts
 processed-real-listings.json
 
-# Reports
+# Reports and Documentation
 posthog-setup-report.md
+docs/
