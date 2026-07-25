@@ -96,10 +96,26 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
         window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(pageUrl)}`);
         break;
       case "messages":
-        window.open(`sms:?&body=${encodeURIComponent(`${title} — ${pageUrl}`)}`);
+        window.open(`sms:?body=${encodeURIComponent(`${title} — ${pageUrl}`)}`);
         break;
     }
   };
+
+  const cleanupRef = React.useRef<(() => void) | null>(null);
+  const scrollLockRef = React.useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      const preventScroll = (e: Event) => e.preventDefault();
+      node.addEventListener("wheel", preventScroll, { passive: false });
+      node.addEventListener("touchmove", preventScroll, { passive: false });
+      cleanupRef.current = () => {
+        node.removeEventListener("wheel", preventScroll);
+        node.removeEventListener("touchmove", preventScroll);
+      };
+    } else if (cleanupRef.current) {
+      cleanupRef.current();
+      cleanupRef.current = null;
+    }
+  }, []);
 
   return (
     <>
@@ -173,7 +189,23 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setShowShareModal(true)}
+                onClick={async () => {
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: title,
+                        url: pageUrl
+                      });
+                    } catch (err) {
+                      // If user cancels or it fails, fallback to modal if it wasn't a manual cancel
+                      if ((err as Error).name !== 'AbortError') {
+                        setShowShareModal(true);
+                      }
+                    }
+                  } else {
+                    setShowShareModal(true);
+                  }
+                }}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-bold shadow-sm hover:shadow-md transition-all hover:border-gray-300 dark:hover:border-gray-600"
               >
                 <Share size={16} />
@@ -190,10 +222,11 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
       <AnimatePresence>
         {showShareModal && (
           <motion.div
+            ref={scrollLockRef}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
             onClick={() => setShowShareModal(false)}
           >
             <motion.div
