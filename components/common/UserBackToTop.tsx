@@ -4,9 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
 
 const UserBackToTop = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const pathname = usePathname();
+  const isListingDetail = pathname.startsWith('/listings/') && pathname.split('/').length > 2;
 
   useEffect(() => {
     const toggleVisibility = () => {
@@ -39,7 +42,7 @@ const UserBackToTop = () => {
           onClick={scrollToTop}
           className={cn(
             "fixed right-4 md:right-10 z-[60]",
-            "bottom-36 md:bottom-28", // Positioned nicely above ChatBot on mobile
+            `${isListingDetail ? 'bottom-48' : 'bottom-36'} md:bottom-28`, // Positioned nicely above ChatBot on mobile
             "p-3.5 md:p-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] backdrop-blur-xl",
             "bg-primary text-white",
             "border border-white/20",
