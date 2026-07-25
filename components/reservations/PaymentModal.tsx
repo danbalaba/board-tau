@@ -251,24 +251,50 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       </div>
 
       {/* Footer Actions */}
-      <div className="p-4 sm:p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-100 dark:border-gray-700 flex justify-center sm:justify-between items-center gap-4 shrink-0">
-        <button
-          onClick={onClose}
-          className="hidden sm:block w-full sm:w-auto px-6 py-3 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-          disabled={isProcessing}
-        >
-          Go Back
-        </button>
-        
-        <div className="w-full sm:w-auto flex justify-center">
-          <SlideToConfirm 
-            text={`PAY ₱${reservation.totalPrice.toLocaleString()}`}
-            successText="REDIRECTING..."
-            onConfirm={handlePayment}
-            width={280}
-            disabled={isProcessing || !selectedMethod}
-            icon={<Lock size={14} strokeWidth={3} />}
-          />
+      <div className="p-4 sm:p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-100 dark:border-gray-700 shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+          {/* Go Back — desktop only (mobile has X button in header) */}
+          <div className="hidden sm:flex flex-col items-start gap-2">
+            <span className="text-[10px] invisible select-none">placeholder</span>
+            <button
+              onClick={onClose}
+              className="px-6 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              disabled={isProcessing}
+            >
+              Go Back
+            </button>
+          </div>
+
+          {/* Slider — full width on mobile, 300px on desktop */}
+          <div className="flex flex-col items-center gap-2 w-full sm:w-auto">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500">
+              Slide to confirm payment
+            </p>
+            {/* Mobile: full width */}
+            <div className="block sm:hidden w-full">
+              <SlideToConfirm
+                text={`PAY ₱${reservation.totalPrice.toLocaleString()}`}
+                successText="REDIRECTING..."
+                onConfirm={handlePayment}
+                fullWidth
+                disabled={isProcessing || !selectedMethod}
+                icon={<Lock size={14} strokeWidth={3} />}
+                className="w-full"
+              />
+            </div>
+            {/* Desktop: fixed 300px */}
+            <div className="hidden sm:block">
+              <SlideToConfirm
+                text={`PAY ₱${reservation.totalPrice.toLocaleString()}`}
+                successText="REDIRECTING..."
+                onConfirm={handlePayment}
+                width={300}
+                disabled={isProcessing || !selectedMethod}
+                icon={<Lock size={14} strokeWidth={3} />}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </Modal>
