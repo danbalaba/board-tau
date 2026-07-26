@@ -41,13 +41,34 @@ export default function ContactSupportModal({ isOpen, onClose, initialSubject = 
 
   // Lock body scroll when open
   useEffect(() => {
+    const body = document.body;
+    const rootNode = document.documentElement;
+
+    const restoreScroll = () => {
+      const top = parseFloat(body.style.top) * -1;
+      body.style.overflow = '';
+      body.style.paddingRight = '';
+      body.style.top = '';
+      body.classList.remove("fixed", "w-full");
+      if (top) {
+        window.scrollTo(0, top);
+      }
+    };
+
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      const scrollTop = window.pageYOffset || rootNode.scrollTop || body.scrollTop;
+      body.style.overflow = 'hidden';
+      body.style.paddingRight = '17px';
+      body.style.top = `-${scrollTop}px`;
+      body.classList.add("fixed", "w-full");
     } else {
-      document.body.style.overflow = '';
+      restoreScroll();
     }
+    
     return () => {
-      document.body.style.overflow = '';
+      if (isOpen) {
+        restoreScroll();
+      }
     };
   }, [isOpen]);
 

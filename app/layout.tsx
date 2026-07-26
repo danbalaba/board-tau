@@ -111,6 +111,8 @@ export const viewport = {
   ],
 };
 
+import SmoothScrollProvider from "@/components/providers/SmoothScrollProvider";
+
 export default function RootLayout({
   children,
 }: {
@@ -137,18 +139,20 @@ export default function RootLayout({
         className={`${fontVariables} font-sans antialiased`}
         suppressHydrationWarning
       >
-        <Providers>
-          <NetworkStatusManager />
-          <Suspense fallback={null}>
-            <GlobalLoadingOverlay />
-          </Suspense>
-          <LayoutContent>
-            {children}
-            <InstallPrompt />
-          </LayoutContent>
-          <SpeedInsights />
-          <Analytics />
-        </Providers>
+        <SmoothScrollProvider>
+          <Providers>
+            <NetworkStatusManager />
+            <Suspense fallback={null}>
+              <GlobalLoadingOverlay />
+            </Suspense>
+            <LayoutContent>
+              {children}
+              <InstallPrompt />
+            </LayoutContent>
+            <SpeedInsights />
+            <Analytics />
+          </Providers>
+        </SmoothScrollProvider>
         {process.env.GA_MEASUREMENT_ID && (
           <GoogleAnalytics gaId={process.env.GA_MEASUREMENT_ID} />
         )}
