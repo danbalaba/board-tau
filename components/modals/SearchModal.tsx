@@ -115,7 +115,7 @@ export default function SearchModal({ onCloseModal }: { onCloseModal?: () => voi
         className="h-auto flex-1 min-h-0 border-0 relative flex flex-col w-full bg-white dark:bg-gray-900 outline-none focus:outline-none"
         onSubmit={handleSubmit(actions.onSubmit)}
       >
-        <div className="relative p-6 overflow-y-auto flex-1 custom-scrollbar flex flex-col pt-4">
+        <div data-lenis-prevent className="relative p-6 overflow-y-auto flex-1 custom-scrollbar flex flex-col pt-4">
           {renderStep()}
         </div>
         
