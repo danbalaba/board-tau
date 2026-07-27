@@ -125,7 +125,7 @@ describe("IDStep Component", () => {
 
     await userEvent.upload(uploadInput, largeFile);
 
-    expect(mockToastError).toHaveBeenCalledWith("File size is too large. Please upload an image under 10MB.");
+    expect(mockToastError).toHaveBeenCalledWith("File size is too large. Please upload an image under 5MB.");
   });
 
   it("renders the captured ID when capturedID is present", () => {
