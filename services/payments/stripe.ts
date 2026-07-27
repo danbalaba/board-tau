@@ -65,6 +65,9 @@ export const createStripeCheckoutSession = async (inquiryId: string) => {
     payment_method_types: ['card'],
     mode: 'payment',
     customer_email: user?.email || undefined,
+    payment_intent_data: {
+      receipt_email: user?.email || undefined,
+    },
     metadata: {
       inquiryId,
       listingId: inquiry.listingId,
