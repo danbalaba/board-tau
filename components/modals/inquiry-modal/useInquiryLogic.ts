@@ -60,6 +60,10 @@ export const useInquiryLogic = (
   const [capturedID, setCapturedID] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [isFlashActive, setIsFlashActive] = useState(false);
+  const [isIDProcessing, setIsIDProcessing] = useState(false);
+  const [isSelfieProcessing, setIsSelfieProcessing] = useState(false);
+  const [isEngineReady, setIsEngineReady] = useState(false);
+  const [selfieRetakeNeeded, setSelfieRetakeNeeded] = useState(false);
 
   // Calendar State
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -130,6 +134,27 @@ export const useInquiryLogic = (
     }
   }, [currentStep, capturedSelfie]);
 
+  // Effect 1: Wake up / Sleep face-engine based on step
+  useEffect(() => {
+    // Only load the heavy ML models if we are on the selfie step AND we don't have a selfie yet.
+    if (currentStep === 5 && !capturedSelfie) {
+      setIsEngineReady(false); // Show initializing overlay
+      faceEngine.warmup().then(() => setIsEngineReady(true)); 
+    } else if (currentStep > 5 || capturedSelfie) {
+      setIsEngineReady(false);
+      faceEngine.dispose();
+    }
+  }, [currentStep, capturedSelfie, faceEngine]);
+
+  const getScaledCanvas = (video: HTMLVideoElement) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 320;
+    canvas.height = 240;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx?.drawImage(video, 0, 0, 320, 240);
+    return canvas;
+  };
+
   // Effect 2: Real-time scanning loop
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -137,12 +162,13 @@ export const useInquiryLogic = (
       interval = setInterval(async () => {
         const video = webcamRef.current?.video;
         if (video && video.readyState === 4) {
-          // Run face alignment check
-          const result = await faceEngine.validateFace(video);
+          const scaledCanvas = getScaledCanvas(video);
+          
+          // Use the new quickValidateFace to do everything in one pass!
+          const result = await faceEngine.quickValidateFace(scaledCanvas);
           setIsFaceAligned(result.isValid);
 
-          // FACE-LOSS DETECTION: Reset liveness if face disappears for 3+ consecutive polls (600ms)
-          // Catches: user switches from real face to phone photo AFTER confirming liveness
+          // FACE-LOSS DETECTION: Reset liveness if face disappears
           if (livenessStatus === 'passed') {
             if (!result.isValid) {
               consecutiveFaceFailures.current += 1;
@@ -154,17 +180,16 @@ export const useInquiryLogic = (
                 consecutiveFaceFailures.current = 0;
               }
             } else {
-              consecutiveFaceFailures.current = 0; // Face back in frame, reset counter
+              consecutiveFaceFailures.current = 0; 
             }
-            return; // Skip liveness detection once confirmed (unless reset above)
+            return; 
           }
 
           // Check active challenge
-          const state = await faceEngine.getLivenessState(video);
+          const state = result.liveness;
           if (state && livenessStatus === 'idle' && activeChallenges.length > 0) {
             const currentChallenge = activeChallenges[0];
             
-            // Require the state to be present and explicitly held
             if (
               (currentChallenge === 'blink' && state.blink) ||
               (currentChallenge === 'smile' && state.smile) ||
@@ -172,49 +197,23 @@ export const useInquiryLogic = (
               (currentChallenge === 'turnRight' && state.turnRight)
             ) {
               if (activeChallenges.length > 1) {
-                // Move to next challenge
                 setActiveChallenges(prev => prev.slice(1));
               } else {
-                // All challenges passed
                 setLivenessStatus('passed');
               }
               consecutiveFaceFailures.current = 0;
             }
           }
         }
-      }, 200);
+      }, 600); // Changed from 200ms to 600ms to save CPU
     }
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, capturedSelfie, isProcessing, faceEngine, activeChallenges, livenessStatus]);
 
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (currentStep === 6 && !capturedID && !isProcessing) {
-      interval = setInterval(async () => {
-        const video = webcamRef.current?.video;
-        if (video && video.readyState === 4) {
-          const result = await idEngine.validateIDCard(video);
-          
-          if (result.isValid) {
-            consecutiveIDFailures.current = 0;
-            setIsIDAligned(true);
-          } else {
-            consecutiveIDFailures.current += 1;
-            // Persistence Buffer: Only hide if we fail 3 consecutive polls (~900ms)
-            if (consecutiveIDFailures.current >= 3) {
-              setIsIDAligned(false);
-            }
-          }
+  // ID Live Scan Loop REMOVED for Issue #9
 
-          const phoneCheck = result.reason?.toLowerCase().includes("phone") || false;
-          setIsPhoneDetected(phoneCheck);
-        }
-      }, 300); // Faster polling for snappier feedback
-    }
-    return () => clearInterval(interval);
-  }, [currentStep, capturedID, isProcessing, idEngine]);
 
   useEffect(() => {
     if (dateRange?.from) {
@@ -238,93 +237,103 @@ export const useInquiryLogic = (
 
     // CRITICAL: Validate the LIVE VIDEO STREAM first (not the screenshot).
     setIsFlashActive(true);
-    setTimeout(() => setIsFlashActive(false), 150);
+    // Wait for flash animation to complete (150ms), then show spinner
+    await new Promise(resolve => setTimeout(resolve, 160));
+    setIsFlashActive(false);
 
-    const result = await faceEngine.validateFace(video);
-    if (!result.isValid) {
-      responsiveToast.error(result.reason || "Selfie verification failed.");
-      return;
-    }
+    setIsSelfieProcessing(true);
+    
+    // Give the browser ONE more frame to render the spinner before the ML blocks the thread
+    await new Promise(resolve => setTimeout(resolve, 80));
 
-    // Only if LIVE frame passed all checks, save the screenshot
-    const imageSrc = webcamRef.current?.getScreenshot();
-    if (imageSrc) {
-      setCapturedSelfie(imageSrc);
-      responsiveToast.success("Face verified successfully!");
-    }
-  };
-
-  const handleCaptureID = async () => {
-    const video = webcamRef.current?.video;
-    if (!video) return;
-
-    // CRITICAL: Validate the LIVE VIDEO STREAM first (not the screenshot).
-    setIsFlashActive(true);
-    setTimeout(() => setIsFlashActive(false), 150);
-
-    const result = await idEngine.validateIDCard(video);
-    if (!result.isValid) {
-      responsiveToast.error(result.reason || "ID verification failed.");
-      return;
-    }
-
-    // Capture the ID screenshot
-    const imageSrc = webcamRef.current?.getScreenshot();
-    if (imageSrc) {
-      if (!capturedSelfie) {
-        responsiveToast.error("Selfie not found. Please complete the selfie step first.");
+    try {
+      const result = await faceEngine.validateFace(video);
+      if (!result.isValid) {
+        responsiveToast.error(result.reason || "Selfie verification failed.");
         return;
       }
 
-      const _setLoading = (window as any)._setIsProcessing;
-      if (_setLoading) _setLoading(true);
-
-      try {
-        // Load images into Image elements for face-api
-        const loadImage = (src: string): Promise<HTMLImageElement> => {
-          return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = reject;
-            img.src = src;
-          });
-        };
-
-        const [selfieImg, idImg] = await Promise.all([
-          loadImage(capturedSelfie),
-          loadImage(imageSrc)
-        ]);
-
-        const [selfieDescriptor, idDescriptor] = await Promise.all([
-          faceMatcher.getFaceDescriptor(selfieImg),
-          faceMatcher.getFaceDescriptor(idImg, 0.2) // Explicitly lower threshold for ID
-        ]);
-
-        if (!selfieDescriptor) {
-          responsiveToast.error("Could not verify your live selfie. Please retake it.");
-          return;
-        }
-
-        if (!idDescriptor) {
-          responsiveToast.error("Could not detect a face on your ID card. Please hold it closer and ensure it's well-lit.");
-          return;
-        }
-
-        const distance = faceMatcher.getFaceDistance(selfieDescriptor, idDescriptor);
-        if (distance > 0.6) {
-          responsiveToast.error(`Face mismatch (dist: ${distance.toFixed(2)}). The ID does not match the selfie.`);
-          return;
-        }
-
-        setCapturedID(imageSrc);
-        responsiveToast.success("ID card matched successfully!");
-      } catch (error) {
-        console.error("Face matching error:", error);
-        responsiveToast.error("Failed to perform face matching.");
-      } finally {
-        if (_setLoading) _setLoading(false);
+      // Only if LIVE frame passed all checks, save the screenshot
+      const imageSrc = webcamRef.current?.getScreenshot();
+      if (imageSrc) {
+        setCapturedSelfie(imageSrc);
+        responsiveToast.success("Face verified successfully!");
       }
+    } finally {
+      setIsSelfieProcessing(false);
     }
+  };
+
+  const handleCaptureID = async (imageFile: File) => {
+    if (!capturedSelfie) {
+      responsiveToast.error("Selfie not found. Please complete the selfie step first.");
+      return;
+    }
+
+    setIsIDProcessing(true);
+
+    try {
+      const reader = new FileReader();
+      const imageSrc = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(imageFile);
+      });
+
+      // Load images into Image elements for face-api
+      const loadImage = (src: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = src;
+        });
+      };
+
+      const [selfieImg, idImg] = await Promise.all([
+        loadImage(capturedSelfie),
+        loadImage(imageSrc)
+      ]);
+
+      const [selfieDescriptor, idDescriptor] = await Promise.all([
+        faceMatcher.getFaceDescriptor(selfieImg),
+        faceMatcher.getFaceDescriptor(idImg, 0.2) // Explicitly lower threshold for ID
+      ]);
+
+      if (!selfieDescriptor) {
+        setSelfieRetakeNeeded(true);
+        responsiveToast.error("Could not verify your live selfie. Please retake it.");
+        return;
+      }
+
+      // Reset if we get past this point
+      setSelfieRetakeNeeded(false);
+
+      if (!idDescriptor) {
+        responsiveToast.error("Could not detect a face on your ID card. Please ensure the ID photo is clearly visible.");
+        return;
+      }
+
+      const distance = faceMatcher.getFaceDistance(selfieDescriptor, idDescriptor);
+      if (distance > 0.6) {
+        responsiveToast.error(`Face mismatch (dist: ${distance.toFixed(2)}). The ID does not match the selfie.`);
+        return;
+      }
+
+      setCapturedID(imageSrc);
+      responsiveToast.success("ID card matched successfully!");
+    } catch (error) {
+      console.error("Face matching error:", error);
+      responsiveToast.error("Failed to perform face matching.");
+    } finally {
+      setIsIDProcessing(false);
+    }
+  };
+
+  const handleRetakeSelfie = () => {
+    setCapturedSelfie(null);
+    setSelfieRetakeNeeded(false);
+    setCurrentStep(5);
   };
 
   const toggleCamera = () => {
@@ -488,7 +497,7 @@ export const useInquiryLogic = (
   return {
     currentStep, setCurrentStep,
     currentImageIndex, setCurrentImageIndex,
-    submitted, isUploading, isProcessing,
+    submitted, isUploading, isProcessing, isIDProcessing, isSelfieProcessing, isEngineReady,
     webcamRef,
     isFaceAligned, isIDAligned, isPhoneDetected,
     hasReadGuidelines, setHasReadGuidelines,
@@ -497,6 +506,7 @@ export const useInquiryLogic = (
     capturedSelfie, setCapturedSelfie,
     setIsFaceAligned,
     capturedID, setCapturedID,
+    selfieRetakeNeeded, handleRetakeSelfie,
     livenessStatus, activeChallenge: activeChallenges[0] || 'blink',
     setIsIDAligned, setIsPhoneDetected,
     facingMode, isFlashActive, direction,

@@ -118,6 +118,7 @@ const LandlordWalkInModal: React.FC<LandlordWalkInModalProps> = ({
             activeChallenge={modal.activeChallenge}
             setIsFaceAligned={modal.setIsFaceAligned}
             isProcessing={modal.isProcessing}
+            isEngineReady={true}
             isFlashActive={modal.isFlashActive}
             toggleCamera={modal.toggleCamera}
             handleCaptureSelfie={modal.handleCaptureSelfie}

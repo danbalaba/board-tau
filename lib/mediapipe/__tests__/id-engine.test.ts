@@ -4,23 +4,19 @@ import { visionManager } from "../vision-manager";
 // Mock the visionManager
 jest.mock("../vision-manager", () => ({
   visionManager: {
-    createHandLandmarker: jest.fn(),
     createObjectDetector: jest.fn(),
   }
 }));
 
 describe("IDEngine", () => {
   let engine: IDEngine;
-  let mockHandLandmarker: any;
   let mockObjectDetector: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
     
-    mockHandLandmarker = { detect: jest.fn() };
     mockObjectDetector = { detect: jest.fn() };
 
-    (visionManager.createHandLandmarker as jest.Mock).mockResolvedValue(mockHandLandmarker);
     (visionManager.createObjectDetector as jest.Mock).mockResolvedValue(mockObjectDetector);
 
     engine = new IDEngine();
@@ -35,7 +31,6 @@ describe("IDEngine", () => {
     it("initializes models", async () => {
       await engine.warmup();
       expect(visionManager.createObjectDetector).toHaveBeenCalled();
-      expect(visionManager.createHandLandmarker).toHaveBeenCalled();
     });
   });
 
@@ -49,7 +44,6 @@ describe("IDEngine", () => {
 
     it("detects digital spoofing (phone/screen)", async () => {
       const video = createMockVideo();
-      mockHandLandmarker.detect.mockReturnValue({ landmarks: [] });
       mockObjectDetector.detect.mockReturnValue({
         detections: [{ categories: [{ categoryName: "cell phone", score: 0.3 }] }]
       });
@@ -63,7 +57,6 @@ describe("IDEngine", () => {
 
     it("allows phone detection if score is low (e.g. glossy reflection falsely flagged)", async () => {
       const video = createMockVideo();
-      mockHandLandmarker.detect.mockReturnValue({ landmarks: [] });
       mockObjectDetector.detect.mockReturnValue({
         detections: [{ categories: [{ categoryName: "cell phone", score: 0.1 }] }]
       });
@@ -74,7 +67,6 @@ describe("IDEngine", () => {
 
     it("blocks selfies in the ID step", async () => {
       const video = createMockVideo(100, 100);
-      mockHandLandmarker.detect.mockReturnValue({ landmarks: [] });
       
       // Person bounding box taking up 50% of the screen (50x100)
       mockObjectDetector.detect.mockReturnValue({
@@ -91,7 +83,6 @@ describe("IDEngine", () => {
 
     it("allows person detection if bounding box is very small (e.g. photo on ID card)", async () => {
       const video = createMockVideo(100, 100);
-      mockHandLandmarker.detect.mockReturnValue({ landmarks: [] });
       
       // Person bounding box taking up only 5% of the screen
       mockObjectDetector.detect.mockReturnValue({
@@ -107,7 +98,6 @@ describe("IDEngine", () => {
 
     it("passes valid ID card scans", async () => {
       const video = createMockVideo();
-      mockHandLandmarker.detect.mockReturnValue({ landmarks: [] });
       mockObjectDetector.detect.mockReturnValue({ detections: [] });
 
       const result = await engine.validateIDCard(video);

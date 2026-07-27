@@ -50,17 +50,13 @@ describe("useKYC hook", () => {
     } as any;
   });
 
-  it("initializes and warms up engines on mount", async () => {
+  it("initializes without warming up engines on mount", () => {
     const { result } = renderHook(() => useKYC());
     
-    // Initially isInitializing is true
-    expect(result.current.isInitializing).toBe(true);
-    
-    await waitFor(() => {
-      expect(faceEngine.warmup).toHaveBeenCalled();
-      expect(idEngine.warmup).toHaveBeenCalled();
-      expect(result.current.isInitializing).toBe(false);
-    });
+    // isInitializing should be false as we no longer warm up on mount
+    expect(result.current.isInitializing).toBe(false);
+    expect(faceEngine.warmup).not.toHaveBeenCalled();
+    expect(idEngine.warmup).not.toHaveBeenCalled();
   });
 
   describe("validateSelfie", () => {

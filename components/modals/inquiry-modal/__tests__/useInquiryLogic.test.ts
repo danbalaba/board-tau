@@ -29,15 +29,41 @@ jest.mock("@/components/common/ResponsiveToast", () => ({
 const mockValidateFace = jest.fn().mockResolvedValue({ isValid: true });
 const mockValidateIDCard = jest.fn().mockResolvedValue({ isValid: true });
 const mockGetLivenessState = jest.fn().mockResolvedValue({ blink: false, smile: false, turnLeft: false, turnRight: false });
+const mockQuickValidateFace = jest.fn().mockResolvedValue({ isValid: true, liveness: { blink: false, smile: false, turnLeft: false, turnRight: false } });
+
+// Stable engine objects — MUST NOT be re-created per render, or faceEngine
+// reference changes will cause the warmup useEffect to loop infinitely.
+const mockFaceEngine = {
+  validateFace: mockValidateFace,
+  getLivenessState: mockGetLivenessState,
+  quickValidateFace: mockQuickValidateFace,
+  warmup: () => Promise.resolve(),
+  dispose: jest.fn(),
+};
+
+const mockIdEngine = {
+  validateIDCard: mockValidateIDCard,
+  warmup: jest.fn(),
+};
 
 jest.mock("@/hooks/useKYC", () => ({
   useKYC: () => ({
     isProcessing: false,
     validateSelfie: jest.fn(),
     validateID: jest.fn(),
-    faceEngine: { validateFace: mockValidateFace, getLivenessState: mockGetLivenessState },
-    idEngine: { validateIDCard: mockValidateIDCard },
+    faceEngine: mockFaceEngine,
+    idEngine: mockIdEngine,
   }),
+}));
+
+const mockGetFaceDescriptor = jest.fn().mockResolvedValue(new Float32Array(128));
+const mockGetFaceDistance = jest.fn().mockReturnValue(0.3);
+
+jest.mock("@/lib/mediapipe/face-matcher", () => ({
+  faceMatcher: {
+    getFaceDescriptor: (...args: any[]) => mockGetFaceDescriptor(...args),
+    getFaceDistance: (...args: any[]) => mockGetFaceDistance(...args),
+  },
 }));
 
 // Mock react-hook-form
@@ -235,6 +261,11 @@ describe("useInquiryLogic hook", () => {
   });
 
   describe("Camera & Capture", () => {
+    afterEach(() => {
+      // Always restore real timers so fake timers don't bleed into subsequent tests
+      jest.useRealTimers();
+    });
+
     it("toggles camera facing mode", () => {
       const { result } = setup();
       expect(result.current.facingMode).toBe("user");
@@ -270,188 +301,142 @@ describe("useInquiryLogic hook", () => {
 
     it("executes the full KYC blink detection loop and succeeds", async () => {
       jest.useFakeTimers();
-      const { result } = setup();
-      
-      const fakeVideo = document.createElement("video");
-      // Add a getter for readyState to mock a loaded video stream
-      Object.defineProperty(fakeVideo, "readyState", { value: 4 });
-      const fakeGetScreenshot = jest.fn().mockReturnValue("data:image/png;base64,test-selfie");
-      
-      result.current.webcamRef.current = {
-        video: fakeVideo,
-        getScreenshot: fakeGetScreenshot,
-      } as any;
+      try {
+        const { result } = setup();
+        
+        const fakeVideo = document.createElement("video");
+        // Add a getter for readyState to mock a loaded video stream
+        Object.defineProperty(fakeVideo, "readyState", { value: 4 });
+        const fakeGetScreenshot = jest.fn().mockReturnValue("data:image/png;base64,test-selfie");
+        
+        result.current.webcamRef.current = {
+          video: fakeVideo,
+          getScreenshot: fakeGetScreenshot,
+        } as any;
 
-      // Start the loop by moving to Step 5
-      act(() => {
-        result.current.setCurrentStep(5);
-      });
+        // Start the loop by moving to Step 5
+        act(() => {
+          result.current.setCurrentStep(5);
+        });
 
-      // 1. Initial State (eyes open)
-      mockValidateFace.mockResolvedValue({ isValid: true });
-      mockGetLivenessState.mockResolvedValue({ blink: false, smile: false, turnLeft: false, turnRight: false }); // Idle
+        // 1. Initial State (eyes open)
+        mockValidateFace.mockResolvedValue({ isValid: true });
+        mockGetLivenessState.mockResolvedValue({ blink: false, smile: false, turnLeft: false, turnRight: false }); // Idle
 
-      await act(async () => {
-        jest.advanceTimersByTime(200);
-      });
-      await Promise.resolve(); // Let the microtasks flush
+        await act(async () => {
+          jest.advanceTimersByTime(200);
+        });
+        await Promise.resolve(); // Let the microtasks flush
 
-      // 2. Eyes closed (Frame 1)
-      mockGetLivenessState.mockResolvedValue({ blink: true, smile: false, turnLeft: false, turnRight: false }); // Blink detected
-      await act(async () => {
-        jest.advanceTimersByTime(200);
-      });
-      await Promise.resolve();
-
-      // 2. Eyes closed (Frame 2 - triggers transition to 'eye_closed')
-      await act(async () => {
-        jest.advanceTimersByTime(200);
-      });
-      await Promise.resolve();
-
-      // 3. Eyes open again (completes the blink)
-      mockGetLivenessState.mockResolvedValue({ blink: false, smile: false, turnLeft: false, turnRight: false }); // Idle
-      await act(async () => {
-        jest.advanceTimersByTime(200);
-      });
-      await Promise.resolve();
-
-      // We'll assume livenessStatus passes based on the sequence above
-
-      // Face loss detection (face goes missing)
-      mockValidateFace.mockResolvedValue({ isValid: false });
-      await act(async () => {
-        jest.advanceTimersByTime(600); // 3 consecutive polls
+        // 2. Eyes closed (Frame 1)
+        mockGetLivenessState.mockResolvedValue({ blink: true, smile: false, turnLeft: false, turnRight: false }); // Blink detected
+        await act(async () => {
+          jest.advanceTimersByTime(200);
+        });
         await Promise.resolve();
-      });
-      // Should reset everything
-      expect(result.current.livenessStatus).toBe('idle');
 
-      jest.useRealTimers();
-    });
-
-    it("executes the ID persistence buffer loop", async () => {
-      jest.useFakeTimers();
-      const { result } = setup();
-      
-      const fakeVideo = document.createElement("video");
-      Object.defineProperty(fakeVideo, "readyState", { value: 4 });
-      
-      result.current.webcamRef.current = {
-        video: fakeVideo,
-      } as any;
-
-      // Start the loop by moving to Step 6
-      act(() => {
-        result.current.setCurrentStep(6);
-      });
-
-      // Successful ID validation
-      mockValidateIDCard.mockResolvedValue({ isValid: true, reason: "" });
-      await act(async () => {
-        jest.advanceTimersByTime(300);
+        // 2. Eyes closed (Frame 2 - triggers transition to 'eye_closed')
+        await act(async () => {
+          jest.advanceTimersByTime(200);
+        });
         await Promise.resolve();
-      });
-      
-      expect(result.current.isIDAligned).toBe(true);
 
-      // Failing ID validation (requires 3 consecutive failures = 900ms)
-      mockValidateIDCard.mockResolvedValue({ isValid: false, reason: "Phone screen detected" });
-      await act(async () => {
-        jest.advanceTimersByTime(900);
+        // 3. Eyes open again (completes the blink)
+        mockGetLivenessState.mockResolvedValue({ blink: false, smile: false, turnLeft: false, turnRight: false }); // Idle
+        await act(async () => {
+          jest.advanceTimersByTime(200);
+        });
         await Promise.resolve();
-      });
 
-      expect(result.current.isIDAligned).toBe(false);
-      expect(result.current.isPhoneDetected).toBe(true);
+        // We'll assume livenessStatus passes based on the sequence above
 
-      jest.useRealTimers();
-    });
+        // Face loss detection (face goes missing)
+        mockValidateFace.mockResolvedValue({ isValid: false });
+        await act(async () => {
+          jest.advanceTimersByTime(600); // 3 consecutive polls
+          await Promise.resolve();
+        });
+        // Should reset everything
+        expect(result.current.livenessStatus).toBe('idle');
+      } finally {
+        jest.useRealTimers();
+      }
+    }, 15000);
 
     it("handles ID capture successfully", async () => {
-      const { result } = setup();
-      
-      const fakeVideo = document.createElement("video");
-      const fakeGetScreenshot = jest.fn().mockReturnValue("data:image/png;base64,test-id");
-      
-      result.current.webcamRef.current = {
-        video: fakeVideo,
-        getScreenshot: fakeGetScreenshot,
+      // Mock FileReader for this test
+      const originalFileReader = global.FileReader;
+      global.FileReader = class {
+        onload: any;
+        readAsDataURL() {
+          setTimeout(() => this.onload(), 0);
+        }
+        result = "data:image/png;base64,test-id";
       } as any;
 
-      // Pre-set capturedSelfie so handleCaptureID doesn't short-circuit
+      const { result } = setup();
+      const fakeFile = new File(["dummy"], "id.png", { type: "image/png" });
+
       act(() => { result.current.setCapturedSelfie("data:image/png;base64,test-selfie"); });
 
-      mockValidateIDCard.mockResolvedValueOnce({ isValid: true });
-
       await act(async () => {
-        await result.current.handleCaptureID();
+        await result.current.handleCaptureID(fakeFile);
       });
 
-      expect(mockValidateIDCard).toHaveBeenCalled();
-      // Face matcher will fail in JSDOM (no face-api), so capturedID may remain null —
-      // but at minimum the ID validation was called and no ID error toast was shown.
-      // The test verifies the path up to the face-matching gate.
-      expect(mockToastError).not.toHaveBeenCalledWith("ID verification failed.");
+      expect(mockGetFaceDescriptor).toHaveBeenCalledTimes(2);
+      expect(mockToastSuccess).toHaveBeenCalledWith("ID card matched successfully!");
+      
+      global.FileReader = originalFileReader;
     });
-    
+
     it("handles selfie capture successfully after blinking", async () => {
       jest.useFakeTimers();
+      try {
+        const { result } = setup();
+        
+        const fakeVideo = document.createElement("video");
+        Object.defineProperty(fakeVideo, "readyState", { value: 4 });
+        const fakeGetScreenshot = jest.fn().mockReturnValue("data:image/png;base64,test-selfie");
+        
+        result.current.webcamRef.current = {
+          video: fakeVideo,
+          getScreenshot: fakeGetScreenshot,
+        } as any;
+
+        act(() => { result.current.setCurrentStep(5); });
+        mockValidateFace.mockResolvedValue({ isValid: true });
+        mockQuickValidateFace.mockResolvedValue({ isValid: true, liveness: { blink: true, smile: true, turnLeft: true, turnRight: true } });
+        await act(async () => { jest.advanceTimersByTime(600); }); await Promise.resolve();
+        await act(async () => { jest.advanceTimersByTime(600); }); await Promise.resolve();
+        
+        expect(result.current.livenessStatus).toBe('passed');
+
+        // Switch to real timers BEFORE capture — handleCaptureSelfie has
+        // internal setTimeout(160ms) and setTimeout(80ms) that would hang forever
+        // under fake timers, causing this test to always time out.
+        jest.useRealTimers();
+
+        mockValidateFace.mockResolvedValueOnce({ isValid: true });
+        await act(async () => {
+          await result.current.handleCaptureSelfie();
+        });
+        
+        expect(result.current.capturedSelfie).toBe("data:image/png;base64,test-selfie");
+        expect(mockToastSuccess).toHaveBeenCalledWith("Face verified successfully!");
+      } finally {
+        jest.useRealTimers();
+      }
+    }, 15000);
+
+    it("handles ID capture failure when selfie is not found", async () => {
       const { result } = setup();
-      
-      const fakeVideo = document.createElement("video");
-      Object.defineProperty(fakeVideo, "readyState", { value: 4 });
-      const fakeGetScreenshot = jest.fn().mockReturnValue("data:image/png;base64,test-selfie");
-      
-      result.current.webcamRef.current = {
-        video: fakeVideo,
-        getScreenshot: fakeGetScreenshot,
-      } as any;
-
-      // Start step 5 — this triggers the reset effect which picks 2 random challenges
-      act(() => { result.current.setCurrentStep(5); });
-
-      // Face is valid
-      mockValidateFace.mockResolvedValue({ isValid: true });
-
-      // Simulate enough liveness polls to satisfy BOTH challenges:
-      // Round 1: challenge[0] detected as 'true' (blink mock covers any first challenge)
-      mockGetLivenessState.mockResolvedValue({ blink: true, smile: true, turnLeft: true, turnRight: true });
-      await act(async () => { jest.advanceTimersByTime(200); }); await Promise.resolve();
-      // Round 2: challenge[1] also still true → passes second challenge
-      await act(async () => { jest.advanceTimersByTime(200); }); await Promise.resolve();
-      
-      // State should now be 'passed'
-      expect(result.current.livenessStatus).toBe('passed');
-
-      // Capture success
-      mockValidateFace.mockResolvedValueOnce({ isValid: true });
-      await act(async () => {
-        await result.current.handleCaptureSelfie();
-      });
-      
-      expect(result.current.capturedSelfie).toBe("data:image/png;base64,test-selfie");
-      expect(mockToastSuccess).toHaveBeenCalledWith("Face verified successfully!");
-
-      jest.useRealTimers();
-    });
-    
-    it("handles ID capture failure", async () => {
-      const { result } = setup();
-      
-      const fakeVideo = document.createElement("video");
-      result.current.webcamRef.current = {
-        video: fakeVideo,
-        getScreenshot: jest.fn(),
-      } as any;
-
-      mockValidateIDCard.mockResolvedValueOnce({ isValid: false, reason: "Too blurry" });
+      const fakeFile = new File(["dummy"], "id.png", { type: "image/png" });
 
       await act(async () => {
-        await result.current.handleCaptureID();
+        await result.current.handleCaptureID(fakeFile);
       });
 
-      expect(mockToastError).toHaveBeenCalledWith("Too blurry");
+      expect(mockToastError).toHaveBeenCalledWith("Selfie not found. Please complete the selfie step first.");
       expect(result.current.capturedID).toBeNull();
     });
   });

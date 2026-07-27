@@ -230,7 +230,7 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
                         </div>
                         <span>My messages</span>
                       </button>
-                      <Modal.Trigger name="host-application">
+                      <Modal.Trigger name="host-application" onClick={onClose}>
                         <button className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
                           <Home className="text-sm" />
                           <span>Become a host</span>

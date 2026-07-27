@@ -45,7 +45,7 @@ const OTPVerifyStep: React.FC<OTPVerifyStepProps> = ({
     setIsProcessing(true);
     try {
       await axios.post("/api/inquiries/otp/send", { email: userEmail });
-      responsiveToast.success("Security code sent to your email!", { duration: 4000 });
+      responsiveToast.success("Inquiry confirmation code sent to your registered email!", { duration: 4500 });
       setOtpAttemptLimitReached(false);
     } catch (error: any) {
       const msg = error.response?.data?.error || error.message;
@@ -101,9 +101,23 @@ const OTPVerifyStep: React.FC<OTPVerifyStepProps> = ({
         <p className="text-xs text-gray-500 font-medium">To protect landlords from spam, please verify your identity before submitting this inquiry.</p>
       </div>
 
-      <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-500/20 text-center">
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Code sent to</p>
-        <p className="text-sm font-black text-blue-600 dark:text-blue-400 tracking-wide">{userEmail}</p>
+      {/* Clarification Alert */}
+      <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-3 flex items-start gap-3 text-left">
+        <div className="mt-0.5 text-amber-500">
+          <FaShieldAlt size={14} />
+        </div>
+        <p className="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400 font-medium">
+          <strong className="font-bold">Security Notice:</strong> The verification code is sent to your <u>registered account email</u>, NOT the contact details you provided for the landlord earlier.
+        </p>
+      </div>
+
+      {/* Account Email Display */}
+      <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-500/20 text-center shadow-inner">
+        <p className="text-[10px] font-bold text-blue-400/80 uppercase tracking-widest mb-1.5 flex items-center justify-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+          Registered Account Email
+        </p>
+        <p className="text-sm font-black text-blue-600 dark:text-blue-400 tracking-wide select-all">{userEmail}</p>
       </div>
 
       <div className="px-2">
