@@ -22,14 +22,14 @@ interface IDStepProps {
 }
 
 /**
- * Validates that a URL uses a safe protocol (blob: or data:) before
- * passing it to an img src. CodeQL recognizes this as a safe whitelist.
+ * Validates that a URL uses the blob: protocol before
+ * passing it to an img src.
  */
 const sanitizeImgUrl = (url: string | null): string | undefined => {
   if (!url) return undefined;
   try {
     const { protocol } = new URL(url);
-    return (protocol === 'blob:' || protocol === 'data:') ? url : undefined;
+    return protocol === 'blob:' ? url : undefined;
   } catch {
     return undefined;
   }
@@ -54,38 +54,52 @@ const IDStep: React.FC<IDStepProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const responsiveToast = useResponsiveToast();
-
-  // Set img src imperatively to avoid CodeQL js/xss-through-dom false positive.
-  // previewUrl is always a blob: URL from URL.createObjectURL() — never DOM text.
-  useEffect(() => {
-    if (imgRef.current) {
-      imgRef.current.src = sanitizeImgUrl(previewUrl) ?? '';
-    }
-  }, [previewUrl]);
 
   useEffect(() => {
     return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
   }, [previewUrl]);
 
+  const processFile = (file: File) => {
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+    if (!validTypes.includes(file.type)) {
+      responsiveToast.error("Please upload a valid image file (JPEG, PNG, or WEBP)");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      responsiveToast.error("File size is too large. Please upload an image under 5MB.");
+      return;
+    }
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
-      if (!validTypes.includes(file.type)) {
-        responsiveToast.error("Please upload a valid image file (JPEG, PNG, or WEBP)");
-        return;
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        responsiveToast.error("File size is too large. Please upload an image under 10MB.");
-        return;
-      }
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-    }
+    if (file) processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
   };
 
   const confirmUpload = () => { if (selectedFile) handleCaptureID(selectedFile); };
@@ -123,10 +137,10 @@ const IDStep: React.FC<IDStepProps> = ({
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.97 }}
-            className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-emerald-500/30 bg-black"
+            className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-black flex items-center justify-center"
             style={{ minHeight: 280 }}
           >
-            <img src={capturedID} alt="Captured ID" className="w-full h-full object-contain" />
+            <img src={capturedID} alt="Captured ID" className="absolute inset-0 w-full h-full object-contain p-4" />
 
             {/* Green success overlay at bottom */}
             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
@@ -174,12 +188,23 @@ const IDStep: React.FC<IDStepProps> = ({
             className="space-y-3"
           >
             {/* Preview card */}
-            <div className="relative w-full rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/10" style={{ minHeight: 250 }}>
+            <div className="relative w-full rounded-2xl overflow-hidden bg-gray-50 dark:bg-black shadow-2xl border border-gray-200 dark:border-white/10 flex items-center justify-center" style={{ minHeight: 250 }}>
               <img 
-                ref={imgRef}
+                src={sanitizeImgUrl(previewUrl)}
                 alt="ID Preview" 
-                className="w-full h-full object-contain" 
+                className="absolute inset-0 w-full h-full object-contain p-4" 
               />
+
+              {/* Clear button */}
+              {!isProcessing && (
+                <button
+                  type="button"
+                  onClick={cancelUpload}
+                  className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white p-2 rounded-full hover:bg-red-500/80 transition-all z-10 border border-white/10"
+                >
+                  <FaTimes size={12} />
+                </button>
+              )}
 
               {/* Corner brackets */}
               <div className="absolute inset-2 pointer-events-none">
@@ -236,10 +261,10 @@ const IDStep: React.FC<IDStepProps> = ({
 
             {/* File info bar */}
             {selectedFile && !isProcessing && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-800/60 border border-white/5 text-xs text-gray-400">
-                <FaIdCard size={11} className="text-blue-400 shrink-0" />
-                <span className="truncate flex-1 font-mono">{selectedFile.name}</span>
-                <span className="shrink-0 text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(1)} MB</span>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800/60 border border-gray-200 dark:border-white/5 text-xs text-gray-500 dark:text-gray-400">
+                <FaIdCard size={11} className="text-blue-500 dark:text-blue-400 shrink-0" />
+                <span className="truncate flex-1 font-mono text-gray-700 dark:text-gray-300">{selectedFile.name}</span>
+                <span className="shrink-0 text-gray-400 dark:text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(1)} MB</span>
               </div>
             )}
 
@@ -269,7 +294,7 @@ const IDStep: React.FC<IDStepProps> = ({
                 type="button"
                 disabled={isProcessing}
                 onClick={cancelUpload}
-                className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-white/10 text-gray-300 hover:bg-white/5 disabled:opacity-40 transition-all"
+                className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-gray-300 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-40 transition-all"
               >
                 ↩ Retake
               </button>
@@ -277,7 +302,7 @@ const IDStep: React.FC<IDStepProps> = ({
                 type="button"
                 disabled={isProcessing}
                 onClick={confirmUpload}
-                className="flex-[2] py-3.5 rounded-xl font-bold text-sm bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-40 flex justify-center items-center gap-2 transition-all shadow-lg shadow-blue-500/20"
+                className="flex-1 py-3.5 rounded-xl font-bold text-sm bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-40 flex justify-center items-center gap-2 transition-all shadow-lg shadow-blue-500/20"
               >
                 {isProcessing
                   ? <><Loader2 className="w-4 h-4 animate-spin" /> Verifying...</>
@@ -296,8 +321,17 @@ const IDStep: React.FC<IDStepProps> = ({
             className="space-y-4"
           >
             {/* Big drop zone */}
-            <div className="relative w-full rounded-2xl bg-gradient-to-b from-gray-900 to-gray-950 border-2 border-dashed border-gray-700 hover:border-blue-500/50 transition-colors overflow-hidden group"
-                 style={{ minHeight: 220 }}>
+            <div 
+              className={`relative w-full rounded-2xl bg-gradient-to-b border-2 border-dashed transition-colors overflow-hidden group ${
+                isDragging 
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 from-blue-50/50 to-blue-100/50 dark:from-blue-900/10 dark:to-blue-900/20' 
+                  : 'from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 border-gray-300 dark:border-gray-700 hover:border-blue-500/50'
+              }`}
+              style={{ minHeight: 220 }}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
 
               {/* Background card illustration */}
               <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] pointer-events-none select-none">
@@ -319,8 +353,8 @@ const IDStep: React.FC<IDStepProps> = ({
                   <FaIdCard className="text-blue-400" size={28} />
                 </motion.div>
                 <div className="text-center space-y-1">
-                  <p className="text-white font-semibold text-sm">Position your ID card here</p>
-                  <p className="text-gray-500 text-xs">Accepted: JPEG, PNG, WEBP, HEIC · Max 10MB</p>
+                  <p className="text-gray-900 dark:text-white font-semibold text-sm">Position your ID card here</p>
+                  <p className="text-gray-500 text-xs">Accepted: JPEG, PNG, WEBP, HEIC · Max 5MB</p>
                 </div>
               </div>
             </div>
@@ -339,7 +373,7 @@ const IDStep: React.FC<IDStepProps> = ({
               <button
                 type="button"
                 onClick={() => galleryInputRef.current?.click()}
-                className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white py-4 rounded-2xl font-bold flex flex-col items-center gap-2 transition-all active:scale-95"
+                className="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white py-4 rounded-2xl font-bold flex flex-col items-center gap-2 transition-all active:scale-95"
               >
                 <FaImage size={22} />
                 <span className="text-[11px] uppercase tracking-widest">Gallery</span>
@@ -347,10 +381,10 @@ const IDStep: React.FC<IDStepProps> = ({
             </div>
 
             {/* Tips */}
-            <div className="flex gap-2 p-3 rounded-xl bg-amber-500/5 border border-amber-500/15">
-              <AlertCircle size={14} className="text-amber-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-300/70 leading-relaxed">
-                Ensure the <strong className="text-amber-300">entire ID card</strong> is visible, well-lit, and free from glare or blur.
+            <div className="flex gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <AlertCircle size={14} className="text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700 dark:text-amber-300/70 leading-relaxed">
+                Ensure the <strong className="text-amber-800 dark:text-amber-300">entire ID card</strong> is visible, well-lit, and free from glare or blur.
               </p>
             </div>
 

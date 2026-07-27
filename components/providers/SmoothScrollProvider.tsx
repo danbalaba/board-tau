@@ -1,11 +1,10 @@
 "use client";
 
-import { ReactLenis } from '@studio-freight/react-lenis';
-
+/**
+ * SmoothScrollProvider: Lenis was removed because it hijacked wheel events
+ * in every modal and scrollable container across the app.
+ * Smooth scrolling is now handled natively via `scroll-behavior: smooth` in globals.css.
+ */
 export default function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <ReactLenis root options={{ lerp: 0.08, duration: 1.5, smoothWheel: true }}>
-      <>{children}</>
-    </ReactLenis>
-  );
+  return <>{children}</>;
 }

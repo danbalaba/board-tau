@@ -11,6 +11,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Native smooth scrolling — replaces Lenis library */
+html {
+  scroll-behavior: smooth;
+}
+
 /* Custom scrollbar styles */
 ::-webkit-scrollbar {
   width: 8px;
