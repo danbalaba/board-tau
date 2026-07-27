@@ -1,22 +1,10 @@
 "use client";
 
-import { ReactLenis } from '@studio-freight/react-lenis';
-
 /**
- * Auto-detect scrollable containers so Lenis never intercepts wheel events
- * on any element with overflow-y: auto or scroll. This covers all modals,
- * dropdowns, and scrollable panels globally — no data-lenis-prevent needed.
+ * SmoothScrollProvider: Lenis was removed because it hijacked wheel events
+ * in every modal and scrollable container across the app.
+ * Smooth scrolling is now handled natively via `scroll-behavior: smooth` in globals.css.
  */
-function preventLenis(node: Element): boolean {
-  const style = window.getComputedStyle(node);
-  const overflowY = style.overflowY;
-  return overflowY === 'auto' || overflowY === 'scroll';
-}
-
 export default function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <ReactLenis root options={{ lerp: 0.08, duration: 1.5, smoothWheel: true, prevent: preventLenis } as any}>
-      <>{children}</>
-    </ReactLenis>
-  );
+  return <>{children}</>;
 }
