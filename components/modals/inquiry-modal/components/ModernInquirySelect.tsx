@@ -84,7 +84,7 @@ export function ModernInquirySelect({
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             className="absolute z-[100] left-0 right-0 p-2 bg-white dark:bg-[#111827] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl"
           >
-            <div className="max-h-60 overflow-y-auto scrollbar-hide">
+            <div data-lenis-prevent className="max-h-60 overflow-y-auto scrollbar-hide">
               {options.map((option) => (
                 <button
                   key={option.value}
