@@ -54,18 +54,9 @@ const IDStep: React.FC<IDStepProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const responsiveToast = useResponsiveToast();
-
-  // Set img src imperatively to avoid CodeQL js/xss-through-dom false positive.
-  // previewUrl is always a blob: URL from URL.createObjectURL() — never DOM text.
-  useEffect(() => {
-    if (imgRef.current) {
-      imgRef.current.src = sanitizeImgUrl(previewUrl) ?? '';
-    }
-  }, [previewUrl]);
 
   useEffect(() => {
     return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
@@ -176,7 +167,7 @@ const IDStep: React.FC<IDStepProps> = ({
             {/* Preview card */}
             <div className="relative w-full rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/10" style={{ minHeight: 250 }}>
               <img 
-                ref={imgRef}
+                src={sanitizeImgUrl(previewUrl)}
                 alt="ID Preview" 
                 className="w-full h-full object-contain" 
               />
