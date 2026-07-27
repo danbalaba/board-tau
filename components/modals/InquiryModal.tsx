@@ -155,7 +155,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
         </div>
         
         {/* Main Content Area */}
-        <div data-lenis-prevent className="overflow-y-auto flex-1 min-h-0 custom-scrollbar overscroll-contain">
+        <div className="overflow-y-auto flex-1 min-h-0 custom-scrollbar overscroll-contain">
           <div className="p-4 md:p-6 pb-24 md:pb-6">
             
             {/* Mobile-Only Compact Header Strip (Expandable) */}

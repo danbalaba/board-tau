@@ -332,7 +332,7 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
         </div>
 
         {/* Room Grid Area */}
-        <div data-lenis-prevent className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-gray-50/20 dark:bg-gray-900/10 relative">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-gray-50/20 dark:bg-gray-900/10 relative">
           <AnimatePresence mode="wait">
             {isFiltering ? (
               <motion.div
