@@ -287,7 +287,7 @@ const IDStep: React.FC<IDStepProps> = ({
             className="space-y-4"
           >
             {/* Big drop zone */}
-            <div className="relative w-full rounded-2xl bg-gradient-to-b from-gray-900 to-gray-950 border-2 border-dashed border-gray-700 hover:border-blue-500/50 transition-colors overflow-hidden group"
+            <div className="relative w-full rounded-2xl bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500/50 transition-colors overflow-hidden group"
                  style={{ minHeight: 220 }}>
 
               {/* Background card illustration */}
@@ -310,7 +310,7 @@ const IDStep: React.FC<IDStepProps> = ({
                   <FaIdCard className="text-blue-400" size={28} />
                 </motion.div>
                 <div className="text-center space-y-1">
-                  <p className="text-white font-semibold text-sm">Position your ID card here</p>
+                  <p className="text-gray-900 dark:text-white font-semibold text-sm">Position your ID card here</p>
                   <p className="text-gray-500 text-xs">Accepted: JPEG, PNG, WEBP, HEIC · Max 10MB</p>
                 </div>
               </div>
@@ -330,7 +330,7 @@ const IDStep: React.FC<IDStepProps> = ({
               <button
                 type="button"
                 onClick={() => galleryInputRef.current?.click()}
-                className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white py-4 rounded-2xl font-bold flex flex-col items-center gap-2 transition-all active:scale-95"
+                className="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white py-4 rounded-2xl font-bold flex flex-col items-center gap-2 transition-all active:scale-95"
               >
                 <FaImage size={22} />
                 <span className="text-[11px] uppercase tracking-widest">Gallery</span>
@@ -338,10 +338,10 @@ const IDStep: React.FC<IDStepProps> = ({
             </div>
 
             {/* Tips */}
-            <div className="flex gap-2 p-3 rounded-xl bg-amber-500/5 border border-amber-500/15">
-              <AlertCircle size={14} className="text-amber-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-300/70 leading-relaxed">
-                Ensure the <strong className="text-amber-300">entire ID card</strong> is visible, well-lit, and free from glare or blur.
+            <div className="flex gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <AlertCircle size={14} className="text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700 dark:text-amber-300/70 leading-relaxed">
+                Ensure the <strong className="text-amber-800 dark:text-amber-300">entire ID card</strong> is visible, well-lit, and free from glare or blur.
               </p>
             </div>
 
