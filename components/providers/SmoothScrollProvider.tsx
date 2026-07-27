@@ -15,7 +15,7 @@ function preventLenis(node: Element): boolean {
 
 export default function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
   return (
-    <ReactLenis root options={{ lerp: 0.08, duration: 1.5, smoothWheel: true, prevent: preventLenis }}>
+    <ReactLenis root options={{ lerp: 0.08, duration: 1.5, smoothWheel: true, prevent: preventLenis } as any}>
       <>{children}</>
     </ReactLenis>
   );
