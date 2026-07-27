@@ -56,27 +56,50 @@ const IDStep: React.FC<IDStepProps> = ({
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const responsiveToast = useResponsiveToast();
 
   useEffect(() => {
     return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
   }, [previewUrl]);
 
+  const processFile = (file: File) => {
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+    if (!validTypes.includes(file.type)) {
+      responsiveToast.error("Please upload a valid image file (JPEG, PNG, or WEBP)");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      responsiveToast.error("File size is too large. Please upload an image under 10MB.");
+      return;
+    }
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
-      if (!validTypes.includes(file.type)) {
-        responsiveToast.error("Please upload a valid image file (JPEG, PNG, or WEBP)");
-        return;
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        responsiveToast.error("File size is too large. Please upload an image under 10MB.");
-        return;
-      }
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-    }
+    if (file) processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
   };
 
   const confirmUpload = () => { if (selectedFile) handleCaptureID(selectedFile); };
@@ -287,8 +310,17 @@ const IDStep: React.FC<IDStepProps> = ({
             className="space-y-4"
           >
             {/* Big drop zone */}
-            <div className="relative w-full rounded-2xl bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500/50 transition-colors overflow-hidden group"
-                 style={{ minHeight: 220 }}>
+            <div 
+              className={`relative w-full rounded-2xl bg-gradient-to-b border-2 border-dashed transition-colors overflow-hidden group ${
+                isDragging 
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 from-blue-50/50 to-blue-100/50 dark:from-blue-900/10 dark:to-blue-900/20' 
+                  : 'from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 border-gray-300 dark:border-gray-700 hover:border-blue-500/50'
+              }`}
+              style={{ minHeight: 220 }}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
 
               {/* Background card illustration */}
               <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] pointer-events-none select-none">
