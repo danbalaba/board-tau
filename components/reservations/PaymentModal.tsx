@@ -136,7 +136,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 bg-gray-50/50 dark:bg-gray-900/50 custom-scrollbar">
+        <div data-lenis-prevent className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 bg-gray-50/50 dark:bg-gray-900/50 custom-scrollbar">
           {/* Summary */}
           <div className="bg-white dark:bg-gray-800 rounded-[32px] p-6 shadow-sm border border-gray-100 dark:border-gray-700/50">
             <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">
