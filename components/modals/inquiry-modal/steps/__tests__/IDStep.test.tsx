@@ -10,6 +10,28 @@ jest.mock("@/components/common/SafeImage", () => ({
   default: ({ src, alt }: any) => <img src={src} alt={alt} data-testid="safe-image" />
 }));
 
+const mockToastError = jest.fn();
+jest.mock("@/components/common/ResponsiveToast", () => ({
+  useResponsiveToast: () => ({
+    error: mockToastError,
+    success: jest.fn(),
+  })
+}));
+
+// Mock framer-motion so AnimatePresence/motion.div renders children immediately (no exit animations in JSDOM)
+jest.mock("framer-motion", () => ({
+  motion: new Proxy({}, {
+    get: (_: any, tag: string) => {
+      return ({ children, ...props }: any) => {
+        const React = require("react");
+        const { initial, animate, exit, transition, whileHover, whileTap, ...rest } = props;
+        return React.createElement(tag, rest, children);
+      };
+    },
+  }),
+  AnimatePresence: ({ children }: any) => children,
+}));
+
 describe("IDStep Component", () => {
   const mockSetCapturedID = jest.fn();
   const mockHandleCaptureID = jest.fn();
@@ -23,6 +45,7 @@ describe("IDStep Component", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockToastError.mockClear();
     global.URL.createObjectURL = jest.fn(() => "blob:fake-url");
     global.URL.revokeObjectURL = jest.fn();
     window.alert = jest.fn();
@@ -33,7 +56,7 @@ describe("IDStep Component", () => {
 
     expect(screen.getByText("Step 2: Upload Your ID Card")).toBeInTheDocument();
     expect(screen.getByText("Take Photo")).toBeInTheDocument();
-    expect(screen.getByText("Upload")).toBeInTheDocument();
+    expect(screen.getByText("Gallery")).toBeInTheDocument();
   });
 
   it("shows preview when file is selected", async () => {
@@ -46,9 +69,9 @@ describe("IDStep Component", () => {
     await userEvent.upload(uploadInput, file);
 
     await waitFor(() => {
-      expect(screen.getByAltText("Preview")).toBeInTheDocument();
+      expect(screen.getByAltText("ID Preview")).toBeInTheDocument();
       expect(screen.getByText("Use This Photo")).toBeInTheDocument();
-      expect(screen.getByText("Retake")).toBeInTheDocument();
+      expect(screen.getByText(/Retake/i)).toBeInTheDocument();
     });
   });
 
@@ -80,13 +103,15 @@ describe("IDStep Component", () => {
     await userEvent.upload(uploadInput, file);
 
     await waitFor(() => {
-      expect(screen.getByText("Retake")).toBeInTheDocument();
+      expect(screen.getByText(/Retake/i)).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Retake"));
+    fireEvent.click(screen.getByText(/Retake/i));
 
-    expect(screen.queryByAltText("Preview")).not.toBeInTheDocument();
-    expect(screen.getByText("Take Photo")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByAltText("Preview")).not.toBeInTheDocument();
+      expect(screen.getByText("Take Photo")).toBeInTheDocument();
+    });
   });
 
   it("alerts on file too large", async () => {
@@ -100,13 +125,13 @@ describe("IDStep Component", () => {
 
     await userEvent.upload(uploadInput, largeFile);
 
-    expect(window.alert).toHaveBeenCalledWith("File size should be less than 10MB");
+    expect(mockToastError).toHaveBeenCalledWith("File size is too large. Please upload an image under 10MB.");
   });
 
   it("renders the captured ID when capturedID is present", () => {
     render(<IDStep {...defaultProps} capturedID="data:image/jpeg;base64,456" />);
 
-    const img = screen.getByTestId("safe-image");
+    const img = screen.getByAltText("Captured ID");
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute("src", "data:image/jpeg;base64,456");
     expect(screen.getByText("Verified ID Document")).toBeInTheDocument();

@@ -33,6 +33,7 @@ describe("SelfieStep Component", () => {
     activeChallenge: 'blink' as const,
     setIsFaceAligned: mockSetIsFaceAligned,
     isProcessing: false,
+    isEngineReady: true,
     isFlashActive: false,
     toggleCamera: mockToggleCamera,
     handleCaptureSelfie: mockHandleCaptureSelfie,
@@ -91,7 +92,7 @@ describe("SelfieStep Component", () => {
     expect(screen.queryByTestId("webcam")).not.toBeInTheDocument();
     
     // Should render SafeImage
-    const img = screen.getByTestId("safe-image");
+    const img = screen.getByAltText("Captured Selfie");
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute("src", "data:image/jpeg;base64,123");
     expect(screen.getByText("Verified Biometric")).toBeInTheDocument();

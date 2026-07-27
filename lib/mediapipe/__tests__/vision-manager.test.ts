@@ -1,5 +1,5 @@
 import { visionManager } from "../vision-manager";
-import { FilesetResolver, FaceLandmarker, HandLandmarker, ObjectDetector } from "@mediapipe/tasks-vision";
+import { FilesetResolver, FaceLandmarker, ObjectDetector } from "@mediapipe/tasks-vision";
 
 jest.mock("@mediapipe/tasks-vision", () => {
   return {
@@ -8,9 +8,6 @@ jest.mock("@mediapipe/tasks-vision", () => {
     },
     FaceLandmarker: {
       createFromOptions: jest.fn().mockResolvedValue("mock-face-landmarker"),
-    },
-    HandLandmarker: {
-      createFromOptions: jest.fn().mockResolvedValue("mock-hand-landmarker"),
     },
     ObjectDetector: {
       createFromOptions: jest.fn().mockResolvedValue("mock-object-detector"),
@@ -53,15 +50,6 @@ describe("visionManager", () => {
       outputFaceBlendshapes: true,
       runningMode: "IMAGE",
       numFaces: 1,
-    }));
-  });
-
-  it("creates HandLandmarker with correct options", async () => {
-    const hand = await visionManager.createHandLandmarker();
-    expect(hand).toBe("mock-hand-landmarker");
-    expect(HandLandmarker.createFromOptions).toHaveBeenCalledWith("mock-resolver", expect.objectContaining({
-      runningMode: "IMAGE",
-      numHands: 2,
     }));
   });
 
