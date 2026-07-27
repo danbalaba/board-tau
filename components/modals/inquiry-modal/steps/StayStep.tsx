@@ -373,6 +373,9 @@ const StayStep: React.FC<StayStepProps> = ({
             {errors.contactInfo && (
               <p className="text-xs text-red-500 font-medium">{errors.contactInfo.message}</p>
             )}
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 italic mt-1 ml-1 leading-snug">
+              * This is for the landlord to reach you. For security, your verification OTP (Step 7) will still be sent to your registered account email.
+            </p>
           </motion.div>
         )}
       </AnimatePresence>

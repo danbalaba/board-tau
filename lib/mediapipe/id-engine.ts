@@ -1,4 +1,4 @@
-import { ObjectDetector, HandLandmarker } from "@mediapipe/tasks-vision";
+import { ObjectDetector } from "@mediapipe/tasks-vision";
 import { visionManager } from "./vision-manager";
 
 export interface IDValidationResult {
@@ -12,10 +12,9 @@ export interface IDValidationResult {
  */
 export class IDEngine {
   private detector: ObjectDetector | null = null;
-  private handLandmarker: HandLandmarker | null = null;
 
   public async warmup() {
-    await Promise.all([this.getDetector(), this.getHandLandmarker()]);
+    await this.getDetector();
   }
 
   private async getDetector() {
@@ -25,18 +24,10 @@ export class IDEngine {
     return this.detector;
   }
 
-  private async getHandLandmarker() {
-    if (!this.handLandmarker) {
-      this.handLandmarker = await visionManager.createHandLandmarker();
-    }
-    return this.handLandmarker;
-  }
-
   public async validateIDCard(
     imageElement: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement
   ): Promise<IDValidationResult> {
     const detector = await this.getDetector();
-    const hand = await this.getHandLandmarker();
 
     // Protection: Ensure the element actually has loaded frame data
     const width = 'videoWidth' in imageElement ? imageElement.videoWidth : imageElement.width;
@@ -49,10 +40,7 @@ export class IDEngine {
         };
     }
 
-    // 1. HAND DETECTION
-    // We intentionally do NOT block capture if a hand is detected, 
-    // because users naturally hold their ID cards up to the webcam.
-    const handResult = hand.detect(imageElement);
+    // (Hand detection was intentionally removed from ID validation to save memory)
 
     const result = detector.detect(imageElement);
 

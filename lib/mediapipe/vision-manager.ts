@@ -1,4 +1,4 @@
-import { FilesetResolver, ObjectDetector, FaceLandmarker, HandLandmarker } from "@mediapipe/tasks-vision";
+import { FilesetResolver, ObjectDetector, FaceLandmarker } from "@mediapipe/tasks-vision";
 
 /**
  * Global Manager for MediaPipe Vision Tasks
@@ -7,6 +7,8 @@ import { FilesetResolver, ObjectDetector, FaceLandmarker, HandLandmarker } from 
 class VisionManager {
   private static instance: VisionManager;
   private wasmResolver: any = null;
+  private faceLandmarkerInstance: FaceLandmarker | null = null;
+  private objectDetectorInstance: ObjectDetector | null = null;
 
   private constructor() {}
 
@@ -27,43 +29,43 @@ class VisionManager {
   }
 
   public async createFaceLandmarker(): Promise<FaceLandmarker> {
-    const resolver = await this.getResolver();
-    return await FaceLandmarker.createFromOptions(resolver, {
-      baseOptions: {
-        modelAssetPath: `/models/face_landmarker.task`,
-        delegate: "GPU",
-      },
-      outputFaceBlendshapes: true,
-      runningMode: "IMAGE",
-      numFaces: 1,
-    });
+    if (!this.faceLandmarkerInstance) {
+      const resolver = await this.getResolver();
+      this.faceLandmarkerInstance = await FaceLandmarker.createFromOptions(resolver, {
+        baseOptions: {
+          modelAssetPath: `/models/face_landmarker.task`,
+          delegate: "GPU",
+        },
+        outputFaceBlendshapes: true,
+        runningMode: "IMAGE",
+        numFaces: 1,
+      });
+    }
+    return this.faceLandmarkerInstance;
   }
 
-  /**
-   * NEW: Creates a Hand Landmarker to detect hands during selfie capture
-   */
-  public async createHandLandmarker(): Promise<HandLandmarker> {
-    const resolver = await this.getResolver();
-    return await HandLandmarker.createFromOptions(resolver, {
-      baseOptions: {
-        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
-        delegate: "GPU",
-      },
-      runningMode: "IMAGE",
-      numHands: 2,
-    });
-  }
+
 
   public async createObjectDetector(): Promise<ObjectDetector> {
-    const resolver = await this.getResolver();
-    return await ObjectDetector.createFromOptions(resolver, {
-      baseOptions: {
-        modelAssetPath: `/models/id_detector.tflite`,
-        delegate: "GPU",
-      },
-      scoreThreshold: 0.5,
-      runningMode: "IMAGE",
-    });
+    if (!this.objectDetectorInstance) {
+      const resolver = await this.getResolver();
+      this.objectDetectorInstance = await ObjectDetector.createFromOptions(resolver, {
+        baseOptions: {
+          modelAssetPath: `/models/id_detector.tflite`,
+          delegate: "GPU",
+        },
+        scoreThreshold: 0.5,
+        runningMode: "IMAGE",
+      });
+    }
+    return this.objectDetectorInstance;
+  }
+  
+  public disposeAll() {
+    this.faceLandmarkerInstance?.close();
+    this.objectDetectorInstance?.close();
+    this.faceLandmarkerInstance = null;
+    this.objectDetectorInstance = null;
   }
 }
 

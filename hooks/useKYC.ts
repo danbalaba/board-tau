@@ -6,28 +6,9 @@ import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 export type KYCStep = 'SELFIE' | 'ID';
 
 export const useKYC = () => {
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(false); // No longer warming up on mount
   const [isProcessing, setIsProcessing] = useState(false);
   const responsiveToast = useResponsiveToast();
-
-  // Warm up the engines when hook is mounted
-  useEffect(() => {
-      const warmup = async () => {
-        try {
-          // Properly warm up without passing 0-pixel images
-          await Promise.all([
-             faceEngine.warmup(), 
-             idEngine.warmup()
-          ]);
-        } catch (e) {
-          console.warn("AI Warmup behavior:", e);
-        } finally {
-          setIsInitializing(false);
-        }
-      };
-    warmup();
-  }, []);
-  
   /**
    * Validates a Selfie capture
    */

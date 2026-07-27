@@ -116,8 +116,8 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                         hasReadGuidelines={logic.hasReadGuidelines}
                         setHasReadGuidelines={logic.setHasReadGuidelines}
                       />;
-      case 5: return <SelfieStep {...logic} isProcessing={logic.isProcessing} />;
-      case 6: return <IDStep {...logic} isProcessing={logic.isProcessing} />;
+      case 5: return <SelfieStep {...logic} isProcessing={logic.isSelfieProcessing} isEngineReady={logic.isEngineReady} />;
+      case 6: return <IDStep {...logic} isProcessing={logic.isIDProcessing} />;
       case 7: return <OTPVerifyStep 
                         register={logic.register as any} 
                         errors={logic.errors} 

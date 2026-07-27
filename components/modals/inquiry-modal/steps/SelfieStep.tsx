@@ -3,7 +3,6 @@ import Webcam from "react-webcam";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, RefreshCcw, Loader2, Eye } from "lucide-react";
 import { FaCamera, FaTimes } from "react-icons/fa";
-import SafeImage from "@/components/common/SafeImage";
 interface SelfieStepProps {
   capturedSelfie: string | null;
   setCapturedSelfie: (val: string | null) => void;
@@ -14,6 +13,7 @@ interface SelfieStepProps {
   activeChallenge: 'blink' | 'smile' | 'turnLeft' | 'turnRight';
   setIsFaceAligned: (val: boolean) => void;
   isProcessing: boolean;
+  isEngineReady: boolean;
   isFlashActive: boolean;
   toggleCamera: () => void;
   handleCaptureSelfie: () => void;
@@ -23,7 +23,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
   capturedSelfie, setCapturedSelfie,
   webcamRef, facingMode,
   isFaceAligned, livenessStatus, activeChallenge, setIsFaceAligned,
-  isProcessing, isFlashActive,
+  isProcessing, isEngineReady, isFlashActive,
   toggleCamera, handleCaptureSelfie
 }) => {
   return (
@@ -43,7 +43,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                 audio={false}
                 ref={webcamRef}
                 screenshotFormat="image/jpeg"
-                videoConstraints={{ facingMode: facingMode }}
+                videoConstraints={{ facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 720 } }}
                 className="w-full h-full object-cover grayscale-[0.2]"
               />
 
@@ -148,8 +148,26 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                 )}
               </AnimatePresence>
 
+              {/* Engine Initializing Overlay */}
+              {!isEngineReady && !isProcessing && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-[60] bg-black/70 backdrop-blur-md gap-3">
+                  <div className="relative">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                      className="w-14 h-14 rounded-full border-4 border-white/10 border-t-primary"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                    </div>
+                  </div>
+                  <span className="text-white text-[10px] font-black uppercase tracking-widest animate-pulse">Initializing AI...</span>
+                  <span className="text-white/50 text-[9px] tracking-wide">Preparing biometric scanner</span>
+                </div>
+              )}
+
               {isProcessing && (
-                <div className="absolute inset-0 flex items-center justify-center z-40 bg-black/40 backdrop-blur-sm">
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-[60] bg-black/60 backdrop-blur-md gap-4">
                    <div className="relative">
                       <motion.div
                         animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
@@ -160,6 +178,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                          <Loader2 className="w-8 h-8 text-white animate-spin" />
                       </div>
                    </div>
+                   <span className="text-white text-[10px] font-black uppercase tracking-widest animate-pulse">Verifying...</span>
                 </div>
               )}
 
@@ -167,7 +186,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                  <button
                   type="button"
                   onClick={handleCaptureSelfie}
-                  disabled={isProcessing || !isFaceAligned || livenessStatus !== 'passed'}
+                  disabled={isProcessing || !isEngineReady || !isFaceAligned || livenessStatus !== 'passed'}
                   className={`px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl flex items-center gap-3 transition-all transform active:scale-95 border-4 border-white/10
                     ${ isProcessing ? 'opacity-0 scale-50' :
                        (isFaceAligned && livenessStatus === 'passed')
@@ -182,7 +201,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
             </>
           ) : (
             <div className="relative w-full h-full">
-              <SafeImage src={capturedSelfie} alt="Captured Selfie" unoptimized={true} />
+              <img src={capturedSelfie} alt="Captured Selfie" className="w-full h-full object-cover" />
               <button
                 type="button"
                 onClick={() => {

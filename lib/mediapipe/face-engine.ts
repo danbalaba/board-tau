@@ -1,4 +1,4 @@
-import { FaceLandmarker, HandLandmarker, ObjectDetector } from "@mediapipe/tasks-vision";
+import { FaceLandmarker, ObjectDetector } from "@mediapipe/tasks-vision";
 import { visionManager } from "./vision-manager";
 
 export interface FaceValidationResult {
@@ -14,20 +14,23 @@ export interface FaceValidationResult {
  */
 export class FaceEngine {
   private faceLandmarker: FaceLandmarker | null = null;
-  private handLandmarker: HandLandmarker | null = null;
   private objectDetector: ObjectDetector | null = null;
 
   public async warmup() {
     await this.getModels();
   }
 
+  public dispose() {
+    visionManager.disposeAll();
+    this.faceLandmarker = null;
+    this.objectDetector = null;
+  }
+
   private async getModels() {
     if (!this.faceLandmarker) this.faceLandmarker = await visionManager.createFaceLandmarker();
-    if (!this.handLandmarker) this.handLandmarker = await visionManager.createHandLandmarker();
     if (!this.objectDetector) this.objectDetector = await visionManager.createObjectDetector();
     return { 
       face: this.faceLandmarker, 
-      hand: this.handLandmarker,
       object: this.objectDetector
     };
   }
@@ -35,7 +38,7 @@ export class FaceEngine {
   public async validateFace(
     imageElement: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement
   ): Promise<FaceValidationResult> {
-    const { face, hand, object } = await this.getModels();
+    const { face, object } = await this.getModels();
 
     // Protection: Ensure the element actually has loaded frame data
     const width = 'videoWidth' in imageElement ? imageElement.videoWidth : imageElement.width;
@@ -70,15 +73,6 @@ export class FaceEngine {
     }
 
 
-    // 2. HAND DETECTION
-    const handResult = hand.detect(imageElement);
-    if (handResult.landmarks && handResult.landmarks.length > 0) {
-      return { 
-        isValid: false, 
-        score: 0, 
-        reason: "Hand detected in frame. Please remove your hand from the camera view." 
-      };
-    }
 
     // 3. FACE DETECTION
     const faceResult = face.detect(imageElement);
@@ -141,6 +135,81 @@ export class FaceEngine {
   }
 
   /**
+   * LIGHTWEIGHT FAST VALIDATION (For Live Polling)
+   * Only runs FaceLandmarker (No ObjectDetector, No HandLandmarker)
+   * Also returns liveness state so we don't have to call FaceLandmarker twice.
+   */
+  public async quickValidateFace(
+    imageElement: HTMLVideoElement | HTMLCanvasElement
+  ): Promise<{ 
+    isValid: boolean; 
+    liveness: { blink: boolean; smile: boolean; turnLeft: boolean; turnRight: boolean } | null 
+  }> {
+    const { face } = await this.getModels();
+    
+    const width = 'videoWidth' in imageElement ? imageElement.videoWidth : imageElement.width;
+    const height = 'videoHeight' in imageElement ? imageElement.videoHeight : imageElement.height;
+    if (!width || width === 0 || !height || height === 0) {
+      return { isValid: false, liveness: null };
+    }
+
+    const faceResult = face.detect(imageElement);
+    if (!faceResult.faceLandmarks || faceResult.faceLandmarks.length === 0) {
+      return { isValid: false, liveness: null };
+    }
+
+    const landmarks = faceResult.faceLandmarks[0];
+
+    // 1. POSITIONING & CENTERING
+    const noseTip = landmarks[1];
+    const leftEye = landmarks[33];
+    const rightEye = landmarks[263];
+    
+    const faceCenterX = (leftEye.x + rightEye.x + noseTip.x) / 3;
+    const faceCenterY = (leftEye.y + rightEye.y + noseTip.y) / 3;
+
+    let isValid = true;
+    if (faceCenterX < 0.35 || faceCenterX > 0.65 || faceCenterY < 0.25 || faceCenterY > 0.75) {
+      isValid = false;
+    }
+
+    // 2. LIVENESS & TURN EXTRACTION
+    const leftTragus = landmarks[234];
+    const rightTragus = landmarks[454];
+
+    const leftDist = Math.abs(noseTip.x - leftTragus.x);
+    const rightDist = Math.abs(noseTip.x - rightTragus.x);
+
+    let turnLeft = false;
+    let turnRight = false;
+    
+    // FIXED MIRRORING BUG:
+    if (leftDist > 0 && rightDist > 0) {
+      if (rightDist / leftDist > 2.0) turnRight = true;
+      if (leftDist / rightDist > 2.0) turnLeft = true;
+    }
+
+    let blink = false;
+    let smile = false;
+
+    if (faceResult.faceBlendshapes && faceResult.faceBlendshapes.length > 0) {
+      const categories = faceResult.faceBlendshapes[0].categories;
+      const leftBlink = categories.find(c => c.categoryName === 'eyeBlinkLeft')?.score ?? 0;
+      const rightBlink = categories.find(c => c.categoryName === 'eyeBlinkRight')?.score ?? 0;
+      const smileLeft = categories.find(c => c.categoryName === 'mouthSmileLeft')?.score ?? 0;
+      const smileRight = categories.find(c => c.categoryName === 'mouthSmileRight')?.score ?? 0;
+
+      if (leftBlink > 0.45 || rightBlink > 0.45) blink = true;
+      if (smileLeft > 0.5 && smileRight > 0.5) smile = true;
+    }
+
+    return { 
+      isValid, 
+      liveness: { blink, smile, turnLeft, turnRight } 
+    };
+  }
+
+  /**
    * LIVENESS CHECK: Returns states for randomized challenge-response liveness.
    * Returns { blink, smile, turnLeft, turnRight }
    * The caller tracks these to pass randomly assigned challenges.
@@ -172,9 +241,10 @@ export class FaceEngine {
     let turnRight = false;
     
     // Threshold for head turn (ratio > 2.0 means significant turn)
+    // FIXED MIRRORING BUG:
     if (leftDist > 0 && rightDist > 0) {
-      if (rightDist / leftDist > 2.0) turnLeft = true;
-      if (leftDist / rightDist > 2.0) turnRight = true;
+      if (rightDist / leftDist > 2.0) turnRight = true;
+      if (leftDist / rightDist > 2.0) turnLeft = true;
     }
 
     // 2. Calculate Blendshapes (Blink, Smile)

@@ -1,193 +1,338 @@
-import React from "react";
-import Webcam from "react-webcam";
+import React, { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaIdCard, FaCamera, FaTimes } from "react-icons/fa";
-import { RefreshCcw, ShieldAlert, Loader2 } from "lucide-react";
-import SafeImage from "@/components/common/SafeImage";
+import { FaIdCard, FaCamera, FaImage, FaTimes, FaCheckCircle, FaShieldAlt } from "react-icons/fa";
+import { Loader2, ScanLine, AlertCircle } from "lucide-react";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 
 interface IDStepProps {
   capturedID: string | null;
   setCapturedID: (val: string | null) => void;
-  webcamRef: React.RefObject<Webcam | null>;
-  facingMode: "user" | "environment";
-  isIDAligned: boolean;
-  setIsIDAligned: (val: boolean) => void;
-  isPhoneDetected: boolean;
-  setIsPhoneDetected: (val: boolean) => void;
   isProcessing: boolean;
-  toggleCamera: () => void;
-  handleCaptureID: () => void;
+  handleCaptureID: (file: File) => void;
+  selfieRetakeNeeded?: boolean;
+  handleRetakeSelfie?: () => void;
+  // Backward compatibility props
+  webcamRef?: any;
+  facingMode?: any;
+  isIDAligned?: any;
+  setIsIDAligned?: any;
+  isPhoneDetected?: any;
+  setIsPhoneDetected?: any;
+  toggleCamera?: any;
 }
+
+/** Animated corner bracket */
+const CornerBracket = ({ position }: { position: "tl" | "tr" | "bl" | "br" }) => {
+  const base = "absolute w-6 h-6 border-blue-400/80";
+  const corners: Record<string, string> = {
+    tl: "top-0 left-0 border-t-2 border-l-2 rounded-tl-md",
+    tr: "top-0 right-0 border-t-2 border-r-2 rounded-tr-md",
+    bl: "bottom-0 left-0 border-b-2 border-l-2 rounded-bl-md",
+    br: "bottom-0 right-0 border-b-2 border-r-2 rounded-br-md",
+  };
+  return <div className={`${base} ${corners[position]}`} />;
+};
 
 const IDStep: React.FC<IDStepProps> = ({
   capturedID, setCapturedID,
-  webcamRef, facingMode,
-  isIDAligned, setIsIDAligned,
-  isPhoneDetected, setIsPhoneDetected,
-  isProcessing, toggleCamera, handleCaptureID
+  isProcessing, handleCaptureID,
+  selfieRetakeNeeded, handleRetakeSelfie
 }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const responsiveToast = useResponsiveToast();
+
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
+  }, [previewUrl]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+      if (!validTypes.includes(file.type)) {
+        responsiveToast.error("Please upload a valid image file (JPEG, PNG, or WEBP)");
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        responsiveToast.error("File size is too large. Please upload an image under 10MB.");
+        return;
+      }
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const confirmUpload = () => { if (selectedFile) handleCaptureID(selectedFile); };
+
+  const cancelUpload = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (galleryInputRef.current) galleryInputRef.current.value = '';
+  };
+
   return (
-    <div className="space-y-6">
-       <div className="space-y-2">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <FaIdCard className="text-primary" />
-            Step 2: Capture Your ID Card
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-start gap-3">
+        <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 shrink-0">
+          <FaIdCard className="text-blue-400" size={20} />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            Step 2: Upload Your ID Card
           </h3>
-          <p className="text-xs text-gray-500">Align your ID card with the rectangle. Ensure text is clear and readable.</p>
-       </div>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Take a clear photo of your <span className="text-blue-400 font-medium">physical government-issued ID</span> — both portrait and landscape are accepted. <br/>
+            <span className="text-amber-500 dark:text-amber-400 font-medium italic">* Please ensure the face photo on the ID is clearly visible for verification.</span>
+          </p>
+        </div>
+      </div>
 
-       <div className="relative aspect-[1.6/1] max-w-[500px] mx-auto rounded-3xl overflow-hidden shadow-2xl bg-black group transition-all duration-300 ring-4 ring-white/5">
-          {!capturedID ? (
-            <>
-              <Webcam
-                audio={false}
-                ref={webcamRef}
-                screenshotFormat="image/jpeg"
-                videoConstraints={{ facingMode: facingMode }}
-                className="w-full h-full object-cover grayscale-[0.1]"
-              />
+      <AnimatePresence mode="wait">
+        {/* ─── STATE 1: Captured & Verified ─── */}
+        {capturedID ? (
+          <motion.div
+            key="verified"
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.97 }}
+            className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-emerald-500/30 bg-black"
+            style={{ minHeight: 280 }}
+          >
+            <img src={capturedID} alt="Captured ID" className="w-full h-full object-contain" />
 
-              {/* Professional Document Mask - EXPANED for Passport Support */}
-              <div className="absolute inset-0 pointer-events-none">
-                 <svg viewBox="0 0 160 100" className={`w-full h-full transition-colors duration-500 ${isIDAligned ? 'text-blue-500/5' : 'text-black/60'} fill-current`}>
-                    <defs>
-                       <mask id="cardMask">
-                          <rect width="160" height="100" fill="white" />
-                          <rect x="8" y="8" width="144" height="84" rx="4" fill="black" />
-                       </mask>
-                    </defs>
-                    <rect width="160" height="100" mask="url(#cardMask)" />
-                    
-                    <motion.rect 
-                       x="8" y="8" width="144" height="84" rx="4"
-                       fill="none" 
-                       stroke={isIDAligned ? "#3b82f6" : "rgba(255,255,255,0.4)"} 
-                       strokeWidth="1.5" 
-                       strokeDasharray={isIDAligned ? "none" : "6 4"}
-                       animate={isIDAligned ? { scale: [1, 1.02, 1] } : { strokeDashoffset: [0, -20] }}
-                       transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    />
+            {/* Green success overlay at bottom */}
+            <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
 
-                    {!isProcessing && (
-                      <motion.line 
-                        x1="10" y1="0" x2="150" y2="0"
-                        stroke="#3b82f6"
-                        strokeWidth="1"
-                        initial={{ y: 0, opacity: 0 }}
-                        animate={{ 
-                          y: [15, 85, 15],
-                          opacity: [0, 1, 0]
-                        }}
-                        transition={{ 
-                          duration: 1.5, 
-                          repeat: Infinity, 
-                          ease: "easeInOut" 
-                        }}
+            {/* Corner brackets — verified green */}
+            {(["tl","tr","bl","br"] as const).map(pos => (
+              <div key={pos} className={`absolute w-7 h-7 border-emerald-400/80 ${
+                pos === "tl" ? "top-2 left-2 border-t-2 border-l-2 rounded-tl-md" :
+                pos === "tr" ? "top-2 right-2 border-t-2 border-r-2 rounded-tr-md" :
+                pos === "bl" ? "bottom-2 left-2 border-b-2 border-l-2 rounded-bl-md" :
+                               "bottom-2 right-2 border-b-2 border-r-2 rounded-br-md"
+              }`} />
+            ))}
+
+            {/* Retake button */}
+            <button
+              type="button"
+              onClick={() => { setCapturedID(null); cancelUpload(); }}
+              className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white p-2 rounded-full hover:bg-red-500/80 transition-all z-10 border border-white/10"
+            >
+              <FaTimes size={12} />
+            </button>
+
+            {/* Verified badge */}
+            <motion.div
+              initial={{ y: 16, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.15 }}
+              className="absolute bottom-4 left-0 right-0 flex justify-center z-10"
+            >
+              <span className="flex items-center gap-2 bg-emerald-600/90 backdrop-blur-sm text-white px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-xl border border-emerald-400/30">
+                <FaCheckCircle size={12} />
+                Verified ID Document
+              </span>
+            </motion.div>
+          </motion.div>
+
+        ) : previewUrl ? (
+          /* ─── STATE 2: Preview — awaiting confirmation ─── */
+          <motion.div
+            key="preview"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-3"
+          >
+            {/* Preview card */}
+            <div className="relative w-full rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/10" style={{ minHeight: 250 }}>
+              <img src={previewUrl} alt="ID Preview" className="w-full h-full object-contain" />
+
+              {/* Corner brackets */}
+              <div className="absolute inset-2 pointer-events-none">
+                {(["tl","tr","bl","br"] as const).map(pos => <CornerBracket key={pos} position={pos} />)}
+              </div>
+
+              {/* Processing overlay */}
+              <AnimatePresence>
+                {isProcessing && (
+                  <motion.div
+                    key="processing"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center gap-5 z-20"
+                  >
+                    {/* Scan line animation */}
+                    <div className="relative w-full h-0.5 overflow-hidden">
+                      <motion.div
+                        className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-blue-400 to-transparent"
+                        animate={{ x: ["-100%", "400%"] }}
+                        transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
                       />
-                    )}
-                 </svg>
-              </div>
+                    </div>
 
-              {/* Status Indicator */}
-              <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                 <span className="text-[8px] font-bold text-white uppercase tracking-widest">AI Scanner Active</span>
-              </div>
-
-               {/* Top-Middle Notification System */}
-              <div className="absolute top-0 left-0 right-0 z-50 pointer-events-none flex justify-center">
-                <AnimatePresence mode="wait">
-                  {isPhoneDetected ? (
-                    <motion.div 
-                      key="phone-alert"
-                      initial={{ y: -60, opacity: 0 }}
-                      animate={{ y: 12, opacity: 1 }}
-                      exit={{ y: -60, opacity: 0 }}
-                      className="bg-rose-600/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-rose-400/30 flex items-center justify-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-w-[250px]"
-                    >
-                       <ShieldAlert className="w-4 h-4 animate-pulse" />
-                       <div className="flex flex-col items-center">
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Physical Presence Required</span>
-                          <span className="text-[8px] opacity-80 font-medium whitespace-nowrap">Digital screens or photos detected</span>
-                       </div>
-                    </motion.div>
-                  ) : isIDAligned && !isProcessing ? (
-                    <motion.div 
-                      key="id-aligned"
-                      initial={{ y: -60, opacity: 0 }}
-                      animate={{ y: 12, opacity: 1 }}
-                      exit={{ y: -60, opacity: 0 }}
-                      className="bg-blue-600/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-blue-400/30 flex items-center justify-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-w-[200px]"
-                    >
-                       <div className="w-2 h-2 bg-white rounded-full animate-ping" />
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-center">Ready to Scan</span>
-                    </motion.div>
-                  ) : null}
-                </AnimatePresence>
-              </div>
-
-              <button 
-                type="button"
-                onClick={toggleCamera}
-                className="absolute top-4 left-4 bg-white/10 backdrop-blur-xl text-white p-2.5 rounded-full hover:bg-white/20 transition-all border border-white/20"
-                title="Switch Camera"
-              >
-                <RefreshCcw size={18} className={facingMode === 'environment' ? 'rotate-180 transition-transform' : ''} />
-              </button>
-
-              {isProcessing && (
-                <div className="absolute inset-0 flex items-center justify-center z-40 bg-black/40 backdrop-blur-sm">
-                   <div className="relative">
-                      <motion.div 
-                        animate={{ scale: [1, 2, 1], opacity: [0.5, 0, 0.5] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                        className="absolute inset-0 bg-blue-500/30 rounded-full"
-                      />
-                      <div className="bg-blue-600 p-4 rounded-full shadow-2xl relative z-10">
-                         <Loader2 className="w-8 h-8 text-white animate-spin" />
+                    {/* Rings + spinner */}
+                    <div className="relative flex items-center justify-center">
+                      <div className="absolute w-20 h-20 rounded-full border-2 border-blue-500/20 animate-ping" />
+                      <div className="absolute w-20 h-20 rounded-full border border-blue-400/40 animate-pulse" />
+                      <div className="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-400/40 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
                       </div>
-                   </div>
-                </div>
-              )}
+                    </div>
 
-              <div className="absolute bottom-6 left-0 right-0 flex justify-center transition-all duration-300">
-                 <button 
-                  type="button"
-                  onClick={handleCaptureID}
-                  disabled={isProcessing}
-                  className={`bg-white text-gray-900 px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl flex items-center gap-3 hover:bg-blue-600 hover:text-white transition-all transform hover:scale-105 active:scale-95 border-4 border-white/10 ${isProcessing ? 'opacity-0 scale-50' : ''}`}
-                 >
-                   <FaCamera size={14} />
-                   Scan ID Card
-                 </button>
+                    <div className="text-center space-y-1.5 px-8">
+                      <p className="text-white font-bold text-sm tracking-wide">Analyzing ID Card</p>
+                      <p className="text-blue-300/80 text-xs leading-relaxed">
+                        Cross-referencing with your selfie<span className="animate-pulse">...</span>
+                      </p>
+                    </div>
+
+                    {/* Scan line at bottom */}
+                    <div className="relative w-full h-0.5 overflow-hidden">
+                      <motion.div
+                        className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-blue-400 to-transparent"
+                        animate={{ x: ["400%", "-100%"] }}
+                        transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* File info bar */}
+            {selectedFile && !isProcessing && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-800/60 border border-white/5 text-xs text-gray-400">
+                <FaIdCard size={11} className="text-blue-400 shrink-0" />
+                <span className="truncate flex-1 font-mono">{selectedFile.name}</span>
+                <span className="shrink-0 text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(1)} MB</span>
               </div>
-            </>
-          ) : (
-            <div className="relative w-full h-full">
-              <SafeImage src={capturedID} alt="Captured ID" unoptimized={true} />
-              <button 
-                type="button"
-                onClick={() => {
-                  setCapturedID(null);
-                  setIsIDAligned(false);
-                  setIsPhoneDetected(false);
-                }}
-                className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-red-500 transition-colors"
+            )}
+
+            {/* Selfie Retake Error Banner */}
+            {selfieRetakeNeeded && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-sm"
               >
-                <FaTimes />
+                <div className="flex items-center gap-2 text-red-400">
+                  <AlertCircle size={16} />
+                  <span>Your live selfie was too blurry to verify.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRetakeSelfie}
+                  className="px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold text-xs shadow-lg transition-colors"
+                >
+                  Retake Selfie
+                </button>
+              </motion.div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={cancelUpload}
+                className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-white/10 text-gray-300 hover:bg-white/5 disabled:opacity-40 transition-all"
+              >
+                ↩ Retake
               </button>
-              <div className="absolute bottom-6 left-0 right-0 flex justify-center">
-                 <motion.span 
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-2xl border border-white/20"
-                 >
-                   Verified ID Document
-                 </motion.span>
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={confirmUpload}
+                className="flex-[2] py-3.5 rounded-xl font-bold text-sm bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-40 flex justify-center items-center gap-2 transition-all shadow-lg shadow-blue-500/20"
+              >
+                {isProcessing
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Verifying...</>
+                  : <><FaShieldAlt size={14} /> Use This Photo</>}
+              </button>
+            </div>
+          </motion.div>
+
+        ) : (
+          /* ─── STATE 3: Upload prompt ─── */
+          <motion.div
+            key="upload"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-4"
+          >
+            {/* Big drop zone */}
+            <div className="relative w-full rounded-2xl bg-gradient-to-b from-gray-900 to-gray-950 border-2 border-dashed border-gray-700 hover:border-blue-500/50 transition-colors overflow-hidden group"
+                 style={{ minHeight: 220 }}>
+
+              {/* Background card illustration */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] pointer-events-none select-none">
+                <FaIdCard size={160} className="text-blue-300" />
+              </div>
+
+              {/* Corner brackets */}
+              <div className="absolute inset-4 pointer-events-none">
+                {(["tl","tr","bl","br"] as const).map(pos => <CornerBracket key={pos} position={pos} />)}
+              </div>
+
+              {/* Centre content */}
+              <div className="relative flex flex-col items-center justify-center h-full gap-3 py-12 px-6">
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center"
+                >
+                  <FaIdCard className="text-blue-400" size={28} />
+                </motion.div>
+                <div className="text-center space-y-1">
+                  <p className="text-white font-semibold text-sm">Position your ID card here</p>
+                  <p className="text-gray-500 text-xs">Accepted: JPEG, PNG, WEBP, HEIC · Max 10MB</p>
+                </div>
               </div>
             </div>
-          )}
-       </div>
+
+            {/* Upload buttons */}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold flex flex-col items-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+              >
+                <FaCamera size={22} />
+                <span className="text-[11px] uppercase tracking-widest">Take Photo</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => galleryInputRef.current?.click()}
+                className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white py-4 rounded-2xl font-bold flex flex-col items-center gap-2 transition-all active:scale-95"
+              >
+                <FaImage size={22} />
+                <span className="text-[11px] uppercase tracking-widest">Gallery</span>
+              </button>
+            </div>
+
+            {/* Tips */}
+            <div className="flex gap-2 p-3 rounded-xl bg-amber-500/5 border border-amber-500/15">
+              <AlertCircle size={14} className="text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-300/70 leading-relaxed">
+                Ensure the <strong className="text-amber-300">entire ID card</strong> is visible, well-lit, and free from glare or blur.
+              </p>
+            </div>
+
+            {/* Hidden inputs */}
+            <input type="file" ref={fileInputRef} accept="image/*" capture="environment" className="hidden" onChange={handleFileSelect} />
+            <input type="file" ref={galleryInputRef} accept="image/*" className="hidden" onChange={handleFileSelect} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
