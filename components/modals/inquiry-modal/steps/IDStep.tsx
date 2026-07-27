@@ -227,10 +227,10 @@ const IDStep: React.FC<IDStepProps> = ({
 
             {/* File info bar */}
             {selectedFile && !isProcessing && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-800/60 border border-white/5 text-xs text-gray-400">
-                <FaIdCard size={11} className="text-blue-400 shrink-0" />
-                <span className="truncate flex-1 font-mono">{selectedFile.name}</span>
-                <span className="shrink-0 text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(1)} MB</span>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800/60 border border-gray-200 dark:border-white/5 text-xs text-gray-500 dark:text-gray-400">
+                <FaIdCard size={11} className="text-blue-500 dark:text-blue-400 shrink-0" />
+                <span className="truncate flex-1 font-mono text-gray-700 dark:text-gray-300">{selectedFile.name}</span>
+                <span className="shrink-0 text-gray-400 dark:text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(1)} MB</span>
               </div>
             )}
 
@@ -260,7 +260,7 @@ const IDStep: React.FC<IDStepProps> = ({
                 type="button"
                 disabled={isProcessing}
                 onClick={cancelUpload}
-                className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-white/10 text-gray-300 hover:bg-white/5 disabled:opacity-40 transition-all"
+                className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-gray-300 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-40 transition-all"
               >
                 ↩ Retake
               </button>
@@ -268,7 +268,7 @@ const IDStep: React.FC<IDStepProps> = ({
                 type="button"
                 disabled={isProcessing}
                 onClick={confirmUpload}
-                className="flex-[2] py-3.5 rounded-xl font-bold text-sm bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-40 flex justify-center items-center gap-2 transition-all shadow-lg shadow-blue-500/20"
+                className="flex-1 py-3.5 rounded-xl font-bold text-sm bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-40 flex justify-center items-center gap-2 transition-all shadow-lg shadow-blue-500/20"
               >
                 {isProcessing
                   ? <><Loader2 className="w-4 h-4 animate-spin" /> Verifying...</>
