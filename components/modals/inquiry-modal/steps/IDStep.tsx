@@ -137,10 +137,10 @@ const IDStep: React.FC<IDStepProps> = ({
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.97 }}
-            className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-emerald-500/30 bg-black"
+            className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-black flex items-center justify-center"
             style={{ minHeight: 280 }}
           >
-            <img src={capturedID} alt="Captured ID" className="w-full h-full object-contain" />
+            <img src={capturedID} alt="Captured ID" className="absolute inset-0 w-full h-full object-contain p-4" />
 
             {/* Green success overlay at bottom */}
             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
@@ -188,11 +188,11 @@ const IDStep: React.FC<IDStepProps> = ({
             className="space-y-3"
           >
             {/* Preview card */}
-            <div className="relative w-full rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/10" style={{ minHeight: 250 }}>
+            <div className="relative w-full rounded-2xl overflow-hidden bg-gray-50 dark:bg-black shadow-2xl border border-gray-200 dark:border-white/10 flex items-center justify-center" style={{ minHeight: 250 }}>
               <img 
                 src={sanitizeImgUrl(previewUrl)}
                 alt="ID Preview" 
-                className="w-full h-full object-contain" 
+                className="absolute inset-0 w-full h-full object-contain p-4" 
               />
 
               {/* Corner brackets */}
