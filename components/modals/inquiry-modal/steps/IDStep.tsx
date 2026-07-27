@@ -195,6 +195,17 @@ const IDStep: React.FC<IDStepProps> = ({
                 className="absolute inset-0 w-full h-full object-contain p-4" 
               />
 
+              {/* Clear button */}
+              {!isProcessing && (
+                <button
+                  type="button"
+                  onClick={cancelUpload}
+                  className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white p-2 rounded-full hover:bg-red-500/80 transition-all z-10 border border-white/10"
+                >
+                  <FaTimes size={12} />
+                </button>
+              )}
+
               {/* Corner brackets */}
               <div className="absolute inset-2 pointer-events-none">
                 {(["tl","tr","bl","br"] as const).map(pos => <CornerBracket key={pos} position={pos} />)}
