@@ -383,7 +383,7 @@ export const useInquiryLogic = (
       if (!isOTPVerified) {
         // Send in background so we don't block the UI transition
         axios.post('/api/inquiries/otp/send', { email: userEmail })
-          .then(() => responsiveToast.success("Security code sent to your email!"))
+          .then(() => responsiveToast.success("Inquiry verification code sent to your email!"))
           .catch(() => {}); // Suppress error, step 7 allows manual resend
       }
     }
