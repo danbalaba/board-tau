@@ -22,14 +22,14 @@ interface IDStepProps {
 }
 
 /**
- * Validates that a URL uses a safe protocol (blob: or data:) before
- * passing it to an img src. CodeQL recognizes this as a safe whitelist.
+ * Validates that a URL uses the blob: protocol before
+ * passing it to an img src.
  */
 const sanitizeImgUrl = (url: string | null): string | undefined => {
   if (!url) return undefined;
   try {
     const { protocol } = new URL(url);
-    return (protocol === 'blob:' || protocol === 'data:') ? url : undefined;
+    return protocol === 'blob:' ? url : undefined;
   } catch {
     return undefined;
   }
