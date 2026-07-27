@@ -69,8 +69,8 @@ const IDStep: React.FC<IDStepProps> = ({
       responsiveToast.error("Please upload a valid image file (JPEG, PNG, or WEBP)");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      responsiveToast.error("File size is too large. Please upload an image under 10MB.");
+    if (file.size > 5 * 1024 * 1024) {
+      responsiveToast.error("File size is too large. Please upload an image under 5MB.");
       return;
     }
     setSelectedFile(file);
@@ -354,7 +354,7 @@ const IDStep: React.FC<IDStepProps> = ({
                 </motion.div>
                 <div className="text-center space-y-1">
                   <p className="text-gray-900 dark:text-white font-semibold text-sm">Position your ID card here</p>
-                  <p className="text-gray-500 text-xs">Accepted: JPEG, PNG, WEBP, HEIC · Max 10MB</p>
+                  <p className="text-gray-500 text-xs">Accepted: JPEG, PNG, WEBP, HEIC · Max 5MB</p>
                 </div>
               </div>
             </div>
