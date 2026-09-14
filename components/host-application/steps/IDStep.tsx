@@ -7,6 +7,7 @@ import { Loader2, AlertCircle, Info, ChevronLeft, X, Check, User, ShieldCheck, C
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import SafeImage from "@/components/common/SafeImage";
 import { cn } from "@/utils/helper";
+import { sanitizeImgUrl } from "@/lib/security/sanitize";
 
 interface IDStepProps {
   capturedID: string | null;
@@ -26,21 +27,7 @@ interface IDStepProps {
   toggleCamera?: any;
 }
 
-/**
- * Validates that a URL uses the blob: protocol before passing it to an img src.
- */
-const sanitizeImgUrl = (url: string | null): string | undefined => {
-  if (!url) return undefined;
-  if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  try {
-    const { protocol } = new URL(url);
-    return (protocol === 'blob:' || protocol === 'data:' || protocol === 'http:' || protocol === 'https:') ? url : undefined;
-  } catch {
-    return undefined;
-  }
-};
+
 
 /** Animated corner bracket */
 const CornerBracket = ({ position }: { position: "tl" | "tr" | "bl" | "br" }) => {
@@ -183,7 +170,7 @@ const IDStep: React.FC<IDStepProps> = ({
               hideHeader ? "min-h-[260px]" : "min-h-[300px] md:min-h-[360px]"
             )}
           >
-            <img src={capturedID} alt="Captured ID" className="absolute inset-0 w-full h-full object-contain p-4" />
+            <img src={sanitizeImgUrl(capturedID)} alt="Captured ID" className="absolute inset-0 w-full h-full object-contain p-4" />
 
             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent pointer-events-none" />
 

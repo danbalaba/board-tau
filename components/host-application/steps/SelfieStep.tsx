@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { User, RefreshCcw, Loader2, Eye } from "lucide-react";
 import { FaCamera, FaTimes } from "react-icons/fa";
 import { cn } from "@/utils/helper";
+import { sanitizeImgUrl } from "@/lib/security/sanitize";
 
 interface SelfieStepProps {
   capturedSelfie: string | null;
@@ -23,23 +24,6 @@ interface SelfieStepProps {
   handleCaptureSelfie: () => void;
   hideHeader?: boolean;
 }
-
-/**
- * Validates that a URL uses a safe protocol (blob: or data:) before
- * passing it to an img src. CodeQL recognizes this as a safe whitelist.
- */
-const sanitizeImgUrl = (url: string | null): string | undefined => {
-  if (!url) return undefined;
-  if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  try {
-    const { protocol } = new URL(url);
-    return (protocol === 'blob:' || protocol === 'data:' || protocol === 'http:' || protocol === 'https:') ? url : undefined;
-  } catch {
-    return undefined;
-  }
-};
 
 const SelfieStep: React.FC<SelfieStepProps> = ({
   capturedSelfie,

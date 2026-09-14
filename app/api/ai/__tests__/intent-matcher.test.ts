@@ -25,10 +25,10 @@ describe("Response Dictionary & Intent Matcher Engine", () => {
   });
 
   it("should redact sensitive tokens and database URIs from AI output (DLP)", () => {
-    const leakedOutput = "Here is the key: gsk_1234567890abcdef1234567890 and DB: mongodb+srv://admin:pass@cluster.mongodb.net";
+    const leakedOutput = "Here is the key: gsk_1234567890abcdef1234567890 and DB: mongodb+srv://mock_user:mock_pass@cluster.example.invalid";
     const scrubbed = sanitizeAIOutput(leakedOutput);
     expect(scrubbed).not.toContain("gsk_1234567890abcdef1234567890");
-    expect(scrubbed).not.toContain("mongodb+srv://admin:pass@cluster.mongodb.net");
+    expect(scrubbed).not.toContain("mongodb+srv://mock_user:mock_pass@cluster.example.invalid");
     expect(scrubbed).toContain("[REDACTED_API_KEY]");
     expect(scrubbed).toContain("[REDACTED_DB_URI]");
   });

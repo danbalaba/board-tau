@@ -33,6 +33,7 @@ import { useColleges } from "@/hooks/useColleges";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useEdgeStore } from "@/lib/edgestore";
+import { sanitizeImgUrl } from "@/lib/security/sanitize";
 
 import MapLoadingState from "@/components/common/MapLoadingState";
 
@@ -483,7 +484,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                         title="Click to view full screen preview"
                       >
                         <img
-                          src={previewUrl}
+                          src={sanitizeImgUrl(previewUrl)}
                           alt="Logo Preview"
                           className="w-16 h-16 object-contain rounded-xl bg-white border border-slate-200 dark:border-slate-800 p-2 shadow-md shrink-0 transition-transform group-hover:scale-105"
                         />
@@ -712,7 +713,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                 <div className="flex items-center gap-3.5">
                   <div className="relative w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-amber-500 shadow-sm overflow-hidden flex items-center justify-center shrink-0">
                     {previewUrl ? (
-                      <img src={previewUrl} alt={formData.code} className="w-full h-full object-cover" />
+                      <img src={sanitizeImgUrl(previewUrl)} alt={formData.code} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-xs font-black text-amber-500">{formData.code || "TAU"}</span>
                     )}
@@ -865,7 +866,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
 
                 <div className="flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950/60 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 max-h-[70vh] overflow-hidden">
                   <img
-                    src={previewUrl}
+                    src={sanitizeImgUrl(previewUrl)}
                     alt="Full Logo Preview"
                     className="max-h-[60vh] max-w-full w-auto object-contain rounded-xl shadow-lg"
                   />

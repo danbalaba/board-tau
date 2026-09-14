@@ -3,7 +3,7 @@
  */
 
 // 1. Anti-XSS & Anti-SQL Injection Regex Patterns
-const XSS_PATTERN = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|javascript:|onerror\s*=|onload\s*=|eval\s*\(|<iframe|<object|<embed|<link|<meta|style\s*=|data:/i;
+const XSS_PATTERN = /javascript:|onerror\s*=|onload\s*=|eval\s*\(|<iframe|<object|<embed|<link|<meta|style\s*=|data:/i;
 const SQL_INJECTION_PATTERN = /(\b(SELECT\s+[\s\S]*?\s+FROM|INSERT\s+INTO|UPDATE\s+[\s\S]*?\s+SET|DELETE\s+FROM|DROP\s+(TABLE|DATABASE)|UNION\s+SELECT|ALTER\s+TABLE|TRUNCATE\s+TABLE|EXEC\s*\()\b)|(--\s|;\s*DROP|;\s*SELECT|'\s*OR\s*['"\d]|=\s*['"\d]|\/\*|\*\/)/i;
 const HTML_TAG_PATTERN = /<[^>]*>/g;
 

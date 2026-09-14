@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaIdCard, FaCamera, FaImage, FaTimes, FaCheckCircle, FaShieldAlt } from "react-icons/fa";
 import { Loader2, ScanLine, AlertCircle } from "lucide-react";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
+import { sanitizeImgUrl } from "@/lib/security/sanitize";
 
 interface IDStepProps {
   capturedID: string | null;
@@ -21,22 +22,7 @@ interface IDStepProps {
   toggleCamera?: any;
 }
 
-/**
- * Validates that a URL uses the blob: protocol before
- * passing it to an img src.
- */
-const sanitizeImgUrl = (url: string | null): string | undefined => {
-  if (!url) return undefined;
-  if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  try {
-    const { protocol } = new URL(url);
-    return (protocol === 'blob:' || protocol === 'data:' || protocol === 'http:' || protocol === 'https:') ? url : undefined;
-  } catch {
-    return undefined;
-  }
-};
+
 
 /** Animated corner bracket */
 const CornerBracket = ({ position }: { position: "tl" | "tr" | "bl" | "br" }) => {
@@ -143,7 +129,7 @@ const IDStep: React.FC<IDStepProps> = ({
             className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-black flex items-center justify-center"
             style={{ minHeight: 280 }}
           >
-            <img src={capturedID} alt="Captured ID" className="absolute inset-0 w-full h-full object-contain p-4" />
+            <img src={sanitizeImgUrl(capturedID)} alt="Captured ID" className="absolute inset-0 w-full h-full object-contain p-4" />
 
             {/* Green success overlay at bottom */}
             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
