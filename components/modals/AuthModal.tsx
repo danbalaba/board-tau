@@ -160,8 +160,12 @@ const AuthModal = ({
             // Fetch user role to determine redirect
             const response = await fetch('/api/auth/session');
             const sessionData = await response.json();
+            const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+            const callbackUrl = urlParams?.get('callbackUrl');
 
-            if (sessionData.user?.role === 'admin' || sessionData.user?.role === 'ADMIN') {
+            if (callbackUrl && callbackUrl !== '/') {
+              router.push(callbackUrl);
+            } else if (sessionData.user?.role === 'admin' || sessionData.user?.role === 'ADMIN') {
               router.push('/admin');
             } else if (sessionData.user?.role === 'landlord' || sessionData.user?.role === 'LANDLORD') {
               router.push('/landlord');
@@ -269,7 +273,7 @@ const AuthModal = ({
   }, [lockoutCountdown]);
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full bg-white dark:bg-gray-900 rounded-card overflow-hidden border border-gray-100 dark:border-gray-800 shadow-2xl">
       <Modal.WindowHeader title={isOTPModal ? "Verify Email" : title} onClose={onCloseModal} />
 
       <form

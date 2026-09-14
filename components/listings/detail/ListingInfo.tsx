@@ -21,8 +21,11 @@ interface ListingInfoProps {
   roomType: string;
 }
 
+import MapLoadingState from "@/components/common/MapLoadingState";
+
 const Map = dynamic(() => import("@/components/common/Map"), {
   ssr: false,
+  loading: () => <MapLoadingState label="Location Map" height="h-[210px]" />
 });
 
 const ListingInfo: React.FC<ListingInfoProps> = ({

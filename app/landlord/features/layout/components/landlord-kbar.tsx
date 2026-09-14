@@ -45,31 +45,36 @@ const useLandlordSearchData = () => {
   const propertiesQuery = useQuery({
     queryKey: ['landlord-search-properties'],
     queryFn: () => getAllLandlordProperties(),
-    staleTime: 60000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const inquiriesQuery = useQuery({
     queryKey: ['landlord-search-inquiries'],
     queryFn: () => getLandlordInquiries({ cursor: undefined }),
-    staleTime: 60000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const bookingsQuery = useQuery({
     queryKey: ['landlord-search-bookings'],
     queryFn: () => getLandlordBookings({ cursor: undefined }),
-    staleTime: 60000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const reviewsQuery = useQuery({
     queryKey: ['landlord-search-reviews'],
     queryFn: () => getLandlordReviews({ cursor: undefined }),
-    staleTime: 60000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const tenantsQuery = useQuery({
     queryKey: ['landlord-search-tenants'],
     queryFn: () => getLandlordTenants({ cursor: undefined }),
-    staleTime: 60000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const isLoading = propertiesQuery.isLoading || inquiriesQuery.isLoading || bookingsQuery.isLoading || reviewsQuery.isLoading || tenantsQuery.isLoading;

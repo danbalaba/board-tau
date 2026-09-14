@@ -74,8 +74,9 @@ describe("AuthModal", () => {
       fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: "test@example.com" } });
       fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "Str0ngP@ssw0rd!" } });
 
+      const form = screen.getByLabelText(/Email/i).closest('form')!;
       await act(async () => {
-        fireEvent.submit(screen.getByRole("button", { name: "Continue" }));
+        fireEvent.submit(form);
       });
 
       await waitFor(() => {
@@ -97,8 +98,9 @@ describe("AuthModal", () => {
       fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: "test@example.com" } });
       fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "Str0ngP@ssw0rd!" } });
 
+      const form = screen.getByLabelText(/Email/i).closest('form')!;
       await act(async () => {
-        fireEvent.submit(screen.getByRole("button", { name: "Continue" }));
+        fireEvent.submit(form);
       });
 
       await waitFor(() => {
@@ -115,8 +117,9 @@ describe("AuthModal", () => {
       fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: "test@example.com" } });
       fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "Str0ngP@ssw0rd!" } });
 
+      const form = screen.getByLabelText(/Email/i).closest('form')!;
       await act(async () => {
-        fireEvent.submit(screen.getByRole("button", { name: "Continue" }));
+        fireEvent.submit(form);
       });
 
       await waitFor(() => {
@@ -164,8 +167,9 @@ describe("AuthModal", () => {
       fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: "test@example.com" } });
       fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "Str0ngP@ssw0rd!" } });
 
+      const form = screen.getByLabelText(/Email/i).closest('form')!;
       await act(async () => {
-        fireEvent.submit(screen.getByRole("button", { name: "Continue" }));
+        fireEvent.submit(form);
       });
 
       await waitFor(() => {
@@ -188,8 +192,9 @@ describe("AuthModal", () => {
       fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: "test@example.com" } });
       fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "Str0ngP@ssw0rd!" } });
       
+      const form = screen.getByLabelText(/Email/i).closest('form')!;
       await act(async () => {
-        fireEvent.submit(screen.getByRole("button", { name: "Continue" }));
+        fireEvent.submit(form);
       });
 
       await waitFor(() => {
@@ -211,8 +216,9 @@ describe("AuthModal", () => {
       fireEvent.change(otpInputs[5], { target: { value: "6" } });
       
       // Submit the form
+      const form = screen.getByText("Verify Identity").closest('form')!;
       await act(async () => {
-        fireEvent.submit(screen.getByRole("button", { name: "Verify Identity" }));
+        fireEvent.submit(form);
       });
 
       await waitFor(() => {
@@ -233,8 +239,9 @@ describe("AuthModal", () => {
       fireEvent.change(otpInputs[4], { target: { value: "5" } });
       fireEvent.change(otpInputs[5], { target: { value: "6" } });
 
+      const form = screen.getByText("Verify Identity").closest('form')!;
       await act(async () => {
-        fireEvent.submit(screen.getByRole("button", { name: "Verify Identity" }));
+        fireEvent.submit(form);
       });
 
       await waitFor(() => {
@@ -255,8 +262,9 @@ describe("AuthModal", () => {
       fireEvent.change(otpInputs[4], { target: { value: "5" } });
       fireEvent.change(otpInputs[5], { target: { value: "6" } });
 
+      const form = screen.getByText("Verify Identity").closest('form')!;
       await act(async () => {
-        fireEvent.submit(screen.getByRole("button", { name: "Verify Identity" }));
+        fireEvent.submit(form);
       });
 
       await waitFor(() => {

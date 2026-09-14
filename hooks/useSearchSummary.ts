@@ -1,6 +1,24 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { colleges } from "@/data/colleges";
+import axios from "axios";
+
+const COLLEGE_SHORT_NAMES: Record<string, string> = {
+  "TAU - College of Engineering and Technology": "TAU - College of Eng.",
+  "TAU - College of Business and Management": "TAU - CBM",
+  "TAU - College of Veterinary Medicine": "TAU - CVM",
+  "TAU - College of Veterinary Medicine Annex Bldg.": "TAU - CVM Annex",
+  "TAU - College of Agriculture and Forestry": "TAU - CAF",
+  "TAU - College of Arts and Sciences": "TAU - CAS",
+  "TAU - College of Education": "TAU - CED",
+  "TAU - Laboratory High School": "TAU - LHS",
+  "Tarlac Agricultural University": "TAU Main",
+};
+
+const getShortCollegeName = (fullName: string): string => {
+  if (COLLEGE_SHORT_NAMES[fullName]) return COLLEGE_SHORT_NAMES[fullName];
+  if (fullName.length > 25) return fullName.replace("College of ", "Col. of ");
+  return fullName;
+};
 
 export function useSearchSummary() {
   const searchParams = useSearchParams();
@@ -13,12 +31,27 @@ export function useSearchSummary() {
   const maxPrice = searchParams?.get("maxPrice");
   const guestCount = searchParams?.get("guestCount");
 
+  const [collegeName, setCollegeName] = useState<string>("TAU");
+
+  useEffect(() => {
+    if (college && college !== "any") {
+      axios.get("/api/colleges").then((res) => {
+        const found = res.data.find((c: any) => c.code === college);
+        if (found) setCollegeName(found.name);
+      }).catch(console.error);
+    } else {
+      setCollegeName("TAU");
+    }
+  }, [college]);
+
+  const shortCollegeName = useMemo(() => {
+    return getShortCollegeName(collegeName);
+  }, [collegeName]);
+
   const locationLabel = useMemo(() => {
-    const co = colleges.find((c) => c.value === college);
-    const name = co?.label ?? "TAU";
-    if (distance != null && distance !== "") return `Near ${name} · ≤ ${distance} km`;
-    return `Near ${name}`;
-  }, [college, distance]);
+    if (distance != null && distance !== "") return `Near ${shortCollegeName} · ≤ ${distance} km`;
+    return `Near ${shortCollegeName}`;
+  }, [shortCollegeName, distance]);
 
   const categoryLabel = useMemo(() => {
     if (categories?.length) {

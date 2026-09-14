@@ -8,6 +8,8 @@ import { getAllLandlordProperties } from '@/services/landlord/properties';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DateRange } from 'react-day-picker';
 
+import { clearDraftFromStorage } from '@/utils/draftStorage';
+
 export interface Property {
   id: string;
   title: string;
@@ -192,7 +194,13 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
 
   const handleConfirmDelete = async () => {
     if (!selectedProperty) return;
-    await deleteMutation.mutateAsync(selectedProperty.id);
+    const propertyId = selectedProperty.id;
+    await deleteMutation.mutateAsync(propertyId);
+    try {
+      await clearDraftFromStorage(`boardtau_property_editor_draft_${propertyId}`);
+    } catch (e) {
+      console.warn('Failed to clear property draft from storage on delete:', e);
+    }
   };
 
   const handleClearFilters = useCallback(() => {

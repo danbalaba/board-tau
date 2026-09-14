@@ -2,20 +2,20 @@
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import queryString from "query-string";
+import * as LucideIcons from "lucide-react";
 
-import { Category } from "@/types";
-
-interface CategoryBoxProps extends Category {
-  selected?: boolean;
+interface CategoryBoxProps {
+  label: string;
+  iconName?: string | null;
 }
 
 const CategoryBox: React.FC<CategoryBoxProps> = ({
-  icon: Icon,
+  iconName,
   label,
-  selected,
 }) => {
   const router = useRouter();
   const params = useSearchParams();
+  const selected = params?.get("category") === label;
 
   const handleClick = () => {
     let currentQuery = {};
@@ -42,6 +42,11 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
     router.push(url);
   }
 
+  // Safely resolve the Lucide icon from the string name
+  const Icon = iconName && (LucideIcons as any)[iconName] 
+    ? (LucideIcons as any)[iconName] 
+    : LucideIcons.Building;
+
   return (
     <button
     type="button"
@@ -58,3 +63,4 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
 };
 
 export default CategoryBox;
+

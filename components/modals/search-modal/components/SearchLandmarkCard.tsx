@@ -47,7 +47,7 @@ export default function SearchLandmarkCard({ landmark, onClose }: SearchLandmark
                   alt={landmark.name}
                   width={40}
                   height={40}
-                  className="object-contain p-1"
+                  className="object-cover scale-110 w-full h-full rounded-full"
                 />
               ) : (
                 <MapPin size={20} style={{ color: "var(--primary-color)" }} />

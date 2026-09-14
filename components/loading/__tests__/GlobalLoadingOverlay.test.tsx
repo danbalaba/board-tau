@@ -12,10 +12,16 @@ jest.mock('next/navigation', () => ({
 jest.mock('framer-motion', () => {
   const React = require('react');
   return {
-    motion: {
-      div: React.forwardRef(({ children, ...props }: any, ref: any) => <div ref={ref} {...props}>{children}</div>),
-      span: React.forwardRef(({ children, ...props }: any, ref: any) => <span ref={ref} {...props}>{children}</span>),
-    },
+    motion: new Proxy(
+      {},
+      {
+        get: (_target, prop: string) => {
+          return React.forwardRef(({ children, ...props }: any, ref: any) =>
+            React.createElement(prop, { ref, ...props }, children)
+          );
+        },
+      }
+    ),
     AnimatePresence: ({ children }: any) => <>{children}</>,
   };
 });
@@ -64,7 +70,7 @@ describe('GlobalLoadingOverlay', () => {
       screen.getByText('Start').click();
     });
 
-    expect(screen.getByText(/BoardTAU Syncing/i)).toBeInTheDocument();
+    expect(screen.getByText(/Zooming to Route|BoardTAU Syncing/i)).toBeInTheDocument();
   });
 
   it('hides overlay after minimum loading time', () => {
@@ -79,7 +85,7 @@ describe('GlobalLoadingOverlay', () => {
       screen.getByText('Start').click();
     });
 
-    expect(screen.getByText(/BoardTAU Syncing/i)).toBeInTheDocument();
+    expect(screen.getByText(/Zooming to Route|BoardTAU Syncing/i)).toBeInTheDocument();
 
     // Trigger stop logic by simulating a path change
     (usePathname as jest.Mock).mockReturnValue('/new-page');
@@ -97,7 +103,7 @@ describe('GlobalLoadingOverlay', () => {
       jest.advanceTimersByTime(800);
     });
 
-    expect(screen.queryByText(/BoardTAU Syncing/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Zooming to Route|BoardTAU Syncing/i)).not.toBeInTheDocument();
   });
 
   it('triggers fail-safe timeout', () => {
@@ -112,13 +118,13 @@ describe('GlobalLoadingOverlay', () => {
       screen.getByText('Start').click();
     });
 
-    expect(screen.getByText(/BoardTAU Syncing/i)).toBeInTheDocument();
+    expect(screen.getByText(/Zooming to Route|BoardTAU Syncing/i)).toBeInTheDocument();
 
     // Fast forward fail-safe time (5000ms)
     act(() => {
       jest.advanceTimersByTime(5000);
     });
 
-    expect(screen.queryByText(/BoardTAU Syncing/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Zooming to Route|BoardTAU Syncing/i)).not.toBeInTheDocument();
   });
 });

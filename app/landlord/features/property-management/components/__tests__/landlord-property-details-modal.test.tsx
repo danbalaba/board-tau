@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { LandlordPropertyDetailsModal } from '../landlord-property-details-modal';
 import { Property } from '../../hooks/use-property-logic';
 
@@ -69,12 +69,9 @@ describe('LandlordPropertyDetailsModal', () => {
         formatStatus={mockFormatStatus}
       />
     );
-
-    // Initial load state is true, but since we mock setTimeout, we need to wait or just check loading state
-    // Let's assume loading state will pass, we can use `findByText` or jest fake timers
   });
 
-  it('renders content after loading', async () => {
+  it('renders content after loading', () => {
     jest.useFakeTimers();
     render(
       <LandlordPropertyDetailsModal
@@ -85,22 +82,30 @@ describe('LandlordPropertyDetailsModal', () => {
       />
     );
 
-    expect(screen.getByText('Syncing Environment')).toBeInTheDocument();
+    expect(screen.getByText('Syncing Property Details...')).toBeInTheDocument();
     
-    // Advance timers to clear loading state
-    jest.advanceTimersByTime(1000);
+    // Advance timers inside act to flush React state updates
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
     
-    // Use findAllByText since it appears in multiple places (h3, img alt, etc.)
-    const titles = await screen.findAllByText('Test Property Details');
+    // Use getAllByText since it appears in multiple places (h3, img alt, etc.)
+    const titles = screen.getAllByText('Test Property Details');
     expect(titles.length).toBeGreaterThan(0);
     expect(screen.getByText('A beautiful test property.')).toBeInTheDocument();
     
     // Rent
-    expect(screen.getByText('₱5,000')).toBeInTheDocument();
+    expect(screen.getByText(/₱5,000/i)).toBeInTheDocument();
 
-    // Rooms
+    // Rooms - switch to Rooms tab
+    const roomsTab = screen.getByText(/4\. Rooms/i);
+    fireEvent.click(roomsTab);
     expect(screen.getByText('Deluxe')).toBeInTheDocument();
     
+    // Rules & Features - switch to Setup & Rules tab
+    const configTab = screen.getByText(/3\. Setup/i);
+    fireEvent.click(configTab);
+
     // Rules
     expect(screen.getByText(/Female Only/i)).toBeInTheDocument();
     expect(screen.getByText(/No parties/i)).toBeInTheDocument();
@@ -112,7 +117,7 @@ describe('LandlordPropertyDetailsModal', () => {
     jest.useRealTimers();
   });
 
-  it('calls onClose when dismiss button is clicked', async () => {
+  it('calls onClose when dismiss button is clicked', () => {
     jest.useFakeTimers();
     render(
       <LandlordPropertyDetailsModal
@@ -122,9 +127,12 @@ describe('LandlordPropertyDetailsModal', () => {
         formatStatus={mockFormatStatus}
       />
     );
-    jest.advanceTimersByTime(1000);
 
-    const dismissBtn = await screen.findByText('Dismiss');
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    const dismissBtn = screen.getByText('Dismiss');
     fireEvent.click(dismissBtn);
     expect(mockOnClose).toHaveBeenCalled();
 

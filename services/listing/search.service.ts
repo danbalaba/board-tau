@@ -5,6 +5,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 /**
  * THE JOIN PIPELINE
  */
+
 const JOIN_STAGES = [
   {
     $lookup: {
@@ -15,45 +16,45 @@ const JOIN_STAGES = [
       pipeline: [
         {
           $match: { isArchived: false }
+        },
+        {
+          $lookup: {
+            from: "RoomAttributeLink",
+            localField: "_id",
+            foreignField: "roomId",
+            as: "roomLinks"
+          }
         }
       ]
     }
   },
   {
     $lookup: {
-      from: "ListingRule",
+      from: "ListingAttributeLink",
       localField: "_id",
       foreignField: "listingId",
-      as: "_rules"
-    }
-  },
-  {
-    $addFields: {
-      rules_doc: { $arrayElemAt: ["$_rules", 0] }
+      as: "listingLinks"
     }
   },
   {
     $lookup: {
-      from: "ListingFeature",
-      localField: "_id",
-      foreignField: "listingId",
-      as: "_features"
-    }
-  },
-  {
-    $addFields: {
-      features_doc: { $arrayElemAt: ["$_features", 0] }
+      from: "PropertyType",
+      localField: "propertyTypeId",
+      foreignField: "_id",
+      as: "propertyTypeArr"
     }
   }
 ];
 
+import { escapeRegexString } from "@/lib/security/sanitize";
+
 function buildHardFilters(params: any, isRelaxed: boolean = false) {
   const match: any = {};
-  match.status = "active";
+  match.status = "ACTIVE";
 
   if (params.amenities && !isRelaxed) {
     const amenitiesArr = Array.isArray(params.amenities) ? params.amenities : [params.amenities];
-    match.amenities_list = { $all: amenitiesArr };
+    match.amenities_list = { $in: amenitiesArr };
   }
 
   if (params.minPrice || params.maxPrice) {
@@ -66,12 +67,12 @@ function buildHardFilters(params: any, isRelaxed: boolean = false) {
   if (params.roomType || params.roomAmenities || params.bedType) {
     const roomMatch: any = { status: "AVAILABLE" };
     if (params.roomType) roomMatch.roomType = params.roomType;
-    if (params.bedType) roomMatch.bedType = params.bedType;
+    if (params.bedType && params.bedType !== "ANY") roomMatch.bedType = params.bedType;
     if (params.bathroomArrangement) roomMatch.bathroomArrangement = params.bathroomArrangement;
 
     if (params.roomAmenities && !isRelaxed) {
       const roomAmArr = Array.isArray(params.roomAmenities) ? params.roomAmenities : [params.roomAmenities];
-      roomMatch.amenityNames = { $all: roomAmArr };
+      roomMatch.amenityNames = { $in: roomAmArr };
     }
 
     match.rooms_list = {
@@ -83,15 +84,16 @@ function buildHardFilters(params: any, isRelaxed: boolean = false) {
     };
   }
 
-  if (params.femaleOnly === "true") match["rules_doc.femaleOnly"] = true;
-  if (params.maleOnly === "true") match["rules_doc.maleOnly"] = true;
-  if (params.visitorsAllowed === "true") match["rules_doc.visitorsAllowed"] = true;
-  if (params.petsAllowed === "true") match["rules_doc.petsAllowed"] = true;
-  if (params.smokingAllowed === "true") match["rules_doc.smokingAllowed"] = true;
-  if (params.noCurfew === "true") match["rules_doc.noCurfew"] = true;
+  // Instead of boolean checks, frontend should pass attributes array.
+  // We check if the listing has all the required attribute IDs
+  if (params.attributes && !isRelaxed) {
+    const attrArr = Array.isArray(params.attributes) ? params.attributes : [params.attributes];
+    match["listingLinks.attributeId"] = { $all: attrArr.map((id: string) => ({ $oid: id })) };
+  }
 
   if (params.q) {
-    const regex = { $regex: params.q, $options: "i" };
+    const cleanQ = escapeRegexString(params.q);
+    const regex = { $regex: cleanQ, $options: "i" };
     match.$and = match.$and || [];
     match.$and.push({
       $or: [
@@ -107,12 +109,13 @@ function buildHardFilters(params: any, isRelaxed: boolean = false) {
 
 function buildScoringEngine(params: any) {
   const scoreConditions: any[] = [];
-  if (params.cctv === "true") scoreConditions.push({ $cond: [{ $eq: ["$features_doc.cctv", true] }, 15, 0] });
-  if (params.security24h === "true") scoreConditions.push({ $cond: [{ $eq: ["$features_doc.security24h", true] }, 10, 0] });
-  if (params.fireSafety === "true") scoreConditions.push({ $cond: [{ $eq: ["$features_doc.fireSafety", true] }, 10, 0] });
-  if (params.floodFree === "true") scoreConditions.push({ $cond: [{ $eq: ["$features_doc.floodFree", true] }, 10, 0] });
-  if (params.backupPower === "true") scoreConditions.push({ $cond: [{ $eq: ["$features_doc.backupPower", true] }, 10, 0] });
-  if (params.nearTransport === "true") scoreConditions.push({ $cond: [{ $eq: ["$features_doc.nearTransport", true] }, 10, 0] });
+  // or we can pass bonus features as IDs in params.
+  if (params.bonusAttributes) {
+    const bonusArr = Array.isArray(params.bonusAttributes) ? params.bonusAttributes : [params.bonusAttributes];
+    bonusArr.forEach((id: string) => {
+       scoreConditions.push({ $cond: [{ $in: [{ $oid: id }, "$listingLinks.attributeId"] }, 10, 0] });
+    });
+  }
 
   scoreConditions.push({ $multiply: [{ $ifNull: ["$rating", 3.5] }, 2] });
 
@@ -137,8 +140,12 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
         // bounds format: west,south,east,north (lng,lat,lng,lat)
         const [w, s, e, n] = params.bounds.split(',').map(Number);
         
-        const baseMatch: any = { status: "active" };
-        if (params.category) baseMatch.category = { $in: Array.isArray(params.category) ? params.category : [params.category] };
+        const baseMatch: any = { status: "ACTIVE" };
+        if (params.category) {
+          const catNames = Array.isArray(params.category) ? params.category : [params.category];
+          const pts = await prisma.propertyType.findMany({ where: { name: { in: catNames } }, select: { id: true } });
+          baseMatch.propertyTypeId = pts.length ? { $in: pts.map(pt => ({ $oid: pt.id })) } : null;
+        }
 
         // Security Guardrail: Validate numbers and restrict to max ~0.5 degrees diff to prevent DOS
         if (!isNaN(w) && !isNaN(s) && !isNaN(e) && !isNaN(n) && 
@@ -159,8 +166,12 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
           ? 1000000 
           : (Number(isRelaxed ? 20 : (params.distance || 10))) * 1000);
         
-        const earlyMatch: any = { status: "active" };
-        if (params.category) earlyMatch.category = { $in: Array.isArray(params.category) ? params.category : [params.category] };
+        const earlyMatch: any = { status: "ACTIVE" };
+        if (params.category) {
+          const catNames = Array.isArray(params.category) ? params.category : [params.category];
+          const pts = await prisma.propertyType.findMany({ where: { name: { in: catNames } }, select: { id: true } });
+          earlyMatch.propertyTypeId = pts.length ? { $in: pts.map(pt => ({ $oid: pt.id })) } : null;
+        }
 
         pipeline.push({
           $geoNear: {
@@ -172,8 +183,12 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
           }
         });
       } else {
-        const baseMatch: any = { status: "active" };
-        if (params.category) baseMatch.category = { $in: Array.isArray(params.category) ? params.category : [params.category] };
+        const baseMatch: any = { status: "ACTIVE" };
+        if (params.category) {
+          const catNames = Array.isArray(params.category) ? params.category : [params.category];
+          const pts = await prisma.propertyType.findMany({ where: { name: { in: catNames } }, select: { id: true } });
+          baseMatch.propertyTypeId = pts.length ? { $in: pts.map(pt => ({ $oid: pt.id })) } : null;
+        }
         pipeline.push({ $match: baseMatch });
       }
 
@@ -188,12 +203,6 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
       pipeline.push({ $sort: { finalScore: -1 } });
       pipeline.push({ $skip: skip });
       pipeline.push({ $limit: limit });
-      pipeline.push({
-        $project: {
-          _rules: 0,
-          _features: 0
-        }
-      });
 
       const rawResults = await prisma.listing.aggregateRaw({ pipeline });
 
@@ -213,6 +222,10 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
         ...doc,
         id: doc._id['$oid'] || doc._id.toString(),
         _id: undefined,
+        propertyType: doc.propertyTypeArr && doc.propertyTypeArr.length > 0 
+          ? { name: doc.propertyTypeArr[0].name, icon: doc.propertyTypeArr[0].icon } 
+          : null,
+        propertyTypeArr: undefined,
         rooms: (doc.rooms_list || []).map((r: any) => ({
           ...r,
           id: r._id?.['$oid'] || r._id?.toString(),
@@ -238,7 +251,7 @@ export async function executeComplexSearch(searchParams: Record<string, string>)
         return await runPipeline(searchParams, true);
       }
 
-      await cache.set(cacheKey, result, 300);
+      await cache.set(cacheKey, result, 1800); // 30 Mins TTL
       return result;
     } catch (err: any) {
       console.error("SEARCH_ENGINE_FAILURE:", err.message);
@@ -261,8 +274,12 @@ export async function executeComplexSearchCount(searchParams: Record<string, str
     if (searchParams.bounds) {
       const [w, s, e, n] = searchParams.bounds.split(',').map(Number);
       
-      const baseMatch: any = { status: "active" };
-      if (searchParams.category) baseMatch.category = { $in: Array.isArray(searchParams.category) ? searchParams.category : [searchParams.category] };
+      const baseMatch: any = { status: "ACTIVE" };
+      if (searchParams.category) {
+        const catNames = Array.isArray(searchParams.category) ? searchParams.category : [searchParams.category];
+        const pts = await prisma.propertyType.findMany({ where: { name: { in: catNames } }, select: { id: true } });
+        baseMatch.propertyTypeId = pts.length ? { $in: pts.map(pt => ({ $oid: pt.id })) } : null;
+      }
 
       if (!isNaN(w) && !isNaN(s) && !isNaN(e) && !isNaN(n) && 
           Math.abs(e - w) <= 0.5 && Math.abs(n - s) <= 0.5) {
@@ -281,8 +298,12 @@ export async function executeComplexSearchCount(searchParams: Record<string, str
         ? 1000000 
         : (Number(searchParams.distance || 10)) * 1000);
       
-      const earlyMatch: any = { status: "active" };
-      if (searchParams.category) earlyMatch.category = { $in: Array.isArray(searchParams.category) ? searchParams.category : [searchParams.category] };
+      const earlyMatch: any = { status: "ACTIVE" };
+      if (searchParams.category) {
+        const catNames = Array.isArray(searchParams.category) ? searchParams.category : [searchParams.category];
+        const pts = await prisma.propertyType.findMany({ where: { name: { in: catNames } }, select: { id: true } });
+        earlyMatch.propertyTypeId = pts.length ? { $in: pts.map(pt => ({ $oid: pt.id })) } : null;
+      }
 
       pipeline.push({
         $geoNear: {
@@ -294,8 +315,12 @@ export async function executeComplexSearchCount(searchParams: Record<string, str
         }
       });
     } else {
-      const baseMatch: any = { status: "active" };
-      if (searchParams.category) baseMatch.category = { $in: Array.isArray(searchParams.category) ? searchParams.category : [searchParams.category] };
+      const baseMatch: any = { status: "ACTIVE" };
+      if (searchParams.category) {
+        const catNames = Array.isArray(searchParams.category) ? searchParams.category : [searchParams.category];
+        const pts = await prisma.propertyType.findMany({ where: { name: { in: catNames } }, select: { id: true } });
+        baseMatch.propertyTypeId = pts.length ? { $in: pts.map(pt => ({ $oid: pt.id })) } : null;
+      }
       pipeline.push({ $match: baseMatch });
     }
 

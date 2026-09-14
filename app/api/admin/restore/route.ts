@@ -155,8 +155,7 @@ export async function POST(req: NextRequest) {
     restoredCounts.userRoles = await restoreCollection(db.userRole, body.userRoles);
     restoredCounts.permissions = await restoreCollection(db.permission, body.permissions);
     restoredCounts.passwordResetTokens = await restoreCollection(db.passwordResetToken, body.passwordResetTokens);
-    restoredCounts.categories = await restoreCollection(db.category, body.categories);
-    restoredCounts.roomAmenityTypes = await restoreCollection(db.roomAmenityType, body.roomAmenityTypes);
+    restoredCounts.dynamicAttributes = await restoreCollection(db.dynamicAttribute, body.dynamicAttributes);
     restoredCounts.siteSettings = await restoreCollection(db.siteSettings, body.siteSettings);
     restoredCounts.featureFlags = await restoreCollection(db.featureFlag, body.featureFlags);
     restoredCounts.platformMetricSnapshots = await restoreCollection(db.platformMetricSnapshot, body.platformMetricSnapshots);
@@ -177,16 +176,13 @@ export async function POST(req: NextRequest) {
 
     // Level 3
     restoredCounts.listingImages = await restoreCollection(db.listingImage, body.listingImages);
-    restoredCounts.listingAmenities = await restoreCollection(db.listingAmenity, body.listingAmenities);
-    restoredCounts.listingRules = await restoreCollection(db.listingRule, body.listingRules);
-    restoredCounts.listingFeatures = await restoreCollection(db.listingFeature, body.listingFeatures);
-    restoredCounts.listingCategories = await restoreCollection(db.listingCategory, body.listingCategories);
+    restoredCounts.listingAttributeLinks = await restoreCollection(db.listingAttributeLink, body.listingAttributeLinks);
     restoredCounts.rooms = await restoreCollection(db.room, body.rooms);
     restoredCounts.messages = await restoreCollection(db.message, body.messages);
 
     // Level 4
     restoredCounts.roomImages = await restoreCollection(db.roomImage, body.roomImages);
-    restoredCounts.roomAmenities = await restoreCollection(db.roomAmenity, body.roomAmenities);
+    restoredCounts.roomAttributeLinks = await restoreCollection(db.roomAttributeLink, body.roomAttributeLinks);
     restoredCounts.inquiries = await restoreCollection(db.inquiry, body.inquiries);
 
     // Level 5

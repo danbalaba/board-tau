@@ -70,7 +70,7 @@ describe('LandlordPropertyCreator', () => {
   it('renders wizard header', () => {
     render(<LandlordPropertyCreator />);
     expect(screen.getByText('New Property Listing')).toBeInTheDocument();
-    expect(screen.getByText('Discard Draft')).toBeInTheDocument();
+    expect(screen.getByText('Discard & Exit')).toBeInTheDocument();
   });
 
   it('renders the first step by default', () => {
@@ -80,6 +80,6 @@ describe('LandlordPropertyCreator', () => {
 
   it('renders navigation buttons', () => {
     render(<LandlordPropertyCreator />);
-    expect(screen.getByText('Next Step')).toBeInTheDocument();
+    expect(screen.getByText('Next: Location')).toBeInTheDocument();
   });
 });

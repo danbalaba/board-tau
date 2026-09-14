@@ -104,7 +104,7 @@ describe('MediaPreviewOverlay', () => {
       />
     );
     
-    const img = screen.getByRole('img');
+    const img = screen.getByAltText('Preview');
     fireEvent.click(img);
     
     expect(mockOnClose).not.toHaveBeenCalled();
@@ -121,12 +121,7 @@ describe('MediaPreviewOverlay', () => {
       />
     );
     
-    // Find the next button (contains ChevronRight)
-    // The previous button is index 1, next button is index 2, close is index 0
-    const buttons = screen.getAllByRole('button');
-    // We can also find it by class or just trying the 3rd button
-    const nextBtn = buttons[2]; 
-    
+    const nextBtn = screen.getByTitle('Next image (Right Arrow)');
     fireEvent.click(nextBtn);
     expect(mockOnNavigate).toHaveBeenCalledWith(1); // 0 + 1
   });
@@ -142,9 +137,7 @@ describe('MediaPreviewOverlay', () => {
       />
     );
     
-    const buttons = screen.getAllByRole('button');
-    const prevBtn = buttons[1]; 
-    
+    const prevBtn = screen.getByTitle('Previous image (Left Arrow)');
     fireEvent.click(prevBtn);
     expect(mockOnNavigate).toHaveBeenCalledWith(2); // Wraps around to 2 (last index)
   });

@@ -92,11 +92,15 @@ const navItems = [
 ];
 
 import Skeleton from '@/components/common/Skeleton';
+import { KerbyMascot } from '@/components/modals/search-modal/KerbyMascot';
+import { useKerby } from '@/lib/context/KerbyContext';
 
 export default function LandlordSidebar() {
   const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
+  const isDashboardPage = pathname === '/landlord';
   const { state } = useSidebar();
   const { theme } = useTheme();
+  const { kerbyState } = useKerby();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -253,69 +257,50 @@ export default function LandlordSidebar() {
       </SidebarContent>
 
       <SidebarFooter className={cn(
-        'p-8 mt-auto border-t border-gray-100/50 dark:border-gray-800/50 bg-gray-50/30 dark:bg-white/5 overflow-hidden',
+        'p-4 mt-auto border-t border-gray-100/50 dark:border-gray-800/50 bg-transparent overflow-visible z-50',
         mounted && 'transition-[padding] duration-500 ease-in-out',
-        state === 'collapsed' && 'p-2'
+        state === 'collapsed' && 'p-2',
+        isDashboardPage && 'hidden'
       )}>
         {!mounted ? (
           <div className="flex flex-col gap-5">
             <Skeleton className="h-[68px] w-full rounded-2xl" />
-            <div className="flex items-center justify-between px-1">
-              <Skeleton className="h-4 w-20 rounded-lg" />
-              <Skeleton className="h-4 w-10 rounded-lg" />
-            </div>
           </div>
         ) : state === 'collapsed' ? (
-          <div className="flex flex-col items-center gap-5">
+          <div className="flex flex-col items-center justify-center w-full">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button className="bg-white dark:bg-gray-900 p-2.5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm transition-all hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:border-emerald-500/30 group/status">
-                    <IconCloudCheck size={20} className="text-emerald-500 group-hover/status:scale-110 transition-transform" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">System Online</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/20 shadow-sm hover:scale-110 hover:bg-primary hover:text-white transition-all duration-500 cursor-pointer relative group/brand overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-white/30 to-transparent opacity-0 group-hover/brand:opacity-100 transition-opacity" />
-                    <IconCircleLetterT size={24} stroke={2.5} className="relative z-10" />
+                  <div className="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-sm hover:scale-110 transition-all duration-500 cursor-pointer relative group/brand overflow-visible">
+                    <Image
+                      src="/assets/mascot/kerby-casual-waving.png"
+                      alt="Kerby Mascot"
+                      width={26}
+                      height={26}
+                      className="object-contain drop-shadow-md group-hover:scale-110 transition-transform"
+                      unoptimized
+                    />
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-gray-950 animate-pulse" />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="right" className="bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800">
-                  <p className="text-[10px] font-black uppercase tracking-widest">BoardTAU © 2026</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-primary">Kerby Host Assistant</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
-        ) : (
-          <div className="flex flex-col gap-5">
-            <div className="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm group/status cursor-default">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1.5">
-                  <IconServer size={14} className="text-gray-400 dark:text-gray-500" />
-                  <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest leading-none">System Status</p>
-                </div>
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tight">Cloud Online</span>
-                <span className="text-[10px] font-medium text-gray-400">v3.4.2</span>
-              </div>
-            </div>
-
-            <div className='flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-gray-400/80 px-1'>
-               <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default group/brand">
-                 <IconCircleLetterT size={16} stroke={3} className="text-primary group-hover/brand:scale-110 transition-transform" />
-                 <span>BoardTAU</span>
-               </div>
-               <span className="opacity-50">© 2026</span>
+        ) : isDashboardPage ? null : (
+          <div className="relative flex flex-col items-center justify-end w-full overflow-visible">
+            {/* Mascot in Sidebar with Transparent Background & Northeast Slant Speech Bubble (Active on non-dashboard subpages) */}
+            <div className="w-full flex flex-col items-center overflow-visible">
+              <KerbyMascot 
+                pose={(kerbyState?.pose as any) || "waving"}
+                outfitMode="casual"
+                speechText={kerbyState?.speech || "Mabuhay Host! Ready to manage your TAU listings today?"}
+                badgeLabel={kerbyState?.badge || "Host Assistant"}
+                transparentBg={true}
+                bubblePosition="top-right"
+              />
             </div>
           </div>
         )}

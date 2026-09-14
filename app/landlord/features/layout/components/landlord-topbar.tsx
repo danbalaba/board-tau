@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   IconSun,
   IconMoon,
   IconSearch,
+  IconMenu2,
 } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
@@ -12,6 +14,7 @@ import { useTheme } from 'next-themes';
 import { useKBar } from 'kbar';
 import { SidebarTrigger } from '@/app/admin/components/ui/sidebar';
 import { cn } from '@/lib/utils';
+import { useMenuPanel } from '@/hooks/use-menu-panel';
 
 import Skeleton from '@/components/common/Skeleton';
 
@@ -34,6 +37,9 @@ export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProp
   const closeSettings = useLandlordProfileStore((state: any) => state.closeSettings);
   const isInitialized = useLandlordProfileStore((state: any) => state.isInitialized);
   const setUser = useLandlordProfileStore((state: any) => state.setUser);
+  const { onOpen: openMenuPanel } = useMenuPanel();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   
   const [localLoading, setLocalLoading] = useState(true);
 
@@ -64,14 +70,14 @@ export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProp
 
   return (
     <>
-      <header className="sticky top-0 w-full bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 h-16 flex items-center justify-between px-6 z-50">
+      <header className="hidden md:flex sticky top-0 w-full bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 h-16 items-center justify-between px-6 z-50">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
             <SidebarTrigger className='-ml-1 hover:bg-primary/10 transition-colors rounded-xl p-2 h-9 w-9 text-gray-500' />
-            <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 hidden md:block mx-1" />
+            <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 mx-1" />
           </div>
 
-          {/* Left-aligned Search (Only on KBar enabled pages) */}
+          {/* Left-aligned Search (Only on KBar enabled pages on Desktop) */}
           <div className="hidden md:block relative">
             {isLoading ? (
               <Skeleton className="h-10 w-[240px] lg:w-[320px] rounded-2xl" />
@@ -113,12 +119,12 @@ export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProp
           {/* Notifications */}
           <NotificationsDropdown />
 
-          {/* Theme Toggle - Now using the premium animated component */}
+          {/* Theme Toggle */}
           <ThemeToggle />
 
           <div className="w-[1px] h-6 bg-gray-200 dark:bg-gray-800 mx-2" />
 
-          {/* New Modular User Menu */}
+          {/* Modular User Menu */}
           <LandlordTopbarUserMenu
             user={user}
             isLoading={isLoading}

@@ -40,10 +40,10 @@ export async function GET(req: NextRequest) {
       backupData.passwordResetTokens = await db.passwordResetToken.findMany();
     }
     if (shouldInclude('categories', scope === 'all' || scope === 'listings')) {
-      backupData.categories = await db.category.findMany();
+      backupData.propertyTypes = await db.propertyType.findMany();
     }
-    if (shouldInclude('roomAmenityTypes', scope === 'all' || scope === 'listings')) {
-      backupData.roomAmenityTypes = await db.roomAmenityType.findMany();
+    if (shouldInclude('dynamicAttributes', scope === 'all' || scope === 'listings')) {
+      backupData.dynamicAttributes = await db.dynamicAttribute.findMany();
     }
     if (shouldInclude('siteSettings', scope === 'all' || scope === 'logs')) {
       backupData.siteSettings = await db.siteSettings.findMany();
@@ -93,17 +93,8 @@ export async function GET(req: NextRequest) {
     if (shouldInclude('listingImages', scope === 'all' || scope === 'listings')) {
       backupData.listingImages = await db.listingImage.findMany();
     }
-    if (shouldInclude('listingAmenities', scope === 'all' || scope === 'listings')) {
-      backupData.listingAmenities = await db.listingAmenity.findMany();
-    }
-    if (shouldInclude('listingRules', scope === 'all' || scope === 'listings')) {
-      backupData.listingRules = await db.listingRule.findMany();
-    }
-    if (shouldInclude('listingFeatures', scope === 'all' || scope === 'listings')) {
-      backupData.listingFeatures = await db.listingFeature.findMany();
-    }
-    if (shouldInclude('listingCategories', scope === 'all' || scope === 'listings')) {
-      backupData.listingCategories = await db.listingCategory.findMany();
+    if (shouldInclude('listingAttributeLinks', scope === 'all' || scope === 'listings')) {
+      backupData.listingAttributeLinks = await db.listingAttributeLink.findMany();
     }
     if (shouldInclude('rooms', scope === 'all' || scope === 'listings')) {
       backupData.rooms = await db.room.findMany();
@@ -116,8 +107,8 @@ export async function GET(req: NextRequest) {
     if (shouldInclude('roomImages', scope === 'all' || scope === 'listings')) {
       backupData.roomImages = await db.roomImage.findMany();
     }
-    if (shouldInclude('roomAmenities', scope === 'all' || scope === 'listings')) {
-      backupData.roomAmenities = await db.roomAmenity.findMany();
+    if (shouldInclude('roomAttributeLinks', scope === 'all' || scope === 'listings')) {
+      backupData.roomAttributeLinks = await db.roomAttributeLink.findMany();
     }
     if (shouldInclude('inquiries', scope === 'all' || scope === 'reservations')) {
       backupData.inquiries = await db.inquiry.findMany();

@@ -20,7 +20,7 @@ export const edgeStoreRouter = es.router({
     .beforeUpload(({ ctx }) => ctx.userId !== "unauthenticated")
     .beforeDelete(({ ctx, fileInfo }) => {
       const metadata = fileInfo.metadata as Record<string, any>;
-      return ctx.userId !== "unauthenticated" && (ctx.userId === metadata.userId || ctx.role === "ADMIN");
+      return ctx.userId !== "unauthenticated" && (ctx.userId === metadata.userId || ctx.role === "ADMIN" || ctx.role === "SUPER_ADMIN");
     }),
 
   reviewMedia: es
@@ -48,12 +48,13 @@ export const edgeStoreRouter = es.router({
       landlordId: input.landlordId,
     }))
     .beforeUpload(({ ctx }) => {
-      const allowedRoles = ["USER", "LANDLORD", "ADMIN"];
+      const allowedRoles = ["USER", "LANDLORD", "ADMIN", "SUPER_ADMIN"];
       return ctx.userId !== "unauthenticated" && allowedRoles.includes(ctx.role);
     })
     .accessControl({
       OR: [
         { role: { eq: "ADMIN" } },
+        { role: { eq: "SUPER_ADMIN" } },
         { userId: { path: "landlord" } },
         { userId: { path: "owner" } },
       ],
@@ -83,6 +84,36 @@ export const edgeStoreRouter = es.router({
     .beforeUpload(({ ctx }) => {
       // Only allow the cron system (which passes SUPER_ADMIN role) to upload
       return ctx.role === 'SUPER_ADMIN';
+    }),
+
+  digitalContracts: es
+    .fileBucket({
+      maxSize: 1024 * 1024 * 15,
+      accept: ["image/png", "image/jpeg", "application/pdf"],
+    })
+    .input(
+      z.object({
+        listingId: z.string(),
+        landlordId: z.string(),
+      })
+    )
+    .path(({ ctx, input }) => [{ owner: ctx.userId }, { landlord: input.landlordId }])
+    .metadata(({ ctx, input }) => ({
+      userId: ctx.userId,
+      listingId: input.listingId,
+      landlordId: input.landlordId,
+    }))
+    .beforeUpload(({ ctx }) => {
+      const allowedRoles = ["USER", "LANDLORD", "ADMIN", "SUPER_ADMIN"];
+      return ctx.userId !== "unauthenticated" && allowedRoles.includes(ctx.role);
+    })
+    .accessControl({
+      OR: [
+        { role: { eq: "ADMIN" } },
+        { role: { eq: "SUPER_ADMIN" } },
+        { userId: { path: "landlord" } },
+        { userId: { path: "owner" } },
+      ],
     }),
 });
 

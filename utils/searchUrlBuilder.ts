@@ -1,6 +1,5 @@
 import queryString from "query-string";
 import { FieldValues } from "react-hook-form";
-import { colleges } from "@/data/colleges";
 import { ROOM_TYPES } from "@/data/roomTypes";
 
 /**
@@ -9,8 +8,9 @@ import { ROOM_TYPES } from "@/data/roomTypes";
  */
 export function buildSearchUrl(data: FieldValues, currentSearchParams: URLSearchParams | null): string {
   // 1. Get exact map coordinates for distance filtering
-  const co = colleges.find((c) => c.value === data.college);
-  const origin = co?.latlng ?? null;
+  // These are now populated directly in the form via CollegeStep
+  const originLat = data.originLat;
+  const originLng = data.originLng;
 
   // 2. Parse existing queries to retain anything else in the URL
   let currentQuery: Record<string, unknown> = {};
@@ -22,13 +22,13 @@ export function buildSearchUrl(data: FieldValues, currentSearchParams: URLSearch
   const updatedQuery: Record<string, unknown> = {
     ...currentQuery,
     college: data.college,
-    categories: (data.categories ?? []).length ? data.categories : undefined,
+    category: (data.propertyType ?? []).length ? data.propertyType : (data.categories ?? undefined),
     distance: data.distance,
     moveInDate: data.moveInMonth || undefined,
     stayDuration: data.stayDuration || undefined,
     amenities: (data.amenities ?? []).length ? data.amenities : undefined,
     // Send raw enum values — DB stores enums (SOLO, DESK, etc.)
-    roomType: data.roomType || undefined,
+    roomType: Array.isArray(data.roomType) ? data.roomType[0] : (data.roomType || undefined),
     bedType: data.bedType || undefined,
     roomAmenities: (data.roomAmenities ?? []).length ? data.roomAmenities : undefined,
     
@@ -58,9 +58,9 @@ export function buildSearchUrl(data: FieldValues, currentSearchParams: URLSearch
   };
 
   // 4. Attach Geolocation coordinates if a specific college was chosen
-  if (origin && origin.length >= 2) {
-    updatedQuery.originLat = origin[0];
-    updatedQuery.originLng = origin[1];
+  if (originLat !== undefined && originLng !== undefined) {
+    updatedQuery.originLat = originLat;
+    updatedQuery.originLng = originLng;
   }
 
   // 5. Build and return the stringified URL

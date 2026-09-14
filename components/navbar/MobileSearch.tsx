@@ -64,11 +64,11 @@ const MobileSearch: React.FC<MobileSearchProps> = ({ layoutId = "mobile-search-b
                   </motion.div>
 
                   {/* Text Content */}
-                  <div className="flex flex-col items-start min-w-0 flex-1 py-1">
-                     <span className="font-bold text-[15px] text-gray-900 dark:text-white truncate w-full text-left tracking-tight">
+                  <div className="flex flex-col items-start min-w-0 flex-1 py-1 overflow-hidden">
+                     <span className="font-bold text-[15px] text-gray-900 dark:text-white truncate block w-full text-left tracking-tight">
                         {locationLabel === "Any / Not sure" ? "Where to?" : locationLabel}
                      </span>
-                     <span className="text-[13px] text-gray-500 dark:text-gray-400 truncate w-full text-left font-medium">
+                     <span className="text-[13px] text-gray-500 dark:text-gray-400 truncate block w-full text-left font-medium">
                         {priceLabel === "Any price" && roomTypeLabel === "Any room" 
                            ? "Anywhere • Any week • Add guests" 
                            : <><span className="text-orange-600 dark:text-orange-400">{priceLabel}</span> <span className="mx-1 opacity-40">•</span> {roomTypeLabel}</>}
@@ -87,8 +87,8 @@ const MobileSearch: React.FC<MobileSearchProps> = ({ layoutId = "mobile-search-b
         </Modal.Trigger>
       </motion.div>
 
-      <Modal.Window name="search" size="lg" hasFixedFooter>
-        <SearchModal onCloseModal={handleSearchClose} />
+      <Modal.Window name="search" size="full" hasFixedFooter noPadding>
+        <SearchModal initialShowWizard={false} onCloseModal={handleSearchClose} />
       </Modal.Window>
     </Modal>
   );

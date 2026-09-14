@@ -1,5 +1,5 @@
 import { type Table as TanstackTable, flexRender } from '@tanstack/react-table';
-import type * as React from 'react';
+import * as React from 'react';
 
 import { DataTablePagination } from "./data-table-pagination";
 import {
@@ -27,6 +27,22 @@ export function DataTable<TData>({
   isLoading,
   children
 }: DataTableProps<TData>) {
+  const columnFilters = table.getState().columnFilters;
+  const pagination = table.getState().pagination;
+  const [isTableStateLoading, setIsTableStateLoading] = React.useState(false);
+  const prevTableStateRef = React.useRef({ columnFilters, pagination });
+
+  React.useEffect(() => {
+    const currentState = { columnFilters, pagination };
+    if (JSON.stringify(prevTableStateRef.current) !== JSON.stringify(currentState)) {
+      prevTableStateRef.current = currentState;
+      setIsTableStateLoading(true);
+      const timer = setTimeout(() => setIsTableStateLoading(false), 250);
+      return () => clearTimeout(timer);
+    }
+  }, [columnFilters, pagination]);
+
+  const showLoading = isLoading || isTableStateLoading;
 
   return (
     <div className='space-y-4'>
@@ -59,7 +75,7 @@ export function DataTable<TData>({
                 ))}
               </TableHeader>
               <TableBody>
-                {isLoading ? (
+                {showLoading ? (
                   <TableRow>
                     <TableCell
                       colSpan={table.getAllColumns().length}

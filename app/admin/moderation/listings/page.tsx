@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import { ListingsReviewDashboard } from '@/app/admin/features/moderation/components/listings-review';
 
 export const metadata: Metadata = {
-  title: 'Market Inventory Hub - BoardTAU HQ',
-  description: 'Vetting and authorizing property listing assets for platform release',
+  title: 'Listings Review - BoardTAU',
+  description: 'Review and moderate landlord property submissions before releasing them to BoardTAU',
 };
 
 import { requireAdmin } from '@/lib/admin';

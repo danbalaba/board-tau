@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import { HostApplicationsDashboard } from '@/app/admin/features/moderation/components/host-applications';
 
 export const metadata: Metadata = {
-  title: 'Host Recruitment Hub - BoardTAU HQ',
-  description: 'Expanding and vetting the platform\'s property host network',
+  title: 'Host Applications Review - BoardTAU HQ',
+  description: 'Review and verify landlord onboarding applications',
 };
 
 import { requireAdmin } from '@/lib/admin';

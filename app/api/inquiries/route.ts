@@ -39,6 +39,7 @@ export async function POST(request: Request) {
       paymentMethod,
       contactInfo,
       isSoloBuyout,
+      tenantSignature,
     } = data;
 
     // Validate required fields
@@ -134,6 +135,24 @@ export async function POST(request: Request) {
         paymentStatus: "UNPAID",
       },
     });
+
+    // 1.5 If there's a signature and a LeaseContract, store the ContractSignature
+    if (tenantSignature) {
+      const leaseContract = await db.leaseContract.findFirst({
+        where: { listingId }
+      });
+      
+      if (leaseContract) {
+        await db.contractSignature.create({
+          data: {
+            contractId: leaseContract.id,
+            signerId: user.id,
+            signerType: "TENANT",
+            signatureUrl: tenantSignature,
+          }
+        });
+      }
+    }
 
     // 2. Create Persistent Notification for Landlord
     try {

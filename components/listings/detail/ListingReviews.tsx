@@ -174,7 +174,7 @@ const MediaGrid = ({ media, onMediaClick }: { media: { url: string; type: 'image
 
 export default function ListingReviews({
   reviews: initialReviews,
-  listingRating = 4.8,
+  listingRating,
   listingReviewCount = 0,
   ownerName = "Property Owner",
   currentUser,
@@ -300,7 +300,7 @@ export default function ListingReviews({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-             <h2 className="text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3"><AiFillStar className="text-primary" />{listingRating.toFixed(1)}</h2>
+             <h2 className="text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3"><AiFillStar className="text-primary" />{(listingRating ?? (reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0)).toFixed(1)}</h2>
              <p className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">Overall Guest Rating • ({listingReviewCount} reviews)</p>
           </div>
           <div className="flex flex-col gap-2 mt-4">
@@ -349,7 +349,7 @@ export default function ListingReviews({
                    <div>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{review.user.name}</p>
-                      {review.reservationId && <span className="flex items-center gap-1 px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 text-[8px] font-black text-emerald-600 dark:text-emerald-400 rounded-md border border-emerald-100 dark:border-emerald-500/20 uppercase tracking-tighter"><CheckCircle size={10} strokeWidth={3} /> Verified</span>}
+                      {review.reservationId && <span className="flex items-center gap-1 px-1.5 py-0.5 bg-primary/5 dark:bg-primary/10 text-[8px] font-black text-primary dark:text-primary-light rounded-md border border-primary/20 dark:border-primary/30 uppercase tracking-tighter"><CheckCircle size={10} strokeWidth={3} /> Verified</span>}
                     </div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{new Date(review.createdAt).toLocaleDateString("en-US")}</p>
                   </div>

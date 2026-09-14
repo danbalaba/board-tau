@@ -26,15 +26,16 @@ describe('CategoryBox', () => {
   });
 
   it('renders correctly with default props', () => {
-    render(<CategoryBox icon={MockIcon} label="Test Category" value="Test Category" />);
+    const { container } = render(<CategoryBox label="Test Category" />);
     
     expect(screen.getByText('Test Category')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-icon')).toBeInTheDocument();
+    expect(container.querySelector('svg')).toBeInTheDocument();
     expect(screen.getByRole('button')).toHaveClass('border-transparent');
   });
 
-  it('renders with selected styles', () => {
-    render(<CategoryBox icon={MockIcon} label="Test Category" value="Test Category" selected={true} />);
+  it('renders with selected styles when category matches search params', () => {
+    (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams('category=Test Category'));
+    render(<CategoryBox label="Test Category" />);
     
     expect(screen.getByRole('button')).toHaveClass('border-b-primary');
   });
@@ -46,7 +47,7 @@ describe('CategoryBox', () => {
     (queryString.parse as jest.Mock).mockReturnValue({ location: 'tarlac' });
     (queryString.stringifyUrl as jest.Mock).mockReturnValue('/?location=tarlac&category=Test+Category');
 
-    render(<CategoryBox icon={MockIcon} label="Test Category" value="Test Category" />);
+    render(<CategoryBox label="Test Category" />);
     
     fireEvent.click(screen.getByRole('button'));
     
@@ -72,7 +73,7 @@ describe('CategoryBox', () => {
     (queryString.parse as jest.Mock).mockReturnValue({ category: 'Test Category' });
     (queryString.stringifyUrl as jest.Mock).mockReturnValue('/');
 
-    render(<CategoryBox icon={MockIcon} label="Test Category" value="Test Category" selected={true} />);
+    render(<CategoryBox label="Test Category" />);
     
     fireEvent.click(screen.getByRole('button'));
     

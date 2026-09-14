@@ -80,6 +80,8 @@ export function DataTableFacetedFilter<TData, TValue>({
     [column]
   );
 
+  if (!mounted) return null;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>

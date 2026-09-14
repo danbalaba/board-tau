@@ -76,7 +76,7 @@ export const getTenantDetails = async (tenantId: string) => {
           title: true,
           imageSrc: true,
           description: true,
-          amenities: true,
+          amenities_list: true,
         },
       },
     },
@@ -150,7 +150,7 @@ export const getTenantRentalHistory = async (tenantId: string) => {
         startDate: new Date("2024-07-01"),
         endDate: new Date("2024-12-31"),
         amount: 15000,
-        status: "active",
+        status: "ACTIVE",
       },
     ],
   };

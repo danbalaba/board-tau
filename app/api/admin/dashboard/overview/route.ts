@@ -22,10 +22,10 @@ export async function GET(req: NextRequest) {
       activeListings,
       recentLogs
     ] = await Promise.all([
-      db.listing.count({ where: { status: 'pending' } }),
-      db.hostApplication.count({ where: { status: 'pending' } }),
-      db.review.count({ where: { status: 'pending' } }),
-      db.listing.count({ where: { status: 'active' } }),
+      db.listing.count({ where: { status: 'PENDING' } }),
+      db.hostApplication.count({ where: { status: 'PENDING' } }),
+      db.review.count({ where: { status: 'PENDING' } }),
+      db.listing.count({ where: { status: 'ACTIVE' } }),
       db.moderationLog.findMany({
         take: 5,
         orderBy: { createdAt: 'desc' },

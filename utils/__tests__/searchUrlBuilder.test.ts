@@ -26,12 +26,6 @@ jest.mock('query-string', () => ({
   }),
 }));
 
-jest.mock('@/data/colleges', () => ({
-  colleges: [
-    { value: 'tau', label: 'TAU', latlng: [15.635, 120.415] }
-  ]
-}));
-
 describe('searchUrlBuilder', () => {
   it('builds a simple url with no params', () => {
     const url = buildSearchUrl({}, null);
@@ -45,17 +39,29 @@ describe('searchUrlBuilder', () => {
     expect(url).toContain('baz=1');
   });
 
-  it('includes college and geolocation if provided', () => {
-    const url = buildSearchUrl({ college: 'tau' }, null);
-    expect(url).toContain('college=tau');
-    expect(url).toContain('originLat=15.635');
-    expect(url).toContain('originLng=120.415');
+  it('includes custom geolocation if provided', () => {
+    const data = {
+      college: 'cbm',
+      distance: 5,
+      roomType: 'SOLO',
+      originLat: 15.6358,
+      originLng: 120.4162,
+    };
+
+    const url = buildSearchUrl(data, null);
+    
+    expect(url).toContain('college=cbm');
+    expect(url).toContain('distance=5');
+    expect(url).toContain('roomType=SOLO');
+    
+    expect(url).toContain('originLat=15.6358');
+    expect(url).toContain('originLng=120.4162');
   });
 
   it('serializes array parameters correctly', () => {
-    const url = buildSearchUrl({ categories: ['Apartment', 'Premium'] }, null);
-    expect(url).toContain('categories=Apartment');
-    expect(url).toContain('categories=Premium');
+    const url = buildSearchUrl({ propertyType: ['Apartment', 'Premium'] }, null);
+    expect(url).toContain('category=Apartment');
+    expect(url).toContain('category=Premium');
   });
 
   it('serializes boolean rules and advanced filters', () => {

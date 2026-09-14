@@ -28,10 +28,41 @@ export function haversineKm(
   return R * c;
 }
 
-export function calculateAverageRating(reviews: { rating: number }[], fallbackRating?: number | null): number {
+export function calculateAverageRating(reviews?: { rating: number }[], fallbackRating?: number | null): number | null {
   if (!reviews || reviews.length === 0) {
-    return fallbackRating || 0;
+    return fallbackRating ?? null;
   }
   const total = reviews.reduce((acc, curr) => acc + (curr.rating || 0), 0);
   return total / reviews.length;
+}
+
+export function formatPropertyType(type: any): string {
+  if (!type || type === 'N/A') return 'Not Specified';
+  const clean = String(type).trim().toLowerCase();
+  if (clean === 'boarding-house' || clean === 'boarding_house' || clean === 'boardinghouse') return 'Boarding House';
+  if (clean === 'dormitory') return 'Dormitory';
+  if (clean === 'apartment' || clean === 'apartment-building') return 'Apartment Building';
+  if (clean === 'hostel' || clean === 'hostel-transient') return 'Hostel / Transient';
+
+  return clean
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+export function formatPhoneNumber(phone: any): string {
+  if (!phone || phone === 'N/A') return 'N/A';
+  const raw = String(phone).trim();
+  const digits = raw.replace(/[^\d+]/g, '');
+
+  if (digits.startsWith('+639') && digits.length === 13) {
+    return `+63 ${digits.slice(3, 6)} ${digits.slice(6, 9)} ${digits.slice(9)}`;
+  }
+  if (digits.startsWith('639') && digits.length === 12) {
+    return `+63 ${digits.slice(3, 6)} ${digits.slice(6, 9)} ${digits.slice(9)}`;
+  }
+  if (digits.startsWith('09') && digits.length === 11) {
+    return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`;
+  }
+
+  return raw;
 }

@@ -20,6 +20,7 @@ export interface ModerationItem {
   entityType: 'listing' | 'review' | 'hostApplication';
   title: string;
   description: string;
+  submittedBy?: string;
   user: {
     id: string;
     name: string;
@@ -28,6 +29,7 @@ export interface ModerationItem {
   };
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
+  meta?: Record<string, any>;
 }
 
 export interface ModerationLogItem {
@@ -56,56 +58,70 @@ export interface ModerationQueryParams {
   perPage?: number;
   entityType?: string;
   isArchived?: boolean;
+  range?: string;
+}
+
+async function safeFetchJson<T = any>(url: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(url, options);
+  const contentType = response.headers.get('content-type') || '';
+  
+  if (!contentType.includes('application/json')) {
+    if (!response.ok) {
+      throw new Error(`Server error (${response.status}): ${response.statusText || 'Unable to complete request'}`);
+    }
+    throw new Error('Invalid response from server.');
+  }
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || data.error || `Error ${response.status}: Failed to process request`);
+  }
+
+  return data;
 }
 
 export function useModerationQueue(params?: ModerationQueryParams) {
-  const { page = 1, perPage = 10, entityType = '', isArchived } = params || {};
+  const { page = 1, perPage = 10, entityType = '', isArchived, range = '30d' } = params || {};
 
   const queryString = new URLSearchParams({
     page: page.toString(),
     perPage: perPage.toString(),
+    range,
     ...(entityType && { entityType }),
     ...(isArchived !== undefined && { isArchived: isArchived.toString() }),
   }).toString();
 
   return useQuery({
-    queryKey: ['moderation-queue', params],
+    queryKey: ['moderation-queue', page, perPage, entityType, isArchived, range],
     queryFn: async () => {
-      const response = await fetch(`/api/admin/moderation/queue?${queryString}`);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch moderation queue');
-      }
-
-      const data: ApiResponse<ModerationQueueData> = await response.json();
-
+      const data: ApiResponse<ModerationQueueData> = await safeFetchJson(`/api/admin/moderation/queue?${queryString}`);
       if (!data.success) {
         throw new Error(data.message || 'Failed to fetch moderation queue');
       }
-
       return data;
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 15000, // Keep data fresh for 15 seconds
+    refetchInterval: 30000, // Background sync every 30 seconds
     placeholderData: keepPreviousData,
   });
 }
 
-export function useHostApplications(params?: ModerationQueryParams) {
-  const { page = 1, perPage = 10, entityType = '', isArchived } = params || {};
+export function useHostApplications(params?: ModerationQueryParams & { range?: string; status?: string }) {
+  const { page = 1, perPage = 10, entityType = '', isArchived, range = '30d', status } = params || {};
 
   const queryString = new URLSearchParams({
     page: page.toString(),
     perPage: perPage.toString(),
-    ...(isArchived ? { isArchived: 'true' } : { status: 'pending' }),
+    range,
+    ...(isArchived ? { isArchived: 'true' } : {}),
+    ...(status ? { status } : {}),
   }).toString();
 
   return useQuery({
     queryKey: ['host-applications', params],
     queryFn: async () => {
-      const response = await fetch(`/api/admin/moderation/hosts?${queryString}`);
-      if (!response.ok) throw new Error('Failed to fetch host applications');
-      const data: ApiResponse = await response.json();
+      const data: ApiResponse = await safeFetchJson(`/api/admin/moderation/hosts?${queryString}`);
       if (!data.success) throw new Error(data.message || 'Failed to fetch host applications');
       return data;
     },
@@ -113,21 +129,21 @@ export function useHostApplications(params?: ModerationQueryParams) {
   });
 }
 
-export function useListingsReview(params?: ModerationQueryParams) {
-  const { page = 1, perPage = 10, isArchived } = params || {};
+export function useListingsReview(params?: ModerationQueryParams & { range?: string; status?: string }) {
+  const { page = 1, perPage = 10, isArchived, range = '30d', status } = params || {};
 
   const queryString = new URLSearchParams({
     page: page.toString(),
     perPage: perPage.toString(),
-    ...(isArchived ? { isArchived: 'true' } : { status: 'pending' }),
+    range,
+    ...(isArchived ? { isArchived: 'true' } : {}),
+    ...(status ? { status } : {}),
   }).toString();
 
   return useQuery({
     queryKey: ['listings-review', params],
     queryFn: async () => {
-      const response = await fetch(`/api/admin/moderation/listings?${queryString}`);
-      if (!response.ok) throw new Error('Failed to fetch listings for review');
-      const data: ApiResponse = await response.json();
+      const data: ApiResponse = await safeFetchJson(`/api/admin/moderation/listings?${queryString}`);
       if (!data.success) throw new Error(data.message || 'Failed to fetch listings for review');
       return data;
     },
@@ -135,21 +151,21 @@ export function useListingsReview(params?: ModerationQueryParams) {
   });
 }
 
-export function useReviewsModeration(params?: ModerationQueryParams) {
-  const { page = 1, perPage = 10, isArchived } = params || {};
+export function useReviewsModeration(params?: ModerationQueryParams & { range?: string; status?: string }) {
+  const { page = 1, perPage = 10, isArchived, range = '30d', status } = params || {};
 
   const queryString = new URLSearchParams({
     page: page.toString(),
     perPage: perPage.toString(),
-    ...(isArchived ? { isArchived: 'true' } : { status: 'pending' }),
+    range,
+    ...(isArchived ? { isArchived: 'true' } : {}),
+    ...(status ? { status } : {}),
   }).toString();
 
   return useQuery({
     queryKey: ['reviews-moderation', params],
     queryFn: async () => {
-      const response = await fetch(`/api/admin/moderation/reviews?${queryString}`);
-      if (!response.ok) throw new Error('Failed to fetch reviews for moderation');
-      const data: ApiResponse = await response.json();
+      const data: ApiResponse = await safeFetchJson(`/api/admin/moderation/reviews?${queryString}`);
       if (!data.success) throw new Error(data.message || 'Failed to fetch reviews for moderation');
       return data;
     },
@@ -170,7 +186,7 @@ export function useModerationDecision() {
     }: {
       id: string;
       entityType: 'listing' | 'review' | 'hostApplication';
-      action: 'approve' | 'reject' | 'archive';
+      action: 'approve' | 'reject' | 'archive' | 'unarchive';
       reason?: string;
       banUser?: boolean;
     }) => {
@@ -180,21 +196,13 @@ export function useModerationDecision() {
       else if (entityType === 'listing') endpoint = `/api/admin/moderation/listings/${id}`;
       else if (entityType === 'review') endpoint = `/api/admin/moderation/reviews/${id}`;
 
-      const response = await fetch(endpoint, {
+      return await safeFetchJson(endpoint, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ action, reason, banUser }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to submit decision');
-      }
-
-      const data = await response.json();
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['moderation-queue'] });
@@ -221,16 +229,9 @@ export function useModerationDelete() {
       else if (entityType === 'listing') endpoint = `/api/admin/moderation/listings/${id}`;
       else if (entityType === 'review') endpoint = `/api/admin/moderation/reviews/${id}`;
 
-      const response = await fetch(endpoint, {
+      return await safeFetchJson(endpoint, {
         method: 'DELETE',
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete item');
-      }
-
-      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['moderation-queue'] });

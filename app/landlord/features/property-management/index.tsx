@@ -15,6 +15,7 @@ import { LandlordPropertyArchiveModal } from './components/landlord-property-arc
 import { LandlordPagination } from '../shared/landlord-pagination';
 import Link from 'next/link';
 import { Button } from '@/app/admin/components/ui/button';
+import { useLoading } from '@/components/loading/LoadingContext';
 
 interface LandlordPropertyManagementProps {
   properties: {
@@ -34,6 +35,7 @@ const formatStatus = (status: string) => status.charAt(0).toUpperCase() + status
 
 export default function LandlordPropertyManagement({ properties }: LandlordPropertyManagementProps) {
   const router = useRouter();
+  const { startLoading } = useLoading();
   const {
     listings,
     totalListings,
@@ -98,7 +100,7 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
   );
 
   return (
-    <div className="space-y-8 p-1 pb-12 max-w-[1600px] mx-auto animate-in fade-in duration-700">
+    <div className="flex flex-col min-h-[calc(100vh-8rem)] space-y-4 sm:space-y-8 p-1 pb-12 max-w-[1600px] mx-auto animate-in fade-in duration-700">
       <LandlordPropertyHeader 
         sortBy={sortBy}
         setSortBy={setSortBy}
@@ -117,7 +119,7 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
       />
 
       {/* 2. Main Content Area */}
-      <div className="min-h-[400px] relative">
+      <div className="flex-1 flex flex-col min-h-[400px] relative">
         <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div 
@@ -128,7 +130,7 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
               className="py-24 flex flex-col items-center justify-center gap-6"
             >
               <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin shadow-xl shadow-primary/10" />
-              <p className="text-[11px] font-black uppercase tracking-[0.4em] text-gray-500 animate-pulse">Syncing Portfolio</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.4em] text-gray-500 animate-pulse">Syncing Property Listings</p>
             </motion.div>
           ) : (
             <motion.div
@@ -137,12 +139,13 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
               transition={{ duration: 0.3 }}
+              className="flex-1 flex flex-col justify-between"
             >
               {/* Results count */}
               {listings.length > 0 && (
-                <div className="flex items-center gap-2 mb-6">
+                <div className="flex items-center gap-2 mb-4 sm:mb-6">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                    {isArchived ? 'Archived Portfolio' : 'Active Portfolio'} ({totalListings} Listing{totalListings !== 1 ? 's' : ''})
+                    {isArchived ? 'Archived Listings' : 'Active Property Listings'} ({totalListings} Listing{totalListings !== 1 ? 's' : ''})
                   </span>
                   <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
                 </div>
@@ -174,7 +177,10 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
                       <span className="text-[12px] font-black uppercase tracking-widest">Reset View</span>
                     </Button>
                   ) : (
-                    <Link href="/landlord/properties/create">
+                    <Link 
+                      href="/landlord/properties/create"
+                      onClick={() => { if (startLoading) startLoading(); }}
+                    >
                       <Button className="h-14 px-12 rounded-2xl bg-primary hover:bg-primary/90 text-white shadow-2xl shadow-primary/30 border-b-4 border-primary/30 active:border-b-0 transition-all group">
                         <IconPlus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
                         <span className="text-[12px] font-black uppercase tracking-widest">Publish New Property</span>
@@ -186,8 +192,8 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
                 <div 
                   className={cn(
                     viewMode === 'grid' 
-                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
-                      : "flex flex-col gap-4"
+                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6" 
+                      : "flex flex-col gap-2.5 sm:gap-4"
                   )}
                 >
                   {listings.map((property, idx) => (
@@ -206,15 +212,17 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
                 </div>
               )}
 
-              <LandlordPagination 
-                currentPage={currentPage}
-                totalPages={Math.ceil(totalListings / itemsPerPage)}
-                itemsPerPage={itemsPerPage}
-                onPageChange={setCurrentPage}
-                onItemsPerPageChange={setItemsPerPage}
-                totalItems={totalListings}
-                itemName="properties"
-              />
+              <div className="mt-auto pt-8 border-t border-gray-100 dark:border-gray-800">
+                <LandlordPagination 
+                  currentPage={currentPage}
+                  totalPages={Math.ceil(totalListings / itemsPerPage)}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setCurrentPage}
+                  onItemsPerPageChange={setItemsPerPage}
+                  totalItems={totalListings}
+                  itemName="properties"
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

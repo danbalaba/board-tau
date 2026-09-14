@@ -21,12 +21,18 @@ jest.mock('lucide-react', () => {
   });
 });
 
-jest.mock('../CustomAmenityModal', () => () => <div data-testid="custom-amenity-modal" />);
 jest.mock('../BulkConfigureModal', () => ({ onApply, onClose }: any) => (
   <div data-testid="bulk-modal">
     <button onClick={() => onApply({ roomType: ROOM_TYPES.SOLO, bedCount: '1' })}>Apply</button>
   </div>
 ));
+
+jest.mock('@/lib/landlordTaxonomyCache', () => ({
+  getSyncAttributes: () => [{ id: 'attr-1', name: 'WiFi', type: 'ROOM_AMENITY' }],
+  getCachedAttributes: jest.fn().mockResolvedValue([{ id: 'attr-1', name: 'WiFi', type: 'ROOM_AMENITY' }]),
+  getSyncRoomTypes: () => [{ value: 'SOLO', label: 'Solo Room', isFlatRate: true }],
+  getCachedRoomTypes: jest.fn().mockResolvedValue([{ value: 'SOLO', label: 'Solo Room', isFlatRate: true }]),
+}));
 
 jest.mock('@/components/common/ResponsiveToast', () => ({
   useResponsiveToast: () => ({
@@ -84,19 +90,18 @@ const Wrapper = () => {
 describe('RoomConfigStep', () => {
   it('renders correctly with one room', () => {
     render(<Wrapper />);
-    expect(screen.getByText('Individual Room Setup')).toBeInTheDocument();
-    expect(screen.getByText('Room Details')).toBeInTheDocument();
-    expect(screen.getByLabelText(/Price \(PHP\)/i)).toBeInTheDocument();
+    expect(screen.getByText('Bulk Configuration')).toBeInTheDocument();
+    expect(screen.getByText(/1 Details/)).toBeInTheDocument();
   });
 
   it('adds a new unit', async () => {
     render(<Wrapper />);
-    const addBtn = screen.getByText('Add New Unit');
+    const addBtn = screen.getByText('Add Layout');
     fireEvent.click(addBtn);
     
     await waitFor(() => {
-      // The second room details should appear
-      expect(screen.getAllByText('Room Details').length).toBe(2);
+      // The room tab bar should show 2 units
+      expect(screen.getByText(/Configure All 2 Units/i)).toBeInTheDocument();
     });
   });
 
@@ -127,7 +132,7 @@ describe('RoomConfigStep', () => {
     
     expect(screen.getByText('Copied!')).toBeInTheDocument();
 
-    const pasteBtn = screen.getByTitle('Paste configuration');
+    const pasteBtn = screen.getByTitle('Paste copied configuration');
     fireEvent.click(pasteBtn);
   });
 });

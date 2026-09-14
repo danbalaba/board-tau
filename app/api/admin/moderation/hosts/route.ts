@@ -23,17 +23,39 @@ export async function GET(req: NextRequest) {
     const perPage = parseInt(searchParams.get('perPage') || '10');
     const status = searchParams.get('status') || 'pending'; // pending, approved, rejected
     const isArchived = searchParams.get('isArchived') === 'true';
+    const range = searchParams.get('range') || '30d';
+
+    // Calculate date ranges for comparisons
+    let days = 30;
+    if (range === '7d') days = 7;
+    if (range === '90d') days = 90;
+    if (range === '1y') days = 365;
+
+    const now = new Date();
+    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    const previousStartDate = new Date(now.getTime() - (days * 2) * 24 * 60 * 60 * 1000);
 
     // Calculate pagination
     const skip = (page - 1) * perPage;
 
-    // Fetch host applications with status counts
-    const [hostApplications, total, approvedCount, rejectedCount] = await Promise.all([
+    const targetStatusWhere = (status && status !== 'all') ? { status } : {};
+    const whereClause: any = isArchived
+      ? { isArchived: true, ...targetStatusWhere }
+      : { isArchived: false, ...targetStatusWhere };
+
+    // Fetch host applications with status counts & previous period comparison stats
+    const [
+      hostApplications, 
+      totalPending, 
+      approvedCount, 
+      rejectedCount,
+      totalPreviousCount,
+      pendingPreviousCount,
+      approvedPreviousCount,
+      rejectedPreviousCount
+    ] = await Promise.all([
       db.hostApplication.findMany({
-        where: { 
-          status,
-          isArchived
-        } as any,
+        where: whereClause,
         include: { user: true } as any,
         orderBy: { createdAt: 'desc' },
         skip,
@@ -42,6 +64,12 @@ export async function GET(req: NextRequest) {
       db.hostApplication.count({ where: { status: 'pending', isArchived } as any }),
       db.hostApplication.count({ where: { status: 'approved', isArchived } as any }),
       db.hostApplication.count({ where: { status: 'rejected', isArchived } as any }),
+
+      // Historical comparison stats for range trend percentage
+      db.hostApplication.count({ where: { createdAt: { gte: previousStartDate, lt: startDate }, isArchived } as any }),
+      db.hostApplication.count({ where: { status: 'pending', createdAt: { gte: previousStartDate, lt: startDate }, isArchived } as any }),
+      db.hostApplication.count({ where: { status: 'approved', createdAt: { gte: previousStartDate, lt: startDate }, isArchived } as any }),
+      db.hostApplication.count({ where: { status: 'rejected', createdAt: { gte: previousStartDate, lt: startDate }, isArchived } as any }),
     ]);
 
     // Transform data for response
@@ -52,11 +80,17 @@ export async function GET(req: NextRequest) {
         name: application.user?.name,
         email: application.user?.email,
         image: application.user?.image,
+        phoneNumber: application.user?.phoneNumber,
       },
       status: application.status,
       isArchived: (application as any).isArchived,
       businessInfo: application.businessInfo,
       contactInfo: application.contactInfo,
+      selfieUrl: application.selfieUrl,
+      idCardUrl: application.idCardUrl,
+      businessPermitUrl: application.businessPermitUrl,
+      fireSafetyUrl: application.fireSafetyUrl,
+      facadePhotoUrl: application.facadePhotoUrl,
       documents: {
         selfieUrl: application.selfieUrl,
         idCardUrl: application.idCardUrl,
@@ -76,14 +110,18 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       ApiResponseFormatter.success(transformedApplications, 'Host applications fetched successfully', {
-        total,
+        total: totalPending,
         page,
         perPage,
-        totalPages: Math.ceil(total / perPage),
+        totalPages: Math.ceil(totalPending / perPage),
         stats: {
-          pending: total,
+          pending: totalPending,
           approved: approvedCount,
           rejected: rejectedCount,
+          totalLastWeek: totalPreviousCount,
+          pendingLastWeek: pendingPreviousCount,
+          approvedLastWeek: approvedPreviousCount,
+          rejectedLastWeek: rejectedPreviousCount,
         }
       })
     );

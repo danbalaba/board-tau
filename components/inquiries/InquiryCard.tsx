@@ -60,15 +60,7 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
   hasNotification,
 }) => {
   const router = useRouter();
-  const [isReservationClicked, setIsReservationClicked] = useState(false);
 
-  // Load seen state from localStorage
-  React.useEffect(() => {
-    const seen = localStorage.getItem(`inquiry_seen_${inquiry.id}`);
-    if (seen === "true") {
-      setIsReservationClicked(true);
-    }
-  }, [inquiry.id]);
   // Status badge colors
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -237,12 +229,10 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
             Details
           </button>
 
-          {inquiry.status === "APPROVED" && !isReservationClicked ? (
+          {inquiry.status === "APPROVED" ? (
              <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  localStorage.setItem(`inquiry_seen_${inquiry.id}`, "true");
-                  setIsReservationClicked(true);
                   router.push("/reservations");
                 }}
                 className="flex-[1.5] py-2.5 px-2 sm:px-4 font-black text-[9px] sm:text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-md bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center gap-1.5 sm:gap-2 group/res"

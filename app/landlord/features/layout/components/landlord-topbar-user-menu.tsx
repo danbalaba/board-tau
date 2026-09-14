@@ -79,7 +79,7 @@ export function LandlordTopbarUserMenu({ user, onOpenSettings, isLoading }: Land
               {user.role} Account
             </p>
           </div>
-          <IconMenu2 size={14} className="text-gray-400 ml-1 group-hover:text-primary transition-colors" />
+          <IconMenu2 size={14} className="text-gray-400 ml-1 group-hover:text-primary transition-colors hidden lg:block" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

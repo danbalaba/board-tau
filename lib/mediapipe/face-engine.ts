@@ -143,7 +143,7 @@ export class FaceEngine {
     imageElement: HTMLVideoElement | HTMLCanvasElement
   ): Promise<{ 
     isValid: boolean; 
-    liveness: { blink: boolean; smile: boolean; turnLeft: boolean; turnRight: boolean } | null 
+    liveness: { blink: boolean; smile: boolean; turnLeft: boolean; turnRight: boolean; openMouth: boolean; raiseEyebrows: boolean } | null 
   }> {
     const { face } = await this.getModels();
     
@@ -191,6 +191,8 @@ export class FaceEngine {
 
     let blink = false;
     let smile = false;
+    let openMouth = false;
+    let raiseEyebrows = false;
 
     if (faceResult.faceBlendshapes && faceResult.faceBlendshapes.length > 0) {
       const categories = faceResult.faceBlendshapes[0].categories;
@@ -198,25 +200,31 @@ export class FaceEngine {
       const rightBlink = categories.find(c => c.categoryName === 'eyeBlinkRight')?.score ?? 0;
       const smileLeft = categories.find(c => c.categoryName === 'mouthSmileLeft')?.score ?? 0;
       const smileRight = categories.find(c => c.categoryName === 'mouthSmileRight')?.score ?? 0;
+      const jawOpen = categories.find(c => c.categoryName === 'jawOpen')?.score ?? 0;
+      const browOuterLeft = categories.find(c => c.categoryName === 'browOuterUpLeft')?.score ?? 0;
+      const browOuterRight = categories.find(c => c.categoryName === 'browOuterUpRight')?.score ?? 0;
+      const browInner = categories.find(c => c.categoryName === 'browInnerUp')?.score ?? 0;
 
       if (leftBlink > 0.45 || rightBlink > 0.45) blink = true;
       if (smileLeft > 0.5 && smileRight > 0.5) smile = true;
+      if (jawOpen > 0.30) openMouth = true;
+      if (browOuterLeft > 0.35 || browOuterRight > 0.35 || browInner > 0.35) raiseEyebrows = true;
     }
 
     return { 
       isValid, 
-      liveness: { blink, smile, turnLeft, turnRight } 
+      liveness: { blink, smile, turnLeft, turnRight, openMouth, raiseEyebrows } 
     };
   }
 
   /**
    * LIVENESS CHECK: Returns states for randomized challenge-response liveness.
-   * Returns { blink, smile, turnLeft, turnRight }
+   * Returns { blink, smile, turnLeft, turnRight, openMouth, raiseEyebrows }
    * The caller tracks these to pass randomly assigned challenges.
    */
   public async getLivenessState(
     imageElement: HTMLVideoElement
-  ): Promise<{ blink: boolean; smile: boolean; turnLeft: boolean; turnRight: boolean } | null> {
+  ): Promise<{ blink: boolean; smile: boolean; turnLeft: boolean; turnRight: boolean; openMouth: boolean; raiseEyebrows: boolean } | null> {
     const { face } = await this.getModels();
 
     const width = imageElement.videoWidth;
@@ -235,21 +243,19 @@ export class FaceEngine {
     const leftDist = Math.abs(noseTip.x - leftTragus.x);
     const rightDist = Math.abs(noseTip.x - rightTragus.x);
 
-    // If one side is much smaller than the other, the head is turned
-    // The user's left is mirrored, so if rightDist is small, they are looking right
     let turnLeft = false;
     let turnRight = false;
     
-    // Threshold for head turn (ratio > 2.0 means significant turn)
-    // FIXED MIRRORING BUG:
     if (leftDist > 0 && rightDist > 0) {
       if (rightDist / leftDist > 2.0) turnRight = true;
       if (leftDist / rightDist > 2.0) turnLeft = true;
     }
 
-    // 2. Calculate Blendshapes (Blink, Smile)
+    // 2. Calculate Blendshapes (Blink, Smile, Open Mouth, Raise Eyebrows)
     let blink = false;
     let smile = false;
+    let openMouth = false;
+    let raiseEyebrows = false;
 
     if (faceResult.faceBlendshapes && faceResult.faceBlendshapes.length > 0) {
       const categories = faceResult.faceBlendshapes[0].categories;
@@ -257,12 +263,18 @@ export class FaceEngine {
       const rightBlink = categories.find(c => c.categoryName === 'eyeBlinkRight')?.score ?? 0;
       const smileLeft = categories.find(c => c.categoryName === 'mouthSmileLeft')?.score ?? 0;
       const smileRight = categories.find(c => c.categoryName === 'mouthSmileRight')?.score ?? 0;
+      const jawOpen = categories.find(c => c.categoryName === 'jawOpen')?.score ?? 0;
+      const browOuterLeft = categories.find(c => c.categoryName === 'browOuterUpLeft')?.score ?? 0;
+      const browOuterRight = categories.find(c => c.categoryName === 'browOuterUpRight')?.score ?? 0;
+      const browInner = categories.find(c => c.categoryName === 'browInnerUp')?.score ?? 0;
 
       if (leftBlink > 0.45 || rightBlink > 0.45) blink = true;
       if (smileLeft > 0.5 && smileRight > 0.5) smile = true;
+      if (jawOpen > 0.30) openMouth = true;
+      if (browOuterLeft > 0.35 || browOuterRight > 0.35 || browInner > 0.35) raiseEyebrows = true;
     }
 
-    return { blink, smile, turnLeft, turnRight };
+    return { blink, smile, turnLeft, turnRight, openMouth, raiseEyebrows };
   }
 }
 

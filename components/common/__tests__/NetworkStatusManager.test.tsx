@@ -25,6 +25,7 @@ jest.mock('framer-motion', () => ({
     circle: ({ ...props }: any) => <circle {...props} />,
     img: ({ ...props }: any) => <img {...props} />,
   },
+  AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
 describe('NetworkStatusManager', () => {
@@ -52,8 +53,8 @@ describe('NetworkStatusManager', () => {
     
     render(<NetworkStatusManager />);
     
-    expect(screen.getByText('No internet connection')).toBeInTheDocument();
-    expect(screen.getByText('Please check your connection again, or connect to Wi-Fi')).toBeInTheDocument();
+    expect(screen.getByText(/No Internet Connection/i)).toBeInTheDocument();
+    expect(screen.getByText(/Please check your Wi-Fi router/i)).toBeInTheDocument();
     expect(screen.getByText('Refresh Page')).toBeInTheDocument();
     
     // Body scroll should be locked
@@ -65,26 +66,26 @@ describe('NetworkStatusManager', () => {
     (useNetworkStatus as jest.Mock).mockReturnValue(false);
     const { rerender } = render(<NetworkStatusManager />);
     
-    expect(screen.getByText('No internet connection')).toBeInTheDocument();
+    expect(screen.getByText(/No Internet Connection/i)).toBeInTheDocument();
     
     // Go online
     (useNetworkStatus as jest.Mock).mockReturnValue(true);
     rerender(<NetworkStatusManager />);
     
-    // Should show "Back Online!" toast
-    expect(screen.getByText('Back Online!')).toBeInTheDocument();
-    expect(screen.queryByText('No internet connection')).not.toBeInTheDocument();
+    // Should show "Connection Restored" toast
+    expect(screen.getByText(/Connection Restored/i)).toBeInTheDocument();
+    expect(screen.queryByText(/No Internet Connection/i)).not.toBeInTheDocument();
     
     // Body scroll should be unlocked
     expect(document.body.style.overflow).toBe('');
     
     // Advance timers by 3 seconds
     act(() => {
-      jest.advanceTimersByTime(3000);
+      jest.advanceTimersByTime(4000);
     });
     
     // Toast should be gone
-    expect(screen.queryByText('Back Online!')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Connection Restored/i)).not.toBeInTheDocument();
   });
 
   it('reloads page when refresh button is clicked', () => {

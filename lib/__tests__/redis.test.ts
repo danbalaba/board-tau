@@ -1,3 +1,4 @@
+jest.unmock('@/lib/redis');
 import { cache } from '../redis';
 import { Redis } from '@upstash/redis';
 

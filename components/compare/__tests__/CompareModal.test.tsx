@@ -34,6 +34,8 @@ jest.mock('react-markdown', () => {
 });
 
 describe('CompareModal', () => {
+  let mockFetch: jest.Mock;
+
   const mockListing = {
     id: '1',
     title: 'Test Listing 1',
@@ -52,13 +54,19 @@ describe('CompareModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getComparedListings as jest.Mock).mockResolvedValue([mockListing]);
-    // Mock fetch for AI Chat
-    global.fetch = jest.fn(() =>
+    
+    mockFetch = jest.fn(() =>
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ reply: 'AI response', suggestedPrompts: ['Prompt A'] }),
       })
-    ) as jest.Mock;
+    );
+    
+    global.fetch = mockFetch;
+    globalThis.fetch = mockFetch;
+    if (typeof window !== 'undefined') {
+      window.fetch = mockFetch;
+    }
     
     // Polyfill for scrollIntoView
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
@@ -72,7 +80,6 @@ describe('CompareModal', () => {
   it('loads and displays listings', async () => {
     render(<CompareModal isOpen={true} onClose={jest.fn()} listingIds={['1']} />);
     
-    // Fixed the intentional error for the final green screenshot!
     expect(screen.getByText(/Fetching listing data/i)).toBeInTheDocument();
     
     await waitFor(() => {
@@ -91,13 +98,18 @@ describe('CompareModal', () => {
     });
     
     const input = screen.getByPlaceholderText(/Ask about these properties/i);
-    fireEvent.change(input, { target: { value: 'Is there a pool?' } });
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'Is there a pool?' } });
+    });
     
-    const form = input.closest('form');
-    fireEvent.submit(form!);
+    await act(async () => {
+      const activeInput = screen.getByPlaceholderText(/Ask about these properties/i);
+      const activeForm = activeInput.closest('form')!;
+      fireEvent.submit(activeForm);
+    });
     
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalled();
+      expect(mockFetch).toHaveBeenCalled();
       expect(screen.getByText('AI response')).toBeInTheDocument();
     });
   });
@@ -113,7 +125,7 @@ describe('CompareModal', () => {
     fireEvent.click(promptBtn);
     
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalled();
+      expect(mockFetch).toHaveBeenCalled();
       expect(screen.getByText('AI response')).toBeInTheDocument();
     });
   });
@@ -125,13 +137,18 @@ describe('CompareModal', () => {
       expect(screen.getByText('Test Listing 1')).toBeInTheDocument();
     });
     
-    const dataSheetBtn = screen.getByText('Data Sheet');
-    const aiAdvisorBtn = screen.getByText('AI Advisor', { selector: 'button' }); // Since it's also a heading
-    
+    const aiAdvisorBtn = screen.getByText('AI Advisor', { selector: 'button' });
     fireEvent.click(aiAdvisorBtn);
-    expect(aiAdvisorBtn).toHaveClass('text-primary');
     
+    await waitFor(() => {
+      expect(screen.getByText('AI Advisor', { selector: 'button' })).toHaveClass('text-primary');
+    });
+    
+    const dataSheetBtn = screen.getByText('Data Sheet', { selector: 'button' });
     fireEvent.click(dataSheetBtn);
-    expect(dataSheetBtn).toHaveClass('text-primary');
+    
+    await waitFor(() => {
+      expect(screen.getByText('Data Sheet', { selector: 'button' })).toHaveClass('text-primary');
+    });
   });
 });

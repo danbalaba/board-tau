@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Check } from 'lucide-react';
 import { 
   IconChartBar, 
   IconCalendar, 
@@ -29,6 +30,13 @@ interface AdminAnalyticsHeaderProps {
   isLoading?: boolean;
   isSuperAdmin?: boolean;
 }
+
+const DATE_RANGES = [
+  { value: '7d', label: 'Last 7 Days' },
+  { value: '30d', label: 'Last 30 Days' },
+  { value: '90d', label: 'Last 90 Days' },
+  { value: '1y', label: 'Past Year' },
+];
 
 export function AdminAnalyticsHeader({
   range,
@@ -101,23 +109,24 @@ export function AdminAnalyticsHeader({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-100 dark:border-gray-800 rounded-2xl p-2 shadow-2xl">
-                  {[
-                    { r: '7d', l: 'Last 7 Days' },
-                    { r: '30d', l: 'Last 30 Days' },
-                    { r: '90d', l: 'Last 90 Days' },
-                    { r: '1y', l: 'Past Year' }
-                  ].map(item => (
-                    <DropdownMenuItem
-                      key={item.r}
-                      onClick={() => onRangeChange(item.r)}
-                      className={cn(
-                        'text-[10px] font-black py-3 uppercase tracking-widest cursor-pointer rounded-xl mb-1',
-                        range === item.r ? 'bg-fuchsia-500/10 text-fuchsia-600' : 'text-gray-500'
-                      )}
-                    >
-                      {item.l}
-                    </DropdownMenuItem>
-                  ))}
+                  {DATE_RANGES.map(item => {
+                    const isSelected = range === item.value;
+                    return (
+                      <DropdownMenuItem
+                        key={item.value}
+                        onClick={() => onRangeChange(item.value)}
+                        className={cn(
+                          'text-[10px] font-black py-3 px-3.5 uppercase tracking-widest cursor-pointer rounded-xl mb-1 flex items-center justify-between transition-all outline-none',
+                          isSelected
+                            ? 'bg-fuchsia-500 text-white data-[highlighted]:bg-fuchsia-500 data-[highlighted]:text-white focus:bg-fuchsia-500 focus:text-white hover:bg-fuchsia-500 hover:text-white shadow-md shadow-fuchsia-500/20'
+                            : 'text-gray-600 dark:text-gray-300 data-[highlighted]:bg-fuchsia-500/10 data-[highlighted]:text-fuchsia-600 focus:bg-fuchsia-500/10 focus:text-fuchsia-600 hover:bg-fuchsia-500/10 hover:text-fuchsia-600'
+                        )}
+                      >
+                        <span>{item.label}</span>
+                        {isSelected && <Check size={14} className="text-white shrink-0 ml-2" />}
+                      </DropdownMenuItem>
+                    );
+                  })}
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -127,9 +136,9 @@ export function AdminAnalyticsHeader({
                   variant="outline"
                   size="sm"
                   onClick={onRefresh}
-                  className="h-10 w-10 p-0 shadow-sm rounded-[0.85rem] border-gray-200/60 dark:border-gray-700/60 bg-white/50 dark:bg-gray-800/50 hover:bg-pink-500/10 hover:border-pink-500/30 transition-all duration-200 group"
+                  className="h-10 w-10 p-0 shadow-sm rounded-[0.85rem] border-gray-200/60 dark:border-gray-700/60 bg-white/50 dark:bg-gray-800/50 hover:bg-fuchsia-500/10 hover:border-fuchsia-500/30 transition-all duration-200 group"
                 >
-                  <IconRefresh size={16} className={cn("text-gray-500 dark:text-gray-400 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors", isFetching && "animate-spin [animation-duration:2s]")} />
+                  <IconRefresh size={16} className={cn("text-gray-500 dark:text-gray-400 group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400 transition-colors", isFetching && "animate-spin [animation-duration:2s]")} />
                 </Button>
 
                 {/* Export - Only visible to Super Admin */}
@@ -143,15 +152,15 @@ export function AdminAnalyticsHeader({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-100 dark:border-gray-800 rounded-2xl p-2 shadow-2xl relative z-50">
-                      <DropdownMenuItem onClick={() => onExport('PDF')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-all text-sm font-semibold text-gray-700 dark:text-gray-300 dark:hover:text-white group cursor-pointer mb-1">
+                      <DropdownMenuItem onClick={() => onExport('PDF')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl data-[highlighted]:bg-fuchsia-500/10 data-[highlighted]:text-fuchsia-600 hover:bg-fuchsia-500/10 focus:bg-fuchsia-500/10 focus:text-fuchsia-600 hover:text-fuchsia-600 transition-all text-xs font-bold text-gray-700 dark:text-gray-300 group cursor-pointer mb-1 outline-none">
                         <IconFileTypePdf className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform" />
                         PDF Document
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onExport('EXCEL')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-all text-sm font-semibold text-gray-700 dark:text-gray-300 dark:hover:text-white group cursor-pointer mb-1">
+                      <DropdownMenuItem onClick={() => onExport('EXCEL')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl data-[highlighted]:bg-fuchsia-500/10 data-[highlighted]:text-fuchsia-600 hover:bg-fuchsia-500/10 focus:bg-fuchsia-500/10 focus:text-fuchsia-600 hover:text-fuchsia-600 transition-all text-xs font-bold text-gray-700 dark:text-gray-300 group cursor-pointer mb-1 outline-none">
                         <IconTable className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
                         Excel
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onExport('CSV')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-all text-sm font-semibold text-gray-700 dark:text-gray-300 dark:hover:text-white group cursor-pointer">
+                      <DropdownMenuItem onClick={() => onExport('CSV')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl data-[highlighted]:bg-fuchsia-500/10 data-[highlighted]:text-fuchsia-600 hover:bg-fuchsia-500/10 focus:bg-fuchsia-500/10 focus:text-fuchsia-600 hover:text-fuchsia-600 transition-all text-xs font-bold text-gray-700 dark:text-gray-300 group cursor-pointer outline-none">
                         <IconFileTypeCsv className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform" />
                         CSV Data
                       </DropdownMenuItem>

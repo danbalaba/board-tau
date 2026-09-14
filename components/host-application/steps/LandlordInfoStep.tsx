@@ -1,10 +1,16 @@
 import React from 'react';
 import Input from '../../inputs/Input';
-import Textarea from '../../inputs/Textarea';
 import { Controller } from 'react-hook-form';
 import ReactSelect from 'react-select';
-import { User, Phone, Mail, Shield, UserCheck, ShieldAlert, Info } from 'lucide-react';
+import { User, Phone, Mail, UserCheck, Shield, Building2, AlertCircle } from 'lucide-react';
+import { cn } from '@/utils/helper';
 import { motion } from 'framer-motion';
+import {
+  validateFullName,
+  validatePhoneNumber,
+  validateEmail,
+  validateBusinessName,
+} from '../HostApplicationUtils';
 
 interface LandlordInfoStepProps {
   register: any;
@@ -15,41 +21,44 @@ interface LandlordInfoStepProps {
 
 const LandlordInfoStep: React.FC<LandlordInfoStepProps> = ({ register, errors, watch, control }) => {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Step Header */}
       <motion.div
-        className="bg-gradient-to-r from-primary/10 to-transparent dark:from-primary/20 rounded-2xl p-6 border border-primary/20 dark:border-primary/30 shadow-sm"
+        className="bg-gradient-to-r from-primary/10 to-transparent dark:from-primary/20 rounded-2xl p-5 border border-primary/20 dark:border-primary/30 shadow-sm"
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.4 }}
       >
-        <div className="flex items-center space-x-4">
-          <div className="p-3 bg-primary/10 rounded-xl text-primary">
-            <UserCheck className="w-6 h-6" />
+        <div className="flex items-center space-x-3.5 pr-14 sm:pr-0">
+          <div className="p-2.5 bg-primary/10 rounded-xl text-primary dark:text-[#4fa89a]">
+            <UserCheck className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-black text-gray-900 dark:text-white uppercase tracking-wider text-sm">Landlord Profiling</h3>
-            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-0.5">
-              Personal contact information and business background
+            <h3 className="font-extrabold text-gray-900 dark:text-white uppercase tracking-wider text-xs">
+              Landlord Profiling
+            </h3>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-0.5">
+              Personal contact information and property background
             </p>
           </div>
         </div>
       </motion.div>
 
+      {/* Main 2-Column Responsive Layout */}
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 gap-8"
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
+        transition={{ duration: 0.4, delay: 0.15 }}
       >
-        {/* Personal Details Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-[2rem] p-8 border border-gray-200 dark:border-gray-700 shadow-sm">
-          <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 mb-8 flex items-center space-x-2">
-            <User className="w-4 h-4 opacity-40" />
+        {/* Personal Identity Details Card */}
+        <div className="bg-white dark:bg-slate-800/80 rounded-3xl p-6 md:p-7 border border-gray-100 dark:border-slate-700 shadow-sm space-y-6">
+          <h4 className="text-[11px] font-black uppercase tracking-widest text-primary dark:text-[#4fa89a] flex items-center space-x-2 pb-2 border-b border-gray-100 dark:border-slate-700">
+            <User className="w-4 h-4" />
             <span>Identity Details</span>
           </h4>
 
-          <div className="space-y-10">
+          <div className="space-y-5">
             <Input
               label="Full Legal Name"
               id="contactInfo.fullName"
@@ -62,10 +71,10 @@ const LandlordInfoStep: React.FC<LandlordInfoStepProps> = ({ register, errors, w
               useStaticLabel={true}
               validationRules={{
                 required: "Full name is required",
-                minLength: { value: 3, message: "Too short" },
-                pattern: { value: /^[a-zA-ZñÑ\s-]+$/, message: "Letters/spaces only" }
+                validate: validateFullName,
               }}
             />
+
             <Input
               label="Primary Contact No."
               id="contactInfo.phoneNumber"
@@ -78,10 +87,11 @@ const LandlordInfoStep: React.FC<LandlordInfoStepProps> = ({ register, errors, w
               icon={Phone}
               useStaticLabel={true}
               validationRules={{
-                required: "Required",
-                pattern: { value: /^[+\d\s()-]{10,20}$/, message: "Invalid format" }
+                required: "Contact number is required",
+                validate: validatePhoneNumber,
               }}
             />
+
             <Input
               label="Official Email"
               id="contactInfo.email"
@@ -94,161 +104,216 @@ const LandlordInfoStep: React.FC<LandlordInfoStepProps> = ({ register, errors, w
               icon={Mail}
               useStaticLabel={true}
               validationRules={{
-                required: "Required",
-                pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Invalid email" }
+                required: "Email is required",
+                validate: validateEmail,
               }}
             />
-          </div>
-        </div>
 
-        {/* Emergency Contact Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-[2rem] p-8 border border-gray-200 dark:border-gray-700 shadow-sm">
-          <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-rose-500 mb-8 flex items-center space-x-2">
-            <ShieldAlert className="w-4 h-4 opacity-70" />
-            <span>Emergency Bypass</span>
-          </h4>
-
-          <div className="space-y-10">
-            <Input
-              label="Alternative Contact Name"
-              id="contactInfo.emergencyContact.name"
-              type="text"
-              register={register}
-              errors={errors}
-              watch={watch}
-              required
-              placeholder="Contact person's name"
-              useStaticLabel={true}
-            />
             <div>
-              <label className="block text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">
-                Relationship <span className="text-red-500">*</span>
+              <label className={cn(
+                "block text-[11px] font-bold uppercase tracking-widest mb-1.5 ml-1 transition-colors",
+                errors?.contactInfo?.ownershipRole ? "text-red-500" : "text-gray-400"
+              )}>
+                Property Relationship / Role <span className="text-red-500">*</span>
               </label>
               <Controller
-                name="contactInfo.emergencyContact.relationship"
+                name="contactInfo.ownershipRole"
                 control={control}
-                rules={{ required: "Required" }}
-                render={({ field }) => (
-                  <ReactSelect
-                    {...field}
-                    options={[
-                      { value: 'spouse', label: 'Spouse/Partner' },
-                      { value: 'child', label: 'Child' },
-                      { value: 'parent', label: 'Parent' },
-                      { value: 'sibling', label: 'Sibling' },
-                      { value: 'friend', label: 'Business Partner' },
-                      { value: 'other', label: 'Other' },
-                    ]}
-                    value={field.value ? { value: field.value, label: field.value.charAt(0).toUpperCase() + field.value.slice(1) } : null}
-                    onChange={(val: any) => field.onChange(val?.value)}
-                    placeholder="Select relationship..."
-                    classNames={{
-                      control: (state) => `!bg-white dark:!bg-gray-800 !border ${state.isFocused ? '!border-primary !ring-1 !ring-primary shadow-lg shadow-primary/10' : '!border-gray-200 dark:!border-gray-700'} !rounded-2xl !p-[5px] !shadow-sm transition-all text-[15px]`,
-                      singleValue: () => `!text-text-primary dark:!text-gray-100 font-bold`,
-                      menu: () => `!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-700 !shadow-2xl !rounded-2xl !mt-2 z-[60] overflow-hidden`,
-                      menuList: () => `!p-0 !bg-white dark:!bg-gray-800`,
-                      option: (state) => `!cursor-pointer ${state.isSelected ? '!bg-primary/10 !text-primary font-black' : state.isFocused ? '!bg-gray-100 dark:!bg-gray-700 !text-text-primary dark:!text-gray-100' : '!bg-transparent dark:!bg-transparent !text-text-primary dark:!text-gray-100'} !px-4 !py-3 !text-xs uppercase tracking-widest transition-colors`,
-                    }}
-                    menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-                    styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-                    instanceId="relationship-select"
-                  />
-                )}
+                rules={{ required: "Property relationship is required" }}
+                render={({ field }) => {
+                  const hasError = !!errors?.contactInfo?.ownershipRole;
+                  return (
+                    <ReactSelect
+                      {...field}
+                      options={[
+                        { value: 'OWNER', label: 'Property Owner (Title Holder)' },
+                        { value: 'CO_OWNER_FAMILY', label: 'Co-Owner / Family Representative' },
+                        { value: 'AUTHORIZED_CARETAKER', label: 'Authorized Manager / Caretaker' },
+                        { value: 'SUBLESSOR', label: 'Master Tenant / Sub-lessor' },
+                      ]}
+                      value={field.value ? {
+                        value: field.value,
+                        label: field.value === 'OWNER' ? 'Property Owner (Title Holder)' :
+                               field.value === 'CO_OWNER_FAMILY' ? 'Co-Owner / Family Representative' :
+                               field.value === 'AUTHORIZED_CARETAKER' ? 'Authorized Manager / Caretaker' : 'Master Tenant / Sub-lessor'
+                      } : null}
+                      onChange={(val: any) => field.onChange(val?.value)}
+                      placeholder="Select role..."
+                      classNames={{
+                        control: (state) =>
+                          cn(
+                            "!bg-white dark:!bg-slate-800 !border-2 !rounded-2xl !p-1 text-[14px] transition-all",
+                            hasError
+                              ? "!border-red-500 dark:!border-red-500 !ring-4 !ring-red-500/20 !bg-red-50/30 dark:!bg-red-950/30"
+                              : state.isFocused
+                              ? "!border-primary !ring-4 !ring-primary/10 shadow-sm"
+                              : "!border-gray-200 dark:!border-slate-700"
+                          ),
+                        singleValue: () => `!text-slate-800 dark:!text-slate-100 font-semibold`,
+                        menu: () => `!bg-white dark:!bg-slate-800 !border !border-gray-200 dark:!border-slate-700 !shadow-xl !rounded-2xl !mt-1 z-[60] overflow-hidden`,
+                        menuList: () => `!p-0 !bg-white dark:!bg-slate-800`,
+                        option: (state) => `!cursor-pointer ${state.isSelected ? '!bg-primary/10 !text-primary font-bold' : state.isFocused ? '!bg-gray-100 dark:!bg-slate-700 !text-slate-800 dark:!text-slate-100' : '!bg-transparent !text-slate-700 dark:!text-slate-200'} !px-4 !py-2.5 !text-xs uppercase tracking-wider transition-colors`,
+                      }}
+                      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                      styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                      instanceId="ownership-role-select"
+                    />
+                  );
+                }}
               />
-              {errors?.contactInfo?.emergencyContact?.relationship && <p className="mt-1.5 text-xs text-red-500 font-bold">{errors.contactInfo.emergencyContact.relationship.message}</p>}
+              {errors?.contactInfo?.ownershipRole && (
+                <p className="text-red-500 text-[10px] font-black mt-1.5 ml-2 flex items-center gap-1 uppercase tracking-[0.1em]">
+                  <AlertCircle size={10} />
+                  <span>{errors.contactInfo.ownershipRole.message}</span>
+                </p>
+              )}
             </div>
+          </div>
+        </div>
+
+        {/* Business & Property Profile Card */}
+        <div className="bg-white dark:bg-slate-800/80 rounded-3xl p-6 md:p-7 border border-gray-100 dark:border-slate-700 shadow-sm space-y-6">
+          <h4 className="text-[11px] font-black uppercase tracking-widest text-primary dark:text-[#4fa89a] flex items-center space-x-2 pb-2 border-b border-gray-100 dark:border-slate-700">
+            <Building2 className="w-4 h-4" />
+            <span>Establishment Background</span>
+          </h4>
+
+          <div className="space-y-5">
             <Input
-              label="Secondary Contact No."
-              id="contactInfo.emergencyContact.phoneNumber"
-              type="tel"
+              label="Business / Establishment Name"
+              id="businessInfo.businessName"
               register={register}
               errors={errors}
               watch={watch}
               required
-              placeholder="(+63) 9XX-XXXXXXX"
-              icon={Phone}
+              placeholder="e.g. De La Cruz Student Boarding"
               useStaticLabel={true}
+              validationRules={{
+                required: "Establishment name is required",
+                validate: validateBusinessName,
+              }}
             />
-          </div>
-        </div>
-      </motion.div>
 
-      {/* Experience Background */}
-      <motion.div
-        className="bg-white dark:bg-gray-800 rounded-[2rem] p-10 border border-gray-200 dark:border-gray-700 shadow-sm"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-      >
-        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 mb-8 flex items-center space-x-2">
-           <Shield className="w-4 h-4 opacity-40" />
-           <span>Business & Experience</span>
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          <Input
-            label="Business/Establishment Name"
-            id="businessInfo.businessName"
-            register={register}
-            errors={errors}
-            watch={watch}
-            required
-            placeholder="e.g. De La Cruz Dormitory"
-            useStaticLabel={true}
-          />
-          <div>
-            <label className="block text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">
-              Property Type <span className="text-red-500">*</span>
-            </label>
-            <Controller
-              name="businessInfo.businessType"
-              control={control}
-              rules={{ required: "Required" }}
-              render={({ field }) => (
-                <ReactSelect
-                  {...field}
-                  options={[
-                    { value: 'boarding-house', label: 'Boarding House' },
-                    { value: 'dormitory', label: 'Dormitory' },
-                    { value: 'apartment', label: 'Apartment' },
-                    { value: 'hostel', label: 'Hostel' },
-                  ]}
-                  value={field.value ? { value: field.value, label: field.value.replace(/-/g, ' ').toUpperCase() } : null}
-                  onChange={(val: any) => field.onChange(val?.value)}
-                  placeholder="Select type..."
-                  classNames={{
-                    control: (state) => `!bg-white dark:!bg-gray-800 !border ${state.isFocused ? '!border-primary !ring-1 !ring-primary shadow-lg shadow-primary/10' : '!border-gray-200 dark:!border-gray-700'} !rounded-2xl !p-[5px] !shadow-sm transition-all text-[15px]`,
-                    singleValue: () => `!text-text-primary dark:!text-gray-100 font-bold`,
-                    menu: () => `!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-700 !shadow-2xl !rounded-2xl !mt-2 z-[60] overflow-hidden`,
-                    menuList: () => `!p-0 !bg-white dark:!bg-gray-800`,
-                    option: (state) => `!cursor-pointer ${state.isSelected ? '!bg-primary/10 !text-primary font-black' : state.isFocused ? '!bg-gray-100 dark:!bg-gray-700 !text-text-primary dark:!text-gray-100' : '!bg-transparent dark:!bg-transparent !text-text-primary dark:!text-gray-100'} !px-4 !py-3 !text-xs uppercase tracking-widest transition-colors`,
-                  }}
-                  menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-                  styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-                  instanceId="property-type-select"
-                />
+            <div>
+              <label className={cn(
+                "block text-[11px] font-bold uppercase tracking-widest mb-1.5 ml-1 transition-colors",
+                errors?.businessInfo?.businessType ? "text-red-500" : "text-gray-400"
+              )}>
+                Property Type <span className="text-red-500">*</span>
+              </label>
+              <Controller
+                name="businessInfo.businessType"
+                control={control}
+                rules={{ required: "Property type is required" }}
+                render={({ field }) => {
+                  const hasError = !!errors?.businessInfo?.businessType;
+                  return (
+                    <ReactSelect
+                      {...field}
+                      options={[
+                        { value: 'boarding-house', label: 'Boarding House' },
+                        { value: 'dormitory', label: 'Dormitory' },
+                        { value: 'apartment', label: 'Apartment Building' },
+                        { value: 'hostel', label: 'Hostel / Transient' },
+                      ]}
+                      value={field.value ? { value: field.value, label: field.value.replace(/-/g, ' ').toUpperCase() } : null}
+                      onChange={(val: any) => field.onChange(val?.value)}
+                      placeholder="Select property type..."
+                      classNames={{
+                        control: (state) =>
+                          cn(
+                            "!bg-white dark:!bg-slate-800 !border-2 !rounded-2xl !p-1 text-[14px] transition-all",
+                            hasError
+                              ? "!border-red-500 dark:!border-red-500 !ring-4 !ring-red-500/20 !bg-red-50/30 dark:!bg-red-950/30"
+                              : state.isFocused
+                              ? "!border-primary !ring-4 !ring-primary/10 shadow-sm"
+                              : "!border-gray-200 dark:!border-slate-700"
+                          ),
+                        singleValue: () => `!text-slate-800 dark:!text-slate-100 font-semibold`,
+                        menu: () => `!bg-white dark:!bg-slate-800 !border !border-gray-200 dark:!border-slate-700 !shadow-xl !rounded-2xl !mt-1 z-[60] overflow-hidden`,
+                        menuList: () => `!p-0 !bg-white dark:!bg-slate-800`,
+                        option: (state) => `!cursor-pointer ${state.isSelected ? '!bg-primary/10 !text-primary font-bold' : state.isFocused ? '!bg-gray-100 dark:!bg-slate-700 !text-slate-800 dark:!text-slate-100' : '!bg-transparent !text-slate-700 dark:!text-slate-200'} !px-4 !py-2.5 !text-xs uppercase tracking-wider transition-colors`,
+                      }}
+                      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                      styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                      instanceId="property-type-select"
+                    />
+                  );
+                }}
+              />
+              {errors?.businessInfo?.businessType && (
+                <p className="text-red-500 text-[10px] font-black mt-1.5 ml-2 flex items-center gap-1 uppercase tracking-[0.1em]">
+                  <AlertCircle size={10} />
+                  <span>{errors.businessInfo.businessType.message}</span>
+                </p>
               )}
-            />
+            </div>
+
+            <div>
+              <label className={cn(
+                "block text-[11px] font-bold uppercase tracking-widest mb-1.5 ml-1 transition-colors",
+                errors?.businessInfo?.yearsExperience ? "text-red-500" : "text-gray-400"
+              )}>
+                Landlord Experience Level <span className="text-red-500">*</span>
+              </label>
+              <Controller
+                name="businessInfo.yearsExperience"
+                control={control}
+                rules={{ required: "Experience level is required" }}
+                render={({ field }) => {
+                  const hasError = !!errors?.businessInfo?.yearsExperience;
+                  return (
+                    <ReactSelect
+                      {...field}
+                      options={[
+                        { value: 'less-than-1', label: 'First-Time Landlord (< 1 year)' },
+                        { value: '1-3-years', label: 'Experienced (1 - 3 years)' },
+                        { value: '3-5-years', label: 'Established (3 - 5 years)' },
+                        { value: '5-plus-years', label: 'Veteran Landlord (5+ years)' },
+                      ]}
+                      value={field.value ? {
+                        value: field.value,
+                        label: field.value === 'less-than-1' ? 'First-Time Landlord (< 1 year)' :
+                               field.value === '1-3-years' ? 'Experienced (1 - 3 years)' :
+                               field.value === '3-5-years' ? 'Established (3 - 5 years)' : 'Veteran Landlord (5+ years)'
+                      } : null}
+                      onChange={(val: any) => field.onChange(val?.value)}
+                      placeholder="Select experience level..."
+                      classNames={{
+                        control: (state) =>
+                          cn(
+                            "!bg-white dark:!bg-slate-800 !border-2 !rounded-2xl !p-1 text-[14px] transition-all",
+                            hasError
+                              ? "!border-red-500 dark:!border-red-500 !ring-4 !ring-red-500/20 !bg-red-50/30 dark:!bg-red-950/30"
+                              : state.isFocused
+                              ? "!border-primary !ring-4 !ring-primary/10 shadow-sm"
+                              : "!border-gray-200 dark:!border-slate-700"
+                          ),
+                        singleValue: () => `!text-slate-800 dark:!text-slate-100 font-semibold`,
+                        menu: () => `!bg-white dark:!bg-slate-800 !border !border-gray-200 dark:!border-slate-700 !shadow-xl !rounded-2xl !mt-1 z-[60] overflow-hidden`,
+                        menuList: () => `!p-0 !bg-white dark:!bg-slate-800`,
+                        option: (state) => `!cursor-pointer ${state.isSelected ? '!bg-primary/10 !text-primary font-bold' : state.isFocused ? '!bg-gray-100 dark:!bg-slate-700 !text-slate-800 dark:!text-slate-100' : '!bg-transparent !text-slate-700 dark:!text-slate-200'} !px-4 !py-2.5 !text-xs uppercase tracking-wider transition-colors`,
+                      }}
+                      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                      styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                      instanceId="experience-level-select"
+                    />
+                  );
+                }}
+              />
+              {errors?.businessInfo?.yearsExperience && (
+                <p className="text-red-500 text-[10px] font-black mt-1.5 ml-2 flex items-center gap-1 uppercase tracking-[0.1em]">
+                  <AlertCircle size={10} />
+                  <span>{errors.businessInfo.yearsExperience.message}</span>
+                </p>
+              )}
+            </div>
+
+            <div className="pt-2 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-1.5 opacity-80">
+              <Shield size={12} className="text-primary" />
+              <span>Data is encrypted & protected under BoardTAU Host Policy</span>
+            </div>
           </div>
-        </div>
-        <Textarea
-          label="Relevant Landlord Experience"
-          id="businessInfo.businessDescription"
-          register={register}
-          errors={errors}
-          watch={watch}
-          required
-          rows={4}
-          placeholder="Briefly describe your experience managing properties for students. This helps us verify your application faster."
-          validationRules={{
-            required: "Required",
-            minLength: { value: 100, message: "Minimum 100 characters" }
-          }}
-        />
-        <div className="mt-8 flex gap-4 p-4 bg-primary/5 rounded-2xl border border-primary/10">
-          <div className="h-fit p-1.5 bg-primary/20 rounded-lg text-primary"><Info size={14} /></div>
-          <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest italic opacity-70">
-            Confidentiality Notice: your data is strictly used for host verification and will not be shared publicly without consent.
-          </p>
         </div>
       </motion.div>
     </div>

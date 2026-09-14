@@ -13,7 +13,8 @@ import { formatPrice, calculateAverageRating } from "@/utils/helper";
 import ListingMenu from "./ListingMenu";
 import { usePathname } from "next/navigation";
 import { useCompareStore } from "@/hooks/use-compare-store";
-import { CheckSquare, Square, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckSquare, Square, ChevronLeft, ChevronRight, Home } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import HelpTooltip from "@/components/common/HelpTooltip";
 
@@ -37,6 +38,7 @@ interface ListingCardProps {
     totalPrice: number;
   };
   hasFavorited: boolean;
+  priority?: boolean; // LCP Optimization for top images
   matchScore?: number; // New: optional AI match score
   aiHighlight?: string; // New: optional AI reasoning text
   isHighlighted?: boolean; // New: for visual focus/notifications
@@ -47,6 +49,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
   data,
   reservation,
   hasFavorited,
+  priority = false,
   matchScore,
   aiHighlight,
   isHighlighted,
@@ -97,9 +100,10 @@ const ListingCard: React.FC<ListingCardProps> = ({
 
   // Rating calculation (Shared utility)
   const reviewsArray: any[] = (data as any).reviews || [];
-  const rating = calculateAverageRating(reviewsArray, (data as any).rating);
-  const hasRating = reviewsArray.length > 0 || (rating && rating > 0);
   const reviewCount = reviewsArray.length || (data as any).reviewCount || 0;
+  const rawRating = (data as any).rating;
+  const rating = reviewCount > 0 ? calculateAverageRating(reviewsArray, rawRating) : null;
+  const hasRating = reviewCount > 0 && rating != null && rating > 0;
 
   // Available rooms computation
   const rooms: any[] = (data as any).rooms || [];
@@ -109,11 +113,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
   const totalRooms = rooms.length;
   const hasRooms = totalRooms > 0;
 
-  // Category label
-  const categoryData = Array.isArray(data.category) 
-    ? data.category 
-    : (typeof data.category === 'string' ? [data.category] : []);
-  const displayCategories = categoryData.slice(0, 2); // Max 2 categories on card
+
 
   // Smart Badges Logic
   const isNew =
@@ -124,7 +124,22 @@ const ListingCard: React.FC<ListingCardProps> = ({
   const isVerified = (data as any).user?.isVerifiedLandlord;
   const isPopular = reviewCount >= 10;
 
-  const displayScore = matchScore || (Math.floor(Math.random() * (98 - 85 + 1)) + 85);
+  const displayScore = React.useMemo(() => {
+    if (matchScore) return matchScore;
+    if (!data.id) return 92;
+    let hash = 0;
+    for (let i = 0; i < data.id.length; i++) {
+      hash = (hash << 5) - hash + data.id.charCodeAt(i);
+      hash |= 0;
+    }
+    return 85 + (Math.abs(hash) % 14);
+  }, [matchScore, data.id]);
+  
+  // Resolve Property Type Icon
+  const propType = (data as any).propertyType;
+  const PropertyIcon = propType?.icon && (LucideIcons as any)[propType.icon] 
+    ? (LucideIcons as any)[propType.icon] 
+    : Home;
   
   // Smart image selection helper
   const getImageUrl = (img: any) => {
@@ -258,28 +273,29 @@ const ListingCard: React.FC<ListingCardProps> = ({
               >
                 {allImages.map((imgUrl, idx) => (
                   <SwiperSlide key={idx} className="h-full w-full">
-                    <SafeImage src={imgUrl} alt={`${data.title} - Image ${idx + 1}`} />
+                    <SafeImage src={imgUrl} priority={priority && idx === 0} alt={`${data.title} - Boarding House near TAU Camiling Tarlac (Photo ${idx + 1})`} />
                   </SwiperSlide>
                 ))}
                 
                 {/* Custom Nav Buttons */}
                 <div 
-                  className={`swiper-prev-${data.id} absolute left-2 top-1/2 -translate-y-1/2 z-[60] w-7 h-7 bg-white/90 dark:bg-slate-900/90 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-opacity hover:scale-110`}
+                  className={`swiper-prev-${data.id} absolute left-2 top-1/2 -translate-y-1/2 z-[60] w-7 h-7 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
                   onClick={(e: any) => { e.preventDefault(); e.stopPropagation(); }}
                 >
-                  <ChevronLeft size={16} className="text-slate-800 dark:text-primary -ml-0.5" />
+                  <ChevronLeft size={16} className="text-slate-800 dark:text-slate-100 -ml-0.5" />
                 </div>
                 <div 
-                  className={`swiper-next-${data.id} absolute right-2 top-1/2 -translate-y-1/2 z-[60] w-7 h-7 bg-white/90 dark:bg-slate-900/90 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-opacity hover:scale-110`}
+                  className={`swiper-next-${data.id} absolute right-2 top-1/2 -translate-y-1/2 z-[60] w-7 h-7 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
                   onClick={(e: any) => { e.preventDefault(); e.stopPropagation(); }}
                 >
-                  <ChevronRight size={16} className="text-slate-800 dark:text-primary -mr-0.5" />
+                  <ChevronRight size={16} className="text-slate-800 dark:text-slate-100 -mr-0.5" />
                 </div>
               </Swiper>
             ) : (
               <SafeImage
                 src={displayImage}
-                alt={data.title}
+                priority={priority}
+                alt={`${data.title} - Boarding House near TAU Camiling Tarlac`}
               />
             )}
 
@@ -336,17 +352,23 @@ const ListingCard: React.FC<ListingCardProps> = ({
 
             {/* Bottom Controls Overlay (Badges + Price) */}
             <div className="absolute bottom-6 md:bottom-3 left-2 right-2 md:left-3 md:right-3 z-10 flex flex-col md:flex-row md:items-end justify-end md:justify-between gap-1 md:gap-2 pointer-events-none">
-              {/* Left Side: Category */}
+              {/* Left Side: Category Placeholder */}
               <div className="flex items-center gap-1.5 flex-wrap max-w-[80%] md:max-w-[50%] self-start">
-                {displayCategories.map((cat: string, idx: number) => (
-                  <div key={idx} className="bg-slate-900/80 dark:bg-slate-900/80 backdrop-blur-md text-white border border-white/10 dark:border-slate-700 px-1.5 py-0.5 md:px-2.5 md:py-1 rounded-md md:rounded-lg text-[7px] md:text-[9px] font-black uppercase tracking-wider truncate max-w-full">
-                    {cat}
+                {propType?.name && (
+                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-800 dark:text-slate-200 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700/50 shadow-sm flex items-center gap-1.5 pointer-events-auto">
+                    <PropertyIcon size={12} className="text-primary" />
+                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider line-clamp-1">
+                      {propType.name}
+                    </span>
                   </div>
-                ))}
+                )}
               </div>
 
               {/* Right Side: Price Pill */}
               <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-900 dark:text-white px-1.5 py-0.5 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-2xl flex items-center gap-0.5 md:gap-1 font-black text-[9px] md:text-xs shrink-0 pointer-events-auto self-start md:self-auto">
+                {!reservation && !(propType?.isFlatRate) && (
+                  <span className="text-[8px] md:text-[9px] text-slate-500 font-bold uppercase tracking-tight">From</span>
+                )}
                 <span className="text-primary">₱</span>
                 <span>{formatPrice(price)}</span>
                 {!reservation && <span className="text-[7px] md:text-[8px] text-slate-500 dark:text-slate-400 font-normal">/mo</span>}
@@ -360,11 +382,18 @@ const ListingCard: React.FC<ListingCardProps> = ({
               <h3 className="font-extrabold text-[12px] md:text-[14px] text-slate-900 dark:text-slate-50 uppercase tracking-wide line-clamp-1">
                 {data?.title}
               </h3>
-              {hasRating && (
+              {hasRating ? (
                 <div className="flex items-center gap-1 shrink-0 bg-slate-100 dark:bg-slate-700/50 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-600/50">
                   <Star size={10} className="fill-amber-400 text-amber-400" />
                   <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
                     {Number(rating).toFixed(1)}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 shrink-0 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded-md border border-amber-200/60 dark:border-amber-500/20">
+                  <Star size={10} className="fill-amber-400 text-amber-400" />
+                  <span className="text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-tight">
+                    New
                   </span>
                 </div>
               )}

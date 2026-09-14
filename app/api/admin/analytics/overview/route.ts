@@ -161,11 +161,15 @@ export async function GET(req: NextRequest) {
       }),
       // Property Distribution by Category
       db.listing.findMany({
-        select: { category: true },
+        select: {
+          propertyType: {
+            select: { name: true }
+          }
+        },
       }).then((listings: any) => {
         const counts: Record<string, number> = {};
         listings.forEach((l: any) => {
-          const cat = l.category[0] || 'Other';
+          const cat = l.propertyType?.name || 'Other';
           counts[cat] = (counts[cat] || 0) + 1;
         });
         const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e']; // blue, emerald, amber, violet, rose

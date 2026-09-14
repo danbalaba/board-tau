@@ -93,6 +93,9 @@ const validateEssentials = (info: any, errors: ValidationError[]) => {
   if (!info.propertyName || info.propertyName.length < 3) {
     errors.push({ field: 'propertyInfo.propertyName', message: 'Display name must be at least 3 characters' });
   }
+  if (!info.propertyTypeId && !info.category) {
+    errors.push({ field: 'propertyInfo.propertyTypeId', message: 'Please select a property type' });
+  }
   if (!info.description || info.description.length < 100) {
     errors.push({ field: 'propertyInfo.description', message: 'Marketing narrative must be at least 100 characters' });
   }
@@ -118,25 +121,41 @@ const validateLocation = (loc: any, errors: ValidationError[]) => {
 
 const validateConfig = (config: any, errors: ValidationError[]) => {
   const total = Number(config.totalRooms);
-  if (!total || total < 1) {
-    errors.push({ field: 'propertyConfig.totalRooms', message: 'Please enter total rooms/units available' });
+  if (isNaN(total) || total < 1) {
+    errors.push({ field: 'propertyConfig.totalRooms', message: 'Total rooms must be at least 1 unit' });
   } else if (total > 50) {
-    errors.push({ field: 'propertyConfig.totalRooms', message: 'Maximum 50 rooms allowed' });
+    errors.push({ field: 'propertyConfig.totalRooms', message: 'Maximum limit is 50 rooms' });
+  }
+
+  if (!config.kitchenSetup) {
+    errors.push({ field: 'propertyConfig.kitchenSetup', message: 'Please select a kitchen setup option' });
+  }
+
+  if (!config.bathroomSetup) {
+    errors.push({ field: 'propertyConfig.bathroomSetup', message: 'Please select a bathroom setup option' });
   }
   
-  const bathrooms = Number(config.bathroomCount);
-  if (isNaN(bathrooms) || bathrooms < 0) {
-    errors.push({ field: 'propertyConfig.bathroomCount', message: 'Bathroom count is required' });
-  } else if (bathrooms > 10) {
-    errors.push({ field: 'propertyConfig.bathroomCount', message: 'Maximum 10 common bathrooms allowed' });
+  if (config.bathroomSetup === 'SHARED') {
+    const bathrooms = Number(config.bathroomCount);
+    if (isNaN(bathrooms) || bathrooms < 1) {
+      errors.push({ field: 'propertyConfig.bathroomCount', message: 'Shared setup requires at least 1 common CR' });
+    } else if (bathrooms > 6) {
+      errors.push({ field: 'propertyConfig.bathroomCount', message: 'Common CRs cannot exceed 6' });
+    } else if (total > 0 && bathrooms > total) {
+      errors.push({ field: 'propertyConfig.bathroomCount', message: `Common CRs (${bathrooms}) cannot exceed total rooms (${total})` });
+    }
   }
 };
 
 const validateImages = (formData: any, errors: ValidationError[]) => {
   const imgs = formData.propertyImages || {};
-  const pImages = imgs?.property || [];
-  if (pImages.length < 3) {
-    errors.push({ field: 'propertyImages.property', message: `Please upload at least 3 property images (currently: ${pImages.length})` });
+  const pImagesObj = imgs?.property || {};
+  const totalCoreCount = Array.isArray(pImagesObj) 
+    ? pImagesObj.length 
+    : Object.values(pImagesObj).flat().length;
+
+  if (totalCoreCount < 1) {
+    errors.push({ field: 'propertyImages.property', message: `Please upload at least 1 property image` });
   }
 
   // Validate that each room defined in the config has at least 1 image
@@ -162,60 +181,60 @@ const validateRooms = (rooms: any[], errors: ValidationError[]) => {
 
   rooms.forEach((room, index) => {
     if (!room.roomType) {
-      errors.push({ field: `propertyConfig.rooms[${index}].roomType`, message: `Room ${index + 1}: Room type is required` });
+      errors.push({ field: `propertyConfig.rooms.${index}.roomType`, message: `Room ${index + 1}: Room category is required` });
     }
     if (!room.bedType) {
-      errors.push({ field: `propertyConfig.rooms[${index}].bedType`, message: `Room ${index + 1}: Bed type is required` });
+      errors.push({ field: `propertyConfig.rooms.${index}.bedType`, message: `Room ${index + 1}: Bed type is required` });
     }
     if (!room.bathroomArrangement) {
-      errors.push({ field: `propertyConfig.rooms[${index}].bathroomArrangement`, message: `Room ${index + 1}: Please select a bathroom setup` });
+      errors.push({ field: `propertyConfig.rooms.${index}.bathroomArrangement`, message: `Room ${index + 1}: Please select a bathroom setup` });
     }
 
     const priceStr = room.price;
     if (priceStr === undefined || priceStr === '') {
-      errors.push({ field: `propertyConfig.rooms[${index}].price`, message: `Room ${index + 1}: Price is required` });
+      errors.push({ field: `propertyConfig.rooms.${index}.price`, message: `Room ${index + 1}: Monthly rate is required` });
     } else {
       const price = Number(priceStr);
       if (price < 500) {
-        errors.push({ field: `propertyConfig.rooms[${index}].price`, message: `Room ${index + 1}: Price must be at least ₱500` });
+        errors.push({ field: `propertyConfig.rooms.${index}.price`, message: `Room ${index + 1}: Price must be at least ₱500` });
       } else if (price > 50000) {
-        errors.push({ field: `propertyConfig.rooms[${index}].price`, message: `Room ${index + 1}: Price cannot exceed ₱50,000` });
+        errors.push({ field: `propertyConfig.rooms.${index}.price`, message: `Room ${index + 1}: Price cannot exceed ₱50,000` });
       }
     }
 
     const resFeeStr = room.reservationFee;
     if (resFeeStr === undefined || resFeeStr === '') {
-      errors.push({ field: `propertyConfig.rooms[${index}].reservationFee`, message: `Room ${index + 1}: Reservation fee is required` });
+      errors.push({ field: `propertyConfig.rooms.${index}.reservationFee`, message: `Room ${index + 1}: Reservation fee is required` });
     } else {
       const resFee = Number(resFeeStr);
       if (resFee < 500) {
-        errors.push({ field: `propertyConfig.rooms[${index}].reservationFee`, message: `Room ${index + 1}: Fee must be at least ₱500` });
+        errors.push({ field: `propertyConfig.rooms.${index}.reservationFee`, message: `Room ${index + 1}: Fee must be at least ₱500` });
       } else if (resFee > 50000) {
-        errors.push({ field: `propertyConfig.rooms[${index}].reservationFee`, message: `Room ${index + 1}: Fee cannot exceed ₱50,000` });
+        errors.push({ field: `propertyConfig.rooms.${index}.reservationFee`, message: `Room ${index + 1}: Fee cannot exceed ₱50,000` });
       }
     }
 
     const bedCountStr = room.bedCount;
     if (bedCountStr === undefined || bedCountStr === '') {
-      errors.push({ field: `propertyConfig.rooms[${index}].bedCount`, message: `Room ${index + 1}: Bed count is required` });
+      errors.push({ field: `propertyConfig.rooms.${index}.bedCount`, message: `Room ${index + 1}: Bed count is required` });
     } else {
       const bedCount = Number(bedCountStr);
       if (bedCount < 1) {
-        errors.push({ field: `propertyConfig.rooms[${index}].bedCount`, message: `Room ${index + 1}: Bed count must be at least 1` });
+        errors.push({ field: `propertyConfig.rooms.${index}.bedCount`, message: `Room ${index + 1}: Bed count must be at least 1` });
       } else if (bedCount > 10) {
-        errors.push({ field: `propertyConfig.rooms[${index}].bedCount`, message: `Room ${index + 1}: Bed count cannot exceed 10` });
+        errors.push({ field: `propertyConfig.rooms.${index}.bedCount`, message: `Room ${index + 1}: Bed count cannot exceed 10` });
       }
     }
 
     const sizeStr = room.size;
     if (sizeStr === undefined || sizeStr === '') {
-      errors.push({ field: `propertyConfig.rooms[${index}].size`, message: `Room ${index + 1}: Size is required` });
+      errors.push({ field: `propertyConfig.rooms.${index}.size`, message: `Room ${index + 1}: Size is required` });
     } else {
       const size = Number(sizeStr);
       if (size < 5) {
-        errors.push({ field: `propertyConfig.rooms[${index}].size`, message: `Room ${index + 1}: Size must be at least 5 sqm` });
+        errors.push({ field: `propertyConfig.rooms.${index}.size`, message: `Room ${index + 1}: Size must be at least 5 sqm` });
       } else if (size > 100) {
-        errors.push({ field: `propertyConfig.rooms[${index}].size`, message: `Room ${index + 1}: Size cannot exceed 100 sqm` });
+        errors.push({ field: `propertyConfig.rooms.${index}.size`, message: `Room ${index + 1}: Size cannot exceed 100 sqm` });
       }
     }
   });

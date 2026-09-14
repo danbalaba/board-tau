@@ -1,30 +1,65 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getLandlordDashboardStats } from '@/services/landlord/analytics';
+import { getLandlordDashboardOverview } from '@/services/landlord/analytics';
 
 export function useDashboardLogic() {
-  const [stats, setStats] = useState<any>(null);
+  const [data, setData] = useState<{
+    stats: any;
+    areaChartData: any[];
+    pieChartData: any[];
+    lineChartData: any[];
+    recentActivities: any[];
+  }>({
+    stats: null,
+    areaChartData: [],
+    pieChartData: [],
+    lineChartData: [],
+    recentActivities: [],
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchData() {
       try {
         setIsLoading(true);
-        const data = await getLandlordDashboardStats();
-        setStats(data);
+        const overview = await getLandlordDashboardOverview();
+        if (isMounted && overview) {
+          setData({
+            stats: overview.stats || null,
+            areaChartData: overview.areaChartData || [],
+            pieChartData: overview.pieChartData || [],
+            lineChartData: overview.lineChartData || [],
+            recentActivities: overview.recentActivities || [],
+          });
+        }
       } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
+        console.error('Error fetching dashboard overview:', error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
     fetchData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return {
-    stats,
+    stats: data.stats,
+    areaChartData: data.areaChartData,
+    pieChartData: data.pieChartData,
+    lineChartData: data.lineChartData,
+    recentActivities: data.recentActivities,
     isLoading
   };
 }
+
+export default useDashboardLogic;
+

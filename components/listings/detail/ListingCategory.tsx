@@ -13,8 +13,8 @@ const ListingCategory: React.FC<ListingCategoryProps> = ({
   description,
 }) => {
   return (
-    <div className="group flex flex-row items-center gap-4 p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all duration-300 hover:border-emerald-500/30 dark:hover:border-emerald-500/30 cursor-default">
-      <div className="flex items-center justify-center p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300">
+    <div className="group flex flex-row items-center gap-4 p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/30 dark:hover:border-primary/30 cursor-default">
+      <div className="flex items-center justify-center p-3 rounded-xl bg-primary/5 dark:bg-primary/10 text-primary dark:text-primary-light group-hover:scale-110 transition-transform duration-300">
         <Icon size={24} />
       </div>
       <div className="flex flex-col">

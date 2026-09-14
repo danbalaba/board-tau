@@ -20,15 +20,52 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get('page') || '1');
     const perPage = parseInt(searchParams.get('perPage') || '10');
-    const status = searchParams.get('status') || 'pending'; // pending, approved, removed
+    const statusParam = searchParams.get('status'); // pending, approved, removed, all
+    const isArchivedParam = searchParams.get('isArchived') === 'true';
+    const range = searchParams.get('range') || '30d';
+
+    // Calculate date ranges for comparisons
+    let days = 30;
+    if (range === '7d') days = 7;
+    if (range === '90d') days = 90;
+    if (range === '1y') days = 365;
+
+    const now = new Date();
+    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    const previousStartDate = new Date(now.getTime() - (days * 2) * 24 * 60 * 60 * 1000);
 
     // Calculate pagination
     const skip = (page - 1) * perPage;
 
-    // Fetch reviews to moderate with status counts
-    const [reviews, total, approvedCount] = await Promise.all([
+    const isArchived = isArchivedParam;
+
+    const baseTargetWhere: any = isArchived
+      ? { isArchived: true }
+      : { isArchived: false };
+
+    let statusFilter: string | undefined = undefined;
+    if (statusParam && statusParam.toLowerCase() !== 'all') {
+      statusFilter = statusParam.toLowerCase();
+    }
+
+    const whereClause: any = isArchived
+      ? { isArchived: true, ...(statusFilter ? { status: statusFilter } : {}) }
+      : { isArchived: false, ...(statusFilter ? { status: statusFilter } : {}) };
+
+    // Fetch reviews to moderate with status counts & trend stats
+    const [
+      reviews, 
+      totalPending, 
+      approvedCount, 
+      rejectedCount,
+      totalPreviousCount,
+      pendingPreviousCount,
+      approvedPreviousCount,
+      rejectedPreviousCount,
+      ratingAggregate
+    ] = await Promise.all([
       db.review.findMany({
-        where: { status },
+        where: whereClause,
         include: {
           user: true,
           listing: true,
@@ -37,9 +74,23 @@ export async function GET(req: NextRequest) {
         skip,
         take: perPage,
       }),
-      db.review.count({ where: { status: 'pending' } }),
-      db.review.count({ where: { status: 'approved' } }),
+      db.review.count({ where: { ...baseTargetWhere, status: 'pending' } }),
+      db.review.count({ where: { ...baseTargetWhere, status: 'approved' } }),
+      db.review.count({ where: { ...baseTargetWhere, OR: [{ status: 'removed' }, { status: 'rejected' }] } }),
+
+      // Historical comparison stats for range trend percentage
+      db.review.count({ where: { ...baseTargetWhere, createdAt: { gte: previousStartDate, lt: startDate } } }),
+      db.review.count({ where: { ...baseTargetWhere, status: 'pending', createdAt: { gte: previousStartDate, lt: startDate } } }),
+      db.review.count({ where: { ...baseTargetWhere, status: 'approved', createdAt: { gte: previousStartDate, lt: startDate } } }),
+      db.review.count({ where: { ...baseTargetWhere, OR: [{ status: 'removed' }, { status: 'rejected' }], createdAt: { gte: previousStartDate, lt: startDate } } }),
+
+      db.review.aggregate({
+        where: baseTargetWhere,
+        _avg: { rating: true },
+      }),
     ]);
+
+    const avgRating = ratingAggregate._avg.rating ? ratingAggregate._avg.rating.toFixed(1) : '0.0';
 
     // Transform data for response
     const transformedReviews = reviews.map((review: any) => ({
@@ -54,32 +105,39 @@ export async function GET(req: NextRequest) {
       location: review.location,
       value: review.value,
       status: review.status,
+      isArchived: review.isArchived,
       createdAt: review.createdAt,
       response: review.response,
       respondedAt: review.respondedAt,
       user: {
-        id: review.user.id,
-        name: review.user.name,
-        email: review.user.email,
-        image: review.user.image,
+        id: review.user?.id,
+        name: review.user?.name,
+        email: review.user?.email,
+        image: review.user?.image,
       },
       listing: {
-        id: review.listing.id,
-        title: review.listing.title,
-        description: review.listing.description,
-        imageSrc: review.listing.imageSrc,
+        id: review.listing?.id,
+        title: review.listing?.title,
+        description: review.listing?.description,
+        imageSrc: review.listing?.imageSrc,
       },
     }));
 
     return NextResponse.json(
       ApiResponseFormatter.success(transformedReviews, 'Reviews to moderate fetched successfully', {
-        total,
+        total: totalPending,
         page,
         perPage,
-        totalPages: Math.ceil(total / perPage),
+        totalPages: Math.ceil(totalPending / perPage),
         stats: {
-          pending: total,
+          pending: totalPending,
           approved: approvedCount,
+          rejected: rejectedCount,
+          totalLastWeek: totalPreviousCount,
+          pendingLastWeek: pendingPreviousCount,
+          approvedLastWeek: approvedPreviousCount,
+          rejectedLastWeek: rejectedPreviousCount,
+          avgRating,
         }
       })
     );

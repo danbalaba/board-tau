@@ -50,7 +50,7 @@ export const useInquiryLogic = (
   const [isIDAligned, setIsIDAligned] = useState(false);
   const [isPhoneDetected, setIsPhoneDetected] = useState(false);
   const [livenessStatus, setLivenessStatus] = useState<'idle' | 'passed'>('idle');
-  const [activeChallenges, setActiveChallenges] = useState<('blink' | 'smile' | 'turnLeft' | 'turnRight')[]>([]);
+  const [activeChallenges, setActiveChallenges] = useState<('blink' | 'smile' | 'turnLeft' | 'turnRight' | 'openMouth' | 'raiseEyebrows')[]>([]);
   const consecutiveFaceFailures = useRef(0);  // Resets liveness if face disappears
   const consecutiveIDFailures = useRef(0);    // Buffer for ID detection jitter
   const [hasReadGuidelines, setHasReadGuidelines] = useState(false);
@@ -64,6 +64,9 @@ export const useInquiryLogic = (
   const [isSelfieProcessing, setIsSelfieProcessing] = useState(false);
   const [isEngineReady, setIsEngineReady] = useState(false);
   const [selfieRetakeNeeded, setSelfieRetakeNeeded] = useState(false);
+  
+  // Signature State
+  const [tenantSignature, setTenantSignature] = useState<string>("");
 
   // Calendar State
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -120,16 +123,24 @@ export const useInquiryLogic = (
   // Watch for step completion checks
   const watchedValues = watch(['paymentMethod', 'moveInDate', 'checkOutDate', 'role', 'contactMethod', 'contactInfo', 'message', 'occupantsCount', 'isSoloBuyout']);
 
-  // Effect 1: Reset ALL liveness state ONLY when entering step 5 or selfie is cleared
+  type ChallengeType = 'blink' | 'smile' | 'turnLeft' | 'turnRight' | 'openMouth' | 'raiseEyebrows';
+  const previousChallengesRef = useRef<ChallengeType[]>([]);
+
+  const generateUniqueRandomChallenges = (): ChallengeType[] => {
+    const ALL: ChallengeType[] = ['blink', 'smile', 'turnLeft', 'turnRight', 'openMouth', 'raiseEyebrows'];
+    let pool = ALL.filter(c => !previousChallengesRef.current.includes(c));
+    if (pool.length < 2) pool = ALL;
+    const shuffled = [...pool].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, 2);
+    previousChallengesRef.current = selected;
+    return selected;
+  };
+
+  // Reset Liveness State on Step 5
   useEffect(() => {
     if (currentStep === 5 && !capturedSelfie) {
       setLivenessStatus('idle');
-      
-      // Pick 2 random challenges
-      const challenges: ('blink' | 'smile' | 'turnLeft' | 'turnRight')[] = ['blink', 'smile', 'turnLeft', 'turnRight'];
-      const shuffled = [...challenges].sort(() => 0.5 - Math.random());
-      setActiveChallenges(shuffled.slice(0, 2));
-      
+      setActiveChallenges(generateUniqueRandomChallenges());
       consecutiveFaceFailures.current = 0;
     }
   }, [currentStep, capturedSelfie]);
@@ -174,9 +185,7 @@ export const useInquiryLogic = (
               consecutiveFaceFailures.current += 1;
               if (consecutiveFaceFailures.current >= 3) {
                 setLivenessStatus('idle');
-                const challenges: ('blink' | 'smile' | 'turnLeft' | 'turnRight')[] = ['blink', 'smile', 'turnLeft', 'turnRight'];
-                const shuffled = [...challenges].sort(() => 0.5 - Math.random());
-                setActiveChallenges(shuffled.slice(0, 2));
+                setActiveChallenges(generateUniqueRandomChallenges());
                 consecutiveFaceFailures.current = 0;
               }
             } else {
@@ -194,7 +203,9 @@ export const useInquiryLogic = (
               (currentChallenge === 'blink' && state.blink) ||
               (currentChallenge === 'smile' && state.smile) ||
               (currentChallenge === 'turnLeft' && state.turnLeft) ||
-              (currentChallenge === 'turnRight' && state.turnRight)
+              (currentChallenge === 'turnRight' && state.turnRight) ||
+              (currentChallenge === 'openMouth' && state.openMouth) ||
+              (currentChallenge === 'raiseEyebrows' && state.raiseEyebrows)
             ) {
               if (activeChallenges.length > 1) {
                 setActiveChallenges(prev => prev.slice(1));
@@ -235,16 +246,29 @@ export const useInquiryLogic = (
       return;
     }
 
-    // CRITICAL: Validate the LIVE VIDEO STREAM first (not the screenshot).
+    // 1. Capture the photo INSTANTLY at click time (0ms shutter lag)
+    let imageSrc = webcamRef.current?.getScreenshot();
+    if (!imageSrc || imageSrc === 'data:,' || imageSrc.length < 500) {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        imageSrc = canvas.toDataURL('image/jpeg', 0.92);
+      }
+    }
+
+    if (!imageSrc || imageSrc.length < 500) {
+      responsiveToast.error("Failed to capture photo. Please try again.");
+      return;
+    }
+
+    // 2. Trigger quick 100ms flash feedback
     setIsFlashActive(true);
-    // Wait for flash animation to complete (150ms), then show spinner
-    await new Promise(resolve => setTimeout(resolve, 160));
-    setIsFlashActive(false);
+    setTimeout(() => setIsFlashActive(false), 100);
 
     setIsSelfieProcessing(true);
-    
-    // Give the browser ONE more frame to render the spinner before the ML blocks the thread
-    await new Promise(resolve => setTimeout(resolve, 80));
 
     try {
       const result = await faceEngine.validateFace(video);
@@ -253,12 +277,11 @@ export const useInquiryLogic = (
         return;
       }
 
-      // Only if LIVE frame passed all checks, save the screenshot
-      const imageSrc = webcamRef.current?.getScreenshot();
-      if (imageSrc) {
-        setCapturedSelfie(imageSrc);
-        responsiveToast.success("Face verified successfully!");
-      }
+      setCapturedSelfie(imageSrc);
+      responsiveToast.success("Face verified successfully!");
+    } catch (e) {
+      console.error("Selfie capture error:", e);
+      responsiveToast.error("An error occurred during verification.");
     } finally {
       setIsSelfieProcessing(false);
     }
@@ -295,9 +318,12 @@ export const useInquiryLogic = (
         loadImage(imageSrc)
       ]);
 
+      const selfieCacheKey = `selfie_${capturedSelfie.length}_${capturedSelfie.slice(0, 50)}`;
+      const idCacheKey = `file_${imageFile.name}_${imageFile.size}_${imageFile.lastModified}`;
+
       const [selfieDescriptor, idDescriptor] = await Promise.all([
-        faceMatcher.getFaceDescriptor(selfieImg),
-        faceMatcher.getFaceDescriptor(idImg, 0.2) // Explicitly lower threshold for ID
+        faceMatcher.getFaceDescriptorCached(selfieCacheKey, selfieImg),
+        faceMatcher.getFaceDescriptorCached(idCacheKey, idImg, 0.2) // Explicitly lower threshold for ID
       ]);
 
       if (!selfieDescriptor) {
@@ -353,7 +379,7 @@ export const useInquiryLogic = (
       case 5: return capturedSelfie !== null;
       case 6: return capturedID !== null;
       case 7: return !!values.otp && values.otp.length === 6;
-      case 8: return true;
+      case 8: return tenantSignature.trim().length > 0;
       default: return false;
     }
   };
@@ -445,6 +471,7 @@ export const useInquiryLogic = (
       const uploadTasks = [];
       let profilePhotoUrl = null;
       let idAttachmentUrl = null;
+      let signatureUrl = null;
 
       if (capturedSelfie) {
         const file = base64ToFile(capturedSelfie, "selfie.jpg");
@@ -466,6 +493,16 @@ export const useInquiryLogic = (
         );
       }
 
+      if (tenantSignature) {
+        const file = base64ToFile(tenantSignature, "tenant_signature.png"); // Signature is usually png
+        uploadTasks.push(
+          edgestore.digitalContracts.upload({
+            file,
+            input: { listingId, landlordId }
+          }).then((res) => { signatureUrl = res.url; })
+        );
+      }
+
       await Promise.all(uploadTasks);
 
       const inquiryData = {
@@ -481,6 +518,7 @@ export const useInquiryLogic = (
         paymentMethod: data.paymentMethod,
         profilePhotoUrl,
         idAttachmentUrl,
+        tenantSignature: signatureUrl, // Pass URL instead of base64
       };
 
       await onSubmit(inquiryData);
@@ -506,6 +544,7 @@ export const useInquiryLogic = (
     capturedSelfie, setCapturedSelfie,
     setIsFaceAligned,
     capturedID, setCapturedID,
+    tenantSignature, setTenantSignature,
     selfieRetakeNeeded, handleRetakeSelfie,
     livenessStatus, activeChallenge: activeChallenges[0] || 'blink',
     setIsIDAligned, setIsPhoneDetected,

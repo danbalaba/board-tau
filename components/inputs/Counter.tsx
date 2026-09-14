@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { AiOutlineMinus, AiOutlinePlus } from "react-icons/ai";
+import { Minus, Plus } from "lucide-react";
 import { FieldValues, UseFormWatch } from "react-hook-form";
 import HelpTooltip from "@/components/common/HelpTooltip";
 
@@ -46,40 +46,44 @@ const Counter: React.FC<CounterProps> = ({
   };
 
   return (
-    <div className={`flex flex-row items-center justify-between ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
-      <div className="flex flex-col">
-        <div className="flex items-center">
-          <h3 className="font-semibold text-text-primary">{title}</h3>
+    <div className={`p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className="flex flex-col gap-0.5">
+        <div className="flex items-center gap-1.5">
+          <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">{title}</h3>
           {helpText && <HelpTooltip text={helpText} />}
         </div>
-        <p className="font-light text-[14px] text-text-secondary">{subtitle}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">{subtitle}</p>
       </div>
-      <div className="flex flex-row items-center gap-4">
-        <button type="button"
+
+      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 p-1.5 px-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm shrink-0 self-start sm:self-auto">
+        <button 
+          type="button"
           onClick={onReduce}
           disabled={disabled || value === 0}
-          className={`w-8 h-8 rounded-full border-[1px] flex items-center justify-center transition-all ${
+          className={`p-2 rounded-xl transition-all ${
             disabled || value === 0
-              ? 'border-gray-200 dark:border-gray-700 text-gray-400 cursor-not-allowed opacity-50'
-              : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
+              ? 'bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed'
+              : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600'
           }`}
         >
-          <AiOutlineMinus size={16} />
+          <Minus size={14} strokeWidth={2.5} />
         </button>
-        <span className="font-semibold text-lg select-none text-gray-900 dark:text-gray-100 w-10 text-center">
+        
+        <span className="font-extrabold text-sm select-none text-slate-900 dark:text-white min-w-[2.5rem] text-center px-1">
           {displayValue}
         </span>
-        <button type="button"
+
+        <button 
+          type="button"
           onClick={onAdd}
           disabled={disabled}
-          className={`w-8 h-8 rounded-full border-[1px] flex items-center justify-center transition-all ${
+          className={`p-2 rounded-xl transition-all ${
             disabled
-              ? 'border-gray-200 dark:border-gray-700 text-gray-400 cursor-not-allowed opacity-50'
-              : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
+              ? 'bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed'
+              : 'bg-[#2f7d6d] hover:bg-[#256659] text-white shadow-sm'
           }`}
-          autoFocus={title === "Guests"}
         >
-          <AiOutlinePlus size={16} />
+          <Plus size={14} strokeWidth={2.5} />
         </button>
       </div>
     </div>

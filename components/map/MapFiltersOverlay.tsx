@@ -9,7 +9,7 @@ import dynamic from "next/dynamic";
 import { AnimatePresence } from "framer-motion";
 import Modal from "@/components/modals/Modal";
 import { Listing } from "@prisma/client";
-
+import { sanitizeSearchQuery } from "@/lib/security/sanitize";
 
 const SearchModal = dynamic(() => import("@/components/modals/SearchModal"), { ssr: false });
 
@@ -50,7 +50,8 @@ export default function MapFiltersOverlay({
   
   const handleSearch = async (e: React.FormEvent, overrideQuery?: string, cachedParams?: Record<string, string>) => {
     e.preventDefault();
-    const queryToUse = overrideQuery || searchQuery;
+    let queryToUse = overrideQuery || searchQuery;
+    queryToUse = sanitizeSearchQuery(queryToUse, 100);
     if (!queryToUse.trim()) return;
 
     // If we have cached parameters from a previous search, use them instantly!
@@ -77,10 +78,27 @@ export default function MapFiltersOverlay({
       return;
     }
 
+    // Heuristic: only trigger AI for natural language queries
+    const words = queryToUse.split(/\s+/);
+    const aiKeywords = ['under', 'near', 'with', 'cheap', 'expensive', 'below', 'max', 'min', 'budget', 'around', 'close', 'walking', 'studio', 'bedspace', 'solo'];
+    const isAiQuery = words.length > 3 || aiKeywords.some(kw => queryToUse.toLowerCase().includes(kw));
+
+    if (!isAiQuery) {
+      const params = new URLSearchParams(searchParams.toString());
+      ['maxPrice', 'amenities', 'femaleOnly', 'category'].forEach(k => params.delete(k));
+      params.set("q", queryToUse.trim());
+      params.set("_bust", Date.now().toString());
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      
+      addQuery(queryToUse, { q: queryToUse.trim() });
+      setIsSearchFocused(false);
+      return;
+    }
+
     setIsAILoading(true);
     try {
       // Fetch parsed filters from the AI backend
-      const res = await fetch('/api/ai/map-search', {
+      const res = await fetch('/api/ai/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: queryToUse })
@@ -255,11 +273,11 @@ export default function MapFiltersOverlay({
       <Modal 
         isOpen={showSearchModal} 
         onClose={() => setShowSearchModal(false)}
-        width="lg"
+        width="full"
         hasFixedFooter
         noPadding
       >
-        <SearchModal onCloseModal={() => setShowSearchModal(false)} />
+        <SearchModal initialShowWizard={false} isMapOverlay={true} onCloseModal={() => setShowSearchModal(false)} />
       </Modal>
 
       {/* Mobile Directions FAB */}

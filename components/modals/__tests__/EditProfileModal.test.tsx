@@ -39,8 +39,10 @@ jest.mock('@/components/modals/Modal', () => {
 
 jest.mock('@/components/inputs/ModalInput', () => {
   const React = require('react');
-  return React.forwardRef(function MockModalInput({ id, label, type, onChange, onBlur, name, register }: any, ref: any) {
-    const reg = register ? register(id) : {};
+  return React.forwardRef(function MockModalInput(props: any, outerRef: any) {
+    const { id, label, type, register, watch, errors, icon, value, defaultValue, placeholder, validationRules, required, ref: propRef, ...rest } = props;
+    const regProps = register ? register(id) : {};
+    const inputRef = outerRef || propRef || regProps.ref;
     return (
       <div data-testid={`input-wrapper-${id}`}>
         <label htmlFor={id}>{label}</label>
@@ -48,11 +50,10 @@ jest.mock('@/components/inputs/ModalInput', () => {
           id={id}
           data-testid={`input-${id}`}
           type={type || 'text'}
-          {...reg}
-          onChange={(e) => {
-            if (reg.onChange) reg.onChange(e);
-            if (onChange) onChange(e);
-          }}
+          placeholder={placeholder}
+          {...regProps}
+          {...rest}
+          ref={inputRef}
         />
       </div>
     );
@@ -141,7 +142,8 @@ describe('EditProfileModal Component', () => {
     fireEvent.change(screen.getByTestId('input-name'), { target: { value: 'Jane Doe' } });
     fireEvent.change(screen.getByTestId('input-city'), { target: { value: 'Camiling' } });
 
-    fireEvent.click(screen.getByText('Save Changes'));
+    const form = screen.getByTestId('input-name').closest('form')!;
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(mockOnUpdate).toHaveBeenCalledWith(expect.objectContaining({
@@ -230,7 +232,8 @@ describe('EditProfileModal Component', () => {
       />
     );
 
-    fireEvent.click(screen.getByText('Save Changes'));
+    const form = screen.getByTestId('input-name').closest('form')!;
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(mockErrorToast).toHaveBeenCalledWith('Failed to update profile');

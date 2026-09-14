@@ -34,6 +34,9 @@ import { getSafeImageSrcString } from '@/components/modals/inquiry-modal/Inquiry
 import SafeImage from '@/components/common/SafeImage';
 import { useRouter, usePathname } from 'next/navigation';
 import { LandlordInquiryDeclineModal } from './landlord-inquiry-decline-modal';
+import { generateLeaseContractPDF } from '@/utils/contractPdfGenerator';
+import { IconFileText } from '@tabler/icons-react';
+import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 
 interface LandlordInquiryDetailsModalProps {
   inquiry: Inquiry | null;
@@ -57,6 +60,7 @@ export function LandlordInquiryDetailsModal({
   isUpdatingStatus
 }: LandlordInquiryDetailsModalProps) {
   const { edgestore } = useEdgeStore();
+  const responsiveToast = useResponsiveToast();
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -468,10 +472,35 @@ export function LandlordInquiryDetailsModal({
                      </div>
                   )}
                   
-                  <div className="mt-6 flex flex-col gap-4">
+                  <div className="mt-6 flex flex-col sm:flex-row gap-4">
+                    {inquiry.status === 'APPROVED' && (
+                      <Button
+                        outline
+                        className="w-full sm:flex-1 rounded-[1.25rem] py-4 border-teal-100 text-[10px] font-black uppercase tracking-[0.2em] group/contract flex items-center justify-center gap-2 transition-all active:scale-[0.98] hover:bg-teal-50 dark:hover:bg-teal-900/30 text-teal-600 dark:border-teal-900/30"
+                        onClick={async () => {
+                          const toastId = responsiveToast.loading("Generating Lease Contract...");
+                          try {
+                            const res = await fetch(`/api/contracts/generate?listingId=${inquiry.listing.id}&userId=${inquiry.user.id}&roomId=${inquiry.room?.id}`);
+                            if (!res.ok) throw new Error("Failed to fetch contract data");
+                            const data = await res.json();
+                            await generateLeaseContractPDF(`Lease_Contract_${inquiry.listing.id}`, data);
+                            responsiveToast.success("Lease Contract downloaded successfully!", { id: toastId });
+                          } catch (e) {
+                            responsiveToast.error("Failed to generate Lease Contract.", { id: toastId });
+                          }
+                        }}
+                      >
+                        <IconFileText size={18} className="group-hover/contract:scale-110 transition-transform text-teal-600" />
+                        Contract
+                      </Button>
+                    )}
+
                     <Button
                       outline
-                      className="w-full rounded-[1.25rem] py-4 border-gray-100 dark:border-gray-800 text-[10px] font-black uppercase tracking-[0.2em] group/chat flex items-center justify-center gap-2"
+                      className={cn(
+                        "w-full rounded-[1.25rem] py-4 border-gray-100 dark:border-gray-800 text-[10px] font-black uppercase tracking-[0.2em] group/chat flex items-center justify-center gap-2",
+                        inquiry.status === 'APPROVED' ? 'sm:flex-1' : ''
+                      )}
                       onClick={() => {
                         const listingImg = (inquiry.room?.images && inquiry.room.images.length > 0) ? inquiry.room.images[0].url : inquiry.listing.imageSrc;
                         const event = new CustomEvent('open-landlord-chat', {
@@ -491,13 +520,13 @@ export function LandlordInquiryDetailsModal({
                       <IconMessage size={18} className="group-hover/chat:scale-110 transition-transform text-primary" />
                       Chat with {inquiry.user.name || 'Tenant'}
                     </Button>
-
-                    <div className="flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl">
+                  </div>
+                  
+                  <div className="mt-6 flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl">
                       <IconClock size={12} className="text-gray-400" />
                       <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest text-center px-4">
                         Approving will notify the tenant to proceed with the reservation payment.
                       </p>
-                    </div>
                   </div>
                 </motion.div>
               </motion.div>

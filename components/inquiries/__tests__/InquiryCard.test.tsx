@@ -129,21 +129,6 @@ describe('InquiryCard', () => {
     expect(viewResBtn).toBeInTheDocument();
     
     fireEvent.click(viewResBtn);
-    expect(localStorage.getItem('inquiry_seen_inq-1')).toBe('true');
     expect(mockRouter.push).toHaveBeenCalledWith('/reservations');
-  });
-
-  it('does not show View Reservation if already clicked (seen in localStorage)', () => {
-    localStorage.setItem('inquiry_seen_inq-1', 'true');
-    
-    render(
-      <InquiryCard 
-        inquiry={{ ...mockInquiry, status: 'APPROVED' }} 
-        onViewDetails={mockOnViewDetails}
-        onCancel={mockOnCancel}
-      />
-    );
-    
-    expect(screen.queryByText(/View Reservation/i)).not.toBeInTheDocument();
   });
 });

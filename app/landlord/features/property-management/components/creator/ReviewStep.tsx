@@ -1,534 +1,1792 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import dynamic from 'next/dynamic';
 import { 
-  User, 
-  MapPin, 
   Building2, 
+  MapPin, 
+  Settings, 
+  Bed, 
+  Images, 
+  FileCheck, 
+  Pencil, 
+  CheckCircle2, 
   ShieldCheck, 
-  BadgeCheck, 
-  Info,
-  ChevronLeft,
-  ExternalLink,
+  Info, 
+  ChevronLeft, 
+  ChevronRight, 
+  ListChecks,
+  Star,
+  Maximize2,
+  Check,
+  Briefcase,
+  Compass,
+  Zap,
+  Droplets,
   Wifi,
-  Wind,
+  ShieldAlert,
+  Layers,
+  Sparkles,
+  Lock,
+  Clock,
+  VolumeX,
+  PawPrint,
+  Ban,
+  Wine,
+  UserX,
+  Users,
   Utensils,
   Shirt,
+  ShoppingBag,
   Car,
-  Dumbbell,
-  Tv,
-  Waves,
+  Bike,
   BookOpen,
-  Landmark,
-  Droplets,
-  Zap,
-  Sparkles,
-  Tag,
-  Users,
-  Dog,
+  Sofa,
+  UserCheck,
+  Tv,
+  Fan,
+  ShowerHead,
+  Refrigerator,
   Shield,
   Camera,
+  Wind,
+  Coffee,
   Flame,
-  Bus,
-  Book,
-  Calendar,
-  HelpCircle,
-  Gem,
-  CheckCircle2,
-  Lock,
-  Focus,
-  Images,
-  FileCheck
+  X,
+  Eye,
+  FileText,
+  PenTool,
+  ExternalLink,
+  Download
 } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/common/Button';
 import { cn } from '@/utils/helper';
+import { sanitizeImgUrl } from '@/lib/security/sanitize';
 import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
 import SafeImage from '@/components/common/SafeImage';
+import { SharedAmenitiesModal } from '@/components/common/SharedAmenitiesModal';
+import { generateLeaseContractPDF } from '@/utils/contractPdfGenerator';
+
+const Map = dynamic(() => import('@/components/common/Map'), { ssr: false });
+import { 
+  getCachedPropertyTypes, 
+  getCachedAttributes, 
+  getCachedRoomTypes,
+  getCachedSubGroups,
+  getSyncPropertyTypes,
+  getSyncAttributes,
+  getSyncSubGroups
+} from '@/lib/landlordTaxonomyCache';
 
 interface ReviewStepProps {
   watch?: any;
   control?: any;
-  onBack: (e?: any) => void;
+  getValues?: any;
+  uploadedFiles?: any;
+  propertyFiles?: any;
+  roomFiles?: any;
+  onNavigateStep?: (stepIndex: number) => void;
+  onBack?: (e?: any) => void;
+  onCustomNavChange?: (nav: { nextLabel: string; backLabel: string; onNext: () => void; onBack: () => void } | null) => void;
+  onSubmit?: () => void;
 }
 
-const ReviewSection = ({ title, icon: Icon, children, colorClass, stepNumber }: any) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 15 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="bg-white dark:bg-[#0B1221] rounded-[2.5rem] border border-gray-100 dark:border-gray-800/50 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] transition-all duration-500 h-full flex flex-col group"
-  >
-    <div className="px-10 py-6 border-b border-gray-50 dark:border-gray-800/50 flex items-center justify-between bg-gray-50/20 dark:bg-gray-900/10">
-      <div className="flex items-center gap-4">
-        <div className={cn("p-3 rounded-2xl bg-white dark:bg-[#161F32] border border-gray-100 dark:border-gray-700 shadow-sm group-hover:scale-110 transition-transform duration-500", colorClass)}>
-          <Icon size={20} />
-        </div>
-        <div>
-          <span className="text-[8px] font-black uppercase tracking-[0.4em] text-gray-400 mb-0.5 block">Section {stepNumber}</span>
-          <h4 className="text-[13px] font-black uppercase tracking-[0.1em] text-gray-900 dark:text-white">{title}</h4>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-         <CheckCircle2 size={18} className="text-emerald-500/40" />
-      </div>
-    </div>
-    <div className="p-10 flex-1">
-      {children}
-    </div>
-  </motion.div>
-);
-
-const AMENITY_ICONS: Record<string, any> = {
-  'WiFi': Wifi,
-  'Air Conditioning': Wind,
-  'Kitchen': Utensils,
-  'Laundry': Shirt,
-  'Parking': Car,
-  'Security': ShieldCheck,
-  'Gym': Dumbbell,
-  'TV': Tv,
-  'Pool': Waves,
-  'Study Area': BookOpen,
-  'Balcony': Landmark,
-  'Water': Droplets,
-  'Electricity': Zap,
-  'Cleaning': Sparkles,
+const getSafeImageSrc = (image: string): string => {
+  if (!image || typeof image !== 'string') return '';
+  const lower = image.toLowerCase();
+  const isSafeProtocol = lower.startsWith('data:image/') || lower.startsWith('blob:') || lower.startsWith('https://') || lower.startsWith('http://');
+  const hasDangerousChars = /[<>"'`();\\]/.test(image) && !lower.startsWith('data:image/');
+  if (isSafeProtocol && !hasDangerousChars) return image;
+  return '';
 };
 
-const ReviewField = ({ label, value, darkValue }: { label: string; value: any; darkValue?: boolean }) => {
-  const decodeValue = (val: any) => {
-    if (typeof val !== 'string') return val;
-    if (typeof document === 'undefined') return val;
-    
-    let decoded = val;
-    const parser = new DOMParser();
-    for (let i = 0; i < 5; i++) {
-      const dom = parser.parseFromString(decoded, 'text/html');
-      const newDecoded = dom.documentElement.textContent || decoded;
-      if (newDecoded === decoded) break;
-      decoded = newDecoded;
-    }
-    return decoded;
-  };
+const SUB_TABS = [
+  { id: 'BASIC', label: '1. Basic Info', icon: Building2, nextLabel: 'Location' },
+  { id: 'LOCATION', label: '2. Location', icon: MapPin, nextLabel: 'Setup & Rules' },
+  { id: 'SETUP', label: '3. Setup & Rules', icon: Settings, nextLabel: 'Rooms & Pricing' },
+  { id: 'ROOMS', label: '4. Rooms & Rates', icon: Bed, nextLabel: 'Photos' },
+  { id: 'IMAGES', label: '5. Photos', icon: Images, nextLabel: 'Documents' },
+  { id: 'DOCUMENTS', label: '6. Documents', icon: FileCheck, nextLabel: 'Final Submission' }
+];
 
-  const cleanValue = decodeValue(value);
+const PROPERTY_IMAGE_CATEGORIES = [
+  { id: 'Exterior', label: 'Exterior Gallery', icon: Building2, description: 'Facade & Entrance' },
+  { id: 'Kitchen', label: 'Kitchen Gallery', icon: Utensils, description: 'Cooking & dining space' },
+  { id: 'Bathroom', label: 'Bathroom Gallery', icon: ShowerHead, description: 'Shared / Common CR' },
+  { id: 'Common Area', label: 'Common Area Gallery', icon: Sofa, description: 'Lobby & Lounge' },
+  { id: 'Other', label: 'Other Property Photos', icon: Images, description: 'Other property photos' },
+];
 
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 ml-1">{label}</span>
-      <div className={cn(
-        "px-5 py-4 rounded-2xl bg-gray-50/50 dark:bg-[#161F32]/50 border border-gray-100 dark:border-gray-800/50 text-[13px] font-bold min-h-[54px] flex flex-col justify-center items-start leading-relaxed break-words whitespace-pre-wrap transition-all hover:border-primary/20",
-        darkValue ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"
-      )}>
-        {cleanValue || <span className="opacity-30 italic font-normal text-xs uppercase tracking-widest">Awaiting Input</span>}
-      </div>
-    </div>
-  );
-};
-
-const ReviewStep: React.FC<ReviewStepProps> = ({ watch, control, onBack }) => {
-  const rooms = watch('propertyConfig.rooms') || [];
-  const propertyImages = watch('propertyImages.property') || [];
+const ReviewStep: React.FC<ReviewStepProps> = ({ 
+  watch, 
+  getValues, 
+  onNavigateStep, 
+  onBack,
+  onCustomNavChange,
+  onSubmit
+}) => {
+  // Watch all form state
+  const businessInfo = watch('businessInfo') || {};
+  const propertyInfo = watch('propertyInfo') || {};
+  const location = watch('location') || {};
+  const propertyConfig = watch('propertyConfig') || {};
+  const rooms = propertyConfig.rooms || [];
+  const propertyImages = watch('propertyImages.property') || {};
   const roomImages = watch('propertyImages.rooms') || {};
   const docs = watch('documents') || {};
-  const amenities = watch('propertyConfig.amenities') || [];
-  const customRules = watch('propertyConfig.rules') || [];
-  const customFeatures = watch('propertyConfig.features') || [];
+  const selectedAmenities = propertyConfig.amenities || [];
 
-  const [previewData, setPreviewData] = useState<{ isOpen: boolean; images: string[]; index: number; title: string }>({
+  const calculatedStartingPrice = useMemo(() => {
+    const validPrices = (rooms || [])
+      .map((r: any) => parseFloat(r?.price))
+      .filter((p: number) => !isNaN(p) && p > 0);
+
+    if (validPrices.length > 0) {
+      return Math.min(...validPrices);
+    }
+    return parseFloat(propertyInfo.price) || 0;
+  }, [rooms, propertyInfo.price]);
+
+  // Interactive Sub-Step Audit State (starting directly on Step 1)
+  const [activeTab, setActiveTab] = useState<string>('BASIC');
+  const [amenitiesModalConfig, setAmenitiesModalConfig] = useState<{
+    isOpen: boolean;
+    initialCategory: 'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY' | 'ROOMS';
+  }>({
+    isOpen: false,
+    initialCategory: 'ALL'
+  });
+
+  // Dynamic Taxonomy State
+  const [propertyTypes, setPropertyTypes] = useState<any[]>(() => getSyncPropertyTypes() || []);
+  const [attributes, setAttributes] = useState<any[]>(() => getSyncAttributes() || []);
+  const [roomTypes, setRoomTypes] = useState<any[]>([]);
+  const [dbSubGroups, setDbSubGroups] = useState<any[]>(() => getSyncSubGroups() || []);
+
+  const propertyTypeId = propertyInfo.propertyTypeId || watch('propertyBasic.propertyTypeId') || '';
+
+  useEffect(() => {
+    getCachedPropertyTypes().then(types => { if (types) setPropertyTypes(types); });
+    getCachedAttributes().then(attrs => { if (attrs) setAttributes(attrs); });
+    getCachedSubGroups().then(sgs => { if (sgs) setDbSubGroups(sgs); });
+  }, []);
+
+  useEffect(() => {
+    getCachedRoomTypes(propertyTypeId).then(types => { 
+      if (types && types.length > 0) {
+        setRoomTypes(types);
+      } else {
+        getCachedRoomTypes().then(allTypes => { if (allTypes) setRoomTypes(allTypes); });
+      }
+    });
+  }, [propertyTypeId]);
+
+  // Current Sub-Step Index & Object
+  const currentTabIdx = SUB_TABS.findIndex(t => t.id === activeTab);
+
+  const lastNavKeyRef = useRef<string>('');
+
+  // Synchronize Main Wizard Bottom-Right Action Button with Active Review Step
+  useEffect(() => {
+    if (!onCustomNavChange) return;
+
+    const nextLabel = 'Publish Listing';
+    const backLabel = '‹ BACK: DOCUMENTS';
+
+    const currentNavKey = `${activeTab}-${nextLabel}-${backLabel}`;
+    if (lastNavKeyRef.current === currentNavKey) {
+      return;
+    }
+    lastNavKeyRef.current = currentNavKey;
+
+    const handleNext = () => {
+      if (onSubmit) {
+        onSubmit();
+      }
+    };
+
+    const handlePrevious = () => {
+      if (onBack) {
+        onBack();
+      }
+    };
+
+    onCustomNavChange({
+      nextLabel,
+      backLabel,
+      onNext: handleNext,
+      onBack: handlePrevious
+    });
+  }, [activeTab, onCustomNavChange, onSubmit, onBack]);
+
+  // Resolution Helpers
+  const resolvePropertyTypeName = (typeId: string) => {
+    if (!typeId) return 'Boarding House';
+    const matched = propertyTypes.find(t => t.id === typeId || t.value === typeId || t._id === typeId || t.code === typeId);
+    if (matched) return matched.name || matched.label || matched.title;
+    if (!/^[a-f0-9]{24}$/i.test(typeId)) return typeId.replace(/-/g, ' ');
+    return 'Boarding House / Dormitory';
+  };
+
+  const resolveAmenityName = (attrId: string) => {
+    if (!attrId) return '';
+    if (attrId.includes('|')) return attrId.split('|')[0];
+    const matched = attributes.find(a => a.id === attrId || a.value === attrId || a._id === attrId || a.code === attrId);
+    if (matched) return matched.name || matched.label || matched.title;
+    if (!/^[a-f0-9]{24}$/i.test(attrId)) return attrId.replace(/-/g, ' ');
+    return attrId;
+  };
+
+  const resolveRoomTypeName = (roomInput: any) => {
+    if (!roomInput) return 'Standard Room';
+
+    // 1. Direct object property checks if room object is passed
+    if (typeof roomInput === 'object' && roomInput !== null) {
+      if (roomInput.roomTypeDefinition?.name) return roomInput.roomTypeDefinition.name;
+      if (roomInput.roomTypeDefinition?.label) return roomInput.roomTypeDefinition.label;
+      if (roomInput.roomTypeName) return roomInput.roomTypeName;
+      if (roomInput.name && !roomInput.name.toLowerCase().startsWith('room ') && !roomInput.name.toLowerCase().startsWith('unit ')) return roomInput.name;
+      if (roomInput.title && !roomInput.title.toLowerCase().startsWith('room ') && !roomInput.title.toLowerCase().startsWith('unit ')) return roomInput.title;
+      if (roomInput.roomCategory && typeof roomInput.roomCategory === 'string' && !/^[a-f0-9]{24}$/i.test(roomInput.roomCategory)) {
+        return roomInput.roomCategory.replace(/_/g, ' ').replace(/-/g, ' ');
+      }
+    }
+
+    const roomTypeId = typeof roomInput === 'string' 
+      ? roomInput 
+      : (roomInput?.roomType || roomInput?.roomTypeDefinitionId || roomInput?.roomCategory || '');
+
+    if (!roomTypeId) return 'Standard Room';
+
+    // 2. Match against dynamic roomTypes loaded from cache/API
+    const matched = roomTypes.find(t => 
+      t.id === roomTypeId || 
+      t.value === roomTypeId || 
+      t._id === roomTypeId || 
+      t.code === roomTypeId ||
+      t.name?.toLowerCase() === roomTypeId?.toLowerCase() ||
+      t.label?.toLowerCase() === roomTypeId?.toLowerCase()
+    );
+    if (matched) return matched.name || matched.label || matched.title;
+    
+    // 3. Fallback map for common codes
+    const knownRoomTypes: Record<string, string> = {
+      'SOLO': 'Solo Room',
+      'SHARED': 'Shared Room',
+      'BEDSPACE': 'Bedspace',
+      'STUDIO': 'Studio Unit',
+      'WHOLE_HOUSE': 'Whole House',
+      'APARTMENT': 'Apartment Unit',
+    };
+    if (knownRoomTypes[roomTypeId.toUpperCase()]) {
+      return knownRoomTypes[roomTypeId.toUpperCase()];
+    }
+
+    // 4. Non-hex clean text
+    if (!/^[a-f0-9]{24}$/i.test(roomTypeId)) {
+      return roomTypeId.replace(/_/g, ' ').replace(/-/g, ' ');
+    }
+
+    return 'Standard Room';
+  };
+
+  const resolveBedTypeName = (bedTypeInput: any, roomTypeId?: string) => {
+    if (!bedTypeInput) return 'Single Bed';
+
+    if (typeof bedTypeInput === 'object' && bedTypeInput !== null) {
+      if (bedTypeInput.name) return bedTypeInput.name;
+      if (bedTypeInput.label) return bedTypeInput.label;
+    }
+
+    const bedType = typeof bedTypeInput === 'string' ? bedTypeInput : (bedTypeInput?.code || bedTypeInput?.id || '');
+    if (!bedType) return 'Single Bed';
+    
+    if (roomTypeId) {
+      const roomTypeObj = roomTypes.find((t: any) => 
+        t.id === roomTypeId || t.value === roomTypeId || t.code === roomTypeId || t.name?.toLowerCase() === roomTypeId?.toLowerCase()
+      );
+      if (roomTypeObj && Array.isArray(roomTypeObj.bedSetups)) {
+        const matched = roomTypeObj.bedSetups.find((b: any) => b.code === bedType || b.id === bedType || b.name?.toLowerCase() === bedType?.toLowerCase());
+        if (matched) return matched.name;
+      }
+    }
+    
+    for (const rt of roomTypes) {
+      if (Array.isArray(rt.bedSetups)) {
+        const matched = rt.bedSetups.find((b: any) => b.code === bedType || b.id === bedType || b.name?.toLowerCase() === bedType?.toLowerCase());
+        if (matched) return matched.name;
+      }
+    }
+
+    const knownBedNames: Record<string, string> = {
+      'SINGLE': 'Single Bed',
+      'BUNK': 'Bunk Bed',
+      'DOUBLE': 'Double Bed',
+      'QUEEN': 'Queen Bed',
+      'KING': 'King Bed',
+      'TWIN': 'Twin Bed',
+      'DOUBLE_BED_FRAME': 'Double Bed Frame',
+      'SINGLE_BED_FRAME': 'Single Bed Frame',
+    };
+
+    if (knownBedNames[bedType.toUpperCase()]) {
+      return knownBedNames[bedType.toUpperCase()];
+    }
+
+    if (!/^[a-f0-9]{24}$/i.test(bedType)) {
+      return bedType.replace(/_/g, ' ').replace(/-/g, ' ');
+    }
+
+    return 'Single Bed';
+  };
+
+  const checkIsFlatRate = (room: any) => {
+    if (!room) return false;
+    if (typeof room.isFlatRate === 'boolean') return room.isFlatRate;
+    if (room.pricingMode === 'WHOLE_UNIT') return true;
+    if (room.pricingMode === 'PER_HEAD') return false;
+    if (typeof room.roomTypeDefinition?.isFlatRate === 'boolean') return room.roomTypeDefinition.isFlatRate;
+
+    const rtId = typeof room === 'string' ? room : (room.roomType || room.roomTypeDefinitionId || '');
+    const selectedRoomType = roomTypes.find((t: any) => t.id === rtId || t.value === rtId || t._id === rtId || t.code === rtId);
+    if (selectedRoomType && typeof selectedRoomType.isFlatRate === 'boolean') {
+      return selectedRoomType.isFlatRate;
+    }
+
+    const knownFlatTypes = ['STUDIO', 'WHOLE_HOUSE', 'APARTMENT'];
+    if (typeof rtId === 'string' && knownFlatTypes.includes(rtId.toUpperCase())) {
+      return true;
+    }
+    return false;
+  };
+
+  // Category Grouping for Amenities
+  const groupAmenitiesByCategory = (amenityIds: string[]) => {
+    const categories: Record<string, string[]> = {
+      'Kitchen Appliances & Cooking': [],
+      'CR & Bathroom Features': [],
+      'Cooling & Climate Control': [],
+      'Security & Safety Features': [],
+      'Utilities & Services': [],
+      'Furniture & General Amenities': []
+    };
+
+    amenityIds.forEach(id => {
+      const name = resolveAmenityName(id);
+      const lower = name.toLowerCase();
+      if (lower.includes('kitchen') || lower.includes('cook') || lower.includes('fridge') || lower.includes('stove') || lower.includes('microwave') || lower.includes('dining')) {
+        categories['Kitchen Appliances & Cooking'].push(name);
+      } else if (lower.includes('shower') || lower.includes('bathroom') || lower.includes('cr') || lower.includes('bidet') || lower.includes('toilet') || lower.includes('heater')) {
+        categories['CR & Bathroom Features'].push(name);
+      } else if (lower.includes('air') || lower.includes('fan') || lower.includes('ac') || lower.includes('cool')) {
+        categories['Cooling & Climate Control'].push(name);
+      } else if (lower.includes('cctv') || lower.includes('security') || lower.includes('fire') || lower.includes('guard') || lower.includes('lock')) {
+        categories['Security & Safety Features'].push(name);
+      } else if (lower.includes('wifi') || lower.includes('water') || lower.includes('power') || lower.includes('generator') || lower.includes('light') || lower.includes('laundry')) {
+        categories['Utilities & Services'].push(name);
+      } else {
+        categories['Furniture & General Amenities'].push(name);
+      }
+    });
+
+    return Object.entries(categories).filter(([_, items]) => items.length > 0);
+  };
+
+  const getItemIcon = (name: string, attrId?: string) => {
+    const n = name.toLowerCase();
+
+    // Rules & Policies
+    if (n.includes("curfew") || n.includes("gate lock") || n.includes("8:00 pm") || n.includes("9:00 pm") || n.includes("10:00 pm")) return Lock;
+    if (n.includes("24/7 open gate") || n.includes("no curfew") || n.includes("open gate")) return Clock;
+    if (n.includes("quiet hours") || n.includes("quiet") || n.includes("noise")) return VolumeX;
+    if (n.includes("pet")) return PawPrint;
+    if (n.includes("smoke") || n.includes("smoking")) return Ban;
+    if (n.includes("drink") || n.includes("alcohol") || n.includes("liquor")) return Wine;
+    if (n.includes("female-only") || n.includes("female only") || n.includes("male-only") || n.includes("male only") || n.includes("no visitors")) return UserX;
+    if (n.includes("visitors") || n.includes("guests") || n.includes("mixed") || n.includes("coed") || n.includes("gender")) return Users;
+
+    // Kitchen & Appliances
+    if (n.includes("utensil") || n.includes("dishware") || n.includes("plate") || n.includes("spoon")) return Utensils;
+    if (n.includes("microwave")) return Utensils;
+    if (n.includes("rice cooker")) return Utensils;
+    if (n.includes("kettle")) return Coffee;
+    if (n.includes("stove") || n.includes("cook")) return Flame;
+    if (n.includes("fridge") || n.includes("refrigerator")) return Refrigerator;
+    if (n.includes("sink") || n.includes("dish drying") || n.includes("kitchen")) return Utensils;
+
+    // Bathroom & CR
+    if (n.includes("bidet")) return Droplets;
+    if (n.includes("shower") || n.includes("bath") || n.includes("cr")) return ShowerHead;
+    if (n.includes("toilet") || n.includes("flush")) return ShowerHead;
+    if (n.includes("mirror") || n.includes("vanity")) return ShowerHead;
+    if (n.includes("water storage") || n.includes("drum") || n.includes("tabo") || n.includes("poso") || n.includes("tank")) return Droplets;
+
+    // Cooling & Fans
+    if (n.includes("inverter") || n.includes("split type") || n.includes("window type") || n.includes("ac") || n.includes("aircon") || n.includes("air conditioner")) return Wind;
+    if (n.includes("fan") || n.includes("exhaust")) return Fan;
+
+    // Furniture & Interior Features
+    if (n.includes("curtain") || n.includes("blind") || n.includes("screen") || n.includes("mosquito")) return Layers;
+    if (n.includes("cabinet") || n.includes("closet") || n.includes("wardrobe") || n.includes("storage")) return Layers;
+    if (n.includes("desk") || n.includes("chair") || n.includes("study") || n.includes("book")) return BookOpen;
+    if (n.includes("sofa") || n.includes("lounge") || n.includes("living") || n.includes("couch")) return Sofa;
+    if (n.includes("bed") || n.includes("mattress") || n.includes("pillow")) return Bed;
+    if (n.includes("lock") || n.includes("lockable")) return Lock;
+
+    // Utilities & Connectivity
+    if (n.includes("wifi") || n.includes("internet") || n.includes("fiber")) return Wifi;
+    if (n.includes("generator") || n.includes("electric") || n.includes("power") || n.includes("zap")) return Zap;
+    if (n.includes("laundry") || n.includes("washing") || n.includes("sampayan")) return Shirt;
+    if (n.includes("store") || n.includes("sari-sari") || n.includes("convenience") || n.includes("shop")) return ShoppingBag;
+    if (n.includes("parking") || n.includes("garage") || n.includes("car") || n.includes("motorcycle")) return Car;
+    if (n.includes("bike") || n.includes("bicycle")) return Bike;
+    if (n.includes("caretaker") || n.includes("housekeeping") || n.includes("repairs")) return UserCheck;
+    if (n.includes("tv") || n.includes("smart tv")) return Tv;
+
+    // Security & Safety
+    if (n.includes("cctv") || n.includes("camera") || n.includes("security") || n.includes("guard")) return ShieldCheck;
+    if (n.includes("flood") || n.includes("fire") || n.includes("emergency") || n.includes("first aid")) return ShieldCheck;
+
+    return Sparkles;
+  };
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  const [activeModalCategory, setActiveModalCategory] = useState<{
+    title: string;
+    icon: any;
+    items: string[];
+    groups?: { key: string; label: string; items: string[] }[];
+    iconColorClass: string;
+  } | null>(null);
+
+  const customPdfUrl = watch('propertyConfig.customPdfUrl') || propertyConfig.customPdfUrl || watch('documents.customContract') || watch('documents.customPdfUrl');
+  const storedCustomPdfName = watch('propertyConfig.customPdfName') || propertyConfig.customPdfName;
+
+  const rawPropName = watch('basicInfo.name') || propertyConfig.propertyName || 'Property';
+  const cleanPropName = rawPropName.trim().replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_');
+  const displayCustomPdfName = storedCustomPdfName || `${cleanPropName}_Custom_Lease_Agreement.pdf`;
+
+  const handlePreviewAutoGeneratedPdf = async () => {
+    const pdfWindow = typeof window !== 'undefined' ? window.open('', '_blank') : null;
+    try {
+      const propName = watch('basicInfo.name') || propertyConfig.propertyName || 'Boarding House Property';
+      const propAddress = watch('location.address') || propertyConfig.address || 'Property Address';
+      const deposit = Number(propertyConfig.depositAmount) || Number(watch('propertyConfig.depositAmount')) || 0;
+      const noticeDays = Number(propertyConfig.moveOutNoticeDays) || Number(watch('propertyConfig.moveOutNoticeDays')) || 30;
+      const signature = propertyConfig.landlordSignatureBase64 || watch('propertyConfig.landlordSignatureBase64') || '';
+      const clauses = propertyConfig.customContractClauses || watch('propertyConfig.customContractClauses') || [];
+
+      const pdfBlob = await generateLeaseContractPDF(`${cleanPropName}_BoardTAU_Smart_Lease_Contract.pdf`, {
+        contractHash: `DRAFT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+        landlordName: 'Property Owner / Landlord',
+        tenantName: '[TENANT NAME APPLICANT]',
+        propertyName: propName,
+        roomName: 'Standard Unit / Room',
+        propertyAddress: propAddress,
+        moveInDate: 'Effective Upon Signing',
+        checkOutDate: 'Per Lease Agreement Duration',
+        depositAmount: deposit,
+        rentAmount: calculatedStartingPrice,
+        moveOutNoticeDays: noticeDays,
+        customClauses: clauses,
+        landlordSignatureBase64: signature,
+        tenantSignatureBase64: ''
+      }, true);
+
+      if (pdfBlob) {
+        const blob = new Blob([pdfBlob as Blob], { type: 'application/pdf' });
+        const pdfUrl = URL.createObjectURL(blob);
+        if (pdfWindow) {
+          pdfWindow.location.href = pdfUrl;
+        } else {
+          window.open(pdfUrl, '_blank');
+        }
+      } else if (pdfWindow) {
+        pdfWindow.close();
+      }
+    } catch (err) {
+      console.error('Error generating PDF preview:', err);
+      if (pdfWindow) pdfWindow.close();
+    }
+  };
+
+  // Dynamically group chosen items by their Sub-Step AND inner Sub-Group tabs!
+  const groupedSubStepItems = useMemo(() => {
+    const amenitiesArray = Array.isArray(propertyConfig.amenities) ? propertyConfig.amenities : [];
+    const rulesArray = Array.isArray(propertyConfig.rules) ? propertyConfig.rules : [];
+    const featuresArray = Array.isArray(propertyConfig.features) ? propertyConfig.features : [];
+    const rawList: string[] = Array.from(new Set([...amenitiesArray, ...rulesArray, ...featuresArray]));
+
+    // Sub-Step 2: Shared Amenities grouped by Sub-Group tab
+    const amenitiesBySubGroup: Record<string, { key: string; label: string; items: string[] }> = {};
+    
+    // Sub-Step 3: House Rules grouped by Sub-Group tab
+    const rulesBySubGroup: Record<string, { key: string; label: string; items: string[] }> = {};
+
+    // Sub-Step 4: Security & Safety Features grouped by Sub-Group tab
+    const featuresBySubGroup: Record<string, { key: string; label: string; items: string[] }> = {};
+
+    // Helper to get subGroupLabel
+    const getSubGroupTitle = (key: string, defaultTitle: string) => {
+      const matched = dbSubGroups.find((s: any) => s.key === key);
+      return matched?.tabLabel || matched?.title || defaultTitle;
+    };
+
+    // 2. Map all checked attribute IDs to their exact sub-group tabs!
+    rawList.forEach(id => {
+      const attr = attributes.find(a => a.id === id || a.name === id || a._id === id || a.code === id);
+      const name = resolveAmenityName(id);
+      if (!name) return;
+
+      const subKey = attr?.subGroupKey || 'GENERAL';
+
+      if (attr?.type === 'RULE' || subKey === 'GENDER_POLICY' || subKey === 'CURFEW' || subKey === 'VISITOR_POLICY' || subKey === 'PET_POLICY' || subKey === 'SMOKING_POLICY' || subKey === 'ALCOHOL_POLICY' || subKey === 'SMOKE_ALCOHOL' || subKey === 'SMOKING') {
+        const title = getSubGroupTitle(subKey, 'House Rules');
+        if (!rulesBySubGroup[subKey]) rulesBySubGroup[subKey] = { key: subKey, label: title, items: [] };
+        if (!rulesBySubGroup[subKey].items.includes(name)) rulesBySubGroup[subKey].items.push(name);
+      } else if (attr?.type === 'FEATURE' || subKey === 'SECURITY' || subKey === 'SAFETY' || subKey === 'FIRE_SAFETY') {
+        const title = getSubGroupTitle(subKey, 'Security & Safety');
+        if (!featuresBySubGroup[subKey]) featuresBySubGroup[subKey] = { key: subKey, label: title, items: [] };
+        if (!featuresBySubGroup[subKey].items.includes(name)) featuresBySubGroup[subKey].items.push(name);
+      } else {
+        const title = getSubGroupTitle(subKey, 'Shared Amenities');
+        if (!amenitiesBySubGroup[subKey]) amenitiesBySubGroup[subKey] = { key: subKey, label: title, items: [] };
+        if (!amenitiesBySubGroup[subKey].items.includes(name)) amenitiesBySubGroup[subKey].items.push(name);
+      }
+    });
+
+    const totalAmenitiesCount = Object.values(amenitiesBySubGroup).reduce((acc, g) => acc + g.items.length, 0);
+    const totalRulesCount = Object.values(rulesBySubGroup).reduce((acc, g) => acc + g.items.length, 0);
+    const totalFeaturesCount = Object.values(featuresBySubGroup).reduce((acc, g) => acc + g.items.length, 0);
+
+    const allAmenitiesItems = Object.values(amenitiesBySubGroup).flatMap(g => g.items);
+    const allRulesItems = Object.values(rulesBySubGroup).flatMap(g => g.items);
+    const allFeaturesItems = Object.values(featuresBySubGroup).flatMap(g => g.items);
+
+    return {
+      amenitiesBySubGroup: Object.values(amenitiesBySubGroup),
+      rulesBySubGroup: Object.values(rulesBySubGroup),
+      featuresBySubGroup: Object.values(featuresBySubGroup),
+      totalAmenitiesCount,
+      totalRulesCount,
+      totalFeaturesCount,
+      allAmenitiesItems,
+      allRulesItems,
+      allFeaturesItems
+    };
+  }, [propertyConfig.amenities, propertyConfig.rules, propertyConfig, attributes, dbSubGroups]);
+
+  // Preview Lightbox State
+  const [previewData, setPreviewData] = useState<{ isOpen: boolean; images: string[]; index: number; title: string; isDocument?: boolean }>({
     isOpen: false,
     images: [],
     index: 0,
-    title: ''
+    title: '',
+    isDocument: false
   });
 
-  const handlePreview = (images: string[], index: number, title: string) => {
-    setPreviewData({ isOpen: true, images, index, title });
+  const handlePreview = (images: string[], index: number, title: string, isDocument: boolean = false) => {
+    setPreviewData({ isOpen: true, images, index, title, isDocument });
   };
 
-  const renderAmenity = (ca: string) => {
-    const [label, iconName] = ca.includes('|') ? ca.split('|') : [ca, 'Tag'];
-    const Icon = AMENITY_ICONS[label] || (LucideIcons as any)[iconName] || Tag;
-    return (
-      <span key={ca} className="px-4 py-2 rounded-[1rem] bg-blue-50/50 dark:bg-blue-500/5 border border-blue-100/50 dark:border-blue-500/10 text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-2.5 transition-all hover:bg-blue-100 dark:hover:bg-blue-500/10 shadow-sm">
-        <Icon size={14} className="opacity-70" />
-        {label}
-      </span>
-    );
+  const [selectedRoomIndex, setSelectedRoomIndex] = useState<number>(0);
+  const roomTabContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (roomTabContainerRef.current) {
+        const activeTabEl = roomTabContainerRef.current.querySelector('[data-active="true"]');
+        if (activeTabEl) {
+          activeTabEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [selectedRoomIndex]);
+
+  const groupInUnitAmenities = (amenitiesList: string[]) => {
+    if (!Array.isArray(amenitiesList) || amenitiesList.length === 0) return [];
+
+    const subGroupMap: Record<string, { key: string; label: string; items: string[] }> = {};
+
+    amenitiesList.forEach(attrId => {
+      const cleanName = resolveAmenityName(attrId);
+      if (!cleanName) return;
+
+      const matchedAttr = attributes.find(a => a.id === attrId || a.value === attrId || a._id === attrId || a.code === attrId || attrId.startsWith(a.id + '|'));
+      const subGroupKey = matchedAttr?.subGroupKey || matchedAttr?.subGroup || 'IN_UNIT_AMENITIES';
+      const matchedSubGroup = dbSubGroups.find((sg: any) => sg.key === subGroupKey);
+      const label = matchedSubGroup?.tabLabel || matchedSubGroup?.title || matchedAttr?.category || 'In-Unit Amenities';
+
+      if (!subGroupMap[subGroupKey]) {
+        subGroupMap[subGroupKey] = { key: subGroupKey, label, items: [] };
+      }
+      if (!subGroupMap[subGroupKey].items.includes(cleanName)) {
+        subGroupMap[subGroupKey].items.push(cleanName);
+      }
+    });
+
+    return Object.values(subGroupMap);
   };
 
-  const renderCustomTag = (ct: string, colorClass: string, fallbackIcon: any) => {
-    const [label, iconName] = ct.includes('|') ? ct.split('|') : [ct, ''];
-    const Icon = (LucideIcons as any)[iconName] || fallbackIcon;
-    return (
-      <span key={ct} className={cn("px-4 py-2 rounded-[1rem] border text-[10px] font-black uppercase tracking-widest flex items-center gap-2.5 transition-all shadow-sm", colorClass)}>
-        <Icon size={12} /> {label}
-      </span>
-    );
-  };
+  const totalCorePhotos = Object.values(propertyImages || {}).flat().length;
+  const totalRoomPhotos = Object.values(roomImages || {}).flat().length;
 
   return (
-    <div className="space-y-12 pb-20 max-w-7xl mx-auto">
-      <div className="text-center mb-16 relative">
-        <motion.div 
-           initial={{ opacity: 0, scale: 0.9 }}
-           animate={{ opacity: 1, scale: 1 }}
-           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.3em] mb-6"
-        >
-          <Gem size={14} /> Final Verification
-        </motion.div>
-        <h3 className="text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-3">Application Review</h3>
-        <p className="text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-[0.4em] opacity-50">Please audit all data points carefully before legal submission</p>
-      </div>
+    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto">
 
+      {/* Sleek Final Review & Verification Banner */}
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-10 rounded-[3rem] bg-gray-50 dark:bg-[#161F32] border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl relative overflow-hidden mb-12"
+        className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4"
       >
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/20 via-emerald-500/20 to-primary/20" />
-        <div className="flex items-center gap-6 relative z-10">
-          <div className="w-16 h-16 rounded-[1.5rem] bg-amber-500/10 flex items-center justify-center text-amber-500 shadow-inner">
-            <Info size={32} />
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20 shadow-sm">
+            <CheckCircle2 size={22} className="sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <h5 className="text-[13px] font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white mb-1">Final Data Check</h5>
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tight leading-relaxed max-w-lg">By proceeding, you confirm all data entries are legally accurate. Discrepancies may lead to immediate application rejection.</p>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h4 className="text-xs sm:text-sm font-black uppercase text-slate-900 dark:text-white tracking-wider">
+                Final Property Application Review
+              </h4>
+              <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider shrink-0">
+                Ready to Publish
+              </span>
+            </div>
+            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5 leading-relaxed">
+              Review your complete property details below. Click any section tab to inspect or edit before submitting.
+            </p>
           </div>
         </div>
-        <Button outline type="button" onClick={onBack} className="flex items-center justify-center rounded-2xl px-12 py-4 uppercase text-[11px] font-black tracking-[0.3em] gap-3 bg-white dark:bg-[#0B1221] shrink-0 w-full md:w-auto h-fit hover:border-primary transition-all shadow-lg hover:shadow-xl active:scale-95">
-          <ChevronLeft size={16} /> Edit Application
-        </Button>
+
+        {onBack && (
+          <Button 
+            outline 
+            type="button" 
+            onClick={onBack}
+            className="flex items-center justify-center rounded-xl sm:rounded-2xl px-4 py-2.5 sm:px-6 sm:py-3 uppercase text-[11px] sm:text-xs font-black tracking-wider gap-2 bg-slate-50 dark:bg-slate-800 hover:border-primary shrink-0 transition-all cursor-pointer"
+          >
+            <ChevronLeft size={16} /> Back to Documents
+          </Button>
+        )}
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* Row 1: Identity & Essentials */}
-        <ReviewSection stepNumber="01" title="Business Identity" icon={Building2} colorClass="text-emerald-500">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <ReviewField label="Registered Business Name" value={watch('businessInfo.businessName')} darkValue />
-            <ReviewField label="Market Experience" value={watch('businessInfo.yearsExperience')?.replace(/-/g, ' ')} />
-            <div className="sm:col-span-2">
-              <ReviewField label="Property Type" value={watch('businessInfo.businessType')?.replace(/-/g, ' ')} />
-            </div>
-            <div className="sm:col-span-2">
-              <ReviewField label="Your Business Story" value={watch('businessInfo.businessDescription')} />
-            </div>
-          </div>
-        </ReviewSection>
+      {/* SUB-STEP NAVIGATION PILLS BAR */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border-b border-slate-200 dark:border-slate-800">
+        {SUB_TABS.map(tab => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
 
-        <ReviewSection stepNumber="02" title="Property Essentials" icon={BadgeCheck} colorClass="text-primary">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <div className="sm:col-span-2">
-              <ReviewField label="Public Listing Name" value={watch('propertyInfo.propertyName')} darkValue />
-            </div>
-            <ReviewField 
-              label="System Category" 
-              value="Categories will be automatically assigned by the system upon submission." 
-            />
-            <ReviewField label="Floor Pricing" value={`₱${watch('propertyInfo.price') || '0'}`} />
-            <div className="sm:col-span-2">
-              <ReviewField label="Public Property Description" value={watch('propertyInfo.description')} />
-            </div>
-          </div>
-        </ReviewSection>
-
-        {/* Row 2: Location & Capacity */}
-        <ReviewSection stepNumber="03" title="Mapping Details" icon={MapPin} colorClass="text-orange-500">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <div className="sm:col-span-2">
-              <ReviewField label="Physical Street Address" value={watch('location.address')} />
-            </div>
-            <ReviewField label="City / Municipality" value={watch('location.city')} />
-            <ReviewField label="Province" value={watch('location.province')} />
-            <div className="sm:col-span-2">
-              <ReviewField label="Postal Zip Code" value={watch('location.zipCode')} />
-            </div>
-          </div>
-        </ReviewSection>
-
-        <ReviewSection stepNumber="04" title="Listing Capacity" icon={ShieldCheck} colorClass="text-purple-500">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <ReviewField label="Total Rooms" value={`${watch('propertyConfig.totalRooms') || 0} Units`} />
-            <ReviewField label="Bathrooms" value={`${watch('propertyConfig.bathroomCount') || 0} Baths`} />
-            <ReviewField label="Reservation" value={`₱${watch('propertyInfo.price') || '0'}`} />
-          </div>
-          <div className="mt-10">
-             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500 ml-1">Universal Amenities</span>
-             <div className="flex flex-wrap gap-3 mt-4">
-                {Array.isArray(amenities) && amenities.length > 0 ? (
-                  amenities.map((a: string) => renderAmenity(a))
-                ) : <span className="text-[10px] italic text-gray-400 uppercase tracking-widest">Standard Amenities Only</span>}
-             </div>
-          </div>
-        </ReviewSection>
-
-        {/* Row 3: Rules & Security */}
-        <ReviewSection stepNumber="05" title="Rules & Preferences" icon={Users} colorClass="text-rose-500">
-           <div className="flex flex-wrap gap-3">
-              {watch('propertyConfig.female-only') && <span className="px-4 py-2.5 rounded-[1.2rem] bg-rose-50/50 dark:bg-rose-500/5 border border-rose-100/50 dark:border-rose-500/10 text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest flex items-center gap-2.5 shadow-sm"><ShieldCheck size={14} /> Female-only</span>}
-              {watch('propertyConfig.male-only') && <span className="px-4 py-2.5 rounded-[1.2rem] bg-blue-50/50 dark:bg-blue-500/5 border border-blue-100/50 dark:border-blue-500/10 text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-2.5 shadow-sm"><ShieldCheck size={14} /> Male-only</span>}
-              {watch('propertyConfig.visitors-allowed') && <span className="px-4 py-2.5 rounded-[1.2rem] bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100/50 dark:border-indigo-500/10 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-2.5 shadow-sm"><Users size={14} /> Visitors Allowed</span>}
-              {watch('propertyConfig.pets-allowed') && <span className="px-4 py-2.5 rounded-[1.2rem] bg-amber-50/50 dark:bg-amber-500/5 border border-amber-100/50 dark:border-amber-500/10 text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-2.5 shadow-sm"><Dog size={14} /> Pets Allowed</span>}
-              {watch('propertyConfig.smoking-allowed') && <span className="px-4 py-2.5 rounded-[1.2rem] bg-gray-50/50 dark:bg-gray-500/5 border border-gray-100/50 dark:border-gray-500/10 text-[10px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2.5 shadow-sm"><Wind size={14} /> Smoking Allowed</span>}
-              {watch('propertyConfig.no-curfew') && <span className="px-4 py-2.5 rounded-[1.2rem] bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100/50 dark:border-emerald-500/10 text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-2.5 shadow-sm"><Calendar size={14} /> No Curfew Enforced</span>}
-              {Array.isArray(customRules) && customRules.map((r: string) => renderCustomTag(r, "bg-rose-50/50 dark:bg-rose-500/5 border-rose-100/50 dark:border-rose-500/10 text-rose-600 dark:text-rose-400", ShieldCheck))}
-           </div>
-        </ReviewSection>
-
-        <ReviewSection stepNumber="06" title="Security & Features" icon={Shield} colorClass="text-emerald-500">
-           <div className="flex flex-wrap gap-3">
-              {watch('propertyConfig.security24h') && <span className="px-4 py-2.5 rounded-[1.2rem] bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100/50 dark:border-emerald-500/10 text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-2.5 shadow-sm"><Shield size={14} /> 24/7 Security</span>}
-              {watch('propertyConfig.cctv') && <span className="px-4 py-2.5 rounded-[1.2rem] bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100/50 dark:border-emerald-500/10 text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-2.5 shadow-sm"><Camera size={14} /> CCTV Cameras</span>}
-              {watch('propertyConfig.fireSafety') && <span className="px-4 py-2.5 rounded-[1.2rem] bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100/50 dark:border-emerald-500/10 text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-2.5 shadow-sm"><Flame size={14} /> Fire Safety</span>}
-              {watch('propertyConfig.floodFree') && <span className="px-4 py-2.5 rounded-[1.2rem] bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100/50 dark:border-emerald-500/10 text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-2.5 shadow-sm"><Waves size={14} /> Flood-Free Area</span>}
-              {watch('propertyConfig.backupPower') && <span className="px-4 py-2.5 rounded-[1.2rem] bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100/50 dark:border-emerald-500/10 text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-2.5 shadow-sm"><Zap size={14} /> Backup Power</span>}
-              {watch('propertyConfig.nearTransport') && <span className="px-4 py-2.5 rounded-[1.2rem] bg-sky-50/50 dark:bg-sky-500/5 border border-sky-100/50 dark:border-sky-500/10 text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase tracking-widest flex items-center gap-2.5 shadow-sm"><Bus size={14} /> Near Transport</span>}
-              {Array.isArray(customFeatures) && customFeatures.map((f: string) => renderCustomTag(f, "bg-amber-50/50 dark:bg-amber-500/5 border-amber-100/50 dark:border-amber-500/10 text-amber-600 dark:text-amber-400", Sparkles))}
-           </div>
-        </ReviewSection>
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap border cursor-pointer select-none shrink-0",
+                isActive
+                  ? "bg-primary text-white border-primary shadow-sm"
+                  : "bg-slate-100 dark:bg-slate-800 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              )}
+            >
+              <Icon size={14} className={cn(isActive ? "text-white" : "shrink-0")} />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Full Width Sections */}
-      <div className="space-y-12">
-        {/* Step 7: Room Inventory */}
-        <ReviewSection stepNumber="07" title="Room Details & Layout" icon={BookOpen} colorClass="text-blue-500">
-          <div className="space-y-8">
-            <div className="flex items-center justify-between px-4 pb-4 border-b border-gray-50 dark:border-gray-800/50">
-               <div className="flex flex-col">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-1">Room Summary</p>
-                  <p className="text-[13px] font-black text-gray-900 dark:text-white uppercase tracking-wider">{rooms.length} Units Registered</p>
-               </div>
-               <div className="flex items-center gap-3">
-                  <div className="flex -space-x-3">
-                     {[...Array(Math.min(4, rooms.length))].map((_, i) => (
-                       <div key={i} className="w-8 h-8 rounded-xl bg-primary/10 border-2 border-white dark:border-[#0B1221] flex items-center justify-center text-[10px] font-black text-primary shadow-lg">
-                          {i + 1}
-                       </div>
-                     ))}
-                  </div>
-                  {rooms.length > 4 && <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">+{rooms.length - 4} units</span>}
-               </div>
+      {/* SUB-STEP WORKSPACE CARDS */}
+      <AnimatePresence mode="popLayout">
+        
+        {/* SUB-STEP 1: Property & Business Basics */}
+        {activeTab === 'BASIC' && (
+          <motion.div 
+            key="BASIC"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="bg-white dark:bg-slate-900/90 rounded-none sm:rounded-[2.5rem] p-4 sm:p-8 border-x-0 sm:border border-slate-200 dark:border-slate-800/80 shadow-md sm:shadow-xl space-y-4 sm:space-y-6"
+          >
+            <div className="flex items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-primary/10 text-primary border border-primary/20 shrink-0">
+                  <Building2 size={18} className="sm:w-5 sm:h-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white truncate">Business & Property Info</h4>
+                </div>
+              </div>
+
+              {onNavigateStep && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateStep(0)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shrink-0"
+                >
+                  <Pencil size={12} className="sm:w-3.5 sm:h-3.5" /> Edit Section
+                </button>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-h-[700px] overflow-y-auto pr-4 custom-scrollbar p-1">
-              {rooms.length > 0 ? rooms.map((room: any, index: number) => (
-                <motion.div 
-                  key={index}
-                  whileHover={{ y: -5 }}
-                  className="relative p-6 rounded-[2rem] bg-gray-50/30 dark:bg-[#161F32]/30 border border-gray-100 dark:border-gray-800/50 flex flex-col gap-4 group hover:border-primary/40 transition-all duration-500 hover:shadow-[0_15px_40px_rgba(0,0,0,0.05)] overflow-hidden"
+            {/* Section 1: Business Profile */}
+            <div className="space-y-3">
+              <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+                <Briefcase size={15} className="text-primary" />
+                <span>Host & Business Verification Profile</span>
+              </h5>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Registered Business Name</span>
+                  <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">{businessInfo.businessName || 'N/A'}</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Landlord Experience</span>
+                  <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                    {businessInfo.yearsExperience === 'less-than-1' ? 'Less than 1 year' : businessInfo.yearsExperience === '5-plus' ? '5+ years' : businessInfo.yearsExperience === '1-2' ? '1 - 2 years' : businessInfo.yearsExperience === '3-5' ? '3 - 5 years' : businessInfo.yearsExperience ? `${businessInfo.yearsExperience} Years` : 'N/A'}
+                  </p>
+                </div>
+
+                {businessInfo.businessDescription && (
+                  <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 sm:col-span-2">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Business Mission & Host Background</span>
+                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{businessInfo.businessDescription}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Section 2: Property Essentials */}
+            <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+                <Building2 size={15} className="text-primary" />
+                <span>Public Property Listing Essentials</span>
+              </h5>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 sm:col-span-2">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Listing Display Title</span>
+                  <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">{propertyInfo.propertyName || 'N/A'}</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Property Type</span>
+                  <p className="text-xs font-black text-primary uppercase tracking-wider">{resolvePropertyTypeName(propertyInfo.propertyTypeId || businessInfo.businessType)}</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 sm:col-span-3">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Starting Rent Price</span>
+                  <p className="text-xs font-black text-primary uppercase tracking-wider">₱{Number(calculatedStartingPrice || 0).toLocaleString()}/mo</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 sm:col-span-3">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Property Description</span>
+                  <p className="text-xs font-medium text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{propertyInfo.description || 'No description provided.'}</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* SUB-STEP 2: Address & Location */}
+        {activeTab === 'LOCATION' && (
+          <motion.div 
+            key="LOCATION"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="bg-white dark:bg-slate-900/90 rounded-none sm:rounded-[2.5rem] p-4 sm:p-8 border-x-0 sm:border border-slate-200 dark:border-slate-800/80 shadow-md sm:shadow-xl space-y-4 sm:space-y-6"
+          >
+            <div className="flex items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
+                  <MapPin size={18} className="sm:w-5 sm:h-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white truncate">Address & Map Location</h4>
+                </div>
+              </div>
+
+              {onNavigateStep && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateStep(1)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shrink-0"
                 >
-                  {/* Card Background Accent */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-primary/10 transition-all" />
-                  
-                  <div className="flex items-center justify-between relative z-10">
-                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-white dark:bg-[#1C263D] border border-gray-100 dark:border-gray-700 flex items-center justify-center text-sm font-black text-gray-400 group-hover:text-primary transition-all duration-500 shadow-sm group-hover:shadow-md">
-                          {index + 1}
-                        </div>
-                        <div>
-                          <h5 className="text-[11px] font-black uppercase tracking-[0.1em] text-gray-900 dark:text-white group-hover:text-primary transition-colors">{room.roomType || 'Standard'} Unit</h5>
-                          <div className="flex items-center gap-2 mt-0.5">
-                             <Users size={10} className="text-gray-400" />
-                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">Cap: {room.capacity || (room.bedCount * (room.bedType?.includes('Bunk') ? 2 : 1))} PAX</p>
-                          </div>
-                        </div>
-                     </div>
-                     <div className="text-right">
-                        <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black mb-1">
-                           ₱{room.price}
-                        </div>
-                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Monthly Rate</p>
-                     </div>
+                  <Pencil size={12} className="sm:w-3.5 sm:h-3.5" /> Edit Section
+                </button>
+              )}
+            </div>
+
+            {/* Section 1: Address Details */}
+            <div className="space-y-3">
+              <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+                <MapPin size={15} className="text-amber-500" />
+                <span>Administrative Address Details</span>
+              </h5>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 sm:col-span-2">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Complete Street Address</span>
+                  <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">{location.address || 'N/A'}</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">City / Municipality</span>
+                  <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">{location.city || 'Camiling'}</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Province</span>
+                  <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">{location.province || 'Tarlac'}</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 sm:col-span-2">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Postal Zip Code</span>
+                  <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">{location.zipCode || '2370'}</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 sm:col-span-2 flex items-center justify-between">
+                  <div>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">GPS Coordinates</span>
+                    <p className="text-xs font-black text-primary uppercase tracking-wider">
+                      {Array.isArray(location.coordinates) && location.coordinates.length === 2
+                        ? `Lat: ${Number(location.coordinates[0]).toFixed(4)}, Lng: ${Number(location.coordinates[1]).toFixed(4)}`
+                        : 'Lat: 15.6980, Lng: 120.4285'}
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-black px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 uppercase tracking-wider flex items-center gap-1">
+                    <CheckCircle2 size={12} /> Pinpoint Saved
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: Interactive Map Preview */}
+            <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+                <Compass size={15} className="text-amber-500" />
+                <span>Verified Map Location Pin</span>
+              </h5>
+              <div className="h-[220px] rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-inner relative">
+                <Map
+                  center={Array.isArray(location.coordinates) && location.coordinates.length === 2 ? location.coordinates : [15.6980, 120.4285]}
+                  onLocationSelect={() => {}}
+                  title={propertyInfo.propertyName || 'Property Location'}
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* SUB-STEP 3: Property Setup & Rules */}
+        {activeTab === 'SETUP' && (
+          <motion.div 
+            key="SETUP"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="bg-white dark:bg-slate-900/90 rounded-none sm:rounded-[2.5rem] p-4 sm:p-8 border-x-0 sm:border border-slate-200 dark:border-slate-800/80 shadow-md sm:shadow-xl space-y-4 sm:space-y-6"
+          >
+            <div className="flex items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-purple-500/10 text-purple-500 border border-purple-500/20 shrink-0">
+                  <Settings size={18} className="sm:w-5 sm:h-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white truncate">Property Setup & Rules</h4>
+                </div>
+              </div>
+
+              {onNavigateStep && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateStep(2)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shrink-0"
+                >
+                  <Pencil size={12} className="sm:w-3.5 sm:h-3.5" /> Edit Section
+                </button>
+              )}
+            </div>
+
+            {/* 1. Sub-Step 1: Compound Structure & Facility Setup */}
+            <div className="space-y-3">
+              <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+                <Building2 size={15} className="text-purple-500" />
+                <span>1. Compound Structure & Facility Setup</span>
+              </h5>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Total Room Units Available</span>
+                  <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">{propertyConfig.totalRooms || rooms.length || 0} Units</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Bathroom & CR Setup</span>
+                  <p className="text-xs font-black text-primary uppercase tracking-wider">{propertyConfig.bathroomSetup?.replace(/_/g, ' ') || 'Shared Bathroom'}</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Common CR Count</span>
+                  <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                    {propertyConfig.bathroomSetup === 'PRIVATE' ? 'Private En-Suite' : propertyConfig.bathroomCount ? `${propertyConfig.bathroomCount} Common CRs` : 'Shared Hallway CR'}
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Kitchen Facilities Setup</span>
+                  <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">{propertyConfig.kitchenSetup?.replace(/_/g, ' ') || 'Shared Kitchen'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Sub-Step 2: Shared Compound Amenities (Grouped by Inner Sub-Group Tabs) */}
+            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between">
+                <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+                  <ListChecks size={15} className="text-blue-500" />
+                  <span>2. Shared Compound Amenities ({groupedSubStepItems.totalAmenitiesCount})</span>
+                </h5>
+                <button
+                  type="button"
+                  onClick={() => setAmenitiesModalConfig({ isOpen: true, initialCategory: 'AMENITIES' })}
+                  className="text-[10px] font-black text-blue-500 hover:underline flex items-center gap-1 uppercase tracking-wider cursor-pointer"
+                >
+                  <Maximize2 size={12} /> View All Amenities ({groupedSubStepItems.totalAmenitiesCount})
+                </button>
+              </div>
+
+              {groupedSubStepItems.amenitiesBySubGroup.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {groupedSubStepItems.amenitiesBySubGroup.map(group => (
+                    <div key={group.key} className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-2.5">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-blue-500 block">{group.label}</span>
+                      <div className="flex flex-wrap gap-2">
+                        {group.items.map((item, idx) => {
+                          const ItemIcon = getItemIcon(item);
+                          return (
+                            <span key={idx} className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-blue-200/60 dark:border-blue-500/30 text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                              <ItemIcon size={12} className="text-blue-500 shrink-0" />
+                              <span>{item}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-[11px] font-bold text-slate-400 italic">No specific shared amenities selected</span>
+              )}
+            </div>
+
+            {/* 3. Sub-Step 3: House Rules & Tenant Policies (Grouped by Inner Sub-Group Tabs) */}
+            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between">
+                <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+                  <Shield size={15} className="text-purple-500" />
+                  <span>3. House Rules & Tenant Policies ({groupedSubStepItems.totalRulesCount})</span>
+                </h5>
+                <button
+                  type="button"
+                  onClick={() => setAmenitiesModalConfig({ isOpen: true, initialCategory: 'RULES' })}
+                  className="text-[10px] font-black text-purple-500 hover:underline flex items-center gap-1 uppercase tracking-wider cursor-pointer"
+                >
+                  <Maximize2 size={12} /> View All Rules ({groupedSubStepItems.totalRulesCount})
+                </button>
+              </div>
+
+              {groupedSubStepItems.rulesBySubGroup.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {groupedSubStepItems.rulesBySubGroup.map(group => (
+                    <div key={group.key} className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-2.5">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-purple-500 dark:text-purple-400 block">{group.label}</span>
+                      <div className="flex flex-wrap gap-2">
+                        {group.items.map((item, idx) => {
+                          const ItemIcon = getItemIcon(item);
+                          return (
+                            <span key={idx} className="px-2.5 py-1 rounded-xl bg-purple-500/10 dark:bg-purple-500/15 border border-purple-500/25 text-[10px] font-black text-purple-700 dark:text-purple-300 uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                              <ItemIcon size={12} className="text-purple-500 dark:text-purple-400 shrink-0" />
+                              <span>{item}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-[11px] font-bold text-slate-400 italic">Standard Rules Apply (Open to All Tenants)</span>
+              )}
+            </div>
+
+            {/* 4. Sub-Step 4: Security & Safety Features (Grouped by Inner Sub-Group Tabs) */}
+            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between">
+                <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+                  <Star size={15} className="text-amber-500" />
+                  <span>4. Security & Safety Features ({groupedSubStepItems.totalFeaturesCount})</span>
+                </h5>
+                <button
+                  type="button"
+                  onClick={() => setAmenitiesModalConfig({ isOpen: true, initialCategory: 'SECURITY' })}
+                  className="text-[10px] font-black text-amber-500 hover:underline flex items-center gap-1 uppercase tracking-wider cursor-pointer"
+                >
+                  <Maximize2 size={12} /> View All Security ({groupedSubStepItems.totalFeaturesCount})
+                </button>
+              </div>
+
+              {groupedSubStepItems.featuresBySubGroup.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {groupedSubStepItems.featuresBySubGroup.map(group => (
+                    <div key={group.key} className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-2.5">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-500 dark:text-amber-400 block">{group.label}</span>
+                      <div className="flex flex-wrap gap-2">
+                        {group.items.map((item, idx) => {
+                          const ItemIcon = getItemIcon(item);
+                          return (
+                            <span key={idx} className="px-2.5 py-1 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/25 text-[10px] font-black text-amber-700 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                              <ItemIcon size={12} className="text-amber-500 dark:text-amber-400 shrink-0" />
+                              <span>{item}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-[11px] font-bold text-slate-400 italic">Standard Security Level</span>
+              )}
+            </div>
+
+            {/* 5. Sub-Step 5: Lease Contract & Digital Signature */}
+            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+                <FileCheck size={15} className="text-teal-500" />
+                <span>5. Lease Contract & Digital Signature</span>
+              </h5>
+
+              {propertyConfig.contractMode === 'CUSTOM_PDF' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Lease Agreement Mode</span>
+                    <p className="text-xs font-black text-teal-600 dark:text-teal-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <FileText size={14} /> Custom Contract PDF
+                    </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 pt-5 border-t border-gray-50 dark:border-gray-800/40 relative z-10">
-                     <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5">
-                           <Focus size={10} className="text-primary/50" />
-                           <span className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">Unit Setup</span>
+                  <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Uploaded Custom Document</span>
+                      <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider truncate" title={displayCustomPdfName}>
+                        {customPdfUrl ? displayCustomPdfName : 'No Document Uploaded'}
+                      </p>
+                    </div>
+                    {customPdfUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => window.open(customPdfUrl, '_blank')}
+                        className="px-3 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm"
+                      >
+                        <Eye size={13} />
+                        <span>Preview PDF</span>
+                      </button>
+                    ) : (
+                      <span className="text-[10px] font-extrabold text-rose-500 bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20">
+                        Missing PDF
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Lease Agreement Mode</span>
+                      <p className="text-xs font-black text-primary uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles size={14} /> BoardTAU Smart Contract
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Standard Security Deposit</span>
+                      <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                        {propertyConfig.depositAmount ? `₱${Number(propertyConfig.depositAmount).toLocaleString()}` : 'Not Specified'}
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Move-Out Notice Period</span>
+                      <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                        {propertyConfig.moveOutNoticeDays ? `${propertyConfig.moveOutNoticeDays} Days` : '30 Days'}
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Landlord Digital Signature</span>
+                      {propertyConfig.landlordSignatureBase64 || watch('propertyConfig.landlordSignatureBase64') ? (
+                        <div className="h-7 w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 flex items-center justify-center overflow-hidden relative">
+                          <SafeImage 
+                            src={sanitizeImgUrl(propertyConfig.landlordSignatureBase64 || watch('propertyConfig.landlordSignatureBase64'))} 
+                            alt="Landlord Signature" 
+                            fill
+                            className="object-contain dark:invert" 
+                          />
                         </div>
-                        <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 truncate">{room.bedCount}x {room.bedType}</span>
-                     </div>
-                     <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5">
-                           <Utensils size={10} className="text-primary/50" />
-                           <span className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">Bathroom</span>
-                        </div>
-                        <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 truncate">{room.bathroomArrangement?.replace(/_/g, ' ') || 'Shared'}</span>
-                     </div>
+                      ) : (
+                        <p className="text-xs font-black text-rose-500 uppercase tracking-wider">Not Signed</p>
+                      )}
+                    </div>
                   </div>
 
-                  {room.amenities?.length > 0 ? (
-                    <div className="flex flex-wrap gap-2 mt-2 relative z-10">
-                      {room.amenities.slice(0, 5).map((a: string) => (
-                        <span key={a} className="px-2.5 py-1 rounded-lg bg-white/80 dark:bg-[#1C263D]/80 border border-gray-100 dark:border-gray-700 text-[8px] font-black text-gray-500 uppercase tracking-tighter shadow-sm">
-                          {a.includes('|') ? a.split('|')[0] : a}
-                        </span>
-                      ))}
-                      {room.amenities.length > 5 && <span className="text-[8px] font-black text-gray-400 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-lg">+{room.amenities.length - 5}</span>}
+                  {/* Auto-Generated Contract PDF Preview Action Banner */}
+                  <div className="p-4 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-2.5 rounded-xl bg-teal-500/20 text-teal-600 dark:text-teal-400 shrink-0">
+                        <FileCheck size={20} />
+                      </div>
+                      <div>
+                        <h6 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">Auto-Generated Smart Lease Agreement</h6>
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Generate and preview standard PDF lease contract populated with property rules & deposit terms.</p>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="mt-2 py-2 px-4 rounded-xl bg-gray-50/50 dark:bg-gray-800/30 border border-dashed border-gray-200 dark:border-gray-700 text-[8px] font-black text-gray-400 uppercase tracking-widest text-center">
-                       Basic Features Only
-                    </div>
-                  )}
-                </motion.div>
-              )) : (
-                <div className="col-span-full py-20 flex flex-col items-center justify-center bg-gray-50/20 dark:bg-[#161F32]/20 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-800/50">
-                   <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800/50 flex items-center justify-center mb-6">
-                      <Info className="text-gray-300 dark:text-gray-600" size={32} />
-                   </div>
-                   <p className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.3em]">No Units Found in Configuration</p>
+
+                    <button
+                      type="button"
+                      onClick={handlePreviewAutoGeneratedPdf}
+                      className="w-full sm:w-auto px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 shrink-0 shadow-md cursor-pointer"
+                    >
+                      <Eye size={15} />
+                      <span>Preview Smart Lease PDF</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
-          </div>
-        </ReviewSection>
+          </motion.div>
+        )}
 
-        {/* Step 8: Media and Docs */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Left: Combined Asset Highlights */}
-            <div className="lg:col-span-2">
-              <ReviewSection stepNumber="08" title="Photo Review" icon={Images} colorClass="text-teal-500">
-                <div className="space-y-12">
-                  <div className="flex flex-col gap-8">
-                    <div className="flex items-center justify-between px-1">
-                       <div className="flex flex-col">
-                          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500 mb-1">Property Visual Assets</span>
-                          <span className="text-[13px] font-black text-gray-900 dark:text-white uppercase tracking-wider">
-                            {Object.values(propertyImages || {}).flat().length} Official Files
-                          </span>
-                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {Object.entries(propertyImages || {}).map(([category, urls]: [string, any]) => {
-                        if (!urls || urls.length === 0) return null;
-                        return (
-                          <div key={category} className="p-6 rounded-[2.5rem] bg-gray-50/30 dark:bg-[#161F32]/30 border border-gray-100 dark:border-gray-800/50 flex flex-col gap-4">
-                            <div className="flex items-center justify-between px-2">
-                               <span className="text-[10px] font-black uppercase tracking-widest text-primary">{category}</span>
-                               <span className="text-[9px] font-bold text-gray-400 uppercase">{urls.length} Photos</span>
-                            </div>
-                            <div className="flex flex-wrap gap-3">
-                               {urls.map((img: string, idx: number) => (
-                                 <div 
-                                   key={idx} 
-                                   className="w-16 h-16 rounded-2xl border-2 border-white dark:border-[#1C263D] shadow-sm cursor-pointer transition-all overflow-hidden"
-                                   onClick={() => handlePreview(urls, idx, `Property: ${category}`)}
-                                 >
-                                   <SafeImage src={img} alt={`${category} ${idx + 1}`} />
-                                 </div>
-                               ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {Object.values(propertyImages || {}).flat().length === 0 && (
-                      <div className="px-8 py-10 rounded-[3rem] bg-gray-50/20 dark:bg-gray-800/10 border-2 border-dashed border-gray-100 dark:border-gray-800 flex items-center justify-center">
-                         <span className="text-xs italic text-gray-400 uppercase tracking-[0.2em]">No Property Assets Found</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-6">
-                    <div className="flex items-center justify-between px-1">
-                       <div className="flex flex-col">
-                          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500 mb-1">Unit-Specific Assets</span>
-                          <span className="text-[13px] font-black text-gray-900 dark:text-white uppercase tracking-wider">{Object.values(roomImages).flat().length} Registered Images</span>
-                       </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                       {rooms.map((room: any, idx: number) => {
-                         const images = roomImages[idx] || [];
-                         if (images.length === 0) return null;
-                         return (
-                           <div key={idx} className="p-8 rounded-[2.5rem] bg-gray-50/30 dark:bg-[#161F32]/30 border border-gray-100 dark:border-gray-800/50 flex flex-col gap-5 hover:border-primary/20 transition-all group/room">
-                              <div className="flex items-center justify-between">
-                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-xl bg-white dark:bg-[#1C263D] border border-gray-100 dark:border-gray-700 flex items-center justify-center text-[11px] font-black text-gray-400 group-hover/room:text-primary transition-colors">
-                                       {idx + 1}
-                                    </div>
-                                    <span className="text-[11px] font-black uppercase text-gray-900 dark:text-white tracking-[0.1em]">{room.roomType || 'Standard'} Unit</span>
-                                 </div>
-                                 <span className="text-[9px] font-black text-primary/60 uppercase tracking-widest">{images.length} Photos</span>
-                              </div>
-                              <div className="flex flex-wrap gap-4">
-                                 {images.map((img: string, imgIdx: number) => (
-                                   <div 
-                                     key={imgIdx} 
-                                     className="w-20 h-20 rounded-2xl border-4 border-white dark:border-[#1C263D] shadow-md cursor-pointer transition-all duration-500 overflow-hidden"
-                                     onClick={() => handlePreview(images, imgIdx, `Unit ${idx + 1}: ${room.roomType || 'Standard'}`)}
-                                   >
-                                     <SafeImage src={img} alt={`Room ${idx + 1} Image ${imgIdx + 1}`} />
-                                   </div>
-                                 ))}
-                              </div>
-                           </div>
-                         );
-                       })}
-                    </div>
-                    {Object.values(roomImages).flat().length === 0 && (
-                      <div className="px-8 py-10 rounded-[3rem] bg-gray-50/20 dark:bg-gray-800/10 border-2 border-dashed border-gray-100 dark:border-gray-800 flex items-center justify-center">
-                         <span className="text-xs italic text-gray-400 uppercase tracking-[0.2em]">No Unit Assets Found</span>
-                      </div>
-                    )}
-                  </div>
+        {/* SUB-STEP 4: Room Units & Monthly Rates */}
+        {activeTab === 'ROOMS' && (
+          <motion.div 
+            key="ROOMS"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="bg-white dark:bg-slate-900/90 rounded-none sm:rounded-[2.5rem] p-4 sm:p-8 border-x-0 sm:border border-slate-200 dark:border-slate-800/80 shadow-md sm:shadow-xl space-y-4 sm:space-y-6"
+          >
+            {/* Header & Section Navigation */}
+            <div className="flex items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-blue-500/10 text-blue-500 border border-blue-500/20 shrink-0">
+                  <Bed size={18} className="sm:w-5 sm:h-5" />
                 </div>
-              </ReviewSection>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white truncate">Room Units & Rates</h4>
+                </div>
+              </div>
+
+              {onNavigateStep && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateStep(3)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shrink-0"
+                >
+                  <Pencil size={12} className="sm:w-3.5 sm:h-3.5" /> Edit Section
+                </button>
+              )}
             </div>
 
-            {/* Bottom: Legal Docs Stack */}
-            <div className="lg:col-span-2">
-              <ReviewSection stepNumber="09" title="Legal Documents" icon={FileCheck} colorClass="text-emerald-500">
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-                  {Object.entries(docs).filter(([_, url]) => !!url).length > 0 ? (
-                    Object.entries(docs).filter(([_, url]) => !!url).map(([key, url]: [string, any], idx: number) => (
-                      <motion.div 
-                         key={key} 
-                         whileHover={{ y: -10 }}
-                         className="flex flex-col items-center gap-4 group/doc"
-                      >
-                        <div 
-                          onClick={() => handlePreview([url], 0, key.replace(/([A-Z])/g, ' $1'))}
-                          className="w-full aspect-square rounded-3xl border-4 border-white dark:border-[#1C263D] shadow-xl overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-500 bg-white dark:bg-[#1C263D] flex items-center justify-center group relative"
-                        >
-                          <SafeImage 
-                            src={url} 
-                            alt={key} 
-                          />
-                          <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover/doc:opacity-100 transition-opacity flex items-center justify-center text-white backdrop-blur-[2px]">
-                             <Focus size={32} />
+            {/* Room Selector Navigation Bar (For 2 to 20+ Rooms) */}
+            {rooms.length > 1 && (
+              <div ref={roomTabContainerRef} className="flex items-center gap-2 overflow-x-auto pb-2 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border-b border-slate-100 dark:border-slate-800">
+                {rooms.map((room: any, idx: number) => {
+                  const roomTypeName = resolveRoomTypeName(room);
+                  const isFlatRate = checkIsFlatRate(room);
+                  const isActive = selectedRoomIndex === idx;
+
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      data-active={isActive ? "true" : "false"}
+                      onClick={() => setSelectedRoomIndex(idx)}
+                      className={cn(
+                        "flex items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap border cursor-pointer select-none shrink-0",
+                        isActive
+                          ? "bg-primary text-white border-primary shadow-sm"
+                          : "bg-slate-100 dark:bg-slate-800 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      )}
+                    >
+                      <Bed size={14} />
+                      <span>{isFlatRate ? 'Unit' : 'Room'} {idx + 1}: {roomTypeName}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Room Cards Display */}
+            {rooms.length > 0 ? (
+              <div className="grid grid-cols-1 gap-6">
+                {rooms
+                  .filter((_: any, idx: number) => (selectedRoomIndex < rooms.length ? selectedRoomIndex === idx : idx === 0))
+                  .map((room: any) => {
+                    const roomIdx = selectedRoomIndex < rooms.length ? selectedRoomIndex : 0;
+                    const roomTypeName = resolveRoomTypeName(room);
+                    const isFlatRate = checkIsFlatRate(room);
+                    const isPrivateCR = room.bathroomArrangement === 'PRIVATE_CR' || room.bathroomArrangement === 'PRIVATE' || room.bathroomType === 'PRIVATE';
+
+                    const inUnitAmenities = room.amenities || [];
+                    const groupedAmenities = groupInUnitAmenities(inUnitAmenities);
+                    const totalInUnitCount = groupedAmenities.reduce((sum, g) => sum + g.items.length, 0);
+
+                    return (
+                      <div key={roomIdx} className="p-6 rounded-3xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-5 shadow-sm">
+                        {/* Header */}
+                        <div className="flex items-center justify-between pb-4 border-b border-slate-200/60 dark:border-slate-700/60">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary font-black text-sm flex items-center justify-center shrink-0 border border-primary/20">
+                              {roomIdx + 1}
+                            </div>
+                            <div>
+                              <h5 className="text-xs sm:text-sm font-black uppercase text-slate-900 dark:text-white tracking-wider">{roomTypeName}</h5>
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mt-0.5">
+                                {isFlatRate ? 'Unit Layout' : 'Room Layout'} #{roomIdx + 1} • {isFlatRate ? 'Whole Unit Rent' : 'Per Head Rent'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <span className="text-xs sm:text-sm font-black text-primary uppercase block">
+                              ₱{Number(room.price || 0).toLocaleString()}/mo {isFlatRate ? '(Whole Unit)' : '(per Head)'}
+                            </span>
+                            {room.reservationFee && (
+                              <span className="text-[9px] font-bold text-slate-400 uppercase">₱{Number(room.reservationFee).toLocaleString()} Reservation Fee</span>
+                            )}
                           </div>
                         </div>
-                        <span className="text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 text-center tracking-[0.1em] px-2 leading-relaxed">
-                          {key.replace(/([A-Z])/g, ' $1')}
-                        </span>
-                      </motion.div>
-                    ))
-                  ) : (
-                    <div className="col-span-full w-full flex flex-col items-center justify-center gap-4 py-20">
-                       <Lock size={40} className="text-gray-200 dark:text-gray-800" />
-                       <span className="text-xs italic text-gray-400 uppercase tracking-[0.2em]">No Documents Found</span>
-                    </div>
-                  )}
+
+                        {/* Specs Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                          <div className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">
+                              {isFlatRate ? 'Unit Floor Area' : 'Room Size'}
+                            </span>
+                            <p className="text-xs font-black text-slate-900 dark:text-white uppercase">{room.size ? `${room.size} SQM` : 'N/A'}</p>
+                          </div>
+
+                          <div className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">Bed Setup</span>
+                            <p className="text-xs font-black text-slate-900 dark:text-white uppercase">{room.bedCount || '1'} x {resolveBedTypeName(room.bedType, room.roomType)}</p>
+                          </div>
+
+                          <div className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">
+                              {isFlatRate ? 'Total Unit Capacity' : 'Bedspace Capacity'}
+                            </span>
+                            <p className="text-xs font-black text-slate-900 dark:text-white uppercase">
+                              {room.capacity || '1'} {isFlatRate ? 'Pax' : 'Beds / Slots'}
+                            </p>
+                          </div>
+
+                          <div className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">CR Setup</span>
+                            <p className="text-xs font-black text-primary uppercase">{isPrivateCR ? 'Own Private CR' : 'Common Shared CR'}</p>
+                          </div>
+                        </div>
+
+                          {/* In-Unit Amenities Grouped by Taxonomy Sub-Groups */}
+                          <div className="space-y-3 pt-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
+                                <Sparkles size={13} className="text-primary" />
+                                <span>In-Unit Amenities ({totalInUnitCount})</span>
+                              </span>
+
+                              {totalInUnitCount > 6 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveModalCategory({
+                                    title: `Unit ${roomIdx + 1} (${roomTypeName}) In-Unit Amenities`,
+                                    icon: Bed,
+                                    items: groupedAmenities.flatMap(g => g.items),
+                                    groups: groupedAmenities,
+                                    iconColorClass: "bg-primary/15 text-primary"
+                                  })}
+                                  className="text-[10px] font-black text-primary hover:underline flex items-center gap-1 uppercase tracking-wider cursor-pointer"
+                                >
+                                  <Maximize2 size={12} /> View All ({totalInUnitCount})
+                                </button>
+                              )}
+                            </div>
+
+                            {groupedAmenities.length > 0 ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {groupedAmenities.map(group => (
+                                  <div key={group.key} className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
+                                    <span className="text-[9px] font-black uppercase tracking-wider text-primary block">{group.label}</span>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {group.items.map((item, i) => {
+                                        const ItemIcon = getItemIcon(item);
+                                        return (
+                                          <span key={i} className="px-2.5 py-1 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                                            <ItemIcon size={12} className="text-primary shrink-0" />
+                                            <span>{item}</span>
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-[11px] font-bold text-slate-400 italic">No specific in-unit amenities selected</span>
+                            )}
+                          </div>
+
+                          {/* Dynamic Bottom Room Navigation Buttons */}
+                          {rooms.length > 1 && (
+                            <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-200/60 dark:border-slate-700/60">
+                              <div>
+                                {roomIdx > 0 && (() => {
+                                  const prevRoom = rooms[roomIdx - 1];
+                                  const prevTypeName = resolveRoomTypeName(prevRoom);
+                                  const prevIsFlat = checkIsFlatRate(prevRoom);
+                                  const prevLabel = `${prevIsFlat ? 'Unit' : 'Room'} ${roomIdx}: ${prevTypeName}`;
+
+                                  return (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedRoomIndex(roomIdx - 1)}
+                                      className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white text-slate-700 dark:text-slate-200 text-xs font-black uppercase tracking-wider transition-all border border-slate-200 dark:border-slate-700 cursor-pointer shadow-sm"
+                                    >
+                                      <ChevronLeft size={15} />
+                                      <span>PREVIOUS: {prevLabel}</span>
+                                    </button>
+                                  );
+                                })()}
+                              </div>
+
+                              <div>
+                                {roomIdx < rooms.length - 1 && (() => {
+                                  const nextRoom = rooms[roomIdx + 1];
+                                  const nextTypeName = resolveRoomTypeName(nextRoom);
+                                  const nextIsFlat = checkIsFlatRate(nextRoom);
+                                  const nextLabel = `${nextIsFlat ? 'Unit' : 'Room'} ${roomIdx + 2}: ${nextTypeName}`;
+
+                                  return (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedRoomIndex(roomIdx + 1)}
+                                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary/90 text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md"
+                                    >
+                                      <span>NEXT: {nextLabel}</span>
+                                      <ChevronRight size={15} />
+                                    </button>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
-              </ReviewSection>
+            ) : (
+              <p className="text-xs font-bold text-slate-400 italic">No room units registered yet.</p>
+            )}
+          </motion.div>
+        )}
+
+        {/* SUB-STEP 5: Property & Room Photos */}
+        {activeTab === 'IMAGES' && (
+          <motion.div 
+            key="IMAGES"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="bg-white dark:bg-slate-900/90 rounded-none sm:rounded-[2.5rem] p-4 sm:p-8 border-x-0 sm:border border-slate-200 dark:border-slate-800/80 shadow-md sm:shadow-xl space-y-4 sm:space-y-6"
+          >
+            <div className="flex items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-teal-500/10 text-teal-500 border border-teal-500/20 shrink-0">
+                  <Images size={18} className="sm:w-5 sm:h-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white truncate">Property & Unit Photos</h4>
+                </div>
+              </div>
+
+              {onNavigateStep && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateStep(4)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shrink-0"
+                >
+                  <Pencil size={12} className="sm:w-3.5 sm:h-3.5" /> Edit Section
+                </button>
+              )}
             </div>
-        </div>
-      </div>
 
+            {/* Core Property Photos (Grouped per Category) */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+                  <Camera size={15} className="text-teal-500" />
+                  <span>Core Property Photos ({totalCorePhotos} Total Uploaded)</span>
+                </h5>
+              </div>
 
-      {/* Media Preview Overlay */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {PROPERTY_IMAGE_CATEGORIES.map(cat => {
+                  const IconComp = cat.icon;
+                  const catPhotos: string[] = Array.isArray(propertyImages[cat.id]) ? propertyImages[cat.id] : [];
+
+                  return (
+                    <div key={cat.id} className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 bg-teal-500/10 text-teal-500 rounded-xl shrink-0">
+                            <IconComp size={16} />
+                          </div>
+                          <div>
+                            <h6 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider">{cat.label}</h6>
+                            <p className="text-[10px] font-bold text-slate-400">{cat.description}</p>
+                          </div>
+                        </div>
+
+                        <span className={cn(
+                          "text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase border",
+                          catPhotos.length > 0
+                            ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-400 border-transparent"
+                        )}>
+                          {catPhotos.length} {catPhotos.length === 1 ? 'Photo' : 'Photos'}
+                        </span>
+                      </div>
+
+                      {catPhotos.length > 0 ? (
+                        <div className="flex flex-wrap gap-2.5 pt-1">
+                          {catPhotos.map((img: string, idx: number) => (
+                            <div 
+                              key={idx} 
+                              onClick={() => handlePreview(catPhotos, idx, `${cat.label} - Photo ${idx + 1}`)}
+                              className="relative group w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm bg-slate-100 dark:bg-slate-800 cursor-pointer"
+                            >
+                              <SafeImage src={getSafeImageSrc(img)} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                              <div className="absolute inset-0 bg-slate-950/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-[1px]">
+                                <Maximize2 size={14} className="text-white" />
+                              </div>
+                              {idx === 0 && (
+                                <span className="absolute bottom-1 left-1 px-1 py-0.5 rounded bg-primary/90 text-white text-[7px] font-black uppercase tracking-wider">
+                                  Cover
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[11px] font-bold text-slate-400 italic pt-1">No photos uploaded for this category</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Room Unit Photos Summary */}
+            {rooms.length > 0 && (
+              <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider">
+                  Room & Unit Photos ({totalRoomPhotos} Total Uploaded)
+                </h5>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {rooms.map((room: any, idx: number) => {
+                    const roomPhotoList = roomImages[idx] || [];
+                    const roomTypeName = resolveRoomTypeName(room.roomType);
+
+                    return (
+                      <div key={idx} className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider">
+                            Unit {idx + 1}: {roomTypeName}
+                          </span>
+                          <span className={cn(
+                            "text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase border",
+                            roomPhotoList.length > 0
+                              ? "bg-primary/10 text-primary border-primary/20"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-400 border-transparent"
+                          )}>
+                            {roomPhotoList.length} {roomPhotoList.length === 1 ? 'Photo' : 'Photos'}
+                          </span>
+                        </div>
+
+                        {roomPhotoList.length > 0 ? (
+                          <div className="flex flex-wrap gap-2.5">
+                            {roomPhotoList.map((img: string, imgIdx: number) => (
+                              <div 
+                                key={imgIdx} 
+                                onClick={() => handlePreview(roomPhotoList, imgIdx, `Unit ${idx + 1}: ${roomTypeName}`)}
+                                className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm bg-slate-100 dark:bg-slate-800 cursor-pointer"
+                              >
+                                <SafeImage src={getSafeImageSrc(img)} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                <div className="absolute inset-0 bg-slate-950/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-[1px]">
+                                  <Maximize2 size={14} className="text-white" />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-[11px] font-bold text-slate-400 italic pt-1">No unit photos uploaded</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* SUB-STEP 6: Legal Verification Documents */}
+        {activeTab === 'DOCUMENTS' && (
+          <motion.div 
+            key="DOCUMENTS"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="bg-white dark:bg-slate-900/90 rounded-none sm:rounded-[2.5rem] p-4 sm:p-8 border-x-0 sm:border border-slate-200 dark:border-slate-800/80 shadow-md sm:shadow-xl space-y-4 sm:space-y-6"
+          >
+            <div className="flex items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
+                  <FileCheck size={18} className="sm:w-5 sm:h-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white truncate">Legal Verification Documents</h4>
+                </div>
+              </div>
+
+              {onNavigateStep && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateStep(5)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shrink-0"
+                >
+                  <Pencil size={12} className="sm:w-3.5 sm:h-3.5" /> Edit Section
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4">
+              {[
+                { id: 'governmentId', label: 'Government ID' },
+                { id: 'businessPermit', label: 'Business Permit' },
+                { id: 'landTitle', label: 'Land Title / Lease' },
+                { id: 'barangayClearance', label: 'Barangay Clearance' },
+                { id: 'fireSafetyCertificate', label: 'Fire Safety Certificate' }
+              ].map((doc, idx) => {
+                const url = docs[doc.id];
+                const isUploaded = Boolean(url);
+
+                return (
+                  <div 
+                    key={doc.id}
+                    onClick={() => isUploaded && handlePreview([url], 0, doc.label, true)}
+                    className={cn(
+                      "p-3 sm:p-4 rounded-2xl border transition-all flex flex-col items-center justify-center gap-2 sm:gap-3 text-center min-w-0",
+                      idx === 4 ? "col-span-2 sm:col-span-1" : "col-span-1",
+                      isUploaded 
+                        ? "bg-primary/5 border-primary/30 cursor-pointer hover:border-primary shadow-sm" 
+                        : "bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 opacity-60"
+                    )}
+                  >
+                    {isUploaded ? (
+                      <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-primary/30 shadow-sm bg-slate-100 dark:bg-slate-800 shrink-0">
+                        <SafeImage src={getSafeImageSrc(url)} alt={doc.label} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-slate-950/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                          <Maximize2 size={14} className="text-white sm:w-4 sm:h-4" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-400 flex items-center justify-center shrink-0">
+                        <FileCheck size={18} className="sm:w-5 sm:h-5" />
+                      </div>
+                    )}
+
+                    <div className="min-w-0 w-full">
+                      <p className="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider truncate" title={doc.label}>
+                        {doc.label}
+                      </p>
+                      <span className={cn(
+                        "text-[8px] sm:text-[9px] font-black uppercase tracking-wider mt-0.5 inline-block px-2 py-0.5 rounded-full border",
+                        isUploaded ? "bg-primary/10 text-primary border-primary/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                      )}>
+                        {isUploaded ? 'Uploaded ✓' : 'Missing'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Lightbox Preview Modal */}
       <MediaPreviewOverlay
         isOpen={previewData.isOpen}
         onClose={() => setPreviewData(prev => ({ ...prev, isOpen: false }))}
         images={previewData.images}
         currentIndex={previewData.index}
-        onNavigate={(newIdx) => setPreviewData(prev => ({ ...prev, index: newIdx }))}
         title={previewData.title}
+        isDocument={previewData.isDocument}
+      />
+
+      {/* Full Category Items Modal Popup */}
+      {mounted && typeof window !== "undefined" && createPortal(
+        <AnimatePresence>
+          {activeModalCategory && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[999999] flex items-center justify-center p-0 sm:p-6 bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-300"
+              onClick={() => setActiveModalCategory(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.95, y: 20 }}
+                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full h-[100dvh] sm:h-auto sm:max-h-[85vh] max-w-4xl rounded-none sm:rounded-3xl bg-white dark:bg-slate-900 border-0 sm:border border-slate-200 dark:border-white/10 p-4 sm:p-7 shadow-2xl flex flex-col justify-between overflow-hidden"
+              >
+                {/* Modal Header */}
+                <div className="flex items-center justify-between pb-3 sm:pb-3.5 border-b border-slate-200 dark:border-slate-800 shrink-0">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`p-2.5 rounded-xl shrink-0 ${activeModalCategory.iconColorClass}`}>
+                      <activeModalCategory.icon className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-extrabold text-sm sm:text-lg text-slate-900 dark:text-white leading-tight truncate">
+                        {activeModalCategory.title}
+                      </h3>
+                      <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">
+                        {activeModalCategory.items.length} selected item{activeModalCategory.items.length !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveModalCategory(null)}
+                    className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors shrink-0 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Sub-Group Categorized View inside Modal Popup */}
+                <div className="overflow-y-auto custom-scrollbar flex-1 min-h-0 py-3 space-y-4 sm:space-y-6">
+                  {activeModalCategory.groups && activeModalCategory.groups.length > 0 ? (
+                    activeModalCategory.groups.map(group => (
+                      <div key={group.key} className="space-y-2.5 sm:space-y-3">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-primary dark:text-primary-400 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-1.5">
+                          <span className="w-2 h-2 rounded-full bg-primary inline-block"></span>
+                          <span>{group.label}</span>
+                          <span className="text-[10px] font-bold text-slate-400">({group.items.length})</span>
+                        </h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-2.5">
+                          {group.items.map((item) => {
+                            const ItemIcon = getItemIcon(item);
+                            return (
+                              <div
+                                key={item}
+                                className="p-2 sm:p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center gap-2 sm:gap-3 shadow-sm min-w-0"
+                              >
+                                <div className="p-1.5 sm:p-2 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
+                                  <ItemIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <h5 className="font-extrabold text-[11px] sm:text-xs text-slate-900 dark:text-white truncate" title={item}>
+                                    {item}
+                                  </h5>
+                                  <span className="text-[9px] sm:text-[10px] font-extrabold text-primary flex items-center gap-0.5 sm:gap-1 mt-0.5">
+                                    <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+                                    <span className="truncate">Configured</span>
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-2.5">
+                      {activeModalCategory.items.map((item) => {
+                        const ItemIcon = getItemIcon(item);
+                        return (
+                          <div
+                            key={item}
+                            className="p-2 sm:p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center gap-2 sm:gap-3 shadow-sm min-w-0"
+                          >
+                            <div className="p-1.5 sm:p-2 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
+                              <ItemIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h5 className="font-extrabold text-[11px] sm:text-xs text-slate-900 dark:text-white truncate" title={item}>
+                                {item}
+                              </h5>
+                              <span className="text-[9px] sm:text-[10px] font-extrabold text-primary flex items-center gap-0.5 sm:gap-1 mt-0.5">
+                                <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+                                <span className="truncate">Configured</span>
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Modal Footer */}
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setActiveModalCategory(null)}
+                    className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    Close Preview
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* Shared Amenities, Rules & Features Full Breakdown Modal */}
+      <SharedAmenitiesModal
+        isOpen={amenitiesModalConfig.isOpen}
+        onClose={() => setAmenitiesModalConfig(prev => ({ ...prev, isOpen: false }))}
+        initialCategory={amenitiesModalConfig.initialCategory}
+        propertyTitle={propertyInfo.title || propertyInfo.propertyName || 'Property Features & Rules'}
+        amenities={selectedAmenities}
+        customRules={propertyConfig.rules?.customRules || watch('propertyConfig.rules.customRules') || []}
+        customFeatures={propertyConfig.features?.customFeatures || watch('propertyConfig.features.customFeatures') || []}
+        rulesObj={propertyConfig.rules || watch('propertyConfig.rules') || {}}
+        featuresObj={propertyConfig.features || watch('propertyConfig.features') || {}}
+        rooms={rooms}
       />
     </div>
   );

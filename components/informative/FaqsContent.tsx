@@ -70,7 +70,7 @@ const faqData: FAQCategory[] = [
       {
         id: 'how-to-become-host',
         question: 'How do I register as a host?',
-        answer: 'Click "Become a Host" in the header or footer. You will be guided through a simple host application wizard where you provide your business name, emergency contact details, and upload copy of your Mayor\'s/Business Permit and Fire Safety Certificate. Our administration team reviews applications within 24–48 hours.'
+        answer: 'Click "Become a Host" in the header or footer. You will be guided through a simple host application wizard where you provide your business name, contact details, and upload a copy of your Mayor\'s/Business Permit and Fire Safety Certificate. Our administration team reviews applications within 24–48 hours.'
       },
       {
         id: 'how-to-add-rooms',

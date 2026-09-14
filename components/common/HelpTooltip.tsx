@@ -15,6 +15,7 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children, forceVisible 
   const [isVisible, setIsVisible] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
+  const wasClickedRef = useRef<boolean>(false);
   const [coords, setCoords] = useState({ 
     top: 0, 
     left: 0, 
@@ -23,7 +24,6 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children, forceVisible 
     pointerLeft: '50%'
   });
   const [isMounted, setIsMounted] = useState(false);
-  const touchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -64,50 +64,59 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children, forceVisible 
   };
 
   const handleMouseEnter = () => {
+    if (wasClickedRef.current) return;
     timeoutRef.current = setTimeout(() => {
       updatePosition();
       setIsVisible(true);
-    }, 400); // 400ms hover debounce
+    }, 200);
   };
 
   const handleMouseLeave = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (touchTimeoutRef.current) clearTimeout(touchTimeoutRef.current);
-    setIsVisible(false);
+    if (!wasClickedRef.current) {
+      setIsVisible(false);
+    }
   };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    // On touch devices, toggle visibility on click. 
-    // On desktop, it just stops propagation (hover handles visibility).
-    if (typeof window !== 'undefined' && window.matchMedia("(pointer: coarse)").matches) {
-      if (!isVisible) {
-        updatePosition();
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    
+    if (isVisible && wasClickedRef.current) {
+      wasClickedRef.current = false;
+      setIsVisible(false);
+    } else {
+      wasClickedRef.current = true;
+      updatePosition();
+      setIsVisible(true);
     }
   };
 
   useEffect(() => {
     if (isVisible) {
-      const handleGlobalTouch = (e: TouchEvent) => {
-        if (triggerRef.current && triggerRef.current.contains(e.target as Node)) {
+      const handleGlobalDismiss = (e: Event) => {
+        const targetNode = e.target as Node;
+        if (triggerRef.current && (triggerRef.current === targetNode || triggerRef.current.contains(targetNode))) {
           return;
         }
+        wasClickedRef.current = false;
         setIsVisible(false);
       };
 
-      window.addEventListener('scroll', updatePosition, true);
-      window.addEventListener('resize', updatePosition);
-      window.addEventListener('touchstart', handleGlobalTouch);
+      const timer = setTimeout(() => {
+        window.addEventListener('scroll', updatePosition, true);
+        window.addEventListener('resize', updatePosition);
+        window.addEventListener('touchstart', handleGlobalDismiss);
+        window.addEventListener('click', handleGlobalDismiss);
+      }, 50);
 
       return () => {
+        clearTimeout(timer);
         window.removeEventListener('scroll', updatePosition, true);
         window.removeEventListener('resize', updatePosition);
-        window.removeEventListener('touchstart', handleGlobalTouch);
+        window.removeEventListener('touchstart', handleGlobalDismiss);
+        window.removeEventListener('click', handleGlobalDismiss);
       };
     }
   }, [isVisible]);
@@ -119,6 +128,7 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children, forceVisible 
         updatePosition();
         setIsVisible(true);
       } else {
+        wasClickedRef.current = false;
         setIsVisible(false);
       }
     }
@@ -131,13 +141,6 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children, forceVisible 
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
-      onContextMenu={(e) => {
-        // Prevent default context menu (like text selection or magnifier) on mobile 
-        // to ensure the custom long press peek effect works cleanly.
-        if (typeof window !== 'undefined' && window.matchMedia("(pointer: coarse)").matches) {
-          e.preventDefault();
-        }
-      }}
     >
       {children ? (
         children

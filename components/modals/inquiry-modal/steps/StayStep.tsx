@@ -55,12 +55,12 @@ const StayStep: React.FC<StayStepProps> = ({
         validation: {
           required: "Email is required",
           validate: (value: string) => {
+            if (!isCleanString(value)) {
+              return "Please remove special characters (< > { } [ ])";
+            }
             const emailRegex = /\S+@\S+\.\S+/;
             if (!emailRegex.test(value)) {
               return "Please enter a valid email address";
-            }
-            if (!isCleanString(value)) {
-              return "Please remove special characters (< > { } [ ])";
             }
             return true;
           }

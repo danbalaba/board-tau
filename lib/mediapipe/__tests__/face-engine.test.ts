@@ -174,7 +174,7 @@ describe("FaceEngine", () => {
       });
       const result = await engine.getLivenessState(video);
       // getLivenessState still returns a state object even without blendshapes (just all false)
-      expect(result).toEqual({ blink: false, smile: false, turnLeft: false, turnRight: false });
+      expect(result).toEqual({ blink: false, smile: false, turnLeft: false, turnRight: false, openMouth: false, raiseEyebrows: false });
     });
 
     it("returns blink state if blink score is high", async () => {
@@ -192,7 +192,7 @@ describe("FaceEngine", () => {
         }]
       });
       const result = await engine.getLivenessState(video);
-      expect(result).toEqual({ blink: true, smile: false, turnLeft: false, turnRight: false });
+      expect(result).toEqual({ blink: true, smile: false, turnLeft: false, turnRight: false, openMouth: false, raiseEyebrows: false });
     });
   });
 });

@@ -10,42 +10,49 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { NotificationProvider } from "@/context/NotificationContext";
 
 if (typeof window !== "undefined") {
+  const filterPostHogAndScript = (...args: any[]) => {
+    const str = args.map(String).join(" ");
+    if (str.includes("Encountered a script tag while rendering React component")) return true;
+    if (str.includes("[PostHog.js]")) return true;
+    return false;
+  };
+
   const originalError = console.error;
   console.error = (...args) => {
-    if (typeof args[0] === "string" && args[0].includes("Encountered a script tag while rendering React component")) {
-      return;
-    }
+    if (filterPostHogAndScript(...args)) return;
     originalError(...args);
+  };
+
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    if (filterPostHogAndScript(...args)) return;
+    originalWarn(...args);
   };
 }
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: true,
-    },
-    mutations: {
-      onSuccess: () => {
-        // Invalidate queries on mutation success to ensure fresh data
-        queryClient.invalidateQueries({
-          queryKey: ['listings'],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ['properties'],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ['reservations'],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ['analytics'],
-        });
+function makeQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        gcTime: 10 * 60 * 1000, // 10 minutes
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: true,
       },
     },
-  },
-});
+  });
+}
+
+let browserQueryClient: QueryClient | undefined = undefined;
+
+function getQueryClient() {
+  if (typeof window === "undefined") {
+    return makeQueryClient();
+  } else {
+    if (!browserQueryClient) browserQueryClient = makeQueryClient();
+    return browserQueryClient;
+  }
+}
 
 const EdgeStoreWrapper = ({ children }: PropsWithChildren) => {
   const { status, data: session } = useSession();
@@ -58,8 +65,13 @@ const EdgeStoreWrapper = ({ children }: PropsWithChildren) => {
   );
 };
 
+import { preloadKerbyAssets } from "@/utils/imagePreloader";
+
 const Providers = ({ children }: PropsWithChildren) => {
+  const queryClient = getQueryClient();
+
   useEffect(() => {
+    preloadKerbyAssets();
     // Ensure light mode doesn't have any theme class
     const root = document.documentElement;
     if (root.classList.contains('light')) {

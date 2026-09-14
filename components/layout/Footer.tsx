@@ -12,8 +12,17 @@ import AuthModal from '../modals/AuthModal';
 import HostApplicationModal from '../modals/HostApplicationModal';
 import ContactSupportModal from '../modals/ContactSupportModal';
 
+const useSafeSession = () => {
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useSession();
+  } catch (err) {
+    return { data: null, status: 'unauthenticated' };
+  }
+};
+
 const Footer: React.FC = () => {
-  const { data: session } = useSession();
+  const { data: session } = useSafeSession();
   const currentUser = session?.user;
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
@@ -33,6 +42,7 @@ const Footer: React.FC = () => {
                   alt="BoardTAU Logo"
                   width={150}
                   height={40}
+                  style={{ width: 'auto', height: 'auto' }}
                   className="object-contain dark:hidden"
                 />
                 <Image
@@ -40,6 +50,7 @@ const Footer: React.FC = () => {
                   alt="BoardTAU Logo"
                   width={150}
                   height={40}
+                  style={{ width: 'auto', height: 'auto' }}
                   className="object-contain hidden dark:block"
                 />
               </Link>
@@ -110,29 +121,13 @@ const Footer: React.FC = () => {
                 </h3>
                 <ul className="space-y-3">
                   <li>
-                    <Modal>
-                      {currentUser ? (
-                        <Modal.Trigger name="host-application">
-                          <button className="text-sm hover:underline text-gray-600 dark:text-slate-400 hover:text-black dark:hover:text-white text-left w-full">
-                            Become a Host
-                          </button>
-                        </Modal.Trigger>
-                      ) : (
-                        <Modal.Trigger name="Login">
-                          <button className="text-sm hover:underline text-gray-600 dark:text-slate-400 hover:text-black dark:hover:text-white text-left w-full">
-                            Become a Host
-                          </button>
-                        </Modal.Trigger>
-                      )}
-                      
-                      <Modal.Window name="Login" size="sm" closeOnOutsideClick={false}>
-                        <AuthModal name="Login" />
-                      </Modal.Window>
-                      
-                      <Modal.Window name="host-application" size="xl">
-                        <HostApplicationModal />
-                      </Modal.Window>
-                    </Modal>
+                    <Link
+                      href="/become-a-host"
+                      prefetch={false}
+                      className="text-sm hover:underline text-gray-600 dark:text-slate-400 hover:text-black dark:hover:text-white"
+                    >
+                      Become a Host
+                    </Link>
                   </li>
                   <li>
                     <Link

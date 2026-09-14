@@ -1,108 +1,141 @@
+"use client";
+
+import React from "react";
 import { FaCheck } from "react-icons/fa";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { Lock } from "lucide-react";
+import { motion } from "framer-motion";
+import { cn } from "@/utils/helper";
 
 interface ProgressBarProps {
   steps: { id: number; label: string }[];
   currentStepId: number;
+  maxUnlockedStepId?: number;
+  onStepClick?: (stepId: number) => void;
 }
 
-export default function ProgressBar({ steps, currentStepId }: ProgressBarProps) {
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window !== "undefined") return window.innerWidth < 768;
-    return false;
-  });
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const displayStep = steps.findIndex(s => s.id === currentStepId) + 1;
+export default function ProgressBar({
+  steps,
+  currentStepId,
+  maxUnlockedStepId,
+  onStepClick,
+}: ProgressBarProps) {
+  const foundIndex = steps.findIndex((s) => s.id === currentStepId);
+  const activeIndex = foundIndex >= 0 ? foundIndex : Math.min(Math.max(0, currentStepId), steps.length - 1);
+  const displayStep = activeIndex + 1;
   const totalSteps = steps.length;
+  const progressPercent = Math.round((displayStep / totalSteps) * 100);
+  const currentStepObj = steps[activeIndex] || steps[0];
 
-  const ITEM_WIDTH = isMobile ? (100 / 3) : 25; // 3 items on mobile, 4 on desktop
+  const activeStepRef = React.useRef<HTMLDivElement | null>(null);
 
-  // We center the active step when possible.
-  let startIndex = displayStep - 2;
-  if (startIndex < 0) startIndex = 0;
-  
-  // Calculate max start index so the track doesn't scroll past the end
-  const maxStartIndex = Math.max(0, totalSteps - (isMobile ? 3 : 4));
-  if (startIndex > maxStartIndex) startIndex = maxStartIndex;
-
-  const translateX = `-${startIndex * ITEM_WIDTH}%`;
+  React.useEffect(() => {
+    if (activeStepRef.current && typeof window !== "undefined" && window.innerWidth < 768) {
+      activeStepRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [currentStepId]);
 
   return (
-    <div className="w-full flex justify-center pt-6 pb-4 border-b border-gray-100 dark:border-gray-800/60 bg-white dark:bg-gray-900 px-6 overflow-hidden">
-      <div className="relative w-full max-w-2xl">
-        
-        {/* The Sliding Track */}
-        <motion.div 
-          className="flex items-center"
-          animate={{ x: translateX }}
-          transition={{ type: "spring", stiffness: 250, damping: 30, mass: 0.8 }}
-        >
-          <AnimatePresence mode="popLayout">
-            {steps.map((stepObj, index) => {
-              const step = index + 1;
-              const isPast = displayStep > step;
-              const isCurrent = displayStep === step;
+    <div className="w-full flex flex-col gap-3 py-2 px-2 md:px-6">
+      {/* Top Meta Status Row: Step Badge + Percentage */}
+      <div className="flex items-center justify-between text-xs font-semibold px-1">
+        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+          <span className="px-2.5 py-1 rounded-full bg-[#2f7d6d]/15 text-[#2f7d6d] dark:text-emerald-400 font-bold border border-[#2f7d6d]/30 text-[11px] uppercase tracking-wider">
+            Step {displayStep} of {totalSteps}
+          </span>
+          <span className="font-bold text-slate-900 dark:text-white truncate max-w-[200px] md:max-w-xs">
+            {currentStepObj?.label}
+          </span>
+        </div>
 
-              return (
-                <motion.div 
-                  key={stepObj.id} 
-                  layout
-                  initial={{ opacity: 0, scale: 0.8, width: "0%" }}
-                  animate={{ opacity: 1, scale: 1, width: isMobile ? "33.333%" : "25%" }}
-                  exit={{ opacity: 0, scale: 0.5, width: "0%" }}
-                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                  className="flex-shrink-0 flex flex-col items-center justify-center relative"
-                >
-                  
-                  {/* Connecting Line to the next step */}
-                  {step < totalSteps && (
-                    <div className="absolute top-[15px] left-[50%] w-full h-[3px] bg-gray-200 dark:bg-gray-700 rounded-full">
-                      <motion.div 
-                        className="h-full bg-primary rounded-full"
-                        style={{ transformOrigin: "left" }}
-                        initial={false}
-                        animate={{ scaleX: displayStep > step ? 1 : 0 }}
-                        transition={{ duration: 0.5, ease: "easeInOut" }}
-                      />
-                    </div>
-                  )}
+        <div className="flex items-center gap-2">
+          <span className="text-[#2f7d6d] dark:text-emerald-400 font-extrabold font-mono text-xs">
+            {progressPercent}%
+          </span>
+          <div className="w-16 md:w-24 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-[#2f7d6d] rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPercent}%` }}
+              transition={{ type: "spring", stiffness: 200, damping: 25 }}
+            />
+          </div>
+        </div>
+      </div>
 
-                  <div className="flex flex-col items-center gap-3 bg-white dark:bg-gray-900 px-4 relative z-10">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                        isCurrent
-                          ? "bg-primary text-white shadow-md shadow-primary/20 ring-4 ring-primary/10 scale-110"
-                          : isPast
-                          ? "bg-primary text-white"
-                          : "bg-gray-100 dark:bg-gray-800 text-gray-400 border border-gray-200 dark:border-gray-700"
-                      }`}
-                    >
-                      {isPast ? <FaCheck size={12} /> : step}
-                    </div>
-                    <span
-                      className={`text-sm font-semibold whitespace-nowrap transition-colors duration-300 ${
-                        isCurrent
-                          ? "text-gray-900 dark:text-white"
-                          : isPast
-                          ? "text-primary/70"
-                          : "text-gray-400"
-                      }`}
-                    >
-                      {stepObj.label}
-                    </span>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </motion.div>
+      {/* Balanced Stepper Track */}
+      <div className="relative w-full flex items-center justify-between pt-1 pb-5 md:pb-6 overflow-x-auto md:overflow-visible no-scrollbar">
+        {/* Continuous Background Connecting Bar */}
+        <div className="absolute top-[18px] left-3 right-3 h-[3px] bg-slate-200 dark:bg-slate-800 rounded-full z-0">
+          <motion.div
+            className="h-full bg-[#2f7d6d] rounded-full"
+            initial={{ width: 0 }}
+            animate={{
+              width: `${(activeIndex / Math.max(1, totalSteps - 1)) * 100}%`,
+            }}
+            transition={{ type: "spring", stiffness: 200, damping: 25 }}
+          />
+        </div>
+
+        {/* Step Nodes */}
+        {steps.map((stepObj, index) => {
+          const stepNum = index + 1;
+          const isPast = activeIndex > index;
+          const isCurrent = activeIndex === index;
+          const isLocked = maxUnlockedStepId !== undefined && stepObj.id > maxUnlockedStepId;
+
+          return (
+            <div
+              key={stepObj.id}
+              ref={isCurrent ? activeStepRef : null}
+              onClick={() => {
+                if (!isLocked && onStepClick) {
+                  onStepClick(stepObj.id);
+                }
+              }}
+              className={cn(
+                "relative z-10 flex flex-col items-center group shrink-0 transition-all",
+                isLocked ? "cursor-not-allowed" : "cursor-pointer"
+              )}
+              title={isLocked ? `Step ${stepNum}: ${stepObj.label} (Locked)` : `Step ${stepNum}: ${stepObj.label}`}
+            >
+              <motion.div
+                whileHover={!isLocked ? { scale: 1.15 } : { scale: 1.05 }}
+                className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                  isCurrent
+                    ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 ring-4 ring-[#2f7d6d]/20 scale-110 z-10"
+                    : isPast
+                    ? "bg-[#2f7d6d] text-white shadow-sm"
+                    : isLocked
+                    ? "bg-slate-100/40 dark:bg-slate-900/40 text-slate-400/60 dark:text-slate-600/60 border border-slate-200/40 dark:border-slate-800/40 scale-90"
+                    : "bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-slate-700"
+                }`}
+              >
+                {isLocked ? (
+                  <Lock size={10} className="text-slate-400/70 dark:text-slate-600/70 group-hover:text-slate-500 transition-colors" />
+                ) : isPast ? (
+                  <FaCheck className="w-3 h-3 text-white" />
+                ) : (
+                  stepNum
+                )}
+              </motion.div>
+
+              {/* Step Label underneath node: Only active step visible by default; others reveal on hover */}
+              <span
+                className={`hidden md:block absolute -bottom-5 text-[10px] font-bold tracking-tight whitespace-nowrap transition-all duration-300 pointer-events-none ${
+                  isCurrent
+                    ? "text-[#2f7d6d] dark:text-emerald-400 font-extrabold opacity-100"
+                    : "text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100"
+                }`}
+              >
+                {stepObj.label}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

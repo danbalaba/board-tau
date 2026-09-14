@@ -1,22 +1,20 @@
 import { useState, useEffect, useMemo } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import { useRouter, useSearchParams } from "next/navigation";
-import { colleges } from "@/data/colleges";
 import { ROOM_TYPES } from "@/data/roomTypes";
 import { buildSearchUrl } from "@/utils/searchUrlBuilder";
 
 export enum STEPS {
   COLLEGE = 0,
-  BUDGET = 1,
-  ROOM_TYPE = 2,
-  ROOM_AMENITIES = 3,
-  BED_SETUP = 4,
-  LOCATION = 5,
-  CATEGORY = 6,
-  AMENITIES = 7,
-  RULES = 8,
-  ADVANCED = 9,
-  SUMMARY = 10,
+  PROPERTY_TYPE = 1,
+  ROOM_CONFIG = 2,
+  BUDGET = 3,
+  LOCATION = 4,
+  AMENITIES = 5,
+  ROOM_AMENITIES = 6,
+  RULES = 7,
+  ADVANCED_FEATURES = 8,
+  SUMMARY = 9,
 }
 
 export function useSearchLogic(onCloseModal?: () => void) {
@@ -27,79 +25,89 @@ export function useSearchLogic(onCloseModal?: () => void) {
   const form = useForm<FieldValues>({
     defaultValues: {
       college: "any",
-      categories: [] as string[],
-      distance: 5,
-      amenities: [] as string[],
-      rules: [] as string[],
-      roomType: "",
+      propertyType: [] as string[],
+      roomType: [] as string[],
       bedType: "",
-      roomAmenities: [] as string[],
       capacity: "",
       availableSlots: "",
       roomSize: "",
       minPrice: "",
       maxPrice: "",
-      advanced: [] as string[],
+      distance: "",
       isUnlimitedDistance: true,
+      amenities: [] as string[],
+      roomAmenities: [] as string[],
+      rules: [] as string[],
+      advanced: [] as string[],
     },
   });
 
   const { handleSubmit, setValue, watch, getValues, register, formState: { errors } } = form;
 
+  // Sync URL searchParams to default form state (e.g. navbar category pill click)
+  useEffect(() => {
+    const urlCategory = searchParams?.get("category") || searchParams?.get("propertyType");
+    if (urlCategory) {
+      const currentProps = (getValues("propertyType") ?? []) as string[];
+      if (currentProps.length === 0) {
+        setValue("propertyType", [urlCategory], { shouldDirty: true });
+      }
+    }
+  }, [searchParams, setValue, getValues]);
+
   const college = watch("college");
-  const categoriesSelected = watch("categories") ?? [];
-  const distance = watch("distance") ?? 5;
-  const amenitiesSelected = watch("amenities") ?? [];
-  const rulesSelected = watch("rules") ?? [];
-  const roomType = watch("roomType");
+  const propertyTypeSelected = watch("propertyType") ?? [];
+  const roomTypeSelected = watch("roomType") ?? [];
   const bedType = watch("bedType");
-  const roomAmenitiesSelected = watch("roomAmenities") ?? [];
   const capacity = watch("capacity") || "";
   const availableSlots = watch("availableSlots") || "";
   const roomSize = watch("roomSize");
   const minPrice = watch("minPrice") || "";
   const maxPrice = watch("maxPrice") || "";
-  const advancedSelected = watch("advanced") ?? [];
+  const distance = watch("distance") ?? 5;
   const isUnlimitedDistance = watch("isUnlimitedDistance");
+  const amenitiesSelected = watch("amenities") ?? [];
+  const roomAmenitiesSelected = watch("roomAmenities") ?? [];
+  const rulesSelected = watch("rules") ?? [];
+  const advancedSelected = watch("advanced") ?? [];
 
-  const collegeOption = useMemo(() => colleges.find((c) => c.value === college), [college]);
-  const mapCenter = collegeOption?.latlng ?? undefined;
+  // In Phase 8, college mapping is dynamic so mapCenter/collegeOption are handled 
+  // directly in the steps that need them or passed differently.
+  const collegeOption = undefined;
+  const mapCenter = undefined;
 
+  // Removed hardcoded room type logic as it will be dynamic
   useEffect(() => {
-    if (roomType === ROOM_TYPES.SOLO) {
-      if (capacity !== 1) setCustomValue("capacity", 1);
-      if (availableSlots !== 1) setCustomValue("availableSlots", 1);
-    } else if (roomType === ROOM_TYPES.BEDSPACE) {
-      if (capacity < 2) setCustomValue("capacity", 2);
-    }
-  }, [roomType, capacity]);
+    // We can add capacity reset logic later if needed
+  }, [roomTypeSelected, capacity]);
 
   const setCustomValue = (id: string, value: unknown) => {
     setValue(id, value, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
   };
 
-  const toggleMulti = (id: "categories" | "amenities" | "rules" | "advanced" | "roomAmenities", value: string) => {
+  const toggleMulti = (id: "amenities" | "rules" | "advanced" | "roomAmenities" | "propertyType" | "roomType", value: string) => {
     const prev = (getValues(id) ?? []) as string[];
     const next = prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value];
     setCustomValue(id, next);
   };
 
   const onBack = () => {
-    if (step === STEPS.LOCATION && !roomType) setStep(STEPS.ROOM_TYPE);
-    else setStep((s) => s - 1);
-  };
-
-  const onNext = () => {
-    if (step === STEPS.ROOM_TYPE && !roomType) setStep(STEPS.LOCATION);
-    else setStep((s) => s + 1);
+    setStep((s) => s - 1);
   };
 
   const isStepFilled = () => {
     switch (step) {
-      case STEPS.COLLEGE: return !!college;
-      case STEPS.BUDGET: return minPrice <= maxPrice;
+      case STEPS.COLLEGE: return !!college && college !== "";
+      case STEPS.PROPERTY_TYPE: return propertyTypeSelected && propertyTypeSelected.length > 0;
+      case STEPS.ROOM_CONFIG: return true;
       default: return true;
     }
+  };
+
+  const onNext = () => {
+    if (!isStepFilled()) return false;
+    setStep((s) => s + 1);
+    return true;
   };
 
   const onSubmit: SubmitHandler<FieldValues> = (data) => {
@@ -120,20 +128,20 @@ export function useSearchLogic(onCloseModal?: () => void) {
     form,
     values: {
       college,
-      categoriesSelected,
-      distance,
-      amenitiesSelected,
-      rulesSelected,
-      roomType,
+      propertyTypeSelected,
+      roomTypeSelected,
       bedType,
-      roomAmenitiesSelected,
       capacity,
       availableSlots,
       roomSize,
       minPrice,
       maxPrice,
-      advancedSelected,
+      distance,
       isUnlimitedDistance,
+      amenitiesSelected,
+      roomAmenitiesSelected,
+      rulesSelected,
+      advancedSelected,
       collegeOption,
       mapCenter,
     },

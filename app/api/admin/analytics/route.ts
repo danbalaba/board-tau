@@ -105,11 +105,11 @@ export async function GET(request: NextRequest) {
     });
 
     // Get property type distribution
-    const propertyTypes = await db.category.findMany({
+    const propertyTypes = await db.propertyType.findMany({
       include: {
         _count: {
           select: {
-            listingCategories: true
+            listings: true
           }
         }
       }

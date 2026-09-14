@@ -49,13 +49,13 @@ export function ListingReviewCard({ listing, onApprove, onReject, onModify }: Li
                 <CardTitle className="text-2xl font-black tracking-tighter uppercase">{listing.title}</CardTitle>
               </div>
               <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground/60 uppercase tracking-widest pl-11">
-                <MapPin className="w-4 h-4 text-emerald-500" />
+                <MapPin className="w-4 h-4 text-primary" />
                 {listing.location}
               </div>
             </div>
             
             <div className="flex flex-col items-end gap-2">
-              <div className="text-3xl font-black tracking-tighter text-emerald-500">
+              <div className="text-3xl font-black tracking-tighter text-primary">
                 ₱{listing.price.toLocaleString()}
                 <span className="text-xs text-muted-foreground/60 font-medium tracking-tight">/MO</span>
               </div>
@@ -71,7 +71,7 @@ export function ListingReviewCard({ listing, onApprove, onReject, onModify }: Li
           <div className="grid grid-cols-4 gap-4">
             {[
               { label: 'Bedrooms', val: listing.rooms, icon: Bed, color: 'text-blue-500' },
-              { label: 'Bathrooms', val: listing.bathrooms, icon: Bath, color: 'text-emerald-500' },
+              { label: 'Bathrooms', val: listing.bathrooms, icon: Bath, color: 'text-primary' },
               { label: 'Total Area', val: '120 SQFT', icon: ShieldCheck, color: 'text-amber-500' },
               { label: 'Floor Level', val: '3rd Floor', icon: TrendingUp, color: 'text-purple-500' }
             ].map((stat, i) => (
@@ -86,9 +86,9 @@ export function ListingReviewCard({ listing, onApprove, onReject, onModify }: Li
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
             {/* Left: Images & Gallery */}
             <div className="space-y-6">
-              <div className="flex items-center gap-3 pl-4 border-l-[3px] border-emerald-500">
-                <ImageIcon className="w-5 h-5 text-emerald-500" />
-                <h3 className="text-[11px] font-black uppercase tracking-widest text-emerald-500">Property Inspection Gallery</h3>
+              <div className="flex items-center gap-3 pl-4 border-l-[3px] border-primary">
+                <ImageIcon className="w-5 h-5 text-primary" />
+                <h3 className="text-[11px] font-black uppercase tracking-widest text-primary">Property Inspection Gallery</h3>
               </div>
               <div className="relative group overflow-hidden rounded-[40px] border-2 border-border/40 bg-muted/20">
                 <SafeImage 
@@ -183,7 +183,7 @@ export function ListingReviewCard({ listing, onApprove, onReject, onModify }: Li
           </Button>
           <Button 
             onClick={() => onApprove(listing.id)}
-            className="h-14 px-10 rounded-3xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-xl shadow-emerald-500/20 text-[11px] font-black uppercase tracking-widest"
+            className="h-14 px-10 rounded-3xl bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 text-[11px] font-black uppercase tracking-widest"
           >
             <CheckCircle className="w-4 h-4 mr-2" />
             Approve Listing

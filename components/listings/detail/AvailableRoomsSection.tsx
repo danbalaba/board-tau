@@ -44,6 +44,7 @@ interface AvailableRoomsSectionProps {
   isLoading: boolean;
   user?: any; // User object or null if not logged in (optional)
   activeStay?: { endDate: string; status: string; listing: { title: string } } | null;
+  leaseContract?: any;
 }
 
 const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
@@ -55,6 +56,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
   isLoading,
   user,
   activeStay,
+  leaseContract,
 }) => {
   const soloRooms = React.useMemo(() => [...rooms].filter(r => r.roomType === 'SOLO').sort((a, b) => 
     a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
@@ -504,6 +506,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
         onSubmit={onSubmit}
         isLoading={isLoading}
         activeStay={activeStay}
+        leaseContract={leaseContract}
       />
 
       {/* Auth Modal for Guests */}

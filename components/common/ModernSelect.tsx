@@ -139,15 +139,15 @@ const ModernSelect: React.FC<ModernSelectProps> = ({
   }
 
   return (
-    <div className={cn("relative w-full sm:w-auto", className)}>
+    <div className={cn("flex flex-col gap-1.5 w-full sm:w-auto", className)}>
       {label && (
-        <label className="block text-[9px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 mb-2 ml-1">
+        <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">
           {label}
         </label>
       )}
       <div className={cn(
         "flex items-center gap-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary/40 dark:hover:border-primary/40 focus-within:border-primary dark:focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/5 transition-all duration-300 shadow-sm",
-        isSmall ? "rounded-xl pr-2 pl-3.5 py-0" : "rounded-2xl pr-3 pl-4.5 py-0",
+        isSmall ? "rounded-xl px-3.5 py-1" : "rounded-2xl px-4 py-1.5",
         isSmall ? "min-w-[160px]" : "min-w-[220px]",
         disabled && "opacity-50 pointer-events-none",
       )}>
@@ -174,6 +174,27 @@ const ModernSelect: React.FC<ModernSelectProps> = ({
             isSearchable={isSearchable}
             menuPortalTarget={portalTarget}
             styles={{
+              valueContainer: (base) => ({
+                ...base,
+                display: 'flex',
+                alignItems: 'center',
+                padding: 0,
+                margin: 0,
+              }),
+              singleValue: (base) => ({
+                ...base,
+                position: 'relative',
+                transform: 'none',
+                top: 'auto',
+                margin: 0,
+                maxWidth: '100%',
+              }),
+              control: (base) => ({
+                ...base,
+                minHeight: 'auto',
+                border: 'none',
+                boxShadow: 'none',
+              }),
               menuPortal: (base) => ({
                 ...base,
                 zIndex: 999999
@@ -187,14 +208,11 @@ const ModernSelect: React.FC<ModernSelectProps> = ({
               }),
             }}
             classNames={{
-              control: () => cn(
-                "cursor-pointer font-bold flex items-center w-full",
-                isSmall ? "text-[12px] py-1.5" : "text-[14px] py-2.5",
-              ),
-              valueContainer: () => "flex-1 overflow-hidden py-0.5",
+              control: () => "cursor-pointer font-bold flex items-center w-full min-h-[44px] py-1",
+              valueContainer: () => "flex-1 overflow-hidden flex items-center",
               singleValue: () => "text-gray-900 dark:text-white truncate",
               input: () => "m-0 p-0",
-              indicatorsContainer: () => "shrink-0 ml-2",
+              indicatorsContainer: () => "shrink-0 ml-2 flex items-center",
               menu: () => cn(
                 "absolute z-50 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl overflow-hidden",
                 isSmall ? "rounded-xl" : "rounded-2xl",

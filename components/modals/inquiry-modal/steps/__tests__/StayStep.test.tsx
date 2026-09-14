@@ -235,35 +235,51 @@ describe("StayStep Component", () => {
     const contactMethodSelect = selects[1];
     
     // Test Email validation side effects
-    fireEvent.change(contactMethodSelect, { target: { value: "email" } });
-    const emailInput = await screen.findByPlaceholderText("example@email.com");
+    await act(async () => {
+      fireEvent.change(contactMethodSelect, { target: { value: "email" } });
+    });
     
     // Assuming the validation runs on blur or change, we simulate invalid inputs
-    fireEvent.change(emailInput, { target: { value: "invalid-email" } });
-    fireEvent.blur(emailInput);
+    await act(async () => {
+      const emailInput = screen.getByPlaceholderText("example@email.com");
+      fireEvent.change(emailInput, { target: { value: "invalid-email" } });
+      fireEvent.blur(emailInput);
+    });
     
     // Wait for the error message to appear
     expect(await screen.findByText("Please enter a valid email address")).toBeInTheDocument();
 
-    fireEvent.change(emailInput, { target: { value: "test<script>@email.com" } });
-    fireEvent.blur(emailInput);
+    await act(async () => {
+      const emailInput = screen.getByPlaceholderText("example@email.com");
+      fireEvent.change(emailInput, { target: { value: "test<script>@email.com" } });
+      fireEvent.blur(emailInput);
+    });
     expect(await screen.findByText("Please remove special characters (< > { } [ ])")).toBeInTheDocument();
     
     // Test valid email
-    fireEvent.change(emailInput, { target: { value: "valid@email.com" } });
-    fireEvent.blur(emailInput);
-    // Error should go away or the internal rule just passes (we can't explicitly assert missing error immediately without waitForElementToBeRemoved, but the branch will be covered).
+    await act(async () => {
+      const emailInput = screen.getByPlaceholderText("example@email.com");
+      fireEvent.change(emailInput, { target: { value: "valid@email.com" } });
+      fireEvent.blur(emailInput);
+    });
 
     // Test Phone validation side effects
-    fireEvent.change(contactMethodSelect, { target: { value: "phone" } });
-    const phoneInput = await screen.findByPlaceholderText("e.g. 09123456789 or +63...");
+    await act(async () => {
+      fireEvent.change(contactMethodSelect, { target: { value: "phone" } });
+    });
     
-    fireEvent.change(phoneInput, { target: { value: "123" } });
-    fireEvent.blur(phoneInput);
+    await act(async () => {
+      const phoneInput = screen.getByPlaceholderText("e.g. 09123456789 or +63...");
+      fireEvent.change(phoneInput, { target: { value: "123" } });
+      fireEvent.blur(phoneInput);
+    });
     expect(await screen.findByText("Please enter a valid phone number (e.g. 09123456789 or +63...)")).toBeInTheDocument();
     
     // Test valid phone
-    fireEvent.change(phoneInput, { target: { value: "09123456789" } });
-    fireEvent.blur(phoneInput);
+    await act(async () => {
+      const phoneInput = screen.getByPlaceholderText("e.g. 09123456789 or +63...");
+      fireEvent.change(phoneInput, { target: { value: "09123456789" } });
+      fireEvent.blur(phoneInput);
+    });
   });
 });

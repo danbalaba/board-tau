@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import { X, Send, ChevronDown, ChevronUp, Sparkles, Maximize2, Minimize2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
@@ -13,21 +13,55 @@ import { useScrollDirection } from '@/hooks/use-scroll-direction';
 
 const TypingIndicator = () => (
   <div className="flex gap-1.5 items-center px-1">
-    <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0 }} className="w-1.5 h-1.5 bg-primary/70 rounded-full" />
-    <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0.15 }} className="w-1.5 h-1.5 bg-primary/70 rounded-full" />
-    <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0.3 }} className="w-1.5 h-1.5 bg-primary/70 rounded-full" />
+    <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0 }} className="w-1.5 h-1.5 bg-[#2f7d6d] dark:bg-emerald-400 rounded-full" />
+    <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0.15 }} className="w-1.5 h-1.5 bg-[#2f7d6d] dark:bg-emerald-400 rounded-full" />
+    <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0.3 }} className="w-1.5 h-1.5 bg-[#2f7d6d] dark:bg-emerald-400 rounded-full" />
   </div>
 );
+
+// Typewriter component for initial assistant greeting with deterministic slicing
+const TypewriterText: React.FC<{ text: string; speed?: number }> = ({ text, speed = 25 }) => {
+  const [displayedText, setDisplayedText] = useState('');
+  const [isFinished, setIsFinished] = useState(false);
+
+  useEffect(() => {
+    let index = 0;
+    setDisplayedText('');
+    setIsFinished(false);
+
+    const timer = setInterval(() => {
+      index++;
+      if (index <= text.length) {
+        setDisplayedText(text.slice(0, index));
+      } else {
+        setIsFinished(true);
+        clearInterval(timer);
+      }
+    }, speed);
+
+    return () => clearInterval(timer);
+  }, [text, speed]);
+
+  return (
+    <div className="markdown-content space-y-2 [&>ul]:list-disc [&>ul]:pl-4 [&>ol]:list-decimal [&>ol]:pl-4 [&>p]:m-0 [&_strong]:font-bold [&_strong]:text-[#2f7d6d] dark:[&_strong]:text-emerald-400">
+      <ReactMarkdown>{displayedText}</ReactMarkdown>
+      {!isFinished && (
+        <span className="inline-block w-1.5 h-4 bg-[#2f7d6d] dark:bg-emerald-400 ml-1 animate-pulse rounded-full align-middle" />
+      )}
+    </div>
+  );
+};
 
 type Message = {
   role: 'user' | 'assistant';
   content: string;
+  isInitial?: boolean;
 };
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Hello! I'm your BoardTAU AI Assistant. How can I help you today?" }
+    { role: 'assistant', content: "Mabuhay! I'm **Kerby**, your BoardTAU AI Assistant 🦬. How can I help you find student housing or navigate campus today?", isInitial: true }
   ]);
   const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([
     "How do I book a room?",
@@ -56,7 +90,7 @@ export default function ChatBot() {
   // Prevent background scrolling when interacting with the chatbot
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const container = document.getElementById('chatbot-wrapper');
     if (!container) return;
 
@@ -86,6 +120,26 @@ export default function ChatBot() {
     setMessages(newMessages);
     setInput('');
     setSuggestedPrompts([]); // Clear chips while loading
+
+    // Client-side SessionStorage caching key
+    const cacheKey = `chatbot_cache_${pathname}_${text.trim().toLowerCase()}`;
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.reply) {
+            setMessages([...newMessages, { role: 'assistant', content: parsed.reply }]);
+            setSuggestedPrompts(parsed.suggestedPrompts || []);
+            setShowPrompts(true);
+            return;
+          }
+        }
+      } catch (err) {
+        // Ignore storage access errors
+      }
+    }
+
     setIsLoading(true);
 
     try {
@@ -99,14 +153,21 @@ export default function ChatBot() {
       });
 
       const data = await res.json();
-      
+
       if (data.reply) {
         setMessages([...newMessages, { role: 'assistant', content: data.reply }]);
         if (data.suggestedPrompts && Array.isArray(data.suggestedPrompts)) {
-           setSuggestedPrompts(data.suggestedPrompts);
-           setShowPrompts(true); // Auto-expand when new prompts arrive
+          setSuggestedPrompts(data.suggestedPrompts);
+          setShowPrompts(true); // Auto-expand when new prompts arrive
         } else {
-           setSuggestedPrompts([]);
+          setSuggestedPrompts([]);
+        }
+
+        // Cache response in sessionStorage
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify(data));
+          } catch {}
         }
       } else {
         throw new Error('No response');
@@ -131,90 +192,125 @@ export default function ChatBot() {
         {isOpen && (
           <motion.div
             id="chatbot-wrapper"
-            initial={{ opacity: 0, y: 50, scale: 0.9, originX: 1, originY: 1 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 50, scale: 0.9, originX: 1, originY: 1 }}
-            transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
-            className="fixed inset-0 w-full h-[100dvh] rounded-none border-0 md:inset-auto md:bottom-[115px] md:right-10 z-[100] md:w-[400px] md:h-[550px] md:max-h-[80vh] flex flex-col bg-card md:rounded-3xl shadow-xl md:border md:border-border overflow-hidden"
+            initial={{ x: "100%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: "100%", opacity: 0 }}
+            transition={{ type: "spring", stiffness: 320, damping: 30 }}
+            className={cn(
+              "fixed top-0 right-0 bottom-0 z-[100] flex flex-col bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl font-sans overflow-hidden border-l border-slate-200/80 dark:border-white/10 shadow-[-15px_0_50px_rgba(0,0,0,0.35)]",
+              "w-full md:w-[440px] h-[100dvh] rounded-none"
+            )}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 bg-gradient-to-br from-primary via-primary to-emerald-800 text-primary-foreground shadow-md z-10 relative overflow-hidden">
-              <div className="absolute inset-0 bg-black/10 backdrop-blur-sm pointer-events-none" />
-              <div className="flex items-center gap-3 relative z-10">
-                <div className="p-1 bg-white/20 rounded-full backdrop-blur-md flex items-center justify-center w-10 h-10 border border-white/30 shadow-inner">
-                  <Image src="/logo.png" alt="BoardTAU" width={24} height={24} className="object-contain drop-shadow-md" />
+            {/* Header - Dynamic iOS Liquid Glass style with larger avatar */}
+            <div className="flex items-center justify-between p-4 bg-white/70 dark:bg-slate-900/80 backdrop-blur-2xl text-slate-900 dark:text-white shadow-sm z-10 relative overflow-hidden border-b border-white/50 dark:border-white/10 ring-1 ring-white/30 dark:ring-white/10">
+              <div className="flex items-center gap-3.5 relative z-10">
+                <div className="p-1 bg-[#2f7d6d]/15 dark:bg-white/10 rounded-full backdrop-blur-md flex items-center justify-center w-14 h-14 border border-[#2f7d6d]/30 dark:border-white/20 shadow-inner overflow-hidden shrink-0">
+                  <Image src="/assets/mascot/kerby-ai-face.png" alt="Kerby AI Face" width={48} height={48} className="object-contain drop-shadow-md scale-110" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg leading-tight text-white flex items-center gap-1.5">
-                    BoardTAU AI
+                  <h3 className="font-extrabold text-lg leading-tight text-slate-900 dark:text-white flex items-center gap-1.5 tracking-tight">
+                    Kerby AI <Sparkles className="w-4 h-4 text-[#2f7d6d] dark:text-emerald-300 fill-[#2f7d6d] dark:fill-emerald-300" />
                   </h3>
-                  <p className="text-xs text-white/80 font-medium tracking-wide">Online | Ready to assist</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                    <p className="text-xs text-slate-600 dark:text-emerald-200/90 font-medium tracking-wide">Official TAU Assistant • Online</p>
+                  </div>
                 </div>
               </div>
-              <button 
-                onClick={() => setIsOpen(false)}
-                className="p-2 rounded-full hover:bg-white/20 transition-colors relative z-10 text-white"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-1 relative z-10">
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-2 rounded-full hover:bg-slate-200/60 dark:hover:bg-white/20 backdrop-blur-md transition-colors relative z-10 text-slate-700 dark:text-white cursor-pointer"
+                  aria-label="Close Assistant"
+                >
+                  <X size={22} />
+                </button>
+              </div>
             </div>
 
             {/* Chat Area */}
-            <div id="chatbot-scrollable" className="flex-1 overflow-y-auto overscroll-none p-4 space-y-4 bg-background/50">
+            <div id="chatbot-scrollable" className="flex-1 overflow-y-auto overscroll-none p-4 space-y-4 bg-slate-50/50 dark:bg-slate-900/40 custom-scrollbar">
               {messages.map((msg, idx) => (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  key={idx} 
+                  key={idx}
                   className={cn("flex w-full gap-3", msg.role === 'user' ? "justify-end" : "justify-start")}
                 >
                   {msg.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 shadow-sm mt-1 overflow-hidden">
-                      <Image src="/logo.png" alt="AI" width={20} height={20} className="object-contain" />
+                    <div className="w-10 h-10 rounded-full bg-[#2f7d6d]/20 dark:bg-emerald-500/20 border border-[#2f7d6d]/40 dark:border-emerald-500/40 flex items-center justify-center shrink-0 shadow-sm mt-1 overflow-hidden p-0.5 backdrop-blur-md">
+                      <Image src="/assets/mascot/kerby-ai-face.png" alt="Kerby" width={34} height={34} className="object-contain scale-110" />
                     </div>
                   )}
                   <div className={cn(
                     "px-4 py-3 rounded-2xl max-w-[85%] text-[15px] leading-relaxed shadow-sm",
-                    msg.role === 'user' 
-                      ? "bg-gradient-to-br from-primary to-emerald-700 text-white rounded-tr-sm" 
-                      : "bg-card border border-border rounded-tl-sm text-foreground"
+                    msg.role === 'user'
+                      ? "bg-gradient-to-r from-[#2f7d6d] to-emerald-700 text-white rounded-tr-xs shadow-md border border-emerald-400/20 font-medium"
+                      : "bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-tl-xs text-slate-900 dark:text-slate-100"
                   )}>
                     {msg.role === 'assistant' ? (
-                      <div className="markdown-content space-y-2 [&>ul]:list-disc [&>ul]:pl-4 [&>ol]:list-decimal [&>ol]:pl-4 [&>p]:m-0 [&_strong]:font-semibold [&_strong]:text-primary">
-                        <ReactMarkdown
-                          components={{
-                            a: ({ node, ...props }) => {
-                              const isNav = props.children?.toString().includes("NAV:");
-                              const btnText = isNav ? props.children?.toString().replace("NAV:", "").trim() : props.children;
-                              const href = props.href || "#";
-                              
-                              if (isNav) {
+                      msg.isInitial ? (
+                        <TypewriterText text={msg.content} />
+                      ) : (
+                        <div className="markdown-content space-y-2 [&>ul]:list-disc [&>ul]:pl-4 [&>ol]:list-decimal [&>ol]:pl-4 [&>p]:m-0 [&_strong]:font-bold [&_strong]:text-[#2f7d6d] dark:[&_strong]:text-emerald-400">
+                          <ReactMarkdown
+                            components={{
+                              a: ({ node, ...props }) => {
+                                const isNav = props.children?.toString().includes("NAV:");
+                                const btnText = isNav ? props.children?.toString().replace("NAV:", "").trim() : props.children;
+                                let href = props.href || "#";
+
+                                // Fallback mapping for common about/learn more buttons if AI generates dead # link
+                                if (href === '#' || !href) {
+                                  const labelLower = String(btnText).toLowerCase();
+                                  if (labelLower.includes("about") || labelLower.includes("founder")) href = "/about";
+                                  else if (labelLower.includes("how") || labelLower.includes("work")) href = "/about/boardtau";
+                                  else if (labelLower.includes("contact") || labelLower.includes("support")) href = "/support/contact";
+                                  else if (labelLower.includes("faq")) href = "/faqs";
+                                  else if (labelLower.includes("browse") || labelLower.includes("listing")) href = "/";
+                                }
+
+                                const handleNavigation = (e: React.MouseEvent) => {
+                                  e.preventDefault();
+                                  if (!href || href === '#') return;
+                                  setIsOpen(false);
+                                  
+                                  if (href === '/login') {
+                                    document.getElementById('chatbot-login-btn')?.click();
+                                  } else if (href === '/register' || href === '/signup') {
+                                    document.getElementById('chatbot-signup-btn')?.click();
+                                  } else {
+                                    router.push(href);
+                                  }
+                                };
+
+                                if (isNav) {
+                                  return (
+                                    <button
+                                      type="button"
+                                      onClick={handleNavigation}
+                                      className="block mt-3 w-full text-center bg-[#2f7d6d] hover:bg-[#256659] text-white py-2.5 px-4 rounded-full font-extrabold text-sm hover:scale-[1.02] transition shadow-md shadow-[#2f7d6d]/30 no-underline cursor-pointer"
+                                    >
+                                      {btnText}
+                                    </button>
+                                  );
+                                }
                                 return (
-                                  <button 
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      setIsOpen(false);
-                                      if (href === '/login') {
-                                        document.getElementById('chatbot-login-btn')?.click();
-                                      } else if (href === '/register' || href === '/signup') {
-                                        document.getElementById('chatbot-signup-btn')?.click();
-                                      } else {
-                                        router.push(href);
-                                      }
-                                    }}
-                                    className="block mt-3 w-full text-center bg-primary text-primary-foreground py-2.5 px-4 rounded-xl font-bold text-sm hover:scale-[1.02] transition shadow-md no-underline"
+                                  <a
+                                    {...props}
+                                    onClick={handleNavigation}
+                                    className="text-[#2f7d6d] dark:text-emerald-400 hover:underline font-bold cursor-pointer"
                                   >
-                                    {btnText}
-                                  </button>
+                                    {props.children}
+                                  </a>
                                 );
                               }
-                              return <a {...props} className="text-primary hover:underline font-semibold" />;
-                            }
-                          }}
-                        >
-                          {msg.content}
-                        </ReactMarkdown>
-                      </div>
+                            }}
+                          >
+                            {msg.content}
+                          </ReactMarkdown>
+                        </div>
+                      )
                     ) : (
                       msg.content
                     )}
@@ -223,10 +319,10 @@ export default function ChatBot() {
               ))}
               {isLoading && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex w-full gap-3 justify-start">
-                  <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 mt-1 overflow-hidden shadow-sm">
-                    <Image src="/logo.png" alt="AI" width={20} height={20} className="object-contain" />
+                  <div className="w-10 h-10 rounded-full bg-[#2f7d6d]/20 dark:bg-emerald-500/20 border border-[#2f7d6d]/40 dark:border-emerald-500/40 flex items-center justify-center shrink-0 mt-1 overflow-hidden p-0.5 shadow-sm backdrop-blur-md">
+                    <Image src="/assets/mascot/kerby-ai-face.png" alt="Kerby" width={34} height={34} className="object-contain scale-110" />
                   </div>
-                  <div className="px-4 py-3.5 rounded-2xl bg-card border border-border rounded-tl-sm flex items-center gap-2 shadow-sm">
+                  <div className="px-4 py-3.5 rounded-2xl bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-tl-xs flex items-center gap-2 shadow-sm">
                     <TypingIndicator />
                   </div>
                 </motion.div>
@@ -237,16 +333,16 @@ export default function ChatBot() {
             {/* Suggested Questions */}
             <AnimatePresence>
               {suggestedPrompts.length > 0 && !isLoading && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="px-4 pb-4 pt-2 flex flex-col gap-2 bg-background/50 border-t border-border w-full"
+                  className="px-4 pb-3 pt-2 flex flex-col gap-2 bg-slate-100/60 dark:bg-slate-900/60 backdrop-blur-xl border-t border-slate-200/80 dark:border-white/10 w-full"
                 >
                   <div className="flex justify-start w-full">
-                    <button 
+                    <button
                       onClick={() => setShowPrompts(!showPrompts)}
-                      className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted/50"
+                      className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[#2f7d6d] dark:hover:text-emerald-400 transition-colors px-2.5 py-1 rounded-full hover:bg-white/40 dark:hover:bg-white/10"
                     >
                       {showPrompts ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
                       {showPrompts ? "Hide Suggestions" : "Show Suggestions"}
@@ -268,7 +364,7 @@ export default function ChatBot() {
                             animate={{ opacity: 1, scale: 1, x: 0, transition: { delay: i * 0.05 } }}
                             exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
                             onClick={() => handleSend(prompt)}
-                            className="text-sm font-medium bg-slate-50 dark:bg-slate-800 text-primary dark:text-primary/90 px-4 py-2.5 rounded-2xl rounded-tr-sm border border-primary/20 hover:bg-primary/10 transition text-right max-w-[90%] whitespace-normal shadow-sm"
+                            className="text-xs sm:text-sm font-normal bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-full rounded-tr-xs border border-[#2f7d6d]/25 dark:border-emerald-500/30 hover:bg-[#2f7d6d] hover:text-white dark:hover:bg-[#2f7d6d] transition-all text-right max-w-[90%] whitespace-normal shadow-sm backdrop-blur-md"
                           >
                             {prompt}
                           </motion.button>
@@ -280,25 +376,25 @@ export default function ChatBot() {
               )}
             </AnimatePresence>
 
-            {/* Input Area */}
-            <div className="p-3 border-t border-border bg-card">
-              <form 
+            {/* Floating Input Area */}
+            <div className="p-3 border-t border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-slate-950/90 backdrop-blur-2xl">
+              <form
                 onSubmit={(e) => { e.preventDefault(); handleSend(input); }}
-                className="flex items-center gap-2 bg-background p-1.5 rounded-full border border-border focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10 transition-all shadow-inner"
+                className="flex items-center gap-2 bg-slate-100/80 dark:bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-200 dark:border-white/15 focus-within:border-[#2f7d6d] focus-within:ring-2 focus-within:ring-[#2f7d6d]/30 transition-all shadow-inner backdrop-blur-xl"
               >
                 <input
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask me anything..."
-                  className="flex-1 bg-transparent px-4 py-2 text-[15px] outline-none text-foreground placeholder:text-muted-foreground"
+                  placeholder="Ask Kerby AI anything..."
+                  className="flex-1 bg-transparent px-3 py-1.5 text-[15px] outline-none text-slate-900 dark:text-white placeholder:text-slate-400 font-medium"
                 />
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className="p-2.5 rounded-full bg-primary hover:bg-primary/90 dark:bg-primary/20 dark:hover:bg-primary/30 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed text-white dark:text-primary transition-all shrink-0 shadow-sm"
+                  className="p-2.5 rounded-full bg-[#2f7d6d] hover:bg-[#256659] disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-400 disabled:cursor-not-allowed text-white transition-all shrink-0 shadow-md shadow-[#2f7d6d]/30"
                 >
-                  <Send size={18} className={input.trim() && !isLoading ? "translate-x-0.5 -translate-y-0.5" : ""} />
+                  <Send size={16} className={input.trim() && !isLoading ? "translate-x-0.5 -translate-y-0.5" : ""} />
                 </button>
               </form>
             </div>
@@ -309,17 +405,18 @@ export default function ChatBot() {
       {/* Floating Toggle Button */}
       <div className={cn(
         `fixed ${isListingDetail ? 'bottom-32' : 'bottom-20'} right-4 md:bottom-8 md:right-8 z-[50] transition-transform duration-300 ease-in-out`,
-        isHiddenOnMobile && !isOpen ? "translate-y-48 md:translate-y-0" : "translate-y-0"
+        isHiddenOnMobile && !isOpen ? "translate-y-48 md:translate-y-0" : "translate-y-0",
+        pathname.startsWith('/become-a-host') && "hidden md:block"
       )}>
-        
+
         <motion.button
           onClick={() => setIsOpen(!isOpen)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           className={cn(
-            "relative flex items-center justify-center shadow-2xl",
-            "w-14 h-14 rounded-full text-white",
-            isOpen ? "bg-rose-500 hover:bg-rose-600 border border-white/20" : "bg-white dark:bg-slate-800 border-2 border-primary hover:bg-slate-50 dark:hover:bg-slate-700",
+            "relative flex items-center justify-center shadow-[0_12px_35px_rgba(0,0,0,0.3)]",
+            "w-14 h-14 rounded-full text-white backdrop-blur-2xl",
+            isOpen ? "bg-rose-500 hover:bg-rose-600 border border-white/30" : "bg-white/90 dark:bg-slate-900/90 border-2 border-[#2f7d6d] hover:bg-slate-50 dark:hover:bg-slate-800",
             "transition-all duration-300"
           )}
         >
@@ -329,8 +426,8 @@ export default function ChatBot() {
                 <X size={26} strokeWidth={2.5} />
               </motion.div>
             ) : (
-              <motion.div key="chat" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} className="flex items-center justify-center w-full h-full p-2.5">
-                <Image src="/logo.png" alt="Chat" width={32} height={32} className="object-contain drop-shadow-sm" />
+              <motion.div key="chat" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} className="flex items-center justify-center w-full h-full p-1 overflow-hidden">
+                <Image src="/assets/mascot/kerby-ai-face.png" alt="Kerby AI Face" width={44} height={44} className="object-contain drop-shadow-md scale-110" />
               </motion.div>
             )}
           </AnimatePresence>

@@ -101,11 +101,12 @@ export const getFavoriteListings = async () => {
       include: {
         rooms: true,
         reviews: true,
-        categories: {
+        listingLinks: {
           include: {
-            category: true,
+            attribute: true,
           },
         },
+        propertyType: true,
         images: true,
       },
     });

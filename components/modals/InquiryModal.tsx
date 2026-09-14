@@ -56,6 +56,7 @@ interface InquiryModalProps {
   isOpen?: boolean;
   onClose?: () => void;
   activeStay?: { endDate: string; status: string; listing: { title: string } } | null;
+  leaseContract?: any;
 }
 
 const InquiryModal: React.FC<InquiryModalProps> = ({
@@ -68,6 +69,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
   isOpen,
   onClose,
   activeStay,
+  leaseContract,
 }) => {
   const logic = useInquiryLogic(listingId, landlordId, room, onSubmit, activeStay);
   const [isDetailsExpanded, setIsDetailsExpanded] = React.useState(false);
@@ -133,7 +135,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                         lockoutCountdown={logic.lockoutCountdown}
                         setLockoutCountdown={logic.setLockoutCountdown}
                       />;
-      case 8: return <ReviewStep watchedValues={logic.watchedValues} capturedSelfie={logic.capturedSelfie} capturedID={logic.capturedID} room={room} />;
+      case 8: return <ReviewStep watchedValues={logic.watchedValues} capturedSelfie={logic.capturedSelfie} capturedID={logic.capturedID} room={room} leaseContract={leaseContract} tenantSignature={logic.tenantSignature} setTenantSignature={logic.setTenantSignature} />;
       default: return null;
     }
   };

@@ -43,16 +43,17 @@ export function ModerationActivityFeed({ pendingItems, recentLogs, isLoading }: 
 
   const filteredFeedItems = feedItems.filter(item => filterType === 'all' || item.entityType === filterType);
 
-  const handleRedirect = (entityType: string) => {
+  const handleRedirect = (entityType: string, entityId?: string) => {
+    const query = entityId ? `?id=${entityId}` : '';
     switch (entityType) {
       case 'hostApplication':
-        router.push('/admin/moderation/host-applications');
+        router.push(`/admin/moderation/hosts${query}`);
         break;
       case 'listing':
-        router.push('/admin/moderation/listings');
+        router.push(`/admin/moderation/listings${query}`);
         break;
       case 'review':
-        router.push('/admin/moderation/reviews');
+        router.push(`/admin/moderation/reviews${query}`);
         break;
       default:
         break;

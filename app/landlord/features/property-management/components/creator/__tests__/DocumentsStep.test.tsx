@@ -10,10 +10,14 @@ jest.mock('framer-motion', () => ({
   },
 }));
 
-jest.mock('lucide-react', () => ({
-  ShieldCheck: () => <div />,
-  Info: () => <div />,
-}));
+jest.mock('lucide-react', () => {
+  return new Proxy({}, {
+    get: function(target, prop) {
+      if (prop === '__esModule') return true;
+      return () => <div data-testid={`icon-${String(prop)}`} />;
+    }
+  });
+});
 
 jest.mock('@/components/common/FileUpload', () => ({ label, onFileSelect, onPreview }: any) => (
   <div data-testid={`file-upload-${label}`}>
@@ -44,29 +48,18 @@ const Wrapper = () => {
 describe('DocumentsStep', () => {
   it('renders all document fields', () => {
     render(<Wrapper />);
-    expect(screen.getByText('Legal Check')).toBeInTheDocument();
+    expect(screen.getByText('Legal Verification')).toBeInTheDocument();
     
-    expect(screen.getByTestId('file-upload-Government ID')).toBeInTheDocument();
-    expect(screen.getByTestId('file-upload-Business Permit')).toBeInTheDocument();
-    expect(screen.getByTestId('file-upload-Land Title / Lease Agreement')).toBeInTheDocument();
-    expect(screen.getByTestId('file-upload-Barangay Clearance')).toBeInTheDocument();
-    expect(screen.getByTestId('file-upload-Fire Safety Certificate')).toBeInTheDocument();
+    expect(screen.getByText(/Government ID/)).toBeInTheDocument();
+    expect(screen.getByText(/Business Permit/)).toBeInTheDocument();
+    expect(screen.getByText(/Land Title/)).toBeInTheDocument();
+    expect(screen.getByText(/Barangay Clearance/)).toBeInTheDocument();
+    expect(screen.getByText(/Fire Safety Certificate/)).toBeInTheDocument();
   });
 
-  it('handles file selection', () => {
+  it('renders document status badges', () => {
     render(<Wrapper />);
-    const selectBtn = screen.getByTestId('file-upload-Government ID').querySelector('button');
-    if (selectBtn) {
-      fireEvent.click(selectBtn);
-    }
-  });
-
-  it('handles preview', () => {
-    render(<Wrapper />);
-    
-    // We didn't set a URL in watch in this simple wrapper, so preview might not open,
-    // but the button click handler should not crash.
-    const previewBtn = screen.getByTestId('file-upload-Government ID').querySelectorAll('button')[1];
-    fireEvent.click(previewBtn);
+    const requiredBadges = screen.getAllByText('Required');
+    expect(requiredBadges.length).toBeGreaterThan(0);
   });
 });

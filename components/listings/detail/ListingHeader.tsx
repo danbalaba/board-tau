@@ -2,11 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, MapPin, Sparkles, Share, X, Copy, Mail, MessageCircle } from "lucide-react";
+import { Share, Heart, ChevronLeft, MapPin, Star, ShieldCheck, Tag, X, Copy, Mail, MessageCircle, Sparkles } from "lucide-react";
 import { LuBadgeCheck } from "react-icons/lu";
 import { FaFacebook, FaTwitter } from "react-icons/fa";
 import HeartButton from "@/components/favorites/HeartButton";
-import { categories } from "@/utils/constants";
 
 interface ListingHeaderProps {
   title: string;
@@ -130,9 +129,9 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
           <div className="flex flex-wrap items-center gap-3">
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-black uppercase tracking-widest shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 text-primary dark:text-primary-light text-xs font-black uppercase tracking-widest shadow-sm"
             >
-              <LuBadgeCheck size={14} className="text-emerald-500" />
+              <LuBadgeCheck size={14} className="text-primary" />
               Verified Property
             </motion.div>
 
@@ -142,10 +141,18 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-black uppercase tracking-widest hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors cursor-pointer shadow-sm"
             >
               <Star size={14} className="fill-amber-500 text-amber-500" />
-              {rating.toFixed(1)} <span className="opacity-60">({reviewCount} Reviews)</span>
+              {reviewCount > 0 && rating ? (
+                <>
+                  {rating.toFixed(1)} <span className="opacity-60">({reviewCount} {reviewCount === 1 ? "Review" : "Reviews"})</span>
+                </>
+              ) : (
+                <>
+                  New Property <span className="opacity-60">(0 Reviews)</span>
+                </>
+              )}
             </motion.button>
 
-            {rating >= 4.9 && reviewCount >= 5 && (
+            {rating != null && rating >= 4.9 && reviewCount >= 5 && (
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest shadow-sm"
@@ -156,7 +163,7 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
             )}
 
             {listingCategories && listingCategories.map((cat, idx) => {
-              const CategoryIcon = categories.find(c => c.value === cat.value)?.icon;
+              const CategoryIcon = Tag;
               return (
                 <motion.div
                   key={idx}

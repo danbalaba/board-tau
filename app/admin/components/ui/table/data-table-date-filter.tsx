@@ -172,6 +172,14 @@ export function DataTableDateFilter<TData>({
     );
   }, [selectedDates, multiple, formatDateRange, title]);
 
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
     <Popover>
       <PopoverTrigger asChild>

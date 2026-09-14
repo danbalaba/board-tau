@@ -31,6 +31,8 @@ class FaceMatcherEngine {
     return this.loadPromise;
   }
 
+  private descriptorCache = new Map<string, Float32Array | null>();
+
   public async getFaceDescriptor(
     imageElement: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement, 
     minConfidence: number = 0.2
@@ -52,6 +54,23 @@ class FaceMatcherEngine {
       console.error('Face descriptor extraction failed:', error);
       return null;
     }
+  }
+
+  /**
+   * Retrieves face descriptor with automatic in-memory caching keyed by cacheKey.
+   * If the cacheKey was processed before, returns cached Float32Array in 0ms.
+   */
+  public async getFaceDescriptorCached(
+    cacheKey: string,
+    imageElement: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement,
+    minConfidence: number = 0.2
+  ): Promise<Float32Array | null> {
+    if (this.descriptorCache.has(cacheKey)) {
+      return this.descriptorCache.get(cacheKey) || null;
+    }
+    const descriptor = await this.getFaceDescriptor(imageElement, minConfidence);
+    this.descriptorCache.set(cacheKey, descriptor);
+    return descriptor;
   }
 
   /**

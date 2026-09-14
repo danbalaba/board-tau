@@ -41,7 +41,7 @@ export const useWalkInModal = (
   // KYC States
   const webcamRef = useRef<Webcam>(null);
   const [livenessStatus, setLivenessStatus] = useState<'idle' | 'passed'>('idle');
-  const [activeChallenges, setActiveChallenges] = useState<('blink' | 'smile' | 'turnLeft' | 'turnRight')[]>([]);
+  const [activeChallenges, setActiveChallenges] = useState<('blink' | 'smile' | 'turnLeft' | 'turnRight' | 'openMouth' | 'raiseEyebrows')[]>([]);
   const [isFaceAligned, setIsFaceAligned] = useState(false);
   const [isIDAligned, setIsIDAligned] = useState(false);
   const [isPhoneDetected, setIsPhoneDetected] = useState(false);
@@ -103,13 +103,24 @@ export const useWalkInModal = (
     setDateRange({ from: undefined, to: undefined });
   };
 
+  type ChallengeType = 'blink' | 'smile' | 'turnLeft' | 'turnRight' | 'openMouth' | 'raiseEyebrows';
+  const previousChallengesRef = useRef<ChallengeType[]>([]);
+
+  const generateUniqueRandomChallenges = (): ChallengeType[] => {
+    const ALL: ChallengeType[] = ['blink', 'smile', 'turnLeft', 'turnRight', 'openMouth', 'raiseEyebrows'];
+    let pool = ALL.filter(c => !previousChallengesRef.current.includes(c));
+    if (pool.length < 2) pool = ALL;
+    const shuffled = [...pool].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, 2);
+    previousChallengesRef.current = selected;
+    return selected;
+  };
+
   // Reset Liveness State on Step 3
   useEffect(() => {
     if (currentStep === 3 && !capturedSelfie) {
       setLivenessStatus('idle');
-      const challenges: ('blink' | 'smile' | 'turnLeft' | 'turnRight')[] = ['blink', 'smile', 'turnLeft', 'turnRight'];
-      const shuffled = [...challenges].sort(() => 0.5 - Math.random());
-      setActiveChallenges(shuffled.slice(0, 2));
+      setActiveChallenges(generateUniqueRandomChallenges());
       consecutiveFaceFailures.current = 0;
     }
   }, [currentStep, capturedSelfie]);
@@ -129,9 +140,7 @@ export const useWalkInModal = (
               consecutiveFaceFailures.current += 1;
               if (consecutiveFaceFailures.current >= 3) {
                 setLivenessStatus('idle');
-                const challenges: ('blink' | 'smile' | 'turnLeft' | 'turnRight')[] = ['blink', 'smile', 'turnLeft', 'turnRight'];
-                const shuffled = [...challenges].sort(() => 0.5 - Math.random());
-                setActiveChallenges(shuffled.slice(0, 2));
+                setActiveChallenges(generateUniqueRandomChallenges());
                 consecutiveFaceFailures.current = 0;
               }
             } else {
@@ -147,7 +156,9 @@ export const useWalkInModal = (
               (currentChallenge === 'blink' && state.blink) ||
               (currentChallenge === 'smile' && state.smile) ||
               (currentChallenge === 'turnLeft' && state.turnLeft) ||
-              (currentChallenge === 'turnRight' && state.turnRight)
+              (currentChallenge === 'turnRight' && state.turnRight) ||
+              (currentChallenge === 'openMouth' && state.openMouth) ||
+              (currentChallenge === 'raiseEyebrows' && state.raiseEyebrows)
             ) {
               if (activeChallenges.length > 1) {
                 setActiveChallenges(prev => prev.slice(1));
@@ -212,20 +223,37 @@ export const useWalkInModal = (
       return;
     }
 
-    setIsFlashActive(true);
-    setTimeout(() => setIsFlashActive(false), 150);
+    // 1. Capture photo INSTANTLY at click time (0ms shutter lag)
+    let imageSrc = webcamRef.current?.getScreenshot();
+    if (!imageSrc || imageSrc === 'data:,' || imageSrc.length < 500) {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        imageSrc = canvas.toDataURL('image/jpeg', 0.92);
+      }
+    }
 
+    if (!imageSrc || imageSrc.length < 500) {
+      responsiveToast.error({ title: "Capture Error", description: "Failed to capture photo. Please try again." });
+      return;
+    }
+
+    // 2. Trigger quick 100ms flash feedback
+    setIsFlashActive(true);
+    setTimeout(() => setIsFlashActive(false), 100);
+
+    // 3. Validate ML face
     const result = await faceEngine.validateFace(video);
     if (!result.isValid) {
       responsiveToast.error({ title: "Verification Failed", description: result.reason || "Selfie verification failed." });
       return;
     }
 
-    const imageSrc = webcamRef.current?.getScreenshot();
-    if (imageSrc) {
-      setCapturedSelfie(imageSrc);
-      responsiveToast.success({ title: "Success", description: "Face verified successfully!" });
-    }
+    setCapturedSelfie(imageSrc);
+    responsiveToast.success({ title: "Success", description: "Face verified successfully!" });
   };
 
   const handleCaptureID = async () => {

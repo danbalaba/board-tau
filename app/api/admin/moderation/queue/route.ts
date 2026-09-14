@@ -28,6 +28,12 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const perPage = parseInt(searchParams.get('perPage') || '10');
     const entityType = searchParams.get('entityType') || '';
+    const range = searchParams.get('range') || '30d';
+
+    let days = 30;
+    if (range === '7d') days = 7;
+    if (range === '90d') days = 90;
+    if (range === '1y') days = 365;
 
     // Calculate pagination
     const skip = (page - 1) * perPage;
@@ -50,24 +56,40 @@ export async function GET(req: NextRequest) {
           }).then((items: any) => items.map((item: any) => ({
             id: item.id,
             entityType: 'hostApplication',
-            title: `Host Application: ${item.user?.name}`,
-            description: 'New host application',
+            title: `Host Application: ${item.user?.name || 'Applicant'}`,
+            description: `Verification documents submitted by ${item.user?.name || 'User'} (${item.user?.email || 'N/A'}). Awaiting administrative verification.`,
+            submittedBy: item.user?.name || item.user?.email || 'Applicant',
             user: item.user,
             status: item.status,
             createdAt: item.createdAt,
+            isArchived: Boolean(item.isArchived || item.isAdminArchived),
+            meta: {
+              email: item.user?.email,
+              phone: item.user?.phone,
+              governmentIdType: item.governmentIdType || 'Government ID',
+              isArchived: Boolean(item.isArchived || item.isAdminArchived),
+            }
           }))),
           db.listing.findMany({
-            where: { status: 'pending' },
-            include: { user: true },
+            where: { status: 'PENDING' },
+            include: { user: true, propertyType: true },
             orderBy: { createdAt: 'desc' },
           }).then((items: any) => items.map((item: any) => ({
             id: item.id,
             entityType: 'listing',
             title: item.title,
-            description: item.description,
+            description: item.description || `Property listing submitted by landlord ${item.user?.name || 'Host'}. Awaiting platform verification.`,
+            submittedBy: item.user?.name || 'Landlord',
             user: item.user,
             status: item.status,
             createdAt: item.createdAt,
+            isArchived: Boolean(item.isAdminArchived || item.isArchived),
+            meta: {
+              propertyTypeName: item.propertyType?.name || 'Property',
+              price: item.price,
+              address: item.address,
+              isArchived: Boolean(item.isAdminArchived || item.isArchived),
+            }
           }))),
           db.review.findMany({
             where: { status: 'pending' },
@@ -76,11 +98,18 @@ export async function GET(req: NextRequest) {
           }).then((items: any) => items.map((item: any) => ({
             id: item.id,
             entityType: 'review',
-            title: `Review: ${item.listing?.title}`,
-            description: item.comment,
+            title: item.listing?.title ? `Review for ${item.listing.title}` : 'Property Review',
+            description: item.comment ? `"${item.comment}"` : 'Student review awaiting moderation check.',
+            submittedBy: item.user?.name || 'Student',
             user: item.user,
             status: item.status,
             createdAt: item.createdAt,
+            isArchived: Boolean(item.isAdminArchived || item.isArchived),
+            meta: {
+              rating: item.rating,
+              propertyTitle: item.listing?.title,
+              isArchived: Boolean(item.isAdminArchived || item.isArchived),
+            }
           }))),
         ]);
 
@@ -91,18 +120,18 @@ export async function GET(req: NextRequest) {
       // Get individual counts
       (async () => {
         const now = new Date();
-        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const pastDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
         const [
           hostCount, listingCount, reviewCount,
           hostCountLastWeek, listingCountLastWeek, reviewCountLastWeek
         ] = await Promise.all([
-          db.hostApplication.count({ where: { status: 'pending' } }),
-          db.listing.count({ where: { status: 'pending' } }),
-          db.review.count({ where: { status: 'pending' } }),
-          db.hostApplication.count({ where: { status: 'pending', createdAt: { lt: sevenDaysAgo } } }),
-          db.listing.count({ where: { status: 'pending', createdAt: { lt: sevenDaysAgo } } }),
-          db.review.count({ where: { status: 'pending', createdAt: { lt: sevenDaysAgo } } }),
+          db.hostApplication.count({ where: { status: 'PENDING' } }),
+          db.listing.count({ where: { status: 'PENDING' } }),
+          db.review.count({ where: { status: 'PENDING' } }),
+          db.hostApplication.count({ where: { status: 'PENDING', createdAt: { lt: pastDate } } }),
+          db.listing.count({ where: { status: 'PENDING', createdAt: { lt: pastDate } } }),
+          db.review.count({ where: { status: 'PENDING', createdAt: { lt: pastDate } } }),
         ]);
         return {
           hostCount,

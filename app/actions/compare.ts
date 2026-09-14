@@ -16,19 +16,22 @@ export async function getComparedListings(ids: string[]) {
         user: {
           select: { name: true, image: true }
         },
-        amenities: true,
-        rules: true,
         reviews: true,
-        features: true,
         images: true,
-        categories: {
-          include: { category: true }
+        propertyType: true,
+        listingLinks: {
+          include: { attribute: true }
         },
         rooms: {
           where: {
             status: "AVAILABLE",
             isArchived: false,
           },
+          include: {
+            roomLinks: {
+              include: { attribute: true }
+            }
+          }
         },
       },
     });

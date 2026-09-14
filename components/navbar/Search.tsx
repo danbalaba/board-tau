@@ -266,8 +266,8 @@ const Search: React.FC<SearchProps> = ({ compact = false, isMobile = false }) =>
         </Modal.Trigger>
       </motion.div>
 
-      <Modal.Window name="search" size="lg" hasFixedFooter>
-        <SearchModal onCloseModal={handleSearchClose} />
+      <Modal.Window name="search" size="full" hasFixedFooter noPadding>
+        <SearchModal initialShowWizard={false} onCloseModal={handleSearchClose} />
       </Modal.Window>
     </Modal>
   );

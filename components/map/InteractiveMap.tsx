@@ -3,8 +3,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useTheme } from "next-themes";
 import { TAU_COORDINATES } from "@/utils/constants";
-import { colleges } from "@/data/colleges";
 import { Listing } from "@prisma/client";
+import { useColleges } from "@/hooks/useColleges";
 
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -12,16 +12,6 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 if (typeof window !== "undefined") {
   require("leaflet.markercluster");
 }
-
-const LANDMARKS = colleges
-  .filter(c => c.value !== "any")
-  .map(c => ({
-    id: c.value,
-    name: c.label,
-    coords: c.latlng as L.LatLngTuple,
-    logo: c.logo,
-  }));
-
 interface InteractiveMapProps {
   onListingClick: (id: string) => void;
   onLandmarkClick: (landmark: any) => void;
@@ -105,6 +95,7 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
   const routingLineRef = useRef<L.Polyline | null>(null);
   const routingBadgeRef = useRef<L.Marker | null>(null);
   const landmarkMarkersRef = useRef<L.Marker[]>([]);
+  const { data: collegesData } = useColleges();
   
   // Permanent tracking refs for dynamic icon swapping
   const listingMarkersRef = useRef<Record<string, L.Marker>>({});
@@ -149,87 +140,20 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
       updateWhenZooming: false // Smoother zooming transitions
     };
 
-    const lightLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", tileOptions);
-    const darkLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", tileOptions);
+    const lightLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", tileOptions);
+    const voyagerLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", tileOptions);
+    const darkLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { ...tileOptions, className: "dark-map-tiles" });
     const satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { ...tileOptions, maxZoom: 19 });
 
     if (resolvedTheme === "dark") darkLayer.addTo(map);
     else lightLayer.addTo(map);
 
     L.control.layers({
-      "Modern Light": lightLayer,
-      "Modern Dark": darkLayer,
+      "Street Map": lightLayer,
+      "Modern Light": voyagerLayer,
+      "Street Map (Dark)": darkLayer,
       "Satellite View": satelliteLayer
     }, undefined, { position: controlPos }).addTo(map);
-
-    // Modern Glassmorphism Landmark markers
-    landmarkMarkersRef.current = []; // Clear array before populating to avoid StrictMode duplicates and map poisoning
-    LANDMARKS.forEach((landmark) => {
-      const landmarkIcon = L.divIcon({
-        className: "custom-landmark-marker group",
-        html: `
-          <div class="relative flex items-center justify-center cursor-pointer group">
-            <!-- Soft pulsing halo -->
-            <div class="absolute w-12 h-12 rounded-full animate-pulse-slow pointer-events-none" style="background-color: rgba(47,125,109,0.15);"></div>
-            <div class="absolute w-8 h-8 rounded-full animate-ping pointer-events-none" style="background-color: rgba(47,125,109,0.35);"></div>
-            
-            <!-- Premium Glassmorphism Pin -->
-            <div class="relative z-10 w-14 h-14 rounded-full bg-white shadow-[0_8px_20px_rgba(0,0,0,0.18)] flex items-center justify-center transition-transform group-hover:scale-110 group-hover:shadow-[0_8px_28px_rgba(47,125,109,0.45)]" style="border: 3px solid var(--primary-color);">
-              ${landmark.logo
-                ? `<img src="${landmark.logo}" alt="${landmark.name}" style="width:38px;height:38px;object-fit:contain;border-radius:50%;" />`
-                : `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`
-              }
-            </div>
-            
-            <!-- Floating Tooltip Label -->
-            <div style="
-              position: absolute;
-              left: 66px;
-              top: 50%;
-              transform: translateY(-50%) translateX(4px);
-              opacity: 0;
-              transition: opacity 0.2s ease, transform 0.2s ease;
-              pointer-events: none;
-              white-space: nowrap;
-              background: rgba(255,255,255,0.97);
-              backdrop-filter: blur(20px);
-              -webkit-backdrop-filter: blur(20px);
-              padding: 7px 14px 7px 12px;
-              border-radius: 10px;
-              font-size: 12px;
-              font-weight: 700;
-              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-              letter-spacing: 0.015em;
-              color: #111827;
-              box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 0 0 1.5px rgba(47,125,109,0.18);
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              border-left: 3.5px solid var(--primary-color);
-            " class="landmark-tooltip">
-              <span style="width:6px;height:6px;border-radius:50%;background:var(--primary-color);flex-shrink:0;display:inline-block;"></span>
-              ${landmark.name}
-            </div>
-          </div>
-        `,
-        iconSize: [56, 56],
-        iconAnchor: [28, 28]
-      });
-
-      const marker = L.marker(landmark.coords, { icon: landmarkIcon }).addTo(map);
-      marker.on("click", () => {
-        if (radiusCircleRef.current) map.removeLayer(radiusCircleRef.current);
-        
-        // Use setView with animate: false to completely bypass Leaflet's CSS animation loop.
-        // This guarantees zero _leaflet_pos crashes when React re-renders simultaneously.
-        if (directionsPhaseRef.current !== "destination") {
-          map.setView(landmark.coords, 15, { animate: false });
-        }
-        
-        onLandmarkClickRef.current(landmark);
-      });
-      landmarkMarkersRef.current.push(marker);
-    });
 
     // Handle map movement for "Search this area"
     map.on('dragstart', () => { 
@@ -327,6 +251,97 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
     };
   // Only rebuild the map when the theme changes — never on callback changes
   }, [resolvedTheme]);
+
+  // Dedicated effect for dynamic college landmarks rendering
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !collegesData || collegesData.length === 0) return;
+
+    // Clear existing landmark markers to avoid duplicates
+    landmarkMarkersRef.current.forEach((m) => {
+      if (map.hasLayer(m)) map.removeLayer(m);
+    });
+    landmarkMarkersRef.current = [];
+
+    const dynamicLandmarks = collegesData.map((c: any) => ({
+      id: c.code,
+      name: c.name,
+      coords: [c.latitude, c.longitude] as L.LatLngTuple,
+      logo: c.logoUrl,
+    }));
+
+    dynamicLandmarks.forEach((landmark: any) => {
+      const landmarkIcon = L.divIcon({
+        className: "custom-landmark-marker group",
+        html: `
+          <div class="relative flex items-center justify-center cursor-pointer group">
+            <!-- Soft pulsing halo -->
+            <div class="absolute w-10 h-10 rounded-full animate-pulse-slow pointer-events-none" style="background-color: rgba(47,125,109,0.15);"></div>
+            <div class="absolute w-7 h-7 rounded-full animate-ping pointer-events-none" style="background-color: rgba(47,125,109,0.35);"></div>
+            
+            <!-- Premium Glassmorphism Pin (40px x 40px matching CollegeStep) -->
+            <div class="relative z-10 w-10 h-10 rounded-full bg-white shadow-[0_6px_16px_rgba(0,0,0,0.18)] flex items-center justify-center transition-all duration-300 group-hover:scale-115 group-hover:shadow-[0_8px_24px_rgba(47,125,109,0.45)]" style="border: 2.5px solid var(--primary-color);">
+              ${
+                landmark.logo
+                  ? `<img src="${landmark.logo}" alt="${landmark.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
+                  : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`
+              }
+            </div>
+            
+            <!-- Floating Tooltip Label (Positioned Above Pin to Prevent Overlapping Listing Pins) -->
+            <div style="
+              position: absolute;
+              bottom: 100%;
+              left: 50%;
+              transform: translateX(-50%) translateY(-6px);
+              opacity: 0;
+              transition: opacity 0.2s ease, transform 0.2s ease;
+              pointer-events: none;
+              white-space: nowrap;
+              background: rgba(255,255,255,0.98);
+              backdrop-filter: blur(20px);
+              -webkit-backdrop-filter: blur(20px);
+              padding: 6px 12px 6px 10px;
+              border-radius: 10px;
+              font-size: 11px;
+              font-weight: 700;
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+              letter-spacing: 0.015em;
+              color: #111827;
+              box-shadow: 0 4px 20px rgba(0,0,0,0.18), 0 0 0 1.5px rgba(47,125,109,0.2);
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              border-bottom: 3px solid var(--primary-color);
+              margin-bottom: 6px;
+              z-index: 100;
+            " class="landmark-tooltip">
+              <span style="width:5px;height:5px;border-radius:50%;background:var(--primary-color);flex-shrink:0;display:inline-block;"></span>
+              ${landmark.name}
+            </div>
+          </div>
+        `,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+      });
+
+      const marker = L.marker(landmark.coords, { icon: landmarkIcon });
+      if (directionsPhaseRef.current !== "start") {
+        marker.addTo(map);
+      }
+
+      marker.on("click", () => {
+        if (radiusCircleRef.current) map.removeLayer(radiusCircleRef.current);
+
+        if (directionsPhaseRef.current !== "destination") {
+          map.setView(landmark.coords, 15, { animate: false });
+        }
+
+        onLandmarkClickRef.current(landmark);
+      });
+      landmarkMarkersRef.current.push(marker);
+    });
+  }, [collegesData]);
 
   // Keep track of a temporary marker to show the starting point during Phase 2
   const tempSelectedMarkerRef = useRef<L.Marker | null>(null);
@@ -630,7 +645,12 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
         @keyframes pulse-slow { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.4); opacity: 0.2; } }
         .custom-landmark-marker:hover .landmark-tooltip {
           opacity: 1 !important;
-          transform: translateY(-50%) translateX(0px) !important;
+          transform: translateX(-50%) translateY(-12px) !important;
+        }
+        .dark .landmark-tooltip {
+          background: rgba(15, 23, 42, 0.95) !important;
+          color: #f8fafc !important;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 0 0 1.5px rgba(47,125,109,0.3) !important;
         }
         .custom-price-marker:hover .listing-tooltip {
           opacity: 1 !important;
@@ -638,6 +658,9 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
         }
         .custom-price-marker:hover > div > div:first-child {
           transform: scale(1.08);
+        }
+        .dark-map-tiles {
+          filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7) !important;
         }
       `}} />
     </>

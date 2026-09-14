@@ -27,7 +27,7 @@ const CompactListingCard: React.FC<CompactListingCardProps> = ({
       <div className="relative w-28 h-full rounded-lg overflow-hidden shrink-0">
         <img
           src={imgSrc}
-          alt={data.title}
+          alt={`${data.title} - Boarding House near TAU Camiling Tarlac`}
           className="w-full h-full object-cover"
         />
         <div className="absolute top-1 right-1 z-10" onClick={(e) => e.stopPropagation()}>

@@ -9,7 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch active, approved listings from the database
   const listings = await db.listing.findMany({
     where: {
-      status: "approved",
+      status: "ACTIVE",
       isArchived: false,
     },
     select: {

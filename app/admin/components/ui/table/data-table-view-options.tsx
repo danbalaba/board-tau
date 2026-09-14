@@ -28,6 +28,12 @@ interface DataTableViewOptionsProps<TData> {
 export function DataTableViewOptions<TData>({
   table
 }: DataTableViewOptionsProps<TData>) {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const columns = React.useMemo(
     () =>
       table
@@ -38,6 +44,8 @@ export function DataTableViewOptions<TData>({
         ),
     [table]
   );
+
+  if (!mounted) return null;
 
   return (
     <Popover>
@@ -71,26 +79,34 @@ export function DataTableViewOptions<TData>({
               </div>
             </CommandEmpty>
             <CommandGroup>
-              {columns.map((column) => (
-                <CommandItem
-                  key={column.id}
-                  value={column.columnDef.meta?.label ?? column.id}
-                  onSelect={() =>
-                    column.toggleVisibility(!column.getIsVisible())
-                  }
-                  className="group"
-                >
-                  <span className='truncate'>
-                    {column.columnDef.meta?.label ?? column.id}
-                  </span>
-                  <div className={cn(
-                    "ml-auto shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200",
-                    column.getIsVisible() ? 'bg-emerald-500/20 opacity-100 scale-100' : 'opacity-0 scale-75'
-                  )}>
-                    <CheckIcon className='h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 font-bold' />
-                  </div>
-                </CommandItem>
-              ))}
+              {columns.map((column) => {
+                const label =
+                  column.columnDef.meta?.label ??
+                  (typeof column.columnDef.header === 'string'
+                    ? column.columnDef.header
+                    : column.id.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase()));
+
+                return (
+                  <CommandItem
+                    key={column.id}
+                    value={label}
+                    onSelect={() =>
+                      column.toggleVisibility(!column.getIsVisible())
+                    }
+                    className="group"
+                  >
+                    <span className='truncate'>
+                      {label}
+                    </span>
+                    <div className={cn(
+                      "ml-auto shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200",
+                      column.getIsVisible() ? 'bg-emerald-500/20 opacity-100 scale-100' : 'opacity-0 scale-75'
+                    )}>
+                      <CheckIcon className='h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 font-bold' />
+                    </div>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </CommandList>
         </Command>

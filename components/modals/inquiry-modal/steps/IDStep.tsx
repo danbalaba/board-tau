@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaIdCard, FaCamera, FaImage, FaTimes, FaCheckCircle, FaShieldAlt } from "react-icons/fa";
 import { Loader2, ScanLine, AlertCircle } from "lucide-react";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
+import { sanitizeImgUrl } from "@/lib/security/sanitize";
+import SafeImage from "@/components/common/SafeImage";
 
 interface IDStepProps {
   capturedID: string | null;
@@ -21,19 +23,7 @@ interface IDStepProps {
   toggleCamera?: any;
 }
 
-/**
- * Validates that a URL uses the blob: protocol before
- * passing it to an img src.
- */
-const sanitizeImgUrl = (url: string | null): string | undefined => {
-  if (!url) return undefined;
-  try {
-    const { protocol } = new URL(url);
-    return protocol === 'blob:' ? url : undefined;
-  } catch {
-    return undefined;
-  }
-};
+
 
 /** Animated corner bracket */
 const CornerBracket = ({ position }: { position: "tl" | "tr" | "bl" | "br" }) => {
@@ -140,7 +130,7 @@ const IDStep: React.FC<IDStepProps> = ({
             className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-black flex items-center justify-center"
             style={{ minHeight: 280 }}
           >
-            <img src={capturedID} alt="Captured ID" className="absolute inset-0 w-full h-full object-contain p-4" />
+            <SafeImage src={sanitizeImgUrl(capturedID)} alt="Captured ID" fill className="object-contain p-4" />
 
             {/* Green success overlay at bottom */}
             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
@@ -189,10 +179,11 @@ const IDStep: React.FC<IDStepProps> = ({
           >
             {/* Preview card */}
             <div className="relative w-full rounded-2xl overflow-hidden bg-gray-50 dark:bg-black shadow-2xl border border-gray-200 dark:border-white/10 flex items-center justify-center" style={{ minHeight: 250 }}>
-              <img 
+              <SafeImage 
                 src={sanitizeImgUrl(previewUrl)}
                 alt="ID Preview" 
-                className="absolute inset-0 w-full h-full object-contain p-4" 
+                fill
+                className="object-contain p-4" 
               />
 
               {/* Clear button */}
@@ -221,14 +212,12 @@ const IDStep: React.FC<IDStepProps> = ({
                     exit={{ opacity: 0 }}
                     className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center gap-5 z-20"
                   >
-                    {/* Scan line animation */}
-                    <div className="relative w-full h-0.5 overflow-hidden">
-                      <motion.div
-                        className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-blue-400 to-transparent"
-                        animate={{ x: ["-100%", "400%"] }}
-                        transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
-                      />
-                    </div>
+                    {/* Futuristic Laser Beam Scan Line traversing top to bottom */}
+                    <motion.div
+                      animate={{ top: ["5%", "90%", "5%"] }}
+                      transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                      className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-blue-400 to-transparent shadow-[0_0_18px_rgba(96,165,250,0.9)] z-30 pointer-events-none"
+                    />
 
                     {/* Rings + spinner */}
                     <div className="relative flex items-center justify-center">
@@ -244,15 +233,6 @@ const IDStep: React.FC<IDStepProps> = ({
                       <p className="text-blue-300/80 text-xs leading-relaxed">
                         Cross-referencing with your selfie<span className="animate-pulse">...</span>
                       </p>
-                    </div>
-
-                    {/* Scan line at bottom */}
-                    <div className="relative w-full h-0.5 overflow-hidden">
-                      <motion.div
-                        className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-blue-400 to-transparent"
-                        animate={{ x: ["400%", "-100%"] }}
-                        transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
-                      />
                     </div>
                   </motion.div>
                 )}

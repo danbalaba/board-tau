@@ -46,9 +46,6 @@ interface UseDataTableProps<TData>
       | 'state'
       | 'pageCount'
       | 'getCoreRowModel'
-      | 'manualFiltering'
-      | 'manualPagination'
-      | 'manualSorting'
     >,
     Required<Pick<TableOptions<TData>, 'pageCount'>> {
   initialState?: Omit<Partial<TableState>, 'sorting'> & {
@@ -62,6 +59,9 @@ interface UseDataTableProps<TData>
   scroll?: boolean;
   shallow?: boolean;
   startTransition?: React.TransitionStartFunction;
+  manualPagination?: boolean;
+  manualSorting?: boolean;
+  manualFiltering?: boolean;
 }
 
 export function useDataTable<TData>(props: UseDataTableProps<TData>) {
@@ -77,6 +77,9 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
     scroll = false,
     shallow = true,
     startTransition,
+    manualPagination = true,
+    manualSorting = true,
+    manualFiltering = true,
     ...tableProps
   } = props;
 
@@ -287,9 +290,9 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
-     manualPagination: true,
-     manualSorting: true,
-     manualFiltering: true
+    manualPagination,
+    manualSorting,
+    manualFiltering
   });
 
   return { table, shallow, debounceMs, throttleMs };

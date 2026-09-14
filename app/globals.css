@@ -1,50 +1,46 @@
-/* Admin theme styles */
-@import './admin/components/themes/boardtau.css';
-@import './admin/components/themes/claude.css';
-@import './admin/components/themes/mono.css';
-@import './admin/components/themes/neobrutualism.css';
-@import './admin/components/themes/notebook.css';
-@import './admin/components/themes/supabase.css';
-@import './admin/components/themes/vercel.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Native smooth scrolling — replaces Lenis library */
-html {
-  scroll-behavior: smooth;
-}
-
 /* Custom scrollbar styles */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(var(--border-rgb), 0.2);
-  border-radius: 10px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(var(--border-rgb), 0.6);
-  border-radius: 10px;
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--border-rgb), 0.8);
+  background: rgba(100, 116, 139, 0.7);
+}
+
+html {
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+html.dark {
+  color-scheme: dark;
+  scrollbar-color: rgba(51, 65, 85, 0.7) transparent;
 }
 
 html.dark ::-webkit-scrollbar-track {
-  background: rgba(var(--border-rgb), 0.2);
+  background: transparent;
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  background: rgba(var(--border-rgb), 0.6);
+  background: rgba(51, 65, 85, 0.7);
+  border-radius: 9999px;
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--border-rgb), 0.8);
+  background: rgba(71, 85, 105, 0.9);
 }
 
 /* User/Landlord side - Original color variables */
@@ -112,11 +108,13 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 }
 
 /* ===== UTILITIES ===== */
-.hide-scrollbar::-webkit-scrollbar {
+.hide-scrollbar::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
-.hide-scrollbar {
+.hide-scrollbar,
+.no-scrollbar {
   -ms-overflow-style: none;
   /* IE and Edge */
   scrollbar-width: none;
@@ -126,6 +124,7 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 /* Custom scrollbar utility */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -133,17 +132,29 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(var(--border-rgb), 0.3);
-  border-radius: 10px;
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--border-rgb), 0.5);
+  background: rgba(100, 116, 139, 0.6);
+}
+
+html.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(51, 65, 85, 0.7);
+}
+
+html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 0.9);
 }
 
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(var(--border-rgb), 0.3) transparent;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+
+html.dark .custom-scrollbar {
+  scrollbar-color: rgba(51, 65, 85, 0.7) transparent;
 }
 
 html.dark {
@@ -360,11 +371,9 @@ html[data-theme].dark {
 
 body {
   overflow-x: hidden !important;
-  overflow-y: scroll !important;
   scrollbar-gutter: stable !important;
   padding-right: 0 !important;
   margin-right: 0 !important;
-  scroll-behavior: smooth;
   background-color: rgb(var(--background-rgb));
   color: rgb(var(--foreground-rgb));
   transition: color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
@@ -376,18 +385,16 @@ body {
   padding-bottom: env(safe-area-inset-bottom); /* iOS Safe area padding */
 }
 
-/* Prevent Radix UI scroll lock from adding inline padding which shifts layout on Windows */
+/* Prevent Radix UI scroll lock from adding inline padding or triggering smooth scroll jumps */
 :root {
   --removed-body-scroll-bar-size: 0px !important;
 }
 
 body[data-scroll-locked], 
-html[data-scroll-locked],
-[data-radix-scroll-area-viewport] {
+html[data-scroll-locked] {
+  scroll-behavior: auto !important;
   padding-right: 0 !important;
   margin-right: 0 !important;
-  pointer-events: auto !important;
-  overflow-y: scroll !important;
 }
 
 /* Disable text selection on interactive elements */
@@ -535,14 +542,11 @@ html[data-theme] body {
 }
 
 @keyframes pulse {
-
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+  0%, 100% {
+    opacity: 1;
   }
-
   50% {
-    box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
+    opacity: 0.4;
   }
 }
 
@@ -602,9 +606,7 @@ html[data-theme] body {
   z-index: 0 !important;
 }
 
-#scroll-container {
-  scroll-behavior: smooth !important;
-}
+
 
 @keyframes shake-horizontal {
 
@@ -748,3 +750,34 @@ html.dark .leaflet-control-layers-list label:hover {
 .leaflet-control-attribution {
   display: none !important;
 }
+
+/* GPU-Accelerated Mascot Floating Animation */
+@keyframes floatKerbyGpu {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(-1deg);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0) rotate(1deg);
+  }
+}
+
+@keyframes floatShadowGpu {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(0.72);
+    opacity: 0.12;
+  }
+}
+
+.animate-kerby-float {
+  animation: floatKerbyGpu 3.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-kerby-shadow {
+  animation: floatShadowGpu 3.8s ease-in-out infinite;
+  will-change: transform, opacity;
+}

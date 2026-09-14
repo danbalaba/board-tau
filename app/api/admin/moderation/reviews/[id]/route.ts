@@ -28,33 +28,46 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const { action, reason, banUser } = await req.json();
 
-    if (!['approve', 'reject', 'archive'].includes(action)) {
+    if (!['approve', 'reject', 'archive', 'unarchive'].includes(action)) {
       return NextResponse.json(
-        ApiResponseFormatter.error('Invalid action', 'Action must be "approve", "reject", or "archive"'),
+        ApiResponseFormatter.error('Invalid action', 'Action must be "approve", "reject", "archive", or "unarchive"'),
         { status: 400 }
       );
     }
 
     // Process the decision
-    if (action === 'archive') {
+    if (action === 'archive' || action === 'unarchive') {
+      const isArchiving = action === 'archive';
       const updatedReview = await db.review.update({
         where: { id },
-        data: { isArchived: true },
+        data: { isArchived: isArchiving },
         include: { user: true }
       });
       
       await logAdminAction({
         adminId: session.user.id,
-        action: 'Archive Review',
+        action: isArchiving ? 'Archive Review' : 'Unarchive Review',
         entityType: 'Review',
         entityId: id,
-        details: `Archived review. Reason: ${reason || 'No reason provided'}`,
+        details: `${isArchiving ? 'Archived' : 'Unarchived'} review. Reason: ${reason || 'No reason provided'}`,
         ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
         userAgent: req.headers.get('user-agent')
       });
+
+      // Add to Moderation Activity Feed
+      await db.moderationLog.create({
+        data: {
+          adminId: session.user.id,
+          action: isArchiving ? 'archived' : 'unarchived',
+          entityType: 'review',
+          entityId: id,
+          entityTitle: `Review from ${updatedReview.user?.name || 'User'}`,
+          notes: reason || (isArchiving ? 'Archived by admin' : 'Restored by admin'),
+        }
+      });
       
       return NextResponse.json(
-        ApiResponseFormatter.success(updatedReview, `Review archived successfully`)
+        ApiResponseFormatter.success(updatedReview, `Review ${isArchiving ? 'archived' : 'restored'} successfully`)
       );
     }
 
@@ -162,6 +175,18 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       details: 'Super Admin soft-deleted review',
       ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
       userAgent: req.headers.get('user-agent')
+    });
+
+    // Add to Moderation Activity Feed
+    await db.moderationLog.create({
+      data: {
+        adminId: session.user.id,
+        action: 'deleted',
+        entityType: 'review',
+        entityId: id,
+        entityTitle: `Review ID: ${deletedReview.id}`,
+        notes: 'Soft deleted by Super Admin',
+      }
     });
 
     return NextResponse.json(

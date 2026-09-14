@@ -102,7 +102,10 @@ export const ResponsiveToastProvider: React.FC<{ children: React.ReactNode }> = 
           ? message
           : message.description ? `${message.title}: ${message.description}` : message.title;
         
-        toastFunction(displayMessage, options);
+        const toastId = (options && options.id) ? options.id : (typeof message === "string" ? message : (message.id || message.title));
+        const toastOptions = { id: toastId, ...options };
+
+        toastFunction(displayMessage, toastOptions);
       }
     }
   };

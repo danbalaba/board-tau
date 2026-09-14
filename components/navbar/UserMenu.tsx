@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState, useTransition, useRef } from "react";
 import { AiOutlineMenu } from "react-icons/ai";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { User } from "next-auth";
 
@@ -26,6 +26,9 @@ interface UserMenuProps {
 
 const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
+  const hasCallbackUrl = !user && !!callbackUrl;
   const [isPending, startTransition] = useTransition();
   const { startLoading } = useLoading();
   const { onOpen } = useMenuPanel();
@@ -106,16 +109,15 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
   return (
     <div className="relative">
       <div className="flex flex-row items-center gap-3">
-        <Modal>
+        <Modal initialOpen={hasCallbackUrl ? "Login" : ""}>
           {user ? (
-            <Modal.Trigger name="host-application">
-              <button
-                type="button"
-                className="hidden xl:block text-sm py-3 px-4 rounded-full hover:bg-neutral-100 dark:hover:bg-gray-800 transition cursor-pointer text-gray-600 dark:text-gray-300 font-medium"
-              >
-                Become a Host
-              </button>
-            </Modal.Trigger>
+            <button
+              type="button"
+              onClick={() => redirect("/become-a-host", "Become a Host")}
+              className="hidden xl:block text-sm py-3 px-4 rounded-full hover:bg-neutral-100 dark:hover:bg-gray-800 transition cursor-pointer text-gray-600 dark:text-gray-300 font-medium"
+            >
+              Become a Host
+            </button>
           ) : (
             <Modal.Trigger name="Login">
               <button
@@ -170,9 +172,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
                       );
                     })}
 
-                  <Modal.Trigger name="host-application">
-                    <MenuItem label="Become a Host" />
-                  </Modal.Trigger>
+                  <MenuItem label="Become a Host" onClick={() => redirect("/become-a-host", "Become a Host")} />
                   {(user as { role?: string })?.role === "admin" && (
                     <MenuItem label="Admin" onClick={() => redirect("/admin", "Admin")} />
                   )}
