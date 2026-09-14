@@ -3,6 +3,8 @@ import Webcam from "react-webcam";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, RefreshCcw, Loader2, Eye } from "lucide-react";
 import { FaCamera, FaTimes } from "react-icons/fa";
+import { sanitizeImgUrl } from "@/lib/security/sanitize";
+import SafeImage from "@/components/common/SafeImage";
 interface SelfieStepProps {
   capturedSelfie: string | null;
   setCapturedSelfie: (val: string | null) => void;
@@ -19,22 +21,7 @@ interface SelfieStepProps {
   handleCaptureSelfie: () => void;
 }
 
-/**
- * Validates that a URL uses a safe protocol (blob: or data:) before
- * passing it to an img src. CodeQL recognizes this as a safe whitelist.
- */
-const sanitizeImgUrl = (url: string | null): string | undefined => {
-  if (!url) return undefined;
-  if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  try {
-    const { protocol } = new URL(url);
-    return (protocol === 'blob:' || protocol === 'data:' || protocol === 'http:' || protocol === 'https:') ? url : undefined;
-  } catch {
-    return undefined;
-  }
-};
+
 
 const SelfieStep: React.FC<SelfieStepProps> = ({
   capturedSelfie, setCapturedSelfie,
@@ -269,12 +256,12 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
             </>
           ) : (
             <div className="relative w-full h-full">
-              <img 
-                ref={selfieImgRef}
-                src={sanitizeImgUrl(capturedSelfie) ?? undefined}
-                alt="Captured Selfie" 
-                className="w-full h-full object-cover" 
-              />
+            <SafeImage 
+              src={sanitizeImgUrl(capturedSelfie)}
+              alt="Captured Selfie" 
+              fill
+              className="object-cover" 
+            />
               <button
                 type="button"
                 onClick={() => {

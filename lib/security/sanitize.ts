@@ -113,14 +113,15 @@ export function sanitizeAIOutput(output: string): string {
 /**
  * Validates and sanitizes dynamic image URLs (blob:, data:image/, http:, https:, /)
  * to prevent DOM XSS through <img> src attributes (CodeQL js/xss-through-dom).
+ * Guaranteed to return a safe sanitized string URL or a safe default empty string.
  */
-export function sanitizeImgUrl(url: string | null | undefined): string | undefined {
-  if (!url || typeof url !== 'string') return undefined;
+export function sanitizeImgUrl(url: string | null | undefined): string {
+  if (!url || typeof url !== 'string') return '';
   const trimmed = url.trim();
 
   // Reject dangerous pseudo-protocols or non-image data URIs
   if (/^(javascript|vbscript|data:(?!image\/)):/i.test(trimmed)) {
-    return undefined;
+    return '';
   }
 
   // Allow safe image protocols and relative paths
@@ -131,7 +132,7 @@ export function sanitizeImgUrl(url: string | null | undefined): string | undefin
     trimmed.startsWith('http://') ||
     trimmed.startsWith('https://')
   ) {
-    return trimmed;
+    return encodeURI(trimmed);
   }
 
   try {
@@ -140,9 +141,10 @@ export function sanitizeImgUrl(url: string | null | undefined): string | undefin
       return parsed.href;
     }
   } catch {
-    return undefined;
+    return '';
   }
 
-  return undefined;
+  return '';
 }
+
 

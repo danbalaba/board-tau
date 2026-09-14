@@ -6,6 +6,7 @@ import axios from "axios";
 import { toast } from "@/app/admin/components/ui/sonner";
 import { Button } from "@/app/admin/components/ui/button";
 import Input from "@/components/inputs/Input";
+import SafeImage from "@/components/common/SafeImage";
 import {
   MapPin,
   Image as ImageIcon,
@@ -483,11 +484,14 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                         className="relative group cursor-pointer"
                         title="Click to view full screen preview"
                       >
-                        <img
-                          src={sanitizeImgUrl(previewUrl)}
-                          alt="Logo Preview"
-                          className="w-16 h-16 object-contain rounded-xl bg-white border border-slate-200 dark:border-slate-800 p-2 shadow-md shrink-0 transition-transform group-hover:scale-105"
-                        />
+                        <div className="w-16 h-16 relative rounded-xl bg-white border border-slate-200 dark:border-slate-800 p-2 shadow-md shrink-0 transition-transform group-hover:scale-105 overflow-hidden">
+                          <SafeImage
+                            src={sanitizeImgUrl(previewUrl)}
+                            alt="College Logo Preview"
+                            fill
+                            className="object-contain p-1"
+                          />
+                        </div>
                         <div className="absolute inset-0 bg-slate-950/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                           <Eye size={18} />
                         </div>
@@ -713,7 +717,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                 <div className="flex items-center gap-3.5">
                   <div className="relative w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-amber-500 shadow-sm overflow-hidden flex items-center justify-center shrink-0">
                     {previewUrl ? (
-                      <img src={sanitizeImgUrl(previewUrl)} alt={formData.code} className="w-full h-full object-cover" />
+                      <SafeImage src={sanitizeImgUrl(previewUrl)} alt={formData.code || "College Logo"} fill className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-xs font-black text-amber-500">{formData.code || "TAU"}</span>
                     )}
@@ -864,11 +868,12 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                   </button>
                 </div>
 
-                <div className="flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950/60 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 max-h-[70vh] overflow-hidden">
-                  <img
+                <div className="relative w-full h-[60vh] flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950/60 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden">
+                  <SafeImage
                     src={sanitizeImgUrl(previewUrl)}
                     alt="Full Logo Preview"
-                    className="max-h-[60vh] max-w-full w-auto object-contain rounded-xl shadow-lg"
+                    fill
+                    className="object-contain p-4"
                   />
                 </div>
 

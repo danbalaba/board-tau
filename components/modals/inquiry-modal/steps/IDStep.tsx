@@ -4,6 +4,7 @@ import { FaIdCard, FaCamera, FaImage, FaTimes, FaCheckCircle, FaShieldAlt } from
 import { Loader2, ScanLine, AlertCircle } from "lucide-react";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { sanitizeImgUrl } from "@/lib/security/sanitize";
+import SafeImage from "@/components/common/SafeImage";
 
 interface IDStepProps {
   capturedID: string | null;
@@ -129,7 +130,7 @@ const IDStep: React.FC<IDStepProps> = ({
             className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-black flex items-center justify-center"
             style={{ minHeight: 280 }}
           >
-            <img src={sanitizeImgUrl(capturedID)} alt="Captured ID" className="absolute inset-0 w-full h-full object-contain p-4" />
+            <SafeImage src={sanitizeImgUrl(capturedID)} alt="Captured ID" fill className="object-contain p-4" />
 
             {/* Green success overlay at bottom */}
             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
@@ -178,10 +179,11 @@ const IDStep: React.FC<IDStepProps> = ({
           >
             {/* Preview card */}
             <div className="relative w-full rounded-2xl overflow-hidden bg-gray-50 dark:bg-black shadow-2xl border border-gray-200 dark:border-white/10 flex items-center justify-center" style={{ minHeight: 250 }}>
-              <img 
+              <SafeImage 
                 src={sanitizeImgUrl(previewUrl)}
                 alt="ID Preview" 
-                className="absolute inset-0 w-full h-full object-contain p-4" 
+                fill
+                className="object-contain p-4" 
               />
 
               {/* Clear button */}

@@ -7,6 +7,7 @@ import { User, RefreshCcw, Loader2, Eye } from "lucide-react";
 import { FaCamera, FaTimes } from "react-icons/fa";
 import { cn } from "@/utils/helper";
 import { sanitizeImgUrl } from "@/lib/security/sanitize";
+import SafeImage from "@/components/common/SafeImage";
 
 interface SelfieStepProps {
   capturedSelfie: string | null;
@@ -283,11 +284,11 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
           </>
         ) : (
           <div className="relative w-full h-full">
-            <img 
-              ref={selfieImgRef}
-              src={sanitizeImgUrl(capturedSelfie) ?? undefined}
+            <SafeImage 
+              src={sanitizeImgUrl(capturedSelfie)}
               alt="Captured Selfie" 
-              className="w-full h-full object-cover" 
+              fill
+              className="object-cover" 
             />
             <button
               type="button"
