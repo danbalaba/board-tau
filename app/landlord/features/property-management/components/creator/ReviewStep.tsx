@@ -63,6 +63,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/common/Button';
 import { cn } from '@/utils/helper';
+import { sanitizeImgUrl } from '@/lib/security/sanitize';
 import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
 import SafeImage from '@/components/common/SafeImage';
 import { SharedAmenitiesModal } from '@/components/common/SharedAmenitiesModal';
@@ -1129,12 +1130,12 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                     <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
                       <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Landlord Digital Signature</span>
                       {propertyConfig.landlordSignatureBase64 || watch('propertyConfig.landlordSignatureBase64') ? (
-                        <div className="h-7 w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 flex items-center justify-center overflow-hidden">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img 
-                            src={propertyConfig.landlordSignatureBase64 || watch('propertyConfig.landlordSignatureBase64')} 
+                        <div className="h-7 w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 flex items-center justify-center overflow-hidden relative">
+                          <SafeImage 
+                            src={sanitizeImgUrl(propertyConfig.landlordSignatureBase64 || watch('propertyConfig.landlordSignatureBase64'))} 
                             alt="Landlord Signature" 
-                            className="max-h-full max-w-full object-contain dark:invert" 
+                            fill
+                            className="object-contain dark:invert" 
                           />
                         </div>
                       ) : (

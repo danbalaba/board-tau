@@ -24,6 +24,14 @@ jest.mock('@/lib/redis', () => ({
   }
 }));
 
+// Mock the dynamic taxonomy service to avoid database connection delays in tests
+jest.mock('@/services/taxonomy', () => ({
+  getActivePropertyTypes: jest.fn().mockResolvedValue([{ name: 'Boarding House' }, { name: 'Apartment' }]),
+  getActiveAttributes: jest.fn().mockResolvedValue([{ name: 'WiFi' }, { name: 'Air Conditioning' }]),
+  getActiveCampusColleges: jest.fn().mockResolvedValue([{ code: 'CET', name: 'College of Engineering' }]),
+  getActiveRoomTypes: jest.fn().mockResolvedValue([{ name: 'Solo Room' }, { name: 'Bedspace' }]),
+}));
+
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
 
@@ -72,5 +80,6 @@ describe('POST /api/ai/map-search', () => {
     expect(json.params.maxPrice).toBe('3000');
     expect(json.params.amenities).toBe('WiFi');
     expect(json.params.roomType).toBe('SOLO');
-  });
+  }, 15000);
 });
+
