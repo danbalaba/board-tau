@@ -1,15 +1,11 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { useSearchSummary } from '../useSearchSummary';
 import { useSearchParams } from 'next/navigation';
+import axios from 'axios';
 
+jest.mock('axios');
 jest.mock('next/navigation', () => ({
   useSearchParams: jest.fn(),
-}));
-
-jest.mock('@/data/colleges', () => ({
-  colleges: [
-    { value: 'col1', label: 'College One' },
-  ],
 }));
 
 describe('useSearchSummary', () => {
@@ -44,14 +40,20 @@ describe('useSearchSummary', () => {
     expect(result.current.occupantLabel).toBe('Occupants');
   });
 
-  it('formats location label correctly', () => {
+  it('formats location label correctly', async () => {
+    (axios.get as jest.Mock).mockResolvedValueOnce({
+      data: [{ code: 'col1', name: 'College One' }]
+    });
+
     mockUseSearchParams.mockReturnValue(createMockSearchParams({
       college: 'col1',
       distance: '5'
     }));
 
     const { result } = renderHook(() => useSearchSummary());
-    expect(result.current.locationLabel).toBe('Near College One · ≤ 5 km');
+    await waitFor(() => {
+      expect(result.current.locationLabel).toBe('Near College One · ≤ 5 km');
+    });
   });
 
   it('formats category label for single category', () => {

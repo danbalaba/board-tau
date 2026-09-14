@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { GovernanceKPICards } from './governance-kpi-cards';
 import { AdminQueueHeader } from './admin-queue-header';
-import { ModerationActivityFeed } from './moderation-activity-feed';
-import { AdminTodoSidebar } from './admin-todo-sidebar';
+import { PendingItemsQueue } from './pending-items-queue';
+import { ModerationDecisionLog } from './moderation-decision-log';
 import { useModerationQueue } from '@/app/admin/hooks/use-moderation';
 import { toast } from '@/app/admin/components/ui/sonner';
 import { exportToCSV, exportToExcel } from '@/utils/export-utils';
@@ -19,6 +19,7 @@ export function ModerationQueueDashboard() {
 
   const { data: queueData, isLoading, error, refetch, isFetching } = useModerationQueue({
     entityType: '',
+    range,
   });
 
   if (error) {
@@ -89,8 +90,6 @@ export function ModerationQueueDashboard() {
           onExport={handleExport}
           isLoading={isFetching}
           totalPending={pendingItems.length}
-          range={range}
-          onRangeChange={setRange}
           isSuperAdmin={isSuperAdmin}
         />
       </motion.div>
@@ -113,39 +112,30 @@ export function ModerationQueueDashboard() {
             pendingListingsLastWeek={stats?.pendingListingsLastWeek || 0}
             pendingReviewsLastWeek={stats?.pendingReviewsLastWeek || 0}
             pendingHostsLastWeek={stats?.pendingHostsLastWeek || 0}
-            isLoading={isFetching}
+            isLoading={isLoading}
             range={range}
           />
         </motion.div>
 
-        {/* Main Command Center Layout: 2 Columns */}
+        {/* Main Command Center Layout: Clean 2-Column Split */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6 flex-1"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1"
         >
-        
-        {/* Left Column: Moderation Activity Feed */}
-        <div className="lg:col-span-2 xl:col-span-3 flex flex-col">
-          <ModerationActivityFeed 
+          {/* Left Column: Pending Actions Queue (Action-First) */}
+          <PendingItemsQueue 
             pendingItems={pendingItems} 
-            recentLogs={recentLogs}
-            isLoading={isFetching} 
+            isLoading={isLoading} 
           />
-        </div>
 
-        {/* Right Column: Auto-To-Do Checklist */}
-        <div className="lg:col-span-1 xl:col-span-1">
-          <div className="sticky top-8">
-            <AdminTodoSidebar 
-              pendingItems={pendingItems} 
-              isLoading={isFetching} 
-            />
-          </div>
-        </div>
-
-      </motion.div>
+          {/* Right Column: Admin Decision History (Live Log) */}
+          <ModerationDecisionLog 
+            recentLogs={recentLogs} 
+            isLoading={isLoading} 
+          />
+        </motion.div>
       </div>
     </div>
   );

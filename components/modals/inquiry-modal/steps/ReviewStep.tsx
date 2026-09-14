@@ -4,6 +4,7 @@ import { ShieldCheck, Search } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import SafeImage from "../../../common/SafeImage";
+import SignaturePad from "../../../common/SignaturePad";
 
 import { createPortal } from "react-dom";
 
@@ -12,10 +13,13 @@ interface ReviewStepProps {
   capturedSelfie: string | null;
   capturedID: string | null;
   room: any;
+  leaseContract?: any;
+  tenantSignature?: string;
+  setTenantSignature?: (v: string) => void;
 }
 
 const ReviewStep: React.FC<ReviewStepProps> = ({
-  watchedValues, capturedSelfie, capturedID, room
+  watchedValues, capturedSelfie, capturedID, room, leaseContract, tenantSignature, setTenantSignature
 }) => {
   const [selectedPreview, setSelectedPreview] = useState<string | null>(null);
 
@@ -151,6 +155,35 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
             </div>
           </div>
         </div>
+
+        {leaseContract && (
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+               <ShieldCheck className="text-teal-600" size={18} />
+               <h4 className="font-bold text-gray-900 dark:text-gray-100">Lease Terms Preview</h4>
+            </div>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+               <p><strong>Move-Out Notice Period:</strong> {leaseContract.moveOutNoticeDays || 30} days</p>
+               <p><strong>Security Deposit:</strong> ₱ {(leaseContract.depositAmount || 0).toLocaleString()}</p>
+               {leaseContract.terms?.length > 0 && (
+                 <>
+                   <p className="font-bold mt-2">Custom Clauses:</p>
+                   <ul className="list-disc pl-4 space-y-1">
+                     {leaseContract.terms.map((term: string, idx: number) => (
+                       <li key={idx}>{term}</li>
+                     ))}
+                   </ul>
+                 </>
+               )}
+            </div>
+            
+            <div className="p-4 bg-teal-50 dark:bg-teal-900/20 rounded-2xl border border-teal-100 dark:border-teal-800/50">
+              <p className="text-[11px] font-bold text-teal-800 dark:text-teal-300 leading-relaxed">
+                ℹ️ <strong>Legal Booking Lifecycle Notice</strong>: Submitting this inquiry sends your application to the landlord for approval. You will sign the official digital lease contract during reservation checkout after the landlord approves your application!
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {renderPreviewPortal()}

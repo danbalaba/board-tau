@@ -5,9 +5,9 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { 
-  Home, 
+  CheckCircle2, 
   Clock, 
-  AlertTriangle, 
+  XCircle, 
   CheckSquare, 
   ArrowUpRight, 
   ArrowDownRight, 
@@ -42,8 +42,8 @@ function computeTrend(current: number, previous: number) {
     return { 
       label: `+${current}`, 
       direction: 'up' as const, 
-      color: 'text-emerald-500', 
-      bg: 'bg-emerald-500/10', 
+      color: 'text-primary', 
+      bg: 'bg-primary/10', 
       icon: ArrowUpRight 
     };
   }
@@ -61,8 +61,8 @@ function computeTrend(current: number, previous: number) {
   return {
     label: `${isUp ? '+' : ''}${pct.toFixed(1)}%`,
     direction: isUp ? 'up' as const : 'down' as const,
-    color: isGood ? 'text-emerald-500' : 'text-rose-500',
-    bg: isGood ? 'bg-emerald-500/10' : 'bg-rose-500/10',
+    color: isGood ? 'text-primary' : 'text-rose-500',
+    bg: isGood ? 'bg-primary/10' : 'bg-rose-500/10',
     icon: isUp ? ArrowUpRight : ArrowDownRight,
   };
 }
@@ -92,18 +92,18 @@ export function ListingKPICards({
 
   const kpis = [
     { 
-      label: 'Active Listings', 
+      label: 'Approved Submissions', 
       value: approved, 
-      icon: Home, 
-      color: 'text-emerald-500', 
-      bg: 'bg-emerald-500/10', 
-      chartColor: '#10b981', 
+      icon: CheckCircle2, 
+      color: 'text-primary', 
+      bg: 'bg-primary/10', 
+      chartColor: '#2f7d6d', 
       trendData: generateTrendData(approved, !!isLoading),
       trend: computeTrend(approved, approvedLastWeek),
       tooltip: {
-        title: 'Active Listings',
-        description: 'Properties currently active and available on the platform.',
-        detail: 'Approved and visible to users.',
+        title: 'Approved Submissions',
+        description: 'Properties authorized by admins and published live on BoardTAU.',
+        detail: 'Approved and visible to public users.',
       }
     },
     { 
@@ -122,22 +122,22 @@ export function ListingKPICards({
       }
     },
     { 
-      label: 'Flagged Content', 
+      label: 'Rejected Submissions', 
       value: rejected, 
-      icon: AlertTriangle, 
+      icon: XCircle, 
       color: 'text-rose-500', 
       bg: 'bg-rose-500/10', 
       chartColor: '#f43f5e', 
       trendData: generateTrendData(rejected, !!isLoading),
       trend: computeTrend(rejected, rejectedLastWeek),
       tooltip: {
-        title: 'Flagged Content',
-        description: 'Listings that have been rejected or reported.',
-        detail: 'Requires attention or has been removed.',
+        title: 'Rejected Submissions',
+        description: 'Listings rejected during admin review due to compliance or quality issues.',
+        detail: 'Landlords notified with feedback.',
       }
     },
     { 
-      label: 'Total Processed', 
+      label: 'Total Reviewed', 
       value: total, 
       icon: CheckSquare, 
       color: 'text-purple-500', 
@@ -146,9 +146,9 @@ export function ListingKPICards({
       trendData: generateTrendData(total, !!isLoading),
       trend: computeTrend(total, totalLastWeek),
       tooltip: {
-        title: 'Total Processed',
-        description: 'Overall listings processed in the system.',
-        detail: 'Includes all statuses.',
+        title: 'Total Reviewed',
+        description: 'Overall listing submissions processed in the moderation system.',
+        detail: 'Includes all pending, approved, and rejected listings.',
       }
     }
   ];

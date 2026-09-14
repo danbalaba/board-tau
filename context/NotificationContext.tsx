@@ -99,7 +99,10 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         setHasMore(!!data.nextCursor);
       }
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      // Gracefully catch network abort or server connection errors
+      if (process.env.NODE_ENV === "development") {
+        console.warn("Notification fetch skipped or offline:", error);
+      }
     } finally {
       setIsLoading(false);
       isFetchingRef.current = false;

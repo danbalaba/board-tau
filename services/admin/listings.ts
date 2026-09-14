@@ -16,8 +16,8 @@ export async function getAdminListings(args: {
 }) {
   await requireAdmin();
 
-  const where: { status?: string; user?: { deletedAt: null } } = {};
-  if (args.status) where.status = args.status;
+  const where: any = {};
+  if (args.status) where.status = args.status.toUpperCase();
   where.user = { deletedAt: null }; // Only include listings with active users
 
   const listings = await db.listing.findMany({
@@ -28,9 +28,19 @@ export async function getAdminListings(args: {
      include: {
       user: { select: { id: true, name: true, email: true } },
       images: { orderBy: { order: "asc" }, take: 3 },
-      categories: {
+      propertyType: true,
+      listingLinks: {
         include: {
-          category: true,
+          attribute: true,
+        },
+      },
+      rooms: {
+        include: {
+          roomLinks: {
+            include: {
+              attribute: true,
+            },
+          },
         },
       },
     },
@@ -43,13 +53,13 @@ export async function getAdminListings(args: {
 /**
  * Moderate a listing status
  * @param listingId - Listing ID to moderate
- * @param status - New status (active/rejected/flagged)
+ * @param status - New status (ACTIVE/REJECTED/FLAGGED)
  * @param adminId - Admin performing the action
  * @returns Success status
  */
-export async function adminModerateListing(
+export async function updateListingStatus(
   listingId: string,
-  status: "active" | "rejected" | "flagged",
+  status: 'ACTIVE' | 'REJECTED' | 'FLAGGED',
   adminId: string
 ) {
   await requireAdmin();

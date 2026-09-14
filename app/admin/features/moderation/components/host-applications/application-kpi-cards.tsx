@@ -140,7 +140,7 @@ export function ApplicationKPICards({
       }
     },
     { 
-      label: 'Rejected Apps', 
+      label: 'Rejected Applications', 
       value: rejected, 
       icon: ShieldAlert, 
       color: 'text-rose-500', 

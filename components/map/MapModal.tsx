@@ -5,8 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaTimes, FaRedo, FaBars } from "react-icons/fa";
 import dynamic from "next/dynamic";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import MapLoadingState from "@/components/common/MapLoadingState";
 
-const InteractiveMap = dynamic(() => import("./InteractiveMap"), { ssr: false });
+const InteractiveMap = dynamic(() => import("./InteractiveMap"), {
+  ssr: false,
+  loading: () => <MapLoadingState label="Interactive Fullscreen Map" height="h-full min-h-[400px]" />
+});
 import SidebarListView from "./SidebarListView";
 import SidebarDetailView from "./SidebarDetailView";
 import MapFiltersOverlay from "./MapFiltersOverlay";

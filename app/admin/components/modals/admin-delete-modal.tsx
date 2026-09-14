@@ -40,28 +40,26 @@ export function AdminDeleteModal({
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative bg-white dark:bg-[#111827] rounded-[32px] border border-gray-100 dark:border-white/10 p-8 max-sm:w-full max-w-sm shadow-2xl overflow-hidden"
+            className="relative bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 p-8 max-sm:w-full max-w-sm shadow-2xl overflow-hidden"
           >
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-rose-500" />
-            
-            <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-[2rem] bg-rose-500/10 text-rose-500 border border-rose-900/30 flex items-center justify-center mb-8 shadow-inner">
+            <div className="flex flex-col items-center text-center pt-2">
+              <div className="w-20 h-20 rounded-[2rem] bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center mb-6 shadow-inner">
                 <Trash2 size={36} className="animate-bounce" />
               </div>
               
-              <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-tight leading-none">
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tight leading-none">
                 Delete Permanently
               </h3>
               
-              <p className="text-sm text-gray-400 mb-8 leading-relaxed font-medium px-4">
-                You are about to permanently delete {itemName}. This action cannot be undone.
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-8 leading-relaxed px-2">
+                You are about to permanently delete <span className="font-black text-slate-900 dark:text-white">{itemName}</span>. This action cannot be undone.
               </p>
 
               <div className="flex flex-col w-full gap-3">
                 <button
                   disabled={isDeleting}
                   onClick={onConfirm}
-                  className="rounded-2xl py-4 shadow-xl text-[10px] font-black uppercase tracking-[0.2em] bg-rose-500 hover:bg-rose-600 shadow-rose-500/20 text-white transition-all disabled:opacity-50 flex items-center justify-center"
+                  className="rounded-2xl py-3.5 shadow-xl text-[10px] font-black uppercase tracking-[0.2em] bg-rose-500 hover:bg-rose-600 shadow-rose-500/20 text-white transition-all disabled:opacity-50 flex items-center justify-center"
                 >
                   {isDeleting ? (
                     <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -72,7 +70,7 @@ export function AdminDeleteModal({
                 <button
                   onClick={onClose}
                   disabled={isDeleting}
-                  className="rounded-2xl py-4 border border-gray-200 dark:border-gray-800 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all disabled:opacity-50"
+                  className="rounded-2xl py-3.5 border border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all disabled:opacity-50"
                 >
                   Cancel Action
                 </button>

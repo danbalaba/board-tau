@@ -12,7 +12,6 @@ import SafeImage from "../common/SafeImage";
 import Link from "next/link";
 import { formatPrice, calculateAverageRating } from "@/utils/helper";
 import Avatar from "@/components/common/Avatar";
-import { categories } from "@/utils/constants";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
@@ -116,6 +115,28 @@ export default function CompareModal({ isOpen, onClose, listingIds }: CompareMod
     setChatInput("");
     setSuggestedPrompts([]); // Clear chips while loading
     setMessages(prev => [...prev, { role: "user", content: userMsg }]);
+
+    // Client-side cache key based on listing IDs + user message
+    const sortedIds = listingIds.sort().join("_");
+    const cacheKey = `compare_ai_${sortedIds}_${userMsg.toLowerCase().trim()}`;
+    
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.reply) {
+            setMessages(prev => [...prev, { role: "ai", content: parsed.reply }]);
+            if (parsed.suggestedPrompts && Array.isArray(parsed.suggestedPrompts)) {
+              setSuggestedPrompts(parsed.suggestedPrompts);
+              setShowPrompts(true);
+            }
+            return;
+          }
+        }
+      } catch (err) {}
+    }
+
     setIsChatLoading(true);
 
     try {
@@ -131,6 +152,11 @@ export default function CompareModal({ isOpen, onClose, listingIds }: CompareMod
         if (data.suggestedPrompts && Array.isArray(data.suggestedPrompts)) {
            setSuggestedPrompts(data.suggestedPrompts);
            setShowPrompts(true);
+        }
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify(data));
+          } catch {}
         }
       } else {
         setMessages(prev => [...prev, { role: "ai", content: "Sorry, I encountered an error while analyzing the listings." }]);
@@ -276,8 +302,9 @@ export default function CompareModal({ isOpen, onClose, listingIds }: CompareMod
                     const rulesObject = listing.rules || {};
                     
                     const reviews = listing.reviews || [];
-                    const avgRatingRaw = calculateAverageRating(reviews);
-                    const avgRating = avgRatingRaw ? Number(avgRatingRaw).toFixed(1) : null;
+                    const reviewCount = listing.reviewCount || reviews.length || 0;
+                    const avgRatingRaw = calculateAverageRating(reviews, reviewCount > 0 ? listing.rating : null);
+                    const avgRating = (reviewCount > 0 && avgRatingRaw) ? Number(avgRatingRaw).toFixed(1) : null;
                     const host = listing.user;
                     
                     const categoryData = Array.isArray(listing.category) 
@@ -337,14 +364,14 @@ export default function CompareModal({ isOpen, onClose, listingIds }: CompareMod
                                
                                {/* Custom Nav Buttons */}
                                <div 
-                                 className={`swiper-prev-compare-${listing.id} absolute left-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-opacity hover:scale-110`}
+                                 className={`swiper-prev-compare-${listing.id} absolute left-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
                                >
-                                 <ChevronLeft size={18} className="text-slate-800 -ml-0.5" />
+                                 <ChevronLeft size={18} className="text-slate-800 dark:text-slate-100 -ml-0.5" />
                                </div>
                                <div 
-                                 className={`swiper-next-compare-${listing.id} absolute right-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-opacity hover:scale-110`}
+                                 className={`swiper-next-compare-${listing.id} absolute right-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
                                >
-                                 <ChevronRight size={18} className="text-slate-800 -mr-0.5" />
+                                 <ChevronRight size={18} className="text-slate-800 dark:text-slate-100 -mr-0.5" />
                                </div>
                              </Swiper>
                            ) : (
@@ -409,15 +436,39 @@ export default function CompareModal({ isOpen, onClose, listingIds }: CompareMod
 
                           {/* Quick Stats */}
                           <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 flex flex-col gap-1">
-                               <DoorOpen size={18} className="text-primary" />
-                               <span className="text-xs text-slate-500 font-medium">Available Rooms</span>
-                               <span className="font-black text-primary text-lg">{listing.rooms?.length || 0}</span>
+                            <div className="bg-indigo-500/10 dark:bg-indigo-500/15 border border-indigo-500/20 dark:border-indigo-500/30 rounded-2xl p-3 flex flex-col justify-between gap-2 shadow-sm transition-all hover:border-indigo-500/40">
+                               <div className="flex items-center justify-between">
+                                 <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                                   <DoorOpen size={18} />
+                                 </div>
+                                 <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                                   Rooms
+                                 </span>
+                               </div>
+                               <div>
+                                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Available Rooms</span>
+                                 <div className="flex items-baseline gap-1 mt-0.5">
+                                   <span className="font-black text-indigo-600 dark:text-indigo-300 text-2xl leading-none">{listing.rooms?.length || 0}</span>
+                                   {listing.rooms && listing.rooms.length > 0 && (
+                                     <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">total</span>
+                                   )}
+                                 </div>
+                               </div>
                             </div>
-                            <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-1">
-                               <BadgeCheck size={18} className="text-blue-500" />
-                               <span className="text-xs text-slate-500 font-medium">Status</span>
-                               <span className="font-bold text-slate-700 dark:text-slate-300">Verified</span>
+
+                            <div className="bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 dark:border-emerald-500/30 rounded-2xl p-3 flex flex-col justify-between gap-2 shadow-sm transition-all hover:border-emerald-500/40">
+                               <div className="flex items-center justify-between">
+                                 <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                   <BadgeCheck size={18} />
+                                 </div>
+                                 <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                   Trust
+                                 </span>
+                               </div>
+                               <div>
+                                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Property Status</span>
+                                 <span className="font-black text-emerald-600 dark:text-emerald-300 text-base leading-none block mt-1">Verified</span>
+                               </div>
                             </div>
                           </div>
 
@@ -449,24 +500,6 @@ export default function CompareModal({ isOpen, onClose, listingIds }: CompareMod
                               <ShieldCheck size={16} className="text-primary" /> Safety & Reassurance
                             </h4>
                             <div className="flex flex-col gap-3.5">
-                              {features?.cctv && (
-                                <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-                                  <Camera className="text-primary shrink-0" size={16} />
-                                  <span className="line-clamp-1 font-bold">CCTV Monitoring</span>
-                                </div>
-                              )}
-                              {features?.security24h && (
-                                <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-                                  <ShieldCheck className="text-primary shrink-0" size={16} />
-                                  <span className="line-clamp-1 font-bold">On-site Security</span>
-                                </div>
-                              )}
-                              {features?.fireSafety && (
-                                <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-                                  <Flame className="text-primary shrink-0" size={16} />
-                                  <span className="line-clamp-1 font-bold">Fire Safety Ready</span>
-                                </div>
-                              )}
                               {features?.customFeatures?.map((f: string, i: number) => {
                                 const { label, icon } = parseCustomItem(f);
                                 return (
@@ -476,7 +509,7 @@ export default function CompareModal({ isOpen, onClose, listingIds }: CompareMod
                                   </div>
                                 );
                               })}
-                              {(!features?.cctv && !features?.security24h && !features?.fireSafety && (!features?.customFeatures || features.customFeatures.length === 0)) && (
+                              {(!features?.customFeatures || features.customFeatures.length === 0) && (
                                 <div className="flex items-center gap-3 text-sm text-slate-500">
                                   <AlertTriangle size={16} className="text-amber-500/70 shrink-0" />
                                   <span>Standard security measures</span>

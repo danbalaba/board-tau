@@ -9,7 +9,7 @@ interface ChartData {
   monthlyRevenue: Array<{ date: string; [key: string]: any }>;
   monthlyRevenueListings: Array<{ id: string; title: string }>;
   monthlyRevenueMap: Record<string, string>;
-  growthTrend: Array<{ date: string; bookings: number; revenue: number }>;
+  growthTrend: Array<{ date: string; bookings: number; revenue: number; inquiries?: number }>;
   propertyTypes: Array<{ type: string; count: number; revenue: number }>;
   ratings: Array<{ rating: string; value: number; percentage: number }>;
   propertyPerformance: Array<{ name: string; inquiries: number; bookings: number; revenue: number }>;
@@ -93,7 +93,7 @@ export function LandlordAnalyticsChartsGrid({ chartData, isLoading }: LandlordAn
       {/* Grid of Secondary Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-gray-950 p-5 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
-          <ChartLineInteractive data={chartData?.growthTrend} />
+          <ChartLineInteractive data={chartData?.growthTrend?.map(g => ({ inquiries: g.inquiries ?? 0, ...g }))} />
         </div>
         <div className="bg-white dark:bg-gray-950 p-5 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
           <ChartPieLabel data={chartData?.propertyTypes} />

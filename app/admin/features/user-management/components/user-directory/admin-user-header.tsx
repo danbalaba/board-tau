@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Users, UserPlus, RefreshCw, Download, Calendar, ChevronDown } from 'lucide-react';
+import { Users, UserPlus, RefreshCw, Download, Calendar, ChevronDown, Check } from 'lucide-react';
 import { IconFileTypePdf, IconTable, IconFileTypeCsv } from '@tabler/icons-react';
 import { Button } from '@/app/admin/components/ui/button';
 import { useSession } from 'next-auth/react';
@@ -101,18 +101,24 @@ export function AdminUserHeader({ onRefresh, onExport, isFetching, isLoading, ra
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-100 dark:border-gray-800 rounded-2xl p-2 shadow-2xl">
-                  {DATE_RANGES.map(item => (
-                    <DropdownMenuItem
-                      key={item.value}
-                      onClick={() => onRangeChange(item.value)}
-                      className={cn(
-                        'text-[10px] font-black py-3 uppercase tracking-widest cursor-pointer rounded-xl mb-1',
-                        range === item.value ? 'bg-emerald-500/10 text-emerald-600' : 'text-gray-500'
-                      )}
-                    >
-                      {item.label}
-                    </DropdownMenuItem>
-                  ))}
+                  {DATE_RANGES.map(item => {
+                    const isSelected = range === item.value;
+                    return (
+                      <DropdownMenuItem
+                        key={item.value}
+                        onClick={() => onRangeChange(item.value)}
+                        className={cn(
+                          'text-[10px] font-black py-3 px-3.5 uppercase tracking-widest cursor-pointer rounded-xl mb-1 flex items-center justify-between transition-all outline-none',
+                          isSelected
+                            ? 'bg-emerald-500 text-white data-[highlighted]:bg-emerald-500 data-[highlighted]:text-white focus:bg-emerald-500 focus:text-white hover:bg-emerald-500 hover:text-white shadow-md shadow-emerald-500/20'
+                            : 'text-gray-600 dark:text-gray-300 data-[highlighted]:bg-emerald-500/10 data-[highlighted]:text-emerald-600 focus:bg-emerald-500/10 focus:text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-600'
+                        )}
+                      >
+                        <span>{item.label}</span>
+                        {isSelected && <Check size={14} className="text-white shrink-0 ml-2" />}
+                      </DropdownMenuItem>
+                    );
+                  })}
                 </DropdownMenuContent>
               </DropdownMenu>
               <div className="flex flex-wrap items-center gap-3">
@@ -136,15 +142,15 @@ export function AdminUserHeader({ onRefresh, onExport, isFetching, isLoading, ra
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-100 dark:border-gray-800 rounded-2xl p-2 shadow-2xl">
-                      <DropdownMenuItem onClick={() => onExport('PDF')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-all text-sm font-semibold text-gray-700 dark:text-gray-300 dark:hover:text-white group cursor-pointer mb-1">
+                      <DropdownMenuItem onClick={() => onExport('PDF')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl data-[highlighted]:bg-emerald-500/10 data-[highlighted]:text-emerald-600 hover:bg-emerald-500/10 focus:bg-emerald-500/10 focus:text-emerald-600 hover:text-emerald-600 transition-all text-xs font-bold text-gray-700 dark:text-gray-300 group cursor-pointer mb-1 outline-none">
                         <IconFileTypePdf className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform" />
                         PDF Document
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onExport('EXCEL')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-all text-sm font-semibold text-gray-700 dark:text-gray-300 dark:hover:text-white group cursor-pointer mb-1">
+                      <DropdownMenuItem onClick={() => onExport('EXCEL')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl data-[highlighted]:bg-emerald-500/10 data-[highlighted]:text-emerald-600 hover:bg-emerald-500/10 focus:bg-emerald-500/10 focus:text-emerald-600 hover:text-emerald-600 transition-all text-xs font-bold text-gray-700 dark:text-gray-300 group cursor-pointer mb-1 outline-none">
                         <IconTable className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
                         Excel
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onExport('CSV')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-all text-sm font-semibold text-gray-700 dark:text-gray-300 dark:hover:text-white group cursor-pointer">
+                      <DropdownMenuItem onClick={() => onExport('CSV')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl data-[highlighted]:bg-emerald-500/10 data-[highlighted]:text-emerald-600 hover:bg-emerald-500/10 focus:bg-emerald-500/10 focus:text-emerald-600 hover:text-emerald-600 transition-all text-xs font-bold text-gray-700 dark:text-gray-300 group cursor-pointer outline-none">
                         <IconFileTypeCsv className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform" />
                         CSV Data
                       </DropdownMenuItem>

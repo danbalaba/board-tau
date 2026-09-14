@@ -169,7 +169,7 @@ const FloatingMessagingWidget = () => {
   if (!session?.user) return null;
 
   return (
-    <div className="fixed bottom-8 right-8 z-[100] flex flex-col items-end">
+    <div className="hidden md:flex fixed bottom-8 right-8 z-[100] flex-col items-end">
       <AnimatePresence>
         {isOpen && (
           <motion.div

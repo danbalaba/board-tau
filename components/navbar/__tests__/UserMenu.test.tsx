@@ -16,6 +16,7 @@ jest.mock('next-auth/react', () => ({
 // Mock hooks
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
+  useSearchParams: jest.fn(() => ({ get: jest.fn(() => null) })),
 }));
 jest.mock('@/components/loading/LoadingContext', () => ({
   useLoading: jest.fn(),

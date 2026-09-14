@@ -31,7 +31,7 @@ export const getLandlordDashboardStats = async () => {
     db.listing.count({
       where: {
         userId: landlord.id,
-        status: "active",
+        status: "ACTIVE",
       },
     }),
     // Pending inquiries
@@ -81,7 +81,7 @@ export const getLandlordDashboardStats = async () => {
     (async () => {
       // 1. Get all rooms for landlord's properties in one go
       const activeListings = await db.listing.findMany({
-        where: { userId: landlord.id, status: "active" },
+        where: { userId: landlord.id, status: 'ACTIVE' },
         select: { id: true }
       });
       const listingIds = activeListings.map((l: any) => l.id);
@@ -338,7 +338,7 @@ export const getOccupancyReport = async (propertyId?: string) => {
   };
   if (propertyId) reservationWhere.listingId = propertyId;
 
-  const listingWhere: any = { userId: landlord.id, status: "active" };
+  const listingWhere: any = { userId: landlord.id, status: "ACTIVE" };
   if (propertyId) listingWhere.id = propertyId;
   
   // Bound to last year to prevent unbounded growth
@@ -545,20 +545,77 @@ export const getGrowthTrendData = async (months: number = 6) => {
 export const getPropertyTypeBreakdown = async () => {
   const landlord = await requireLandlord();
 
-  // ============================================================
-  // OPTIMIZED: Use lightweight select + groupBy instead of loading all bookings
-  // ============================================================
-  const properties = await db.listing.findMany({
-    where: { userId: landlord.id },
-    select: { id: true, category: true },
+  // Fetch all landlord properties with propertyType relation, propertyTypeId, and businessInfo
+  const [properties, dbPropertyTypes, roomTypes] = await Promise.all([
+    db.listing.findMany({
+      where: { userId: landlord.id },
+      select: {
+        id: true,
+        propertyTypeId: true,
+        propertyType: { select: { id: true, name: true } },
+        businessInfo: true,
+      },
+    }),
+    db.propertyType.findMany({
+      select: { id: true, name: true },
+    }),
+    db.roomTypeDefinition.findMany({
+      select: { id: true, name: true },
+    }),
+  ]);
+
+  const propertyTypeMap = new Map<string, string>(
+    dbPropertyTypes.map((pt: any) => [pt.id, pt.name])
+  );
+
+  roomTypes.forEach((rt: any) => {
+    if (!propertyTypeMap.has(rt.id)) {
+      propertyTypeMap.set(rt.id, rt.name);
+    }
   });
+
+  const staticIdMap: Record<string, string> = {
+    'bh-1': 'Boarding House',
+    'apt-1': 'Apartment',
+    'th-1': 'Transient House',
+    'ah-1': 'Agri-Hostel',
+    'dorm-1': 'Dormitory',
+  };
+
+  const isObjectId = (str: string) => typeof str === 'string' && /^[0-9a-fA-F]{24}$/.test(str);
 
   const typeCounts: Record<string, number> = {};
   const listingCategoryMap = new Map<string, string>();
+
   properties.forEach((p: any) => {
-    const type = Array.isArray(p.category) ? p.category.join(', ') : 'Other';
-    typeCounts[type] = (typeCounts[type] || 0) + 1;
-    listingCategoryMap.set(p.id, type);
+    let resolvedType: string | undefined = p.propertyType?.name;
+
+    // 1. If not resolved by relation, check propertyTypeId lookup
+    if (!resolvedType && p.propertyTypeId) {
+      resolvedType = propertyTypeMap.get(p.propertyTypeId) || staticIdMap[p.propertyTypeId];
+    }
+
+    // 2. Check businessInfo
+    if (!resolvedType && p.businessInfo && typeof p.businessInfo === 'object') {
+      const info = p.businessInfo as any;
+      const raw = info.businessType || info.category || info.propertyType;
+      if (raw) {
+        resolvedType = isObjectId(raw) ? (propertyTypeMap.get(raw) || staticIdMap[raw]) : raw;
+      }
+    }
+
+    // 3. If resolvedType is still a raw 24-hex ObjectId, attempt map lookup or clean fallback
+    if (resolvedType && isObjectId(resolvedType)) {
+      resolvedType = propertyTypeMap.get(resolvedType) || staticIdMap[resolvedType];
+    }
+
+    // Final fallback: never leak raw ObjectId to UI
+    if (!resolvedType || isObjectId(resolvedType)) {
+      resolvedType = 'Boarding House';
+    }
+
+    typeCounts[resolvedType] = (typeCounts[resolvedType] || 0) + 1;
+    listingCategoryMap.set(p.id, resolvedType);
   });
 
   // Use groupBy to compute revenue per listing in MongoDB (not JS)
@@ -717,3 +774,235 @@ export const getInquirySourceBreakdown = async (months: number = 6) => {
     { date: "2024-09", direct: 0, email: 0, social: 0 },
   ];
 };
+
+export const getMonthlyInquiriesVsBookings = async (months: number = 6) => {
+  const landlord = await requireLandlord();
+  
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - months);
+  startDate.setDate(1);
+
+  const [inquiries, bookings] = await Promise.all([
+    db.inquiry.findMany({
+      where: {
+        listing: { userId: landlord.id },
+        createdAt: { gte: startDate },
+      },
+      select: { createdAt: true },
+    }),
+    db.reservation.findMany({
+      where: {
+        listing: { userId: landlord.id },
+        status: "RESERVED",
+        createdAt: { gte: startDate },
+      },
+      select: { createdAt: true },
+    }),
+  ]);
+
+  const monthlyData: Record<string, { date: string; inquiries: number; bookings: number; conversionRate: number }> = {};
+
+  for (let i = 0; i < months; i++) {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    monthlyData[key] = { date: key, inquiries: 0, bookings: 0, conversionRate: 0 };
+  }
+
+  inquiries.forEach((item: any) => {
+    const key = `${item.createdAt.getFullYear()}-${String(item.createdAt.getMonth() + 1).padStart(2, '0')}`;
+    if (monthlyData[key]) monthlyData[key].inquiries += 1;
+  });
+
+  bookings.forEach((item: any) => {
+    const key = `${item.createdAt.getFullYear()}-${String(item.createdAt.getMonth() + 1).padStart(2, '0')}`;
+    if (monthlyData[key]) monthlyData[key].bookings += 1;
+  });
+
+  Object.values(monthlyData).forEach(item => {
+    item.conversionRate = item.inquiries > 0 ? Math.round((item.bookings / item.inquiries) * 100) : 0;
+  });
+
+  return Object.values(monthlyData).sort((a, b) => a.date.localeCompare(b.date));
+};
+
+export const getLandlordRecentActivities = async (limit: number = 10) => {
+  const landlord = await requireLandlord();
+
+  const [inquiries, reservations, reviews] = await Promise.all([
+    db.inquiry.findMany({
+      where: { listing: { userId: landlord.id } },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        status: true,
+        createdAt: true,
+        user: { select: { name: true } },
+        listing: { select: { title: true } },
+      },
+    }),
+    db.reservation.findMany({
+      where: { listing: { userId: landlord.id } },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        status: true,
+        paymentStatus: true,
+        totalPrice: true,
+        createdAt: true,
+        guestName: true,
+        user: { select: { name: true } },
+        listing: { select: { title: true } },
+      },
+    }),
+    db.review.findMany({
+      where: { listing: { userId: landlord.id } },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        rating: true,
+        createdAt: true,
+        user: { select: { name: true } },
+        listing: { select: { title: true } },
+      },
+    }),
+  ]);
+
+  const activities: Array<{
+    id: string;
+    type: 'INQUIRY' | 'BOOKING' | 'REVIEW' | 'PAYMENT';
+    title: string;
+    description: string;
+    time: string;
+    timestamp: number;
+    status: string;
+    color: 'amber' | 'emerald' | 'blue' | 'purple';
+    href: string;
+  }> = [];
+
+  const formatTime = (d: Date) => {
+    const diffMs = Date.now() - new Date(d).getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 30) return `${diffDays} days ago`;
+    return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  inquiries.forEach((inq: any) => {
+    activities.push({
+      id: `inq-${inq.id}`,
+      type: 'INQUIRY',
+      title: 'New Inquiry Received',
+      description: `from ${inq.user?.name || 'Student Boarder'} for ${inq.listing?.title || 'Property'}`,
+      time: formatTime(inq.createdAt),
+      timestamp: new Date(inq.createdAt).getTime(),
+      status: inq.status || 'Pending',
+      color: 'amber',
+      href: '/landlord/inquiries',
+    });
+  });
+
+  reservations.forEach((res: any) => {
+    const name = res.user?.name || res.guestName || 'Tenant';
+    const title = res.listing?.title || 'Property';
+
+    if (res.paymentStatus === 'PAID') {
+      activities.push({
+        id: `pay-${res.id}`,
+        type: 'PAYMENT',
+        title: 'Payment Received',
+        description: `₱${(res.totalPrice || 0).toLocaleString()} for ${title}`,
+        time: formatTime(res.createdAt),
+        timestamp: new Date(res.createdAt).getTime(),
+        status: 'Success',
+        color: 'purple',
+        href: '/landlord/payments',
+      });
+    }
+
+    activities.push({
+      id: `res-${res.id}`,
+      type: 'BOOKING',
+      title: res.status === 'RESERVED' ? 'Booking Confirmed' : 'Booking Application',
+      description: `${name} booked ${title}`,
+      time: formatTime(res.createdAt),
+      timestamp: new Date(res.createdAt).getTime(),
+      status: res.status || 'Confirmed',
+      color: 'emerald',
+      href: '/landlord/bookings',
+    });
+  });
+
+  reviews.forEach((rev: any) => {
+    activities.push({
+      id: `rev-${rev.id}`,
+      type: 'REVIEW',
+      title: `New ${rev.rating || 5}-Star Review`,
+      description: `from ${rev.user?.name || 'Tenant'} about ${rev.listing?.title || 'Property'}`,
+      time: formatTime(rev.createdAt),
+      timestamp: new Date(rev.createdAt).getTime(),
+      status: 'Published',
+      color: 'blue',
+      href: '/landlord/reviews',
+    });
+  });
+
+  activities.sort((a, b) => b.timestamp - a.timestamp);
+
+  return activities.slice(0, limit);
+};
+
+export const getLandlordDashboardOverview = async () => {
+  const landlord = await requireLandlord();
+
+  const cacheKey = `landlord:dashboard:overview:${landlord.id}`;
+  const cachedData = await cache.get(cacheKey);
+  if (cachedData) return cachedData;
+
+  const [stats, areaChartData, pieChartData, lineChartData, recentActivities] = await Promise.all([
+    getLandlordDashboardStats().catch(() => null),
+    getDailyRevenueHistory(90).catch(() => []),
+    getPropertyTypeBreakdown().catch(() => []),
+    getMonthlyInquiriesVsBookings(6).catch(() => []),
+    getLandlordRecentActivities(10).catch(() => []),
+  ]);
+
+  const overview = {
+    stats,
+    areaChartData,
+    pieChartData,
+    lineChartData,
+    recentActivities,
+  };
+
+  // Cache compiled overview for 5 minutes (300s) for maximum performance
+  // Instant invalidation is handled by clearLandlordCache on state changes
+  await cache.set(cacheKey, overview, 300);
+
+  return overview;
+};
+
+export const clearLandlordCache = async (landlordId?: string) => {
+  try {
+    if (landlordId) {
+      await Promise.all([
+        cache.del(`landlord:dashboard:${landlordId}`),
+        cache.del(`landlord:dashboard:overview:${landlordId}`),
+      ]);
+    } else {
+      await cache.delPattern('landlord:dashboard:*');
+    }
+  } catch (err) {
+    console.error('Error clearing landlord cache:', err);
+  }
+};
+

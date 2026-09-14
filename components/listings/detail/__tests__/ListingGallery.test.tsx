@@ -46,8 +46,8 @@ describe('ListingGallery Component', () => {
     render(<ListingGallery title="Test" images={mockImages} listingId="1" />);
     const showAllBtn = screen.getByText('Show all photos');
     fireEvent.click(showAllBtn);
-    expect(screen.getByText('Photo tour')).toBeInTheDocument();
-    expect(screen.getByText('5 photos')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Photo Tour/i })).toBeInTheDocument();
+    expect(screen.getByText(/5 Photos/i)).toBeInTheDocument();
   });
 
   it('filters by category in the modal', () => {

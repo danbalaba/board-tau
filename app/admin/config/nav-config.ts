@@ -65,7 +65,7 @@ export const navItems: NavItem[] = [
         shortcut: ['m', 'q']
       },
       {
-        title: 'Host Applications',
+        title: 'Host Applications Review',
         url: '/admin/moderation/hosts',
         icon: 'userCheck',
         shortcut: ['h', 'a']
@@ -159,10 +159,8 @@ export const navItems: NavItem[] = [
     allowedRoles: ['SUPER_ADMIN'],
     items: [
       {
-        title: 'General Settings',
-        url: '/admin/settings/general',
-        icon: 'settings',
-        shortcut: ['g', 's']
+        title: 'Property Configuration',
+        url: '/admin/settings/property-configuration'
       },
       {
         title: 'Feature Flags',

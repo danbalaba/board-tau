@@ -26,11 +26,12 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
   const isLandlord = pathname.startsWith('/landlord');
   const isHomePage = pathname === '/';
   const isListingDetail = pathname.startsWith('/listings/') && pathname.split('/').length > 2;
-  const isDashboardPage = ['/inquiries', '/favorites', '/reservations', '/my-reviews', '/profile'].some(path => pathname.startsWith(path));
+  const isDashboardPage = ['/inquiries', '/favorites', '/reservations', '/notifications', '/my-reviews', '/profile'].some(path => pathname.startsWith(path));
   
   const isMessages = pathname.startsWith('/messages');
+  const isBecomeAHost = pathname.startsWith('/become-a-host');
   const isAuthErrorPage = ['/auth/locked', '/auth/suspended', '/auth/banned', '/blocked'].includes(pathname);
-  const isInternalRole = user?.role === 'LANDLORD' || user?.role === 'ADMIN' || user?.role === 'landlord' || user?.role === 'admin';
+  const isInternalRole = user?.role === 'LANDLORD' || user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || user?.role === 'landlord' || user?.role === 'admin';
   
   useEffect(() => {
     // Force scroll to top on every navigation
@@ -39,8 +40,9 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
 
   const isAuthPage = pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password');
   const isFooterPage = ['/faqs', '/hosting', '/support', '/about', '/legal'].some(path => pathname.startsWith(path));
+  const isStatusOrErrorPage = ['/unauthorized', '/not-found', '/error'].some(path => pathname.startsWith(path));
   
-  const mobilePaddingTop = (isListingDetail || isMessages || isAuthPage || isHomePage) ? 'pt-0' : (isDashboardPage ? 'pt-6' : 'pt-8');
+  const mobilePaddingTop = (isListingDetail || isMessages || isAuthPage || isHomePage || isBecomeAHost) ? 'pt-0' : (isDashboardPage ? 'pt-6' : 'pt-8');
   
   useEffect(() => {
     // Lock body scroll on the messages page for mobile to simulate a native app feel
@@ -64,9 +66,9 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
       document.body.style.overflow = '';
     }
   }, [isMessages]);
-  
-  // BLOCK public UI for Admins, Landlords, and protected paths
-  if (isAdmin || isLandlord || isAuthErrorPage) {
+
+  // BLOCK public UI for Admins, Landlords, auth errors, and internal role unauthorized page
+  if (isAdmin || isLandlord || isAuthErrorPage || (pathname === '/unauthorized' && isInternalRole)) {
     return <>{children}</>;
   }
 
@@ -76,13 +78,13 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
       <div className={isFooterPage ? "hidden md:block" : ""}>
         <Navbar user={user} />
       </div>
-      <main className={`${(isAuthPage || isHomePage) ? 'md:pt-0' : 'md:pt-28'} ${mobilePaddingTop} ${isAuthPage ? '' : 'bg-[#F8FAF9] dark:bg-[#0f172a]'} transition-colors duration-300 ${(!isListingDetail && !isAuthPage && !isMessages) ? 'pb-24' : ''} ${isAuthPage ? '' : 'overflow-x-hidden'}`}>
+      <main className={`${(isAuthPage || isHomePage) ? 'md:pt-0' : 'md:pt-28'} ${mobilePaddingTop} ${isAuthPage ? '' : 'bg-[#F8FAF9] dark:bg-[#0f172a]'} transition-colors duration-300 ${(!isListingDetail && !isAuthPage && !isMessages && !isStatusOrErrorPage && !isBecomeAHost) ? 'pb-24' : ''} ${isAuthPage ? '' : 'overflow-x-hidden'}`}>
         {children}
       </main>
-      <div className={(isMessages || isAuthPage) ? "hidden md:block" : ""}>
+      <div className={(isMessages || isAuthPage || isBecomeAHost) ? "hidden md:block" : ""}>
         <Footer />
       </div>
-      {!isListingDetail && <MobileBottomBar user={user} />}
+      {!isListingDetail && !isStatusOrErrorPage && !isBecomeAHost && <MobileBottomBar user={user} />}
       <RightSwipePanel user={user} />
       <UserBackToTop />
       <ChatBot />

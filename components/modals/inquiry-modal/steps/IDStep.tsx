@@ -27,9 +27,12 @@ interface IDStepProps {
  */
 const sanitizeImgUrl = (url: string | null): string | undefined => {
   if (!url) return undefined;
+  if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
   try {
     const { protocol } = new URL(url);
-    return protocol === 'blob:' ? url : undefined;
+    return (protocol === 'blob:' || protocol === 'data:' || protocol === 'http:' || protocol === 'https:') ? url : undefined;
   } catch {
     return undefined;
   }
@@ -221,14 +224,12 @@ const IDStep: React.FC<IDStepProps> = ({
                     exit={{ opacity: 0 }}
                     className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center gap-5 z-20"
                   >
-                    {/* Scan line animation */}
-                    <div className="relative w-full h-0.5 overflow-hidden">
-                      <motion.div
-                        className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-blue-400 to-transparent"
-                        animate={{ x: ["-100%", "400%"] }}
-                        transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
-                      />
-                    </div>
+                    {/* Futuristic Laser Beam Scan Line traversing top to bottom */}
+                    <motion.div
+                      animate={{ top: ["5%", "90%", "5%"] }}
+                      transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                      className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-blue-400 to-transparent shadow-[0_0_18px_rgba(96,165,250,0.9)] z-30 pointer-events-none"
+                    />
 
                     {/* Rings + spinner */}
                     <div className="relative flex items-center justify-center">
@@ -244,15 +245,6 @@ const IDStep: React.FC<IDStepProps> = ({
                       <p className="text-blue-300/80 text-xs leading-relaxed">
                         Cross-referencing with your selfie<span className="animate-pulse">...</span>
                       </p>
-                    </div>
-
-                    {/* Scan line at bottom */}
-                    <div className="relative w-full h-0.5 overflow-hidden">
-                      <motion.div
-                        className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-blue-400 to-transparent"
-                        animate={{ x: ["400%", "-100%"] }}
-                        transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
-                      />
                     </div>
                   </motion.div>
                 )}

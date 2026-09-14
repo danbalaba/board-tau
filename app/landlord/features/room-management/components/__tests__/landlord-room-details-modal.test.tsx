@@ -77,7 +77,7 @@ describe('LandlordRoomDetailsModal', () => {
       jest.advanceTimersByTime(1000);
     });
 
-    expect(await screen.findByText(/Sample Room 101/i)).toBeInTheDocument();
+    expect(screen.getByText(/Sample Room 101/i)).toBeInTheDocument();
     expect(screen.getByText(/This is a lovely sample room/i)).toBeInTheDocument();
     expect(screen.getByText(/SOLO/i)).toBeInTheDocument();
     expect(screen.getByText(/5,000/i)).toBeInTheDocument();
@@ -97,7 +97,7 @@ describe('LandlordRoomDetailsModal', () => {
       jest.advanceTimersByTime(1000);
     });
 
-    const closeBtn = await screen.findByText(/Dismiss/i);
+    const closeBtn = screen.getByText(/Dismiss/i);
     fireEvent.click(closeBtn);
     expect(mockOnClose).toHaveBeenCalled();
   });

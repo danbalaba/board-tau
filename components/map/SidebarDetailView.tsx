@@ -1,8 +1,48 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import * as LucideIcons from "lucide-react";
-import { ArrowLeft, CheckCircle2, MapPin, DoorOpen, Star, ShieldCheck, FileText, Sparkles, User as UserIcon, BadgeCheck, AlertTriangle, Wifi, Car, Waves, Dumbbell, Wind, WashingMachine, Utensils, Refrigerator, Microwave, Droplets, Zap, Clock, Users, Flame, PawPrint, Camera, BookOpen, Square, Blinds, ChevronLeft, ChevronRight } from "lucide-react";
+import { 
+  ArrowLeft, 
+  CheckCircle2, 
+  MapPin, 
+  DoorOpen, 
+  Star, 
+  ShieldCheck, 
+  FileText, 
+  Sparkles, 
+  User as UserIcon, 
+  BadgeCheck, 
+  AlertTriangle, 
+  Wifi, 
+  Car, 
+  Waves, 
+  Dumbbell, 
+  Wind, 
+  WashingMachine, 
+  Utensils, 
+  Refrigerator, 
+  Microwave, 
+  Droplets, 
+  Zap, 
+  Clock, 
+  Users, 
+  Flame, 
+  PawPrint, 
+  Camera, 
+  BookOpen, 
+  Square, 
+  Blinds, 
+  ChevronLeft, 
+  ChevronRight,
+  ListChecks,
+  Shield,
+  Layers,
+  Lock,
+  Ban,
+  Wine,
+  Maximize2
+} from "lucide-react";
 import SafeImage from "../common/SafeImage";
 
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -16,49 +56,15 @@ import 'swiper/css/pagination';
 import Link from "next/link";
 import { formatPrice, calculateAverageRating } from "@/utils/helper";
 import Avatar from "@/components/common/Avatar";
-import { categories } from "@/utils/constants";
-
-const parseCustomItem = (item: string) => {
-  if (!item || typeof item !== 'string') return { label: "", icon: null };
-  if (item.includes("|")) {
-    const [label, icon] = item.split("|");
-    return { label: label.trim(), icon: icon.trim() };
-  }
-  return { label: item, icon: null };
-};
-
-const CustomIcon = ({ name, fallback: Fallback, className, size = 24 }: { name: string | null, fallback: any, className?: string, size?: number }) => {
-  const DynamicIcon = name ? (LucideIcons as any)[name] : null;
-  const IconComponent = DynamicIcon || Fallback;
-  return <IconComponent className={className} size={size} />;
-};
-
-const getAmenityIcon = (amenityName: string) => {
-  const { label, icon } = parseCustomItem(amenityName);
-  if (icon) return <CustomIcon name={icon} fallback={CheckCircle2} size={16} className="text-primary/70 shrink-0" />;
-  const name = label.toLowerCase();
-  if (name.includes('wifi')) return <Wifi size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('parking')) return <Car size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('pool')) return <Waves size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('gym')) return <Dumbbell size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('air conditioning')) return <Wind size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('laundry')) return <WashingMachine size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('kitchen') || name.includes('cooking')) return <Utensils size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('refrigerator')) return <Refrigerator size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('microwave')) return <Microwave size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('water')) return <Droplets size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('electricity')) return <Zap size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('curfew')) return <Clock size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('visitors')) return <Users size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('smoke') || name.includes('fire')) return <Flame size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('cctv') || name.includes('security')) return <Camera size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('pets')) return <PawPrint size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('desk') || name.includes('study friendly')) return <BookOpen size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('balcony')) return <Square size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('closet')) return <Blinds size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('quiet')) return <Wind size={16} className="text-primary/70 shrink-0" />;
-  return <CheckCircle2 size={16} className="text-primary/70 shrink-0" />;
-};
+import { SharedAmenitiesModal } from "@/components/common/SharedAmenitiesModal";
+import {
+  getCachedPropertyTypes,
+  getCachedAttributes,
+  getCachedSubGroups,
+  getSyncPropertyTypes,
+  getSyncAttributes,
+  getSyncSubGroups
+} from "@/lib/landlordTaxonomyCache";
 
 interface SidebarDetailViewProps {
   listing: any;
@@ -67,7 +73,104 @@ interface SidebarDetailViewProps {
 
 export default function SidebarDetailView({ listing, onBack }: SidebarDetailViewProps) {
   const price = listing.price || 0;
-  
+
+  // Taxonomy Cache State
+  const [propertyTypes, setPropertyTypes] = useState<any[]>(() => getSyncPropertyTypes() || []);
+  const [attributes, setAttributes] = useState<any[]>(() => getSyncAttributes() || []);
+  const [dbSubGroups, setDbSubGroups] = useState<any[]>(() => getSyncSubGroups() || []);
+
+  const [amenitiesModalConfig, setAmenitiesModalConfig] = useState<{
+    isOpen: boolean;
+    initialCategory: 'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY' | 'ROOMS';
+  }>({
+    isOpen: false,
+    initialCategory: 'ALL'
+  });
+
+  useEffect(() => {
+    getCachedPropertyTypes().then(pts => { if (pts) setPropertyTypes(pts); });
+    getCachedAttributes().then(attrs => { if (attrs) setAttributes(attrs); });
+    getCachedSubGroups().then(sgs => { if (sgs) setDbSubGroups(sgs); });
+  }, []);
+
+  const resolvePropertyTypeName = useCallback((typeInput: any) => {
+    if (!typeInput) return 'Boarding House';
+    if (typeof typeInput === 'object' && typeInput !== null) {
+      if (typeInput.name) return typeInput.name;
+      if (typeInput.label) return typeInput.label;
+      if (typeInput.title) return typeInput.title;
+    }
+    const typeId = typeof typeInput === 'string' ? typeInput : (typeInput?.id || typeInput?.code || '');
+    if (!typeId) return 'Boarding House';
+
+    const matched = propertyTypes.find(t => 
+      t.id === typeId || 
+      t.value === typeId || 
+      t._id === typeId || 
+      t.code === typeId ||
+      t.name?.toLowerCase() === typeId?.toLowerCase()
+    );
+    if (matched) return matched.name || matched.label || matched.title;
+    if (!/^[a-f0-9]{24}$/i.test(typeId)) return typeId.replace(/_/g, ' ').replace(/-/g, ' ');
+    return 'Boarding House';
+  }, [propertyTypes]);
+
+  const categoryVal = useMemo(() => {
+    return resolvePropertyTypeName(
+      listing.propertyType || 
+      listing.propertyTypeId || 
+      listing.category || 
+      listing.categories?.[0]?.category
+    );
+  }, [listing, resolvePropertyTypeName]);
+
+  const resolveAmenityName = useCallback((attrId: string) => {
+    if (!attrId) return '';
+    const cleanId = attrId.includes('|') ? attrId.split('|')[0] : attrId;
+    const matched = attributes.find(a => 
+      a.id === cleanId || 
+      a.value === cleanId || 
+      a._id === cleanId || 
+      a.code === cleanId || 
+      cleanId.startsWith(a.id + '|')
+    );
+    if (matched) return matched.name || matched.label || matched.title;
+    if (!/^[a-f0-9]{24}$/i.test(cleanId)) return cleanId.replace(/_/g, ' ').replace(/-/g, ' ');
+    return cleanId;
+  }, [attributes]);
+
+  const getItemIcon = useCallback((name: string, attrId?: string) => {
+    if (attrId) {
+      const cleanId = attrId.includes('|') ? attrId.split('|')[0] : attrId;
+      const matched = attributes.find(a => a.id === cleanId || a.value === cleanId || a._id === cleanId || a.code === cleanId || cleanId.startsWith(a.id + '|'));
+      if (matched && matched.icon) {
+        const IconObj = (LucideIcons as any)[matched.icon];
+        if (IconObj) return IconObj;
+      }
+    }
+
+    const n = (name || '').toLowerCase();
+    if (n.includes("curfew") || n.includes("gate lock")) return Lock;
+    if (n.includes("24/7 open gate") || n.includes("no curfew")) return Clock;
+    if (n.includes("pet")) return PawPrint;
+    if (n.includes("smoke")) return Ban;
+    if (n.includes("drink") || n.includes("alcohol")) return Wine;
+    if (n.includes("visitors") || n.includes("guests")) return Users;
+    if (n.includes("utensil") || n.includes("microwave") || n.includes("stove")) return Utensils;
+    if (n.includes("kettle") || n.includes("coffee")) return Utensils;
+    if (n.includes("fridge") || n.includes("refrigerator")) return Refrigerator;
+    if (n.includes("bidet") || n.includes("shower") || n.includes("water")) return Droplets;
+    if (n.includes("ac") || n.includes("aircon") || n.includes("inverter")) return Wind;
+    if (n.includes("curtain") || n.includes("blind") || n.includes("cabinet")) return Layers;
+    if (n.includes("desk") || n.includes("study") || n.includes("book")) return BookOpen;
+    if (n.includes("wifi") || n.includes("internet") || n.includes("fiber")) return Wifi;
+    if (n.includes("laundry") || n.includes("washing")) return WashingMachine;
+    if (n.includes("parking") || n.includes("car")) return Car;
+    if (n.includes("cctv") || n.includes("security") || n.includes("guard")) return ShieldCheck;
+
+    return Sparkles;
+  }, [attributes]);
+
   const getImageUrl = (img: any) => {
     if (!img) return null;
     if (typeof img === 'string') return img;
@@ -79,7 +182,7 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
     return null;
   };
 
-  const allImages = React.useMemo(() => {
+  const allImages = useMemo(() => {
     let images: string[] = [];
     if (listing.imageSrc) images.push(getImageUrl(listing.imageSrc));
     
@@ -92,40 +195,124 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
     return Array.from(new Set(images));
   }, [listing]);
 
-  const amenities = listing.amenities_list || [];
-  const amenitiesObj = listing.amenities || {};
-  
-  const safetyKeywords = ['cctv', 'security', 'fire safety', 'transport', 'flexible lease', 'flood', 'backup power'];
-  const ruleKeywords = ['female', 'male', 'visitor', 'pet', 'smoking', 'curfew'];
+  // Dynamic Subgroup Categorization of Shared Amenities
+  const groupedAmenitiesBySubGroup = useMemo(() => {
+    const rawAmenities: string[] = [
+      ...(Array.isArray(listing.amenities_list) ? listing.amenities_list : []),
+      ...(Array.isArray(listing.amenities) ? listing.amenities : []),
+      ...(Array.isArray(listing.listingLinks) ? listing.listingLinks.map((l: any) => l.attribute?.id || l.attributeId).filter(Boolean) : []),
+    ];
 
-  const baseAmenities = Array.isArray(amenities) ? amenities : [];
-  const legacyAmenities: string[] = [];
-  if (amenitiesObj) {
-    if (amenitiesObj.wifi) legacyAmenities.push("WiFi");
-    if (amenitiesObj.parking) legacyAmenities.push("Parking");
-    if (amenitiesObj.pool) legacyAmenities.push("Pool");
-    if (amenitiesObj.gym) legacyAmenities.push("Gym");
-    if (amenitiesObj.airConditioning) legacyAmenities.push("Air conditioning");
-    if (amenitiesObj.laundry) legacyAmenities.push("Laundry area");
-  }
-  const combined = [...baseAmenities, ...legacyAmenities];
-  const standardAmenities = combined.filter(a => {
-    const lower = a.toLowerCase();
-    return !safetyKeywords.some(kw => lower.includes(kw)) && !ruleKeywords.some(kw => lower.includes(kw));
-  });
+    const RULE_SUBGROUPS = new Set(['GENDER_POLICY', 'CURFEW', 'VISITOR_POLICY', 'PET_POLICY', 'SMOKING_POLICY', 'ALCOHOL_POLICY', 'SMOKE_ALCOHOL', 'HOUSE_RULES', 'POLICY']);
+    const SECURITY_SUBGROUPS = new Set(['SECURITY', 'DISASTER_SAFETY', 'DISASTER_PREP', 'SAFETY', 'FIRE_SAFETY']);
 
-  const features = listing.features || {};
+    const subGroupMap: Record<string, { key: string; label: string; items: { id: string; name: string }[] }> = {};
+
+    rawAmenities.forEach(attrId => {
+      if (!attrId) return;
+      const name = resolveAmenityName(attrId);
+      if (!name || /^[a-f0-9]{24}$/i.test(name)) return;
+
+      const matchedAttr = attributes.find(a => 
+        a.id === attrId || 
+        a.name === attrId || 
+        a.name?.toLowerCase() === String(attrId)?.toLowerCase() || 
+        a.value === attrId || 
+        a._id === attrId || 
+        a.code === attrId || 
+        (typeof attrId === 'string' && attrId.startsWith(a.id + '|'))
+      );
+
+      const type = matchedAttr?.type;
+      const subGroupKey = matchedAttr?.subGroupKey || matchedAttr?.subGroup || 'OTHER';
+      const lowerName = name.toLowerCase();
+
+      const isSecurity = type === 'FEATURE' || SECURITY_SUBGROUPS.has(subGroupKey) ||
+        (lowerName.includes('smoke detector') || lowerName.includes('fire extinguisher') || lowerName.includes('first aid') || lowerName.includes('emergency hallway') || lowerName.includes('flood-free') || lowerName.includes('security') || lowerName.includes('cctv') || lowerName.includes('keycard') || lowerName.includes('biometric'));
+
+      const isRule = !isSecurity && (type === 'RULE' || RULE_SUBGROUPS.has(subGroupKey) ||
+        lowerName.includes('curfew') || lowerName.includes('guest') || lowerName.includes('visitor') ||
+        lowerName.includes('pet policy') || (lowerName.includes('smoke') && !lowerName.includes('detector')) || lowerName.includes('alcohol') ||
+        lowerName.includes('gender') || lowerName.includes('male & female') || lowerName.includes('female only') || lowerName.includes('male only'));
+
+      if (isSecurity || isRule) return;
+
+      const matchedSubGroup = dbSubGroups.find(sg => sg.key === subGroupKey);
+      const label = matchedSubGroup?.tabLabel || matchedSubGroup?.title || matchedAttr?.category || 'Shared Features';
+
+      if (!subGroupMap[subGroupKey]) {
+        subGroupMap[subGroupKey] = { key: subGroupKey, label, items: [] };
+      }
+      if (!subGroupMap[subGroupKey].items.some(item => item.name === name)) {
+        subGroupMap[subGroupKey].items.push({ id: attrId, name });
+      }
+    });
+
+    return Object.values(subGroupMap);
+  }, [listing, attributes, dbSubGroups, resolveAmenityName]);
+
+  const totalAmenityCount = useMemo(() => {
+    return groupedAmenitiesBySubGroup.reduce((sum, g) => sum + g.items.length, 0);
+  }, [groupedAmenitiesBySubGroup]);
+
+  // Dynamic Resolution of Safety Features
+  const resolvedFeatures = useMemo(() => {
+    const rawFeatures: string[] = [
+      ...(Array.isArray(listing.features?.customFeatures) ? listing.features.customFeatures : []),
+      ...(Array.isArray(listing.customFeatures) ? listing.customFeatures : []),
+      ...(Array.isArray(listing.securityFeatures) ? listing.securityFeatures : []),
+      ...(Array.isArray(listing.amenities_list) ? listing.amenities_list : []),
+    ];
+
+    const SECURITY_SUBGROUPS = new Set(['SECURITY', 'DISASTER_SAFETY', 'DISASTER_PREP', 'SAFETY', 'FIRE_SAFETY']);
+    const list: string[] = [];
+
+    rawFeatures.forEach(attrId => {
+      if (!attrId) return;
+      const name = resolveAmenityName(attrId);
+      if (!name || /^[a-f0-9]{24}$/i.test(name)) return;
+
+      const matchedAttr = attributes.find(a => a.id === attrId || a.value === attrId || a.code === attrId || (typeof attrId === 'string' && attrId.startsWith(a.id + '|')));
+      const key = matchedAttr?.subGroupKey || matchedAttr?.subGroup || '';
+      const type = matchedAttr?.type;
+      const lower = name.toLowerCase();
+
+      const isSecurity = type === 'FEATURE' || SECURITY_SUBGROUPS.has(key) ||
+        (lower.includes('smoke detector') || lower.includes('fire extinguisher') || lower.includes('first aid') || lower.includes('emergency hallway') || lower.includes('flood-free') || lower.includes('security') || lower.includes('cctv') || lower.includes('keycard') || lower.includes('biometric'));
+
+      if (isSecurity && !list.includes(name)) {
+        list.push(name);
+      }
+    });
+
+    if (listing.features?.security24h && !list.includes('24/7 Security Guard')) list.push('24/7 Security Guard');
+    if (listing.features?.cctv && !list.includes('CCTV Cameras')) list.push('CCTV Cameras');
+    if (listing.features?.fireSafety && !list.includes('Fire Safety Extinguishers')) list.push('Fire Safety Extinguishers');
+
+    return list;
+  }, [listing, attributes, resolveAmenityName]);
+
   const rulesObject = listing.rules || {};
-  
   const reviews = listing.reviews || [];
-  const avgRatingRaw = calculateAverageRating(reviews);
-  const avgRating = avgRatingRaw ? Number(avgRatingRaw).toFixed(1) : null;
+  const reviewCount = listing.reviewCount || reviews.length || 0;
+  const avgRatingRaw = calculateAverageRating(reviews, reviewCount > 0 ? listing.rating : null);
+  const avgRating = (reviewCount > 0 && avgRatingRaw) ? Number(avgRatingRaw).toFixed(1) : null;
   const host = listing.user;
-  
-  const categoryName = listing.categories?.[0]?.category?.name || (Array.isArray(listing.category) ? listing.category[0] : listing.category);
-  const categoryObj = categories.find(c => c.value === categoryName || c.label === categoryName);
-  const categoryVal = categoryObj?.label || categoryName || "Listing";
-  const CategoryIcon = categoryObj?.icon;
+
+  const availableRoomsCount = useMemo(() => {
+    if (!listing.rooms || !Array.isArray(listing.rooms) || listing.rooms.length === 0) {
+      return 0;
+    }
+    const avail = listing.rooms.filter((r: any) => {
+      if (!r.status) return true;
+      const s = String(r.status).toUpperCase();
+      return s === "AVAILABLE" || s === "VACANT" || s === "ACTIVE";
+    });
+    return avail.length > 0 ? avail.length : listing.rooms.length;
+  }, [listing.rooms]);
+
+  const propType = listing.propertyType;
+  const PropertyIcon = propType?.icon && (LucideIcons as any)[propType.icon] ? (LucideIcons as any)[propType.icon] : LucideIcons.Building2;
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800">
@@ -150,14 +337,14 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
             
             {/* Custom Nav Buttons */}
             <div 
-              className={`swiper-prev-detail-${listing.id} absolute left-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-opacity hover:scale-110`}
+              className={`swiper-prev-detail-${listing.id} absolute left-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-slate-100 border border-slate-200/50 dark:border-slate-700/50 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
             >
-              <ChevronLeft size={18} className="text-slate-800 -ml-0.5" />
+              <ChevronLeft size={18} className="text-slate-800 dark:text-slate-100 -ml-0.5" />
             </div>
             <div 
-              className={`swiper-next-detail-${listing.id} absolute right-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-opacity hover:scale-110`}
+              className={`swiper-next-detail-${listing.id} absolute right-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-slate-100 border border-slate-200/50 dark:border-slate-700/50 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
             >
-              <ChevronRight size={18} className="text-slate-800 -mr-0.5" />
+              <ChevronRight size={18} className="text-slate-800 dark:text-slate-100 -mr-0.5" />
             </div>
           </Swiper>
         ) : (
@@ -169,7 +356,7 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
          <div className="absolute top-4 left-4 z-20">
            <button 
              onClick={onBack}
-             className="p-2.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-slate-200 rounded-full shadow-lg hover:bg-white dark:hover:bg-slate-700 transition-colors border border-white/20"
+             className="p-2.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-slate-200 rounded-full shadow-lg hover:bg-white dark:hover:bg-slate-700 transition-colors border border-white/20 cursor-pointer"
            >
              <ArrowLeft size={18} />
            </button>
@@ -182,16 +369,14 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">/mo</span>
          </div>
 
-         {/* Bottom Image Info */}
+         {/* Bottom Image Info Overlay */}
          <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-1.5 z-20 pointer-events-none">
-           {CategoryIcon && (
-             <div className="w-fit bg-white/90 backdrop-blur-md text-primary px-3 py-1 rounded-full font-bold shadow-lg flex items-center gap-1.5 text-[10px] uppercase tracking-wider border border-white/20">
-               <CategoryIcon size={12} /> {categoryVal}
-             </div>
-           )}
+           <div className="w-fit bg-blue-500/90 backdrop-blur-md text-white px-3 py-1 rounded-full font-black shadow-lg flex items-center gap-1.5 text-[10px] uppercase tracking-wider border border-white/20">
+             <PropertyIcon size={12} /> <span>{categoryVal}</span>
+           </div>
            <h3 className="font-black text-white text-2xl leading-tight line-clamp-2 drop-shadow-md">{listing.title}</h3>
            <div className="flex items-center gap-1 text-sm text-slate-200 font-medium">
-             <MapPin size={14} className="shrink-0 text-primary" /> <span className="truncate">{listing.region}</span>
+             <MapPin size={14} className="shrink-0 text-primary" /> <span className="truncate">{listing.region || listing.address || 'Camiling, Tarlac'}</span>
            </div>
          </div>
       </div>
@@ -225,130 +410,175 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 flex flex-col gap-1">
-             <DoorOpen size={18} className="text-primary" />
-             <span className="text-xs text-slate-500 font-medium">Available Rooms</span>
-             <span className="font-black text-primary text-lg">{listing.rooms?.filter((r: any) => r.status?.toUpperCase() === "AVAILABLE").length || 0}</span>
+          <div className="bg-indigo-500/10 dark:bg-indigo-500/15 border border-indigo-500/20 dark:border-indigo-500/30 rounded-2xl p-3 flex flex-col justify-between gap-2 shadow-sm transition-all hover:border-indigo-500/40">
+             <div className="flex items-center justify-between">
+               <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                 <DoorOpen size={18} />
+               </div>
+               <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                 Rooms
+               </span>
+             </div>
+             <div>
+               <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Available Rooms</span>
+               <div className="flex items-baseline gap-1 mt-0.5">
+                 <span className="font-black text-indigo-600 dark:text-indigo-300 text-2xl leading-none">{availableRoomsCount}</span>
+                 {listing.rooms && listing.rooms.length > 0 && (
+                   <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">/ {listing.rooms.length} total</span>
+                 )}
+               </div>
+             </div>
           </div>
-          <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-1">
-             <BadgeCheck size={18} className="text-blue-500" />
-             <span className="text-xs text-slate-500 font-medium">Status</span>
-             <span className="font-bold text-slate-700 dark:text-slate-300">Verified</span>
+
+          <div className="bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 dark:border-emerald-500/30 rounded-2xl p-3 flex flex-col justify-between gap-2 shadow-sm transition-all hover:border-emerald-500/40">
+             <div className="flex items-center justify-between">
+               <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                 <BadgeCheck size={18} />
+               </div>
+               <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                 Trust
+               </span>
+             </div>
+             <div>
+               <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Property Status</span>
+               <span className="font-black text-emerald-600 dark:text-emerald-300 text-base leading-none block mt-1">Verified</span>
+             </div>
           </div>
         </div>
 
-        {/* What this place offers */}
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-          <h4 className="text-sm font-black text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
-            <Sparkles size={16} className="text-primary" /> What this place offers
-          </h4>
-          <div className="flex flex-col gap-3.5">
-            {standardAmenities.slice(0, 5).map((amenity: string, i: number) => {
-              const { label } = parseCustomItem(amenity);
-              return (
-                <div key={i} className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-                  {getAmenityIcon(amenity)}
-                  <span className="line-clamp-1">{label}</span>
-                </div>
-              );
-            })}
-            {standardAmenities.length > 5 && (
-              <span className="text-xs font-bold text-primary cursor-pointer hover:underline">+{standardAmenities.length - 5} more amenities</span>
-            )}
-            {standardAmenities.length === 0 && <span className="text-sm text-slate-400 italic">Not specified</span>}
+        {/* 1. Shared Property Amenities */}
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-4">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-black uppercase tracking-[0.15em] text-blue-500 flex items-center gap-2">
+              <ListChecks size={16} /> Shared Property Amenities ({totalAmenityCount})
+            </h4>
+            
+            <button
+              type="button"
+              onClick={() => setAmenitiesModalConfig({ isOpen: true, initialCategory: 'AMENITIES' })}
+              className="px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all shadow-sm cursor-pointer shrink-0"
+            >
+              <Maximize2 size={11} /> Expand All
+            </button>
           </div>
-        </div>
 
-        {/* Safety & Reassurance */}
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-          <h4 className="text-sm font-black text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
-            <ShieldCheck size={16} className="text-primary" /> Safety & Reassurance
-          </h4>
-          <div className="flex flex-col gap-3.5">
-            {features?.cctv && (
-              <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-                <Camera className="text-primary shrink-0" size={16} />
-                <span className="line-clamp-1 font-bold">CCTV Monitoring</span>
-              </div>
-            )}
-            {features?.security24h && (
-              <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-                <ShieldCheck className="text-primary shrink-0" size={16} />
-                <span className="line-clamp-1 font-bold">On-site Security</span>
-              </div>
-            )}
-            {features?.fireSafety && (
-              <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-                <Flame className="text-primary shrink-0" size={16} />
-                <span className="line-clamp-1 font-bold">Fire Safety Ready</span>
-              </div>
-            )}
-            {features?.customFeatures?.map((f: string, i: number) => {
-              const { label, icon } = parseCustomItem(f);
-              return (
-                <div key={i} className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-                  <CustomIcon name={icon} fallback={CheckCircle2} className="text-primary shrink-0" size={16} />
-                  <span className="line-clamp-1 font-bold">{label}</span>
-                </div>
-              );
-            })}
-            {(!features?.cctv && !features?.security24h && !features?.fireSafety && (!features?.customFeatures || features.customFeatures.length === 0)) && (
-              <div className="flex items-center gap-3 text-sm text-slate-500">
-                <AlertTriangle size={16} className="text-amber-500/70 shrink-0" />
-                <span>Standard security measures</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Policies & Rules */}
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-          <h4 className="text-sm font-black text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
-            <FileText size={16} className="text-purple-500" /> Policies & Rules
-          </h4>
-          <div className="grid grid-cols-1 gap-5">
-            <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-              <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-primary"><Users size={16} /></div>
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gender</p>
-                <p className="font-bold">{rulesObject?.femaleOnly ? "Strictly Female Only" : rulesObject?.maleOnly ? "Strictly Male Only" : "Co-living Allowed"}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-              <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-primary"><Clock size={16} /></div>
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Curfew</p>
-                <p className="font-bold">{rulesObject?.noCurfew ? "No Curfew (24/7 Access)" : "Standard Curfew applies"}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-              <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-primary"><Users size={16} /></div>
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Visitors</p>
-                <p className="font-bold">{rulesObject?.visitorsAllowed ? "Visitors are welcome" : "No visitors allowed"}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-              <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-primary"><PawPrint size={16} /></div>
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pets</p>
-                <p className="font-bold">{rulesObject?.petsAllowed ? "Pets are allowed" : "Strictly no pets"}</p>
-              </div>
-            </div>
-            {rulesObject?.customRules?.slice(0, 2).map((rule: string, i: number) => {
-              const { label, icon } = parseCustomItem(rule);
-              return (
-                <div key={i} className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-                  <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-primary">
-                    {icon ? <CustomIcon name={icon} fallback={CheckCircle2} size={16} /> : <div className="w-1.5 h-1.5 bg-primary rounded-full m-1" />}
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rule</p>
-                    <p className="font-bold line-clamp-1">{label}</p>
+          {groupedAmenitiesBySubGroup.length > 0 ? (
+            <div className="flex flex-col gap-3.5">
+              {groupedAmenitiesBySubGroup.slice(0, 4).map((group) => (
+                <div key={group.key} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-2">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-blue-500 block">{group.label}</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {group.items.map((item) => {
+                      const ItemIcon = getItemIcon(item.name, item.id);
+                      return (
+                        <span key={item.id} className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-900 border border-blue-200/60 dark:border-blue-500/30 text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                          <ItemIcon size={13} className="text-blue-500 shrink-0" />
+                          <span>{item.name}</span>
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
+              ))}
+
+              {groupedAmenitiesBySubGroup.length > 4 && (
+                <button
+                  type="button"
+                  onClick={() => setAmenitiesModalConfig({ isOpen: true, initialCategory: 'AMENITIES' })}
+                  className="text-xs font-bold text-blue-500 hover:text-blue-600 cursor-pointer text-left transition-colors pt-1"
+                >
+                  +{totalAmenityCount - groupedAmenitiesBySubGroup.slice(0, 4).reduce((sum, g) => sum + g.items.length, 0)} more amenities in full breakdown
+                </button>
+              )}
+            </div>
+          ) : (
+            <span className="text-xs text-slate-400 italic">No shared amenities specified</span>
+          )}
+        </div>
+
+        {/* 2. House Rules & Tenant Policies */}
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-black uppercase tracking-[0.15em] text-purple-500 flex items-center gap-2">
+              <Shield size={16} /> House Rules & Tenant Policies
+            </h4>
+
+            <button
+              type="button"
+              onClick={() => setAmenitiesModalConfig({ isOpen: true, initialCategory: 'RULES' })}
+              className="px-2 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-600 dark:text-purple-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all shadow-sm cursor-pointer shrink-0"
+            >
+              <Maximize2 size={11} /> View All
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2.5">
+            <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-purple-200/40 dark:border-purple-500/20">
+              <div className="p-1.5 bg-purple-500/10 rounded-lg text-purple-500"><Users size={15} /></div>
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Gender Policy</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">{rulesObject?.femaleOnly ? "Strictly Female Only" : rulesObject?.maleOnly ? "Strictly Male Only" : "Mixed (Male & Female)"}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-purple-200/40 dark:border-purple-500/20">
+              <div className="p-1.5 bg-purple-500/10 rounded-lg text-purple-500"><Clock size={15} /></div>
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Curfew Rule</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">{rulesObject?.noCurfew ? "24/7 Open Gate (No Curfew)" : "Standard Curfew applies"}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-purple-200/40 dark:border-purple-500/20">
+              <div className="p-1.5 bg-purple-500/10 rounded-lg text-purple-500"><Users size={15} /></div>
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Visitor Policy</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">{rulesObject?.visitorsAllowed ? "Visitors Allowed" : "No Visitors Allowed"}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-purple-200/40 dark:border-purple-500/20">
+              <div className="p-1.5 bg-purple-500/10 rounded-lg text-purple-500"><PawPrint size={15} /></div>
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pet Policy</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">{rulesObject?.petsAllowed ? "Pets Allowed" : "Pets Not Allowed"}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Security & Safety Features */}
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-black uppercase tracking-[0.15em] text-amber-500 flex items-center gap-2">
+              <Star size={16} /> Security & Safety Features ({resolvedFeatures.length})
+            </h4>
+
+            <button
+              type="button"
+              onClick={() => setAmenitiesModalConfig({ isOpen: true, initialCategory: 'SECURITY' })}
+              className="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all shadow-sm cursor-pointer shrink-0"
+            >
+              <Maximize2 size={11} /> View All
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {resolvedFeatures.map((featName, i) => {
+              const ItemIcon = getItemIcon(featName);
+              return (
+                <span key={i} className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-900 border border-amber-200/60 dark:border-amber-500/30 text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                  <ItemIcon size={13} className="text-amber-500 shrink-0" />
+                  <span>{featName}</span>
+                </span>
               );
             })}
+            {resolvedFeatures.length === 0 && (
+              <div className="flex items-center gap-3 text-xs text-slate-500">
+                <AlertTriangle size={15} className="text-amber-500/70 shrink-0" />
+                <span>Standard safety & security measures</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -358,11 +588,23 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
       <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
         <Link 
           href={`/listings/${listing.id}`} 
-          className="w-full flex items-center justify-center gap-2 bg-primary dark:bg-primary text-white py-3.5 rounded-xl font-bold text-sm hover:scale-[1.02] transition shadow-lg hover:bg-primary/90 no-underline"
+          className="w-full flex items-center justify-center gap-2 bg-primary dark:bg-primary text-white py-3.5 rounded-xl font-bold text-sm hover:scale-[1.02] transition shadow-lg hover:bg-primary/90 no-underline cursor-pointer"
         >
           View Details & Reserve
         </Link>
       </div>
+
+      {/* Full-Screen Shared Amenities Breakdown Modal */}
+      <SharedAmenitiesModal
+        isOpen={amenitiesModalConfig.isOpen}
+        onClose={() => setAmenitiesModalConfig(prev => ({ ...prev, isOpen: false }))}
+        propertyTitle={listing.title}
+        initialCategory={amenitiesModalConfig.initialCategory}
+        amenities={listing.amenities_list || listing.amenities}
+        customRules={listing.rules?.customRules || listing.customRules}
+        customFeatures={listing.features?.customFeatures || listing.customFeatures}
+        rulesObj={listing.rules}
+      />
 
     </div>
   );

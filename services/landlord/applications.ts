@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { backendClient } from "@/lib/edgestore-server";
 import { getCurrentUser } from "../user/user";
 import { 
   sendApplicationConfirmationEmail, 
@@ -17,18 +18,13 @@ interface HostApplicationData {
   businessInfo: {
     businessName: string;
     businessType: string;
-    businessDescription: string;
     yearsExperience: string;
   };
   contactInfo: {
     fullName: string;
     phoneNumber: string;
     email: string;
-    emergencyContact: {
-      name: string;
-      relationship: string;
-      phoneNumber: string;
-    };
+    ownershipRole?: string;
   };
   selfieUrl: string;
   idCardUrl: string;
@@ -55,7 +51,113 @@ export const createHostApplication = async (data: HostApplicationData) => {
   });
 
   if (existingApplication) {
-    throw new Error("You have already submitted an application");
+    if (existingApplication.status === 'approved') {
+      throw new Error("Your host application has already been approved! You are already a verified landlord.");
+    }
+
+    // Final Server-side Validation for updates
+    if (!data.businessInfo.businessName || data.businessInfo.businessName.length < 3) {
+      throw new Error("Business name is too short");
+    }
+
+    if (!data.selfieUrl || !data.idCardUrl) {
+      throw new Error("Biometric verification is required");
+    }
+
+    if (!data.businessPermitUrl || !data.fireSafetyUrl) {
+      throw new Error("Legal compliance documents are required");
+    }
+
+    try {
+      // Identify replaced document URLs and purge old files from EdgeStore
+      const urlsToDelete: string[] = [];
+
+      if (existingApplication.selfieUrl && data.selfieUrl && existingApplication.selfieUrl !== data.selfieUrl) {
+        urlsToDelete.push(existingApplication.selfieUrl);
+      }
+      if (existingApplication.idCardUrl && data.idCardUrl && existingApplication.idCardUrl !== data.idCardUrl) {
+        urlsToDelete.push(existingApplication.idCardUrl);
+      }
+      if (existingApplication.businessPermitUrl && data.businessPermitUrl && existingApplication.businessPermitUrl !== data.businessPermitUrl) {
+        urlsToDelete.push(existingApplication.businessPermitUrl);
+      }
+      if (existingApplication.fireSafetyUrl && data.fireSafetyUrl && existingApplication.fireSafetyUrl !== data.fireSafetyUrl) {
+        urlsToDelete.push(existingApplication.fireSafetyUrl);
+      }
+      if (existingApplication.facadePhotoUrl && data.facadePhotoUrl && existingApplication.facadePhotoUrl !== data.facadePhotoUrl) {
+        urlsToDelete.push(existingApplication.facadePhotoUrl);
+      }
+      if (existingApplication.additionalDocsUrl && data.additionalDocsUrl && existingApplication.additionalDocsUrl !== data.additionalDocsUrl) {
+        urlsToDelete.push(existingApplication.additionalDocsUrl);
+      }
+
+      if (urlsToDelete.length > 0) {
+        console.log(`🧹 EdgeStore Clean-up: Purging ${urlsToDelete.length} replaced old application files...`);
+        await Promise.all(
+          urlsToDelete.map(async (url) => {
+            let targetUrl = url;
+            if (url.includes('/api/edgestore/proxy-file')) {
+              try {
+                const urlObj = url.startsWith('http') 
+                  ? new URL(url) 
+                  : new URL(url, process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
+                const extractedUrl = urlObj.searchParams.get('url');
+                if (extractedUrl) targetUrl = extractedUrl;
+              } catch (err) {
+                console.error("Failed to parse proxied URL during purge:", url);
+              }
+            }
+            if (targetUrl && targetUrl.startsWith('http')) {
+              await (backendClient.identityDocs as any).deleteFile({ url: targetUrl }).catch(() => {
+                return (backendClient.publicFiles as any).deleteFile({ url: targetUrl }).catch(() => {});
+              });
+            }
+          })
+        );
+      }
+
+      // Update existing application record with latest submission data
+      const updatedApplication = await db.hostApplication.update({
+        where: { id: existingApplication.id },
+        data: {
+          businessInfo: data.businessInfo,
+          contactInfo: data.contactInfo,
+          selfieUrl: data.selfieUrl,
+          idCardUrl: data.idCardUrl,
+          businessPermitUrl: data.businessPermitUrl,
+          fireSafetyUrl: data.fireSafetyUrl,
+          facadePhotoUrl: data.facadePhotoUrl,
+          latlng: data.latlng || [15.4822, 120.5963],
+          additionalDocsUrl: data.additionalDocsUrl || "",
+          status: 'pending',
+          rejectedReason: null,
+          rejectedBy: null
+        },
+      });
+
+      // Send confirmation email (fire & forget)
+      sendApplicationConfirmationEmail(user, updatedApplication as any).catch(err => {
+        console.error("Confirmation email notification error:", err);
+      });
+
+      // Notify Super Admins & Admins via email (fire & forget)
+      db.user.findMany({ where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] } } }).then(adminUsers => {
+        adminUsers.forEach((admin: any) => {
+          sendAdminApplicationNotification(admin, updatedApplication as any).catch(err => {
+            console.error("Admin notification email error:", err);
+          });
+        });
+      }).catch(err => console.error("Admin user query error for notification:", err));
+
+      return {
+        success: true,
+        data: updatedApplication,
+        message: "Application updated and submitted successfully. Please wait for admin review."
+      };
+    } catch (error) {
+      console.error("Submission Update Error:", error);
+      throw new Error("Internal Server Error: Failed to update application.");
+    }
   }
 
   // Final Server-side Validation
@@ -83,23 +185,25 @@ export const createHostApplication = async (data: HostApplicationData) => {
         businessPermitUrl: data.businessPermitUrl,
         fireSafetyUrl: data.fireSafetyUrl,
         facadePhotoUrl: data.facadePhotoUrl,
-        latlng: data.latlng,
+        latlng: data.latlng || [15.4822, 120.5963],
         additionalDocsUrl: data.additionalDocsUrl || "",
         status: 'pending'
       },
     });
 
     // Send confirmation emails (fire and forget)
-    sendApplicationConfirmationEmail(user, application as any);
-    
-    // Notify Admins
-    const adminUsers = await db.user.findMany({
-      where: { role: 'ADMIN' }
+    sendApplicationConfirmationEmail(user, application as any).catch(err => {
+      console.error("Confirmation email error:", err);
     });
     
-    adminUsers.forEach((admin: any) => {
-      sendAdminApplicationNotification(admin, application as any);
-    });
+    // Notify Super Admins & Admins via email (fire & forget)
+    db.user.findMany({ where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] } } }).then(adminUsers => {
+      adminUsers.forEach((admin: any) => {
+        sendAdminApplicationNotification(admin, application as any).catch(err => {
+          console.error("Admin email alert error:", err);
+        });
+      });
+    }).catch(err => console.error("Admin query error:", err));
 
     return {
       success: true,

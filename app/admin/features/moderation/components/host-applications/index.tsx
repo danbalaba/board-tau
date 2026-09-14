@@ -9,6 +9,9 @@ import { useHostApplicationsLogic } from '../../hooks/use-host-applications-logi
 import { AdminApplicationHeader } from './admin-application-header';
 import { AdminApplicationCard } from './admin-application-card';
 import { AdminApplicationReviewModal } from './admin-application-review-modal';
+import { AdminApplicationRejectModal } from './admin-application-reject-modal';
+import { AdminApplicationDeleteModal } from './admin-application-delete-modal';
+import { AdminApplicationActionLoaderModal } from './AdminApplicationActionLoaderModal';
 import { ApplicationKPICards } from './application-kpi-cards';
 import { AdminArchiveModal } from '@/app/admin/components/modals/admin-archive-modal';
 import { Button } from '@/app/admin/components/ui/button';
@@ -21,6 +24,25 @@ export function HostApplicationsDashboard() {
   const [range, setRange] = useState('30d');
   const { data: session } = useSession();
   const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
+
+  // Moderation Loader & Standalone Reject Modal State
+  const [loaderModal, setLoaderModal] = useState<{
+    isOpen: boolean;
+    actionType: 'approve' | 'reject';
+    applicantName?: string;
+  }>({
+    isOpen: false,
+    actionType: 'approve',
+    applicantName: ''
+  });
+
+  const [standaloneRejectModal, setStandaloneRejectModal] = useState<{
+    isOpen: boolean;
+    application: any | null;
+  }>({
+    isOpen: false,
+    application: null
+  });
 
   const {
     filteredApplications,
@@ -42,8 +64,11 @@ export function HostApplicationsDashboard() {
     setViewMode,
     searchQuery,
     setSearchQuery,
+    statusFilter,
+    setStatusFilter,
     sortBy,
     setSortBy,
+    handleClearFilters,
     selectedApplication,
     setSelectedApplication,
     viewModalOpen,
@@ -58,11 +83,24 @@ export function HostApplicationsDashboard() {
     handleArchive,
     handleConfirmArchive,
     handleConfirmDelete
-  } = useHostApplicationsLogic();
+  } = useHostApplicationsLogic({ range });
 
   if (error) {
     return <AdminDashboardError onRetry={handleRefresh} />;
   }
+
+  const handleWrappedDecision = (id: string, action: 'approve' | 'reject', reason?: string) => {
+    const targetApp = filteredApplications.find((a: any) => a.id === id) || selectedApplication;
+    const applicantName = targetApp?.user?.name || 'Landlord Applicant';
+
+    setLoaderModal({
+      isOpen: true,
+      actionType: action,
+      applicantName
+    });
+
+    handleDecision(id, action, reason);
+  };
 
   const handleExport = async (format: 'CSV' | 'EXCEL' | 'PDF') => {
     const rangeLabel = { '7d': 'Last 7 Days', '30d': 'Last 30 Days', '90d': 'Last 90 Days', '1y': 'Past Year' }[range] || range;
@@ -110,6 +148,9 @@ export function HostApplicationsDashboard() {
       <AdminApplicationHeader
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        onClearFilters={handleClearFilters}
         sortBy={sortBy}
         setSortBy={setSortBy}
         viewMode={viewMode}
@@ -234,7 +275,10 @@ export function HostApplicationsDashboard() {
                         application={application}
                         idx={idx}
                         viewMode={viewMode}
-                        handleDecision={handleDecision}
+                        handleDecision={handleWrappedDecision}
+                        onRejectModalOpen={(app) => {
+                          setStandaloneRejectModal({ isOpen: true, application: app });
+                        }}
                         isDeciding={isDeciding}
                         onViewDetails={() => {
                           setSelectedApplication(application);
@@ -258,91 +302,62 @@ export function HostApplicationsDashboard() {
         </AnimatePresence>
       </div>
 
+      {/* Multi-Step Review Modal */}
       <AdminApplicationReviewModal 
         application={selectedApplication}
         isOpen={viewModalOpen}
         onClose={() => setViewModalOpen(false)}
-        onDecision={handleDecision}
+        onDecision={handleWrappedDecision}
         isDeciding={isDeciding}
+        onRestore={handleArchive}
       />
 
+      {/* Standalone Quick Rejection Modal for Card Trigger */}
+      <AdminApplicationRejectModal
+        isOpen={standaloneRejectModal.isOpen}
+        onClose={() => setStandaloneRejectModal({ isOpen: false, application: null })}
+        onConfirm={(reason) => {
+          if (standaloneRejectModal.application) {
+            handleWrappedDecision(standaloneRejectModal.application.id, 'reject', reason);
+          }
+          setStandaloneRejectModal({ isOpen: false, application: null });
+        }}
+        applicantName={standaloneRejectModal.application?.user?.name || 'Applicant'}
+      />
+
+      {/* Animated Kerby Mascot Action Loader Modal */}
+      <AdminApplicationActionLoaderModal
+        isOpen={loaderModal.isOpen}
+        actionType={loaderModal.actionType}
+        applicantName={loaderModal.applicantName}
+        onComplete={() => {
+          setLoaderModal(prev => ({ ...prev, isOpen: false }));
+          setViewModalOpen(false);
+        }}
+      />
+
+      {/* Archive Confirmation Modal */}
       <AdminArchiveModal
         isOpen={archiveModalOpen}
         onClose={() => setArchiveModalOpen(false)}
         onConfirm={handleConfirmArchive}
         isArchiving={isArchiving}
-        isRestore={itemToArchive?.isArchived}
-        title={itemToArchive?.isArchived ? 'Restore Application' : 'Archive Application'}
-        description={itemToArchive?.isArchived 
+        isRestore={Boolean(itemToArchive?.isAdminArchived || itemToArchive?.isArchived || isArchived)}
+        title={(itemToArchive?.isAdminArchived || itemToArchive?.isArchived || isArchived) ? 'Restore Application' : 'Archive Application'}
+        description={(itemToArchive?.isAdminArchived || itemToArchive?.isArchived || isArchived) 
           ? `This will restore the application for "${itemToArchive?.user?.name || 'this landlord'}" to the active queue.`
           : `This will move the application for "${itemToArchive?.user?.name || 'this landlord'}" to your archive.`
         }
       />
 
-      <AnimatePresence>
-        {deleteModalOpen && selectedApplication && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
-              onClick={() => setDeleteModalOpen(false)} 
-              className="absolute inset-0 bg-gray-900/80 backdrop-blur-md" 
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }} 
-              animate={{ opacity: 1, scale: 1, y: 0 }} 
-              exit={{ opacity: 0, scale: 0.9, y: 20 }} 
-              className="relative bg-[#111827] rounded-[2.5rem] border border-white/10 p-10 max-w-md w-full shadow-2xl overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 via-orange-500 to-red-500" />
-              
-              <button onClick={() => setDeleteModalOpen(false)} className="absolute top-6 right-6 p-2 text-gray-400 hover:text-white transition-colors">
-                <X size={20} />
-              </button>
-      
-              <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 bg-red-500/10 rounded-[2rem] flex items-center justify-center mb-8 text-red-500 shadow-inner border border-red-900/30">
-                  <AlertTriangle size={36} className="animate-bounce" />
-                </div>
-                
-                <h3 className="text-2xl font-black text-white mb-3 uppercase tracking-tight">Destroy Sensitive Data</h3>
-                <p className="text-[13px] text-gray-400 mb-10 leading-relaxed font-medium">
-                  You are about to permanently delete the application for <span className="font-black text-white underline decoration-red-500/30 decoration-2 underline-offset-4">"{selectedApplication.user?.name || 'this landlord'}"</span>. 
-                  This will wipe all selfies, government IDs, and legal permits from EdgeStore.
-                </p>
-      
-                <div className="flex flex-col sm:flex-row w-full gap-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setDeleteModalOpen(false)} 
-                    disabled={isDeleting}
-                    className="flex-1 rounded-2xl py-4 border-gray-700 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 order-2 sm:order-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    onClick={handleConfirmDelete} 
-                    disabled={isDeleting}
-                    className="flex-1 rounded-2xl py-4 shadow-xl shadow-red-500/20 text-[10px] font-black uppercase tracking-[0.2em] order-1 sm:order-2"
-                  >
-                    {isDeleting ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2 size={14} className="animate-spin" /> Purging...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <Trash2 size={14} /> Purge Identity
-                      </span>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Delete Confirmation Modal */}
+      <AdminApplicationDeleteModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        applicantName={selectedApplication?.user?.name || 'this landlord'}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

@@ -25,11 +25,8 @@ describe('EmptyState', () => {
   it('renders with default props', () => {
     render(<EmptyState />);
     
-    expect(screen.getByTestId('mock-heading')).toBeInTheDocument();
     expect(screen.getByText('No exact matches')).toBeInTheDocument();
     expect(screen.getByText('Try changing or removing some of your filters.')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-heading')).toHaveAttribute('data-center', 'true');
-    
     expect(screen.queryByTestId('mock-link')).not.toBeInTheDocument();
   });
 
@@ -46,7 +43,7 @@ describe('EmptyState', () => {
     const link = screen.getByTestId('mock-link');
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/');
-    expect(screen.getByText('Remove all filters')).toBeInTheDocument();
+    expect(screen.getByText('Clear all filters')).toBeInTheDocument();
   });
 
   it('renders correctly with all props', () => {

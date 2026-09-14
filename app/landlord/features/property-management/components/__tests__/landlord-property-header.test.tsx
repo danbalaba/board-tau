@@ -136,7 +136,7 @@ describe('LandlordPropertyHeader', () => {
   it('toggles archived view', () => {
     render(<LandlordPropertyHeader {...defaultProps} isArchived={true} />);
     
-    const toggleBtn = screen.getByText('Viewing Archived').closest('button');
+    const toggleBtn = screen.getByText('Archived').closest('button');
     expect(toggleBtn).toBeInTheDocument();
 
     fireEvent.click(toggleBtn!);

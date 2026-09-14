@@ -18,7 +18,7 @@ export async function getAdminDashboardStats() {
       where: { deletedAt: null },
       _count: { id: true },
     }),
-    db.listing.count({ where: { status: "active" } }),
+    db.listing.count({ where: { status: "ACTIVE" } }),
     db.reservation.count({
       where: {
         status: { in: ["PENDING_PAYMENT", "RESERVED"] },

@@ -42,9 +42,9 @@ describe('SidebarDetailView Component', () => {
     expect(screen.getByText('Test Listing')).toBeInTheDocument();
     expect(screen.getByText('1,500')).toBeInTheDocument(); // Format price
     expect(screen.getByText('Test Host')).toBeInTheDocument();
-    // Fixed: Nested JSON rules are correctly parsed and rendered
+    // Fixed: Nested JSON rules and features are correctly parsed and rendered
     expect(screen.getByText('Strictly Female Only')).toBeInTheDocument();
-    expect(screen.getByText('CCTV Monitoring')).toBeInTheDocument();
+    expect(screen.getByText(/CCTV/i)).toBeInTheDocument();
   });
 
   it('calls onBack when back button is clicked', () => {

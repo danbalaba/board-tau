@@ -49,7 +49,7 @@ describe('ChatBot', () => {
         <ChatBot />
       </SessionProvider>
     );
-    const toggleBtn = screen.getByAltText('Chat').closest('button') as HTMLElement;
+    const toggleBtn = screen.getByAltText(/Kerby/i).closest('button') as HTMLElement;
     expect(toggleBtn).toBeInTheDocument();
   });
 
@@ -59,10 +59,10 @@ describe('ChatBot', () => {
         <ChatBot />
       </SessionProvider>
     );
-    const toggleBtn = screen.getByAltText('Chat').closest('button') as HTMLElement;
+    const toggleBtn = screen.getByAltText(/Kerby/i).closest('button') as HTMLElement;
     fireEvent.click(toggleBtn);
     
-    expect(screen.getByPlaceholderText('Ask me anything...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Ask.*anything/i)).toBeInTheDocument();
   });
 
   it('sends a message and receives response', async () => {
@@ -72,10 +72,10 @@ describe('ChatBot', () => {
       </SessionProvider>
     );
     
-    const toggleBtn = screen.getByAltText('Chat').closest('button') as HTMLElement;
+    const toggleBtn = screen.getByAltText(/Kerby/i).closest('button') as HTMLElement;
     fireEvent.click(toggleBtn); // open chat
     
-    const input = screen.getByPlaceholderText('Ask me anything...');
+    const input = screen.getByPlaceholderText(/Ask.*anything/i);
     fireEvent.change(input, { target: { value: 'Hi there' } });
     
     fireEvent.submit(input.closest('form')!);

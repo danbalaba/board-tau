@@ -26,6 +26,8 @@ import SafeImage from '@/components/common/SafeImage';
 import { getSafeImageSrcString } from '@/components/modals/inquiry-modal/InquiryModalUtils';
 import { useRouter, usePathname } from 'next/navigation';
 import { LandlordReservationCancelModal } from './landlord-reservation-cancel-modal';
+import { generateLeaseContractPDF } from '@/utils/contractPdfGenerator';
+import { IconFileText } from '@tabler/icons-react';
 
 interface LandlordReservationDetailsModalProps {
   reservation: ReservationRequest;
@@ -333,29 +335,60 @@ export function LandlordReservationDetailsModal({
                     )}
                   </div>
 
-                  {/* Row 2: Communication (Chat) */}
-                  <Button
-                    outline
-                    className="w-full rounded-[1.25rem] py-5 border-gray-100 dark:border-gray-800 text-[10px] font-black uppercase tracking-[0.2em] group/chat flex items-center justify-center gap-3 transition-all active:scale-[0.98] hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                    onClick={() => {
-                      const listingImg = (reservation.room?.images && reservation.room.images.length > 0) ? reservation.room.images[0].url : (reservation.listing?.images && reservation.listing.images.length > 0) ? reservation.listing.images[0].url : reservation.listing?.imageSrc;
-                      const event = new CustomEvent('open-landlord-chat', {
-                        detail: {
-                          listingId: reservation.listing.id,
-                          tenantId: reservation.user.id,
-                          tenantName: (reservation.user?.name || reservation.guestName) || 'Tenant',
-                          tenantImage: (reservation.user?.image || reservation.guestPhotoUrl) || '',
-                          listingTitle: reservation.listing.title,
-                          listingImage: listingImg || ''
-                        }
-                      });
-                      window.dispatchEvent(event);
-                      onClose();
-                    }}
-                  >
-                    <IconMail size={18} className="group-hover/chat:scale-110 transition-transform text-primary" />
-                    Chat with {(reservation.user?.name || reservation.guestName) || 'Tenant'}
-                  </Button>
+                  {/* Row 2: Contract & Communication */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {(reservation.status === 'RESERVED' || reservation.status === 'CHECKED_IN' || reservation.status === 'COMPLETED') && (
+                      <Button
+                        outline
+                        className="w-full rounded-[1.25rem] py-5 border-teal-100 text-[10px] font-black uppercase tracking-[0.2em] group/contract flex items-center justify-center gap-3 transition-all active:scale-[0.98] hover:bg-teal-50 dark:hover:bg-teal-900/30 text-teal-600 dark:border-teal-900/30"
+                        isLoading={isLoading}
+                        onClick={async () => {
+                          const toastId = toast.loading("Generating Lease Contract...");
+                          setIsLoading(true);
+                          try {
+                            const res = await fetch(`/api/contracts/generate?listingId=${reservation.listing.id}&userId=${reservation.user.id}&roomId=${reservation.room?.id}`);
+                            if (!res.ok) throw new Error("Failed to fetch contract data");
+                            const data = await res.json();
+                            await generateLeaseContractPDF(`Lease_Contract_${reservation.listing.id}`, data);
+                            toast.success("Lease Contract downloaded successfully!", { id: toastId });
+                          } catch (e) {
+                            toast.error("Failed to generate Lease Contract.", { id: toastId });
+                          } finally {
+                            setIsLoading(false);
+                          }
+                        }}
+                      >
+                        <IconFileText size={18} className="group-hover/contract:scale-110 transition-transform text-teal-600" />
+                        Download Contract
+                      </Button>
+                    )}
+
+                    <Button
+                      outline
+                      className={cn(
+                        "w-full rounded-[1.25rem] py-5 border-gray-100 dark:border-gray-800 text-[10px] font-black uppercase tracking-[0.2em] group/chat flex items-center justify-center gap-3 transition-all active:scale-[0.98] hover:bg-gray-50 dark:hover:bg-gray-800/50",
+                        (reservation.status === 'RESERVED' || reservation.status === 'CHECKED_IN' || reservation.status === 'COMPLETED') ? "" : "sm:col-span-2"
+                      )}
+                      onClick={() => {
+                        const listingImg = (reservation.room?.images && reservation.room.images.length > 0) ? reservation.room.images[0].url : (reservation.listing?.images && reservation.listing.images.length > 0) ? reservation.listing.images[0].url : reservation.listing?.imageSrc;
+                        const event = new CustomEvent('open-landlord-chat', {
+                          detail: {
+                            listingId: reservation.listing.id,
+                            tenantId: reservation.user.id,
+                            tenantName: (reservation.user?.name || reservation.guestName) || 'Tenant',
+                            tenantImage: (reservation.user?.image || reservation.guestPhotoUrl) || '',
+                            listingTitle: reservation.listing.title,
+                            listingImage: listingImg || ''
+                          }
+                        });
+                        window.dispatchEvent(event);
+                        onClose();
+                      }}
+                    >
+                      <IconMail size={18} className="group-hover/chat:scale-110 transition-transform text-primary" />
+                      Chat with {(reservation.user?.name || reservation.guestName) || 'Tenant'}
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="mt-6 flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl">

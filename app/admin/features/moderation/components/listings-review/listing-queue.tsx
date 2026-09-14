@@ -63,7 +63,7 @@ export function ListingQueue({ listings, selectedId, onSelect }: ListingQueuePro
                     <div className={cn(
                       "flex-shrink-0 px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] border shadow-sm",
                       listing.status === 'pending' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
-                      listing.status === 'approved' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                      listing.status === 'approved' ? "bg-primary/10 text-primary border-primary/20" :
                       "bg-rose-500/10 text-rose-500 border-rose-500/20"
                     )}>
                       {listing.status}

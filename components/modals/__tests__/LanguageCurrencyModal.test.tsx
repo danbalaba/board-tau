@@ -64,7 +64,7 @@ describe('LanguageCurrencyModal Component', () => {
     fireEvent.click(tagalogBtn!);
     
     // Check if the styling changes (bg-gray-50)
-    expect(tagalogBtn).toHaveClass('bg-gray-50');
+    expect(screen.getByText('Tagalog').closest('button')).toHaveClass('bg-gray-50');
   });
 
   it('allows selecting a currency', () => {
@@ -82,8 +82,8 @@ describe('LanguageCurrencyModal Component', () => {
     
     fireEvent.click(usdBtn!);
     
-    expect(usdBtn).toHaveClass('bg-gray-50');
-    expect(phpBtn).not.toHaveClass('bg-gray-50');
+    expect(screen.getByText('United States dollar').closest('button')).toHaveClass('bg-gray-50');
+    expect(screen.getByText('Philippine peso').closest('button')).not.toHaveClass('bg-gray-50');
   });
 
   it('calls onClose when close button or backdrop is clicked', () => {

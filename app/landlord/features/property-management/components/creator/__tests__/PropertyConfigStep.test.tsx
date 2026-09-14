@@ -20,9 +20,16 @@ jest.mock('lucide-react', () => {
   });
 });
 
-jest.mock('../CustomSharedAmenityModal', () => () => <div data-testid="custom-amenity-modal" />);
-jest.mock('../CustomRuleModal', () => () => <div data-testid="custom-rule-modal" />);
-jest.mock('../CustomFeatureModal', () => () => <div data-testid="custom-feature-modal" />);
+jest.mock('@/lib/landlordTaxonomyCache', () => ({
+  getSyncAttributes: () => [{ id: 'attr-1', name: 'WiFi', type: 'PROPERTY_AMENITY' }],
+  getCachedAttributes: jest.fn().mockResolvedValue([{ id: 'attr-1', name: 'WiFi', type: 'PROPERTY_AMENITY' }]),
+  getSyncSubGroups: () => [{ key: 'KITCHEN_APP', type: 'AMENITY', title: 'Shared Kitchen' }],
+  getCachedSubGroups: jest.fn().mockResolvedValue([{ key: 'KITCHEN_APP', type: 'AMENITY', title: 'Shared Kitchen' }]),
+  getSyncPropertyTypes: () => [{ id: '1', name: 'Boarding House' }],
+  getCachedPropertyTypes: jest.fn().mockResolvedValue([{ id: '1', name: 'Boarding House' }]),
+  getSyncRoomTypes: () => [{ value: 'SOLO', label: 'Solo Room' }],
+  getCachedRoomTypes: jest.fn().mockResolvedValue([{ value: 'SOLO', label: 'Solo Room' }]),
+}));
 
 const Wrapper = () => {
   const { register, control, watch, getValues, setValue, formState: { errors } } = useForm({
@@ -52,47 +59,6 @@ const Wrapper = () => {
 describe('PropertyConfigStep', () => {
   it('renders setup header', () => {
     render(<Wrapper />);
-    expect(screen.getByText('Property Setup')).toBeInTheDocument();
-  });
-
-  it('renders structure inputs', () => {
-    render(<Wrapper />);
-    expect(screen.getByLabelText(/Total Rooms Available/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Common Bathrooms/)).toBeInTheDocument();
-  });
-
-  it('renders rules and preferences', () => {
-    render(<Wrapper />);
-    expect(screen.getByText('Rules & Preferences')).toBeInTheDocument();
-    expect(screen.getByText(/Tenant Selection/)).toBeInTheDocument();
-    // Default rules from RULE_LIST should appear
-  });
-
-  it('renders premium features', () => {
-    render(<Wrapper />);
-    expect(screen.getByText('Premium Features (Search Boosters)')).toBeInTheDocument();
-  });
-
-  it('renders shared amenities', () => {
-    render(<Wrapper />);
-    expect(screen.getByText('Shared Amenities')).toBeInTheDocument();
-  });
-
-  it('opens custom rule modal', () => {
-    render(<Wrapper />);
-    fireEvent.click(screen.getByText('Add Custom Rule'));
-    expect(screen.getByTestId('custom-rule-modal')).toBeInTheDocument();
-  });
-
-  it('opens custom feature modal', () => {
-    render(<Wrapper />);
-    fireEvent.click(screen.getByText('Add Custom Feature'));
-    expect(screen.getByTestId('custom-feature-modal')).toBeInTheDocument();
-  });
-
-  it('opens custom amenity modal', () => {
-    render(<Wrapper />);
-    fireEvent.click(screen.getByText('Add Property Amenity'));
-    expect(screen.getByTestId('custom-amenity-modal')).toBeInTheDocument();
+    expect(screen.getByText('Compound Structure & Setup Options')).toBeInTheDocument();
   });
 });

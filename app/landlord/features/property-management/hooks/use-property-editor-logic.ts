@@ -27,7 +27,6 @@ const propertySchema = z.object({
     petsAllowed: z.boolean(),
     smokingAllowed: z.boolean(),
     noCurfew: z.boolean(),
-    customRules: z.array(z.string()),
   }),
   features: z.object({
     security24h: z.boolean(),
@@ -36,10 +35,8 @@ const propertySchema = z.object({
     nearTransport: z.boolean(),
     floodFree: z.boolean(),
     backupPower: z.boolean(),
-    customFeatures: z.array(z.string()),
   }),
   amenities: z.array(z.string()),
-  customAmenities: z.array(z.string()),
   rooms: z.array(z.object({
     roomType: z.string().min(1, "Type required"),
     price: z.coerce.number().min(500),
@@ -85,7 +82,6 @@ export function usePropertyEditorLogic(initialData: any) {
     amenities: initialData.amenities_list || (initialData.amenities ? Object.entries(initialData.amenities)
       .filter(([key, val]) => val === true && key !== 'id' && key !== 'listingId')
       .map(([key]) => key) : []),
-    customAmenities: initialData.amenities?.customAmenities || [],
     rules: {
       femaleOnly: initialData.rules?.femaleOnly || false,
       maleOnly: initialData.rules?.maleOnly || false,
@@ -93,7 +89,6 @@ export function usePropertyEditorLogic(initialData: any) {
       petsAllowed: initialData.rules?.petsAllowed || false,
       smokingAllowed: initialData.rules?.smokingAllowed || false,
       noCurfew: initialData.rules?.noCurfew || false,
-      customRules: initialData.rules?.customRules || [],
     },
     features: {
       security24h: initialData.features?.security24h || false,
@@ -102,7 +97,6 @@ export function usePropertyEditorLogic(initialData: any) {
       nearTransport: initialData.features?.nearTransport ?? true,
       floodFree: initialData.features?.floodFree || false,
       backupPower: initialData.features?.backupPower || false,
-      customFeatures: initialData.features?.customFeatures || [],
     },
     rooms: (initialData.rooms || []).map((r: any) => ({
       id: r.id,

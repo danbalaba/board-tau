@@ -44,7 +44,7 @@ function SelectTrigger({
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <div className="w-6 h-6 shrink-0 rounded-lg flex items-center justify-center transition-all duration-300 bg-gray-50 dark:bg-gray-700 text-gray-400 group-data-[state=open]:bg-gray-200 dark:group-data-[state=open]:bg-gray-600 group-data-[state=open]:text-gray-600 dark:group-data-[state=open]:text-gray-300 group-data-[state=open]:rotate-180">
+        <div className="w-5 h-5 shrink-0 rounded-md flex items-center justify-center transition-all duration-300 bg-gray-50 dark:bg-gray-700 text-gray-400 group-data-[state=open]:bg-gray-200 dark:group-data-[state=open]:bg-gray-600 group-data-[state=open]:text-gray-600 dark:group-data-[state=open]:text-gray-300 group-data-[state=open]:rotate-180">
           <ChevronDownIcon className='h-3 w-3' strokeWidth={3} />
         </div>
       </SelectPrimitive.Icon>
@@ -56,14 +56,17 @@ function SelectContent({
   className,
   children,
   position = 'popper',
+  container,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content>) {
+}: React.ComponentProps<typeof SelectPrimitive.Content> & {
+  container?: HTMLElement | null;
+}) {
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal container={container}>
       <SelectPrimitive.Content
         data-slot='select-content'
         className={cn(
-          'bg-white dark:bg-gray-800 text-gray-900 dark:text-white data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xl',
+          'bg-white dark:bg-gray-800 text-gray-900 dark:text-white data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-[10050] max-h-60 min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl',
           position === 'popper' &&
           'data-[side=bottom]:translate-y-2 data-[side=left]:-translate-x-2 data-[side=right]:translate-x-2 data-[side=top]:-translate-y-2',
           className

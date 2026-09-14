@@ -10,15 +10,14 @@ jest.mock('framer-motion', () => ({
   },
 }));
 
-jest.mock('lucide-react', () => ({
-  Building2: () => <div data-testid="building-icon" />,
-  Briefcase: () => <div />,
-  LayoutGrid: () => <div />,
-  Tag: () => <div />,
-  MapPin: () => <div />,
-  DollarSign: () => <div />,
-  Info: () => <div />,
-}));
+jest.mock('lucide-react', () => {
+  return new Proxy({}, {
+    get: function(target, prop) {
+      if (prop === '__esModule') return true;
+      return () => <div data-testid={`icon-${String(prop)}`} />;
+    }
+  });
+});
 
 const Wrapper = () => {
   const { register, control, watch, formState: { errors } } = useForm({
@@ -50,24 +49,24 @@ const Wrapper = () => {
 describe('PropertyBasicStep', () => {
   it('renders business identity section', () => {
     render(<Wrapper />);
-    expect(screen.getByText('Business Identity')).toBeInTheDocument();
-    expect(screen.getByText('Business Details')).toBeInTheDocument();
+    expect(screen.getByText(/1\. Business Background/)).toBeInTheDocument();
+    expect(screen.getByText(/Verification Data/)).toBeInTheDocument();
   });
 
   it('renders input fields for business info', () => {
     render(<Wrapper />);
     expect(screen.getByLabelText(/Registered Business Name/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Tell us your mission/)).toBeInTheDocument();
-    expect(screen.getByText(/Business Type/)).toBeInTheDocument();
+    expect(screen.getByText(/2\. Property Type/)).toBeInTheDocument();
     expect(screen.getByText(/Years of Experience/)).toBeInTheDocument();
   });
 
   it('renders property essentials section', () => {
     render(<Wrapper />);
-    expect(screen.getByText('Property Essentials')).toBeInTheDocument();
+    expect(screen.getByText(/3\. Property Essentials/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Listing Title/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Property Description/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Main Starting Price/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Estimated Starting Price/)).toBeInTheDocument();
   });
 
   it('allows typing into text fields', () => {

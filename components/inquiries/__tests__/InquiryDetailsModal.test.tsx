@@ -184,7 +184,7 @@ describe('InquiryDetailsModal', () => {
     expect(mockOnCancel).toHaveBeenCalled();
   });
 
-  it('navigates to chat when Chat Landlord is clicked', () => {
+  it('navigates to chat when Chat is clicked', () => {
     render(
       <InquiryDetailsModal 
         inquiry={mockInquiry} 
@@ -194,7 +194,7 @@ describe('InquiryDetailsModal', () => {
       />
     );
 
-    const chatBtn = screen.getByText('Chat Landlord');
+    const chatBtn = screen.getByText('Chat');
     fireEvent.click(chatBtn);
     expect(mockRouter.push).toHaveBeenCalledWith('/messages?listingId=list-1&otherUserId=landlord-1');
   });

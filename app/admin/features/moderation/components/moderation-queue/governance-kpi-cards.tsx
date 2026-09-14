@@ -22,37 +22,21 @@ import {
 } from '@/app/admin/components/ui/tooltip';
 
 // ─── Trend calculation helper ────────────────────────────────────────────────
-function computeTrend(current: number, previous: number, invertedLogic = false) {
-  if (previous === 0 && current === 0) {
-    return { label: 'No data', direction: 'stable' as const, color: 'text-blue-500', bg: 'bg-blue-500/10', icon: IconMinus };
+function computeTrend(current: number, previous: number) {
+  if (current === 0) {
+    return { label: 'All Clear', direction: 'stable' as const, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', icon: IconMinus };
   }
-  if (previous === 0) {
-    // If it went from 0 to something, show the absolute increase in green
-    return { 
-      label: `+${current}`, 
-      direction: 'up' as const, 
-      color: 'text-emerald-500', 
-      bg: 'bg-emerald-500/10', 
-      icon: IconArrowUpRight 
-    };
-  }
-
-  const pct = ((current - previous) / previous) * 100;
-  const isStable = Math.abs(pct) < 1;
-
-  if (isStable) {
+  const diff = current - previous;
+  if (diff === 0) {
     return { label: 'Stable', direction: 'stable' as const, color: 'text-blue-500', bg: 'bg-blue-500/10', icon: IconMinus };
   }
 
-  const isUp = pct > 0;
-  // User prefers up=green and down=red for consistency, regardless of whether a larger queue is 'bad'
-  const isGood = isUp;
-
+  const isUp = diff > 0;
   return {
-    label: `${isUp ? '+' : ''}${pct.toFixed(1)}%`,
+    label: `${isUp ? '+' : ''}${diff} ${isUp ? 'new' : 'resolved'}`,
     direction: isUp ? 'up' as const : 'down' as const,
-    color: isGood ? 'text-emerald-500' : 'text-rose-500',
-    bg: isGood ? 'bg-emerald-500/10' : 'bg-rose-500/10',
+    color: isUp ? 'text-amber-500 dark:text-amber-400' : 'text-emerald-500 dark:text-emerald-400',
+    bg: isUp ? 'bg-amber-500/10 border-amber-500/20' : 'bg-emerald-500/10 border-emerald-500/20',
     icon: isUp ? IconArrowUpRight : IconArrowDownRight,
   };
 }
@@ -105,7 +89,7 @@ export function GovernanceKPICards({
     {
       label: 'Total Pending',
       value: totalPending,
-      trend: computeTrend(totalPending, totalLastWeek, true),
+      trend: computeTrend(totalPending, totalLastWeek),
       icon: IconInbox,
       color: 'text-indigo-500',
       bg: 'bg-indigo-500/10',
@@ -120,7 +104,7 @@ export function GovernanceKPICards({
     {
       label: 'Pending Listings',
       value: pendingListings,
-      trend: computeTrend(pendingListings, pendingListingsLastWeek, true),
+      trend: computeTrend(pendingListings, pendingListingsLastWeek),
       icon: IconHome,
       color: 'text-emerald-500',
       bg: 'bg-emerald-500/10',
@@ -135,7 +119,7 @@ export function GovernanceKPICards({
     {
       label: 'Pending Reviews',
       value: pendingReviews,
-      trend: computeTrend(pendingReviews, pendingReviewsLastWeek, true),
+      trend: computeTrend(pendingReviews, pendingReviewsLastWeek),
       icon: IconStar,
       color: 'text-amber-500',
       bg: 'bg-amber-500/10',
@@ -150,7 +134,7 @@ export function GovernanceKPICards({
     {
       label: 'Pending Hosts',
       value: pendingHosts,
-      trend: computeTrend(pendingHosts, pendingHostsLastWeek, true),
+      trend: computeTrend(pendingHosts, pendingHostsLastWeek),
       icon: IconUserPlus,
       color: 'text-purple-500',
       bg: 'bg-purple-500/10',
@@ -195,21 +179,16 @@ export function GovernanceKPICards({
                           stat.value.toLocaleString()
                         )}
                       </div>
-                      <div className="flex flex-col gap-1 items-start bg-transparent mt-2">
-                        <div className="flex items-center flex-wrap gap-1.5">
-                          <div className={cn(
-                            "flex items-center gap-1.5 w-fit px-2 py-1 rounded-lg",
-                            stat.trend.bg
-                          )}>
-                            <TrendIcon className={cn("w-3 h-3", stat.trend.color)} />
-                            <span className={cn("text-[9px] font-bold uppercase tracking-widest", stat.trend.color)}>
-                              {stat.trend.label}
-                            </span>
-                          </div>
-                          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded-lg">
-                            vs {getRangeLabel(range)}
+                      <div className="flex items-center gap-1.5 mt-2.5">
+                        {stat.value > 0 ? (
+                          <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg">
+                            {stat.value} Waiting
                           </span>
-                        </div>
+                        ) : (
+                          <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+                            All Clear
+                          </span>
+                        )}
                       </div>
                       <div className="h-20 w-full mt-6 -mx-6 mb-[-1.5rem]">
                         <ResponsiveContainer width="100%" height="100%">

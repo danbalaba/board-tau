@@ -23,11 +23,31 @@ export const ListingRecommendations: React.FC<ListingRecommendationsProps> = ({
 
   useEffect(() => {
     const fetchRecommendations = async () => {
+      const cacheKey = `recommendations_${listingId}`;
+      if (typeof window !== "undefined") {
+        try {
+          const cached = sessionStorage.getItem(cacheKey);
+          if (cached) {
+            const data = JSON.parse(cached);
+            if (Array.isArray(data)) {
+              setRecommendations(data);
+              setIsLoading(false);
+              return;
+            }
+          }
+        } catch (err) {}
+      }
+
       try {
         const response = await fetch(`/api/listings/${listingId}/recommendations`);
         const data = await response.json();
         if (data.data) {
           setRecommendations(data.data);
+          if (typeof window !== "undefined") {
+            try {
+              sessionStorage.setItem(cacheKey, JSON.stringify(data.data));
+            } catch {}
+          }
         }
       } catch (error) {
         console.error("Failed to fetch recommendations:", error);

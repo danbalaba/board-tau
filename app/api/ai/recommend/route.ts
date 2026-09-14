@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
 import redis, { cache } from "@/lib/redis";
 import { strictLimiter } from "@/lib/rate-limit";
-import { captureAIGeneration } from "@/lib/posthog-ai";
-import { getCurrentUser } from "@/services/user";
+import { generateAIResponse } from "@/lib/ai/ai-provider";
+import { sanitizeAIOutput } from "@/lib/security/sanitize";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const aiRecommendSchema = z.object({
+  message: z.string(),
+});
 
 export async function POST(req: Request) {
   try {
@@ -14,15 +16,8 @@ export async function POST(req: Request) {
     
     if (!success) {
       return NextResponse.json(
-        { message: "Showing alternatives." },
+        { message: "We found some great alternatives for you." },
         { status: 429 }
-      );
-    }
-    
-    if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json(
-        { message: "We found some alternatives that might interest you." },
-        { status: 500 }
       );
     }
 
@@ -42,10 +37,12 @@ export async function POST(req: Request) {
       return NextResponse.json(cachedData);
     }
 
+    const categoryText = searchParams.propertyType || searchParams.categories || searchParams.category;
     const userQuery = [
-      searchParams.roomType, 
-      searchParams.category,
-      searchParams.amenities ? 'specific amenities' : '',
+      searchParams.roomType ? `${searchParams.roomType} room` : "", 
+      categoryText ? `${categoryText}` : "",
+      searchParams.college ? `near ${searchParams.college}` : "",
+      searchParams.amenities || searchParams.roomAmenities || searchParams.rules ? 'specific preferences' : '',
       searchParams.maxPrice ? `budget up to ₱${searchParams.maxPrice}` : ""
     ].filter(Boolean).join(", ") || "a specific property";
 
@@ -56,7 +53,7 @@ export async function POST(req: Request) {
       
       Your goal is to provide ONE short, empathetic sentence (max 15 words) in English explaining why we are showing these alternatives and highlighting why they are still a great choice for a student.
       Example: "We couldn't find a Solo room under ₱2,000, but here are excellent bedspaces that fit your budget."
-      Example: "No exact matches near your university, but these highly-rated properties are just a short commute away."
+      Example: "No exact matches near CBM, but these highly-rated properties are just a short walk away."
       
       CRITICAL INSTRUCTIONS:
       1. Return raw JSON: { "message": "Your sentence here" }
@@ -64,43 +61,19 @@ export async function POST(req: Request) {
       3. STRICTLY NO EMOJIS. Be warm and helpful.
     `;
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-3-flash-preview",
-      generationConfig: { responseMimeType: "application/json" }
-    });
-
-    const t0 = Date.now();
-    const aiResult = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: systemPrompt }] }]
-    });
-    const latency = (Date.now() - t0) / 1000;
-
-    const response = await aiResult.response;
-    const text = response.text();
-
-    // Capture LLM generation analytics
-    const user = await getCurrentUser();
-    const distinctId = user?.id ?? `anon:${ip}`;
-    await captureAIGeneration({
-      distinctId,
-      model: "gemini-3-flash-preview",
+    const aiResult = await generateAIResponse({
+      prompt: systemPrompt,
+      schema: aiRecommendSchema,
       spanName: "ai_recommend",
-      input: [{ role: "user", content: userQuery }],
-      output: text,
-      inputTokens: response.usageMetadata?.promptTokenCount,
-      outputTokens: response.usageMetadata?.candidatesTokenCount,
-      latencySeconds: latency,
     });
 
-    try {
-      const parsed = JSON.parse(text);
-      if (parsed && parsed.message) {
-        await cache.set(cacheKey, parsed, 86400); // cache for 24h
-      }
-      return NextResponse.json(parsed);
-    } catch(e) {
-      return NextResponse.json({ message: "We found some great alternatives for you." });
+    if (aiResult.data && aiResult.data.message) {
+      aiResult.data.message = sanitizeAIOutput(aiResult.data.message);
+      await cache.set(cacheKey, aiResult.data, 604800); // 7 Days TTL
+      return NextResponse.json(aiResult.data);
     }
+
+    return NextResponse.json({ message: "We found some great alternatives for you." });
 
   } catch (error) {
     console.error("AI Recommend Error:", error);

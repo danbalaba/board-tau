@@ -1,9 +1,20 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { IconCreditCard, IconRefresh, IconLayoutGrid, IconList, IconFilter, IconDownload } from '@tabler/icons-react';
+import { 
+  IconCreditCard, 
+  IconRefresh, 
+  IconLayoutGrid, 
+  IconList, 
+  IconFilter, 
+  IconDownload,
+  IconChevronDown,
+  IconFileTypePdf,
+  IconTable,
+  IconFileTypeCsv
+} from '@tabler/icons-react';
 import { Button } from '@/app/admin/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Search } from 'lucide-react';
+import { Search, Check } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +23,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/app/admin/components/ui/dropdown-menu';
-import { IconChevronDown } from '@tabler/icons-react';
 
 interface AdminTransactionHeaderProps {
   searchQuery: string;
@@ -101,21 +111,24 @@ export function AdminTransactionHeader({
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="h-12 px-6 gap-2 rounded-2xl bg-gray-900 hover:bg-blue-600 dark:bg-white dark:text-gray-900 dark:hover:bg-blue-600 text-white shadow-xl shadow-blue-500/10 text-[10px] font-black uppercase tracking-[0.2em] transition-all">
+                <Button className="h-12 px-6 gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/20 text-[10px] font-black uppercase tracking-[0.2em] transition-all">
                   <IconDownload size={16} /> Export Ledger
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 rounded-2xl border-none shadow-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl p-2">
+              <DropdownMenuContent align="end" className="w-52 rounded-2xl border-none shadow-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl p-2">
                 <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-gray-400">Export Report</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
-                <DropdownMenuItem onClick={() => onExport('CSV')} className="gap-3 p-3 rounded-xl cursor-pointer font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800">
-                  Export as CSV
+                <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800 mb-1" />
+                <DropdownMenuItem onClick={() => onExport('PDF')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl data-[highlighted]:bg-blue-500/10 data-[highlighted]:text-blue-600 hover:bg-blue-500/10 focus:bg-blue-500/10 focus:text-blue-600 hover:text-blue-600 transition-all text-xs font-bold text-gray-700 dark:text-gray-300 group cursor-pointer mb-1 outline-none">
+                  <IconFileTypePdf className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform" />
+                  PDF Document
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('EXCEL')} className="gap-3 p-3 rounded-xl cursor-pointer font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800">
-                  Export as Excel
+                <DropdownMenuItem onClick={() => onExport('EXCEL')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl data-[highlighted]:bg-blue-500/10 data-[highlighted]:text-blue-600 hover:bg-blue-500/10 focus:bg-blue-500/10 focus:text-blue-600 hover:text-blue-600 transition-all text-xs font-bold text-gray-700 dark:text-gray-300 group cursor-pointer mb-1 outline-none">
+                  <IconTable className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
+                  Excel
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('PDF')} className="gap-3 p-3 rounded-xl cursor-pointer font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800">
-                  Export as PDF
+                <DropdownMenuItem onClick={() => onExport('CSV')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl data-[highlighted]:bg-blue-500/10 data-[highlighted]:text-blue-600 hover:bg-blue-500/10 focus:bg-blue-500/10 focus:text-blue-600 hover:text-blue-600 transition-all text-xs font-bold text-gray-700 dark:text-gray-300 group cursor-pointer outline-none">
+                  <IconFileTypeCsv className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform" />
+                  CSV Data
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -139,7 +152,7 @@ export function AdminTransactionHeader({
           <div className="flex items-center gap-2 lg:ml-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-blue-500 transition-all shadow-sm">
+                <button className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-blue-500 transition-all shadow-sm h-12">
                   <IconFilter size={14} className="text-blue-500" />
                   <span>
                     {sortBy === 'newest' ? 'Newest First' : 
@@ -149,19 +162,30 @@ export function AdminTransactionHeader({
                   <IconChevronDown size={14} className="opacity-50" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 p-2 rounded-2xl shadow-2xl">
-                <DropdownMenuItem onClick={() => setSortBy('newest')} className="cursor-pointer rounded-xl text-xs font-bold px-3 py-2.5">
-                  Newest First
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy('oldest')} className="cursor-pointer rounded-xl text-xs font-bold px-3 py-2.5">
-                  Oldest First
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy('amount_high')} className="cursor-pointer rounded-xl text-xs font-bold px-3 py-2.5">
-                  Highest Amount
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy('amount_low')} className="cursor-pointer rounded-xl text-xs font-bold px-3 py-2.5">
-                  Lowest Amount
-                </DropdownMenuItem>
+              <DropdownMenuContent align="end" className="w-52 p-2 rounded-2xl shadow-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+                {[
+                  { value: 'newest', label: 'Newest First' },
+                  { value: 'oldest', label: 'Oldest First' },
+                  { value: 'amount_high', label: 'Highest Amount' },
+                  { value: 'amount_low', label: 'Lowest Amount' },
+                ].map((option) => {
+                  const isSelected = sortBy === option.value;
+                  return (
+                    <DropdownMenuItem
+                      key={option.value}
+                      onClick={() => setSortBy(option.value)}
+                      className={cn(
+                        'cursor-pointer flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all outline-none mb-1',
+                        isSelected
+                          ? 'bg-blue-600 text-white data-[highlighted]:bg-blue-600 data-[highlighted]:text-white focus:bg-blue-600 focus:text-white hover:bg-blue-600 hover:text-white shadow-md shadow-blue-500/20'
+                          : 'text-gray-600 dark:text-gray-300 data-[highlighted]:bg-blue-500/10 data-[highlighted]:text-blue-600 focus:bg-blue-500/10 focus:text-blue-600 hover:bg-blue-500/10 hover:text-blue-600'
+                      )}
+                    >
+                      <span>{option.label}</span>
+                      {isSelected && <Check size={14} className="text-white shrink-0 ml-2" />}
+                    </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

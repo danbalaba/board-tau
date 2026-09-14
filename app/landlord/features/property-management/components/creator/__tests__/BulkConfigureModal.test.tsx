@@ -28,6 +28,10 @@ jest.mock('react-select', () => ({ options, onChange }: any) => (
   </select>
 ));
 
+jest.mock('@/services/taxonomy', () => ({
+  getActiveAttributes: jest.fn().mockResolvedValue([]),
+}));
+
 jest.mock('@/components/common/ResponsiveToast', () => ({
   useResponsiveToast: () => ({
     error: jest.fn(),
@@ -44,11 +48,11 @@ describe('BulkConfigureModal', () => {
         commonBathroomCount={2}
       />
     );
-    expect(screen.getByText('Group Setup Wizard')).toBeInTheDocument();
-    expect(screen.getByText(/Apply settings to all 5 units/)).toBeInTheDocument();
+    expect(screen.getByText('Bulk Unit Configuration')).toBeInTheDocument();
+    expect(screen.getByText(/Apply consistent settings to all 5 units/)).toBeInTheDocument();
   });
 
-  it('validates empty submission', async () => {
+  it('validates empty submission on next step click', async () => {
     const onApply = jest.fn();
     render(
       <BulkConfigureModal
@@ -59,18 +63,15 @@ describe('BulkConfigureModal', () => {
       />
     );
     
-    // Simulate scrollIntoView
-    Element.prototype.scrollIntoView = jest.fn();
-    
-    fireEvent.click(screen.getByText(/Apply to all 5 units/));
+    fireEvent.click(screen.getByText('Next Step'));
     
     await waitFor(() => {
-      expect(screen.getByText('Room type is required')).toBeInTheDocument();
+      expect(screen.getByText('Please select a unit layout / category')).toBeInTheDocument();
       expect(onApply).not.toHaveBeenCalled();
     });
   });
 
-  it('can fill form and apply', async () => {
+  it('can complete wizard steps and apply', async () => {
     const onApply = jest.fn();
     render(
       <BulkConfigureModal
@@ -81,7 +82,7 @@ describe('BulkConfigureModal', () => {
       />
     );
     
-    // Select room type
+    // Step 1: Select room type
     const selects = screen.getAllByTestId('react-select');
     fireEvent.change(selects[0], { target: { value: 'SOLO' } }); // Room Type
     
@@ -90,20 +91,41 @@ describe('BulkConfigureModal', () => {
     fireEvent.change(inputs[0], { target: { value: '5000' } }); // Price
     fireEvent.change(inputs[1], { target: { value: '1000' } }); // Reservation Fee
     fireEvent.change(inputs[2], { target: { value: '20' } }); // Size
-    
-    // Bed type
-    fireEvent.change(selects[1], { target: { value: 'SINGLE' } }); // Bed Type
-    
-    // Bed Count
-    fireEvent.change(inputs[3], { target: { value: '1' } }); // Bed Count
-    
-    // Bathroom Arrangement
-    fireEvent.click(screen.getByText('Own Private CR'));
-    
-    fireEvent.click(screen.getByText(/Apply to all 5 units/));
-    
+
+    // Next -> Step 2
+    fireEvent.click(screen.getByText('Next Step'));
+
+    // Step 2: Bedding
     await waitFor(() => {
-      expect(onApply).toHaveBeenCalled();
+      expect(screen.getByText(/Configure bedding details/i)).toBeInTheDocument();
     });
+    const step2Inputs = screen.getAllByRole('spinbutton');
+    fireEvent.change(step2Inputs[0], { target: { value: '1' } }); // Bed Count
+
+    // Next -> Step 3
+    fireEvent.click(screen.getByText('Next Step'));
+
+    // Step 3: Bathroom
+    await waitFor(() => {
+      expect(screen.getByText(/Own Private Bathroom/i)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText('Own Private Bathroom'));
+
+    // Next -> Step 4
+    fireEvent.click(screen.getByText('Next Step'));
+
+    // Next -> Step 5
+    await waitFor(() => {
+      expect(screen.getByText('Next Step')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText('Next Step'));
+
+    // Step 5: Apply
+    await waitFor(() => {
+      expect(screen.getByText('Apply to All 5 Units')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText('Apply to All 5 Units'));
+
+    expect(onApply).toHaveBeenCalled();
   });
 });

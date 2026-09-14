@@ -11,13 +11,14 @@ jest.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
-jest.mock('lucide-react', () => ({
-  Upload: () => <div />,
-  Image: () => <div />,
-  X: () => <div />,
-  Eye: () => <div />,
-  AlertCircle: () => <div />,
-}));
+jest.mock('lucide-react', () => {
+  return new Proxy({}, {
+    get: function(target, prop) {
+      if (prop === '__esModule') return true;
+      return () => <div data-testid={`icon-${String(prop)}`} />;
+    }
+  });
+});
 
 jest.mock('@/components/common/MediaPreviewOverlay', () => () => <div data-testid="media-preview" />);
 jest.mock('@/components/common/SafeImage', () => ({ src }: any) => <img src={src} data-testid="safe-image" />);
@@ -59,15 +60,15 @@ describe('PropertyImagesStep', () => {
   it('renders property categories', () => {
     render(<Wrapper />);
     expect(screen.getByText('Core Property Photos')).toBeInTheDocument();
-    expect(screen.getByText('Bedroom')).toBeInTheDocument();
+    expect(screen.getByText('Exterior')).toBeInTheDocument();
     expect(screen.getByText('Kitchen')).toBeInTheDocument();
     expect(screen.getByText('Bathroom')).toBeInTheDocument();
   });
 
   it('renders room gallery sections', () => {
     render(<Wrapper />);
-    expect(screen.getByText('Room-by-Room Photos')).toBeInTheDocument();
-    expect(screen.getByText('Room 1 Gallery')).toBeInTheDocument();
+    expect(screen.getByText(/Room & Unit Galleries/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Room 1|Unit 1/i).length).toBeGreaterThan(0);
   });
 
   it('can trigger file upload click on property', () => {

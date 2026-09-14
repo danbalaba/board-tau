@@ -13,6 +13,7 @@ jest.mock('@/components/listings/ListingCard', () => {
 describe('ListingRecommendations', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    sessionStorage.clear();
     global.fetch = jest.fn();
   });
 

@@ -127,17 +127,17 @@ export async function PATCH(
 
     // Replace amenities if provided
     if (Array.isArray(body.amenities)) {
-      await db.roomAmenity.deleteMany({ where: { roomId } });
+      await db.roomAttributeLink.deleteMany({ where: { roomId } });
       if (body.amenities.length > 0) {
         const newAmenitiesData = await Promise.all(body.amenities.map(async (a: string) => {
-          const rec = await db.roomAmenityType.upsert({
+          const rec = await db.dynamicAttribute.upsert({
             where: { name: String(a) },
             update: {},
-            create: { name: String(a), icon: "default-icon" }
+            create: { name: String(a), icon: "HelpCircle", type: "ROOM_AMENITY", isActive: true, description: "" }
           });
-          return { roomId, amenityTypeId: rec.id };
+          return { roomId, attributeId: rec.id };
         }));
-        await db.roomAmenity.createMany({ data: newAmenitiesData });
+        await db.roomAttributeLink.createMany({ data: newAmenitiesData });
       }
     }
 

@@ -17,7 +17,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   icon?: any;
   register?: UseFormRegister<any>;
-  errors?: FieldErrors;
+  errors?: FieldErrors | Record<string, any>;
   watch?: UseFormWatch<any>;
   autoFocus?: boolean;
   required?: boolean;
@@ -59,11 +59,34 @@ const Input: React.FC<InputProps> = ({
   const getError = (path: string) => {
     if (!errors) return undefined;
     const normalizedPath = path.replace(/\[(\d+)\]/g, '.$1');
-    return normalizedPath.split('.').reduce((obj: any, key: string) => obj && obj[key], errors);
+    const raw = normalizedPath.split('.').reduce((obj: any, key: string) => obj && obj[key], errors);
+    if (!raw) return undefined;
+    if (typeof raw === "string") return raw;
+    return raw.message || raw;
   };
 
   const error = getError(id);
   const isSmall = inputSize === "small";
+
+  const regProps = register
+    ? register(id, {
+        required: required ? "This field is required" : false,
+        ...validationRules,
+      })
+    : null;
+
+  const inputBindingProps = regProps
+    ? {
+        ...regProps,
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+          regProps.onChange(e);
+          if (externalOnChange) externalOnChange(e);
+        },
+      }
+    : {
+        ...(value !== undefined ? { value } : {}),
+        onChange: externalOnChange,
+      };
 
   // Floating Label Design
   if (!useStaticLabel) {
@@ -90,24 +113,15 @@ const Input: React.FC<InputProps> = ({
             type={isPasswordInput ? (showPassword ? "text" : "password") : type}
             disabled={disabled}
             placeholder=" "
-            {...(register 
-              ? register(id, {
-                  required: required ? "This field is required" : false,
-                  ...validationRules
-                })
-              : {
-                  ...(value !== undefined ? { value } : {}),
-                  onChange: externalOnChange
-                }
-            )}
+            {...inputBindingProps}
             onWheel={(e) => (e.target as HTMLElement).blur()}
             {...props}
             className={cn(
               "peer w-full text-sm font-medium bg-white dark:bg-gray-800 border-2 rounded-2xl outline-none transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed",
               isSmall ? "px-3 py-2.5 rounded-xl" : "px-4 py-4",
               error
-                ? "border-red-500/50 focus:border-red-500 ring-red-500/10"
-                : "border-gray-100 dark:border-gray-700/50 focus:border-primary dark:focus:border-primary/60 shadow-sm hover:border-gray-200 dark:hover:border-gray-600",
+              ? "border-red-500 focus:border-red-500 ring-4 ring-red-500/20 bg-red-50/30 dark:bg-red-950/30"
+              : "border-gray-200 dark:border-gray-700/50 focus:border-primary dark:focus:border-primary/60 shadow-sm hover:border-gray-200 dark:hover:border-gray-600",
               Icon ? (isSmall ? "pl-9" : "pl-11") : "pl-4",
               isPasswordInput ? "pr-11" : "pr-4",
               "focus:ring-4 focus:ring-primary/5 group-focus-within:shadow-xl group-focus-within:shadow-primary/5"
@@ -204,23 +218,14 @@ const Input: React.FC<InputProps> = ({
           id={id}
           type={isPasswordInput ? (showPassword ? "text" : "password") : type}
           disabled={disabled}
-          {...(register 
-            ? register(id, {
-                required: required ? "This field is required" : false,
-                ...validationRules
-              })
-            : {
-                ...(value !== undefined ? { value } : {}),
-                onChange: externalOnChange
-              }
-          )}
+          {...inputBindingProps}
           onWheel={(e) => (e.target as HTMLElement).blur()}
           {...props}
           className={cn(
             "peer w-full text-sm font-medium bg-white dark:bg-gray-800 border-2 rounded-2xl outline-none transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed",
             isSmall ? "px-3 py-2.5 rounded-xl" : "px-4 py-3.5",
             error
-              ? "border-red-500/50 focus:border-red-500 ring-red-500/10"
+              ? "border-red-500 focus:border-red-500 ring-4 ring-red-500/20 bg-red-50/30 dark:bg-red-950/30"
               : "border-gray-100 dark:border-gray-700/50 focus:border-primary dark:focus:border-primary/60 shadow-sm hover:border-gray-200 dark:hover:border-gray-600",
             Icon ? (isSmall ? "pl-9" : "pl-11") : "pl-4",
             isPasswordInput ? "pr-11" : "pr-4",

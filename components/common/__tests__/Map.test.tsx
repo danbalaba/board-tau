@@ -1,3 +1,6 @@
+jest.unmock('../Map');
+jest.unmock('@/components/common/Map');
+
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import Map from '../Map';
@@ -16,11 +19,15 @@ const mockMapInstance = {
   off: jest.fn().mockReturnThis(),
   remove: mockRemove,
   getContainer: mockGetContainer,
+  hasLayer: jest.fn().mockReturnValue(true),
+  getZoom: jest.fn().mockReturnValue(16),
+  invalidateSize: jest.fn(),
 };
 
 const mockMarkerInstance = {
   addTo: mockAddTo,
   setLatLng: mockSetLatLng,
+  setIcon: jest.fn(),
 };
 
 jest.mock('leaflet', () => ({
@@ -70,7 +77,7 @@ describe('Map', () => {
     // Change center prop
     rerender(<Map center={[16.0, 121.0]} />);
     
-    expect(mockSetView).toHaveBeenCalledWith([16.0, 121.0], 14);
+    expect(mockSetView).toHaveBeenCalledWith([16.0, 121.0], 16, { animate: true });
     expect(mockSetLatLng).toHaveBeenCalledWith([16.0, 121.0]);
   });
 
@@ -107,7 +114,7 @@ describe('Map', () => {
     fireEvent.click(recenterBtn);
     
     // The second time setView is called is when the button is clicked
-    expect(mockSetView).toHaveBeenCalledWith([15.0, 120.0], 14, { animate: true });
+    expect(mockSetView).toHaveBeenCalledWith([15.0, 120.0], 15, { animate: true });
   });
 
   it('cleans up map on unmount', () => {

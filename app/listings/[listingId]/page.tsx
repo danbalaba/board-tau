@@ -9,7 +9,7 @@ import ListingReviews from "@/components/listings/detail/ListingReviews";
 import { getCurrentUser } from "@/services/user";
 import { getListingById } from "@/services/user/listings";
 import { getFavorites } from "@/services/user/favorites/favorite";
-import { categories } from "@/utils/constants";
+
 import { db } from "@/lib/db";
 import { calculateAverageRating } from "@/utils/helper";
 
@@ -84,23 +84,36 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
     features,
   } = listing;
 
-  // Convert new amenities object to string array for backward compatibility
-  const amenities = [...(listing.amenities_list || [])];
-  if (listingAmenities?.wifi) if (!amenities.includes("WiFi")) amenities.push("WiFi");
-  if (listingAmenities?.parking) if (!amenities.includes("Parking")) amenities.push("Parking");
-  if (listingAmenities?.pool) if (!amenities.includes("Pool")) amenities.push("Pool");
-  if (listingAmenities?.gym) if (!amenities.includes("Gym")) amenities.push("Gym");
-  if (listingAmenities?.airConditioning) if (!amenities.includes("Air conditioning")) amenities.push("Air conditioning");
-  if (listingAmenities?.laundry) if (!amenities.includes("Laundry area")) amenities.push("Laundry area");
+  const amenities: string[] = [
+    ...(Array.isArray(listingAmenities) ? listingAmenities : []),
+    ...(Array.isArray((listing as any).amenities_list) ? (listing as any).amenities_list : []),
+    ...(Array.isArray((listing as any).amenities) ? (listing as any).amenities : []),
+  ];
 
-  // Add features to amenities array for display
-  if (features?.cctv) if (!amenities.includes("CCTV")) amenities.push("CCTV");
-  if (features?.security24h) if (!amenities.includes("Security guard")) amenities.push("Security guard");
-  if (features?.nearTransport) if (!amenities.includes("Near transport")) amenities.push("Near transport");
-  if (features?.studyFriendly) if (!amenities.includes("Study friendly")) amenities.push("Study friendly");
-  if (features?.fireSafety) if (!amenities.includes("Fire safety")) amenities.push("Fire safety");
-  if (features?.quietEnvironment) if (!amenities.includes("Quiet environment")) amenities.push("Quiet environment");
-  if (features?.flexibleLease) if (!amenities.includes("Flexible lease")) amenities.push("Flexible lease");
+  // Extract dynamic attributes from listingLinks
+  const dynamicAmenities = listing.listingLinks
+    ?.map((link: any) => link.attribute?.id || link.attributeId || `${link.attribute?.label || link.attribute?.name}${link.attribute?.icon ? `|${link.attribute?.icon}` : ''}`)
+    .filter(Boolean) || [];
+  
+  amenities.push(...dynamicAmenities);
+
+  const dynamicFeatures = listing.listingLinks
+    ?.filter((link: any) => link.attribute.category === 'FEATURE' || link.attribute.type === 'FEATURE')
+    .map((link: any) => `${link.attribute.label || link.attribute.name}${link.attribute.icon ? `|${link.attribute.icon}` : ''}`) || [];
+
+  const featuresObj = {
+    ...features,
+    customFeatures: [...(features?.customFeatures || []), ...dynamicFeatures]
+  };
+
+  const dynamicRules = listing.listingLinks
+    ?.filter((link: any) => link.attribute.category === 'RULE' || link.attribute.type === 'RULE')
+    .map((link: any) => `${link.attribute.label || link.attribute.name}${link.attribute.icon ? `|${link.attribute.icon}` : ''}`) || [];
+
+  const rulesObj = {
+    ...(listing.rules || {}),
+    customRules: [...((listing.rules as any)?.customRules || []), ...dynamicRules]
+  };
 
   const normalizedImages = (images && images.length > 0)
     ? images.map((img: any) => ({ 
@@ -111,20 +124,15 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
       }))
     : [{ url: imageSrc, caption: title, order: 0 }];
 
-  const activeCategories = categories.filter((cate) =>
-    listing.categories?.some((lc: any) => lc.category?.name === cate.value)
-  );
-
-  const categoriesData = activeCategories.length > 0
-    ? activeCategories.map((category) => ({
-        label: category.label,
-        description: category.description,
-        value: category.value,
-      }))
-    : [];
+  const categoriesData = listing.propertyType ? [{
+    label: listing.propertyType.name,
+    description: listing.propertyType.description || "",
+    value: listing.propertyType.name,
+    icon: listing.propertyType.icon,
+  }] : [];
 
   // Guaranteed true average based on fetched reviews
-  const actualRating = calculateAverageRating(listing.reviews || [], listing.rating);
+  const actualRating = calculateAverageRating(listing.reviews || [], (listing.reviews?.length || 0) > 0 ? listing.rating : null);
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://board-tau-rho.vercel.app";
 
@@ -151,10 +159,10 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
         "longitude": longitude
       }
     } : {}),
-    ...(reviewCount > 0 ? {
+    ...(reviewCount > 0 && actualRating ? {
       "aggregateRating": {
         "@type": "AggregateRating",
-        "ratingValue": actualRating > 0 ? actualRating.toFixed(1) : "4.8",
+        "ratingValue": actualRating.toFixed(1),
         "reviewCount": reviewCount,
         "bestRating": "5",
         "worstRating": "1"
@@ -181,10 +189,12 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
     })),
     "numberOfRooms": roomCount,
     "numberOfBathroomsTotal": bathroomCount,
-    "starRating": {
-      "@type": "Rating",
-      "ratingValue": actualRating > 0 ? actualRating.toFixed(1) : "4.8"
-    }
+    ...(actualRating ? {
+      "starRating": {
+        "@type": "Rating",
+        "ratingValue": actualRating.toFixed(1)
+      }
+    } : {})
   };
 
   return (
@@ -205,7 +215,7 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
           title={title}
           region={region}
           country={country}
-          rating={actualRating > 0 ? actualRating : 4.8}
+          rating={actualRating || 0}
           reviewCount={listing.reviews?.length || 0}
           listingId={id}
           hasFavorited={favoriteIds.includes(id)}
@@ -226,15 +236,23 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
             bathroomCount={bathroomCount}
             latlng={[listing.latitude || 0, listing.longitude || 0]}
             amenities={amenities}
-            rules={listing.rules}
-            features={listing.features}
-            rating={actualRating > 0 ? actualRating : undefined}
+            rules={rulesObj}
+            features={featuresObj}
+            rating={actualRating || undefined}
             reviewCount={listing.reviews?.length || 0}
             images={normalizedImages}
             reviews={listing.reviews}
-            rooms={rooms}
+            rooms={rooms.map((r: any) => {
+              const roomAmenities = r.roomLinks?.map((link: any) => `${link.attribute.label}${link.attribute.icon ? `|${link.attribute.icon}` : ''}`) || [];
+              return {
+                ...r,
+                roomType: r.roomTypeDefinition ? (r.roomTypeDefinition.isFlatRate ? 'SOLO' : 'BEDSPACE') : (r.capacity === 1 ? 'SOLO' : 'BEDSPACE'),
+                amenities: [...(r.amenityNames || []), ...roomAmenities]
+              };
+            })}
             region={region}
             country={country}
+            leaseContract={listing.leaseContracts?.[0] || null}
           />
       </div>
     </div>

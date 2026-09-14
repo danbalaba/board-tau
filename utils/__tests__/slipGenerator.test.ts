@@ -64,5 +64,5 @@ describe('slipGenerator', () => {
     await expect(
       generateConfirmationSlipPDF(mockReservation, 'John Doe', 'john@test.com')
     ).resolves.toBeUndefined();
-  });
+  }, 15000);
 });

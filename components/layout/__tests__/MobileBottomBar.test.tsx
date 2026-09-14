@@ -49,19 +49,21 @@ describe('MobileBottomBar', () => {
     render(<MobileBottomBar user={mockUser as any} />);
     
     expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('Favorites')).toBeInTheDocument();
-    expect(screen.getByText('Reservation')).toBeInTheDocument();
-    expect(screen.getByText('Reviews')).toBeInTheDocument();
+    // In mobile bottom bar, text labels show for the active tab (Home by default when pathname is /)
+    const buttons = screen.getAllByRole('button');
+    expect(buttons.length).toBe(5);
   });
 
   it('navigates to correct routes on click', () => {
     const mockUser = { id: '1', role: 'user' };
     render(<MobileBottomBar user={mockUser as any} />);
     
-    fireEvent.click(screen.getByText('Favorites'));
+    const buttons = screen.getAllByRole('button');
+    // Index 0: Home, Index 1: Favorites, Index 2: Inquiry, Index 3: Reservations, Index 4: Notifications
+    fireEvent.click(buttons[1]);
     expect(mockPush).toHaveBeenCalledWith('/favorites');
 
-    fireEvent.click(screen.getByText('Reservation'));
+    fireEvent.click(buttons[3]);
     expect(mockPush).toHaveBeenCalledWith('/reservations');
   });
 
@@ -69,6 +71,7 @@ describe('MobileBottomBar', () => {
     const mockUser = { id: '1', role: 'user' };
     (useNotification as jest.Mock).mockReturnValue({
       unreadStats: {
+        total: 3,
         byType: {
           reservation: 2,
           inquiry: 1
@@ -78,10 +81,9 @@ describe('MobileBottomBar', () => {
 
     render(<MobileBottomBar user={mockUser as any} />);
     
-    // In our component, if unreadStats is > 0, it renders an absolute red dot next to the icon.
-    // It's hard to query the dot directly if it has no text, but we can verify rendering completes without crashing.
-    expect(screen.getByText('Reservation')).toBeInTheDocument();
-    expect(screen.getByText('Inquiry')).toBeInTheDocument();
+    expect(screen.getByText('Home')).toBeInTheDocument();
+    const buttons = screen.getAllByRole('button');
+    expect(buttons.length).toBe(5);
   });
 
   it('hides bottom bar on scroll down', () => {

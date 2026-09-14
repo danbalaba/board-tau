@@ -47,8 +47,8 @@ export async function getLandlordRooms(args?: {
           }
         },
         images: true,
-        amenities: {
-          include: { amenityType: true }
+        roomLinks: {
+          include: { attribute: true }
         }
       },
       orderBy
@@ -103,14 +103,9 @@ export async function createLandlordRoom(data: any) {
       size: Number(data.size) || 0,
       status: Number(data.availableSlots) === 0 ? 'FULL' : 'AVAILABLE',
       amenityNames: data.amenities || [],
-      amenities: {
-        create: await Promise.all((data.amenities || []).map(async (a: string) => {
-          const rec = await db.roomAmenityType.upsert({
-            where: { name: String(a) },
-            update: {},
-            create: { name: String(a), icon: "default-icon" }
-          });
-          return { amenityTypeId: rec.id };
+      roomLinks: {
+        create: (data.amenities || []).map((id: string) => ({
+          attributeId: id
         }))
       }
     }

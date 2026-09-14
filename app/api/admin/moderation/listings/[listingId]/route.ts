@@ -29,44 +29,61 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ li
 
     const { action, reason } = await req.json();
 
-    if (!['approve', 'reject', 'archive'].includes(action)) {
+    if (!['approve', 'reject', 'archive', 'unarchive'].includes(action)) {
       return NextResponse.json(
-        ApiResponseFormatter.error('Invalid action', 'Action must be "approve", "reject", or "archive"'),
+        ApiResponseFormatter.error('Invalid action', 'Action must be "approve", "reject", "archive", or "unarchive"'),
         { status: 400 }
       );
     }
 
-    if (action === 'archive') {
+    if (action === 'archive' || action === 'unarchive') {
+      const isArchiving = action === 'archive';
       const updatedListing = await db.listing.update({
         where: { id },
-        data: { isArchived: true },
+        data: { 
+          isAdminArchived: isArchiving,
+          adminArchivedAt: isArchiving ? new Date() : null,
+        } as any,
       });
       
       await logAdminAction({
         adminId: session.user.id,
-        action: 'Archive Listing',
+        action: isArchiving ? 'Archive Listing' : 'Unarchive Listing',
         entityType: 'Listing',
         entityId: id,
-        details: `Archived listing. Reason: ${reason || 'No reason provided'}`,
+        details: `${isArchiving ? 'Archived' : 'Unarchived'} listing by Admin. Reason: ${reason || 'No reason provided'}`,
         ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
         userAgent: req.headers.get('user-agent')
       });
+
+      // Add to Moderation Activity Feed
+      await db.moderationLog.create({
+        data: {
+          adminId: session.user.id,
+          action: isArchiving ? 'archived' : 'unarchived',
+          entityType: 'listing',
+          entityId: id,
+          entityTitle: updatedListing.title,
+          notes: reason || (isArchiving ? 'Archived by admin' : 'Restored by admin'),
+        }
+      });
       
       return NextResponse.json(
-        ApiResponseFormatter.success(updatedListing, `Listing archived successfully`)
+        ApiResponseFormatter.success(updatedListing, `Listing ${isArchiving ? 'archived' : 'restored'} successfully`)
       );
     }
 
     // Process the decision
-    const status = action === 'approve' ? 'active' : 'rejected';
+    const status = action === 'approve' ? 'ACTIVE' : 'REJECTED';
 
     const updatedListing = await db.listing.update({
       where: { id },
       data: {
-        status,
+        status: action === 'approve' ? 'ACTIVE' : 'REJECTED',
         updatedAt: new Date(),
         approvedAt: action === 'approve' ? new Date() : null,
         approvedBy: action === 'approve' ? session.user.id : null,
+        rejectionReason: action === 'reject' ? (reason || 'Listing does not meet platform verification standards') : null,
       },
     });
 
@@ -85,13 +102,44 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ li
     await db.moderationLog.create({
       data: {
         adminId: session.user.id,
-        action: status === 'active' ? 'approved' : 'rejected',
+        action: status === 'ACTIVE' ? 'approved' : 'rejected',
         entityType: 'listing',
         entityId: id,
         entityTitle: updatedListing.title,
         notes: reason || null,
       }
     });
+
+    // 📩 Dispatch In-App & Email Notifications to Landlord Host
+    try {
+      const landlordUser = await db.user.findUnique({ where: { id: updatedListing.userId } });
+      if (landlordUser) {
+        const { createNotification } = await import('@/services/notification');
+        const { sendListingApprovalEmail, sendListingRejectionEmail } = await import('@/services/email/notifications');
+
+        if (action === 'approve') {
+          await createNotification({
+            userId: landlordUser.id,
+            type: 'reservation',
+            title: 'Property Listing Released & Verified! 🚀',
+            description: `Great news! Your property listing "${updatedListing.title}" has passed administrative verification and is now live for students on BoardTAU.`,
+            link: '/landlord/properties'
+          });
+          await sendListingApprovalEmail(landlordUser, updatedListing);
+        } else if (action === 'reject') {
+          await createNotification({
+            userId: landlordUser.id,
+            type: 'reservation',
+            title: 'Action Required: Property Listing Feedback',
+            description: `Your property listing "${updatedListing.title}" requires updates. ${reason ? `Admin Notes: "${reason}"` : ''}`,
+            link: '/landlord/properties'
+          });
+          await sendListingRejectionEmail(landlordUser, updatedListing, reason);
+        }
+      }
+    } catch (notifErr) {
+      console.error('Failed to dispatch landlord decision notification:', notifErr);
+    }
 
     // ⚡ INVALIDATION: Clear all search and listings caches to show the new active property immediately
     const { cache } = await import('@/lib/redis');
@@ -151,6 +199,18 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ l
       details: 'Super Admin soft-deleted listing',
       ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
       userAgent: req.headers.get('user-agent')
+    });
+
+    // Add to Moderation Activity Feed
+    await db.moderationLog.create({
+      data: {
+        adminId: session.user.id,
+        action: 'deleted',
+        entityType: 'listing',
+        entityId: id,
+        entityTitle: deletedListing.title,
+        notes: 'Soft deleted by Super Admin',
+      }
     });
 
     return NextResponse.json(

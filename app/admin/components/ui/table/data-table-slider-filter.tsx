@@ -128,6 +128,14 @@ export function DataTableSliderFilter<TData>({
     [column]
   );
 
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
     <Popover>
       <PopoverTrigger asChild>

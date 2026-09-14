@@ -40,9 +40,11 @@ export function AdminReviewCard({
   isSuperAdmin,
   isDeleting
 }: AdminReviewCardProps) {
-  const actualStatus = isArchived ? 'archived' : review.status;
-  const config = statusConfig[actualStatus] || statusConfig.pending;
-  const StatusIcon = config.icon;
+  const isItemArchived = Boolean(isArchived || review.isAdminArchived);
+  const rawStatus = String(review.status || 'pending').toLowerCase();
+  const rawConfig = statusConfig[rawStatus] || statusConfig.pending;
+  const RawStatusIcon = rawConfig.icon;
+  const archiveConfig = statusConfig.archived;
 
   if (viewMode === 'list') {
     return (
@@ -65,10 +67,15 @@ export function AdminReviewCard({
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h3 className="text-base font-black text-gray-900 dark:text-white truncate">{review.user?.name || 'Anonymous User'}</h3>
-            <span className={cn("px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1", config.bg, config.color)}>
-              <StatusIcon size={10} /> {actualStatus}
+            {isItemArchived && (
+              <span className={cn("px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1", archiveConfig.bg, archiveConfig.color)}>
+                <ArchiveRestore size={10} /> archived
+              </span>
+            )}
+            <span className={cn("px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1", rawConfig.bg, rawConfig.color)}>
+              <RawStatusIcon size={10} /> {rawStatus}
             </span>
           </div>
           <p className="text-xs font-bold text-gray-400 truncate flex items-center gap-1">
@@ -144,9 +151,16 @@ export function AdminReviewCard({
       <div className="h-24 bg-gray-50 dark:bg-gray-800 relative flex justify-between items-start p-4">
         <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#374151_1px,transparent_1px)] [background-size:16px_16px] opacity-30" />
         
-        <span className={cn("relative z-10 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm backdrop-blur-md", config.bg, config.color)}>
-          <StatusIcon size={12} /> {actualStatus}
-        </span>
+        <div className="relative z-10 flex items-center gap-1.5 flex-wrap max-w-[calc(100%-4rem)]">
+          {isItemArchived && (
+            <span className={cn("px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm backdrop-blur-md", archiveConfig.bg, archiveConfig.color)}>
+              <ArchiveRestore size={12} /> archived
+            </span>
+          )}
+          <span className={cn("px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm backdrop-blur-md", rawConfig.bg, rawConfig.color)}>
+            <RawStatusIcon size={12} /> {rawStatus}
+          </span>
+        </div>
 
         <button
           onClick={(e) => { e.stopPropagation(); onArchive?.(review); }}

@@ -5,8 +5,21 @@ import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { pusherClient } from '@/lib/pusher-client';
 
-// Mock dependencies
-jest.mock('axios');
+jest.mock('axios', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    patch: jest.fn(),
+    delete: jest.fn(),
+  },
+  get: jest.fn(),
+  post: jest.fn(),
+  put: jest.fn(),
+  patch: jest.fn(),
+  delete: jest.fn(),
+}));
 jest.mock('react-hot-toast', () => ({
   toast: {
     success: jest.fn(),

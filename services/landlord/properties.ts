@@ -6,6 +6,7 @@ import { LISTINGS_BATCH } from "@/utils/constants";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { autoCategorizeListing } from "@/utils/categorizer";
+import { clearLandlordCache } from "@/services/landlord/analytics";
 
 export type LandlordPropertyResult = {
   id: string;
@@ -20,36 +21,18 @@ export type LandlordPropertyResult = {
   isArchived: boolean;
   region?: string;
   country?: string;
-  amenities?: {
-    wifi: boolean;
-    parking: boolean;
-    pool: boolean;
-    gym: boolean;
-    airConditioning: boolean;
-    laundry: boolean;
-  } | null;
-  rules?: {
-    femaleOnly: boolean;
-    maleOnly: boolean;
-    visitorsAllowed: boolean;
-    petsAllowed: boolean;
-    smokingAllowed: boolean;
-  } | null;
-  features?: {
-    security24h: boolean;
-    cctv: boolean;
-    fireSafety: boolean;
-    nearTransport: boolean;
-    studyFriendly: boolean;
-    quietEnvironment: boolean;
-    flexibleLease: boolean;
-  } | null;
-  categories?: {
-    category: {
+  listingLinks?: {
+    attribute: {
+      id: string;
       name: string;
-      label: string;
+      icon: string | null;
     };
   }[];
+  propertyType?: {
+    id?: string;
+    name: string;
+    icon: string | null;
+  } | null;
   rooms?: {
     id: string;
     name: string;
@@ -105,11 +88,10 @@ export const getLandlordProperties = async (args?: { cursor?: string }): Promise
       imageSrc: true,
       createdAt: true,
       isArchived: true,
+      rejectionReason: true,
       region: true,
       country: true,
-      amenities: true,
-      rules: true,
-      features: true,
+      location: true,
       amenities_list: true,
       rooms: {
         select: {
@@ -118,9 +100,18 @@ export const getLandlordProperties = async (args?: { cursor?: string }): Promise
           price: true,
           capacity: true,
           availableSlots: true,
-          roomType: true,
+          bathroomArrangement: true,
           bedType: true,
+          bedCount: true,
           size: true,
+          amenityNames: true,
+          reservationFee: true,
+          roomTypeDefinitionId: true,
+          roomLinks: {
+            include: {
+              attribute: true,
+            },
+          },
           images: {
             select: {
               url: true,
@@ -128,11 +119,12 @@ export const getLandlordProperties = async (args?: { cursor?: string }): Promise
           }
         }
       },
-      categories: {
+      listingLinks: {
         include: {
-          category: true,
+          attribute: true,
         },
       },
+      propertyType: true,
       images: {
         select: {
           url: true,
@@ -205,11 +197,10 @@ export const getAllLandlordProperties = async (): Promise<LandlordPropertyResult
       isArchived: true,
       region: true,
       country: true,
-      categories: {
+      propertyType: {
         select: {
-          category: {
-            select: { name: true, label: true }
-          }
+          name: true,
+          icon: true
         }
       },
       // Only fetch room count/summary — not full room + amenity + image trees
@@ -220,7 +211,6 @@ export const getAllLandlordProperties = async (): Promise<LandlordPropertyResult
           price: true,
           capacity: true,
           availableSlots: true,
-          roomType: true,
         }
       },
     },
@@ -238,20 +228,33 @@ export const getLandlordPropertyById = async (id: string) => {
       userId: landlord.id,
     },
     include: {
-      amenities: true,
-      rules: true,
-      features: true,
-      categories: {
+      listingLinks: {
+        include: { attribute: true },
+      },
+      propertyType: true,
+      rooms: {
         include: {
-          category: true,
+          roomLinks: {
+            include: { attribute: true },
+          },
+          images: true,
         },
       },
-      images: true,
-      rooms: true,
+      images: {
+        orderBy: { order: "asc" }
+      },
+      leaseContracts: {
+        include: { signatures: true }
+      }
     },
   });
 
   return property;
+};
+
+const normalizePropertyTitle = (title: string): string => {
+  if (!title) return '';
+  return title.toLowerCase().replace(/[^a-z0-9]/gi, '').trim();
 };
 
 export const createProperty = async (data: any) => {
@@ -260,21 +263,47 @@ export const createProperty = async (data: any) => {
   try {
     const {
       title, description, price, roomCount, bathroomCount, country, region,
-      latlng, amenities, femaleOnly, maleOnly, visitorsAllowed, petsAllowed,
-      smokingAllowed, security24h, cctv, fireSafety, nearTransport, flexibleLease,
-      noCurfew, floodFree, backupPower, customRules, customFeatures, images,
-      rooms, category,
+      city, address, zipCode, location_address, images, features, amenities,
+      category, latitude, longitude, customTerms, femaleOnly, noCurfew,
+      visitorsAllowed, petsAllowed, security24h, cctv, fireSafety,
+      propertyTypeId, isDraft, draftStep, businessInfo, latlng, customRules,
+      customFeatures, customAmenities, rooms, depositAmount, moveOutNoticeDays,
+      customContractClauses, landlordSignatureBase64
     } = data;
 
-    const safePrice = Number(price) || 0;
+    // Check for duplicate property title under the same landlord using normalized comparison
+    const normalizedNewTitle = normalizePropertyTitle(title);
+    if (normalizedNewTitle) {
+      const landlordProperties = await db.listing.findMany({
+        where: {
+          userId: landlord.id,
+          deletedAt: null
+        },
+        select: { id: true, title: true }
+      });
+
+      const isDuplicate = landlordProperties.some(
+        (l) => normalizePropertyTitle(l.title) === normalizedNewTitle
+      );
+
+      if (isDuplicate) {
+        throw new Error('A property with a similar title already exists in your account. Please use a unique title.');
+      }
+    }
+
+    const safeRooms = Array.isArray(rooms) ? rooms : [];
+    const validRoomPrices = safeRooms
+      .map((r: any) => Number(r.price))
+      .filter((p: number) => !isNaN(p) && p > 0);
+    const lowestRoomPrice = validRoomPrices.length > 0 ? Math.min(...validRoomPrices) : 0;
+    const safePrice = lowestRoomPrice > 0 ? lowestRoomPrice : (Number(price) || 0);
+
     const safeRoomCount = Number(roomCount) || 1;
     const safeBathroomCount = Number(bathroomCount) || 0;
     const safeLat = latlng?.[1] ?? 14.5995;
     const safeLng = latlng?.[0] ?? 120.9842;
     const safeAmenities = Array.isArray(amenities) ? amenities : [];
     const safeImages = Array.isArray(images) ? images : [];
-    const safeCategory = autoCategorizeListing(data);
-    const safeRooms = Array.isArray(rooms) ? rooms : [];
 
     const listing = await db.listing.create({
       data: {
@@ -287,60 +316,51 @@ export const createProperty = async (data: any) => {
         region: region || "",
         latitude: safeLat,
         longitude: safeLng,
-        location: { type: "Point", coordinates: [safeLng, safeLat] },
+        location: {
+          type: "Point",
+          coordinates: [safeLng, safeLat],
+          address: data.address || "",
+          city: data.city || "Camiling",
+          zipCode: data.zipCode || "2306",
+        },
         userId: landlord.id,
-        status: "pending",
-        imageSrc: typeof safeImages[0] === 'object' ? (safeImages[0] as any).url : (safeImages[0] || ""),
-        category: safeCategory,
+        status: "PENDING",
+        imageSrc: (() => {
+          const exteriorPhoto = safeImages.find((img: any) => typeof img === 'object' && (img.category === 'Exterior' || img.roomType === 'Exterior'));
+          if (exteriorPhoto) return typeof exteriorPhoto === 'object' ? exteriorPhoto.url : exteriorPhoto;
+          return typeof safeImages[0] === 'object' ? (safeImages[0] as any).url : (safeImages[0] || "");
+        })(),
+        propertyTypeId: propertyTypeId,
         amenities_list: safeAmenities,
+        customClauses: customContractClauses || [],
         businessInfo: { ...data.businessInfo, documents: data.documents },
-        
-        amenities: {
+        leaseContracts: {
           create: {
-            wifi: safeAmenities.some((a: string) => String(a).toLowerCase().includes("wifi")),
-            parking: safeAmenities.some((a: string) => String(a).toLowerCase().includes("parking")),
-            pool: safeAmenities.some((a: string) => String(a).toLowerCase().includes("pool")),
-            gym: safeAmenities.some((a: string) => String(a).toLowerCase().includes("gym")),
-            airConditioning: safeAmenities.some((a: string) => String(a).toLowerCase().includes("air cond")),
-            laundry: safeAmenities.some((a: string) => String(a).toLowerCase().includes("laundry")),
-            cookingAllowed: safeAmenities.some((a: string) => String(a).toLowerCase().includes("cook") || String(a).toLowerCase().includes("kitchen")),
-            waterDispenser: safeAmenities.some((a: string) => String(a).toLowerCase().includes("water")),
-            sariSariStore: safeAmenities.some((a: string) => String(a).toLowerCase().includes("store") || String(a).toLowerCase().includes("canteen")),
-            commonTV: safeAmenities.some((a: string) => String(a).toLowerCase().includes("tv")),
-            kitchen: safeAmenities.some((a: string) => String(a).toLowerCase().includes("kitchen")),
-            gated: safeAmenities.some((a: string) => String(a).toLowerCase().includes("gate")),
-            customAmenities: safeAmenities.filter((a: string) => a.includes('|')),
-          }
-        },
-        rules: {
-          create: {
-            femaleOnly: !!femaleOnly, maleOnly: !!maleOnly, visitorsAllowed: visitorsAllowed !== false,
-            petsAllowed: !!petsAllowed, smokingAllowed: !!smokingAllowed, noCurfew: !!noCurfew,
-            customRules: customRules || [],
-          }
-        },
-        features: {
-          create: {
-            security24h: !!security24h, cctv: !!cctv, fireSafety: !!fireSafety,
-            nearTransport: nearTransport !== false, floodFree: !!floodFree, backupPower: !!backupPower,
-            customFeatures: customFeatures || [],
-          }
-        },
-        categories: {
-          create: safeCategory.map((cat: string) => ({
-            category: {
-              connectOrCreate: {
-                where: { name: String(cat) },
-                create: { name: String(cat), label: String(cat), icon: "default-icon" }
+            landlordId: landlord.id,
+            depositAmount: Number(depositAmount) || 0,
+            moveOutNoticeDays: Number(moveOutNoticeDays) || 30,
+            pdfUrl: data.pdfUrl || null,
+            ...(landlordSignatureBase64 ? {
+              signatures: {
+                create: {
+                  signerId: landlord.id,
+                  signerType: "LANDLORD",
+                  signatureUrl: landlordSignatureBase64,
+                }
               }
-            }
-          }))
+            } : {})
+          }
         },
+        
+        listingLinks: {
+          create: safeAmenities.filter((id: string) => typeof id === 'string' && !id.includes('|')).map((id: string) => ({ attributeId: id }))
+        },
+
         images: {
           create: safeImages.map((img: any, idx: number) => ({
             url: typeof img === 'object' ? img.url : img,
             order: idx,
-            roomType: typeof img === 'object' ? img.category : "General"
+            roomType: typeof img === 'object' ? (img.category || img.roomType || "Other") : "Other"
           }))
         },
         rooms: {
@@ -351,41 +371,75 @@ export const createProperty = async (data: any) => {
             else if (bt.includes("QUEEN")) bedType = "QUEEN";
             else if (bt.includes("BUNK")) bedType = "BUNK";
 
+            const rawAmenities: any[] = Array.isArray(room.amenities) ? room.amenities : Array.isArray(room.attributes) ? room.attributes : [];
+            const validAttributeIds = rawAmenities
+              .map(item => {
+                if (typeof item === 'string') {
+                  if (!item.includes('|') && item.length === 24) return item;
+                  return null;
+                }
+                if (typeof item === 'object' && item !== null) {
+                  const targetId = item.attributeId || item.id;
+                  if (typeof targetId === 'string' && targetId.length === 24) return targetId;
+                }
+                return null;
+              })
+              .filter((id): id is string => typeof id === 'string' && id.length === 24);
+
+            const customAmenityNames = rawAmenities
+              .filter(id => typeof id === 'string' && id.includes('|'))
+              .map(id => id.split('|')[0]);
+
             return {
               name: room.name || "Room",
               description: room.description || "",
               price: Number(room.price) || 0,
               capacity: Number(room.capacity) || 1,
               availableSlots: Number(room.availableSlots) || 1,
-              roomType: (room.roomType || "SOLO").toUpperCase() === "BEDSPACE" ? "BEDSPACE" : "SOLO",
               bathroomArrangement: room.bathroomArrangement || "PRIVATE_CR",
               bedType: bedType as any,
               bedCount: Number(room.bedCount) || 1,
               size: Number(room.size) || 0,
               reservationFee: Number(room.reservationFee) || 0,
               status: Number(room.availableSlots) > 0 ? "AVAILABLE" : "FULL",
+              amenityNames: customAmenityNames,
               images: {
                 create: (room.images || []).map((url: string, idx: number) => ({ url, order: idx }))
               },
-              amenities: {
-                create: (room.amenities || []).map((a: string) => {
-                  const [label, iconName] = a.includes('|') ? a.split('|') : [a, 'default-icon'];
-                  return {
-                    amenityType: {
-                      connectOrCreate: {
-                        where: { name: String(label) },
-                        create: { name: String(label), icon: iconName }
-                      }
-                    }
-                  };
-                })
-              }
+              roomTypeDefinitionId: room.roomType,
+              roomLinks: validAttributeIds.length > 0 ? {
+                create: validAttributeIds.map(id => ({ attributeId: id }))
+              } : undefined,
             };
           })
         }
       } as any
     });
 
+    // Notify Super Admin team of new property submission
+    try {
+      const admins = await db.user.findMany({
+        where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] }, isActive: true },
+        select: { id: true, email: true, name: true }
+      });
+      const { createNotification } = await import('@/services/notification');
+      const { sendAdminNewListingAlert } = await import('@/services/email/notifications');
+
+      for (const admin of admins) {
+        await createNotification({
+          userId: admin.id,
+          type: 'inquiry',
+          title: 'New Property Pending Verification 🔔',
+          description: `Landlord host ${landlord.name || 'Landlord'} submitted property "${listing.title}" for review.`,
+          link: '/admin/moderation/listings'
+        });
+        await sendAdminNewListingAlert(admin, landlord.name || 'Landlord', listing.title);
+      }
+    } catch (adminNotifErr) {
+      console.error('Failed to notify admins of new listing:', adminNotifErr);
+    }
+
+    await clearLandlordCache(landlord.id);
     revalidatePath("/landlord/properties");
     return { success: true, data: listing };
   } catch (error) {
@@ -399,27 +453,32 @@ export const updateProperty = async (propertyId: string, data: any) => {
 
   try {
     const {
-      title, description, price, roomCount, bathroomCount, guestCount, category, roomType,
-      country, region, latlng, amenities, femaleOnly, maleOnly, visitorsAllowed,
-      petsAllowed, smokingAllowed, security24h, cctv, fireSafety, nearTransport,
-      studyFriendly, quietEnvironment, flexibleLease, images, rooms,
+      title, description, price, roomCount, bathroomCount, propertyTypeId,
+      country, region, latlng, amenities, images, rooms,
+      depositAmount, moveOutNoticeDays, customContractClauses, landlordSignatureBase64
     } = data;
 
     const existing = await db.listing.findFirst({
       where: { id: propertyId, userId: landlord.id },
-      include: { amenities: true, rules: true, features: true }
+      include: { listingLinks: true, rooms: true }
     });
 
     if (!existing) return { success: false, error: "Property not found or unauthorized" };
 
-    const safePrice = Number(price) || 0;
+    const safeRooms = Array.isArray(rooms) ? rooms : [];
+    const validRoomPrices = safeRooms
+      .map((r: any) => Number(r.price))
+      .filter((p: number) => !isNaN(p) && p > 0);
+    const lowestRoomPrice = validRoomPrices.length > 0 ? Math.min(...validRoomPrices) : 0;
+    const safePrice = lowestRoomPrice > 0 ? lowestRoomPrice : (Number(price) || Number(existing.price) || 0);
+
     const safeRoomCount = Number(roomCount) || 1;
     const safeBathroomCount = Number(bathroomCount) || 1;
     const safeLat = latlng?.[1] ?? 14.5995;
     const safeLng = latlng?.[0] ?? 120.9842;
     const safeAmenities = Array.isArray(amenities) ? amenities : [];
     const safeImages = Array.isArray(images) ? images : [];
-    const safeCategory = autoCategorizeListing(data);
+
 
     const updateData: any = {
       title: title !== undefined ? title : existing.title,
@@ -432,60 +491,36 @@ export const updateProperty = async (propertyId: string, data: any) => {
       latitude: safeLat,
       longitude: safeLng,
       location: { type: "Point", coordinates: [safeLng, safeLat] },
-      status: "pending",
-      category: safeCategory,
+      status: "PENDING",
       amenities_list: safeAmenities,
     };
 
-    if (safeImages.length > 0 && safeImages[0] !== existing.imageSrc) {
-      updateData.imageSrc = typeof safeImages[0] === 'object' ? (safeImages[0] as any).url : safeImages[0];
+    if (propertyTypeId !== undefined) {
+      updateData.propertyTypeId = propertyTypeId;
+    }
+
+    if (safeImages.length > 0) {
+      const exteriorPhoto = safeImages.find((img: any) => typeof img === 'object' && (img.category === 'Exterior' || img.roomType === 'Exterior'));
+      if (exteriorPhoto) {
+        updateData.imageSrc = typeof exteriorPhoto === 'object' ? exteriorPhoto.url : exteriorPhoto;
+      } else {
+        updateData.imageSrc = typeof safeImages[0] === 'object' ? (safeImages[0] as any).url : safeImages[0];
+      }
     }
     if (data.businessInfo) {
       updateData.businessInfo = { ...data.businessInfo, documents: data.documents };
     }
-
-    if (amenities !== undefined) {
-      const amData = {
-        wifi: safeAmenities.includes('wifi'), parking: safeAmenities.includes('parking'),
-        pool: safeAmenities.includes('pool'), gym: safeAmenities.includes('gym'),
-        airConditioning: safeAmenities.includes('airConditioning'), laundry: safeAmenities.includes('laundry'),
-        cookingAllowed: safeAmenities.includes('cookingAllowed'), waterDispenser: safeAmenities.includes('waterDispenser'),
-        sariSariStore: safeAmenities.includes('sariSariStore'), commonTV: safeAmenities.includes('commonTV'),
-        kitchen: safeAmenities.includes('kitchen'), gated: safeAmenities.includes('gated'),
-        customAmenities: data.customAmenities || [],
-      };
-      updateData.amenities = { upsert: { update: amData, create: amData } };
+    
+    if (customContractClauses !== undefined) {
+      updateData.customClauses = customContractClauses;
     }
 
-    if (femaleOnly !== undefined || maleOnly !== undefined || visitorsAllowed !== undefined || petsAllowed !== undefined || smokingAllowed !== undefined || data.noCurfew !== undefined) {
-      const ruleData = {
-        femaleOnly: !!femaleOnly, maleOnly: !!maleOnly, visitorsAllowed: visitorsAllowed !== false,
-        petsAllowed: !!petsAllowed, smokingAllowed: !!smokingAllowed, noCurfew: !!data.noCurfew,
-        customRules: data.customRules || [],
+    if (safeAmenities.length > 0) {
+      updateData.listingLinks = {
+        deleteMany: {},
+        create: safeAmenities.filter((id: string) => typeof id === 'string' && !id.includes('|')).map((id: string) => ({ attributeId: id })),
       };
-      updateData.rules = { upsert: { update: ruleData, create: ruleData } };
     }
-
-    if (security24h !== undefined || cctv !== undefined || fireSafety !== undefined || nearTransport !== undefined || data.floodFree !== undefined || data.backupPower !== undefined) {
-      const featData = {
-        security24h: !!security24h, cctv: !!cctv, fireSafety: !!fireSafety,
-        nearTransport: nearTransport !== false, floodFree: !!data.floodFree, backupPower: !!data.backupPower,
-        customFeatures: data.customFeatures || [],
-      };
-      updateData.features = { upsert: { update: featData, create: featData } };
-    }
-
-    updateData.categories = {
-      deleteMany: {},
-      create: safeCategory.map((cat: string) => ({
-        category: {
-          connectOrCreate: {
-            where: { name: String(cat) },
-            create: { name: String(cat), label: String(cat), icon: "default-icon" }
-          }
-        }
-      }))
-    };
 
     if (images !== undefined && safeImages.length > 0) {
       updateData.images = {
@@ -493,7 +528,7 @@ export const updateProperty = async (propertyId: string, data: any) => {
         create: safeImages.map((img: any, idx: number) => ({
           url: typeof img === 'object' ? img.url : img,
           order: idx,
-          roomType: typeof img === 'object' ? img.category : "General"
+          roomType: typeof img === 'object' ? (img.category || img.roomType || "Other") : "Other"
         }))
       };
     }
@@ -508,34 +543,45 @@ export const updateProperty = async (propertyId: string, data: any) => {
           else if (bt.includes("QUEEN")) bedType = "QUEEN";
           else if (bt.includes("BUNK")) bedType = "BUNK";
 
+          const rawAmenities: any[] = Array.isArray(room.amenities) ? room.amenities : Array.isArray(room.attributes) ? room.attributes : [];
+          const validAttributeIds = rawAmenities
+            .map(item => {
+              if (typeof item === 'string') {
+                if (!item.includes('|') && item.length === 24) return item;
+                return null;
+              }
+              if (typeof item === 'object' && item !== null) {
+                const targetId = item.attributeId || item.id;
+                if (typeof targetId === 'string' && targetId.length === 24) return targetId;
+              }
+              return null;
+            })
+            .filter((id): id is string => typeof id === 'string' && id.length === 24);
+
+          const customAmenityNames = rawAmenities
+            .filter(id => typeof id === 'string' && id.includes('|'))
+            .map(id => id.split('|')[0]);
+
           return {
             name: room.name || "Room",
             description: room.description || "",
             price: Number(room.price) || 0,
             capacity: Number(room.capacity) || 1,
             availableSlots: Number(room.availableSlots) || 1,
-            roomType: (room.roomType || "SOLO").toUpperCase() === "BEDSPACE" ? "BEDSPACE" : "SOLO",
             bathroomArrangement: room.bathroomArrangement || "PRIVATE_CR",
             bedType: bedType as any,
+            bedCount: Number(room.bedCount) || 1,
             size: Number(room.size) || 0,
             reservationFee: Number(room.reservationFee) || 0,
             status: Number(room.availableSlots) > 0 ? "AVAILABLE" : "FULL",
+            amenityNames: customAmenityNames,
             images: {
               create: (room.images || []).map((url: string, idx: number) => ({ url, order: idx }))
             },
-            amenities: {
-              create: (room.amenities || []).map((a: string) => {
-                const [label, iconName] = a.includes('|') ? a.split('|') : [a, 'default-icon'];
-                return {
-                  amenityType: {
-                    connectOrCreate: {
-                      where: { name: String(label) },
-                      create: { name: String(label), icon: iconName }
-                    }
-                  }
-                };
-              })
-            }
+            roomTypeDefinitionId: room.roomType,
+            roomLinks: validAttributeIds.length > 0 ? {
+              create: validAttributeIds.map(id => ({ attributeId: id }))
+            } : undefined,
           };
         })
       };
@@ -545,6 +591,65 @@ export const updateProperty = async (propertyId: string, data: any) => {
       where: { id: propertyId },
       data: updateData as any,
     });
+
+    if (depositAmount !== undefined || moveOutNoticeDays !== undefined || customContractClauses !== undefined) {
+      const leaseContract = await db.leaseContract.findFirst({
+        where: { listingId: propertyId }
+      });
+      if (leaseContract) {
+        await db.leaseContract.update({
+          where: { id: leaseContract.id },
+          data: {
+            depositAmount: depositAmount !== undefined ? Number(depositAmount) : leaseContract.depositAmount,
+            moveOutNoticeDays: moveOutNoticeDays !== undefined ? Number(moveOutNoticeDays) : leaseContract.moveOutNoticeDays,
+          }
+        });
+        if (customContractClauses !== undefined) {
+          await db.listing.update({
+            where: { id: propertyId },
+            data: { customClauses: customContractClauses }
+          });
+        }
+        if (landlordSignatureBase64) {
+           const existingSignature = await db.contractSignature.findFirst({
+             where: { contractId: leaseContract.id, signerType: "LANDLORD" }
+           });
+           if (!existingSignature) {
+             await db.contractSignature.create({
+               data: {
+                 contractId: leaseContract.id,
+                 signerId: landlord.id,
+                 signerType: "LANDLORD",
+                 signatureUrl: landlordSignatureBase64
+               }
+             });
+           } else if (existingSignature.signatureUrl !== landlordSignatureBase64) {
+             await db.contractSignature.update({
+               where: { id: existingSignature.id },
+               data: { signatureUrl: landlordSignatureBase64 }
+             });
+           }
+        }
+      } else {
+        await db.leaseContract.create({
+          data: {
+            listingId: propertyId,
+            landlordId: landlord.id,
+            depositAmount: Number(depositAmount) || 0,
+            moveOutNoticeDays: Number(moveOutNoticeDays) || 30,
+            ...(landlordSignatureBase64 ? {
+              signatures: {
+                create: {
+                  signerId: landlord.id,
+                  signerType: "LANDLORD",
+                  signatureUrl: landlordSignatureBase64,
+                }
+              }
+            } : {})
+          }
+        });
+      }
+    }
 
     return { success: true, data: listing };
   } catch (error) {
@@ -577,7 +682,7 @@ export const deleteProperty = async (propertyId: string) => {
   }
 };
 
-export const updateListingStatus = async (propertyId: string, status: "active" | "inactive") => {
+export const updateListingStatus = async (propertyId: string, isArchived: boolean) => {
   const landlord = await requireLandlord();
 
   try {
@@ -585,9 +690,7 @@ export const updateListingStatus = async (propertyId: string, status: "active" |
       where: {
         id: propertyId,
       },
-      data: {
-        status,
-      },
+      data: { status: isArchived ? 'UNPUBLISHED' : 'ACTIVE' },
     });
 
     revalidatePath("/landlord/properties");

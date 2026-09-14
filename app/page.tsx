@@ -3,6 +3,7 @@ import { executeComplexSearch } from "@/services/listing/search.service";
 import HeroSection from "@/components/home/HeroSection";
 import ListingsGrid from "@/components/listings/ListingsGrid";
 import Categories from "@/components/navbar/Categories";
+import ClearFiltersBanner from "@/components/navbar/ClearFiltersBanner";
 import EmptyState from "@/components/common/EmptyState";
 import LoadingAnimation from "@/components/common/LoadingAnimation";
 import AIFallbackAlert from "@/components/listings/AIFallbackAlert";
@@ -32,13 +33,19 @@ const Home: FC<HomeProps> = async ({ searchParams }) => {
   }
 
   const resolved = searchParams == null ? undefined : await searchParams;
-  const searchParamsObj = resolved
+  const rawParamsObj = resolved
     ? Object.fromEntries(
         Object.entries(resolved)
           .filter(([_, v]) => v !== undefined)
           .map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
       )
     : {};
+
+  // Ignore non-search system params so they don't break listing queries
+  const SYSTEM_KEYS = new Set(["callbackUrl", "error", "login", "secure", "code", "state", "email", "verified"]);
+  const searchParamsObj = Object.fromEntries(
+    Object.entries(rawParamsObj).filter(([k]) => !SYSTEM_KEYS.has(k))
+  );
 
   // Show loading state while fetching data
   let result, favorites, isRelaxed = false;
@@ -68,15 +75,19 @@ const Home: FC<HomeProps> = async ({ searchParams }) => {
     <>
       <HeroSection />
 
-      <section className="container mx-auto px-4 mb-12 mt-12">
+      <section className="container mx-auto px-4 mt-8 mb-6">
         <Categories />
       </section>
+
+      <ClearFiltersBanner />
+
 
       {!result.listings || result.listings.length === 0 ? (
         <div className="pb-32">
           <EmptyState
             title="No Listings found"
             subtitle="We couldn't find any properties matching your current filters."
+            showReset={Object.keys(searchParamsObj).length > 0}
           />
         </div>
       ) : (

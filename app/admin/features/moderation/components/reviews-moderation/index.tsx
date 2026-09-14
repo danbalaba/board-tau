@@ -15,14 +15,24 @@ import { AdminDeleteModal } from '@/app/admin/components/modals/admin-delete-mod
 import { Button } from '@/app/admin/components/ui/button';
 import { toast } from '@/app/admin/components/ui/sonner';
 import { exportToCSV, exportToExcel } from '@/utils/export-utils';
+import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { AdminDashboardError } from '@/app/admin/components/ui/admin-dashboard-error';
 
 export function ReviewsModerationDashboard() {
+  const searchParams = useSearchParams();
+  const urlIsArchived = searchParams.get('isArchived') === 'true';
+
   const [range, setRange] = useState('30d');
-  const [isArchived, setIsArchived] = useState(false);
+  const [isArchived, setIsArchived] = useState(urlIsArchived);
   const { data: session } = useSession();
   const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
+
+  React.useEffect(() => {
+    if (urlIsArchived && !isArchived) {
+      setIsArchived(true);
+    }
+  }, [urlIsArchived]);
 
   const {
     filteredReviews,
@@ -42,8 +52,12 @@ export function ReviewsModerationDashboard() {
     setViewMode,
     searchQuery,
     setSearchQuery,
+    statusFilter,
+    setStatusFilter,
     sortBy,
     setSortBy,
+    handleClearFilters,
+    isFilterLoading,
     selectedReview,
     setSelectedReview,
     viewModalOpen,
@@ -60,10 +74,17 @@ export function ReviewsModerationDashboard() {
     deleteModalOpen,
     setDeleteModalOpen,
     itemToArchive,
-    itemToDelete
-  } = useReviewsModerationLogic(isArchived);
+    itemToDelete,
+    notFoundInActive
+  } = useReviewsModerationLogic(isArchived, range);
 
-  const isGridLoading = isLoading || isFetching;
+  React.useEffect(() => {
+    if (notFoundInActive && !isArchived) {
+      setIsArchived(true);
+    }
+  }, [notFoundInActive, isArchived]);
+
+  const isGridLoading = isLoading || isFetching || isFilterLoading;
 
   if (error) {
     return <AdminDashboardError onRetry={handleRefresh} />;
@@ -117,6 +138,9 @@ export function ReviewsModerationDashboard() {
       <AdminReviewHeader
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        onClearFilters={handleClearFilters}
         sortBy={sortBy}
         setSortBy={setSortBy}
         viewMode={viewMode}
@@ -124,7 +148,8 @@ export function ReviewsModerationDashboard() {
         handleRefresh={handleRefresh}
         onExport={handleExport}
         pendingCount={pendingCount}
-        isLoading={isLoading}
+        isLoading={isLoading || isFetching || isFilterLoading}
+        isFetching={isFetching}
         range={range}
         onRangeChange={setRange}
         isArchived={isArchived}
@@ -133,14 +158,14 @@ export function ReviewsModerationDashboard() {
       />
 
       <ReviewKPICards 
-        total={filteredReviews.length}
+        total={pendingCount + approvedCount + rejectedCount}
         pending={pendingCount}
         averageRating={avgRating}
         rejected={rejectedCount}
         totalLastWeek={totalLastWeek}
         pendingLastWeek={pendingLastWeek}
         rejectedLastWeek={rejectedLastWeek}
-        isLoading={isLoading}
+        isLoading={isLoading || isFetching}
         range={range}
       />
 
@@ -187,7 +212,7 @@ export function ReviewsModerationDashboard() {
               {filteredReviews.length > 0 && (
                 <div className="flex items-center gap-2 mb-6">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                    Showing {filteredReviews.length} pending review{filteredReviews.length !== 1 ? 's' : ''}
+                    Showing {filteredReviews.length} {statusFilter && statusFilter !== 'all' ? statusFilter : isArchived ? 'archived' : 'total'} review{filteredReviews.length !== 1 ? 's' : ''}
                   </span>
                   <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
                 </div>
@@ -274,9 +299,9 @@ export function ReviewsModerationDashboard() {
         onClose={() => setArchiveModalOpen(false)}
         onConfirm={handleConfirmArchive}
         isArchiving={isDeciding}
-        isRestore={itemToArchive?.isArchived}
-        title={itemToArchive?.isArchived ? 'Restore Review' : 'Archive Review'}
-        description={itemToArchive?.isArchived 
+        isRestore={Boolean(itemToArchive?.isAdminArchived || itemToArchive?.isArchived || isArchived)}
+        title={(itemToArchive?.isAdminArchived || itemToArchive?.isArchived || isArchived) ? 'Restore Review' : 'Archive Review'}
+        description={(itemToArchive?.isAdminArchived || itemToArchive?.isArchived || isArchived) 
           ? `This will restore the review from ${itemToArchive?.user?.name || 'this user'} to the active moderation queue.`
           : `This will move the review from ${itemToArchive?.user?.name || 'this user'} to your archive. You can restore it anytime.`
         }

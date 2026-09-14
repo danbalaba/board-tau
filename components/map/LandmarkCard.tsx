@@ -50,7 +50,7 @@ export default function LandmarkCard({ landmark, nearbyCount, onClose, onShowLis
                     src={landmark.logo}
                     alt={landmark.name}
                     fill
-                    className="object-contain p-2"
+                    className="object-cover scale-110 rounded-full"
                   />
                 ) : (
                   <MapPin size={36} style={{ color: "var(--primary-color)" }} />

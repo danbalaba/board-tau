@@ -4,6 +4,13 @@ import redis, { cache } from "@/lib/redis";
 import { Ratelimit } from "@upstash/ratelimit";
 import { captureAIGeneration } from "@/lib/posthog-ai";
 import { getCurrentUser } from "@/services/user";
+import { z } from "zod";
+import { sanitizeSearchQuery, detectPromptInjection, sanitizeAIOutput } from "@/lib/security/sanitize";
+
+const aiCompareSchema = z.object({
+  reply: z.string(),
+  suggestedPrompts: z.array(z.string()).optional().default([])
+});
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
@@ -31,10 +38,21 @@ export async function POST(req: Request) {
       );
     }
 
-    const { listings, userMessage } = await req.json();
+    let { listings, userMessage } = await req.json();
 
     if (!listings || !userMessage) {
       return NextResponse.json({ reply: "Missing listings or message." }, { status: 400 });
+    }
+
+    // OWASP: Sanitize the user message & check prompt injection
+    userMessage = sanitizeSearchQuery(userMessage, 300);
+
+    const injectionCheck = detectPromptInjection(userMessage);
+    if (injectionCheck.isInjection) {
+      return NextResponse.json({
+        reply: "System security policies strictly prohibit system override or secret extraction prompts.",
+        suggestedPrompts: []
+      });
     }
 
     // Check Cache
@@ -46,55 +64,73 @@ export async function POST(req: Request) {
       return NextResponse.json(cachedData);
     }
 
-    // Format the listings data beautifully so Gemini understands it perfectly
+    // Format the listings data dynamically supporting Super Admin Taxonomy & Relational Models
     const formattedListings = listings.map((l: any) => {
       const id = l.id;
       const title = l.title;
       const price = l.price;
-      const region = l.region;
+      const region = l.region || "Camiling, Tarlac";
+      const propertyType = l.propertyType?.name || (Array.isArray(l.category) ? l.category.join(", ") : l.category) || "Property";
       
-      const features = l.features || {};
-      const rules = l.rules || {};
-      const category = l.categories?.[0]?.category?.name || "Listing";
+      // Dynamic Attributes (Relational DynamicAttribute & ListingAttributeLink)
+      const attributes = l.listingLinks?.map((link: any) => link.attribute) || [];
+      const amenities = attributes.filter((a: any) => a.type === "AMENITY").map((a: any) => a.name);
+      const rules = attributes.filter((a: any) => a.type === "RULE").map((a: any) => a.name);
+      const features = attributes.filter((a: any) => a.type === "FEATURE").map((a: any) => a.name);
 
-      const availableRoomsCount = l.rooms ? l.rooms.filter((r:any) => r.status === "AVAILABLE").length : 0;
+      // Legacy/Direct array fallbacks
+      const allAmenities = [...new Set([...amenities, ...(l.amenities_list || [])])].join(", ") || "Standard amenities";
       
-      // Basic rules summary
-      let rulesText = "Standard rules apply.";
-      if (rules) {
-        let rs = [];
-        if (rules.femaleOnly) rs.push("Strictly Female Only");
-        if (rules.maleOnly) rs.push("Strictly Male Only");
-        if (rules.noCurfew) rs.push("No Curfew");
-        if (rules.visitorsAllowed) rs.push("Visitors Allowed");
-        if (rules.petsAllowed) rs.push("Pets Allowed");
-        if (rs.length > 0) rulesText = rs.join(", ");
+      // Rules summary
+      let rulesText = rules.length > 0 ? rules.join(", ") : "Standard rules apply.";
+      if (l.rules) {
+        let rs = [...rules];
+        if (l.rules.femaleOnly) rs.push("Strictly Female Only");
+        if (l.rules.maleOnly) rs.push("Strictly Male Only");
+        if (l.rules.noCurfew) rs.push("No Curfew");
+        if (l.rules.visitorsAllowed) rs.push("Visitors Allowed");
+        if (l.rules.petsAllowed) rs.push("Pets Allowed");
+        if (l.rules.customRules?.length) rs.push(...l.rules.customRules);
+        rulesText = [...new Set(rs)].join(", ");
       }
 
-      let safetyText = "Standard safety.";
-      if (features) {
-        let sf = [];
-        if (features.cctv) sf.push("CCTV");
-        if (features.security24h) sf.push("24h Security");
-        if (features.fireSafety) sf.push("Fire Safety Ready");
-        if (sf.length > 0) safetyText = sf.join(", ");
+      // Features summary
+      let safetyText = features.length > 0 ? features.join(", ") : "Standard safety.";
+      if (l.features) {
+        let sf = [...features];
+        if (l.features.cctv) sf.push("CCTV");
+        if (l.features.security24h) sf.push("24h Security");
+        if (l.features.fireSafety) sf.push("Fire Safety Ready");
+        if (l.features.customFeatures?.length) sf.push(...l.features.customFeatures);
+        safetyText = [...new Set(sf)].join(", ");
       }
+
+      // Dynamic Room Breakdown (RoomTypeDefinition & Flat-Rate vs Per-Head)
+      const roomSummaries = (l.rooms || []).map((r: any) => {
+        const typeName = r.roomTypeDefinition?.name || r.name || "Room";
+        const pricingModel = r.roomTypeDefinition?.isFlatRate ? "Flat Rate (Entire Unit)" : "Per-Head Bedspace";
+        return `- ${typeName} (${pricingModel}): ₱${r.price}/mo | Capacity: ${r.capacity} pax | Available Slots: ${r.availableSlots}`;
+      }).join("\n      ");
 
       return `
       ID: ${id}
       Listing Title: ${title}
-      Category: ${category}
-      Price: ₱${price}/mo
+      Property Type: ${propertyType}
+      Base Price: ₱${price}/mo
       Location: ${region}
-      Available Rooms: ${availableRoomsCount}
+      
+      Room Options & Pricing Structure:
+      ${roomSummaries || "Standard Room Options"}
+      
+      Shared & Property Amenities: ${allAmenities}
       Safety & Reassurance: ${safetyText}
-      Policies & Rules: ${rulesText}
+      Policies & House Rules: ${rulesText}
       Description: ${l.description || "N/A"}
       `;
     }).join("\n\n--------------------------\n\n");
 
     const systemPrompt = `
-      You are a professional, helpful, and friendly property advisor for BoardTAU (a boarding house system). 
+      You are a professional, helpful, and friendly property advisor for BoardTAU (a boarding house system for TAU students). 
       The user is comparing the following properties:
       
       ${formattedListings}
@@ -103,7 +139,7 @@ export async function POST(req: Request) {
       Keep your answer concise, easy to read, and formatted with markdown if necessary (bullet points are great).
       
       CRITICAL INSTRUCTIONS:
-      1. You MUST return your response as a raw JSON object (without markdown blocks like \`\`\`json) with the following structure:
+      1. You MUST return your response as a raw JSON object with the following structure:
          {
            "reply": "Your markdown formatted reply here",
            "suggestedPrompts": ["Follow up question 1?", "Follow up question 2?"]
@@ -113,47 +149,22 @@ export async function POST(req: Request) {
       4. STRICTLY NO EMOJIS. Do not use any emojis in your \`reply\` or your \`suggestedPrompts\`. Keep it 100% professional.
     `;
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-3-flash-preview",
-      generationConfig: { responseMimeType: "application/json" }
+    const { generateAIResponse } = await import("@/lib/ai/ai-provider");
+    const aiResult = await generateAIResponse({
+      prompt: `User Question: ${userMessage}`,
+      systemInstruction: systemPrompt,
+      schema: aiCompareSchema,
+      spanName: "ai_compare"
     });
 
-    const t0 = Date.now();
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nUser Question: ${userMessage}` }] }]
-    });
-    const latency = (Date.now() - t0) / 1000;
-
-    const response = await result.response;
-    const text = response.text();
-
-    // Capture LLM generation analytics
-    const user = await getCurrentUser();
-    const distinctId = user?.id ?? `anon:${ip}`;
-    await captureAIGeneration({
-      distinctId,
-      model: "gemini-3-flash-preview",
-      spanName: "ai_compare",
-      input: [{ role: "user", content: userMessage }],
-      output: text,
-      inputTokens: response.usageMetadata?.promptTokenCount,
-      outputTokens: response.usageMetadata?.candidatesTokenCount,
-      latencySeconds: latency,
-    });
-
-    try {
-      const parsed = JSON.parse(text);
-
-      // Save successful response to cache for 24 hours
-      if (parsed && parsed.reply) {
-        await cache.set(cacheKey, parsed, 86400);
-      }
-
-      return NextResponse.json(parsed);
-    } catch(e) {
-      // Fallback if AI fails to return strict JSON
-      return NextResponse.json({ reply: text, suggestedPrompts: [] });
+    if (aiResult.data) {
+      aiResult.data.reply = sanitizeAIOutput(aiResult.data.reply);
+      // Save successful response to cache for 7 Days
+      await cache.set(cacheKey, aiResult.data, 604800);
+      return NextResponse.json(aiResult.data);
     }
+
+    return NextResponse.json({ reply: sanitizeAIOutput(aiResult.rawText) || "Sorry, I ran into an issue while analyzing the properties.", suggestedPrompts: [] });
 
   } catch (error) {
     console.error("AI Compare Error:", error);

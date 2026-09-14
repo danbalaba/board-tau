@@ -49,9 +49,7 @@ export async function GET(
       return NextResponse.json({ data: [] });
     }
 
-    const categories = Array.isArray(sourceListing.category)
-      ? sourceListing.category
-      : (typeof sourceListing.category === 'string' ? [sourceListing.category] : []);
+    const propertyTypeId = sourceListing.propertyTypeId || null;
 
     const price = sourceListing.price || (sourceListing.rooms.length > 0 ? sourceListing.rooms[0].price : 0);
 
@@ -60,14 +58,14 @@ export async function GET(
       {
         $match: {
           _id: { $ne: { $oid: listingId } },
-          status: "active",
+          status: "ACTIVE",
         }
       },
       {
         $addFields: {
           categoryMatchScore: {
             $cond: [
-              { $gt: [{ $size: { $setIntersection: ["$category", categories] } }, 0] },
+              { $eq: ["$propertyTypeId", propertyTypeId ? { $oid: propertyTypeId } : null] },
               15,
               0
             ]
@@ -127,7 +125,7 @@ export async function GET(
       id: doc._id['$oid'] || doc._id.toString(),
       _id: undefined,
       rooms: doc.rooms_list || [],
-      categories: (doc.category || []).map((c: string) => ({ name: c, label: c })),
+
       rating: unwrapMongoNumber(doc.rating),
       reviewCount: unwrapMongoNumber(doc.reviewCount) ?? 0,
       price: unwrapMongoNumber(doc.price) ?? doc.price,
@@ -150,9 +148,9 @@ You MUST return raw JSON as an array of objects: [{ "id": "listing_id", "reason"
         generationConfig: { responseMimeType: "application/json" }
       });
 
-      const sourceInfo = `Source Listing: "${sourceListing.title}" (Category: ${categories.join(", ")}, Price: ₱${price})`;
+      const sourceInfo = `Source Listing: "${sourceListing.title}" (Price: ₱${price})`;
       const recommendationsInfo = data.map((l: any, i: number) =>
-        `Recommendation ${i + 1} - ID:"${l.id}" | "${l.title}" | ₱${l.price}/mo | Categories: ${(l.category || []).join(", ")}`
+        `Recommendation ${i + 1} - ID:"${l.id}" | "${l.title}" | ₱${l.price}/mo`
       ).join("\n");
 
       const prompt = `${sourceInfo}\n\nRecommendations:\n${recommendationsInfo}\n\nGenerate the JSON output.`;

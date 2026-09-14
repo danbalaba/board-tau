@@ -11,6 +11,7 @@ describe('create-listing validation', () => {
       },
       propertyInfo: {
         propertyName: 'Joes Place',
+        propertyTypeId: 'boarding-house',
         description: 'B'.repeat(100),
         price: '1500',
       },
@@ -60,6 +61,8 @@ describe('create-listing validation', () => {
       propertyConfig: {
         totalRooms: '10',
         bathroomCount: '2',
+        kitchenSetup: 'SHARED',
+        bathroomSetup: 'SHARED',
       },
     };
     const res = validateCreateListingStep(2, formData);
@@ -98,8 +101,8 @@ describe('create-listing validation', () => {
     };
     const res = validateCreateListingStep(3, formData);
     expect(res.valid).toBe(false);
-    expect(res.errors.some(e => e.field === 'propertyConfig.rooms[0].roomType')).toBe(true);
-    expect(res.errors.some(e => e.field === 'propertyConfig.rooms[0].price')).toBe(true);
+    expect(res.errors.some(e => e.field.includes('roomType'))).toBe(true);
+    expect(res.errors.some(e => e.field.includes('price'))).toBe(true);
   });
 
   it('validates step 4 (IMAGES)', () => {
@@ -121,7 +124,7 @@ describe('create-listing validation', () => {
   it('fails step 4 with missing images', () => {
     const formData = {
       propertyImages: {
-        property: ['img1.jpg'],
+        property: [],
       },
     };
     const res = validateCreateListingStep(4, formData);

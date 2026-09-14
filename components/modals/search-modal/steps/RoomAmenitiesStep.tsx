@@ -1,22 +1,43 @@
+import React, { useEffect, useState } from "react";
 import Heading from "@/components/common/Heading";
 import MultiSelectGrid from "@/components/inputs/MultiSelectGrid";
-import { roomAmenities } from "@/data/roomAmenities";
-import { ROOM_TYPES } from "@/data/roomTypes";
 import { motion } from "framer-motion";
+import { useAttributes } from "@/hooks/useAttributes";
+import { usePropertyTypes } from "@/hooks/usePropertyTypes";
+import { Loader2 } from "lucide-react";
 
 interface RoomAmenitiesStepProps {
-  roomType: string;
   roomAmenitiesSelected: string[];
+  propertyTypeSelected: string[];
   toggleMulti: (id: "roomAmenities", value: string) => void;
 }
 
-export default function RoomAmenitiesStep({
-  roomType,
-  roomAmenitiesSelected,
-  toggleMulti,
+export default function RoomAmenitiesStep({ 
+  roomAmenitiesSelected, 
+  propertyTypeSelected,
+  toggleMulti 
 }: RoomAmenitiesStepProps) {
-  const isSolo = roomType === ROOM_TYPES.SOLO;
-  
+  const [roomAmenities, setRoomAmenities] = useState<any[]>([]);
+  const { data: attributesData, isLoading: isLoadingAttributes } = useAttributes();
+  const { data: propertyTypesData } = usePropertyTypes();
+
+  useEffect(() => {
+    if (attributesData) {
+      const selectedTypeIds = (propertyTypesData || [])
+        .filter((pt: any) => propertyTypeSelected.includes(pt.name) || propertyTypeSelected.includes(pt.id))
+        .map((pt: any) => pt.id);
+
+      const filteredData = attributesData.filter((a: any) => {
+        if (!a.propertyTypeIds || a.propertyTypeIds.length === 0) return true;
+        return selectedTypeIds.some((id: string) => a.propertyTypeIds.includes(id)) || propertyTypeSelected.some((name: string) => a.propertyTypeIds.includes(name));
+      });
+
+      setRoomAmenities(filteredData.filter((a: any) => a.type === 'ROOM_AMENITY').map((a: any) => ({
+        label: a.name, value: a.id, icon: a.icon, description: a.description
+      })));
+    }
+  }, [attributesData, propertyTypesData, propertyTypeSelected]);
+
   return (
     <motion.div 
       initial={{ opacity: 0, x: 20 }}
@@ -25,18 +46,22 @@ export default function RoomAmenitiesStep({
       className="flex flex-col gap-6"
     >
       <Heading
-        title={isSolo ? "Solo Room Amenities" : "Bedspace Amenities"}
-        subtitle={`Select the amenities you want in your ${isSolo ? "solo room" : "bedspace"}.`}
-        helpText="These are strict requirements inside your specific room. If you check 'Air Conditioning', only rooms with AC will be shown."
+        title="Room Amenities"
+        subtitle="Specific amenities inside your room or unit."
+        helpText="These are features located exclusively inside your personal room or unit (e.g. Private Bath, AC, Desk)."
       />
       <div className="mt-2">
-        <MultiSelectGrid
-          options={roomAmenities
-            .filter(amenity => !amenity.applicableTo || amenity.applicableTo.includes(roomType as any))
-            .map((a) => ({ label: a.label, value: a.value, icon: a.icon, description: a.description }))}
-          selected={roomAmenitiesSelected}
-          onToggle={(v) => toggleMulti("roomAmenities", v)}
-        />
+        {isLoadingAttributes ? (
+          <div className="flex justify-center p-8">
+            <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+          </div>
+        ) : (
+          <MultiSelectGrid
+            options={roomAmenities}
+            selected={roomAmenitiesSelected}
+            onToggle={(v) => toggleMulti("roomAmenities", v)}
+          />
+        )}
       </div>
     </motion.div>
   );

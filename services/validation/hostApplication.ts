@@ -50,7 +50,6 @@ export const validateStep = (step: number, formData: any): ValidationResult => {
   switch (step) {
     case 1: // LANDLORD_INFO
       validateContactInfo(formData.contactInfo || {}, errors);
-      validateBusinessDescription(formData.businessInfo || {}, errors);
       break;
 
     case 2: // PROPERTY_BASIC
@@ -97,12 +96,7 @@ export const validateStep = (step: number, formData: any): ValidationResult => {
   };
 };
 
-const validateBusinessDescription = (businessInfo: any, errors: ValidationError[]): void => {
-  const trimmedDescription = businessInfo.businessDescription?.trim() || '';
-  if (!trimmedDescription || trimmedDescription.length < 50) {
-    errors.push({ field: 'businessInfo.businessDescription', message: 'Business description must be at least 50 characters' });
-  }
-};
+
 
 const validateContactInfo = (contactInfo: any, errors: ValidationError[]): void => {
   const nameError = validateName(contactInfo.fullName);
@@ -118,21 +112,6 @@ const validateContactInfo = (contactInfo: any, errors: ValidationError[]): void 
   const emailError = validateEmail(contactInfo.email);
   if (emailError) {
     errors.push({ field: 'contactInfo.email', message: emailError });
-  }
-
-  // Emergency contact validation
-  const emergencyNameError = validateName(contactInfo.emergencyContact?.name);
-  if (emergencyNameError) {
-    errors.push({ field: 'contactInfo.emergencyContact.name', message: emergencyNameError });
-  }
-
-  if (!contactInfo.emergencyContact?.relationship) {
-    errors.push({ field: 'contactInfo.emergencyContact.relationship', message: 'Please select a relationship' });
-  }
-
-  const emergencyPhoneError = validatePhoneNumber(contactInfo.emergencyContact?.phoneNumber);
-  if (emergencyPhoneError) {
-    errors.push({ field: 'contactInfo.emergencyContact.phoneNumber', message: emergencyPhoneError });
   }
 };
 

@@ -18,6 +18,7 @@ import { createPortal } from "react-dom";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
 import { useIsClient } from "@/hooks/useIsClient";
 import { fadeIn, modalSheet } from "@/utils/motion";
+import { cn } from "@/utils/helper";
 
 // Simple implementation of useKeyPress
 const useKeyPress = ({ key, action, enable = true }: { key: string; action: (e: KeyboardEvent) => void; enable?: boolean }) => {
@@ -39,12 +40,14 @@ const useKeyPress = ({ key, action, enable = true }: { key: string; action: (e: 
 interface ModalProps {
   children: ReactNode;
   isOpen?: boolean;
+  initialOpen?: string;
   onClose?: () => void;
   title?: string;
-  width?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  width?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
   hasFixedFooter?: boolean;
   closeOnOutsideClick?: boolean;
   noPadding?: boolean;
+  fullOnMobile?: boolean;
 }
 
 interface TriggerProps {
@@ -54,9 +57,11 @@ interface TriggerProps {
 }
 
 interface WindowProps extends TriggerProps {
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
   hasFixedFooter?: boolean;
   closeOnOutsideClick?: boolean;
+  noPadding?: boolean;
+  fullOnMobile?: boolean;
 }
 
 interface WindowHeaderProps {
@@ -74,7 +79,7 @@ const Modal: FC<ModalProps> & {
   Trigger: typeof Trigger;
   Window: typeof Window;
   WindowHeader: typeof WindowHeader;
-} = ({ children, isOpen, onClose, title, width = 'md', hasFixedFooter, closeOnOutsideClick = true, noPadding = false }) => {
+} = ({ children, isOpen, initialOpen = "", onClose, title, width = 'md', hasFixedFooter, closeOnOutsideClick = true, noPadding = false, fullOnMobile = false }) => {
   // Simplified API for direct control (no context)
   if (isOpen !== undefined) {
     const isClient = useIsClient();
@@ -83,42 +88,37 @@ const Modal: FC<ModalProps> & {
     useEffect(() => {
       if (!isClient) return;
       const body = document.body;
-      const rootNode = document.documentElement;
-
-      const restoreScroll = () => {
-        const top = parseFloat(body.style.top) * -1;
-        body.style.overflow = '';
-        body.style.paddingRight = '';
-        body.style.top = '';
-        body.classList.remove("fixed", "w-full");
-        if (top) {
-          window.scrollTo(0, top);
-        }
-      };
+      const html = document.documentElement;
 
       if (isOpen) {
-        const scrollTop = window.pageYOffset || rootNode.scrollTop || body.scrollTop;
-        body.style.overflow = 'hidden';
-        body.style.paddingRight = '17px';
-        body.style.top = `-${scrollTop}px`;
-        body.classList.add("fixed", "w-full");
+        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+        body.style.overflow = "hidden";
+        html.style.overflow = "hidden";
+        if (scrollbarWidth > 0) {
+          body.style.paddingRight = `${scrollbarWidth}px`;
+        }
       } else {
-        restoreScroll();
+        body.style.overflow = "";
+        html.style.overflow = "";
+        body.style.paddingRight = "";
       }
 
       return () => {
-        if (isOpen) {
-          restoreScroll();
-        }
+        body.style.overflow = "";
+        html.style.overflow = "";
+        body.style.paddingRight = "";
       };
     }, [isClient, isOpen]);
 
+    const isFullMobile = width === 'full' || fullOnMobile;
+
     const widthClasses = {
-      xs: 'md:w-[320px] lg:w-[320px]',
-      sm: 'md:w-[400px] lg:w-[400px]',
-      md: 'md:w-[500px] lg:w-[500px]',
-      lg: 'md:w-[800px] lg:w-[800px]',
-      xl: 'md:w-[1100px] lg:w-[1100px]'
+      xs: isFullMobile ? 'w-full sm:w-[90vw] max-w-[320px] md:w-[320px]' : 'w-[90vw] max-w-[320px] md:w-[320px]',
+      sm: isFullMobile ? 'w-full sm:w-[92vw] max-w-[400px] md:w-[400px]' : 'w-[92vw] max-w-[400px] md:w-[400px]',
+      md: isFullMobile ? 'w-full sm:w-[92vw] max-w-[500px] md:w-[500px]' : 'w-[92vw] max-w-[500px] md:w-[500px]',
+      lg: isFullMobile ? 'w-full sm:w-[95vw] max-w-[800px] md:w-[800px]' : 'w-[95vw] max-w-[800px] md:w-[800px]',
+      xl: isFullMobile ? 'w-full sm:w-[95vw] max-w-[1100px] md:w-[1100px]' : 'w-[95vw] max-w-[1100px] md:w-[1100px]',
+      full: 'w-full h-full'
     };
 
     if (!isClient) return null;
@@ -132,7 +132,12 @@ const Modal: FC<ModalProps> & {
             animate="show"
             exit="hidden"
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[10000] flex justify-center items-center overflow-hidden outline-none focus:outline-none bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm"
+            className={cn(
+              "fixed inset-0 z-[10000] flex justify-center items-center overflow-hidden outline-none focus:outline-none bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-300",
+              isFullMobile ? "p-0 sm:p-6" : "p-4 sm:p-6"
+            )}
+            onWheel={(e) => e.preventDefault()}
+            onTouchMove={(e) => e.preventDefault()}
             onClick={(e) => {
               e.stopPropagation(); // prevent bubbling to parent modals
               // Close modal when clicking outside the inner box
@@ -146,7 +151,19 @@ const Modal: FC<ModalProps> & {
               initial="hidden"
               animate="show"
               exit="exit"
-              className={`md:h-auto h-auto md:max-h-[90vh] ${hasFixedFooter ? 'overflow-hidden' : 'overflow-y-auto'} w-full ${widthClasses[width]} md:rounded-card rounded-card shadow-glass border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
+              tabIndex={-1}
+              ref={(node) => {
+                if (node && isOpen) node.focus();
+              }}
+              className={cn(
+                "outline-none focus:outline-none overscroll-contain w-full",
+                widthClasses[width],
+                isFullMobile 
+                  ? "h-full sm:h-auto max-h-none sm:max-h-[90vh] rounded-none sm:rounded-card" 
+                  : "max-h-[90vh] rounded-2xl sm:rounded-card",
+                hasFixedFooter ? "overflow-hidden" : "overflow-y-auto",
+                noPadding ? "bg-transparent border-0 shadow-none" : (isFullMobile ? "shadow-none sm:shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border-0 sm:border sm:border-white/20 dark:sm:border-white/10" : "shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border border-white/20 dark:border-white/10")
+              )}
               onClick={(e) => e.stopPropagation()}
             >
               {title && (
@@ -164,9 +181,11 @@ const Modal: FC<ModalProps> & {
                   </button>
                 </header>
               )}
-              <div className={hasFixedFooter || noPadding ? "" : "p-6"}>
-                {children}
-              </div>
+              {hasFixedFooter || noPadding ? (
+                children
+              ) : (
+                <div className="p-4 sm:p-6 h-full flex flex-col">{children}</div>
+              )}
             </motion.div>
           </motion.div>
         ) : null}
@@ -176,7 +195,7 @@ const Modal: FC<ModalProps> & {
   }
 
   // Existing context-based API
-  const [openName, setOpenName] = useState("");
+  const [openName, setOpenName] = useState(initialOpen);
 
   const close = useCallback(() => {
     setOpenName("");
@@ -196,9 +215,6 @@ const Modal: FC<ModalProps> & {
 const Trigger: FC<TriggerProps> = ({ children, name, onClick }) => {
   const { open } = useContext(ModalContext);
   const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-
     // Call custom onClick if provided
     if (onClick) {
       onClick(e);
@@ -210,13 +226,16 @@ const Trigger: FC<TriggerProps> = ({ children, name, onClick }) => {
   return cloneElement(children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>, { onClick: handleClick });
 };
 
-const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, closeOnOutsideClick = true }) => {
+const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, closeOnOutsideClick = true, noPadding, fullOnMobile = false }) => {
+  const isFullMobile = size === 'full' || fullOnMobile;
+
   const sizeClasses = {
-    xs: 'md:w-[320px] lg:w-[320px]',
-    sm: 'md:w-[400px] lg:w-[400px]',
-    md: 'md:w-[500px] lg:w-[500px]',
-    lg: 'md:w-[800px] lg:w-[800px]',
-    xl: 'md:w-[1100px] lg:w-[1100px]'
+    xs: isFullMobile ? 'w-full sm:w-[90vw] max-w-[320px] md:w-[320px]' : 'w-[90vw] max-w-[320px] md:w-[320px]',
+    sm: isFullMobile ? 'w-full sm:w-[92vw] max-w-[400px] md:w-[400px]' : 'w-[92vw] max-w-[400px] md:w-[400px]',
+    md: isFullMobile ? 'w-full sm:w-[92vw] max-w-[500px] md:w-[500px]' : 'w-[92vw] max-w-[500px] md:w-[500px]',
+    lg: isFullMobile ? 'w-full sm:w-[95vw] max-w-[800px] md:w-[800px]' : 'w-[95vw] max-w-[800px] md:w-[800px]',
+    xl: isFullMobile ? 'w-full sm:w-[95vw] max-w-[1100px] md:w-[1100px]' : 'w-[95vw] max-w-[1100px] md:w-[1100px]',
+    full: 'w-full h-full'
   };
   const { openName, close } = useContext(ModalContext);
   const isWindowOpen = openName === name;
@@ -237,38 +256,25 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, 
   useEffect(() => {
     if (!isClient) return;
     const body = document.body;
-    const rootNode = document.documentElement;
-
-    const restoreScroll = () => {
-      const top = parseFloat(body.style.top) * -1;
-      body.style.overflow = '';
-      body.style.paddingRight = '';
-      body.style.top = '';
-      body.classList.remove("fixed", "w-full");
-      if (top) {
-        window.scrollTo(0, top);
-      }
-    };
+    const html = document.documentElement;
 
     if (isWindowOpen) {
-      // Save current scroll position
-      const scrollTop = window.pageYOffset || rootNode.scrollTop || body.scrollTop;
-      // Add class to prevent scrolling
-      body.style.overflow = 'hidden';
-      body.style.paddingRight = '17px'; // Compensate for scrollbar
-      body.style.top = `-${scrollTop}px`;
-      body.classList.add("fixed", "w-full");
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      body.style.overflow = "hidden";
+      html.style.overflow = "hidden";
+      if (scrollbarWidth > 0) {
+        body.style.paddingRight = `${scrollbarWidth}px`;
+      }
     } else {
-      // Restore scroll position when logically closing
-      restoreScroll();
+      body.style.overflow = "";
+      html.style.overflow = "";
+      body.style.paddingRight = "";
     }
 
-    // Cleanup: ALWAYS restore scroll on unmount if it was open. 
-    // This catches router.push() unmounts that completely tear down the modal tree mid-flight.
     return () => {
-      if (isWindowOpen) {
-        restoreScroll();
-      }
+      body.style.overflow = "";
+      html.style.overflow = "";
+      body.style.paddingRight = "";
     };
   }, [isClient, isWindowOpen]);
 
@@ -283,17 +289,38 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, 
           animate="show"
           exit="hidden"
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[10000] flex justify-center items-end md:items-center overflow-hidden outline-none focus:outline-none bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm"
+          className={cn(
+            "fixed inset-0 z-[10000] flex justify-center items-center overflow-hidden outline-none focus:outline-none bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-300 overscroll-contain",
+            isFullMobile ? "p-0 sm:p-6" : "p-4 sm:p-6"
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (closeOnOutsideClick && e.target === e.currentTarget) {
+              close();
+            }
+          }}
         >
             <motion.div
               variants={modalSheet}
               initial="hidden"
               animate="show"
               exit="exit"
-              ref={ref}
-              className={`md:h-auto h-[95vh] md:max-h-[90vh] ${hasFixedFooter ? 'overflow-hidden' : 'overflow-y-auto'} w-full ${sizeClasses[size]} md:rounded-card rounded-t-card shadow-glass border-t md:border border-white/20 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl`}
+              tabIndex={-1}
+              ref={(node) => {
+                if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+                if (node && isWindowOpen) node.focus();
+              }}
+              className={cn(
+                "outline-none focus:outline-none overscroll-contain w-full",
+                sizeClasses[size],
+                isFullMobile 
+                  ? "h-full sm:h-auto max-h-none sm:max-h-[90vh] rounded-none sm:rounded-card" 
+                  : "max-h-[90vh] rounded-2xl sm:rounded-card",
+                hasFixedFooter ? "overflow-hidden" : "overflow-y-auto",
+                noPadding ? "bg-transparent border-0 shadow-none" : (isFullMobile ? "shadow-none sm:shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border-0 sm:border sm:border-white/20 dark:sm:border-white/10" : "shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border border-white/20 dark:border-white/10")
+              )}
             >
-            {React.isValidElement(children) && typeof children.type === 'function'
+            {React.isValidElement(children) && (typeof children.type === 'function' || typeof children.type === 'object')
               ? React.cloneElement(children as React.ReactElement<{ onCloseModal: () => void }>, {
                   onCloseModal: close,
                 })

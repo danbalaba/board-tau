@@ -1,5 +1,6 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import ReactSelect, { components } from 'react-select';
 import { 
   DollarSign, 
   Tag, 
@@ -11,25 +12,40 @@ import {
   Wand2, 
   X,
   CheckCircle2,
-  Info
+  Info,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  AlertCircle,
+  Building2,
+  LayoutGrid,
+  Wind,
+  Sofa,
+  Utensils
 } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ReactSelect from 'react-select';
 import { cn } from '@/utils/helper';
 import { ROOM_TYPES, ROOM_TYPE_LABELS } from '@/data/roomTypes';
-import { 
+import {
   BATHROOM_ARRANGEMENTS, 
-  BATHROOM_ARRANGEMENT_LABELS,
   bedTypeOptions as CENTRAL_BED_TYPES,
-  roomAmenities as SHARED_ROOM_AMENITIES
 } from '@/data/roomAmenities';
+import { getActiveAttributes } from '@/services/taxonomy';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
+import { getCachedRoomTypes, getSyncRoomTypes } from '@/lib/landlordTaxonomyCache';
 
 interface BulkConfigureModalProps {
+  isOpen?: boolean;
   onClose: () => void;
   onApply: (template: any) => void;
-  roomCount: number;
-  commonBathroomCount: number;
+  roomCount?: number;
+  totalRooms?: number;
+  commonBathroomCount?: number;
+  propertyTypeId?: string;
+  isLoading?: boolean;
 }
 
 // Field error state type
@@ -43,69 +59,130 @@ interface FieldErrors {
   bathroomArrangement?: string;
 }
 
-const selectClassNames = {
-  control: (state: any) =>
-    `!bg-white dark:!bg-gray-800 !border ${state.isFocused ? '!border-primary !ring-1 !ring-primary shadow-lg shadow-primary/10' : '!border-gray-200 dark:!border-gray-700'} !rounded-2xl !p-[5px] !shadow-sm transition-all text-[15px]`,
-  singleValue: () => `!text-text-primary dark:!text-gray-100 font-bold`,
-  menu: () => `!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-700 !shadow-2xl !rounded-2xl !mt-2 z-[60] overflow-hidden`,
-  option: (state: any) => `!cursor-pointer ${state.isSelected ? '!bg-primary/10 !text-primary font-black' : state.isFocused ? '!bg-gray-100 dark:!bg-gray-700 !text-text-primary dark:!text-gray-100' : '!bg-transparent dark:!bg-transparent !text-text-primary dark:!text-gray-100'} !px-4 !py-3 !text-xs uppercase tracking-widest transition-colors`,
+const CustomDropdownIndicator = (props: any) => {
+  return (
+    <components.DropdownIndicator {...props}>
+      <div className={cn(
+        "w-7 h-7 rounded-xl flex items-center justify-center transition-transform duration-300 mr-1",
+        props.selectProps.menuIsOpen
+          ? "bg-primary/20 text-primary rotate-180"
+          : "bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:text-primary"
+      )}>
+        <ChevronDown size={14} strokeWidth={3} />
+      </div>
+    </components.DropdownIndicator>
+  );
 };
 
-// Error control classes shared across all inline inputs
+const CustomOption = (props: any) => {
+  return (
+    <components.Option {...props}>
+      <div className="flex items-center justify-between w-full">
+        <span className="truncate font-extrabold text-xs tracking-tight">{props.data.label}</span>
+        {props.isSelected && (
+          <div className="shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+            <Check size={12} className="text-primary dark:text-primary" strokeWidth={3.5} />
+          </div>
+        )}
+      </div>
+    </components.Option>
+  );
+};
+
 const errorControlClass = (hasError: boolean) =>
   cn(
-    'w-full bg-gray-50 dark:bg-gray-900 border rounded-2xl p-4 text-sm font-bold transition-all outline-none',
+    'w-full bg-gray-50 dark:bg-slate-900 border rounded-2xl p-4 text-sm font-bold transition-all outline-none text-slate-900 dark:text-white',
     hasError
       ? 'border-red-500 ring-1 ring-red-500/20 focus:ring-red-500/30 focus:border-red-500'
-      : 'border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary'
+      : 'border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary'
   );
 
-// Select wrapper error style
 const errorSelectClass = (hasError: boolean): any => ({
   control: (state: any) =>
     cn(
-      '!bg-white dark:!bg-gray-800 !border !rounded-2xl !p-[5px] !shadow-sm transition-all text-[15px]',
+      '!bg-white dark:!bg-slate-900 !border-2 !rounded-2xl !p-1.5 !shadow-sm transition-all text-xs font-extrabold cursor-pointer',
       hasError
-        ? '!border-red-500 !ring-1 !ring-red-500/20'
+        ? '!border-red-500 !ring-4 !ring-red-500/20'
         : state.isFocused
-        ? '!border-primary !ring-1 !ring-primary shadow-lg shadow-primary/10'
-        : '!border-gray-200 dark:!border-gray-700'
+        ? '!border-primary !ring-4 !ring-primary/10 shadow-lg shadow-primary/10'
+        : '!border-slate-200 dark:!border-slate-800 hover:!border-primary/40'
     ),
-  singleValue: () => `!text-text-primary dark:!text-gray-100 font-bold`,
-  menu: () => `!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-700 !shadow-2xl !rounded-2xl !mt-2 z-[60] overflow-hidden`,
-  option: (state: any) => `!cursor-pointer ${state.isSelected ? '!bg-primary/10 !text-primary font-black' : state.isFocused ? '!bg-gray-100 dark:!bg-gray-700' : '!bg-transparent dark:!bg-transparent'} !px-4 !py-3 !text-xs uppercase tracking-widest transition-colors`,
+  singleValue: () => '!text-slate-900 dark:!text-white font-black text-xs uppercase tracking-wider',
+  menu: () => '!bg-white dark:!bg-slate-900 !border-2 !border-slate-200 dark:!border-slate-800 !shadow-2xl !rounded-2xl !mt-2 z-[100] overflow-hidden p-1.5',
+  menuList: () => '!p-0 !bg-white dark:!bg-slate-900',
+  option: (state: any) =>
+    cn(
+      '!cursor-pointer !rounded-xl !px-3.5 !py-2.5 !text-xs !uppercase !tracking-wider transition-all !mb-1 last:!mb-0',
+      state.isSelected
+        ? '!bg-primary/10 !text-primary dark:!text-primary font-black'
+        : state.isFocused
+        ? '!bg-slate-100 dark:!bg-slate-800 !text-slate-900 dark:!text-white font-bold'
+        : '!bg-transparent !text-slate-700 dark:!text-slate-300 font-bold'
+    ),
 });
 
-const roomTypeOptions = [
-  { value: ROOM_TYPES.SOLO, label: ROOM_TYPE_LABELS.SOLO },
-  { value: ROOM_TYPES.BEDSPACE, label: ROOM_TYPE_LABELS.BEDSPACE },
+const DEFAULT_ROOM_TYPE_OPTIONS = [
+  { value: ROOM_TYPES.SOLO, label: ROOM_TYPE_LABELS.SOLO, isFlatRate: true },
+  { value: ROOM_TYPES.BEDSPACE, label: ROOM_TYPE_LABELS.BEDSPACE, isFlatRate: false },
 ];
 
 const bathroomOptions = [
   {
     value: BATHROOM_ARRANGEMENTS.PRIVATE,
     icon: <ShowerHead className="w-5 h-5" />,
-    label: 'Own Private CR',
+    label: 'Own Private Bathroom',
     description: 'Inside room unit',
   },
   {
     value: BATHROOM_ARRANGEMENTS.COMMON,
     icon: <Bath className="w-5 h-5" />,
-    label: 'Common Bathroom',
-    description: "Building hallway CR",
+    label: 'Shared Common Bathroom',
+    description: 'Building hallway facilities',
   },
 ];
 
-// Inline field error message component
 const FieldError = ({ message }: { message?: string }) =>
   message ? (
-    <p className="text-red-500 text-[9px] font-black mt-1 ml-1 uppercase tracking-[0.1em]">
+    <p className="text-red-500 text-[10px] font-black mt-1.5 ml-1 uppercase tracking-wider flex items-center gap-1">
+      <AlertCircle size={12} />
       {message}
     </p>
   ) : null;
 
-const BulkConfigureModal: React.FC<BulkConfigureModalProps> = ({ onClose, onApply, roomCount, commonBathroomCount }) => {
+const BulkConfigureModal: React.FC<BulkConfigureModalProps> = ({ 
+  onClose, 
+  onApply, 
+  roomCount, 
+  totalRooms, 
+  commonBathroomCount = 0,
+  propertyTypeId
+}) => {
+  const activeRoomCount = totalRooms || roomCount || 1;
   const toast = useResponsiveToast();
+
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [activeAmenityTab, setActiveAmenityTab] = useState<string>('KITCHEN_APP');
+
+  const [roomTypeOptions, setRoomTypeOptions] = useState<any[]>(() => {
+    if (propertyTypeId) {
+      const sync = getSyncRoomTypes(propertyTypeId);
+      if (sync && sync.length > 0) return sync;
+    }
+    return DEFAULT_ROOM_TYPE_OPTIONS;
+  });
+
+  useEffect(() => {
+    if (propertyTypeId) {
+      const sync = getSyncRoomTypes(propertyTypeId);
+      if (sync && sync.length > 0) {
+        setRoomTypeOptions(sync);
+        return;
+      }
+      getCachedRoomTypes(propertyTypeId).then(options => {
+        if (options && options.length > 0) setRoomTypeOptions(options);
+      });
+    }
+  }, [propertyTypeId]);
 
   const [template, setTemplate] = useState({
     roomType: '',
@@ -119,31 +196,75 @@ const BulkConfigureModal: React.FC<BulkConfigureModalProps> = ({ onClose, onAppl
     capacity: '0',
   });
 
-  // Inline field error state — mirrors RoomConfigStep's React Hook Form errors
+  // Dynamic field labels driven by selectedRoomType.isFlatRate
+  const selectedRoomTypeObj = roomTypeOptions.find((o: any) => o.value === template.roomType);
+  const isFlatRate = selectedRoomTypeObj?.isFlatRate ?? (template.roomType === ROOM_TYPES.SOLO);
+
+  const roomTypeLabel = isFlatRate ? 'Unit Layout' : 'Room Category';
+  const priceLabel = isFlatRate ? 'Monthly Unit Price (₱)' : 'Monthly Rate Per Head (₱)';
+  const sizeLabel = isFlatRate ? 'Unit Floor Area (SQM)' : 'Room Size (SQM)';
+  const capacityLabel = isFlatRate ? 'Total Unit Capacity' : 'Total Bedspace Capacity';
+
+  const [dynamicAttributes, setDynamicAttributes] = React.useState<any[]>([]);
+  const [isLoadingAttrs, setIsLoadingAttrs] = React.useState(true);
+
+  React.useEffect(() => {
+    getActiveAttributes().then(attrs => {
+      setDynamicAttributes(attrs.filter((a: any) => a.type === 'ROOM_AMENITY'));
+      setIsLoadingAttrs(false);
+    });
+  }, []);
+
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const clearFieldError = (field: keyof FieldErrors) => {
     setFieldErrors(prev => ({ ...prev, [field]: undefined }));
   };
 
-  const getBedTypeOptions = (roomType: string) => {
-    if (roomType === ROOM_TYPES.SOLO) {
+  const getBedTypeOptions = (roomTypeId: string) => {
+    const rt = roomTypeOptions.find(o => o.value === roomTypeId);
+    if (rt && Array.isArray(rt.bedSetups) && rt.bedSetups.length > 0) {
+      return rt.bedSetups
+        .filter((bs: any) => bs.code !== 'ANY' && !bs.name.toLowerCase().includes('any bed'))
+        .map((bs: any) => ({
+          value: bs.code,
+          label: bs.name,
+        }));
+    }
+    if (rt && rt.isFlatRate) {
       return CENTRAL_BED_TYPES.filter(o => ['SINGLE', 'DOUBLE', 'QUEEN'].includes(o.value));
     }
-    if (roomType === ROOM_TYPES.BEDSPACE) {
-      return CENTRAL_BED_TYPES.filter(o => ['SINGLE', 'BUNK'].includes(o.value));
-    }
-    return CENTRAL_BED_TYPES;
+    return CENTRAL_BED_TYPES.filter(o => ['SINGLE', 'BUNK'].includes(o.value));
   };
 
   const handleRoomTypeChange = (val: any) => {
     const newType = val.value;
-    const isSolo = newType === ROOM_TYPES.SOLO;
-    const bedType = isSolo ? 'SINGLE' : 'BUNK';
-    const multiplier = bedType === 'BUNK' ? 2 : 1;
+    const rt = roomTypeOptions.find(o => o.value === newType);
+    const flatRate = rt?.isFlatRate ?? (newType === ROOM_TYPES.SOLO);
+
+    const availableBedOptions = getBedTypeOptions(newType);
+    const defaultBedType = availableBedOptions.length > 0 ? availableBedOptions[0].value : (flatRate ? 'SINGLE' : 'BUNK');
+
+    const isBunk = defaultBedType.toUpperCase().includes('BUNK');
+    const multiplier = isBunk ? 2 : 1;
     const capacity = template.bedCount ? (parseInt(template.bedCount) * multiplier).toString() : '0';
+    
+    // Apartments/Studios or properties with 0 common CRs auto-set private bathroom. Otherwise preserve selection or leave empty for mandatory choice.
+    const bathroomArrangement = flatRate || commonBathroomCount === 0 
+      ? BATHROOM_ARRANGEMENTS.PRIVATE 
+      : template.bathroomArrangement;
+
     clearFieldError('roomType');
-    setTemplate(prev => ({ ...prev, roomType: newType, bedType, capacity }));
+    clearFieldError('bedType');
+    clearFieldError('bathroomArrangement');
+
+    setTemplate(prev => ({ 
+      ...prev, 
+      roomType: newType, 
+      bedType: defaultBedType, 
+      capacity,
+      bathroomArrangement
+    }));
   };
 
   const handleBeddingChange = (field: 'bedType' | 'bedCount', value: string) => {
@@ -165,446 +286,691 @@ const BulkConfigureModal: React.FC<BulkConfigureModalProps> = ({ onClose, onAppl
     }));
   };
 
-  const handleApplyClick = () => {
+  const validateStep = (step: number): boolean => {
     const newErrors: FieldErrors = {};
 
-    // Room Type
-    if (!template.roomType) {
-      newErrors.roomType = 'Room type is required';
+    if (step === 1) {
+      if (!template.roomType) newErrors.roomType = 'Please select a unit layout / category';
+
+      if (!template.price) {
+        newErrors.price = 'Monthly price is required';
+      } else {
+        const price = parseInt(template.price);
+        if (isNaN(price) || price < 500) newErrors.price = 'Minimum price is ₱500';
+        else if (price > 500000) newErrors.price = 'Maximum price is ₱500,000';
+      }
+
+      if (!template.reservationFee) {
+        newErrors.reservationFee = 'Reservation fee is required';
+      } else {
+        const fee = parseInt(template.reservationFee);
+        if (isNaN(fee) || fee < 100) newErrors.reservationFee = 'Minimum fee is ₱100';
+        else if (fee > 50000) newErrors.reservationFee = 'Maximum fee is ₱50,000';
+      }
+
+      if (!template.size) {
+        newErrors.size = 'Floor space is required';
+      } else {
+        const size = parseFloat(template.size);
+        if (isNaN(size) || size < 5) newErrors.size = 'Minimum area is 5 SQM';
+        else if (size > 100) newErrors.size = 'Maximum area is 100 SQM';
+      }
     }
 
-    // Price
-    if (!template.price) {
-      newErrors.price = 'Monthly price is required';
-    } else {
-      const price = parseInt(template.price);
-      if (isNaN(price) || price < 500) newErrors.price = 'Minimum price is ₱500';
-      else if (price > 50000) newErrors.price = 'Maximum price is ₱50,000';
+    if (step === 2) {
+      if (!template.bedType) newErrors.bedType = 'Please select a bed type';
+
+      if (!template.bedCount) {
+        newErrors.bedCount = 'Bed count is required';
+      } else {
+        const beds = parseInt(template.bedCount);
+        if (isNaN(beds) || beds < 1) newErrors.bedCount = 'Minimum is 1 bed';
+        else if (beds > 10) newErrors.bedCount = 'Maximum is 10 beds';
+      }
     }
 
-    // Reservation Fee
-    if (!template.reservationFee) {
-      newErrors.reservationFee = 'Reservation fee is required';
-    } else {
-      const fee = parseInt(template.reservationFee);
-      if (isNaN(fee) || fee < 500) newErrors.reservationFee = 'Minimum fee is ₱500';
-      else if (fee > 50000) newErrors.reservationFee = 'Maximum fee is ₱50,000';
+    if (step === 3) {
+      if (!template.bathroomArrangement) {
+        newErrors.bathroomArrangement = 'Please select a bathroom setup option';
+      }
     }
 
-    // Room Size
-    if (!template.size) {
-      newErrors.size = 'Room size is required';
-    } else {
-      const size = parseFloat(template.size);
-      if (isNaN(size) || size < 5) newErrors.size = 'Minimum size is 5 SQM';
-      else if (size > 100) newErrors.size = 'Maximum size is 100 SQM';
-    }
-
-    // Bed Type
-    if (!template.bedType) {
-      newErrors.bedType = 'Bed type is required';
-    }
-
-    // Bed Count
-    if (!template.bedCount) {
-      newErrors.bedCount = 'Bed count is required';
-    } else {
-      const beds = parseInt(template.bedCount);
-      if (isNaN(beds) || beds < 1) newErrors.bedCount = 'Minimum is 1 bed';
-      else if (beds > 10) newErrors.bedCount = 'Maximum is 10 beds';
-    }
-
-    // Bathroom Arrangement
-    if (!template.bathroomArrangement) {
-      newErrors.bathroomArrangement = 'Please select a bathroom setup';
-    }
-
-    // If any errors, set state, show toast and scroll to first error field
     if (Object.keys(newErrors).length > 0) {
       setFieldErrors(newErrors);
-      toast.error('Please fix the highlighted fields before applying.');
-
-      // Field ID map for scroll targeting
-      const fieldIdMap: Record<string, string> = {
-        roomType: 'bulk-roomType',
-        price: 'bulk-price',
-        reservationFee: 'bulk-reservationFee',
-        size: 'bulk-size',
-        bedType: 'bulk-bedType',
-        bedCount: 'bulk-bedCount',
-        bathroomArrangement: 'bulk-bathroom',
-      };
-      const firstErrorKey = Object.keys(newErrors)[0];
-      const targetId = fieldIdMap[firstErrorKey];
-      if (targetId) {
-        setTimeout(() => {
-          const el = document.getElementById(targetId);
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.classList.add('animate-shake');
-            setTimeout(() => el.classList.remove('animate-shake'), 700);
-          }
-        }, 80);
-      }
-      return;
+      return false;
     }
 
     setFieldErrors({});
+    return true;
+  };
+
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => (prev < 5 ? (prev + 1) as any : 5));
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep(prev => (prev > 1 ? (prev - 1) as any : 1));
+  };
+
+  const handleApplyClick = () => {
+    for (let s = 1; s <= 3; s++) {
+      if (!validateStep(s)) {
+        setCurrentStep(s as any);
+        return;
+      }
+    }
     onApply(template);
   };
 
   return (
-    <div className="flex flex-col">
+    <motion.div 
+      className="flex flex-col text-slate-800 dark:text-slate-200 w-full p-4 sm:p-7 space-y-3.5 sm:space-y-5 h-full sm:h-auto max-h-none sm:max-h-[88vh] bg-white dark:bg-slate-900 rounded-none sm:rounded-3xl"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       {/* Header */}
-      <div className="px-8 py-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-800 sticky top-0 z-[70]">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-primary/10 rounded-2xl text-primary animate-pulse">
-            <Wand2 size={24} />
+      <div className="shrink-0 space-y-3">
+        <div className="flex items-center justify-between pb-3.5 border-b border-slate-200 dark:border-slate-800 gap-2">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0">
+              <Wand2 size={20} className="sm:w-5 sm:h-5" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-xl font-black text-slate-900 dark:text-white tracking-tight truncate">
+                Bulk Unit Configuration
+              </h2>
+              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5 truncate">
+                Apply consistent settings to all {activeRoomCount} units at once.
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Group Setup Wizard</h3>
-            <p className="text-xs font-bold text-gray-500 dark:text-gray-400">Apply settings to all {roomCount} units at once</p>
+
+          <div className="flex items-center gap-3">
+            <div className="px-3.5 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-black uppercase tracking-wider shrink-0">
+              Step {currentStep} of 5
+            </div>
+            <button 
+              type="button"
+              onClick={onClose} 
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <X size={18} />
+            </button>
           </div>
         </div>
-        <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors">
-          <X size={20} className="text-gray-400" />
-        </button>
+
+        {/* Wizard Progress Bar */}
+        <div className="w-full bg-slate-100 dark:bg-slate-900 h-1.5 rounded-full overflow-hidden">
+          <motion.div
+            className="bg-primary h-full rounded-full transition-all duration-300"
+            initial={{ width: "20%" }}
+            animate={{ width: `${currentStep * 20}%` }}
+          />
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="px-10 py-10 space-y-12 pb-32">
-        {/* Warning Banner */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-[2rem] p-6 flex items-center gap-5 shadow-inner"
-        >
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-600 shrink-0">
-            <Info size={24} />
-          </div>
-          <div>
-            <p className="text-[11px] font-black text-amber-800 dark:text-amber-400 uppercase tracking-widest leading-relaxed">
-              Global Overwrite Warning
-            </p>
-            <p className="text-[10px] font-bold text-amber-700/60 dark:text-amber-400/60 uppercase tracking-tighter mt-0.5 leading-relaxed">
-              Applying these settings will replace existing data for <span className="text-amber-600 font-black">all {roomCount} units</span>. This action is irreversible.
-            </p>
-          </div>
-        </motion.div>
+      {/* Step Container (Auto-sizing, no inner scrollbar overflowing modal) */}
+      <div className="flex-1 overflow-y-auto pr-1 py-1 space-y-5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <AnimatePresence mode="wait">
 
-        {/* Section 1: Types & Pricing */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          className="space-y-8"
-        >
-          <div className="flex items-center justify-between">
-            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-gray-400 flex items-center gap-3">
-              <div className="w-8 h-[2px] bg-primary shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-              Pricing & Room Type
-            </h4>
-            <span className="px-3 py-1 bg-primary/10 text-primary text-[9px] font-black uppercase tracking-widest rounded-full border border-primary/20">Step 01</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Room Type */}
-            <div id="bulk-roomType" className="space-y-3">
-              <label className={cn(
-                "block text-[10px] font-black uppercase tracking-[0.2em] ml-1",
-                fieldErrors.roomType ? "text-red-500" : "text-gray-400"
-              )}>
-                Unit Category <span className="text-red-500">*</span>
-              </label>
-              <ReactSelect
-                options={roomTypeOptions}
-                placeholder="Select category..."
-                classNames={errorSelectClass(!!fieldErrors.roomType)}
-                onChange={handleRoomTypeChange}
-              />
-              <FieldError message={fieldErrors.roomType} />
-            </div>
-
-            {/* Monthly Price */}
-            <div id="bulk-price" className="space-y-3">
-              <label className={cn(
-                "block text-[10px] font-black uppercase tracking-[0.2em] ml-1",
-                fieldErrors.price ? "text-red-500" : "text-gray-400"
-              )}>
-                Monthly Rental (PHP) <span className="text-red-500">*</span>
-              </label>
-              <div className="relative group">
-                <input
-                  type="number"
-                  placeholder="e.g. 8500"
-                  className={cn(errorControlClass(!!fieldErrors.price), "h-14 bg-white dark:bg-gray-800 border-2")}
-                  value={template.price}
-                  onChange={(e) => {
-                    clearFieldError('price');
-                    setTemplate({ ...template, price: e.target.value });
-                  }}
-                />
-                <DollarSign size={18} className={cn("absolute right-5 top-1/2 -translate-y-1/2 transition-colors", fieldErrors.price ? "text-red-400" : "text-gray-300 group-focus-within:text-primary")} />
+          {/* STEP 1: Basic Info & Pricing (Dynamic Labels based on isFlatRate) */}
+          {currentStep === 1 && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, x: 15 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -15 }}
+              className="space-y-6"
+            >
+              <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-center gap-3">
+                <Sparkles size={18} className="text-primary shrink-0" />
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                  Select unit layout and pricing rules to apply across all {activeRoomCount} units.
+                </p>
               </div>
-              <FieldError message={fieldErrors.price} />
-            </div>
 
-            {/* Reservation Fee */}
-            <div id="bulk-reservationFee" className="space-y-3">
-              <label className={cn(
-                "block text-[10px] font-black uppercase tracking-[0.2em] ml-1",
-                fieldErrors.reservationFee ? "text-red-500" : "text-gray-400"
-              )}>
-                Reservation Fee <span className="text-red-500">*</span>
-              </label>
-              <div className="relative group">
-                <input
-                  type="number"
-                  placeholder="e.g. 500"
-                  className={cn(errorControlClass(!!fieldErrors.reservationFee), "h-14 bg-white dark:bg-gray-800 border-2")}
-                  value={template.reservationFee}
-                  onChange={(e) => {
-                    clearFieldError('reservationFee');
-                    setTemplate({ ...template, reservationFee: e.target.value });
-                  }}
-                />
-                <Tag size={18} className={cn("absolute right-5 top-1/2 -translate-y-1/2 transition-colors", fieldErrors.reservationFee ? "text-red-400" : "text-gray-300 group-focus-within:text-primary")} />
-              </div>
-              <FieldError message={fieldErrors.reservationFee} />
-            </div>
+              <div className="grid grid-cols-2 gap-3 sm:gap-6">
+                {/* Dynamic Room Category / Unit Layout */}
+                <div id="bulk-roomType" className="col-span-2 space-y-1.5 sm:space-y-2">
+                  <label className="block text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 ml-1">
+                    {roomTypeLabel} <span className="text-red-500 ml-0.5">*</span>
+                  </label>
+                  <ReactSelect
+                    options={roomTypeOptions}
+                    placeholder="Select category / layout..."
+                    classNames={errorSelectClass(!!fieldErrors.roomType)}
+                    components={{
+                      DropdownIndicator: CustomDropdownIndicator,
+                      Option: CustomOption,
+                      IndicatorSeparator: () => null,
+                    }}
+                    value={roomTypeOptions.find(o => o.value === template.roomType) || null}
+                    onChange={handleRoomTypeChange}
+                    menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+                    menuPosition="fixed"
+                    styles={{
+                      menuPortal: (base: any) => ({ ...base, zIndex: 99999 })
+                    }}
+                  />
+                  <FieldError message={fieldErrors.roomType} />
+                </div>
 
-            {/* Room Size */}
-            <div id="bulk-size" className="space-y-3">
-              <label className={cn(
-                "block text-[10px] font-black uppercase tracking-[0.2em] ml-1",
-                fieldErrors.size ? "text-red-500" : "text-gray-400"
-              )}>
-                Floor Area (SQM) <span className="text-red-500">*</span>
-              </label>
-              <div className="relative group">
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 15"
-                  className={cn(errorControlClass(!!fieldErrors.size), "h-14 bg-white dark:bg-gray-800 border-2")}
-                  value={template.size}
-                  onChange={(e) => {
-                    clearFieldError('size');
-                    setTemplate({ ...template, size: e.target.value });
-                  }}
-                />
-                <Maximize2 size={18} className={cn("absolute right-5 top-1/2 -translate-y-1/2 transition-colors", fieldErrors.size ? "text-red-400" : "text-gray-300 group-focus-within:text-primary")} />
-              </div>
-              <FieldError message={fieldErrors.size} />
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Section 2: Bedding Setup */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          className="space-y-8"
-        >
-          <div className="flex items-center justify-between">
-            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-gray-400 flex items-center gap-3">
-              <div className="w-8 h-[2px] bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
-              Bed Types
-            </h4>
-            <span className="px-3 py-1 bg-indigo-500/10 text-indigo-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-indigo-500/20">Step 02</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Bed Type */}
-            <div className="space-y-3">
-              <label className={cn(
-                "block text-[10px] font-black uppercase tracking-[0.2em] ml-1",
-                fieldErrors.bedType ? "text-red-500" : "text-gray-400"
-              )}>
-                Bed Types <span className="text-red-500">*</span>
-              </label>
-              <ReactSelect
-                options={getBedTypeOptions(template.roomType)}
-                placeholder="Select bed type..."
-                classNames={errorSelectClass(!!fieldErrors.bedType)}
-                value={CENTRAL_BED_TYPES.find(o => o.value === template.bedType) || null}
-                onChange={(val: any) => { clearFieldError('bedType'); handleBeddingChange('bedType', val.value); }}
-              />
-              <FieldError message={fieldErrors.bedType} />
-            </div>
-
-            {/* Bed Count */}
-            <div className="space-y-3">
-              <label className={cn(
-                "block text-[10px] font-black uppercase tracking-[0.2em] ml-1",
-                fieldErrors.bedCount ? "text-red-500" : "text-gray-400"
-              )}>
-                Beds per Room <span className="text-red-500">*</span>
-              </label>
-              <div className="relative group">
-                <input
-                  id="bulk-bedCount"
-                  type="number"
-                  placeholder="e.g. 1"
-                  className={cn(errorControlClass(!!fieldErrors.bedCount), "h-14 bg-white dark:bg-gray-800 border-2")}
-                  value={template.bedCount}
-                  onChange={(e) => { clearFieldError('bedCount'); handleBeddingChange('bedCount', e.target.value); }}
-                />
-                <Bed size={18} className={cn("absolute right-5 top-1/2 -translate-y-1/2 transition-colors", fieldErrors.bedCount ? "text-red-400" : "text-gray-300 group-focus-within:text-primary")} />
-              </div>
-              <FieldError message={fieldErrors.bedCount} />
-            </div>
-
-            {/* Calculated Capacity */}
-            <div className="space-y-3">
-              {(() => {
-                const bedCountNum = parseInt(template.bedCount) || 0;
-                const isInvalid = template.bedCount !== '' && (bedCountNum < 1 || bedCountNum > 10);
-                return (
-                  <>
-                    <label className={cn(
-                      "block text-[10px] font-black uppercase tracking-[0.2em] ml-1",
-                      isInvalid ? "text-rose-500" : "text-indigo-600"
-                    )}>
-                      Total Guests Allowed
-                    </label>
-                    <div className={cn(
-                      "h-14 w-full rounded-[1.2rem] px-5 text-[11px] font-black flex items-center justify-between transition-all duration-500 border-2",
-                      isInvalid
-                        ? "bg-rose-500/5 border-rose-500/20 text-rose-500"
-                        : "bg-indigo-500/5 border-indigo-500/20 text-indigo-600 shadow-xl shadow-indigo-500/5"
-                    )}>
-                      <span>{isInvalid ? '-- PAX' : `${template.capacity} PAX TOTAL`}</span>
-                      <Users size={18} className={cn("opacity-40", isInvalid ? "text-rose-500" : "text-indigo-600")} />
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Section 3: Bathroom Setup */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          className="space-y-8"
-        >
-          <div className="flex items-center justify-between">
-            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-gray-400 flex items-center gap-3">
-              <div className="w-8 h-[2px] bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-              Bathroom Setup
-            </h4>
-            <span className="px-3 py-1 bg-blue-500/10 text-blue-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-blue-500/20">Step 03</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {bathroomOptions.map(option => {
-              const isSelected = template.bathroomArrangement === option.value;
-              const isDisabled = option.value === BATHROOM_ARRANGEMENTS.COMMON && commonBathroomCount === 0;
-              const hasError = !!fieldErrors.bathroomArrangement && !isDisabled;
-
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  disabled={isDisabled}
-                  onClick={() => {
-                    if (!isDisabled) {
-                      clearFieldError('bathroomArrangement');
-                      setTemplate({ ...template, bathroomArrangement: option.value });
-                    }
-                  }}
-                  className={cn(
-                    "group/opt flex flex-col items-center text-center p-8 rounded-[2.5rem] border-2 transition-all duration-500",
-                    isSelected
-                      ? "border-blue-600 bg-blue-600/5 dark:bg-blue-600/10 shadow-2xl shadow-blue-600/10"
-                      : hasError
-                      ? "border-rose-500 bg-rose-500/5"
-                      : "border-gray-50 dark:border-gray-800 bg-white dark:bg-transparent hover:border-blue-600/30",
-                    isDisabled && "opacity-40 grayscale cursor-not-allowed border-dashed bg-gray-50/50"
-                  )}
-                >
-                  <div className={cn(
-                    "w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all duration-500",
-                    isSelected ? "bg-blue-600 text-white scale-110 rotate-6 shadow-lg shadow-blue-600/30" : "bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover/opt:bg-blue-600/10 group-hover/opt:text-blue-600"
-                  )}>
-                    {option.icon}
+                {/* Dynamic Monthly Price Label */}
+                <div id="bulk-price" className="space-y-1.5 sm:space-y-2 min-w-0">
+                  <label className="block text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 ml-1 truncate">
+                    {priceLabel} <span className="text-red-500 ml-0.5">*</span>
+                  </label>
+                  <div className="relative group">
+                    <input
+                      type="number"
+                      placeholder="e.g. 8500"
+                      className={errorControlClass(!!fieldErrors.price)}
+                      value={template.price}
+                      onChange={(e) => {
+                        clearFieldError('price');
+                        setTemplate({ ...template, price: e.target.value });
+                      }}
+                    />
+                    <DollarSign size={16} className={cn("absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 transition-colors", fieldErrors.price ? "text-red-400" : "text-slate-400 group-focus-within:text-primary")} />
                   </div>
-                  <span className={cn("text-[11px] font-black uppercase tracking-widest mb-1.5", isSelected ? "text-blue-600" : "text-gray-900 dark:text-white")}>
-                    {option.label}
-                  </span>
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter leading-relaxed">
-                    {isDisabled ? "Building profile has no common facilities" : option.description}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          <FieldError message={fieldErrors.bathroomArrangement} />
-        </motion.div>
+                  <FieldError message={fieldErrors.price} />
+                </div>
 
-        {/* Section 4: Unit Amenities */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          className="space-y-8"
-        >
-          <div className="flex items-center justify-between">
-            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-gray-400 flex items-center gap-3">
-              <div className="w-8 h-[2px] bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-              Unit Amenities
-            </h4>
-            <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-emerald-500/20">Final Phase</span>
-          </div>
+                {/* Reservation Fee */}
+                <div id="bulk-reservationFee" className="space-y-1.5 sm:space-y-2 min-w-0">
+                  <label className="block text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 ml-1 truncate">
+                    Reservation Fee (₱) <span className="text-red-500 ml-0.5">*</span>
+                  </label>
+                  <div className="relative group">
+                    <input
+                      type="number"
+                      placeholder="e.g. 1000"
+                      className={errorControlClass(!!fieldErrors.reservationFee)}
+                      value={template.reservationFee}
+                      onChange={(e) => {
+                        clearFieldError('reservationFee');
+                        setTemplate({ ...template, reservationFee: e.target.value });
+                      }}
+                    />
+                    <Tag size={16} className={cn("absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 transition-colors", fieldErrors.reservationFee ? "text-red-400" : "text-slate-400 group-focus-within:text-primary")} />
+                  </div>
+                  <FieldError message={fieldErrors.reservationFee} />
+                </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {SHARED_ROOM_AMENITIES.map((amenity, i) => {
-              const isSelected = template.amenities.includes(amenity.value);
-              const Icon = amenity.icon;
-              return (
-                <motion.button
-                  key={amenity.value}
-                  type="button"
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleAmenityToggle(amenity.value)}
-                  className={cn(
-                    "flex items-center gap-3 p-5 rounded-[1.5rem] border-2 transition-all duration-500",
-                    isSelected
-                      ? "border-emerald-500 bg-emerald-500/5 text-emerald-600 shadow-xl shadow-emerald-500/5"
-                      : "border-gray-50 dark:border-gray-800 bg-white dark:bg-transparent hover:border-emerald-500/20"
-                  )}
-                >
-                  <Icon size={16} className={cn("transition-transform duration-500", isSelected ? "text-emerald-500 rotate-6" : "text-gray-400")} />
-                  <span className="text-[10px] font-black uppercase tracking-tight truncate">{amenity.label}</span>
-                </motion.button>
-              );
-            })}
-          </div>
-        </motion.div>
+                {/* Dynamic Floor Space Label */}
+                <div id="bulk-size" className="col-span-2 space-y-1.5 sm:space-y-2">
+                  <label className="block text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 ml-1">
+                    {sizeLabel} <span className="text-red-500 ml-0.5">*</span>
+                  </label>
+                  <div className="relative group">
+                    <input
+                      type="number"
+                      step="0.1"
+                      placeholder="e.g. 15"
+                      className={errorControlClass(!!fieldErrors.size)}
+                      value={template.size}
+                      onChange={(e) => {
+                        clearFieldError('size');
+                        setTemplate({ ...template, size: e.target.value });
+                      }}
+                    />
+                    <Maximize2 size={16} className={cn("absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 transition-colors", fieldErrors.size ? "text-red-400" : "text-slate-400 group-focus-within:text-primary")} />
+                  </div>
+                  <FieldError message={fieldErrors.size} />
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 2: Bedding & Capacity */}
+          {currentStep === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 15 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -15 }}
+              className="space-y-6"
+            >
+              <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-center gap-3">
+                <Bed size={18} className="text-primary shrink-0" />
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                  Configure bedding details. Total capacity is calculated automatically based on bed type.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6">
+                {/* Bed Type */}
+                <div id="bulk-bedType" className="col-span-2 sm:col-span-1 space-y-1.5 sm:space-y-2">
+                  <label className="block text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 ml-1">
+                    Bed Type <span className="text-red-500 ml-0.5">*</span>
+                  </label>
+                  {(() => {
+                    const bedOpts = getBedTypeOptions(template.roomType);
+                    const selectedBedOpt = bedOpts.find((o: any) => o.value === template.bedType) || (bedOpts.length > 0 ? bedOpts[0] : null);
+
+                    return (
+                      <ReactSelect
+                        options={bedOpts}
+                        placeholder="Select bed type..."
+                        classNames={errorSelectClass(!!fieldErrors.bedType)}
+                        components={{
+                          DropdownIndicator: CustomDropdownIndicator,
+                          Option: CustomOption,
+                          IndicatorSeparator: () => null,
+                        }}
+                        value={selectedBedOpt}
+                        onChange={(val: any) => { clearFieldError('bedType'); handleBeddingChange('bedType', val?.value || ''); }}
+                        menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+                        menuPosition="fixed"
+                        styles={{
+                          menuPortal: (base: any) => ({ ...base, zIndex: 99999 })
+                        }}
+                      />
+                    );
+                  })()}
+                  <FieldError message={fieldErrors.bedType} />
+                </div>
+
+                {/* Beds per Room */}
+                <div id="bulk-bedCount" className="space-y-1.5 sm:space-y-2 min-w-0">
+                  <label className="block text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 ml-1">
+                    Bed Count <span className="text-red-500 ml-0.5">*</span>
+                  </label>
+                  <div className="relative group">
+                    <input
+                      type="number"
+                      placeholder="e.g. 1"
+                      className={errorControlClass(!!fieldErrors.bedCount)}
+                      value={template.bedCount}
+                      onChange={(e) => { clearFieldError('bedCount'); handleBeddingChange('bedCount', e.target.value); }}
+                    />
+                    <Bed size={16} className={cn("absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 transition-colors", fieldErrors.bedCount ? "text-red-400" : "text-slate-400 group-focus-within:text-primary")} />
+                  </div>
+                  <FieldError message={fieldErrors.bedCount} />
+                </div>
+
+                {/* Dynamic Capacity Counter Label */}
+                <div className="space-y-1.5 sm:space-y-2 min-w-0">
+                  <label className="block text-[10px] sm:text-xs font-black uppercase tracking-wider text-primary ml-1 truncate">
+                    {capacityLabel}
+                  </label>
+                  <div className="h-[54px] w-full rounded-2xl px-3 sm:px-5 bg-primary/10 border-2 border-primary/30 text-primary font-black text-[11px] sm:text-xs flex items-center justify-between shadow-sm">
+                    <span className="truncate">{template.capacity} GUESTS</span>
+                    <Users size={16} className="text-primary opacity-80 shrink-0 hidden sm:block" />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 3: Bathroom Setup */}
+          {currentStep === 3 && (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0, x: 15 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -15 }}
+              className="space-y-6"
+            >
+              <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-center gap-3">
+                <ShowerHead size={18} className="text-primary shrink-0" />
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                  Select how bathroom facilities are arranged for these units.
+                </p>
+              </div>
+
+              <div id="bulk-bathroom" className="grid grid-cols-2 gap-3 sm:gap-5">
+                {bathroomOptions.map(option => {
+                  const isSelected = template.bathroomArrangement === option.value;
+                  const isDisabled = option.value === BATHROOM_ARRANGEMENTS.COMMON && commonBathroomCount === 0;
+                  const hasError = !!fieldErrors.bathroomArrangement && !isSelected;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      disabled={isDisabled}
+                      onClick={() => {
+                        if (!isDisabled) {
+                          clearFieldError('bathroomArrangement');
+                          setTemplate({ ...template, bathroomArrangement: option.value });
+                        }
+                      }}
+                      className={cn(
+                        "flex flex-col sm:flex-row items-start gap-2.5 sm:gap-4 p-3.5 sm:p-6 rounded-2xl border-2 transition-all cursor-pointer text-left select-none min-h-[64px]",
+                        isSelected
+                          ? "border-primary bg-primary/10 dark:bg-primary/15 shadow-md ring-1 ring-primary/20"
+                          : hasError
+                          ? "border-red-500 bg-red-500/5 ring-1 ring-red-500/20"
+                          : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-primary/40",
+                        isDisabled && "opacity-40 cursor-not-allowed border-dashed bg-slate-50 dark:bg-slate-900/20"
+                      )}
+                    >
+                      <div className={cn(
+                        "p-2 sm:p-3 rounded-xl transition-all shrink-0 mt-0.5",
+                        isSelected ? "bg-primary text-white shadow-md shadow-primary/20" : hasError ? "bg-red-500/10 text-red-500" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                      )}>
+                        {option.icon}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className={cn("text-[11px] sm:text-xs font-black uppercase tracking-wider line-clamp-1", isSelected ? "text-primary dark:text-primary font-extrabold" : hasError ? "text-red-500" : "text-slate-800 dark:text-slate-200")}>
+                          {option.label}
+                        </h4>
+                        <p className={cn("text-[10px] sm:text-[11px] font-semibold mt-0.5 leading-tight line-clamp-2", isSelected ? "text-primary/80 dark:text-primary/80" : "text-slate-500 dark:text-slate-400")}>
+                          {isDisabled ? "No common CR registered" : option.description}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <FieldError message={fieldErrors.bathroomArrangement} />
+            </motion.div>
+          )}
+
+          {/* STEP 4: Unit Amenities (Organized Sub-Group Sub-Step Tabs) */}
+          {currentStep === 4 && (
+            <motion.div
+              key="step4"
+              initial={{ opacity: 0, x: 15 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -15 }}
+              className="space-y-5"
+            >
+              <div className="flex items-center justify-between bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-2xl p-4">
+                <div className="flex items-center gap-3">
+                  <Sparkles size={18} className="text-primary shrink-0" />
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                    Select in-unit amenities to include in all {activeRoomCount} units.
+                  </p>
+                </div>
+                <span className="px-3 py-1 bg-primary/20 text-primary text-[10px] font-black uppercase rounded-full shrink-0">
+                  {template.amenities.length} Selected
+                </span>
+              </div>
+
+              {/* Sub-Group Navigation Pills (Matching RoomConfigStep.tsx) */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border-b border-slate-100 dark:border-slate-800">
+                {(() => {
+                  const hasInUnitKitchen = true;
+                  const hasPrivateCR = template.bathroomArrangement === BATHROOM_ARRANGEMENTS.PRIVATE || commonBathroomCount === 0;
+
+                  const unitSubGroups = [
+                    ...(hasInUnitKitchen ? [{ key: 'KITCHEN_APP', label: 'Kitchen', icon: Utensils }] : []),
+                    ...(hasPrivateCR ? [{ key: 'BATHROOM_FIX', label: 'CR Features', icon: ShowerHead }] : []),
+                    { key: 'COOLING', label: 'Cooling & AC', icon: Wind },
+                    { key: 'FURNITURE', label: 'Furniture', icon: Sofa },
+                  ];
+
+                  const currentTab = unitSubGroups.some(g => g.key === activeAmenityTab) ? activeAmenityTab : (unitSubGroups[0]?.key || 'COOLING');
+
+                  return unitSubGroups.map(sg => {
+                    const Icon = sg.icon;
+                    const isActive = currentTab === sg.key;
+
+                    const selectedCountInGroup = dynamicAttributes
+                      .filter((a: any) => {
+                        if (a.type !== 'ROOM_AMENITY') return false;
+                        if (propertyTypeId && !a.isUniversal && a.propertyTypeIds && a.propertyTypeIds.length > 0) {
+                          if (!a.propertyTypeIds.includes(propertyTypeId)) return false;
+                        }
+                        if (sg.key === 'KITCHEN_APP') return a.subGroupKey === 'KITCHEN_APP' && a.setupContext === 'IN_UNIT';
+                        if (sg.key === 'BATHROOM_FIX') return a.subGroupKey === 'BATHROOM_FIX' && a.setupContext === 'PRIVATE';
+                        return a.subGroupKey === sg.key && a.setupContext !== 'SHARED' && a.setupContext !== 'COMMON_CR';
+                      })
+                      .filter((a: any) => template.amenities.includes(a.id)).length;
+
+                    const hasSelections = selectedCountInGroup > 0;
+
+                    return (
+                      <button
+                        key={sg.key}
+                        type="button"
+                        onClick={() => setActiveAmenityTab(sg.key)}
+                        className={cn(
+                          "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap border cursor-pointer select-none",
+                          isActive
+                            ? "bg-primary text-white border-primary shadow-sm"
+                            : hasSelections
+                            ? "bg-primary/10 border-primary/30 text-primary font-extrabold"
+                            : "bg-slate-100 dark:bg-slate-800 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        )}
+                      >
+                        {hasSelections && !isActive ? (
+                          <CheckCircle2 size={14} className="text-primary shrink-0" />
+                        ) : (
+                          <Icon size={14} className={cn(isActive ? "text-white" : "shrink-0")} />
+                        )}
+                        <span>{sg.label}</span>
+                        {hasSelections && (
+                          <span className={cn(
+                            "ml-1 px-1.5 py-0.5 rounded-md text-[10px] font-black",
+                            isActive ? "bg-white/20 text-white" : "bg-primary/20 text-primary"
+                          )}>
+                            {selectedCountInGroup}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  });
+                })()}
+              </div>
+
+              {/* Filtered Active Sub-Group Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {isLoadingAttrs ? (
+                  <p className="text-xs text-slate-500 font-bold uppercase animate-pulse col-span-full py-8 text-center">Loading Amenities...</p>
+                ) : (() => {
+                  const currentTab = activeAmenityTab;
+                  const filteredAmenities = dynamicAttributes.filter((a: any) => {
+                    if (a.type !== 'ROOM_AMENITY') return false;
+                    if (propertyTypeId && !a.isUniversal && a.propertyTypeIds && a.propertyTypeIds.length > 0) {
+                      if (!a.propertyTypeIds.includes(propertyTypeId)) return false;
+                    }
+                    if (currentTab === 'KITCHEN_APP') return a.subGroupKey === 'KITCHEN_APP' && a.setupContext === 'IN_UNIT';
+                    if (currentTab === 'BATHROOM_FIX') return a.subGroupKey === 'BATHROOM_FIX' && a.setupContext === 'PRIVATE';
+                    return a.subGroupKey === currentTab && a.setupContext !== 'SHARED' && a.setupContext !== 'COMMON_CR';
+                  });
+
+                  if (filteredAmenities.length === 0) {
+                    return (
+                      <p className="text-xs text-slate-400 font-bold uppercase col-span-full py-6 text-center">
+                        No amenities listed under this category.
+                      </p>
+                    );
+                  }
+
+                  return filteredAmenities.map((amenity: any) => {
+                    const isSelected = template.amenities.includes(amenity.id);
+                    const IconComp = (LucideIcons as Record<string, any>)[amenity.icon] && typeof (LucideIcons as Record<string, any>)[amenity.icon] !== 'string' ? (LucideIcons as Record<string, any>)[amenity.icon] : CheckCircle2;
+
+                    return (
+                      <div
+                        key={amenity.id}
+                        onClick={() => handleAmenityToggle(amenity.id)}
+                        className={cn(
+                          "flex items-center gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer select-none",
+                          isSelected
+                            ? "bg-primary/10 border-primary text-slate-900 dark:text-white shadow-sm ring-1 ring-primary/20 font-extrabold"
+                            : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 hover:border-primary/30"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-4 h-4 rounded-md border-2 transition-all flex items-center justify-center shrink-0",
+                          isSelected ? "bg-primary border-primary text-white" : "bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700"
+                        )}>
+                          {isSelected && <Check className="w-3 h-3 text-white stroke-[3.5px]" />}
+                        </div>
+                        <IconComp size={15} className={cn("shrink-0", isSelected ? "text-primary" : "text-slate-400")} />
+                        <span className="text-xs truncate font-bold">{amenity.name}</span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 5: Summary & Confirm */}
+          {currentStep === 5 && (
+            <motion.div
+              key="step5"
+              initial={{ opacity: 0, x: 15 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -15 }}
+              className="space-y-6"
+            >
+              {/* Overwrite Warning Banner */}
+              <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-4 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <Info size={20} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black uppercase text-amber-800 dark:text-amber-400">
+                    Ready to Apply Bulk Settings
+                  </h4>
+                  <p className="text-[11px] font-bold text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                    This configuration will be applied to <span className="font-black text-amber-800 dark:text-amber-300">all {activeRoomCount} units</span> in your inventory. You can still fine-tune individual units afterwards.
+                  </p>
+                </div>
+              </div>
+
+              {/* Summary Cards Grid */}
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
+                <div className="p-3 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 min-w-0">
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-slate-400 block truncate">{roomTypeLabel.replace(' *', '')} & Size</span>
+                  <p className="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white truncate">
+                    {selectedRoomTypeObj?.label || template.roomType} • {template.size} SQM
+                  </p>
+                </div>
+
+                <div className="p-3 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 min-w-0">
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-slate-400 block truncate">Monthly Rent & Fee</span>
+                  <p className="text-[11px] sm:text-xs font-black text-primary truncate">
+                    ₱{template.price} / mo (₱{template.reservationFee} fee)
+                  </p>
+                </div>
+
+                <div className="p-3 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 min-w-0">
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-slate-400 block truncate">Bedding & {capacityLabel}</span>
+                  <p className="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white truncate">
+                    {template.bedCount}x {CENTRAL_BED_TYPES.find(b => b.value === template.bedType)?.label || template.bedType} ({template.capacity} Pax)
+                  </p>
+                </div>
+
+                <div className="p-3 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 min-w-0">
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-slate-400 block truncate">Bathroom Setup</span>
+                  <p className="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white truncate">
+                    {template.bathroomArrangement === BATHROOM_ARRANGEMENTS.PRIVATE ? 'Own Private CR' : 'Shared Common CR'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Selected Amenities Summary Grouped by Sub-Group Category */}
+              <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Selected In-Unit Amenities
+                  </span>
+                  <span className="px-3 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-black uppercase">
+                    {template.amenities.length} Total Selected
+                  </span>
+                </div>
+
+                {template.amenities.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { key: 'KITCHEN_APP', label: 'Kitchen Appliances', icon: Utensils },
+                      { key: 'BATHROOM_FIX', label: 'CR & Bathroom Features', icon: ShowerHead },
+                      { key: 'COOLING', label: 'Cooling & AC', icon: Wind },
+                      { key: 'FURNITURE', label: 'Furniture & Storage', icon: Sofa },
+                    ].map(group => {
+                      const GroupIcon = group.icon;
+                      const groupAmenities = template.amenities
+                        .map(aId => dynamicAttributes.find(a => a.id === aId))
+                        .filter(attr => attr && attr.subGroupKey === group.key);
+
+                      if (groupAmenities.length === 0) return null;
+
+                      return (
+                        <div key={group.key} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                              <GroupIcon size={14} className="text-primary" />
+                              <span>{group.label}</span>
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-400">
+                              {groupAmenities.length} item{groupAmenities.length === 1 ? '' : 's'}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {groupAmenities.map(attr => (
+                              <span key={attr.id} className="px-3 py-1 rounded-xl bg-primary/10 text-primary text-[11px] font-bold border border-primary/20 flex items-center gap-1.5">
+                                <Check size={11} className="stroke-[3]" />
+                                {attr.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+                    <p className="text-xs italic text-slate-400 font-medium">No in-unit amenities selected for bulk setup.</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
       </div>
 
-      {/* Footer */}
-      <div className="px-8 py-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 flex items-center justify-between mt-auto">
-        <button
-          onClick={onClose}
-          className="px-6 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-gray-700 transition-colors"
-        >
-          Discard Changes
-        </button>
-        <button
-          onClick={handleApplyClick}
-          className="flex items-center gap-2 px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95"
-        >
-          <CheckCircle2 size={16} />
-          Apply to all {roomCount} units
-        </button>
+      {/* Modal Footer Controls */}
+      <div className="shrink-0 pt-3 sm:pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2.5">
+        {currentStep > 1 ? (
+          <button
+            type="button"
+            onClick={handleBack}
+            className="px-4 sm:px-5 py-2.5 sm:py-3 text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-xl sm:rounded-2xl transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <ChevronLeft size={16} /> Back
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 sm:px-5 py-2.5 sm:py-3 text-xs font-black uppercase tracking-wider text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors cursor-pointer"
+          >
+            Discard
+          </button>
+        )}
+
+        {currentStep < 5 ? (
+          <button
+            type="button"
+            onClick={handleNext}
+            className="px-5 sm:px-7 py-2.5 sm:py-3 bg-primary hover:bg-primary/90 text-white rounded-xl sm:rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-primary/20 flex items-center gap-1.5 cursor-pointer border-none"
+          >
+            <span>Next Step</span>
+            <ChevronRight size={16} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleApplyClick}
+            className="px-5 sm:px-8 py-3 sm:py-3.5 bg-primary hover:bg-primary/90 text-white rounded-xl sm:rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-primary/20 flex items-center gap-1.5 cursor-pointer border-none hover:scale-105 active:scale-95"
+          >
+            <CheckCircle2 size={16} />
+            <span>Apply to All {activeRoomCount} Units</span>
+          </button>
+        )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

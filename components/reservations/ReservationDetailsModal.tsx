@@ -1,10 +1,11 @@
 "use client";
 import React from "react";
 import Modal from "../modals/Modal";
-import { X, Calendar, CreditCard, Info, Clock, Home, MapPin, CheckCircle as IconCircleCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Calendar, CreditCard, Info, Clock, Home, MapPin, CheckCircle as IconCircleCheck, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
 import { cn } from "@/utils/helper";
 import { generateConfirmationSlipPDF } from "@/utils/slipGenerator";
+import { generateLeaseContractPDF } from "@/utils/contractPdfGenerator";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 
 interface ReservationListing {
@@ -473,6 +474,27 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
               >
                 <IconCircleCheck size={14} strokeWidth={3} className="group-hover/pass:scale-110 transition-transform" />
                 <span className="truncate">Download Pass</span>
+              </button>
+            )}
+
+            {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
+              <button
+                className="py-3 px-4 sm:px-10 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-teal-600 rounded-2xl hover:bg-teal-700 shadow-xl shadow-teal-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/contract"
+                onClick={async () => {
+                  const toastId = responsiveToast.loading("Generating your Lease Contract...");
+                  try {
+                    const res = await fetch(`/api/contracts/generate?listingId=${reservation.listingId}&userId=${reservation.userId}&roomId=${reservation.roomId}`);
+                    if (!res.ok) throw new Error("Failed to fetch contract data");
+                    const data = await res.json();
+                    await generateLeaseContractPDF(`Lease_Contract_${reservation.listingId}`, data);
+                    responsiveToast.success("Lease Contract downloaded successfully!", { id: toastId });
+                  } catch (e) {
+                    responsiveToast.error("Failed to generate Lease Contract.", { id: toastId });
+                  }
+                }}
+              >
+                <FileText size={14} strokeWidth={3} className="group-hover/contract:scale-110 transition-transform" />
+                <span className="truncate">Download Contract</span>
               </button>
             )}
 

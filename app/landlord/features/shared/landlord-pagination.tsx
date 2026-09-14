@@ -52,9 +52,9 @@ export function LandlordPagination({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6 mt-6 border-t border-gray-100 dark:border-gray-800 sm:pr-24">
-      <div className="flex items-center gap-4">
-        <span className="text-[11px] font-black uppercase tracking-[0.1em] text-gray-500">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 sm:py-6 mt-4 sm:mt-6 border-t border-gray-100 dark:border-gray-800 sm:pr-24">
+      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 sm:gap-4">
+        <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.1em] text-gray-500 text-center sm:text-left">
           Showing {startItem}-{endItem} of {totalItems} {itemName}
         </span>
 

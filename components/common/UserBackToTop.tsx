@@ -36,9 +36,10 @@ const UserBackToTop = () => {
     <AnimatePresence>
       {isVisible && (
         <motion.button
-          initial={{ opacity: 0, scale: 0.5, y: 20 }}
+          initial={{ opacity: 0, scale: 0.9, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.5, y: 20 }}
+          exit={{ opacity: 0, scale: 0.9, y: 16 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
           onClick={scrollToTop}
           className={cn(
             "fixed right-4 md:right-10 z-[60]",
@@ -47,7 +48,8 @@ const UserBackToTop = () => {
             "bg-primary text-white",
             "border border-white/20",
             "hover:bg-primary/90 hover:scale-110 active:scale-95",
-            "transition-all duration-300 group"
+            "transition-all duration-300 group",
+            pathname.startsWith('/become-a-host') && "hidden md:block"
           )}
           aria-label="Back to top"
         >

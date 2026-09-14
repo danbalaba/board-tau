@@ -80,7 +80,7 @@ describe('LandlordPropertyCard', () => {
 
       expect(screen.getByText('Test Property')).toBeInTheDocument();
       expect(screen.getByText('Metro Manila')).toBeInTheDocument();
-      expect(screen.getByText('₱5,000')).toBeInTheDocument();
+      expect(screen.getByText(/₱5,000/i)).toBeInTheDocument();
       expect(screen.getByText('3 Slots')).toBeInTheDocument(); // 2 + 1 slots
       expect(screen.getByText('ACTIVE')).toBeInTheDocument();
       expect(screen.getByText('Premium')).toBeInTheDocument();
@@ -138,7 +138,7 @@ describe('LandlordPropertyCard', () => {
         />
       );
 
-      const deleteBtn = screen.getByText('Delete Permanent').closest('button');
+      const deleteBtn = screen.getByText('Delete').closest('button');
       expect(deleteBtn).toBeInTheDocument();
       
       fireEvent.click(deleteBtn!);
@@ -163,10 +163,9 @@ describe('LandlordPropertyCard', () => {
 
       expect(screen.getByText('Test Property')).toBeInTheDocument();
       expect(screen.getByText('Metro Manila')).toBeInTheDocument();
-      expect(screen.getByText('₱5,000')).toBeInTheDocument();
-      expect(screen.getByText('Test Description')).toBeInTheDocument();
-      expect(screen.getByText('2 Rooms')).toBeInTheDocument();
-      expect(screen.getByText('1 Baths')).toBeInTheDocument();
+      expect(screen.getByText(/₱5,000/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/2 Units/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/1 Baths/i).length).toBeGreaterThan(0);
     });
 
     it('triggers actions from list view buttons', () => {
@@ -183,8 +182,8 @@ describe('LandlordPropertyCard', () => {
         />
       );
 
-      const quickViewBtn = screen.getByTitle('Quick View');
-      fireEvent.click(quickViewBtn);
+      const quickViewBtn = screen.getByText('Preview').closest('button');
+      fireEvent.click(quickViewBtn!);
       expect(mockOnView).toHaveBeenCalledWith(mockProperty);
 
       const archiveBtn = screen.getByTitle('Archive Property');

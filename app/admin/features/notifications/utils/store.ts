@@ -22,14 +22,14 @@ type NotificationState = {
 const mockNotifications: Notification[] = [
   {
     id: '1',
-    title: 'New organization member',
-    body: 'John Doe has been added to the admin team.',
+    title: 'New Property Submitted for Review',
+    body: 'TAU Student Housing Corp submitted "BALABA BOARDING HOUSE" for verification.',
     status: 'unread',
     createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
     actions: [
       {
         id: 'view',
-        label: 'View details',
+        label: 'Inspect Listing',
         type: 'redirect',
         style: 'primary'
       }
@@ -37,8 +37,8 @@ const mockNotifications: Notification[] = [
   },
   {
     id: '2',
-    title: 'System update available',
-    body: 'A new security patch is available for the platform.',
+    title: 'Landlord Verification Request',
+    body: 'New landlord host profile submitted verification documents for review.',
     status: 'unread',
     createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString()
   }

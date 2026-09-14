@@ -34,10 +34,12 @@ export async function GET(request: NextRequest) {
     
     const cacheKey = cache.generateKey("api:listings", cacheKeyParams);
     
-    // Check Redis Cache First
+    // Check Redis Cache First (only accept if it contains listings)
     const cachedData = await cache.get(cacheKey);
-    if (cachedData) {
+    if (cachedData && Array.isArray(cachedData.listings) && cachedData.listings.length > 0) {
       return NextResponse.json(cachedData);
+    } else if (cachedData) {
+      await cache.del(cacheKey);
     }
 
     let result;

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, CalendarCheck, Home, User as UserIcon, LogOut, MessageCircle, Star, UserPlus, ClipboardList, LogIn } from "lucide-react";
+import { Heart, CalendarCheck, Home, User as UserIcon, LogOut, MessageCircle, Star, UserPlus, ClipboardList, LogIn, Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { User } from "next-auth";
@@ -212,6 +212,22 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
                         </div>
                         <span>My inquiries</span>
                       </button>
+                      <button onClick={() => redirect("/notifications")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
+                        <div className="relative">
+                          <Bell className="text-sm" />
+                          {unreadStats && unreadStats.total > 0 && (
+                            <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between w-full">
+                          <span>Notifications</span>
+                          {unreadStats && unreadStats.total > 0 && (
+                            <span className="px-2 py-0.5 text-[10px] font-black bg-red-500 text-white rounded-full">
+                              {unreadStats.total > 9 ? "9+" : unreadStats.total}
+                            </span>
+                          )}
+                        </div>
+                      </button>
                       <button onClick={() => redirect("/my-reviews")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
                         <div className="relative">
                           <Star className="text-sm" />
@@ -230,12 +246,10 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
                         </div>
                         <span>My messages</span>
                       </button>
-                      <Modal.Trigger name="host-application" onClick={onClose}>
-                        <button className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
-                          <Home className="text-sm" />
-                          <span>Become a host</span>
-                        </button>
-                      </Modal.Trigger>
+                      <button onClick={() => redirect("/become-a-host")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
+                        <Home className="text-sm" />
+                        <span>Become a host</span>
+                      </button>
                       <button onClick={() => redirect("/profile")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
                         <UserIcon className="text-sm" />
                         <span>My profile</span>

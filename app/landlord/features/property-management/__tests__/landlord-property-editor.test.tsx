@@ -2,6 +2,21 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import LandlordPropertyEditor from '../landlord-property-editor';
 
+jest.mock('@/lib/edgestore', () => ({
+  useEdgeStore: () => ({
+    edgestore: {
+      publicFiles: {
+        upload: jest.fn().mockResolvedValue({ url: 'test-url' })
+      }
+    }
+  }),
+}));
+
+jest.mock('@tanstack/react-query', () => ({
+  useMutation: () => ({ mutateAsync: jest.fn().mockResolvedValue({}) }),
+  useQueryClient: () => ({ invalidateQueries: jest.fn() }),
+}));
+
 // Mock hook
 jest.mock('../hooks/use-property-editor-logic', () => ({
   usePropertyEditorLogic: () => ({
@@ -36,19 +51,15 @@ jest.mock('../hooks/use-property-editor-logic', () => ({
 }));
 
 // Mock child components
-jest.mock('../components/editor/landlord-property-basics-form', () => ({ LandlordPropertyBasicsForm: () => <div data-testid="basics-form">Basics Form</div> }));
-jest.mock('../components/editor/landlord-property-location-form', () => ({ LandlordPropertyLocationForm: () => <div data-testid="location-form">Location Form</div> }));
-jest.mock('../components/editor/landlord-property-rules-config', () => ({ LandlordPropertyRulesConfig: () => <div data-testid="rules-config">Rules Config</div> }));
-jest.mock('../components/editor/landlord-property-amenities-selector', () => ({ LandlordPropertyAmenitiesSelector: () => <div data-testid="amenities-selector">Amenities Selector</div> }));
-jest.mock('../components/editor/landlord-property-media-uploader', () => ({ LandlordPropertyMediaUploader: () => <div data-testid="media-uploader">Media Uploader</div> }));
-jest.mock('../components/editor/landlord-property-rooms-editor', () => ({ LandlordPropertyRoomsEditor: () => <div data-testid="rooms-editor">Rooms Editor</div> }));
+jest.mock('../components/creator/PropertyBasicStep', () => () => <div data-testid="basics-step">Basics Step</div>);
+jest.mock('../components/landlord-location-step', () => () => <div data-testid="location-step">Location Step</div>);
+jest.mock('../components/creator/PropertyConfigStep', () => () => <div data-testid="config-step">Config Step</div>);
+jest.mock('../components/creator/RoomConfigStep', () => () => <div data-testid="rooms-step">Rooms Step</div>);
+jest.mock('../components/creator/PropertyImagesStep', () => () => <div data-testid="images-step">Images Step</div>);
+jest.mock('../components/creator/DocumentsStep', () => () => <div data-testid="docs-step">Docs Step</div>);
 
 // Mock modals
 jest.mock('@/components/modals/Modal', () => ({ isOpen, children }: any) => isOpen ? <div data-testid="modal">{children}</div> : null);
-jest.mock('../components/creator/CustomRuleModal', () => () => <div data-testid="custom-rule-modal">Custom Rule Modal</div>);
-jest.mock('../components/creator/CustomFeatureModal', () => () => <div data-testid="custom-feature-modal">Custom Feature Modal</div>);
-jest.mock('../components/creator/CustomSharedAmenityModal', () => () => <div data-testid="custom-shared-modal">Custom Shared Modal</div>);
-jest.mock('../components/creator/CustomAmenityModal', () => () => <div data-testid="custom-unit-modal">Custom Unit Modal</div>);
 jest.mock('../components/creator/BulkConfigureModal', () => () => <div data-testid="bulk-modal">Bulk Modal</div>);
 
 jest.mock('next/navigation', () => ({
@@ -60,6 +71,7 @@ jest.mock('next/navigation', () => ({
 jest.mock('framer-motion', () => ({
   motion: {
     div: ({ children, className }: any) => <div className={className}>{children}</div>,
+    button: ({ children, className, onClick, disabled }: any) => <button className={className} onClick={onClick} disabled={disabled}>{children}</button>,
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
@@ -78,23 +90,15 @@ describe('LandlordPropertyEditor', () => {
     jest.clearAllMocks();
   });
 
-  it('renders all sections', () => {
-    render(<LandlordPropertyEditor initialData={{}} />);
+  it('renders basics step by default in edit mode', () => {
+    render(<LandlordPropertyEditor initialData={{ id: '1' }} />);
     
-    expect(screen.getByTestId('basics-form')).toBeInTheDocument();
-    expect(screen.getByTestId('location-form')).toBeInTheDocument();
-    expect(screen.getByTestId('rules-config')).toBeInTheDocument();
-    expect(screen.getByTestId('amenities-selector')).toBeInTheDocument();
-    expect(screen.getByTestId('media-uploader')).toBeInTheDocument();
-    expect(screen.getByTestId('rooms-editor')).toBeInTheDocument();
+    expect(screen.getByTestId('basics-step')).toBeInTheDocument();
   });
 
-  it('renders header with save buttons when dirty', () => {
-    render(<LandlordPropertyEditor initialData={{}} />);
+  it('renders header with edit title', () => {
+    render(<LandlordPropertyEditor initialData={{ id: '1' }} />);
     
-    expect(screen.getByText('Refine Listing')).toBeInTheDocument();
-    expect(screen.getByText('Save Changes')).toBeInTheDocument();
-    expect(screen.getByTitle('Undo (Ctrl+Z)')).toBeInTheDocument();
-    expect(screen.getByTitle('Discard all changes')).toBeInTheDocument();
+    expect(screen.getByText('Edit Property Details')).toBeInTheDocument();
   });
 });

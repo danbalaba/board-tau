@@ -8,6 +8,8 @@ import SafeImage from "@/components/common/SafeImage";
 import { useRouter } from "next/navigation";
 import { cn } from "@/utils/helper";
 import { getSafeImageSrcString } from "@/components/modals/inquiry-modal/InquiryModalUtils";
+import { generateLeaseContractPDF } from "@/utils/contractPdfGenerator";
+import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 
 interface InquiryListing {
     id: string;
@@ -84,6 +86,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [activeNotification, setActiveNotification] = useState(notification);
+    const responsiveToast = useResponsiveToast();
 
     // "Freeze" the notification data so it doesn't vanish when marked as read
     React.useEffect(() => {
@@ -478,7 +481,26 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                             onClick={() => router.push(`/messages?listingId=${inquiry.listingId}&otherUserId=${landlordId}`)}
                         >
                             <Mail size={14} strokeWidth={3} className="group-hover/msg:rotate-6 transition-transform" />
-                            <span className="truncate">Chat Landlord</span>
+                            <span className="truncate">Chat</span>
+                        </button>
+
+                        <button
+                            className="px-4 sm:px-10 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-teal-600 bg-teal-50 dark:bg-teal-900/20 border-2 border-teal-100 dark:border-teal-800/50 rounded-2xl hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-all active:scale-95 flex items-center justify-center gap-2 group/contract"
+                            onClick={async () => {
+                              const toastId = responsiveToast.loading("Generating your Lease Contract...");
+                              try {
+                                const res = await fetch(`/api/contracts/generate?listingId=${inquiry.listingId}&userId=${inquiry.userId}&roomId=${inquiry.roomId}`);
+                                if (!res.ok) throw new Error("Failed to fetch contract data");
+                                const data = await res.json();
+                                await generateLeaseContractPDF(`Lease_Contract_${inquiry.listingId}`, data);
+                                responsiveToast.success("Lease Contract downloaded successfully!", { id: toastId });
+                              } catch (e) {
+                                responsiveToast.error("Failed to generate Lease Contract.", { id: toastId });
+                              }
+                            }}
+                        >
+                            <Tag size={14} strokeWidth={3} className="group-hover/contract:rotate-6 transition-transform" />
+                            <span className="truncate">Contract</span>
                         </button>
 
                         {onCancel && inquiry.status === "PENDING" && (

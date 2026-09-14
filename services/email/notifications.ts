@@ -76,10 +76,10 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
 // Application submission confirmation email
 export const sendApplicationConfirmationEmail = async (user: any, application: any) => {
   const emailHtml = await render(React.createElement(ApplicationConfirmation, {
-    userName: user.name,
+    userName: user.name || application.contactInfo?.fullName || 'Valued Landlord',
     applicationId: application.id,
-    businessName: application.businessInfo.businessName,
-    propertyName: application.propertyInfo.propertyName
+    businessName: application.businessInfo?.businessName || 'Accommodation Establishment',
+    propertyName: application.propertyInfo?.propertyName || application.businessInfo?.businessName || 'Landlord Property'
   }));
 
   return await sendEmail({
@@ -93,7 +93,7 @@ export const sendApplicationConfirmationEmail = async (user: any, application: a
 export const sendApplicationApprovalEmail = async (user: any, application: any) => {
   const dashboardLink = `${baseUrl}/landlord`;
   const emailHtml = await render(React.createElement(ApplicationApproved, {
-    userName: user.name,
+    userName: user.name || application.contactInfo?.fullName || 'Landlord',
     dashboardLink: dashboardLink
   }));
 
@@ -107,7 +107,7 @@ export const sendApplicationApprovalEmail = async (user: any, application: any) 
 // Application rejection email
 export const sendApplicationRejectionEmail = async (user: any, application: any, reason: string) => {
   const emailHtml = await render(React.createElement(ApplicationRejected, {
-    userName: user.name,
+    userName: user.name || application.contactInfo?.fullName || 'Landlord',
     reason: reason
   }));
 
@@ -122,13 +122,13 @@ export const sendApplicationRejectionEmail = async (user: any, application: any,
 export const sendAdminApplicationNotification = async (admin: any, application: any) => {
   const adminDashboardLink = `${baseUrl}/admin/applications`;
   const emailHtml = await render(React.createElement(AdminApplicationAlert, {
-    adminName: admin.name,
+    adminName: admin.name || 'Super Admin',
     applicationId: application.id,
-    applicantName: application.contactInfo.fullName,
-    businessName: application.businessInfo.businessName,
-    propertyName: application.propertyInfo.propertyName,
-    email: application.contactInfo.email,
-    phone: application.contactInfo.phoneNumber,
+    applicantName: application.contactInfo?.fullName || 'Landlord Applicant',
+    businessName: application.businessInfo?.businessName || 'Accommodation Establishment',
+    propertyName: application.propertyInfo?.propertyName || application.businessInfo?.businessName || 'Landlord Property',
+    email: application.contactInfo?.email || 'N/A',
+    phone: application.contactInfo?.phoneNumber || 'N/A',
     reviewLink: adminDashboardLink
   }));
 
@@ -479,6 +479,79 @@ export const sendReactivationEmail = async (user: any) => {
   return await sendEmail({
     to: user.email,
     subject: `✅ Account Reactivated: Welcome back to BoardTAU!`,
+    html: emailHtml
+  });
+};
+
+/**
+ * Property Type Disabled Notice (to Landlord)
+ */
+export const sendPropertyTypeDisabledEmail = async (landlord: any, propertyType: any, listingsCount: number) => {
+  const emailHtml = await render(React.createElement(GenericNotification, {
+    title: "Property Type Disabled",
+    description: `The property type "${propertyType.name}" has been disabled by administrators. As a result, ${listingsCount} of your listings have been automatically unpublished. Please update your listings to an active property type and republish them.`,
+    actionLabel: "Manage Properties",
+    actionLink: `${baseUrl}/landlord/properties`
+  }));
+
+  return await sendEmail({
+    to: landlord.email,
+    subject: `Action Required: Listings Unpublished due to Disabled Property Type`,
+    html: emailHtml
+  });
+};
+
+/**
+ * Listing Approved Email Notice (to Landlord)
+ */
+export const sendListingApprovalEmail = async (landlord: any, listing: any) => {
+  const emailHtml = await render(React.createElement(GenericNotification, {
+    title: "Property Listing Approved!",
+    description: `Great news! Your property listing "${listing.title || listing.name || 'Property'}" has passed administrative verification and is now live for students on BoardTAU.`,
+    actionLabel: "Manage Properties",
+    actionLink: `${baseUrl}/landlord/properties`
+  }));
+
+  return await sendEmail({
+    to: landlord.email,
+    subject: `✅ Listing Released: ${listing.title || listing.name || 'Property'} is now Live on BoardTAU`,
+    html: emailHtml
+  });
+};
+
+/**
+ * Listing Rejected Email Notice (to Landlord)
+ */
+export const sendListingRejectionEmail = async (landlord: any, listing: any, reason?: string) => {
+  const feedbackNote = reason ? `Admin Feedback: "${reason}"` : 'Please review your uploaded legal documents, photos, map pin, and pricing details.';
+  const emailHtml = await render(React.createElement(GenericNotification, {
+    title: "Action Required: Property Review Feedback",
+    description: `Your property listing "${listing.title || listing.name || 'Property'}" requires updates before it can be released to students on BoardTAU. ${feedbackNote}`,
+    actionLabel: "Update Property Details",
+    actionLink: `${baseUrl}/landlord/properties`
+  }));
+
+  return await sendEmail({
+    to: landlord.email,
+    subject: `Action Required: Review Feedback for ${listing.title || listing.name || 'Property'}`,
+    html: emailHtml
+  });
+};
+
+/**
+ * New Listing Submitted Alert (to Super Admins)
+ */
+export const sendAdminNewListingAlert = async (admin: any, landlordName: string, listingTitle: string) => {
+  const emailHtml = await render(React.createElement(GenericNotification, {
+    title: "New Property Submitted for Verification",
+    description: `Landlord host ${landlordName} has submitted a new property listing "${listingTitle}" for administrative verification and moderation audit.`,
+    actionLabel: "Audit Moderation Queue",
+    actionLink: `${baseUrl}/admin/moderation/listings`
+  }));
+
+  return await sendEmail({
+    to: admin.email,
+    subject: `🔔 Moderation Alert: New Property Listing "${listingTitle}" Submitted`,
     html: emailHtml
   });
 };

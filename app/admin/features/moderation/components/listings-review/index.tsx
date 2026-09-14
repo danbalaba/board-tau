@@ -9,20 +9,32 @@ import { useListingsReviewLogic } from '../../hooks/use-listings-review-logic';
 import { AdminListingHeader } from './admin-listing-header';
 import { AdminListingCard } from './admin-listing-card';
 import { AdminListingReviewModal } from './admin-listing-review-modal';
+import { AdminListingRejectModal } from './admin-listing-reject-modal';
+import { AdminModerationActionLoaderModal } from './AdminModerationActionLoaderModal';
 import { ListingKPICards } from './listing-kpi-cards';
 import { AdminArchiveModal } from '@/app/admin/components/modals/admin-archive-modal';
 import { AdminDeleteModal } from '@/app/admin/components/modals/admin-delete-modal';
 import { Button } from '@/app/admin/components/ui/button';
 import { toast } from '@/app/admin/components/ui/sonner';
 import { exportToCSV, exportToExcel } from '@/utils/export-utils';
+import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { AdminDashboardError } from '@/app/admin/components/ui/admin-dashboard-error';
 
 export function ListingsReviewDashboard() {
+  const searchParams = useSearchParams();
+  const urlIsArchived = searchParams.get('isArchived') === 'true';
+
   const [range, setRange] = useState('30d');
-  const [isArchived, setIsArchived] = useState(false);
+  const [isArchived, setIsArchived] = useState(urlIsArchived);
   const { data: session } = useSession();
   const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
+
+  React.useEffect(() => {
+    if (urlIsArchived && !isArchived) {
+      setIsArchived(true);
+    }
+  }, [urlIsArchived]);
 
   const {
     filteredListings,
@@ -41,8 +53,12 @@ export function ListingsReviewDashboard() {
     setViewMode,
     searchQuery,
     setSearchQuery,
+    statusFilter,
+    setStatusFilter,
     sortBy,
     setSortBy,
+    handleClearFilters,
+    isFilterLoading,
     selectedListing,
     setSelectedListing,
     viewModalOpen,
@@ -60,10 +76,20 @@ export function ListingsReviewDashboard() {
     setDeleteModalOpen,
     itemToArchive,
     itemToDelete,
-    setRejectModalOpen
-  } = useListingsReviewLogic(isArchived);
+    rejectModalOpen,
+    setRejectModalOpen,
+    moderationLoader,
+    handleLoaderComplete,
+    notFoundInActive
+  } = useListingsReviewLogic(isArchived, range);
 
-  const isGridLoading = isLoading || isFetching;
+  React.useEffect(() => {
+    if (notFoundInActive && !isArchived) {
+      setIsArchived(true);
+    }
+  }, [notFoundInActive, isArchived]);
+
+  const isGridLoading = isLoading || isFetching || isFilterLoading;
 
   if (error) {
     return <AdminDashboardError onRetry={handleRefresh} />;
@@ -115,6 +141,9 @@ export function ListingsReviewDashboard() {
       <AdminListingHeader
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        onClearFilters={handleClearFilters}
         sortBy={sortBy}
         setSortBy={setSortBy}
         viewMode={viewMode}
@@ -122,7 +151,8 @@ export function ListingsReviewDashboard() {
         handleRefresh={handleRefresh}
         onExport={handleExport}
         pendingCount={pendingCount}
-        isLoading={isLoading}
+        isLoading={isLoading || isFetching || isFilterLoading}
+        isFetching={isFetching}
         range={range}
         onRangeChange={setRange}
         isArchived={isArchived}
@@ -131,7 +161,7 @@ export function ListingsReviewDashboard() {
       />
 
       <ListingKPICards 
-        total={filteredListings.length}
+        total={pendingCount + approvedCount + rejectedCount}
         pending={pendingCount}
         approved={approvedCount}
         rejected={rejectedCount}
@@ -139,7 +169,7 @@ export function ListingsReviewDashboard() {
         pendingLastWeek={pendingLastWeek}
         approvedLastWeek={approvedLastWeek}
         rejectedLastWeek={rejectedLastWeek}
-        isLoading={isLoading}
+        isLoading={isLoading || isFetching}
         range={range}
       />
 
@@ -186,7 +216,7 @@ export function ListingsReviewDashboard() {
               {filteredListings.length > 0 && (
                 <div className="flex items-center gap-2 mb-6">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                    Showing {filteredListings.length} pending listing{filteredListings.length !== 1 ? 's' : ''}
+                    Showing {filteredListings.length} {statusFilter && statusFilter !== 'all' ? statusFilter : isArchived ? 'archived' : 'total'} listing{filteredListings.length !== 1 ? 's' : ''}
                   </span>
                   <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
                 </div>
@@ -270,6 +300,19 @@ export function ListingsReviewDashboard() {
         onClose={() => setViewModalOpen(false)}
         onDecision={handleDecision}
         isDeciding={isDeciding}
+        onRestore={handleArchive}
+      />
+
+      <AdminListingRejectModal
+        isOpen={rejectModalOpen}
+        onClose={() => setRejectModalOpen(false)}
+        onConfirm={(reason) => {
+          if (selectedListing) {
+            handleDecision(selectedListing.id, 'reject', reason);
+          }
+        }}
+        listingTitle={selectedListing?.title || selectedListing?.name}
+        isSubmitting={isDeciding}
       />
 
       <AdminArchiveModal
@@ -277,9 +320,9 @@ export function ListingsReviewDashboard() {
         onClose={() => setArchiveModalOpen(false)}
         onConfirm={handleConfirmArchive}
         isArchiving={isDeciding}
-        isRestore={itemToArchive?.isArchived}
-        title={itemToArchive?.isArchived ? 'Restore Listing' : 'Archive Listing'}
-        description={itemToArchive?.isArchived 
+        isRestore={Boolean(itemToArchive?.isAdminArchived || itemToArchive?.isArchived || isArchived)}
+        title={(itemToArchive?.isAdminArchived || itemToArchive?.isArchived || isArchived) ? 'Restore Listing' : 'Archive Listing'}
+        description={(itemToArchive?.isAdminArchived || itemToArchive?.isArchived || isArchived) 
           ? `This will restore the listing "${itemToArchive?.title || itemToArchive?.name || 'this listing'}" to the active moderation queue.`
           : `This will move the listing "${itemToArchive?.title || itemToArchive?.name || 'this listing'}" to your archive. You can restore it anytime.`
         }
@@ -291,6 +334,13 @@ export function ListingsReviewDashboard() {
         onConfirm={handleConfirmDelete}
         itemName={`the listing "${itemToDelete?.title || itemToDelete?.name || 'this listing'}"`}
         isDeleting={isDeleting}
+      />
+
+      <AdminModerationActionLoaderModal
+        isOpen={moderationLoader.isOpen}
+        actionType={moderationLoader.actionType}
+        listingTitle={moderationLoader.listingTitle}
+        onComplete={handleLoaderComplete}
       />
     </div>
   );

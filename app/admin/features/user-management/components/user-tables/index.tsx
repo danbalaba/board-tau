@@ -1,11 +1,16 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { DataTable } from '@/app/admin/components/ui/table/data-table';
-import { DataTableToolbar } from '@/app/admin/components/ui/table/data-table-toolbar';
 import { useDataTable } from '@/app/admin/hooks/use-data-table';
 import { ColumnDef } from '@tanstack/react-table';
 import { parseAsString, useQueryState } from 'nuqs';
 import { User } from './columns';
+
+const DataTableToolbar = dynamic(
+  () => import('@/app/admin/components/ui/table/data-table-toolbar').then((mod) => mod.DataTableToolbar),
+  { ssr: false }
+);
 
 interface UserTableParams<TData, TValue> {
   data: TData[];
@@ -35,7 +40,7 @@ export function UserTable<TData, TValue>({
 
   return (
     <DataTable table={table} isLoading={isLoading}>
-      <DataTableToolbar table={table}>
+      <DataTableToolbar table={table as any}>
         {toolbarActions}
       </DataTableToolbar>
     </DataTable>

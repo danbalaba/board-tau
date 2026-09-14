@@ -10,7 +10,7 @@ interface SelfieStepProps {
   facingMode: "user" | "environment";
   isFaceAligned: boolean;
   livenessStatus: 'idle' | 'passed';
-  activeChallenge: 'blink' | 'smile' | 'turnLeft' | 'turnRight';
+  activeChallenge: 'blink' | 'smile' | 'turnLeft' | 'turnRight' | 'openMouth' | 'raiseEyebrows';
   setIsFaceAligned: (val: boolean) => void;
   isProcessing: boolean;
   isEngineReady: boolean;
@@ -25,9 +25,12 @@ interface SelfieStepProps {
  */
 const sanitizeImgUrl = (url: string | null): string | undefined => {
   if (!url) return undefined;
+  if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
   try {
     const { protocol } = new URL(url);
-    return (protocol === 'blob:' || protocol === 'data:') ? url : undefined;
+    return (protocol === 'blob:' || protocol === 'data:' || protocol === 'http:' || protocol === 'https:') ? url : undefined;
   } catch {
     return undefined;
   }
@@ -41,6 +44,40 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
   toggleCamera, handleCaptureSelfie
 }) => {
   const selfieImgRef = React.useRef<HTMLImageElement>(null);
+  const [videoDevices, setVideoDevices] = React.useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const getDevices = async () => {
+      try {
+        if (typeof window !== 'undefined' && navigator?.mediaDevices?.enumerateDevices) {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoInputs = devices.filter((device) => device.kind === "videoinput");
+          if (isMounted && videoInputs.length > 0) {
+            setVideoDevices(videoInputs);
+          }
+        }
+      } catch (err) {
+        console.error("Error enumerating video devices:", err);
+      }
+    };
+    getDevices();
+    return () => { isMounted = false; };
+  }, []);
+
+  const handleToggleCamera = () => {
+    if (videoDevices.length > 1) {
+      const currentIndex = videoDevices.findIndex((d) => d.deviceId === selectedDeviceId);
+      const nextIndex = (currentIndex + 1) % videoDevices.length;
+      const nextDevice = videoDevices[nextIndex];
+      if (nextDevice && nextDevice.deviceId) {
+        setSelectedDeviceId(nextDevice.deviceId);
+        return;
+      }
+    }
+    toggleCamera();
+  };
 
   // Set img src imperatively to avoid CodeQL js/xss-through-dom false positive.
   // capturedSelfie is always a data: URL from webcam canvas — never DOM text.
@@ -64,10 +101,15 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
           {!capturedSelfie ? (
             <>
               <Webcam
+                key={selectedDeviceId || facingMode}
                 audio={false}
                 ref={webcamRef}
                 screenshotFormat="image/jpeg"
-                videoConstraints={{ facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 720 } }}
+                videoConstraints={
+                  selectedDeviceId
+                    ? { deviceId: { exact: selectedDeviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+                    : { facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 720 } }
+                }
                 className="w-full h-full object-cover grayscale-[0.2]"
               />
 
@@ -146,6 +188,8 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                         {activeChallenge === 'smile' && 'Please Smile to Continue'}
                         {activeChallenge === 'turnLeft' && 'Turn Head Left to Continue'}
                         {activeChallenge === 'turnRight' && 'Turn Head Right to Continue'}
+                        {activeChallenge === 'openMouth' && 'Open Mouth Slightly to Continue'}
+                        {activeChallenge === 'raiseEyebrows' && 'Raise Eyebrows to Continue'}
                       </span>
                     </motion.div>
                   ) : null}
@@ -154,11 +198,11 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
 
               <button
                 type="button"
-                onClick={toggleCamera}
+                onClick={handleToggleCamera}
                 className="absolute top-6 left-6 bg-white/10 backdrop-blur-xl text-white p-3 rounded-full hover:bg-white/20 transition-all border border-white/20"
                 title="Switch Camera"
               >
-                <RefreshCcw size={18} className={facingMode === 'environment' ? 'rotate-180 transition-transform' : ''} />
+                <RefreshCcw size={18} className={facingMode === 'environment' || Boolean(selectedDeviceId) ? 'rotate-180 transition-transform' : ''} />
               </button>
 
               <AnimatePresence>
@@ -227,6 +271,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
             <div className="relative w-full h-full">
               <img 
                 ref={selfieImgRef}
+                src={sanitizeImgUrl(capturedSelfie) ?? undefined}
                 alt="Captured Selfie" 
                 className="w-full h-full object-cover" 
               />

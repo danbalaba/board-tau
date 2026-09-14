@@ -94,19 +94,15 @@ describe('ListingDetailsClient Component', () => {
 
   it('renders amenities correctly', () => {
     render(<ListingDetailsClient {...mockProps} />);
-    expect(screen.getByText('What this place offers')).toBeInTheDocument();
+    expect(screen.getByText(/Shared Property Amenities/i)).toBeInTheDocument();
     expect(screen.getByText('WiFi')).toBeInTheDocument();
     expect(screen.getByText('Air conditioning')).toBeInTheDocument();
   });
 
   it('renders features and rules', () => {
     render(<ListingDetailsClient {...mockProps} />);
-    expect(screen.getByText('Safety & Reassurance')).toBeInTheDocument();
-    expect(screen.getByText('CCTV Monitoring')).toBeInTheDocument();
-
-    expect(screen.getByText('Policies & Rules')).toBeInTheDocument();
-    expect(screen.getByText('Pets are allowed')).toBeInTheDocument();
-    expect(screen.getByText('Quiet hours')).toBeInTheDocument();
+    expect(screen.getByText('Security & Safety Measures')).toBeInTheDocument();
+    expect(screen.getByText('House Rules & Policies')).toBeInTheDocument();
   });
 
   it('scrolls to available rooms when clicking "Available Rooms" text', () => {

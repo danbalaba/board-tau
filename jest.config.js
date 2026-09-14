@@ -10,8 +10,9 @@ const customJestConfig = {
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    '^jspdf$': 'jspdf/dist/jspdf.umd.min.js',
   },
-  collectCoverage: true,
+  collectCoverage: false,
   collectCoverageFrom: [
     'components/**/*.{js,jsx,ts,tsx}',
     'hooks/**/*.{js,jsx,ts,tsx}',

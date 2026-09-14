@@ -28,9 +28,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const { action, reason } = await req.json();
 
-    if (!['approve', 'reject', 'archive'].includes(action)) {
+    if (!['approve', 'reject', 'archive', 'unarchive'].includes(action)) {
       return NextResponse.json(
-        ApiResponseFormatter.error('Invalid action', 'Action must be "approve", "reject", or "archive"'),
+        ApiResponseFormatter.error('Invalid action', 'Action must be "approve", "reject", "archive", or "unarchive"'),
         { status: 400 }
       );
     }
@@ -42,25 +42,38 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       );
     }
 
-    if (action === 'archive') {
+    if (action === 'archive' || action === 'unarchive') {
+      const isArchiving = action === 'archive';
       const updatedApplication = await db.hostApplication.update({
         where: { id },
-        data: { isArchived: true },
+        data: { isArchived: isArchiving },
         include: { user: true }
       });
       
       await logAdminAction({
         adminId: session.user.id,
-        action: 'Archive Host',
+        action: isArchiving ? 'Archive Host' : 'Unarchive Host',
         entityType: 'HostApplication',
         entityId: id,
-        details: `Archived host application for user ${updatedApplication.user?.name || updatedApplication.userId}. Reason: ${reason || 'No reason provided'}`,
+        details: `${isArchiving ? 'Archived' : 'Unarchived'} host application for user ${updatedApplication.user?.name || updatedApplication.userId}. Reason: ${reason || 'No reason provided'}`,
         ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
         userAgent: req.headers.get('user-agent')
       });
+
+      // Add to Moderation Activity Feed
+      await db.moderationLog.create({
+        data: {
+          adminId: session.user.id,
+          action: isArchiving ? 'archived' : 'unarchived',
+          entityType: 'hostApplication',
+          entityId: id,
+          entityTitle: `Host App: ${updatedApplication.user?.name || 'User'}`,
+          notes: reason || (isArchiving ? 'Archived by admin' : 'Restored by admin'),
+        }
+      });
       
       return NextResponse.json(
-        ApiResponseFormatter.success(updatedApplication, `Host application archived successfully`)
+        ApiResponseFormatter.success(updatedApplication, `Host application ${isArchiving ? 'archived' : 'restored'} successfully`)
       );
     }
 
@@ -158,6 +171,18 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       details: 'Super Admin soft-deleted host application',
       ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
       userAgent: req.headers.get('user-agent')
+    });
+
+    // Add to Moderation Activity Feed
+    await db.moderationLog.create({
+      data: {
+        adminId: session.user.id,
+        action: 'deleted',
+        entityType: 'hostApplication',
+        entityId: id,
+        entityTitle: `Host App: ${deletedApplication.userId}`,
+        notes: 'Soft deleted by Super Admin',
+      }
     });
 
     return NextResponse.json(

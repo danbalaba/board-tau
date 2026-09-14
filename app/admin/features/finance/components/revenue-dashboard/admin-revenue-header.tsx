@@ -111,20 +111,20 @@ export function AdminRevenueHeader({
                     <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-gray-400">Export Report</DropdownMenuLabel>
                     <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
                     <DropdownMenuGroup>
-                      <DropdownMenuItem onClick={() => onExport('CSV')} className="gap-3 p-3 rounded-xl cursor-pointer focus:bg-emerald-50 dark:focus:bg-emerald-900/20 focus:text-emerald-600 dark:focus:text-emerald-400 font-bold text-xs">
+                      <DropdownMenuItem onClick={() => onExport('CSV')} className="gap-3 p-3 rounded-xl cursor-pointer data-[highlighted]:bg-emerald-50 dark:data-[highlighted]:bg-emerald-900/20 data-[highlighted]:text-emerald-600 dark:data-[highlighted]:text-emerald-400 focus:bg-emerald-50 dark:focus:bg-emerald-900/20 focus:text-emerald-600 dark:focus:text-emerald-400 font-bold text-xs">
                         <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
                           <IconFileTypeCsv size={16} stroke={2.5} />
                         </div>
                         Export as CSV
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onExport('EXCEL')} className="gap-3 p-3 rounded-xl cursor-pointer focus:bg-green-50 dark:focus:bg-green-900/20 focus:text-green-600 dark:focus:text-green-400 font-bold text-xs">
-                        <div className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400">
+                      <DropdownMenuItem onClick={() => onExport('EXCEL')} className="gap-3 p-3 rounded-xl cursor-pointer data-[highlighted]:bg-emerald-50 dark:data-[highlighted]:bg-emerald-900/20 data-[highlighted]:text-emerald-600 dark:data-[highlighted]:text-emerald-400 focus:bg-emerald-50 dark:focus:bg-emerald-900/20 focus:text-emerald-600 dark:focus:text-emerald-400 font-bold text-xs">
+                        <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
                           <IconFileSpreadsheet size={16} stroke={2.5} />
                         </div>
                         Export as Excel
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onExport('PDF')} className="gap-3 p-3 rounded-xl cursor-pointer focus:bg-rose-50 dark:focus:bg-rose-900/20 focus:text-rose-600 dark:focus:text-rose-400 font-bold text-xs">
-                        <div className="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400">
+                      <DropdownMenuItem onClick={() => onExport('PDF')} className="gap-3 p-3 rounded-xl cursor-pointer data-[highlighted]:bg-emerald-50 dark:data-[highlighted]:bg-emerald-900/20 data-[highlighted]:text-emerald-600 dark:data-[highlighted]:text-emerald-400 focus:bg-emerald-50 dark:focus:bg-emerald-900/20 focus:text-emerald-600 dark:focus:text-emerald-400 font-bold text-xs">
+                        <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
                           <IconFileTypePdf size={16} stroke={2.5} />
                         </div>
                         Export as PDF

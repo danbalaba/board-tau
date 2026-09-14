@@ -35,8 +35,7 @@ export async function GET(req: NextRequest) {
     backupData.userRoles = await db.userRole.findMany();
     backupData.permissions = await db.permission.findMany();
     backupData.passwordResetTokens = await db.passwordResetToken.findMany();
-    backupData.categories = await db.category.findMany();
-    backupData.roomAmenityTypes = await db.roomAmenityType.findMany();
+    backupData.dynamicAttributes = await db.dynamicAttribute.findMany();
     backupData.siteSettings = await db.siteSettings.findMany();
     backupData.featureFlags = await db.featureFlag.findMany();
     backupData.platformMetricSnapshots = await db.platformMetricSnapshot.findMany();
@@ -56,18 +55,14 @@ export async function GET(req: NextRequest) {
     backupData.listings = await db.listing.findMany();
 
     // Level 3
-    backupData.listingImages = await db.listingImage.findMany();
-    backupData.listingAmenities = await db.listingAmenity.findMany();
-    backupData.listingRules = await db.listingRule.findMany();
-    backupData.listingFeatures = await db.listingFeature.findMany();
-    backupData.listingCategories = await db.listingCategory.findMany();
+    backupData.listingAttributeLinks = await db.listingAttributeLink.findMany();
+    backupData.roomTypeDefinitions = await db.roomTypeDefinition.findMany();
     backupData.rooms = await db.room.findMany();
     backupData.messages = await db.message.findMany();
 
     // Level 4
-    backupData.roomImages = await db.roomImage.findMany();
-    backupData.roomAmenities = await db.roomAmenity.findMany();
-    backupData.inquiries = await db.inquiry.findMany();
+    backupData.roomAttributeLinks = await db.roomAttributeLink.findMany();
+    backupData.propertyTypes = await db.propertyType.findMany();
 
     // Level 5
     backupData.reservations = await db.reservation.findMany();
