@@ -5,7 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MdClose } from "react-icons/md";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import { FaFacebook, FaTwitter } from "react-icons/fa";
-import { LayoutGrid, Share, ChevronLeft, X, Copy, Mail, MessageCircle, Maximize2 } from "lucide-react";
+import { 
+  LayoutGrid, Share, ChevronLeft, X, Copy, Mail, MessageCircle, Maximize2, 
+  Building2, Bed, Utensils, ShowerHead, Sofa, Image as ImageIcon, Sparkles, CheckCircle2 
+} from "lucide-react";
 import HeartButton from "@/components/favorites/HeartButton";
 import { useRouter } from "next/navigation";
 import BackToTop from "@/components/common/BackToTop";
@@ -30,7 +33,16 @@ interface CategorizedImages {
   [key: string]: ListingImageData[];
 }
 
-const ROOM_TYPES = ["Bedroom", "Kitchen", "Bathroom", "Exterior", "Common Area"];
+const ROOM_TYPES = ["Exterior", "Bedroom", "Kitchen", "Bathroom", "Common Area", "Other"];
+
+const CATEGORY_ICONS: Record<string, any> = {
+  Exterior: Building2,
+  Bedroom: Bed,
+  Kitchen: Utensils,
+  Bathroom: ShowerHead,
+  "Common Area": Sofa,
+  Other: ImageIcon,
+};
 
 const SHARE_BUTTONS: { label: string; icon: React.ElementType; action: string }[] = [
   { label: "Copy Link", icon: Copy, action: "copy" },
@@ -162,22 +174,44 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
   const sortedImages = [...images].sort((a, b) => (a.order || 0) - (b.order || 0));
 
   const categorizedImages = useMemo(() => {
-    const categories: CategorizedImages = {
-      All: sortedImages,
-    };
+    const categories: CategorizedImages = {};
+    ROOM_TYPES.forEach((rt) => { categories[rt] = []; });
+    categories["All"] = sortedImages;
 
-    ROOM_TYPES.forEach((room) => {
-      categories[room] = sortedImages.filter((img) => {
-        const type = img.roomType?.toLowerCase();
-        const search = room.toLowerCase();
+    const uncategorized: ListingImageData[] = [];
 
-        if (type === search) return true;
-        if (search === 'common area' && type === 'living room') return true;
-        if (search === 'living room' && type === 'common area') return true;
+    sortedImages.forEach((img) => {
+      const type = (img.roomType || "").toLowerCase().trim();
+      const caption = (img.caption || "").toLowerCase().trim();
+      const combined = `${type} ${caption}`;
 
-        return img.caption?.toLowerCase().includes(search);
-      });
+      if (type === "exterior" || combined.includes("exterior") || combined.includes("facade") || combined.includes("building") || combined.includes("outside") || combined.includes("front") || combined.includes("cover")) {
+        categories["Exterior"].push(img);
+      } else if (type === "bedroom" || type === "unit" || type === "room" || type === "solo" || combined.includes("bedroom") || combined.includes("bed") || combined.includes("unit") || combined.includes("room")) {
+        categories["Bedroom"].push(img);
+      } else if (type === "kitchen" || combined.includes("kitchen") || combined.includes("cooking") || combined.includes("sink")) {
+        categories["Kitchen"].push(img);
+      } else if (type === "bathroom" || type === "cr" || combined.includes("bathroom") || combined.includes("cr") || combined.includes("toilet") || combined.includes("shower")) {
+        categories["Bathroom"].push(img);
+      } else if (type === "common area" || type === "living room" || combined.includes("common area") || combined.includes("living room") || combined.includes("lobby") || combined.includes("lounge") || combined.includes("hallway")) {
+        categories["Common Area"].push(img);
+      } else if (type === "other" || combined.includes("other")) {
+        categories["Other"].push(img);
+      } else {
+        uncategorized.push(img);
+      }
     });
+
+    if (uncategorized.length > 0) {
+      if (categories["Exterior"].length === 0) {
+        categories["Exterior"].push(uncategorized[0]);
+        if (uncategorized.length > 1) {
+          categories["Other"].push(...uncategorized.slice(1));
+        }
+      } else {
+        categories["Other"].push(...uncategorized);
+      }
+    }
 
     return categories;
   }, [sortedImages]);
@@ -251,7 +285,7 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
              <div className="absolute inset-0 bg-transparent group-hover:bg-black/20 transition-colors z-10 duration-300 hover:!bg-transparent" />
              <SafeImage
               src={sortedImages[0].url}
-              alt={sortedImages[0].caption || title}
+              alt={sortedImages[0].caption ? `${sortedImages[0].caption} - ${title} near TAU Camiling Tarlac` : `${title} - Boarding House near TAU Camiling Tarlac`}
               priority={true}
              />
           </div>
@@ -271,7 +305,7 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
                   <div className="absolute inset-0 bg-transparent group-hover:bg-black/20 transition-colors z-10 duration-300 hover:!bg-transparent" />
                   <SafeImage
                     src={image.url}
-                    alt={image.caption || title}
+                    alt={image.caption ? `${image.caption} - ${title} near TAU Camiling Tarlac` : `${title} - Boarding House near TAU Camiling Tarlac (Photo ${idx + 2})`}
                   />
                 </div>
               );
@@ -301,126 +335,183 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
             transition={{ ease: "easeInOut", duration: 0.3 }}
-            className="fixed inset-0 z-[100] bg-white dark:bg-gray-900 overflow-y-auto flex flex-col hide-scrollbar overscroll-none"
+            className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-y-auto flex flex-col hide-scrollbar overscroll-none"
             id="scroll-container"
           >
             {/* Sticky Header */}
-            <div className="sticky top-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md z-20 flex items-center justify-between p-4 md:px-6 border-b border-gray-100 dark:border-gray-800">
+            <div className="sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md z-30 flex items-center justify-between p-4 md:px-8 border-b border-slate-200/80 dark:border-slate-800 shadow-sm">
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors flex items-center justify-center text-gray-800 dark:text-gray-100"
+                className="px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors flex items-center gap-2 text-slate-800 dark:text-slate-100 font-bold text-sm cursor-pointer"
               >
                 <BsChevronLeft size={16} strokeWidth={1} />
+                <span>Back to listing</span>
               </button>
-              <p className="text-sm font-bold text-gray-500 dark:text-gray-400">
-                {sortedImages.length} photos
-              </p>
-              <div className="w-9" />{/* spacer to keep title centered */}
+              
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-primary" />
+                <p className="text-xs md:text-sm font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                  Photo Tour • {sortedImages.length} Photos
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={async () => {
+                    if (typeof navigator !== 'undefined' && (navigator as any).share) {
+                      try {
+                        await (navigator as any).share({
+                          title: title,
+                          url: window.location.href
+                        });
+                      } catch (err) {
+                        if ((err as Error).name !== 'AbortError') {
+                          setShowShareModal(true);
+                        }
+                      }
+                    } else {
+                      setShowShareModal(true);
+                    }
+                  }}
+                  className="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition text-slate-700 dark:text-slate-200 cursor-pointer"
+                  title="Share"
+                >
+                  <Share size={16} />
+                </button>
+              </div>
             </div>
 
-            <div className="max-w-4xl mx-auto w-full px-4 py-8 flex flex-col items-center pb-24">
-               <h1 className="text-[32px] font-bold mb-10 text-gray-900 dark:text-gray-100 self-start w-full tracking-tight">Photo tour</h1>
+            <div className="max-w-6xl mx-auto w-full px-4 md:px-8 py-8 flex flex-col items-center pb-24">
+               
+               {/* Hero Title & Subtitle */}
+               <div className="w-full mb-8 text-left space-y-1">
+                 <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                   Photo Tour
+                 </h1>
+                 <p className="text-xs md:text-sm font-semibold text-slate-500 dark:text-slate-400">
+                   Explore all photos of {title} organized by property section
+                 </p>
+               </div>
 
-               {/* Categories Navigator */}
-               <div className="w-full mb-12 flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
+               {/* Categories Navigator Bar */}
+               <div className="w-full mb-10 overflow-x-auto pb-3 pt-1 hide-scrollbar flex items-center gap-3 border-b border-slate-200/60 dark:border-slate-800">
                   {ROOM_TYPES.map(room => {
                      const roomImages = categorizedImages[room];
                      if (!roomImages || roomImages.length === 0) return null;
+                     const IconComp = CATEGORY_ICONS[room] || ImageIcon;
+                     
                      return (
-                        <div
+                        <button
                            key={room}
-                           className="flex flex-col gap-2 min-w-[140px] max-w-[140px] cursor-pointer opacity-80 hover:opacity-100 transition-opacity"
+                           type="button"
                            onClick={() => {
                               const el = document.getElementById(`section-${room}`);
                               if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                            }}
+                           className="flex items-center gap-3 p-2 pr-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-primary/50 dark:hover:border-primary/50 transition-all shrink-0 group cursor-pointer shadow-sm hover:scale-[1.02]"
                         >
-                           <SafeImage
-                               src={roomImages[0].url}
-                               alt={room}
-                               containerClassName="w-full h-24 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden"
-                               className="object-cover"
-                           />
-                           <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{room}</p>
-                        </div>
-                     )
+                           <div className="w-11 h-11 rounded-xl overflow-hidden relative shrink-0 bg-slate-200 dark:bg-slate-700">
+                             <SafeImage 
+                               src={roomImages[0].url} 
+                               alt={room} 
+                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                             />
+                           </div>
+                           <div className="flex flex-col items-start text-left">
+                             <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                               <IconComp size={14} className="text-primary shrink-0" />
+                               {room}
+                             </span>
+                             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                               {roomImages.length} {roomImages.length === 1 ? 'photo' : 'photos'}
+                             </span>
+                           </div>
+                        </button>
+                     );
                   })}
                </div>
 
-               {/* Masonry-like Images Layout */}
-               <div className="w-full flex flex-col gap-12">
+               {/* Category Image Sections */}
+               <div className="w-full flex flex-col gap-14">
                   {ROOM_TYPES.map((room) => {
                      const roomImages = categorizedImages[room];
                      if (!roomImages || roomImages.length === 0) return null;
+                     const IconComp = CATEGORY_ICONS[room] || ImageIcon;
 
                      return (
-                        <div key={room} id={`section-${room}`} className="flex flex-col gap-6 scroll-mt-24">
-                           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{room}</h2>
+                        <div key={room} id={`section-${room}`} className="flex flex-col gap-6 scroll-mt-28">
+                           {/* Category Section Title */}
+                           <div className="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-slate-800">
+                             <div className="flex items-center gap-3">
+                               <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+                                 <IconComp size={20} />
+                               </div>
+                               <div>
+                                 <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">{room}</h2>
+                                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                   {room === 'Exterior' ? 'Building facade & property entrance' :
+                                    room === 'Bedroom' ? 'Rooms & sleeping quarters' :
+                                    room === 'Kitchen' ? 'Kitchen & dining area' :
+                                    room === 'Bathroom' ? 'Bathroom & comfort room features' :
+                                    room === 'Common Area' ? 'Shared lobby & lounge space' : 'Additional property photos'}
+                                 </p>
+                               </div>
+                             </div>
 
-                           {/* Responsive Masonry Layout Pattern */}
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-                              {roomImages.map((img, idx) => {
-                                 // Every 3rd image spans 2 columns on desktop to mimic the layout variety
-                                 const isFullWidth = idx % 3 === 0;
-                                 return (
-                                    <div 
-                                       key={idx} 
-                                       className={isFullWidth ? "col-span-1 md:col-span-2 group relative cursor-pointer" : "col-span-1 group relative cursor-pointer"}
-                                       onClick={() => handleOpenPreview(roomImages.map(i => i.url), idx, room)}
-                                    >
-                                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors z-10 duration-300 flex items-center justify-center backdrop-blur-[1px] opacity-0 group-hover:opacity-100">
-                                          <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-white backdrop-blur-xl border border-white/20 scale-50 group-hover:scale-100 transition-transform duration-500">
-                                             <Maximize2 size={24} />
-                                          </div>
-                                       </div>
-                                       <SafeImage
-                                          src={img.url}
-                                          alt={img.caption || room}
-                                          containerClassName="w-full aspect-[4/3] md:aspect-video rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800"
-                                          className="object-cover"
-                                       />
-                                    </div>
-                                 )
-                              })}
+                             <span className="px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-black text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                               {roomImages.length} {roomImages.length === 1 ? 'photo' : 'photos'}
+                             </span>
+                           </div>
+
+                           {/* Responsive Grid Pattern */}
+                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                               {roomImages.map((img, idx) => {
+                                  const isCover = idx === 0 && room === 'Exterior';
+                                  return (
+                                     <div 
+                                        key={idx} 
+                                        className={`group relative rounded-2xl md:rounded-3xl overflow-hidden border-2 border-slate-200/80 dark:border-slate-800 shadow-sm bg-slate-100 dark:bg-slate-800 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
+                                          roomImages.length >= 3 && idx === 0 ? 'sm:col-span-2 lg:col-span-2 aspect-[16/10]' : 'col-span-1 aspect-[4/3]'
+                                        }`}
+                                        onClick={() => handleOpenPreview(roomImages.map(i => i.url), idx, `${room} Photos`)}
+                                     >
+                                         <SafeImage
+                                            src={img.url}
+                                            alt={img.caption ? `${img.caption} - ${title} (${room}) near TAU Camiling Tarlac` : `${title} ${room} - Boarding House near TAU Camiling Tarlac`}
+                                            containerClassName="w-full h-full"
+                                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+
+                                        {/* Hover Overlay */}
+                                        <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px] flex items-center justify-center">
+                                           <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-white backdrop-blur-xl border border-white/20 scale-75 group-hover:scale-100 transition-transform duration-300">
+                                              <Maximize2 size={22} />
+                                           </div>
+                                        </div>
+
+                                        {/* Caption / Badge Overlay */}
+                                        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+                                          {isCover ? (
+                                            <span className="px-3 py-1 rounded-full bg-primary/90 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-wider shadow-lg border border-white/20">
+                                              Building Cover
+                                            </span>
+                                          ) : img.caption ? (
+                                            <span className="px-3 py-1 rounded-xl bg-black/60 backdrop-blur-md text-white text-xs font-bold truncate max-w-[80%] shadow-lg border border-white/10">
+                                              {img.caption}
+                                            </span>
+                                          ) : <div />}
+                                        </div>
+                                     </div>
+                                  );
+                               })}
                            </div>
                         </div>
-                     )
+                     );
                   })}
-
-                  {/* Fallback if no images got categorized */}
-                  {ROOM_TYPES.every(rt => !categorizedImages[rt] || categorizedImages[rt].length === 0) && (
-                     <div className="flex flex-col gap-6">
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-                              {sortedImages.map((img, idx) => {
-                                 const isFullWidth = idx % 3 === 0;
-                                 return (
-                                    <div 
-                                       key={idx} 
-                                       className={isFullWidth ? "col-span-1 md:col-span-2 group relative cursor-pointer" : "col-span-1 group relative cursor-pointer"}
-                                       onClick={() => handleOpenPreview(sortedImages.map(i => i.url), idx, "Property Photos")}
-                                    >
-                                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors z-10 duration-300 flex items-center justify-center backdrop-blur-[1px] opacity-0 group-hover:opacity-100">
-                                          <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-white backdrop-blur-xl border border-white/20 scale-50 group-hover:scale-100 transition-transform duration-500">
-                                             <Maximize2 size={24} />
-                                          </div>
-                                       </div>
-                                       <SafeImage
-                                          src={img.url}
-                                          alt={img.caption || "Property Photo"}
-                                          containerClassName="w-full aspect-[4/3] md:aspect-video rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800"
-                                          className="object-cover"
-                                       />
-                                    </div>
-                                 )
-                              })}
-                           </div>
-                     </div>
-                  )}
-
-                </div>
-              </div>
-              <BackToTop containerId="scroll-container" bottomClass="bottom-10" />
-            </motion.div>
+               </div>
+            </div>
+            <BackToTop containerId="scroll-container" bottomClass="bottom-8 right-6 md:bottom-10 md:right-10" />
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -432,7 +523,7 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
             onClick={() => setShowShareModal(false)}
           >
             <motion.div

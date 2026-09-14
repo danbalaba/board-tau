@@ -57,7 +57,7 @@ export default function ListingPinCard({ listing, onClose, onViewDetails }: List
             <div className="relative w-full h-36 bg-gray-200 dark:bg-gray-800 overflow-hidden">
               <Image
                 src={imageSrc}
-                alt={listing.title}
+                alt={`${listing.title} - Boarding House near TAU Camiling Tarlac`}
                 fill
                 className="object-cover"
               />

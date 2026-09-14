@@ -1,4 +1,3 @@
-import "./components/themes/extra-themes.css";
 import { requireAdmin } from "@/lib/admin";
 import KBar from "./components/kbar";
 import AppSidebar from "./components/layout/app-sidebar";

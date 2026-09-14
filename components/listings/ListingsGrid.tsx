@@ -60,18 +60,19 @@ export default function ListingsGrid({
 
   return (
     <motion.section
-      className="main-container pt-14 md:pt-16 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-8 xl:gap-6"
+      className="main-container pt-4 md:pt-6 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-8 xl:gap-6"
       variants={staggerContainer}
       initial="hidden"
       animate="show"
     >
-      {currentListings.map((listing) => {
+      {currentListings.map((listing, index) => {
         const hasFavorited = favorites.includes(listing.id);
         return (
           <motion.div key={listing.id} variants={staggerItem}>
-          <ListingCard
+            <ListingCard
               data={listing}
               hasFavorited={hasFavorited}
+              priority={index < 4}
               aiHighlight={(listing as any).aiHighlight ?? undefined}
             />
           </motion.div>
