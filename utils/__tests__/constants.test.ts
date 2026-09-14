@@ -1,5 +1,5 @@
 import {
-  categories,
+
   LISTINGS_BATCH,
   menuItems,
   TAU_COORDINATES,
@@ -8,10 +8,6 @@ import {
 } from '../constants';
 
 describe('constants', () => {
-  it('exports valid categories array', () => {
-    expect(Array.isArray(categories)).toBe(true);
-    expect(categories.length).toBeGreaterThan(0);
-  });
 
   it('exports LISTINGS_BATCH number', () => {
     expect(typeof LISTINGS_BATCH).toBe('number');

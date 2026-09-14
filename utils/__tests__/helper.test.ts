@@ -51,8 +51,8 @@ describe("helper utils", () => {
       expect(calculateAverageRating([], 4.5)).toBe(4.5);
     });
 
-    it("returns 0 if reviews array is empty and no fallback is provided", () => {
-      expect(calculateAverageRating([])).toBe(0);
+    it("returns null if reviews array is empty and no fallback is provided", () => {
+      expect(calculateAverageRating([])).toBe(null);
     });
 
     it("returns fallback if reviews array is null/undefined", () => {

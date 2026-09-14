@@ -14,6 +14,15 @@ enum Role {
   SUPER_ADMIN
 }
 
+enum ListingStatus {
+  ACTIVE
+  PENDING
+  APPROVED
+  REJECTED
+  UNPUBLISHED
+  FLAGGED
+}
+
 enum InquiryRole {
   STUDENT
   STAFF
@@ -22,24 +31,24 @@ enum InquiryRole {
 }
 
 model UserRole {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  name        String    @unique
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
   description String?
-  permissions String[]  @default([])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  permissions String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  users       User[]
+  users User[]
 }
 
 model Permission {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  name        String    @unique
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
   description String?
   module      String
   action      String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum InquiryStatus {
@@ -79,11 +88,6 @@ enum PaymentMethod {
   CASH
 }
 
-enum RoomType {
-  SOLO
-  BEDSPACE
-}
-
 enum BedType {
   SINGLE
   DOUBLE
@@ -98,67 +102,71 @@ enum RoomStatus {
 }
 
 model User {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  favoriteIds         String[]  @default([]) @db.ObjectId
-  recentListingIds    String[]  @default([]) @db.ObjectId
-  recentSearchQueries String[]  @default([])
-  role                Role      @default(USER)
-  roleId        String?   @db.ObjectId
-  isActive      Boolean?  @default(true)
-  deletedAt     DateTime?
-  isVerifiedLandlord Boolean @default(false)
-  landlordApprovedAt DateTime?
+  id                       String    @id @default(auto()) @map("_id") @db.ObjectId
+  name                     String?
+  email                    String    @unique
+  emailVerified            DateTime?
+  image                    String?
+  password                 String?
+  favoriteIds              String[]  @default([]) @db.ObjectId
+  recentListingIds         String[]  @default([]) @db.ObjectId
+  recentSearchQueries      String[]  @default([])
+  role                     Role      @default(USER)
+  roleId                   String?   @db.ObjectId
+  isActive                 Boolean?  @default(true)
+  deletedAt                DateTime?
+  isVerifiedLandlord       Boolean   @default(false)
+  landlordApprovedAt       DateTime?
   landlordVerificationDocs String?
-  businessName String?
-  phoneNumber String?
-  address      String?
-  lastLogin    DateTime?
-  city         String?
-  region       String?
-  bio          String?
-  lastPasswordChangeAt DateTime?
-  securityVersion      Int       @default(1)
-  passwordHistory      String[]  @default([])
-  failedLoginAttempts  Int       @default(0)
-  loginLockoutUntil    DateTime?
+  businessName             String?
+  phoneNumber              String?
+  address                  String?
+  lastLogin                DateTime?
+  city                     String?
+  region                   String?
+  bio                      String?
+  lastPasswordChangeAt     DateTime?
+  securityVersion          Int       @default(1)
+  passwordHistory          String[]  @default([])
+  failedLoginAttempts      Int       @default(0)
+  loginLockoutUntil        DateTime?
 
-  // --- Per-User Notification Preferences (Future Implementation) ---
-  notifyEmail          Boolean   @default(true)  // Receive email notifications
-  notifySms            Boolean   @default(false) // Receive SMS/mobile alerts
-  notifyInquiry        Boolean   @default(true)  // Alerts for new inquiries
-  notifyReservation    Boolean   @default(true)  // Alerts for reservation updates
-  notifyMessages       Boolean   @default(true)  // Alerts for new messages
-  notifyFinancial      Boolean   @default(true)  // Alerts for payment/financial events
+  // --- Per-User Notification & Dashboard Preferences ---
+  quickActions      String[] @default(["properties", "profile", "inquiries", "bookings"])
+  notifyEmail       Boolean  @default(true) // Receive email notifications
+  notifySms         Boolean  @default(false) // Receive SMS/mobile alerts
+  notifyInquiry     Boolean  @default(true) // Alerts for new inquiries
+  notifyReservation Boolean  @default(true) // Alerts for reservation updates
+  notifyMessages    Boolean  @default(true) // Alerts for new messages
+  notifyFinancial   Boolean  @default(true) // Alerts for payment/financial events
 
   // --- Strike System & Moderation ---
-  restrictedReason     String?
-  suspensionCount      Int       @default(0)
-  isPermanentlyBanned  Boolean   @default(false)
+  restrictedReason    String?
+  suspensionCount     Int     @default(0)
+  isPermanentlyBanned Boolean @default(false)
 
-  roleRelation UserRole?    @relation(fields: [roleId], references: [id])
+  roleRelation UserRole? @relation(fields: [roleId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accounts     Account[]
-  listings     Listing[]
-  reservations Reservation[]
-  sentMessages     Message[] @relation("sentMessages")
-  receivedMessages Message[] @relation("receivedMessages")
-  reviews      Review[]
-  adminLogs    AdminActivityLog[]
-  moderationLogs ModerationLog[]
-  inquiries    Inquiry[]
-  hostApplication HostApplication?
-  emailOTPs    EmailOTP[]
-  notifications Notification[]
-  customDashboards CustomDashboard[]
-  userStrikes  UserStrike[]
+  accounts          Account[]
+  listings          Listing[]
+  reservations      Reservation[]
+  sentMessages      Message[]           @relation("sentMessages")
+  receivedMessages  Message[]           @relation("receivedMessages")
+  reviews           Review[]
+  adminLogs         AdminActivityLog[]
+  moderationLogs    ModerationLog[]
+  inquiries         Inquiry[]
+  hostApplication   HostApplication?
+  emailOTPs         EmailOTP[]
+  notifications     Notification[]
+  customDashboards  CustomDashboard[]
+  userStrikes       UserStrike[]
+  landlordContracts LeaseContract[]     @relation("landlordContracts")
+  tenantContracts   LeaseContract[]     @relation("tenantContracts")
+  signatures        ContractSignature[]
 }
 
 model UserStrike {
@@ -168,7 +176,7 @@ model UserStrike {
   entityId  String?
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }
@@ -192,265 +200,229 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
-model ListingAmenity {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  listingId       String    @db.ObjectId
-  wifi            Boolean   @default(false)
-  parking         Boolean   @default(false)
-  pool            Boolean   @default(false)
-  gym             Boolean   @default(false)
-  airConditioning Boolean   @default(false)
-  laundry         Boolean   @default(false)
-  cookingAllowed  Boolean   @default(false)
-  waterDispenser  Boolean   @default(false)
-  sariSariStore   Boolean   @default(false)
-  commonTV        Boolean   @default(false)
-  kitchen         Boolean   @default(false)
-  gated           Boolean   @default(false)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  customAmenities String[]  @default([])
 
-  listing         Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  @@unique([listingId])
-}
-
-model ListingRule {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  listingId       String    @db.ObjectId
-  femaleOnly      Boolean   @default(false)
-  maleOnly        Boolean   @default(false)
-  visitorsAllowed Boolean   @default(true)
-  petsAllowed     Boolean   @default(false)
-  smokingAllowed  Boolean   @default(false)
-  noCurfew        Boolean   @default(false)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  customRules     String[]  @default([])
-
-  listing         Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  @@unique([listingId])
-}
-
-model ListingFeature {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  listingId       String    @db.ObjectId
-  security24h     Boolean   @default(false)
-  cctv            Boolean   @default(false)
-  fireSafety      Boolean   @default(false)
-  nearTransport   Boolean   @default(false)
-  floodFree       Boolean   @default(false)
-  backupPower     Boolean   @default(false)
-  createdAt       DateTime  @default(now())
-  customFeatures  String[]  @default([])
-  updatedAt       DateTime  @updatedAt
-
-  listing         Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  @@unique([listingId])
-}
-
-model Category {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  name            String    @unique
-  label           String
-  icon            String
-  description     String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  listingCategories ListingCategory[]
-}
-
-model ListingCategory {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  listingId       String    @db.ObjectId
-  categoryId      String    @db.ObjectId
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  listing         Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  category        Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  @@unique([listingId, categoryId])
-}
 
 model RoomImage {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  roomId          String    @db.ObjectId
-  url             String
-  caption         String    @default("Photo")
-  order           Int       @default(0)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  roomId    String   @db.ObjectId
+  url       String
+  caption   String   @default("Photo")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  room            Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
 }
 
-model RoomAmenityType {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  name            String    @unique
-  icon            String?
-  description     String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+model PropertyType {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique // e.g., "Apartment", "Boarding House"
+  description String? // Consumed by tooltips / admin cards
+  icon        String? // Lucide icon identifier string
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  roomAmenities   RoomAmenity[]
+  roomTypes RoomTypeDefinition[]
+  listings  Listing[]
 }
 
-model RoomAmenity {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  roomId          String    @db.ObjectId
-  amenityTypeId   String    @db.ObjectId
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+model RoomTypeDefinition {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  propertyTypeId String   @db.ObjectId
+  name           String   // e.g., "Studio Unit", "Bedspace"
+  description    String?  // Consumed by tooltips
+  icon           String?  // Lucide icon identifier
+  isFlatRate     Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  displayOrder   Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  room            Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  amenityType     RoomAmenityType  @relation(fields: [amenityTypeId], references: [id], onDelete: Cascade)
-  @@unique([roomId, amenityTypeId])
+  propertyType PropertyType         @relation(fields: [propertyTypeId], references: [id], onDelete: Cascade)
+  bedSetups    BedSetupDefinition[]
+  rooms        Room[]
+}
+
+model BedSetupDefinition {
+  id                   String             @id @default(auto()) @map("_id") @db.ObjectId
+  roomTypeDefinitionId String             @db.ObjectId
+  roomTypeDefinition   RoomTypeDefinition @relation(fields: [roomTypeDefinitionId], references: [id], onDelete: Cascade)
+  code                 String             // e.g. "SINGLE", "DOUBLE", "QUEEN", "BUNK", "ANY"
+  name                 String             // e.g. "Queen Size Bed Frame", "Bunk Bed (Double Deck)"
+  description          String?            // e.g. "Spacious queen mattress for solo rooms"
+  paxCapacity          Int                @default(1)
+  isActive             Boolean            @default(true)
+  displayOrder         Int                @default(0)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+}
+
+model CampusCollege {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique // e.g. "College of Business and Management"
+  code      String   @unique // e.g. "CBM" or "business"
+  latitude  Float // e.g. 15.634774
+  longitude Float // e.g. 120.415286
+  logoUrl   String? // Logo asset path or edge URL (e.g. "/college/cbm.png")
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
 }
 
 model Listing {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  title             String
-  description       String
-  imageSrc          String
-  roomCount         Int
-  bathroomCount     Int
-  userId            String    @db.ObjectId
-  price             Int
-  country           String?
-  latitude          Float?
-  longitude         Float?
-  location          Json?
-  region            String?
-  rating            Float?    @default(4.8)
-  reviewCount       Int       @default(0)
-  status            String    @default("pending")
-  approvedAt        DateTime?
-  approvedBy        String?   @db.ObjectId
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  category          String[]  @default([])
-  amenities_list    String[]  @default([])
-  amenities_tags    String[]  @default([])
-  isArchived        Boolean   @default(false)
-  deletedAt         DateTime?
-  businessInfo      Json?     // Supporting data for Admin Review (businessName, businessType, experience, mission)
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  title          String
+  description    String
+  imageSrc       String
+  roomCount      Int
+  bathroomCount  Int
+  userId         String        @db.ObjectId
+  price          Int
+  country        String?
+  latitude       Float?
+  longitude      Float?
+  location       Json?
+  region         String?
+  rating         Float?
+  reviewCount    Int           @default(0)
+  status         ListingStatus @default(PENDING)
+  approvedAt     DateTime?
+  approvedBy     String?       @db.ObjectId
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  propertyTypeId String?       @db.ObjectId
+  amenities_list String[]      @default([])
+  amenities_tags String[]      @default([])
+  isArchived     Boolean       @default(false)
+  isAdminArchived Boolean      @default(false)
+  adminArchivedAt DateTime?
+  deletedAt      DateTime?
+  businessInfo   Json? // Supporting data for Admin Review (businessName, businessType, experience, mission)
+  rejectionReason String?
 
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amenities         ListingAmenity?
-  rules             ListingRule?
-  features          ListingFeature?
-  categories        ListingCategory[]
-  rooms             Room[]
-  images            ListingImage[]
-  reviews           Review[]
-  reservations      Reservation[]
-  inquiries         Inquiry[]
-  messages          Message[]
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyType    PropertyType?     @relation(fields: [propertyTypeId], references: [id])
+  rooms           Room[]
+  images          ListingImage[]
+  reviews         Review[]
+  reservations    Reservation[]
+  inquiries       Inquiry[]
+  messages        Message[]
+  leaseContracts  LeaseContract[]
+  customClauses   String[]          @default([])
+
+  listingLinks ListingAttributeLink[]
 
   @@index([location], name: "location_2dsphere")
   @@index([status])
   @@index([price])
-  @@index([category])
+  @@index([propertyTypeId])
   @@index([status, price])
   @@index([status, createdAt(sort: Desc)])
 }
 
 model Room {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  listingId         String    @db.ObjectId
-  name              String
-  description       String?
-  price             Int
-  capacity          Int
-  availableSlots    Int
-  roomType          RoomType
-  bathroomArrangement String?
-  bedType           BedType?
-  bedCount          Int        @default(1)
-  size              Float?
-  status            RoomStatus @default(AVAILABLE)
-  reservationFee    Int       @default(0)
-  isArchived        Boolean   @default(false)
-  amenityNames      String[]  @default([])
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                   String     @id @default(auto()) @map("_id") @db.ObjectId
+  listingId            String     @db.ObjectId
+  name                 String
+  description          String?
+  price                Int
+  capacity             Int
+  availableSlots       Int
+  roomTypeDefinitionId String?    @db.ObjectId
+  bathroomArrangement  String?
+  bedType              BedType?
+  bedCount             Int        @default(1)
+  size                 Float?
+  status               RoomStatus @default(AVAILABLE)
+  reservationFee       Int        @default(0)
+  isArchived           Boolean    @default(false)
+  amenityNames         String[]   @default([])
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
 
-  listing           Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  images            RoomImage[]
-  amenities         RoomAmenity[]
-  inquiries         Inquiry[]
-  reservations      Reservation[]
+  listing            Listing             @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  roomTypeDefinition RoomTypeDefinition? @relation(fields: [roomTypeDefinitionId], references: [id])
+  images             RoomImage[]
+  inquiries          Inquiry[]
+  reservations       Reservation[]
+
+  roomLinks RoomAttributeLink[]
 }
 
 model Inquiry {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  listingId         String    @db.ObjectId
-  roomId            String    @db.ObjectId
-  userId            String    @db.ObjectId
-  moveInDate        DateTime
-  checkOutDate      DateTime
-  occupantsCount    Int
-  role              InquiryRole @default(STUDENT)
-  message           String?
-  profilePhotoUrl   String?
-  idAttachmentUrl   String?
-  paymentMethod     String?
-  contactInfo       String?
-  reservationFee    Int       @default(0)
-  stayDuration      Int       @default(1)
-  status            InquiryStatus @default(PENDING)
-  paymentStatus     PaymentStatus @default(UNPAID)
-  isApproved        Boolean   @default(false)
-  approvedBy        String?   @db.ObjectId
-  approvedAt        DateTime?
-  isArchived        Boolean   @default(false)
-  rejectionReason   String?
+  id                 String        @id @default(auto()) @map("_id") @db.ObjectId
+  listingId          String        @db.ObjectId
+  roomId             String        @db.ObjectId
+  userId             String        @db.ObjectId
+  moveInDate         DateTime
+  checkOutDate       DateTime
+  occupantsCount     Int
+  role               InquiryRole   @default(STUDENT)
+  message            String?
+  profilePhotoUrl    String?
+  idAttachmentUrl    String?
+  paymentMethod      String?
+  contactInfo        String?
+  reservationFee     Int           @default(0)
+  stayDuration       Int           @default(1)
+  status             InquiryStatus @default(PENDING)
+  paymentStatus      PaymentStatus @default(UNPAID)
+  isApproved         Boolean       @default(false)
+  approvedBy         String?       @db.ObjectId
+  approvedAt         DateTime?
+  isArchived         Boolean       @default(false)
+  rejectionReason    String?
   cancellationReason String? // Added for student-side cancellation reasons
-  isSoloBuyout      Boolean   @default(false)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  isSoloBuyout       Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
-  listing           Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  room              Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reservations      Reservation[]
+  listing      Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  room         Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reservations Reservation[]
 
   @@index([listingId, status, createdAt])
   @@index([listingId, userId])
 }
 
 model Reservation {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String?   @db.ObjectId
-  isWalkIn          Boolean   @default(false)
-  guestName         String?
-  guestContact      String?
-  guestPhotoUrl     String?
-  guestIdUrl        String?
-  listingId         String    @db.ObjectId
-  roomId            String    @db.ObjectId
-  inquiryId         String?   @db.ObjectId
-  startDate         DateTime
-  endDate           DateTime
-  durationInDays    Int
-  totalPrice        Int
-  status            ReservationStatus @default(PENDING_PAYMENT)
-  paymentStatus     PaymentStatus @default(PENDING)
-  paymentMethod     PaymentMethod?
-  paymentReference  String?
-  occupantsCount    Int      @default(1) // Added to track group size across the lifecycle
+  id                 String            @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String?           @db.ObjectId
+  isWalkIn           Boolean           @default(false)
+  guestName          String?
+  guestContact       String?
+  guestPhotoUrl      String?
+  guestIdUrl         String?
+  listingId          String            @db.ObjectId
+  roomId             String            @db.ObjectId
+  inquiryId          String?           @db.ObjectId
+  startDate          DateTime
+  endDate            DateTime
+  durationInDays     Int
+  totalPrice         Int
+  status             ReservationStatus @default(PENDING_PAYMENT)
+  paymentStatus      PaymentStatus     @default(PENDING)
+  paymentMethod      PaymentMethod?
+  paymentReference   String?
+  occupantsCount     Int               @default(1) // Added to track group size across the lifecycle
   cancellationReason String? // Added for professional record keeping
-  isSoloBuyout      Boolean   @default(false)
-  isArchived        Boolean   @default(false)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  isSoloBuyout       Boolean           @default(false)
+  isArchived         Boolean           @default(false)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
-  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listing           Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  room              Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  inquiry           Inquiry?  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
-  reviews           Review[]
+  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  room    Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  inquiry Inquiry? @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  reviews Review[]
+
   @@index([listingId, status, paymentStatus])
   @@index([roomId, status])
 }
@@ -468,26 +440,26 @@ model ListingImage {
 }
 
 model Review {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId         String   @db.ObjectId
-  listingId      String   @db.ObjectId
-  reservationId  String?  @db.ObjectId
-  rating         Int      // 1-5
-  comment        String?
-  images         String[] // Photos of the stay
-  videos         String[] // Videos of the stay
-  cleanliness    Int?     // 1-5
-  accuracy       Int?     // 1-5
-  communication  Int?     // 1-5
-  location       Int?     // 1-5
-  value          Int?     // 1-5
-  status         String   @default("approved") // pending, approved, removed
-  isArchived     Boolean  @default(false)
-  deletedAt      DateTime?
-  createdAt      DateTime @default(now())
-  response       String?
-  respondedAt    DateTime?
-  likedIds       String[] @default([]) @db.ObjectId
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String    @db.ObjectId
+  listingId     String    @db.ObjectId
+  reservationId String?   @db.ObjectId
+  rating        Int // 1-5
+  comment       String?
+  images        String[] // Photos of the stay
+  videos        String[] // Videos of the stay
+  cleanliness   Int? // 1-5
+  accuracy      Int? // 1-5
+  communication Int? // 1-5
+  location      Int? // 1-5
+  value         Int? // 1-5
+  status        String    @default("approved") // pending, approved, removed
+  isArchived    Boolean   @default(false)
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  response      String?
+  respondedAt   DateTime?
+  likedIds      String[]  @default([]) @db.ObjectId
 
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   listing     Listing      @relation(fields: [listingId], references: [id], onDelete: Cascade)
@@ -498,10 +470,10 @@ model Review {
 }
 
 model Message {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  listingId  String   @db.ObjectId
-  senderId   String   @db.ObjectId
-  receiverId String   @db.ObjectId
+  id                       String   @id @default(auto()) @map("_id") @db.ObjectId
+  listingId                String   @db.ObjectId
+  senderId                 String   @db.ObjectId
+  receiverId               String   @db.ObjectId
   content                  String
   read                     Boolean  @default(false)
   isArchived               Boolean  @default(false)
@@ -509,8 +481,8 @@ model Message {
   isMarkedUnreadByLandlord Boolean  @default(false)
   createdAt                DateTime @default(now())
 
-  sender   User @relation("sentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User @relation("receivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender   User    @relation("sentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User    @relation("receivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
   listing  Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   @@index([listingId, createdAt(sort: Desc)])
@@ -522,10 +494,10 @@ model Message {
 model AdminActivityLog {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   adminId    String   @db.ObjectId
-  action     String   // e.g. "user_deactivated", "listing_approved", "review_removed"
-  entityType String   // User, Listing, Review, Reservation
+  action     String // e.g. "user_deactivated", "listing_approved", "review_removed"
+  entityType String // User, Listing, Review, Reservation
   entityId   String?
-  details    String?  // JSON string for extra context
+  details    String? // JSON string for extra context
   ipAddress  String?
   userAgent  String?
   createdAt  DateTime @default(now())
@@ -539,34 +511,35 @@ model AdminActivityLog {
 model ModerationLog {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   adminId     String   @db.ObjectId
-  action      String   // e.g. "approved", "rejected"
-  entityType  String   // "listing", "review", "hostApplication"
-  entityId    String   // String because it might refer to different collections
-  entityTitle String?  // Optional snapshot of the title/name for easy feed rendering
+  action      String // e.g. "approved", "rejected"
+  entityType  String // "listing", "review", "hostApplication"
+  entityId    String // String because it might refer to different collections
+  entityTitle String? // Optional snapshot of the title/name for easy feed rendering
   notes       String?
   createdAt   DateTime @default(now())
 
-  admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
   @@index([createdAt(sort: Desc)])
   @@index([entityType, entityId])
 }
 
 model EmailOTP {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String?   @db.ObjectId
-  email             String
-  otpHash           String
-  expiresAt         DateTime
-  attempts          Int       @default(0)
-  used              Boolean   @default(false)
-  lockoutUntil      DateTime?
-  lockoutPhase      Int       @default(1)
-  isPermanentlyLocked Boolean  @default(false)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId              String?   @db.ObjectId
+  email               String
+  otpHash             String
+  expiresAt           DateTime
+  attempts            Int       @default(0)
+  used                Boolean   @default(false)
+  lockoutUntil        DateTime?
+  lockoutPhase        Int       @default(1)
+  isPermanentlyLocked Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([email])
   @@index([userId])
 }
@@ -582,39 +555,39 @@ model PasswordResetToken {
 }
 
 model HostApplication {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String    @db.ObjectId @unique
-  status          String    @default("pending") // pending, approved, rejected
-  isArchived      Boolean   @default(false)
-  deletedAt       DateTime?
-  
-  // Business & Contact Identity
-  businessInfo    Json      // { businessName, mission, yearsExperience, businessType }
-  contactInfo     Json      // { fullName, phoneNumber, emergencyContact }
-  
-  // Verification Media (Stored in Private EdgeStore Buckets)
-  selfieUrl           String?   // Biometric Selfie with Liveness
-  idCardUrl           String?   // Government ID Card
-  businessPermitUrl   String?   // Mayor's / Business Permit
-  fireSafetyUrl       String?   // Fire Safety Certificate
-  facadePhotoUrl      String?   // Property Establishment Front
-  latlng              Float[]   // [latitude, longitude] coordinates
-  additionalDocsUrl   String?   // Optional: Sanitary Permit, etc.
-  
-  adminNotes      String?
-  approvedBy      String?   @db.ObjectId
-  rejectedBy      String?   @db.ObjectId
-  rejectedReason  String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String    @unique @db.ObjectId
+  status     String    @default("pending") // pending, approved, rejected
+  isArchived Boolean   @default(false)
+  deletedAt  DateTime?
 
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Business & Contact Identity
+  businessInfo Json // { businessName, yearsExperience, businessType }
+  contactInfo  Json // { fullName, phoneNumber, email, ownershipRole }
+
+  // Verification Media (Stored in Private EdgeStore Buckets)
+  selfieUrl         String? // Biometric Selfie with Liveness
+  idCardUrl         String? // Government ID Card
+  businessPermitUrl String? // Mayor's / Business Permit
+  fireSafetyUrl     String? // Fire Safety Certificate
+  facadePhotoUrl    String? // Property Establishment Front
+  latlng            Float[] // [latitude, longitude] coordinates
+  additionalDocsUrl String? // Optional: Sanitary Permit, etc.
+
+  adminNotes     String?
+  approvedBy     String?  @db.ObjectId
+  rejectedBy     String?  @db.ObjectId
+  rejectedReason String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Notification {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   userId      String   @db.ObjectId
-  type        String   // inquiry, reservation, review, message
+  type        String // inquiry, reservation, review, message
   title       String
   description String
   link        String
@@ -622,8 +595,8 @@ model Notification {
   isArchived  Boolean  @default(false)
   createdAt   DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   // TTL Index Placeholder: Records should auto-expire after 30 days (2592000 seconds)
   @@index([createdAt])
   @@index([userId, isRead, createdAt(sort: Desc)])
@@ -639,23 +612,23 @@ model CustomDashboard {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model SiteSettings {
-  id               String   @id @default(auto()) @map("_id") @db.ObjectId
-  siteName         String   @default("BoardTAU")
-  siteDescription  String   @default("Your Ultimate Destination Connection")
-  contactEmail     String   @default("contact@boardtau.com")
-  contactPhone     String?
-  address          String?
-  
+  id              String  @id @default(auto()) @map("_id") @db.ObjectId
+  siteName        String  @default("BoardTAU")
+  siteDescription String  @default("Your Ultimate Destination Connection")
+  contactEmail    String  @default("contact@boardtau.com")
+  contactPhone    String?
+  address         String?
+
   // Automated Backups
-  autoBackupSchedule String  @default("none") // 'none', 'daily', 'weekly', 'monthly'
-  autoBackupTime     String  @default("02:00") // Time of day for cron job
-  backupRetention    Int     @default(5) // Number of recent backups to keep
-  
-  updatedAt        DateTime @updatedAt
+  autoBackupSchedule String @default("none") // 'none', 'daily', 'weekly', 'monthly'
+  autoBackupTime     String @default("02:00") // Time of day for cron job
+  backupRetention    Int    @default(5) // Number of recent backups to keep
+
+  updatedAt DateTime @updatedAt
 }
 
 model FeatureFlag {
@@ -669,10 +642,109 @@ model FeatureFlag {
 }
 
 model PlatformMetricSnapshot {
-  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
-  date                  DateTime @unique
-  totalFeatureFlags     Int      @default(0)
-  activeFeatureFlags    Int      @default(0)
-  inactiveFeatureFlags  Int      @default(0)
-  createdAt             DateTime @default(now())
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  date                 DateTime @unique
+  totalFeatureFlags    Int      @default(0)
+  activeFeatureFlags   Int      @default(0)
+  inactiveFeatureFlags Int      @default(0)
+  createdAt            DateTime @default(now())
+}
+
+enum SignerType {
+  LANDLORD
+  TENANT
+}
+
+model LeaseContract {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  listingId         String   @db.ObjectId
+  landlordId        String   @db.ObjectId
+  tenantId          String?  @db.ObjectId
+  depositAmount     Int      @default(0)
+  moveOutNoticeDays Int      @default(30)
+  pdfUrl            String?
+  verificationHash  String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  listing    Listing             @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  landlord   User                @relation("landlordContracts", fields: [landlordId], references: [id], onDelete: Cascade)
+  tenant     User?               @relation("tenantContracts", fields: [tenantId], references: [id], onDelete: Cascade)
+  signatures ContractSignature[]
+}
+
+model ContractSignature {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  contractId   String     @db.ObjectId
+  signerId     String     @db.ObjectId
+  signerType   SignerType
+  signatureUrl String
+  signedAt     DateTime   @default(now())
+
+  contract LeaseContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [signerId], references: [id], onDelete: Cascade)
+}
+
+enum AttributeType {
+  AMENITY
+  RULE
+  FEATURE
+  ROOM_AMENITY
+}
+
+model AttributeSubGroup {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  type         AttributeType // AMENITY, ROOM_AMENITY, RULE, FEATURE
+  key          String        @unique // e.g., "STORES", "WIFI", "KITCHEN_APP", "BATHROOM_FIX", "GARDEN"
+  title        String        // e.g., "Outdoor, Garden & Green Spaces"
+  subtitle     String        // e.g., "Which outdoor or garden areas do you want?"
+  tabLabel     String        // e.g., "Garden" (renders on breadcrumb pill)
+  displayOrder Int           @default(0)
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  attributes DynamicAttribute[]
+}
+
+model DynamicAttribute {
+  id              String             @id @default(auto()) @map("_id") @db.ObjectId
+  type            AttributeType
+  subGroupKey     String?            // References AttributeSubGroup.key
+  subGroup        AttributeSubGroup? @relation(fields: [subGroupKey], references: [key])
+  setupContext    String?            // IN_UNIT | SHARED | PRIVATE | COMMON_CR | UNIVERSAL
+  name            String             @unique
+  icon            String?            // Lucide icon string
+  description     String?            // Consumed by HelpTooltip
+  isActive        Boolean            @default(true)
+  isUniversal     Boolean            @default(true)
+  propertyTypeIds String[]           @db.ObjectId // Empty = Universal
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  listingLinks ListingAttributeLink[]
+  roomLinks    RoomAttributeLink[]
+}
+
+model ListingAttributeLink {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  listingId   String @db.ObjectId
+  attributeId String @db.ObjectId
+
+  listing   Listing          @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  attribute DynamicAttribute @relation(fields: [attributeId], references: [id], onDelete: Restrict)
+
+  @@unique([listingId, attributeId])
+}
+
+model RoomAttributeLink {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  roomId      String @db.ObjectId
+  attributeId String @db.ObjectId
+
+  room      Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  attribute DynamicAttribute @relation(fields: [attributeId], references: [id], onDelete: Restrict)
+
+  @@unique([roomId, attributeId])
 }
