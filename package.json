@@ -123,7 +123,7 @@
     "nuqs": "^2.8.9",
     "posthog-js": "1.399.2",
     "posthog-node": "5.46.1",
-    "pusher": "5.3.3",
+    "pusher": "5.3.4",
     "pusher-js": "8.5.0",
     "qrcode": "1.5.4",
     "qs": "^6.16.0",
