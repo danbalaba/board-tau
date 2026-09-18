@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: release-drafter/release-drafter@v7.6.0
+      - uses: release-drafter/release-drafter@v7.7.0
         with:
           commitish: main
         env:
