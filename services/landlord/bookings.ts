@@ -58,6 +58,11 @@ export const getLandlordBookings = async (args?: {
           title: true,
           imageSrc: true,
           images: true,
+          propertyType: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
       room: {
@@ -67,6 +72,11 @@ export const getLandlordBookings = async (args?: {
           price: true,
           reservationFee: true,
           images: true,
+          roomTypeDefinition: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
     },
@@ -107,8 +117,13 @@ export const getBookingDetails = async (bookingId: string) => {
           title: true,
           imageSrc: true,
           description: true,
-          amenities: true,
+          amenities_list: true,
           images: true,
+          propertyType: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
       room: {
@@ -118,6 +133,11 @@ export const getBookingDetails = async (bookingId: string) => {
           price: true,
           reservationFee: true,
           images: true,
+          roomTypeDefinition: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
     },

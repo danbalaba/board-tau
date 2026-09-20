@@ -15,8 +15,9 @@ import FileUpload from '@/components/common/FileUpload';
 import { motion, AnimatePresence } from 'framer-motion';
 import SignaturePad from '@/components/common/SignaturePad';
 import { getCachedAttributes, getSyncAttributes, getCachedSubGroups, getSyncSubGroups, getSyncPropertyTypes, getCachedPropertyTypes, getCachedRoomTypes, getSyncRoomTypes } from '@/lib/landlordTaxonomyCache';
+import { getDynamicIcon } from '@/lib/iconResolver';
 import { cn } from '@/utils/helper';
-import { generateLeaseContractPDF } from '@/utils/contractPdfGenerator';
+import { generateLeaseContractPDF, previewPdfBlob } from '@/utils/contractPdfGenerator';
 
 interface PropertyConfigStepProps {
   register: any;
@@ -34,12 +35,7 @@ interface PropertyConfigStepProps {
 }
 
 const getSafeLucideIcon = (iconName: string, defaultIcon: any = Sparkles) => {
-  if (!iconName) return defaultIcon;
-  const IconObj = (LucideIcons as Record<string, any>)[iconName];
-  if (IconObj && (typeof IconObj === 'function' || typeof IconObj === 'object')) {
-    return IconObj;
-  }
-  return defaultIcon;
+  return getDynamicIcon(iconName, defaultIcon);
 };
 
 export default function PropertyConfigStep({
@@ -167,7 +163,7 @@ export default function PropertyConfigStep({
   const kitchenSetup = watch('propertyConfig.kitchenSetup') || ''; // '' (unselected), 'SHARED' or 'IN_UNIT'
   const bathroomSetup = watch('propertyConfig.bathroomSetup') || ''; // '' (unselected), 'SHARED' or 'PRIVATE'
   const contractMode = watch('propertyConfig.contractMode') || 'AUTO_GEN'; // 'AUTO_GEN' or 'CUSTOM_PDF'
-  const selectedPropertyTypeId = watch('propertyInfo.propertyTypeId') || watch('businessInfo.businessType') || '';
+  const selectedPropertyTypeId = watch('propertyInfo.propertyTypeId') || watch('propertyInfo.category') || '';
   const watchCategory = watch('propertyInfo.category') || '';
 
   // Ensure default contract mode is explicitly synced into react-hook-form state
@@ -460,9 +456,7 @@ export default function PropertyConfigStep({
 
   // Dynamic Icon Resolver Helper
   const resolveLucideIcon = (iconName?: string | null, Fallback: any = Sparkles) => {
-    if (!iconName) return Fallback;
-    const Comp = (LucideIcons as Record<string, any>)[iconName];
-    return Comp || Fallback;
+    return getDynamicIcon(iconName, Fallback);
   };
 
   // Dynamic Sub-Groups (100% Database Driven & Filtered by Matching Attributes)
@@ -1832,7 +1826,7 @@ export default function PropertyConfigStep({
 
                       {/* Custom Clauses */}
                       <div className="space-y-3 sm:space-y-4 pt-3 sm:pt-4 border-t border-gray-100 dark:border-gray-700/50">
-                        <label className="text-[10px] sm:text-[11px] font-black text-gray-400 uppercase tracking-widest block">
+                        <label className="text-[10px] sm:text-[11px] font-black text-slate-700 dark:text-gray-300 uppercase tracking-widest block">
                           Custom Landlord Clauses (Optional)
                         </label>
                         
@@ -1924,7 +1918,7 @@ export default function PropertyConfigStep({
                               type="button"
                               onClick={() => {
                                 const url = watch('propertyConfig.customPdfUrl');
-                                if (url) window.open(url, '_blank');
+                                if (url) previewPdfBlob(url, 'Custom Lease Contract Preview');
                               }}
                               className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 shadow-sm cursor-pointer"
                             >
@@ -2029,9 +2023,9 @@ export default function PropertyConfigStep({
                               landlordSignatureBase64: currentSignature,
                               tenantSignatureBase64: ''
                             }, true);
-                            if (pdfBlob) {
-                              window.open(URL.createObjectURL(pdfBlob as Blob), '_blank');
-                            }
+                             if (pdfBlob) {
+                               previewPdfBlob(pdfBlob as Blob, 'Sample Smart Lease Contract Preview');
+                             }
                           }}
                           className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 shadow-sm cursor-pointer"
                         >

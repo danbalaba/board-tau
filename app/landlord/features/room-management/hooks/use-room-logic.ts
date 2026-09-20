@@ -11,23 +11,23 @@ export interface Room {
   id: string;
   name: string;
   description?: string | null;
-  propertyId: string;
-  propertyTitle: string;
+  propertyId?: string;
+  propertyTitle?: string;
   price: number;
   capacity: number;
   availableSlots: number;
-  status: 'AVAILABLE' | 'FULL' | 'MAINTENANCE';
-  roomType: 'SOLO' | 'BEDSPACE';
+  status: 'AVAILABLE' | 'FULL' | 'MAINTENANCE' | string;
+  roomType: string;
   bathroomArrangement?: string | null;
   bedType?: string;
-  bedCount: number;
+  bedCount?: number;
   size?: number | null;
-  reservationFee: number;
+  reservationFee?: number;
   imageSrc?: string | null;
-  images: string[];
-  createdAt: string | Date;
-  updatedAt: string | Date;
-  isArchived: boolean;
+  images?: any[];
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  isArchived?: boolean;
   amenities?: any[];
 }
 
@@ -285,6 +285,33 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
     }
   });
 
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const res = await fetch(`/api/landlord/rooms/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error('Failed to update room status');
+      return { id, status };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['landlordRooms'] });
+      setRooms(prev => prev.map(r => r.id === data.id ? { ...r, status: data.status } : r));
+      if (selectedRoom && selectedRoom.id === data.id) {
+        setSelectedRoom(prev => prev ? { ...prev, status: data.status } : null);
+      }
+      responsiveToast.success({ title: 'SUCCESS', description: `Room status updated to ${data.status}` });
+    },
+    onError: () => {
+      responsiveToast.error({ title: 'ERROR', description: 'Failed to update room status' });
+    }
+  });
+
+  const handleStatusChange = useCallback(async (roomId: string, newStatus: string) => {
+    await statusMutation.mutateAsync({ id: roomId, status: newStatus });
+  }, [statusMutation]);
+
   const handleConfirmDelete = useCallback(async () => {
     if (!selectedRoom) return;
     setIsDeleting(true);
@@ -294,6 +321,11 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
       setIsDeleting(false);
     }
   }, [selectedRoom, deleteMutation]);
+
+  const refetchRooms = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['landlordRooms'] });
+    queryClient.refetchQueries({ queryKey: ['landlordRooms'] });
+  }, [queryClient]);
 
   const handleClearFilters = useCallback(() => {
     setFilters({
@@ -314,7 +346,7 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
         const fromDate = dateRange.from;
         const toDate = dateRange.to;
         exportData = exportData.filter(r => {
-          const createdAt = new Date(r.createdAt);
+          const createdAt = new Date(r.createdAt || 0);
           if (toDate) {
             return createdAt >= fromDate && createdAt <= toDate;
           }
@@ -431,5 +463,7 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
     handleGenerateReport,
     handleClearFilters,
     handleConfirmArchive,
+    handleStatusChange,
+    refetchRooms,
   };
 }

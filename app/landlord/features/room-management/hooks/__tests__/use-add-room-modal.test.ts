@@ -15,6 +15,16 @@ jest.mock('@/lib/edgestore', () => ({
   }),
 }));
 
+jest.mock('@tanstack/react-query', () => ({
+  useMutation: (options: any) => ({
+    mutateAsync: jest.fn().mockResolvedValue({}),
+  }),
+  useQueryClient: () => ({
+    invalidateQueries: jest.fn(),
+    refetchQueries: jest.fn(),
+  }),
+}));
+
 describe('useAddRoomModal', () => {
   const mockOnSuccess = jest.fn();
   const mockOnClose = jest.fn();
@@ -83,7 +93,8 @@ describe('useAddRoomModal', () => {
         listingId: 'listing-1',
         name: 'Room',
         roomType: 'SOLO',
-        bathroomArrangement: 'PRIVATE_CR'
+        bathroomArrangement: 'PRIVATE_CR',
+        kitchenSetup: 'IN_UNIT'
       }));
     });
     act(() => {

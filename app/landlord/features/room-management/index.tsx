@@ -18,9 +18,9 @@ import { LandlordRoomCard } from './components/landlord-room-card';
 import { LandlordPagination } from '../shared/landlord-pagination';
 
 const statusColors: Record<string, string> = {
-  AVAILABLE: 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
-  FULL: 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20',
-  MAINTENANCE: 'bg-orange-50 text-orange-600 border-orange-100 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20',
+  AVAILABLE: 'bg-primary/90 text-white border-primary/40 shadow-primary/20',
+  FULL: 'bg-rose-500/90 text-white border-rose-400/50 shadow-rose-500/20',
+  MAINTENANCE: 'bg-amber-500/90 text-white border-amber-400/50 shadow-amber-500/20',
 };
 
 const formatStatus = (status: string) => status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
@@ -74,6 +74,8 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
     isDeleting,
     isArchiving,
     isLoading,
+    handleStatusChange,
+    refetchRooms,
   } = useRoomLogic(initialData.rooms, initialData.nextCursor);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -209,17 +211,24 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
       <AnimatePresence>
         {viewModalOpen && selectedRoom && (
           <LandlordRoomDetailsModal
+            isOpen={viewModalOpen}
             room={selectedRoom}
             onClose={() => setViewModalOpen(false)}
+            onStatusChange={handleStatusChange}
             onEdit={(r) => {
               setViewModalOpen(false);
               setSelectedRoom(r);
               setEditModalOpen(true);
             }}
-            statusColors={statusColors}
-            formatStatus={formatStatus}
             rooms={rooms}
-            onNavigate={setSelectedRoom}
+            onNavigateRoom={(direction) => {
+              const currIdx = rooms.findIndex((r) => r.id === selectedRoom.id);
+              if (direction === 'prev' && currIdx > 0) {
+                setSelectedRoom(rooms[currIdx - 1]);
+              } else if (direction === 'next' && currIdx < rooms.length - 1) {
+                setSelectedRoom(rooms[currIdx + 1]);
+              }
+            }}
           />
         )}
       </AnimatePresence>
@@ -250,7 +259,10 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
             onClose={() => setAddModalOpen(false)}
             uniqueProperties={uniqueProperties}
             initialListingId={propertyFilter !== 'all' ? propertyFilter : ''}
-            onSuccess={() => router.refresh()}
+            onSuccess={() => {
+              refetchRooms();
+              router.refresh();
+            }}
           />
         )}
       </AnimatePresence>
@@ -261,8 +273,10 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
             isOpen={editModalOpen}
             onClose={() => setEditModalOpen(false)}
             initialData={selectedRoom}
+            uniqueProperties={uniqueProperties}
             onSuccess={() => {
               setEditModalOpen(false);
+              refetchRooms();
               router.refresh();
             }}
           />

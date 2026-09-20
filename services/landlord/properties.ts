@@ -153,7 +153,7 @@ export const getLandlordProperties = async (args?: { cursor?: string }): Promise
   };
 };
 
-export const getLandlordPropertiesMinimal = async (): Promise<{ id: string; title: string }[]> => {
+export const getLandlordPropertiesMinimal = async (): Promise<{ id: string; title: string; propertyTypeId?: string | null; bathroomCount?: number; businessInfo?: any; isArchived?: boolean; propertyType?: { id: string; name: string } | null }[]> => {
   const landlord = await requireLandlord();
 
   const properties = await db.listing.findMany({
@@ -163,12 +163,22 @@ export const getLandlordPropertiesMinimal = async (): Promise<{ id: string; titl
     select: {
       id: true,
       title: true,
+      propertyTypeId: true,
       bathroomCount: true,
+      businessInfo: true,
+      isArchived: true,
+      status: true,
+      propertyType: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
     orderBy: { title: "asc" },
   });
 
-  return properties;
+  return properties.filter((p: any) => p.isArchived !== true) as any;
 };
 
 export const getAllLandlordProperties = async (): Promise<LandlordPropertyResult[]> => {
@@ -252,6 +262,57 @@ export const getLandlordPropertyById = async (id: string) => {
   return property;
 };
 
+export const getRoomDetails = async (roomId: string) => {
+  const landlord = await requireLandlord();
+
+  const room = await db.room.findFirst({
+    where: { id: roomId, listing: { userId: landlord.id } },
+    include: {
+      listing: {
+        select: {
+          id: true,
+          title: true,
+          region: true,
+          status: true,
+          userId: true,
+          propertyTypeId: true,
+          bathroomCount: true,
+          businessInfo: true,
+          propertyType: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      },
+      images: true,
+      roomLinks: {
+        include: { attribute: true }
+      },
+      roomTypeDefinition: true
+    }
+  });
+
+  if (!room) return null;
+
+  return {
+    ...room,
+    createdAt: room.createdAt.toISOString(),
+    updatedAt: room.updatedAt.toISOString(),
+    propertyId: room.listingId,
+    propertyTitle: room.listing.title,
+    propertyRegion: room.listing.region,
+    propertyStatus: room.listing.status,
+    propertyTypeId: room.listing.propertyTypeId || (room.listing.propertyType as any)?.id || null,
+    bathroomCount: room.listing.bathroomCount || 0,
+    roomType: room.roomTypeDefinitionId || (room.roomTypeDefinition as any)?.code || room.roomTypeDefinition?.name || '',
+    imageSrc: room.images[0]?.url || null,
+    images: room.images.map((img: any) => img.url),
+    amenities: room.roomLinks.map((rl: any) => rl.attribute)
+  };
+};
+
 const normalizePropertyTitle = (title: string): string => {
   if (!title) return '';
   return title.toLowerCase().replace(/[^a-z0-9]/gi, '').trim();
@@ -305,6 +366,22 @@ export const createProperty = async (data: any) => {
     const safeAmenities = Array.isArray(amenities) ? amenities : [];
     const safeImages = Array.isArray(images) ? images : [];
 
+    let finalPropertyTypeId = propertyTypeId || businessInfo?.businessType || null;
+    if (finalPropertyTypeId) {
+      const foundPt = await db.propertyType.findFirst({
+        where: {
+          OR: [
+            { id: finalPropertyTypeId },
+            { name: { equals: finalPropertyTypeId, mode: 'insensitive' } }
+          ]
+        },
+        select: { id: true }
+      });
+      if (foundPt) {
+        finalPropertyTypeId = foundPt.id;
+      }
+    }
+
     const listing = await db.listing.create({
       data: {
         title: title || "Untitled Property",
@@ -330,7 +407,7 @@ export const createProperty = async (data: any) => {
           if (exteriorPhoto) return typeof exteriorPhoto === 'object' ? exteriorPhoto.url : exteriorPhoto;
           return typeof safeImages[0] === 'object' ? (safeImages[0] as any).url : (safeImages[0] || "");
         })(),
-        propertyTypeId: propertyTypeId,
+        propertyTypeId: finalPropertyTypeId,
         amenities_list: safeAmenities,
         customClauses: customContractClauses || [],
         businessInfo: { ...data.businessInfo, documents: data.documents },
@@ -495,8 +572,20 @@ export const updateProperty = async (propertyId: string, data: any) => {
       amenities_list: safeAmenities,
     };
 
-    if (propertyTypeId !== undefined) {
-      updateData.propertyTypeId = propertyTypeId;
+    const targetPropertyTypeId = propertyTypeId !== undefined ? propertyTypeId : data?.businessInfo?.businessType;
+    if (targetPropertyTypeId !== undefined && targetPropertyTypeId !== null) {
+      let resolvedPtId = targetPropertyTypeId;
+      const foundPt = await db.propertyType.findFirst({
+        where: {
+          OR: [
+            { id: resolvedPtId },
+            { name: { equals: resolvedPtId, mode: 'insensitive' } }
+          ]
+        },
+        select: { id: true }
+      });
+      if (foundPt) resolvedPtId = foundPt.id;
+      updateData.propertyTypeId = resolvedPtId;
     }
 
     if (safeImages.length > 0) {
@@ -662,11 +751,17 @@ export const deleteProperty = async (propertyId: string) => {
   const landlord = await requireLandlord();
 
   try {
-    await db.listing.deleteMany({
+    // Perform SOFT DELETE so linked rooms, inquiries, reservations, and reviews remain intact in DB
+    await db.listing.updateMany({
       where: {
         id: propertyId,
         userId: landlord.id,
       },
+      data: {
+        isArchived: true,
+        deletedAt: new Date(),
+        status: "UNPUBLISHED"
+      }
     });
 
     revalidatePath("/landlord/properties");
@@ -690,7 +785,10 @@ export const updateListingStatus = async (propertyId: string, isArchived: boolea
       where: {
         id: propertyId,
       },
-      data: { status: isArchived ? 'UNPUBLISHED' : 'ACTIVE' },
+      data: { 
+        isArchived,
+        status: isArchived ? 'UNPUBLISHED' : 'ACTIVE' 
+      },
     });
 
     revalidatePath("/landlord/properties");

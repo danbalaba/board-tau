@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Input from '@/components/inputs/Input';
 import Checkbox from '@/components/inputs/Checkbox';
 import Button from '@/components/common/Button';
@@ -13,9 +13,10 @@ import {
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { motion } from 'framer-motion';
-import { BATHROOM_ARRANGEMENTS, bedTypeOptions as CENTRAL_BED_TYPES } from '@/data/roomAmenities';
+import { BATHROOM_ARRANGEMENTS, bedTypeOptions as CENTRAL_BED_TYPES } from '@/utils/constants';
 import axios from 'axios';
-import { getCachedAttributes, getSyncAttributes, getCachedRoomTypes, getSyncRoomTypes } from '@/lib/landlordTaxonomyCache';
+import { getCachedAttributes, getSyncAttributes, getCachedSubGroups, getSyncSubGroups, getCachedRoomTypes, getSyncRoomTypes, getCachedPropertyTypes, getSyncPropertyTypes } from '@/lib/landlordTaxonomyCache';
+import { getDynamicIcon } from '@/lib/iconResolver';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import BulkConfigureModal from './BulkConfigureModal';
 import Modal from '@/components/modals/Modal';
@@ -67,12 +68,7 @@ const defaultRoom = (): RoomType => ({
 });
 
 const getSafeLucideIcon = (iconName: string, defaultIcon: any = CheckCircle2) => {
-  if (!iconName) return defaultIcon;
-  const IconObj = (LucideIcons as Record<string, any>)[iconName];
-  if (IconObj && (typeof IconObj === 'function' || typeof IconObj === 'object')) {
-    return IconObj;
-  }
-  return defaultIcon;
+  return getDynamicIcon(iconName, defaultIcon);
 };
 
 const CustomDropdownIndicator = (props: any) => {
@@ -165,17 +161,100 @@ export default function RoomConfigStep({
   const [activeRoomIndex, setActiveRoomIndex] = useState<number | null>(null);
   const [copiedConfig, setCopiedConfig] = useState<any>(null);
   const [justCopied, setJustCopied] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const propertyTypeId = watch('businessInfo.businessType') || watch('propertyInfo.propertyTypeId');
+  const propertyTypeId = watch('propertyInfo.propertyTypeId') || watch('propertyInfo.category') || '';
+  const watchCategory = watch('propertyInfo.category') || '';
   const [dynamicAttributes, setDynamicAttributes] = useState<any[]>(() => getSyncAttributes() || []);
+  const [dbSubGroups, setDbSubGroups] = useState<any[]>(() => getSyncSubGroups() || []);
   const [isLoadingAttrs, setIsLoadingAttrs] = useState<boolean>(() => !getSyncAttributes() || getSyncAttributes()!.length === 0);
   const [roomTypeOptions, setRoomTypeOptions] = useState<any[]>(() => (propertyTypeId ? getSyncRoomTypes(propertyTypeId) || [] : []));
+
+  useEffect(() => {
+    const syncAttrs = getSyncAttributes();
+    if (syncAttrs && syncAttrs.length > 0) {
+      setDynamicAttributes(syncAttrs);
+      setIsLoadingAttrs(false);
+    } else {
+      getCachedAttributes().then(attrs => {
+        setDynamicAttributes(attrs || []);
+        setIsLoadingAttrs(false);
+      });
+    }
+
+    const syncSgs = getSyncSubGroups();
+    if (syncSgs && syncSgs.length > 0) {
+      setDbSubGroups(syncSgs);
+    } else {
+      getCachedSubGroups().then(sgs => {
+        setDbSubGroups(sgs || []);
+      });
+    }
+
+    if (!getSyncPropertyTypes()) {
+      getCachedPropertyTypes();
+    }
+  }, []);
+
+  const cachedPropertyTypes = getSyncPropertyTypes() || [];
+  const matchedPropertyType = cachedPropertyTypes.find(
+    (pt: any) => pt.id === propertyTypeId || pt.name === propertyTypeId
+  );
+  const resolvedCategoryName = matchedPropertyType?.name || watchCategory || propertyTypeId || '';
+
+  const isAttrMatchingPropertyType = useMemo(() => {
+    return (attr: any) => {
+      if (attr.isUniversal) return true;
+      if (!propertyTypeId && !resolvedCategoryName) return true;
+
+      const typeIds: string[] = Array.isArray(attr.propertyTypeIds) ? attr.propertyTypeIds : [];
+      const typeNames: string[] = Array.isArray(attr.propertyTypeNames)
+        ? attr.propertyTypeNames
+        : Array.isArray(attr.propertyTypes)
+        ? attr.propertyTypes.map((pt: any) => (pt.name || pt).toString())
+        : [];
+
+      if (typeIds.length === 0 && typeNames.length === 0) return true;
+
+      if (propertyTypeId && typeIds.includes(propertyTypeId)) return true;
+      if (matchedPropertyType?.id && typeIds.includes(matchedPropertyType.id)) return true;
+
+      const targetCategory = (resolvedCategoryName || matchedPropertyType?.name || '').toLowerCase();
+      if (targetCategory && typeNames.length > 0) {
+        return typeNames.some((n: string) => {
+          const lowerName = n.toLowerCase();
+          return lowerName.includes(targetCategory) || targetCategory.includes(lowerName);
+        });
+      }
+
+      if (cachedPropertyTypes.length > 0 && typeIds.length > 0) {
+        const matchedPropTypes = cachedPropertyTypes.filter((pt: any) => typeIds.includes(pt.id));
+        if (matchedPropTypes.length > 0) {
+          return matchedPropTypes.some((pt: any) => {
+            const pName = (pt.name || '').toLowerCase();
+            return pName.includes(targetCategory) || targetCategory.includes(pName);
+          });
+        }
+      }
+
+      return false;
+    };
+  }, [propertyTypeId, resolvedCategoryName, matchedPropertyType, cachedPropertyTypes]);
 
   // Sub-step Room Tab State
   const [activeRoomTab, setActiveRoomTab] = useState<number>(() => (defaultToLastRoom && fields.length > 0 ? fields.length - 1 : 0));
   const [amenitiesExpanded, setAmenitiesExpanded] = useState<Record<number, boolean>>({});
 
   const lastNavKeyRef = useRef<string>('');
+
+  // Auto-scroll to top of room workspace when activeRoomTab changes
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [activeRoomTab]);
 
   // Sync Sub-step Navigation with Main Wizard Bottom Action Bar
   useEffect(() => {
@@ -502,7 +581,7 @@ export default function RoomConfigStep({
   }
 
   return (
-    <div className="space-y-4 sm:space-y-8">
+    <div ref={containerRef} className="space-y-4 sm:space-y-8 scroll-mt-24">
       {/* 1. Bulk Configuration Header Card (At the Very Top) */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-8 bg-white dark:bg-gray-800 border-x-0 sm:border border-gray-200 dark:border-gray-700 rounded-none sm:rounded-[2.5rem] gap-3 sm:gap-6 shadow-sm">
         <div className="flex items-center gap-3 sm:gap-5">
@@ -627,12 +706,50 @@ export default function RoomConfigStep({
           const hasInUnitKitchen = kitchenSetup === 'IN_UNIT';
           const hasPrivateCR = currentBathroom === BATHROOM_ARRANGEMENTS.PRIVATE || bathroomSetup === 'PRIVATE';
 
-          const unitSubGroups = [
-            ...(hasInUnitKitchen ? [{ key: 'KITCHEN_APP', label: 'Kitchen', icon: Utensils }] : []),
-            ...(hasPrivateCR ? [{ key: 'BATHROOM_FIX', label: 'CR Features', icon: ShowerHead }] : []),
+          const unitSubGroups: any[] = [];
+          if (hasInUnitKitchen) {
+            unitSubGroups.push({ key: 'KITCHEN_APP', label: 'Kitchen', icon: Utensils });
+          }
+          if (hasPrivateCR) {
+            unitSubGroups.push({ key: 'BATHROOM_FIX', label: 'CR Features', icon: ShowerHead });
+          }
+
+          const defaultSubGroups = [
             { key: 'COOLING', label: 'Cooling & AC', icon: Wind },
             { key: 'FURNITURE', label: 'Furniture', icon: Sofa },
           ];
+
+          defaultSubGroups.forEach(item => {
+            if (!unitSubGroups.some(existing => existing.key === item.key)) {
+              unitSubGroups.push(item);
+            }
+          });
+
+          const dbRoomSgs = dbSubGroups
+            .filter((sg: any) => {
+              const sgKeyUpper = (sg.key || '').toUpperCase().trim();
+              if (sg.type !== 'ROOM_AMENITY' || sgKeyUpper === 'KITCHEN_APP' || sgKeyUpper === 'BATHROOM_FIX') return false;
+
+              const matchingAttrs = dynamicAttributes.filter((a: any) => {
+                if (a.isActive === false || a.status === 'INACTIVE') return false;
+                if ((a.subGroupKey || '').toUpperCase().trim() !== sgKeyUpper) return false;
+                if (a.setupContext === 'SHARED' || a.setupContext === 'COMMON_CR') return false;
+                return isAttrMatchingPropertyType(a);
+              });
+
+              return matchingAttrs.length > 0;
+            })
+            .map((sg: any) => ({
+              key: sg.key,
+              label: sg.tabLabel || sg.title || sg.key,
+              icon: getSafeLucideIcon(sg.icon, Sparkles),
+            }));
+
+          dbRoomSgs.forEach((dbSg: any) => {
+            if (!unitSubGroups.some(existing => (existing.key || '').toUpperCase().trim() === (dbSg.key || '').toUpperCase().trim())) {
+              unitSubGroups.push(dbSg);
+            }
+          });
 
           const currentTab = activeUnitTab[index] || (unitSubGroups[0]?.key || 'COOLING');
           const currentRoomAmenities: string[] = watch(`propertyConfig.rooms[${index}].amenities`) || [];
@@ -659,7 +776,7 @@ export default function RoomConfigStep({
                     <h4 className="font-black text-gray-900 dark:text-white uppercase tracking-tight text-xs sm:text-lg flex items-center gap-2 truncate">
                       {isFlatRate ? `Unit ${index + 1} Details` : `Room ${index + 1} Details`}
                       {justCopied === index && (
-                        <span className="text-[9px] font-black text-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800 animate-pulse shrink-0">
+                        <span className="text-[9px] font-black text-primary bg-primary/10 dark:bg-primary/20 px-2 py-0.5 rounded-full border border-primary/20 animate-pulse shrink-0">
                           Copied!
                         </span>
                       )}
@@ -721,50 +838,57 @@ export default function RoomConfigStep({
                     <label className="text-[10px] sm:text-[11px] font-black text-gray-700 dark:text-gray-300 uppercase tracking-widest block truncate">
                       {roomTypeLabel} <span className="text-red-500 ml-0.5">*</span>
                     </label>
-                    <Controller
-                      name={`propertyConfig.rooms[${index}].roomType`}
-                      control={control}
-                      rules={{ required: 'Room category is required' }}
-                      render={({ field: selectField }) => {
-                        const selectedOpt = selectField.value
-                          ? roomTypeOptions.find(o => 
-                              o.value === selectField.value || 
-                              o.id === selectField.value || 
-                              o.name === selectField.value || 
-                              o.label === selectField.value || 
-                              o.code === selectField.value
-                            ) || null
-                          : null;
-                        return (
-                          <ReactSelect
-                            {...selectField}
-                            options={roomTypeOptions}
-                            value={selectedOpt}
-                            onChange={(opt: any) => {
-                              selectField.onChange(opt ? opt.value : '');
-                              handleRoomTypeChange(index, opt ? opt.value : '');
-                              if (clearErrors) {
-                                clearErrors(`propertyConfig.rooms.${index}.roomType`);
-                                clearErrors(`propertyConfig.rooms[${index}].roomType`);
-                              }
-                            }}
-                            placeholder={isFlatRate ? "Select layout..." : "Select category..."}
-                            unstyled
-                            classNames={getSelectClassNames(!!errors?.propertyConfig?.rooms?.[index]?.roomType)}
-                            components={{
-                              DropdownIndicator: CustomDropdownIndicator,
-                              Option: CustomOption,
+                    {(() => {
+                      const roomTypeErr = errors?.propertyConfig?.rooms?.[index]?.roomType || (errors?.propertyConfig?.rooms as any)?.[`${index}`]?.roomType;
+                      return (
+                        <>
+                          <Controller
+                            name={`propertyConfig.rooms[${index}].roomType`}
+                            control={control}
+                            rules={{ required: 'Room category is required' }}
+                            render={({ field: selectField }) => {
+                              const selectedOpt = selectField.value
+                                ? roomTypeOptions.find(o => 
+                                    o.value === selectField.value || 
+                                    o.id === selectField.value || 
+                                    o.name === selectField.value || 
+                                    o.label === selectField.value || 
+                                    o.code === selectField.value
+                                  ) || null
+                                : null;
+                              return (
+                                <ReactSelect
+                                  {...selectField}
+                                  options={roomTypeOptions}
+                                  value={selectedOpt}
+                                  onChange={(opt: any) => {
+                                    selectField.onChange(opt ? opt.value : '');
+                                    handleRoomTypeChange(index, opt ? opt.value : '');
+                                    if (clearErrors) {
+                                      clearErrors(`propertyConfig.rooms.${index}.roomType`);
+                                      clearErrors(`propertyConfig.rooms[${index}].roomType`);
+                                    }
+                                  }}
+                                  placeholder={isFlatRate ? "Select layout..." : "Select category..."}
+                                  unstyled
+                                  classNames={getSelectClassNames(!!roomTypeErr)}
+                                  components={{
+                                    DropdownIndicator: CustomDropdownIndicator,
+                                    Option: CustomOption,
+                                  }}
+                                />
+                              );
                             }}
                           />
-                        );
-                      }}
-                    />
-                    {errors?.propertyConfig?.rooms?.[index]?.roomType && (
-                      <p className="text-[10px] font-bold text-rose-500 mt-1 flex items-center gap-1">
-                        <AlertCircle size={12} />
-                        <span>{errors.propertyConfig.rooms[index].roomType.message}</span>
-                      </p>
-                    )}
+                          {roomTypeErr && (
+                            <p className="text-[10px] font-bold text-rose-500 mt-1 flex items-center gap-1">
+                              <AlertCircle size={12} />
+                              <span>{roomTypeErr.message || 'Room category is required'}</span>
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* 2. BED TYPE DROPDOWN */}
@@ -772,42 +896,49 @@ export default function RoomConfigStep({
                     <label className="text-[10px] sm:text-[11px] font-black text-gray-700 dark:text-gray-300 uppercase tracking-widest block truncate">
                       Bed Type <span className="text-red-500 ml-0.5">*</span>
                     </label>
-                    <Controller
-                      name={`propertyConfig.rooms[${index}].bedType`}
-                      control={control}
-                      rules={{ required: 'Bed type is required' }}
-                      render={({ field: selectField }) => {
-                        const opts = getBedTypeOptions(currentRoomTypeVal);
-                        const selectedOpt = opts.find((o: any) => o.value === selectField.value) || null;
-                        return (
-                          <ReactSelect
-                            {...selectField}
-                            options={opts}
-                            value={selectedOpt}
-                            onChange={(opt: any) => {
-                              selectField.onChange(opt ? opt.value : '');
-                              if (clearErrors) {
-                                clearErrors(`propertyConfig.rooms.${index}.bedType`);
-                                clearErrors(`propertyConfig.rooms[${index}].bedType`);
-                              }
-                            }}
-                            placeholder="Select bed type..."
-                            unstyled
-                            classNames={getSelectClassNames(!!errors?.propertyConfig?.rooms?.[index]?.bedType)}
-                            components={{
-                              DropdownIndicator: CustomDropdownIndicator,
-                              Option: CustomOption,
+                    {(() => {
+                      const bedTypeErr = errors?.propertyConfig?.rooms?.[index]?.bedType || (errors?.propertyConfig?.rooms as any)?.[`${index}`]?.bedType;
+                      return (
+                        <>
+                          <Controller
+                            name={`propertyConfig.rooms[${index}].bedType`}
+                            control={control}
+                            rules={{ required: 'Bed type is required' }}
+                            render={({ field: selectField }) => {
+                              const opts = getBedTypeOptions(currentRoomTypeVal);
+                              const selectedOpt = opts.find((o: any) => o.value === selectField.value) || null;
+                              return (
+                                <ReactSelect
+                                  {...selectField}
+                                  options={opts}
+                                  value={selectedOpt}
+                                  onChange={(opt: any) => {
+                                    selectField.onChange(opt ? opt.value : '');
+                                    if (clearErrors) {
+                                      clearErrors(`propertyConfig.rooms.${index}.bedType`);
+                                      clearErrors(`propertyConfig.rooms[${index}].bedType`);
+                                    }
+                                  }}
+                                  placeholder="Select bed type..."
+                                  unstyled
+                                  classNames={getSelectClassNames(!!bedTypeErr)}
+                                  components={{
+                                    DropdownIndicator: CustomDropdownIndicator,
+                                    Option: CustomOption,
+                                  }}
+                                />
+                              );
                             }}
                           />
-                        );
-                      }}
-                    />
-                    {errors?.propertyConfig?.rooms?.[index]?.bedType && (
-                      <p className="text-[10px] font-bold text-rose-500 mt-1 flex items-center gap-1">
-                        <AlertCircle size={12} />
-                        <span>{errors.propertyConfig.rooms[index].bedType.message}</span>
-                      </p>
-                    )}
+                          {bedTypeErr && (
+                            <p className="text-[10px] font-bold text-rose-500 mt-1 flex items-center gap-1">
+                              <AlertCircle size={12} />
+                              <span>{bedTypeErr.message || 'Bed type is required'}</span>
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -1046,21 +1177,27 @@ export default function RoomConfigStep({
                       {(() => {
                         return dynamicAttributes
                           .filter(a => {
+                            if (a.isActive === false || a.status === 'INACTIVE') return false;
                             if (a.setupContext === 'SHARED' || a.setupContext === 'COMMON_CR') return false;
+                            if (!isAttrMatchingPropertyType(a)) return false;
+
                             const nameLower = (a.name || a.title || '').toLowerCase();
                             if (nameLower.startsWith('shared ') || nameLower.startsWith('regular common')) return false;
 
                             let matchesSubGroup = false;
-                            if (currentTab === 'KITCHEN_APP') {
-                              matchesSubGroup = a.subGroupKey === 'KITCHEN_APP' || a.subGroupKey === 'KITCHEN';
-                            } else if (currentTab === 'BATHROOM_FIX') {
-                              matchesSubGroup = a.subGroupKey === 'BATHROOM_FIX' || a.subGroupKey === 'BATHROOM' || a.subGroupKey === 'CR_FEATURES';
-                            } else if (currentTab === 'COOLING') {
-                              matchesSubGroup = a.subGroupKey === 'COOLING' || a.subGroupKey === 'AC' || a.subGroupKey === 'AIR_CONDITIONING';
-                            } else if (currentTab === 'FURNITURE') {
-                              matchesSubGroup = a.subGroupKey === 'FURNITURE' || a.subGroupKey === 'ROOM_FURNITURE';
+                            const aSubKeyUpper = (a.subGroupKey || '').toUpperCase().trim();
+                            const currentTabUpper = (currentTab || '').toUpperCase().trim();
+
+                            if (currentTabUpper === 'KITCHEN_APP') {
+                              matchesSubGroup = aSubKeyUpper === 'KITCHEN_APP' || aSubKeyUpper === 'KITCHEN';
+                            } else if (currentTabUpper === 'BATHROOM_FIX') {
+                              matchesSubGroup = aSubKeyUpper === 'BATHROOM_FIX' || aSubKeyUpper === 'BATHROOM' || aSubKeyUpper === 'CR_FEATURES';
+                            } else if (currentTabUpper === 'COOLING') {
+                              matchesSubGroup = aSubKeyUpper === 'COOLING' || aSubKeyUpper === 'AC' || aSubKeyUpper === 'AIR_CONDITIONING';
+                            } else if (currentTabUpper === 'FURNITURE') {
+                              matchesSubGroup = aSubKeyUpper === 'FURNITURE' || aSubKeyUpper === 'ROOM_FURNITURE';
                             } else {
-                              matchesSubGroup = a.subGroupKey === currentTab;
+                              matchesSubGroup = aSubKeyUpper === currentTabUpper;
                             }
 
                             return matchesSubGroup;

@@ -28,14 +28,14 @@ import {
 import * as LucideIcons from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
-import { ROOM_TYPES, ROOM_TYPE_LABELS } from '@/data/roomTypes';
-import {
+import { 
   BATHROOM_ARRANGEMENTS, 
-  bedTypeOptions as CENTRAL_BED_TYPES,
-} from '@/data/roomAmenities';
-import { getActiveAttributes } from '@/services/taxonomy';
+  bedTypeOptions as CENTRAL_BED_TYPES 
+} from '@/utils/constants';
+import { getActiveAttributes, getActiveSubGroups } from '@/services/taxonomy';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { getCachedRoomTypes, getSyncRoomTypes } from '@/lib/landlordTaxonomyCache';
+import { getDynamicIcon } from '@/lib/iconResolver';
 
 interface BulkConfigureModalProps {
   isOpen?: boolean;
@@ -122,8 +122,8 @@ const errorSelectClass = (hasError: boolean): any => ({
 });
 
 const DEFAULT_ROOM_TYPE_OPTIONS = [
-  { value: ROOM_TYPES.SOLO, label: ROOM_TYPE_LABELS.SOLO, isFlatRate: true },
-  { value: ROOM_TYPES.BEDSPACE, label: ROOM_TYPE_LABELS.BEDSPACE, isFlatRate: false },
+  { value: 'SOLO', label: 'Private Solo Room', isFlatRate: true },
+  { value: 'BEDSPACE', label: 'Bedspace / Shared Room', isFlatRate: false },
 ];
 
 const bathroomOptions = [
@@ -198,7 +198,7 @@ const BulkConfigureModal: React.FC<BulkConfigureModalProps> = ({
 
   // Dynamic field labels driven by selectedRoomType.isFlatRate
   const selectedRoomTypeObj = roomTypeOptions.find((o: any) => o.value === template.roomType);
-  const isFlatRate = selectedRoomTypeObj?.isFlatRate ?? (template.roomType === ROOM_TYPES.SOLO);
+  const isFlatRate = selectedRoomTypeObj?.isFlatRate ?? (template.roomType.toUpperCase() === 'SOLO');
 
   const roomTypeLabel = isFlatRate ? 'Unit Layout' : 'Room Category';
   const priceLabel = isFlatRate ? 'Monthly Unit Price (₱)' : 'Monthly Rate Per Head (₱)';
@@ -206,12 +206,16 @@ const BulkConfigureModal: React.FC<BulkConfigureModalProps> = ({
   const capacityLabel = isFlatRate ? 'Total Unit Capacity' : 'Total Bedspace Capacity';
 
   const [dynamicAttributes, setDynamicAttributes] = React.useState<any[]>([]);
+  const [dbSubGroups, setDbSubGroups] = React.useState<any[]>([]);
   const [isLoadingAttrs, setIsLoadingAttrs] = React.useState(true);
 
   React.useEffect(() => {
     getActiveAttributes().then(attrs => {
       setDynamicAttributes(attrs.filter((a: any) => a.type === 'ROOM_AMENITY'));
       setIsLoadingAttrs(false);
+    });
+    getActiveSubGroups().then(sgs => {
+      setDbSubGroups(sgs || []);
     });
   }, []);
 
@@ -240,7 +244,7 @@ const BulkConfigureModal: React.FC<BulkConfigureModalProps> = ({
   const handleRoomTypeChange = (val: any) => {
     const newType = val.value;
     const rt = roomTypeOptions.find(o => o.value === newType);
-    const flatRate = rt?.isFlatRate ?? (newType === ROOM_TYPES.SOLO);
+    const flatRate = rt?.isFlatRate ?? (newType.toUpperCase() === 'SOLO');
 
     const availableBedOptions = getBedTypeOptions(newType);
     const defaultBedType = availableBedOptions.length > 0 ? availableBedOptions[0].value : (flatRate ? 'SINGLE' : 'BUNK');
@@ -698,12 +702,52 @@ const BulkConfigureModal: React.FC<BulkConfigureModalProps> = ({
                   const hasInUnitKitchen = true;
                   const hasPrivateCR = template.bathroomArrangement === BATHROOM_ARRANGEMENTS.PRIVATE || commonBathroomCount === 0;
 
-                  const unitSubGroups = [
-                    ...(hasInUnitKitchen ? [{ key: 'KITCHEN_APP', label: 'Kitchen', icon: Utensils }] : []),
-                    ...(hasPrivateCR ? [{ key: 'BATHROOM_FIX', label: 'CR Features', icon: ShowerHead }] : []),
+                  const unitSubGroups: any[] = [];
+                  if (hasInUnitKitchen) {
+                    unitSubGroups.push({ key: 'KITCHEN_APP', label: 'Kitchen', icon: Utensils });
+                  }
+                  if (hasPrivateCR) {
+                    unitSubGroups.push({ key: 'BATHROOM_FIX', label: 'CR Features', icon: ShowerHead });
+                  }
+
+                  const defaultSubGroups = [
                     { key: 'COOLING', label: 'Cooling & AC', icon: Wind },
                     { key: 'FURNITURE', label: 'Furniture', icon: Sofa },
                   ];
+
+                  defaultSubGroups.forEach(item => {
+                    if (!unitSubGroups.some(existing => existing.key === item.key)) {
+                      unitSubGroups.push(item);
+                    }
+                  });
+
+                  const dbRoomSgs = dbSubGroups
+                    .filter((sg: any) => {
+                      if (sg.type !== 'ROOM_AMENITY' || sg.key === 'KITCHEN_APP' || sg.key === 'BATHROOM_FIX') return false;
+
+                      const matchingAttrs = dynamicAttributes.filter((a: any) => {
+                        if (a.type !== 'ROOM_AMENITY') return false;
+                        if (a.subGroupKey !== sg.key) return false;
+                        if (a.setupContext === 'SHARED' || a.setupContext === 'COMMON_CR') return false;
+                        if (propertyTypeId && !a.isUniversal && a.propertyTypeIds && a.propertyTypeIds.length > 0) {
+                          if (!a.propertyTypeIds.includes(propertyTypeId)) return false;
+                        }
+                        return true;
+                      });
+
+                      return matchingAttrs.length > 0;
+                    })
+                    .map((sg: any) => ({
+                      key: sg.key,
+                      label: sg.tabLabel || sg.title || sg.key,
+                      icon: getDynamicIcon(sg.icon, Sparkles),
+                    }));
+
+                  dbRoomSgs.forEach((dbSg: any) => {
+                    if (!unitSubGroups.some(existing => existing.key === dbSg.key)) {
+                      unitSubGroups.push(dbSg);
+                    }
+                  });
 
                   const currentTab = unitSubGroups.some(g => g.key === activeAmenityTab) ? activeAmenityTab : (unitSubGroups[0]?.key || 'COOLING');
 
@@ -785,7 +829,7 @@ const BulkConfigureModal: React.FC<BulkConfigureModalProps> = ({
 
                   return filteredAmenities.map((amenity: any) => {
                     const isSelected = template.amenities.includes(amenity.id);
-                    const IconComp = (LucideIcons as Record<string, any>)[amenity.icon] && typeof (LucideIcons as Record<string, any>)[amenity.icon] !== 'string' ? (LucideIcons as Record<string, any>)[amenity.icon] : CheckCircle2;
+                    const IconComp = getDynamicIcon(amenity.icon, CheckCircle2);
 
                     return (
                       <div
