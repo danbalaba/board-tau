@@ -228,8 +228,8 @@ If a value is not mentioned, omit the key. Do not include markdown codeblocks.
     if (qLower.includes('apartment')) urlParams.set('categories', 'Apartment');
 
     // Extract distance & location proximity fallback
-    const kmMatch = qLower.match(/(\d+(\.\d+)?)\s*km/);
-    const meterMatch = qLower.match(/(\d+)\s*m\b/);
+    const kmMatch = qLower.match(/\b(\d+(?:\.\d+)?)\s*km\b/);
+    const meterMatch = qLower.match(/\b(\d+)\s*m\b/);
     if (kmMatch) {
       urlParams.set('distance', kmMatch[1]);
     } else if (meterMatch) {
