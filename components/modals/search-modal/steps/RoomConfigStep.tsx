@@ -13,19 +13,11 @@ import {
   Sparkles, 
   RotateCcw,
   AlertCircle,
+  Lightbulb,
 } from "lucide-react";
 import { FieldErrors, FieldValues, UseFormRegister, UseFormWatch } from "react-hook-form";
 import axios from "axios";
-
-const getSafeLucideIcon = (iconName: string) => {
-  if (!iconName) return Building;
-  const IconObj = (LucideIcons as Record<string, any>)[iconName];
-  if (!IconObj) return Building;
-  if (typeof IconObj === "function" || typeof IconObj === "object") {
-    return IconObj;
-  }
-  return Building;
-};
+import { getDynamicIcon } from "@/lib/iconResolver";
 
 interface RoomConfigStepProps {
   propertyTypeSelected: string[];
@@ -96,15 +88,13 @@ export default function RoomConfigStep({
             : [];
           globalRoomTypesCache[selectedPropType] = list;
           setDbRoomTypes(list);
-          const isZero = list.length === 0 && (selectedPropType !== "Boarding House" && selectedPropType !== "Dormitory" && selectedPropType !== "Apartment");
+          const isZero = list.length === 0;
           if (onHasNoRoomTypesChange) onHasNoRoomTypesChange(isZero);
-          if (isZero && onClearValidationError) onClearValidationError();
         }
       } catch (err) {
         if (isMounted) {
           setDbRoomTypes([]);
           if (onHasNoRoomTypesChange) onHasNoRoomTypesChange(true);
-          if (onClearValidationError) onClearValidationError();
         }
       } finally {
         if (isMounted) setIsFetchingDbRoomTypes(false);
@@ -417,25 +407,11 @@ export default function RoomConfigStep({
                     </div>
                   ))}
                 </div>
-              ) : dbRoomTypes.length === 0 && (selectedPropType !== "Boarding House" && selectedPropType !== "Dormitory" && selectedPropType !== "Apartment") ? (
-                <div className="p-5 rounded-2xl bg-[#2f7d6d]/10 border border-[#2f7d6d]/30 text-slate-800 dark:text-slate-200 flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-[#2f7d6d] text-white shrink-0 shadow-sm">
-                    <Sparkles size={24} />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                      No specific room layouts required for {selectedPropType}
-                    </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-snug">
-                      All active properties categorized under <strong>{selectedPropType}</strong> will be included in your search results. Click <strong>Continue</strong> to set your budget & location preferences!
-                    </p>
-                  </div>
-                </div>
               ) : dbRoomTypes.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {dbRoomTypes.map((rt) => {
                     const isSelected = currentRoomType === rt.name;
-                    const Icon = getSafeLucideIcon(rt.icon);
+                    const Icon = getDynamicIcon(rt.icon, Building);
 
                     return (
                       <div
@@ -463,80 +439,32 @@ export default function RoomConfigStep({
                     );
                   })}
                 </div>
-              ) : isBranchB ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  {getBranchBUnitOptions().map((unit) => {
-                    const isSelected = currentRoomType === unit.name;
-                    return (
-                      <div
-                        key={unit.name}
-                        onClick={() => handleRoomTypeSelect(unit.name)}
-                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                          isSelected
-                            ? "border-[#2f7d6d] bg-[#2f7d6d]/10 dark:border-emerald-400 shadow-md ring-2 ring-[#2f7d6d]/20"
-                            : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-slate-700"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className={`p-2.5 rounded-xl ${isSelected ? "bg-[#2f7d6d] text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>
-                            <Building size={20} />
-                          </div>
-                          {isSelected && <Check size={14} className="text-[#2f7d6d] dark:text-emerald-400" strokeWidth={3} />}
-                        </div>
-                        <div className="mt-3">
-                          <h4 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">{unit.name}</h4>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1 leading-snug">{unit.desc}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    { 
-                      name: "Solo Room", 
-                      label: "Solo Room (Private 1 Pax)", 
-                      desc: "Entire private room exclusively for yourself.", 
-                      icon: User 
-                    },
-                    { 
-                      name: "Bedspace", 
-                      label: "Bedspace (Shared Per Head)", 
-                      desc: "Shared room with individual bed slot pricing.", 
-                      icon: Users 
-                    },
-                  ].map((rt) => {
-                    const isSelected = currentRoomType === rt.name;
-                    const Icon = rt.icon;
-
-                    return (
-                      <div
-                        key={rt.name}
-                        onClick={() => handleRoomTypeSelect(rt.name)}
-                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                          isSelected
-                            ? "border-[#2f7d6d] bg-[#2f7d6d]/10 dark:border-emerald-400 shadow-md ring-2 ring-[#2f7d6d]/20"
-                            : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-slate-700"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className={`p-2.5 rounded-xl ${isSelected ? "bg-[#2f7d6d] text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>
-                            <Icon size={20} />
-                          </div>
-                          {isSelected && <Check size={14} className="text-[#2f7d6d] dark:text-emerald-400" strokeWidth={3} />}
-                        </div>
-                        <div className="mt-3">
-                          <h4 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">{rt.name}</h4>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1 leading-snug">{rt.desc}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="p-6 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 text-slate-800 dark:text-slate-200 flex items-start gap-4">
+                  <div className="p-3 rounded-xl bg-amber-500 text-white shrink-0 shadow-sm mt-0.5">
+                    <AlertCircle size={24} />
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <h4 className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                      <span>No Room Types Configured</span>
+                      <span className="text-[10px] font-black text-amber-800 dark:text-amber-200 bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-500/40 uppercase tracking-wider">
+                        Unavailable
+                      </span>
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+                      There are currently no room types or unit layouts configured in the database for <strong>{selectedPropType}</strong>. You cannot proceed to the next step with this selection.
+                    </p>
+                    <div className="pt-2">
+                      <p className="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                        <Lightbulb size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                        <span>Tip: Click <strong>Back</strong> below to choose a different Property Type (e.g. Boarding House, Apartment, or Dormitory).</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {showValidationError && !currentRoomType && (
+              {showValidationError && !currentRoomType && dbRoomTypes.length > 0 && (
                 <p className="text-xs font-bold text-red-900 dark:text-red-200 bg-red-100 dark:bg-red-950/90 p-3 rounded-xl border border-red-300 dark:border-red-800 flex items-center gap-2 shadow-sm">
                   <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
                   <span>Please select a {isBranchB ? "unit layout" : "room concept"} option above before clicking Continue.</span>

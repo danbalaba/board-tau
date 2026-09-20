@@ -4,7 +4,7 @@ import redis, { cache } from "@/lib/redis";
 import { Ratelimit } from "@upstash/ratelimit";
 import { sanitizeSearchQuery, detectPromptInjection, sanitizeAIOutput } from "@/lib/security/sanitize";
 import { generateAIResponse } from "@/lib/ai/ai-provider";
-import { getActivePropertyTypes, getActiveCampusColleges } from "@/services/taxonomy";
+import { getActivePropertyTypes, getActiveCampusColleges, getActiveRoomTypes, getActiveAttributes } from "@/services/taxonomy";
 import { getListingById, getListings } from "@/services/user/listings";
 import { matchUserIntent } from "@/lib/ai/intent-matcher";
 
@@ -45,24 +45,36 @@ function formatCollegeDistances(listingLat: number | null | undefined, listingLn
 
   const items = validColleges
     .map((c: any) => {
-      const distKm = calculateHaversineDistanceKm(listingLat, listingLng, c.latitude, c.longitude);
-      const meters = Math.round(distKm * 1000);
-      const walkMin = Math.max(1, Math.ceil(meters / 80));
-      const distStr = distKm < 1 ? `${meters} meters (~${walkMin} min walk)` : `${distKm.toFixed(1)} km (~${walkMin} min walk)`;
+      const haversineKm = calculateHaversineDistanceKm(listingLat, listingLng, c.latitude, c.longitude);
+      
+      // Apply GIS Road Winding Factor (1.15x for campus walks < 1km, 1.35x for road routes > 1km)
+      const roadFactor = haversineKm < 1 ? 1.15 : 1.35;
+      const roadKm = haversineKm * roadFactor;
+      const meters = Math.round(roadKm * 1000);
+
+      let distStr = "";
+      if (roadKm <= 1.5) {
+        const walkMin = Math.max(1, Math.ceil(meters / 80)); // ~80m/min walking speed
+        distStr = `${meters < 1000 ? `${meters} meters` : `${roadKm.toFixed(1)} km`} (~${walkMin} min walk)`;
+      } else {
+        const trikeMin = Math.max(5, Math.ceil((roadKm / 30) * 60)); // ~30 km/h tricycle / jeepney speed
+        distStr = `${roadKm.toFixed(1)} km road distance (~${trikeMin} min tricycle / jeepney commute)`;
+      }
+
       return {
         code: c.code,
         name: c.name,
         meters,
-        distKm,
+        roadKm,
         text: `${c.code} (${c.name}): ${distStr}`
       };
     })
-    .sort((a, b) => a.meters - b.meters);
+    .sort((a, b) => a.roadKm - b.roadKm);
 
   const closest = items[0];
   const breakdown = items.map((i) => `  * ${i.text}`).join("\n");
 
-  return `- Closest TAU College: ${closest.code} (${closest.name}) at ${closest.meters < 1000 ? `${closest.meters}m` : `${closest.distKm.toFixed(1)}km`}\n- Distance Breakdown to TAU Colleges:\n${breakdown}`;
+  return `- Closest TAU College: ${closest.code} (${closest.name}) at ${closest.meters < 1000 ? `${closest.meters}m` : `${closest.roadKm.toFixed(1)}km`}\n- Distance Breakdown to TAU Colleges:\n${breakdown}`;
 }
 
 export async function POST(req: Request) {
@@ -106,13 +118,24 @@ export async function POST(req: Request) {
     }
 
     // 1. Fetch Super Admin dynamic taxonomy context (< 5ms Redis lookup)
-    const [propTypes, colleges] = await Promise.all([
+    const [propTypes, colleges, roomTypes, attributes] = await Promise.all([
       getActivePropertyTypes().catch(() => []),
       getActiveCampusColleges().catch(() => []),
+      getActiveRoomTypes().catch(() => []),
+      getActiveAttributes().catch(() => []),
     ]);
 
-    const propertyTypeNames = propTypes.map((p: any) => p.name).join(", ") || "Apartment, Boarding House, Dormitory, Transient House, Agri-Hostel";
-    const collegeList = colleges.map((c: any) => `${c.code} (${c.name})`).join(", ") || "CBM, CVM, CAF, CAS, CET, LHS, CED";
+    const propertyTypeNames = propTypes.map((p: any) => p.name).join(", ");
+    const collegeList = colleges.map((c: any) => `${c.code} (${c.name})`).join(", ");
+    const roomTypeNames = roomTypes.map((r: any) => {
+      const setups = (r.bedSetups || []).map((b: any) => b.name).join("/");
+      return `${r.name}${setups ? ` (Bed Setups: ${setups})` : ""}`;
+    }).join(", ");
+
+    const sharedAmenitiesList = attributes.filter((a: any) => a.type === "AMENITY").map((a: any) => a.name).slice(0, 25).join(", ");
+    const roomAmenitiesList = attributes.filter((a: any) => a.type === "ROOM_AMENITY").map((a: any) => a.name).slice(0, 20).join(", ");
+    const houseRulesList = attributes.filter((a: any) => a.type === "RULE").map((a: any) => a.name).slice(0, 15).join(", ");
+    const safetyFeaturesList = attributes.filter((a: any) => a.type === "FEATURE").map((a: any) => a.name).slice(0, 15).join(", ");
 
     // 2. Fetch Active Listing Context if user is viewing a listing detail page (/listings/[id])
     let activeListingContext = "";
@@ -132,12 +155,14 @@ export async function POST(req: Request) {
             const capacityStr = r.capacity ? `${r.capacity} Pax` : "N/A Capacity";
             const slotsStr = r.availableSlots !== undefined ? `${r.availableSlots} Slots Available` : "Available";
 
+            const bedStr = r.bedType ? ` | Bed Setup: ${r.bedCount || 1}x ${r.bedType}` : "";
+
             // Extract room-specific attributes and amenities
             const roomAttrs = (r.roomLinks || []).map((rl: any) => rl.attribute?.name).filter(Boolean);
-            const roomAmenList = [...new Set([...roomAttrs, ...(r.amenities || []), ...(r.amenities_list || [])])];
+            const roomAmenList = [...new Set([...roomAttrs, ...(r.amenities || []), ...(r.amenities_list || []), ...(r.amenityNames || [])])];
             const roomAmenityStr = roomAmenList.length > 0 ? ` | Room Amenities: ${roomAmenList.join(", ")}` : "";
 
-            return `* Room Name: "${roomTitle}" | Type: ${typeName} (${rateType}) | Price: ₱${r.price}/month | Capacity: ${capacityStr} | Availability: ${slotsStr}${roomAmenityStr}`;
+            return `* Room Name: "${roomTitle}" | Type: ${typeName} (${rateType})${bedStr} | Price: ₱${r.price}/month | Capacity: ${capacityStr} | Availability: ${slotsStr}${roomAmenityStr}`;
           }).join("\n");
 
           const attributes = (listingData.listingLinks || []).map((link: any) => link.attribute?.name).filter(Boolean);
@@ -197,18 +222,39 @@ ${distInfo}
 Your goal is to help users navigate the platform, explain features, and guide them on room reservations, 4-phase search wizard, dynamic property types, digital lease contract signing, and KYC verification.
 You must be conversational, friendly, concise, and helpful. You can answer in English, Tagalog, or Taglish, matching the user's language.
 
-Platform Context:
+Super Admin Dynamic Taxonomy Context:
 - Property Types: [${propertyTypeNames}]
+- Room Types & Bed Setups: [${roomTypeNames}]
 - TAU Colleges & Landmarks: [${collegeList}]
+- Shared Property Amenities: [${sharedAmenitiesList}]
+- Room Amenities: [${roomAmenitiesList}]
+- House Rules & Policies: [${houseRulesList}]
+- Security & Safety Features: [${safetyFeaturesList}]
 - Social Media: Facebook (https://www.facebook.com/profile.php?id=61592140986863), X/Twitter (https://x.com/BoardTAU), TikTok (https://www.tiktok.com/@boardtau.official), Instagram (https://www.instagram.com/boardtau.official/)
 - Current user path: "${currentPath}"
 ${activeListingContext}
 
 CRITICAL RULES:
 1. PRIMARY FOCUS: BoardTAU student housing, TAU campus, room reservations, digital lease contracts, KYC verification, and website navigation.
-2. SPECIFIC ROOM NAMES, SPECS & AMENITIES: If the user asks about room options or the cheapest room in a property, ALWAYS state the exact Room Name (e.g., "Room 4"), price (e.g., ₱900/month), room type (e.g., Bedspace / Solo), capacity (e.g., 5 Pax), available slots, AND room/shared amenities (e.g., Wi-Fi, laundry area, aircon, study desk, shared kitchen, etc.). Always include room & property amenities!
-3. INQUIRY-FIRST RESERVATION WORKFLOW: When teaching users how to reserve or book a room:
-   - Step 1 (Inquire First): Tell them to click the "Inquire Now" button directly on their selected room card (e.g., Room 4) to send an inquiry message to the landlord first.
+2. RICH & BEAUTIFULLY STRUCTURED ROOM FORMATTING: When presenting room options for a property, provide a complete, well-structured breakdown for each available room option. Do NOT squish room specs into a single inline string or omit amenity details. Format the output cleanly using markdown sub-headers and structured bullet points:
+
+### **Room Options**
+
+* **[Room Name]** (e.g., Room 4)
+  - **Type & Rate**: [Room Type] ([Flat Rate / Per-Head Bedspace])
+  - **Price**: ₱[Price]/month
+  - **Capacity & Slots**: [Capacity] Pax ([Slots] Slots Available)
+  - **Bed Setup**: [Bed Setup details]
+  - **Room Amenities**: [List room amenities cleanly separated by commas]
+
+### **Shared Property Facilities**
+- [List shared property amenities]
+
+### **House Rules**
+- [List house rules]
+3. INQUIRY-FIRST RESERVATION WORKFLOW & NO INQUIRE CTA BUTTONS:
+   - Step 1 (Inquire First): Tell tenants to click the "Inquire Now" button directly on their chosen room card on the property page to send an inquiry message to the landlord.
+   - DO NOT generate '[NAV: Inquire Now]' buttons or CTA action buttons for room inquiries in your response text, because room inquiry forms are submitted directly on the room card on the page! Only generate '[NAV: Label](/path)' buttons for actual page navigation (e.g., '[NAV: Browse All Listings](/)', '[NAV: View FAQ](/faqs)', '[NAV: Become a Host](/become-a-host)').
    - Step 2 (Reserve Slot): Once aligned with the host, click "Reserve" to request the room slot.
    - Step 3 (KYC Verification): Submit Student/Govt ID and Selfie for biometric verification.
    - Step 4 (Lease Signing): Review and sign the official Digital Lease Agreement.
@@ -224,7 +270,7 @@ CRITICAL INSTRUCTIONS FOR OUTPUT FORMAT:
      "reply": "Your markdown formatted reply here",
      "suggestedPrompts": ["Follow up question 1?", "Follow up question 2?"]
    }
-2. Generate Action Buttons if applicable using syntax: [NAV: Label](/url). Example: [NAV: Browse Listings](/listings) or [NAV: Create Account](/login).
+2. Generate Action Buttons ONLY for page navigation using syntax: [NAV: Label](/url). Example: [NAV: Browse Listings](/) or [NAV: Create Account](/login). NEVER generate [NAV: Inquire Now] buttons.
 3. STRICTLY NO EMOJIS in your reply or suggestedPrompts. Keep it 100% professional.
 `;
 

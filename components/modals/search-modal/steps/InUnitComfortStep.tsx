@@ -5,30 +5,15 @@ import axios from "axios";
 import { fetchTaxonomyData, getTaxonomyDataSync } from "@/lib/taxonomyCache";
 import Heading from "@/components/common/Heading";
 import { motion, AnimatePresence } from "framer-motion";
-import * as LucideIcons from "lucide-react";
+import { getDynamicIcon } from "@/lib/iconResolver";
 import {
   UtensilsCrossed,
-  Flame,
-  Refrigerator,
-  Microwave,
-  Coffee,
-  CookingPot,
   Utensils,
-  Grid,
-  Droplets,
-  Wind,
   CheckCircle,
-  Database,
-  Fan,
-  ThermometerSnowflake,
-  Tv,
-  Sofa,
-  Armchair,
+  Droplets,
   Check,
   ChefHat,
   Bath,
-  Lamp,
-  ShowerHead,
   RotateCcw,
   Sparkles,
   AlertCircle,
@@ -164,18 +149,21 @@ export default function InUnitComfortStep({
       baseTabs.push({ type: "bathroom_items", label: "CR Features", subGroupKey: "BATHROOM_FIX" });
     }
 
-    // Append all other dynamic sub-groups from MongoDB (COOLING, FURNITURE, plus ANY new Admin sub-groups!)
+    // Append all dynamic sub-groups from MongoDB (driven 100% by DB taxonomy)
     const processedKeys = new Set(["KITCHEN_APP", "BATHROOM_FIX"]);
 
     dynamicSubGroups.forEach((sg: any) => {
-      if (!processedKeys.has(sg.key)) {
+      const sgKeyUpper = (sg.key || "").toUpperCase().trim();
+      if (!processedKeys.has(sgKeyUpper)) {
         // Verify at least 1 active attribute in this subGroup matches the user's selected property type!
         const matchingAttrs = dynamicAttributes.filter(
-          (attr: any) => attr.subGroupKey === sg.key && isAttrMatchingPropertyType(attr)
+          (attr: any) =>
+            (attr.subGroupKey || "").toUpperCase().trim() === sgKeyUpper &&
+            isAttrMatchingPropertyType(attr)
         );
 
-        if (matchingAttrs.length > 0 || dynamicAttributes.length === 0) {
-          processedKeys.add(sg.key);
+        if (matchingAttrs.length > 0) {
+          processedKeys.add(sgKeyUpper);
           baseTabs.push({
             type: "dynamic_attribute_subgroup",
             label: sg.tabLabel || sg.title || sg.key,
@@ -185,24 +173,6 @@ export default function InUnitComfortStep({
         }
       }
     });
-
-    // Fallback if dynamicSubGroups hasn't loaded yet
-    if (!processedKeys.has("COOLING")) {
-      const coolingAttrs = dynamicAttributes.filter(
-        (attr: any) => attr.subGroupKey === "COOLING" && isAttrMatchingPropertyType(attr)
-      );
-      if (coolingAttrs.length > 0 || dynamicAttributes.length === 0) {
-        baseTabs.push({ type: "dynamic_attribute_subgroup", label: "Aircon & Cooling", subGroupKey: "COOLING" });
-      }
-    }
-    if (!processedKeys.has("FURNITURE")) {
-      const furnitureAttrs = dynamicAttributes.filter(
-        (attr: any) => attr.subGroupKey === "FURNITURE" && isAttrMatchingPropertyType(attr)
-      );
-      if (furnitureAttrs.length > 0 || dynamicAttributes.length === 0) {
-        baseTabs.push({ type: "dynamic_attribute_subgroup", label: "Furniture", subGroupKey: "FURNITURE" });
-      }
-    }
 
     return baseTabs.map((tab, idx) => ({
       ...tab,
@@ -324,10 +294,7 @@ export default function InUnitComfortStep({
         return false;
       })
       .map((attr) => {
-        let IconComp = Sparkles;
-        if (attr.icon && (LucideIcons as any)[attr.icon]) {
-          IconComp = (LucideIcons as any)[attr.icon];
-        }
+        const IconComp = getDynamicIcon(attr.icon, Sparkles);
         return {
           id: attr.name,
           name: attr.name,
@@ -363,10 +330,7 @@ export default function InUnitComfortStep({
         return false;
       })
       .map((attr) => {
-        let IconComp = Sparkles;
-        if (attr.icon && (LucideIcons as any)[attr.icon]) {
-          IconComp = (LucideIcons as any)[attr.icon];
-        }
+        const IconComp = getDynamicIcon(attr.icon, Sparkles);
         return {
           id: attr.name,
           name: attr.name,
@@ -383,10 +347,11 @@ export default function InUnitComfortStep({
     const sgKey = currentTab.subGroupKey;
     if (!sgKey) return [];
 
+    const sgKeyUpper = (sgKey || "").toUpperCase().trim();
     const selectedProp = (propertyTypeSelected[0] || "Boarding House").toLowerCase();
 
     return dynamicAttributes
-      .filter((attr) => attr.isActive && attr.subGroupKey === sgKey)
+      .filter((attr) => attr.isActive && (attr.subGroupKey || "").toUpperCase().trim() === sgKeyUpper)
       .filter((attr) => {
         if (!attr.isUniversal && attr.propertyTypeNames && attr.propertyTypeNames.length > 0) {
           return attr.propertyTypeNames.some((pt: string) => {
@@ -397,10 +362,7 @@ export default function InUnitComfortStep({
         return true;
       })
       .map((attr) => {
-        let IconComp = Sparkles;
-        if (attr.icon && (LucideIcons as any)[attr.icon]) {
-          IconComp = (LucideIcons as any)[attr.icon];
-        }
+        const IconComp = getDynamicIcon(attr.icon, Sparkles);
         return {
           id: attr.name,
           name: attr.name,

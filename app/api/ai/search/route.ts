@@ -17,7 +17,7 @@ const ratelimit = new Ratelimit({
   analytics: true,
 });
 
-// Flexible Zod Schema supporting dynamic Super Admin taxonomy
+// Flexible Zod Schema supporting dynamic Super Admin taxonomy & location proximity
 const aiResponseSchema = z.object({
   q: z.string().optional(),
   minPrice: z.number().min(0).optional(),
@@ -26,6 +26,8 @@ const aiResponseSchema = z.object({
   propertyTypes: z.array(z.string()).optional(),
   categories: z.array(z.string()).optional(),
   college: z.string().optional(),
+  distance: z.number().min(0.1).max(100).optional(),
+  isWalkingDistance: z.boolean().optional(),
   amenities: z.array(z.string()).optional(),
   rules: z.array(z.string()).optional(),
   features: z.array(z.string()).optional(),
@@ -93,12 +95,14 @@ User query: "${query}"
 
 Return ONLY a valid JSON object matching this schema:
 { 
-  "q": "string (general search keywords)", 
+  "q": "string (property title, landlord name, landmark, address, or search keywords)", 
   "minPrice": number, 
-  "maxPrice": number, 
+  "maxPrice": number (if 'cheap' or 'budget' is mentioned without a number, set maxPrice to 3000), 
   "roomType": "string (e.g. SOLO, BEDSPACE, Studio Unit, 1-Bedroom Unit)", 
   "propertyTypes": ["string"],
   "college": "string (e.g. CBM, CVM, CET, TAU)",
+  "distance": number (max search radius/distance in km: e.g. 1 for walking distance/near, 0.5 for 500m, 2 for 2km),
+  "isWalkingDistance": boolean (true if query mentions 'walking distance', 'walkable', 'close to', 'near'),
   "amenities": ["string"],
   "rules": ["string"],
   "features": ["string"]
@@ -120,20 +124,76 @@ If a value is not mentioned, omit the key. Do not include markdown codeblocks.
     if (validatedData.minPrice) urlParams.set('minPrice', validatedData.minPrice.toString());
     if (validatedData.maxPrice) urlParams.set('maxPrice', validatedData.maxPrice.toString());
     if (validatedData.roomType) urlParams.set('roomType', validatedData.roomType);
-    if (validatedData.college) urlParams.set('college', validatedData.college);
+
+    // 1. Location & Real-World GIS Road Calculation Resolution
+    let extractedDistance = validatedData.distance;
+    if (!extractedDistance && (validatedData.isWalkingDistance || normalizedQuery.includes('walking distance') || normalizedQuery.includes('walkable'))) {
+      extractedDistance = 1.0; // Default 1km walking distance threshold
+    } else if (!extractedDistance && (normalizedQuery.includes('near') || normalizedQuery.includes('close to'))) {
+      extractedDistance = 1.5; // Default 1.5km proximity threshold
+    }
+
+    if (extractedDistance) {
+      urlParams.set('distance', extractedDistance.toString());
+    }
+
+    if (validatedData.college) {
+      urlParams.set('college', validatedData.college);
+      const cleanColQuery = validatedData.college.toLowerCase().trim();
+      const collegeMatch = colleges.find((c: any) => 
+        c.code?.toLowerCase() === cleanColQuery ||
+        c.name?.toLowerCase().includes(cleanColQuery) ||
+        cleanColQuery.includes(c.code?.toLowerCase() || "")
+      );
+
+      if (collegeMatch && typeof collegeMatch.latitude === "number" && typeof collegeMatch.longitude === "number") {
+        urlParams.set('originLat', collegeMatch.latitude.toString());
+        urlParams.set('originLng', collegeMatch.longitude.toString());
+        urlParams.set('collegeCode', collegeMatch.code);
+
+        // Apply GIS Road Winding Factor (1.15x for walking <1km, 1.35x for road routes >1km)
+        const targetDist = extractedDistance || 1.5;
+        const roadFactor = targetDist < 1 ? 1.15 : 1.35;
+        const estimatedRoadDistanceKm = Number((targetDist * roadFactor).toFixed(2));
+        const estimatedWalkMin = Math.ceil((estimatedRoadDistanceKm * 1000) / 80); // ~80m/min walking speed
+
+        urlParams.set('roadDistanceKm', estimatedRoadDistanceKm.toString());
+        urlParams.set('estimatedWalkMin', estimatedWalkMin.toString());
+      }
+    }
     
     const selectedProps = validatedData.propertyTypes || validatedData.categories;
     if (selectedProps && selectedProps.length > 0) {
       urlParams.set('categories', selectedProps.join(','));
     }
 
-    const combinedAttributes = [
+    // 2. Dynamic Attribute Taxonomy Resolution (resolves names to Super Admin attribute IDs)
+    const combinedAttributeNames = [
       ...(validatedData.amenities || []),
       ...(validatedData.rules || []),
       ...(validatedData.features || []),
     ];
-    if (combinedAttributes.length > 0) {
-      urlParams.set('amenities', combinedAttributes.join(','));
+
+    if (combinedAttributeNames.length > 0) {
+      urlParams.set('amenities', combinedAttributeNames.join(','));
+
+      const resolvedAttrIds: string[] = [];
+      combinedAttributeNames.forEach((nameStr: string) => {
+        const cleanName = nameStr.toLowerCase().trim();
+        const found = attributes.find((attr: any) =>
+          attr.name?.toLowerCase() === cleanName ||
+          attr.code?.toLowerCase() === cleanName ||
+          attr.value?.toLowerCase() === cleanName ||
+          cleanName.includes(attr.name?.toLowerCase() || "")
+        );
+        if (found && found.id && !resolvedAttrIds.includes(found.id)) {
+          resolvedAttrIds.push(found.id);
+        }
+      });
+
+      if (resolvedAttrIds.length > 0) {
+        urlParams.set('attributes', resolvedAttrIds.join(','));
+      }
     }
 
     const finalResponse = {
@@ -166,6 +226,19 @@ If a value is not mentioned, omit the key. Do not include markdown codeblocks.
     if (qLower.includes('bedspace') || qLower.includes('shared')) urlParams.set('roomType', 'BEDSPACE');
     if (qLower.includes('studio')) urlParams.set('roomType', 'Studio Unit');
     if (qLower.includes('apartment')) urlParams.set('categories', 'Apartment');
+
+    // Extract distance & location proximity fallback
+    const kmMatch = qLower.match(/(\d+(\.\d+)?)\s*km/);
+    const meterMatch = qLower.match(/(\d+)\s*m\b/);
+    if (kmMatch) {
+      urlParams.set('distance', kmMatch[1]);
+    } else if (meterMatch) {
+      urlParams.set('distance', (Number(meterMatch[1]) / 1000).toString());
+    } else if (qLower.includes('walking distance') || qLower.includes('walkable')) {
+      urlParams.set('distance', '1');
+    } else if (qLower.includes('near') || qLower.includes('close to')) {
+      urlParams.set('distance', '1.5');
+    }
     
     // Extract basic amenities
     const foundAmenities = [];
@@ -176,7 +249,7 @@ If a value is not mentioned, omit the key. Do not include markdown codeblocks.
       urlParams.set('amenities', foundAmenities.join(','));
     }
     
-    const stopWords = ["find", "me", "a", "looking", "for", "under", "max", "below", "with", "has", "have", "and", "boarding", "house", "places", "place"];
+    const stopWords = ["find", "me", "a", "looking", "for", "under", "max", "below", "with", "has", "have", "and", "boarding", "house", "places", "place", "near", "close", "to", "walking", "distance"];
     const cleanQ = qLower.split(/\s+/)
       .filter(word => !stopWords.includes(word) && !/^\d+$/.test(word))
       .join(" ")

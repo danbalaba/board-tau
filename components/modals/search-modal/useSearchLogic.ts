@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ROOM_TYPES } from "@/data/roomTypes";
 import { buildSearchUrl } from "@/utils/searchUrlBuilder";
 
 export enum STEPS {
@@ -71,14 +70,11 @@ export function useSearchLogic(onCloseModal?: () => void) {
   const rulesSelected = watch("rules") ?? [];
   const advancedSelected = watch("advanced") ?? [];
 
-  // In Phase 8, college mapping is dynamic so mapCenter/collegeOption are handled 
-  // directly in the steps that need them or passed differently.
   const collegeOption = undefined;
   const mapCenter = undefined;
 
-  // Removed hardcoded room type logic as it will be dynamic
   useEffect(() => {
-    // We can add capacity reset logic later if needed
+    // Capacity reset logic if needed
   }, [roomTypeSelected, capacity]);
 
   const setCustomValue = (id: string, value: unknown) => {
@@ -119,8 +115,6 @@ export function useSearchLogic(onCloseModal?: () => void) {
     onCloseModal?.();
     router.push(url);
   };
-
-
 
   return {
     step,

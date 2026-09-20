@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, ChevronDown, ChevronUp, Sparkles, Maximize2, Minimize2 } from 'lucide-react';
+import { X, Send, ChevronDown, ChevronUp, Sparkles, Maximize2, Minimize2, RotateCcw } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
@@ -58,26 +58,105 @@ type Message = {
   isInitial?: boolean;
 };
 
+const STORAGE_KEY = 'boardtau_kerby_chat_history';
+
+const DEFAULT_GREETING: Message = {
+  role: 'assistant',
+  content: "Mabuhay! I'm **Kerby**, your BoardTAU AI Assistant 🦬. How can I help you find student housing or navigate campus today?",
+  isInitial: true
+};
+
+const DEFAULT_PROMPTS = [
+  "How do I book a room?",
+  "What is required for KYC?",
+  "Where is BoardTAU located?",
+  "What does this page do?"
+];
+
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Mabuhay! I'm **Kerby**, your BoardTAU AI Assistant 🦬. How can I help you find student housing or navigate campus today?", isInitial: true }
-  ]);
-  const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([
-    "How do I book a room?",
-    "What is required for KYC?",
-    "Where is BoardTAU located?",
-    "What does this page do?"
-  ]);
+  const isLoadedRef = useRef(false);
+
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
+            return parsed.messages;
+          }
+        }
+      } catch (err) {}
+    }
+    return [DEFAULT_GREETING];
+  });
+
+  const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed.suggestedPrompts) && parsed.suggestedPrompts.length > 0) {
+            return parsed.suggestedPrompts;
+          }
+        }
+      } catch (err) {}
+    }
+    return DEFAULT_PROMPTS;
+  });
+
   const [showPrompts, setShowPrompts] = useState(true);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
   const router = useRouter();
   const isListingDetail = pathname.startsWith('/listings/') && pathname.split('/').length > 2;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollDirection = useScrollDirection();
   const isHiddenOnMobile = scrollDirection === "up" || scrollDirection === "";
+
+  // Mark component as mounted/loaded
+  useEffect(() => {
+    isLoadedRef.current = true;
+  }, []);
+
+  // Save chat history to localStorage whenever messages or suggestedPrompts change
+  useEffect(() => {
+    if (isLoadedRef.current && typeof window !== "undefined" && messages.length > 0) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages, suggestedPrompts }));
+      } catch (err) {}
+    }
+  }, [messages, suggestedPrompts]);
+
+  const handleClearChat = () => {
+    if (isResetting) return;
+    setIsResetting(true);
+    setMessages([]); // Immediately clear old messages so typing indicator is front and center
+    setSuggestedPrompts([]); // Temporarily hide chips during loader
+
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (err) {}
+    }
+
+    setTimeout(() => {
+      setMessages([
+        {
+          role: 'assistant',
+          content: "Conversation reset successfully! Mabuhay, I'm **Kerby**, your BoardTAU AI Assistant 🦬. How can I help you find student housing or navigate campus today?",
+          isInitial: true
+        }
+      ]);
+      setSuggestedPrompts(DEFAULT_PROMPTS);
+      setShowPrompts(true);
+      setIsResetting(false);
+    }, 550);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -119,7 +198,6 @@ export default function ChatBot() {
     const newMessages = [...messages, { role: 'user', content: text } as Message];
     setMessages(newMessages);
     setInput('');
-    setSuggestedPrompts([]); // Clear chips while loading
 
     // Client-side SessionStorage caching key
     const cacheKey = `chatbot_cache_${pathname}_${text.trim().toLowerCase()}`;
@@ -130,7 +208,7 @@ export default function ChatBot() {
           const parsed = JSON.parse(cached);
           if (parsed.reply) {
             setMessages([...newMessages, { role: 'assistant', content: parsed.reply }]);
-            setSuggestedPrompts(parsed.suggestedPrompts || []);
+            setSuggestedPrompts(parsed.suggestedPrompts?.length > 0 ? parsed.suggestedPrompts : DEFAULT_PROMPTS);
             setShowPrompts(true);
             return;
           }
@@ -156,12 +234,11 @@ export default function ChatBot() {
 
       if (data.reply) {
         setMessages([...newMessages, { role: 'assistant', content: data.reply }]);
-        if (data.suggestedPrompts && Array.isArray(data.suggestedPrompts)) {
-          setSuggestedPrompts(data.suggestedPrompts);
-          setShowPrompts(true); // Auto-expand when new prompts arrive
-        } else {
-          setSuggestedPrompts([]);
-        }
+        const promptsToSet = (data.suggestedPrompts && Array.isArray(data.suggestedPrompts) && data.suggestedPrompts.length > 0)
+          ? data.suggestedPrompts
+          : DEFAULT_PROMPTS;
+        setSuggestedPrompts(promptsToSet);
+        setShowPrompts(true);
 
         // Cache response in sessionStorage
         if (typeof window !== "undefined") {
@@ -218,6 +295,17 @@ export default function ChatBot() {
                 </div>
               </div>
               <div className="flex items-center gap-1 relative z-10">
+                {(messages.length > 1 || isResetting) && (
+                  <button
+                    onClick={handleClearChat}
+                    disabled={isResetting}
+                    className="p-2 rounded-full hover:bg-slate-200/60 dark:hover:bg-white/20 backdrop-blur-md transition-colors relative z-10 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer disabled:opacity-50"
+                    title="Reset Conversation"
+                    aria-label="Reset Conversation"
+                  >
+                    <RotateCcw size={18} className={cn(isResetting && "animate-spin text-[#2f7d6d] dark:text-emerald-400")} />
+                  </button>
+                )}
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-2 rounded-full hover:bg-slate-200/60 dark:hover:bg-white/20 backdrop-blur-md transition-colors relative z-10 text-slate-700 dark:text-white cursor-pointer"
@@ -317,7 +405,7 @@ export default function ChatBot() {
                   </div>
                 </motion.div>
               ))}
-              {isLoading && (
+              {(isLoading || isResetting) && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex w-full gap-3 justify-start">
                   <div className="w-10 h-10 rounded-full bg-[#2f7d6d]/20 dark:bg-emerald-500/20 border border-[#2f7d6d]/40 dark:border-emerald-500/40 flex items-center justify-center shrink-0 mt-1 overflow-hidden p-0.5 shadow-sm backdrop-blur-md">
                     <Image src="/assets/mascot/kerby-ai-face.png" alt="Kerby" width={34} height={34} className="object-contain scale-110" />

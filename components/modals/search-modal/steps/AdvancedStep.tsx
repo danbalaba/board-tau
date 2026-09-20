@@ -5,22 +5,12 @@ import axios from "axios";
 import { fetchTaxonomyData, getTaxonomyDataSync } from "@/lib/taxonomyCache";
 import Heading from "@/components/common/Heading";
 import { motion, AnimatePresence } from "framer-motion";
-import * as LucideIcons from "lucide-react";
+import { getDynamicIcon } from "@/lib/iconResolver";
 import {
-  Shield,
-  CreditCard,
-  KeyRound,
-  Fingerprint,
-  Camera,
-  ShieldCheck,
-  Flame,
-  AlertCircle,
-  Sun,
-  Cross,
-  Trash2,
   Check,
   RotateCcw,
   Lock,
+  Sparkles,
 } from "lucide-react";
 import { FieldValues, UseFormRegister, UseFormWatch } from "react-hook-form";
 import { KerbyPose } from "../KerbyMascot";
@@ -96,7 +86,7 @@ export default function AdvancedStep({
       const keys = Array.from(new Set(dynamicAttributes.map((a: any) => a.subGroupKey).filter(Boolean)));
       groups = keys.map((k: any, idx: number) => ({
         key: k,
-        tabLabel: k.replace("_", " "),
+        tabLabel: String(k).replace(/_/g, " "),
         displayOrder: idx + 1,
       }));
     }
@@ -126,7 +116,7 @@ export default function AdvancedStep({
   // Sub-step configuration definition purely derived from database subGroup & attributes
   const currentSubGroup = activeSubGroups[subStep] || activeSubGroups[0];
   const currentSubGroupKey = currentSubGroup?.key || "SECURITY";
-  const label = currentSubGroup?.tabLabel || currentSubGroup?.title || currentSubGroupKey;
+  const label = currentSubGroup?.tabLabel || currentSubGroup?.title || String(currentSubGroupKey).replace(/_/g, " ");
 
   const currentItems = dynamicAttributes
     .filter((attr) => attr.isActive && attr.subGroupKey === currentSubGroupKey)
@@ -141,10 +131,7 @@ export default function AdvancedStep({
       });
     })
     .map((attr) => {
-      let IconComp = LucideIcons.Sparkles;
-      if (attr.icon && (LucideIcons as any)[attr.icon]) {
-        IconComp = (LucideIcons as any)[attr.icon];
-      }
+      const IconComp = getDynamicIcon(attr.icon, Sparkles);
       return {
         id: attr.name,
         name: attr.name,

@@ -5,35 +5,12 @@ import axios from "axios";
 import { fetchTaxonomyData, getTaxonomyDataSync } from "@/lib/taxonomyCache";
 import Heading from "@/components/common/Heading";
 import { motion, AnimatePresence } from "framer-motion";
-import * as LucideIcons from "lucide-react";
+import { getDynamicIcon } from "@/lib/iconResolver";
 import {
-  Utensils,
-  Store,
-  ShoppingBag,
-  Shirt,
-  Droplets,
-  Wifi,
-  Radio,
-  Zap,
-  Container,
-  Activity,
-  Droplet,
-  GlassWater,
-  Sparkles,
-  UserCheck,
-  BookOpen,
-  Sofa,
-  Wrench,
-  BedDouble,
-  Car,
-  Warehouse,
-  Bike,
   Check,
   RotateCcw,
-  ShieldCheck,
+  Sparkles,
   Lock,
-  Trees,
-  Sun,
 } from "lucide-react";
 import { FieldValues, UseFormRegister, UseFormWatch } from "react-hook-form";
 import { KerbyPose } from "../KerbyMascot";
@@ -41,10 +18,10 @@ import { KerbyPose } from "../KerbyMascot";
 interface SharedFacilitiesStepProps {
   propertyTypeSelected: string[];
   amenitiesSelected: string[];
-  setCustomValue: (id: string, value: any) => void;
+  setCustomValue?: (id: string, value: any) => void;
   toggleMulti: (id: "amenities" | "rules" | "advanced" | "roomAmenities" | "propertyType" | "roomType", value: string) => void;
-  register: UseFormRegister<FieldValues>;
-  watch: UseFormWatch<FieldValues>;
+  register?: UseFormRegister<FieldValues>;
+  watch?: UseFormWatch<FieldValues>;
   subStep: number;
   setSubStep: (val: number | ((prev: number) => number)) => void;
   onUpdateKerbySpeech: (speech: string, pose?: KerbyPose) => void;
@@ -172,14 +149,10 @@ export default function SharedFacilitiesStep({
       return attr.isUniversal ?? true;
     })
     .map((attr: any) => {
-      let IconComp = Sparkles;
-      if (attr.icon && (LucideIcons as any)[attr.icon]) {
-        IconComp = (LucideIcons as any)[attr.icon];
-      }
       return {
         id: attr.name,
         name: attr.name,
-        icon: IconComp,
+        icon: getDynamicIcon(attr.icon, Sparkles),
         desc: attr.description || `Custom ${attr.name} facility available.`,
       };
     });
