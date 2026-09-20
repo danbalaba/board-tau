@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AuditLogHeader } from './audit-log-header';
+import { AuditLogKpiCards } from './audit-log-kpi-cards';
 import { getColumns, AuditLog } from './columns';
 import { AuditLogModal } from './audit-log-modal';
 import { parseAsString, useQueryState } from 'nuqs';
@@ -101,7 +102,7 @@ export default function AuditLogs() {
   };
 
   return (
-    <div className="p-6 lg:p-10 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <AuditLogHeader 
         onRefresh={() => {
           toast.promise(refetch(), {
@@ -116,7 +117,13 @@ export default function AuditLogs() {
         onRangeChange={setRange}
       />
       
-      <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-800/50 rounded-[2.5rem] shadow-xl overflow-hidden flex flex-col p-6">
+      <AuditLogKpiCards 
+        logs={data?.logs || []} 
+        totalItems={totalItems} 
+        isLoading={isLoading} 
+      />
+
+      <div className="rounded-[2.5rem] border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 p-6 shadow-xl backdrop-blur-xl overflow-hidden flex flex-col">
         <DataTable table={table} isLoading={isLoading || isFetching}>
           <DataTableToolbar table={table} />
         </DataTable>
@@ -130,3 +137,4 @@ export default function AuditLogs() {
     </div>
   );
 }
+

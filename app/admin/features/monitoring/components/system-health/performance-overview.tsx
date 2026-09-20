@@ -1,43 +1,74 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/admin/components/ui/card';
-import { IconCpu, IconServer, IconDatabase } from '@tabler/icons-react';
-import { cn } from '@/app/admin/lib/utils';
+import { Cpu, Server, Database, Activity } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export function PerformanceOverview() {
+interface PerformanceOverviewProps {
+  data?: {
+    system?: {
+      memoryPercent?: number;
+      heapUsedMb?: number;
+      heapTotalMb?: number;
+      cpuCores?: number;
+    };
+  };
+}
+
+export function PerformanceOverview({ data }: PerformanceOverviewProps) {
+  const memPercent = data?.system?.memoryPercent ?? 44;
+  
+  const metrics = [
+    { label: 'Processor (CPU) Load', value: 28, color: 'bg-primary', icon: Cpu, status: 'Normal' },
+    { label: 'Memory (RAM) Usage', value: memPercent, color: 'bg-teal-500', icon: Server, status: memPercent < 80 ? 'Stable' : 'High' },
+    { label: 'Database Activity', value: 18, color: 'bg-blue-500', icon: Database, status: 'Optimal' },
+    { label: 'Network Traffic', value: 35, color: 'bg-purple-500', icon: Activity, status: 'Healthy' }
+  ];
+
   return (
-    <Card className="border-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl shadow-xl rounded-[2.5rem] overflow-hidden p-2">
-      <CardHeader className="flex flex-row items-center justify-between pb-6 pt-6 px-6">
-         <div>
-            <CardTitle className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Performance</CardTitle>
-            <CardDescription className="text-[9px] uppercase font-black text-gray-500 tracking-[0.2em] mt-1">Resource Allocation</CardDescription>
-         </div>
-         <div className="p-3 bg-violet-500/10 rounded-2xl">
-           <IconServer className="h-6 w-6 text-violet-500" />
-         </div>
-      </CardHeader>
-      <CardContent className="space-y-8 px-6 pb-8">
-        {[
-          { label: 'CPU Cluster', value: 65, color: 'bg-violet-500', icon: IconCpu },
-          { label: 'Memory', value: 82, color: 'bg-indigo-500', icon: IconServer },
-          { label: 'Disk I/O', value: 45, color: 'bg-blue-500', icon: IconDatabase }
-        ].map((metric) => (
-          <div key={metric.label} className="space-y-3">
-            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.15em] text-gray-600 dark:text-gray-400">
-              <span className="flex items-center gap-2"><metric.icon size={14} className="text-violet-500" /> {metric.label}</span>
-              <span className="font-black text-gray-900 dark:text-white">{metric.value}%</span>
+    <div className="rounded-[2.5rem] border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 p-6 shadow-xl backdrop-blur-xl overflow-hidden h-full">
+      <div className="flex flex-row items-center justify-between pb-6 border-b border-gray-100 dark:border-gray-800">
+        <div>
+          <h2 className="text-2xl font-black uppercase text-gray-900 dark:text-white tracking-tight">
+            Resource Usage
+          </h2>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-gray-500 dark:text-gray-400 mt-1">
+            Current server workload and memory
+          </p>
+        </div>
+        <div className="p-3 bg-primary/10 rounded-2xl shrink-0 text-primary">
+          <Server className="h-5 w-5" />
+        </div>
+      </div>
+      <div className="pt-6 space-y-6">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="space-y-2.5">
+            <div className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300">
+              <span className="flex items-center gap-2">
+                <metric.icon size={14} className="text-primary" /> 
+                {metric.label}
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                  {metric.status}
+                </span>
+                <span className="font-black text-gray-900 dark:text-white tabular-nums text-sm">{metric.value}%</span>
+              </div>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800 shadow-inner">
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800/80">
               <motion.div 
-                className={cn("h-full shadow-lg shadow-violet-500/20", metric.color)}
+                className={cn("h-full shadow-sm rounded-full", metric.color)}
                 initial={{ width: 0 }}
                 animate={{ width: `${metric.value}%` }}
-                transition={{ duration: 1.5, ease: "circOut" }}
+                transition={{ duration: 1.2, ease: "circOut" }}
               />
             </div>
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
+
+
+
+
