@@ -5,15 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function ClearFiltersBanner() {
+function ClearFiltersBannerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // If there are no filters at all, or only one property type, we don't show the banner
-  // You might customize this based on when exactly you want the banner to appear.
-  // For now, let's show it if any filter (except 'category') is active, 
-  // or if multiple categories are somehow active (though category in URL is a single string here).
-  
   const SYSTEM_KEYS = new Set(["callbackUrl", "error", "login", "secure", "code", "state", "email", "verified"]);
   const activeSearchKeys = Array.from(searchParams?.keys() || []).filter(k => !SYSTEM_KEYS.has(k));
   const hasFilters = activeSearchKeys.length > 0;
@@ -47,5 +42,13 @@ export default function ClearFiltersBanner() {
         </div>
       </motion.div>
     </AnimatePresence>
+  );
+}
+
+export default function ClearFiltersBanner() {
+  return (
+    <React.Suspense fallback={null}>
+      <ClearFiltersBannerContent />
+    </React.Suspense>
   );
 }

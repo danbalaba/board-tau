@@ -13,16 +13,23 @@ Sentry.init({
   tracesSampleRate: 0.1,
   enableLogs: true,
   sendDefaultPii: true,
+  integrations: [
+    Sentry.feedbackIntegration({
+      colorScheme: "system",
+    }),
+  ],
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
 
 import posthog from "posthog-js";
 
-posthog.init(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN!, {
-  api_host: "/ingest",
-  ui_host: "https://us.posthog.com",
-  defaults: "2026-01-30",
-  capture_exceptions: true,
-  debug: process.env.NODE_ENV === "development",
-});
+if (process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) {
+  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN, {
+    api_host: "/ingest",
+    ui_host: "https://us.posthog.com",
+    defaults: "2026-01-30",
+    capture_exceptions: true,
+    debug: process.env.NODE_ENV === "development",
+  });
+}

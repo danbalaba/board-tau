@@ -14,7 +14,7 @@ interface MapFloatingButtonProps {
   listings?: Listing[]; // Fallback
 }
 
-export default function MapFloatingButton({ listings: initialListings }: MapFloatingButtonProps) {
+function MapFloatingButtonContent({ listings: initialListings }: MapFloatingButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [mapListings, setMapListings] = useState<Listing[]>(initialListings || []);
   const [isLoading, setIsLoading] = useState(false);
@@ -106,5 +106,13 @@ export default function MapFloatingButton({ listings: initialListings }: MapFloa
         }}
       />
     </>
+  );
+}
+
+export default function MapFloatingButton(props: MapFloatingButtonProps) {
+  return (
+    <React.Suspense fallback={null}>
+      <MapFloatingButtonContent {...props} />
+    </React.Suspense>
   );
 }
