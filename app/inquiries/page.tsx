@@ -38,6 +38,11 @@ const InquiriesPage = async () => {
           location: true,
           region: true,
           country: true,
+          propertyType: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
       room: {
@@ -45,7 +50,12 @@ const InquiriesPage = async () => {
           id: true,
           name: true,
           price: true,
-          roomType: true,
+          roomTypeDefinition: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
           images: true,
         },
       },
@@ -59,6 +69,12 @@ const InquiriesPage = async () => {
   // Transform to ensure dates are serializable and match the client component interface
   const transformedInquiries = inquiries.map((inquiry: any) => ({
     ...inquiry,
+    room: inquiry.room
+      ? {
+          ...inquiry.room,
+          roomType: inquiry.room.roomTypeDefinition?.name || inquiry.listing?.propertyType?.name || "Solo Room",
+        }
+      : null,
     createdAt: (inquiry as any).createdAt.toISOString(),
     updatedAt: (inquiry as any).updatedAt.toISOString(),
     moveInDate: (inquiry as any).moveInDate.toISOString(),

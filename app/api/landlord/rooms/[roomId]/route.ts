@@ -29,9 +29,10 @@ export async function GET(
           }
         },
         images: true,
-        amenities: {
-          include: { amenityType: true }
-        }
+        roomLinks: {
+          include: { attribute: true }
+        },
+        roomTypeDefinition: true
       }
     });
 
@@ -50,8 +51,10 @@ export async function GET(
       propertyTitle: room.listing.title,
       propertyRegion: room.listing.region,
       propertyStatus: room.listing.status,
+      roomType: room.roomTypeDefinitionId || (room.roomTypeDefinition as any)?.code || room.roomTypeDefinition?.name || '',
       imageSrc: room.images[0]?.url || null,
       images: room.images.map((img: any) => img.url),
+      amenities: room.roomLinks.map((rl: any) => rl.attribute)
     };
 
     return NextResponse.json({ success: true, room: formattedRoom });
@@ -93,7 +96,7 @@ export async function PATCH(
     const updateData: any = {};
     if (body.name !== undefined) updateData.name = body.name;
     if (body.description !== undefined) updateData.description = body.description;
-    if (body.roomType !== undefined) updateData.roomType = body.roomType;
+    if (body.roomType !== undefined) updateData.roomTypeDefinitionId = body.roomType;
     if (body.bathroomArrangement !== undefined) updateData.bathroomArrangement = body.bathroomArrangement;
     if (body.bedType !== undefined) updateData.bedType = body.bedType;
     if (body.bedCount !== undefined) updateData.bedCount = Number(body.bedCount);
@@ -130,20 +133,39 @@ export async function PATCH(
       await db.roomAttributeLink.deleteMany({ where: { roomId } });
       if (body.amenities.length > 0) {
         const newAmenitiesData = await Promise.all(body.amenities.map(async (a: string) => {
+          if (!a) return null;
+          const strVal = String(a).trim();
+          
+          const byId = await db.dynamicAttribute.findUnique({ where: { id: strVal } });
+          if (byId) return { roomId, attributeId: byId.id };
+
+          let cleanName = strVal;
+          let iconName = "HelpCircle";
+          if (strVal.includes("||")) {
+            [cleanName, iconName] = strVal.split("||").map(s => s.trim());
+          } else if (strVal.includes("|")) {
+            [cleanName, iconName] = strVal.split("|").map(s => s.trim());
+          }
+
           const rec = await db.dynamicAttribute.upsert({
-            where: { name: String(a) },
+            where: { name: cleanName },
             update: {},
-            create: { name: String(a), icon: "HelpCircle", type: "ROOM_AMENITY", isActive: true, description: "" }
+            create: { name: cleanName, icon: iconName || "HelpCircle", type: "ROOM_AMENITY", isActive: true, description: "" }
           });
           return { roomId, attributeId: rec.id };
         }));
-        await db.roomAttributeLink.createMany({ data: newAmenitiesData });
+        const validLinks = newAmenitiesData.filter(Boolean) as { roomId: string; attributeId: string }[];
+        if (validLinks.length > 0) {
+          await db.roomAttributeLink.createMany({ data: validLinks });
+        }
       }
     }
+
 
     // Invalidate the cache for the parent listing so tenant-side updates immediately
     if (existing.listingId) {
       await cache.del(`listing:id:${existing.listingId}`);
+      await cache.delPattern("listings:*");
     }
 
     return NextResponse.json({ success: true, room });

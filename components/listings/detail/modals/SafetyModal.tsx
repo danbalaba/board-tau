@@ -5,7 +5,8 @@ import Modal from '@/components/modals/Modal';
 import { 
   ShieldCheck, Flame, X, Shield, Search, SlidersHorizontal, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft 
 } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { getCachedAttributes, getSyncAttributes } from '@/lib/landlordTaxonomyCache';
+import { getDynamicIcon } from '@/lib/iconResolver';
 
 interface SafetyModalProps {
   isOpen: boolean;
@@ -22,19 +23,30 @@ export default function SafetyModal({
 }: SafetyModalProps) {
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [attributes, setAttributes] = useState<any[]>(() => getSyncAttributes() || []);
   const tabsScrollRef = useRef<HTMLDivElement>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    getCachedAttributes().then(res => {
+      if (res && Array.isArray(res)) {
+        setAttributes(res);
+      }
+    });
+  }, []);
 
   // Helper to parse feature item whether string ("Name|Icon"), object, or raw
   const parseFeatureItem = (item: any) => {
     let rawName = '';
     let iconName = '';
     let subGroupKey = '';
+    let attrId = '';
 
     if (typeof item === 'object' && item !== null) {
       rawName = item.name || item.attribute?.name || item.title || '';
       iconName = item.icon || item.attribute?.icon || '';
       subGroupKey = item.subGroupKey || '';
+      attrId = item.id || item.attributeId || item.attribute?.id || '';
     } else if (typeof item === 'string') {
       if (item.includes('|')) {
         const parts = item.split('|');
@@ -62,7 +74,7 @@ export default function SafetyModal({
       }
     }
 
-    return { name: cleanName, icon: iconName, subGroupKey };
+    return { name: cleanName, icon: iconName, subGroupKey, attrId };
   };
 
   // Sub-group category definitions matching 1_taxonomy.ts (Exactly 2 Sub-Steps)
@@ -73,8 +85,8 @@ export default function SafetyModal({
 
   // Parse and group features into sub-steps
   const { groupedFeatures, parsedCustomNotes, totalCount } = useMemo(() => {
-    const map: Record<string, { key: string; label: string; items: { name: string; icon: string; subGroupKey: string; description?: string }[] }> = {};
-    const customList: { name: string; icon: string }[] = [];
+    const map: Record<string, { key: string; label: string; items: { name: string; icon: string; subGroupKey: string; attrId?: string; description?: string }[] }> = {};
+    const customList: { name: string; icon: string; attrId?: string }[] = [];
     const addedNames = new Set<string>();
 
     const allRawItems = [...features, ...customFeatures];
@@ -114,10 +126,11 @@ export default function SafetyModal({
           name: parsed.name,
           icon: parsed.icon,
           subGroupKey: parsed.subGroupKey,
+          attrId: parsed.attrId,
           description: finalDesc,
         });
       } else {
-        customList.push({ name: parsed.name, icon: parsed.icon });
+        customList.push({ name: parsed.name, icon: parsed.icon, attrId: parsed.attrId });
       }
     });
 
@@ -151,25 +164,24 @@ export default function SafetyModal({
   }, [subGroupList, activeTab]);
 
   // Dynamic Lucide Icon Resolver for Security Features
-  const renderFeatureIcon = (iconName?: string, name?: string) => {
-    if (iconName && (LucideIcons as any)[iconName]) {
-      const DynamicIcon = (LucideIcons as any)[iconName];
-      return <DynamicIcon size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />;
+  const renderFeatureIcon = (iconName?: string, name?: string, attrId?: string) => {
+    let resolvedIcon = iconName;
+
+    if (!resolvedIcon && attributes.length > 0) {
+      const matched = attributes.find((a: any) =>
+        (attrId && a.id === attrId) ||
+        (name && a.name?.toLowerCase() === name.toLowerCase())
+      );
+      if (matched?.icon) {
+        resolvedIcon = matched.icon;
+      }
     }
 
-    const lower = (name || '').toLowerCase();
-    if (lower.includes('cctv') || lower.includes('camera')) return <LucideIcons.Camera size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />;
-    if (lower.includes('guard') || lower.includes('security')) return <LucideIcons.Shield size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />;
-    if (lower.includes('rfid') || lower.includes('keycard') || lower.includes('card')) return <LucideIcons.CreditCard size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />;
-    if (lower.includes('lock') || lower.includes('door')) return <LucideIcons.KeyRound size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />;
-    if (lower.includes('biometric') || lower.includes('fingerprint')) return <LucideIcons.Fingerprint size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />;
-    if (lower.includes('flood')) return <LucideIcons.ShieldCheck size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />;
-    if (lower.includes('fire') || lower.includes('extinguisher')) return <LucideIcons.Flame size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />;
-    if (lower.includes('smoke') || lower.includes('detector') || lower.includes('alarm')) return <LucideIcons.AlertCircle size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />;
-    if (lower.includes('light') || lower.includes('hallway') || lower.includes('sun')) return <LucideIcons.Sun size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />;
-    if (lower.includes('first aid') || lower.includes('medical') || lower.includes('kit') || lower.includes('cross')) return <LucideIcons.Cross size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />;
+    const iconInput = (name && resolvedIcon) ? `${name}|${resolvedIcon}` : (name || resolvedIcon);
+    const DynamicIcon = getDynamicIcon(iconInput, ShieldCheck);
+    if (!DynamicIcon) return null;
 
-    return <ShieldCheck size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />;
+    return <DynamicIcon size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />;
   };
 
   // Auto-scroll active category tab into center view
@@ -342,7 +354,7 @@ export default function SafetyModal({
                         className="flex items-start gap-3 p-3.5 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/60 hover:border-amber-500/30 transition-colors"
                       >
                         <div className="p-2 bg-amber-500/10 rounded-xl shrink-0">
-                          {renderFeatureIcon(item.icon, item.name)}
+                          {renderFeatureIcon(item.icon, item.name, item.attrId)}
                         </div>
                         <div>
                           <h5 className="font-bold text-xs text-gray-900 dark:text-white">{item.name}</h5>
@@ -365,7 +377,7 @@ export default function SafetyModal({
                     {filteredCustomNotes.map((note, idx) => (
                       <div key={idx} className="flex items-center gap-3 p-3 bg-amber-50/50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800/50 text-xs font-bold text-amber-900 dark:text-amber-300">
                         <div className="p-1.5 bg-amber-500/10 rounded-lg shrink-0">
-                          {renderFeatureIcon(note.icon, note.name)}
+                          {renderFeatureIcon(note.icon, note.name, note.attrId)}
                         </div>
                         <span>{note.name}</span>
                       </div>

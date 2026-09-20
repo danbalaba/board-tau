@@ -45,7 +45,7 @@ export function ModernInquirySelect({
   return (
     <div className="relative" ref={containerRef}>
       {label && (
-        <label className="block font-black text-[10px] uppercase tracking-widest mb-2 text-gray-400">
+        <label className="block font-black text-[10px] uppercase tracking-widest mb-2 text-slate-700 dark:text-gray-300">
           {label}
         </label>
       )}

@@ -140,7 +140,7 @@ describe('InquiryDetailsModal', () => {
       />
     );
 
-    expect(screen.getByText(/Feedback from Host/i)).toBeInTheDocument();
+    expect(screen.getByText(/Note from Property Owner/i)).toBeInTheDocument();
     expect(screen.getByText(/"Not available"/i)).toBeInTheDocument();
   });
 
@@ -149,7 +149,7 @@ describe('InquiryDetailsModal', () => {
     
     render(
       <InquiryDetailsModal 
-        inquiry={mockInquiry} 
+        inquiry={{ ...mockInquiry, status: 'APPROVED' }} 
         isOpen={true} 
         currentUserId="user-1" 
         onClose={mockOnClose}
@@ -158,17 +158,17 @@ describe('InquiryDetailsModal', () => {
       />
     );
     
-    expect(screen.getByText('Test Alert')).toBeInTheDocument();
+    expect(screen.getByText('Request Approved!')).toBeInTheDocument();
     expect(mockOnMarkAsRead).toHaveBeenCalled();
     
     act(() => {
       jest.advanceTimersByTime(8000);
     });
     
-    expect(screen.queryByText('Test Alert')).not.toBeInTheDocument();
+    expect(screen.queryByText('Request Approved!')).not.toBeInTheDocument();
   });
 
-  it('calls onCancel when Withdraw button is clicked (PENDING status)', () => {
+  it('calls onCancel when Cancel Request button is clicked (PENDING status)', () => {
     render(
       <InquiryDetailsModal 
         inquiry={{ ...mockInquiry, status: 'PENDING' }} 
@@ -179,7 +179,7 @@ describe('InquiryDetailsModal', () => {
       />
     );
 
-    const withdrawBtn = screen.getByText('Withdraw');
+    const withdrawBtn = screen.getByText(/Cancel Request/i);
     fireEvent.click(withdrawBtn);
     expect(mockOnCancel).toHaveBeenCalled();
   });
@@ -194,7 +194,7 @@ describe('InquiryDetailsModal', () => {
       />
     );
 
-    const chatBtn = screen.getByText('Chat');
+    const chatBtn = screen.getByText(/Chat with Host/i);
     fireEvent.click(chatBtn);
     expect(mockRouter.push).toHaveBeenCalledWith('/messages?listingId=list-1&otherUserId=landlord-1');
   });
@@ -209,7 +209,7 @@ describe('InquiryDetailsModal', () => {
       />
     );
 
-    const viewBtn = screen.getByText('View');
+    const viewBtn = screen.getByText(/View Reservation/i);
     fireEvent.click(viewBtn);
     expect(mockRouter.push).toHaveBeenCalledWith('/reservations');
   });

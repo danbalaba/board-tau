@@ -142,7 +142,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} closeOnOutsideClick={false}>
-      <div className="h-[95vh] md:h-auto md:max-h-[90vh] overflow-hidden flex flex-col bg-white dark:bg-gray-900">
+      <div className="h-[88vh] max-h-[820px] min-h-[580px] overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-3xl border border-white/10 shadow-2xl">
         {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 z-20 bg-white dark:bg-gray-900">
           <div className="flex flex-col">
@@ -156,8 +156,8 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
           </button>
         </div>
         
-        {/* Main Content Area */}
-        <div className="overflow-y-auto flex-1 min-h-0 custom-scrollbar overscroll-contain">
+        {/* Main Content Area - Fixed height, hidden scrollbar, no layout shift */}
+        <div className="overflow-y-auto flex-1 min-h-0 overscroll-contain scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <div className="p-4 md:p-6 pb-24 md:pb-6">
             
             {/* Mobile-Only Compact Header Strip (Expandable) */}

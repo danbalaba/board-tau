@@ -103,3 +103,42 @@ export function formatPhoneNumber(phone: any): string {
   return raw;
 }
 
+/**
+ * Global text normalization helper for BoardTAU.
+ * Converts mixed capitalization (e.g., "dAnILo DoRmItOrY", "sTuDiO uNiT") into clean Title Case
+ * while preserving standard uppercase acronyms (TAU, CR, AC, BH, 1BR, 2BR, CCTV, RFID).
+ */
+export function formatCleanTitle(input?: string | null): string {
+  if (!input || typeof input !== 'string') return '';
+  const trimmed = input.trim();
+  if (!trimmed) return '';
+
+  const ACRONYMS = new Set([
+    'TAU', 'CR', 'AC', 'BH', '1BR', '2BR', '3BR', '4BR', 'CCTV', 'RFID',
+    'BFP', 'DTI', 'BIR', 'LGU', 'TV', 'WI-FI', 'WIFI', 'GPS', 'ID', 'SQM'
+  ]);
+
+  const LOWERCASE_WORDS = new Set([
+    'a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'in', 'nor', 'of', 'on', 'or', 'so', 'the', 'to', 'up', 'yet', 'with'
+  ]);
+
+  const words = trimmed.split(/\s+/);
+
+  return words
+    .map((word, index) => {
+      const cleanWord = word.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+
+      if (ACRONYMS.has(cleanWord)) {
+        return word.replace(/[a-zA-Z0-9]+/g, (m) => m.toUpperCase());
+      }
+
+      const lowerWord = word.toLowerCase();
+      if (index > 0 && index < words.length - 1 && LOWERCASE_WORDS.has(lowerWord)) {
+        return lowerWord;
+      }
+
+      return word.replace(/[a-zA-Z]+/g, (m) => m.charAt(0).toUpperCase() + m.slice(1).toLowerCase());
+    })
+    .join(' ');
+}
+

@@ -84,7 +84,7 @@ export async function POST(req: Request) {
         await db.adminActivityLog.create({
           data: {
             adminId,
-            action: "CREATE",
+            action: "CREATE_LANDMARK",
             entityType: "CampusLandmark",
             entityId: college.id,
             details: JSON.stringify({

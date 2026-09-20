@@ -167,10 +167,10 @@ const IDStep: React.FC<IDStepProps> = ({
             exit={{ opacity: 0, scale: 0.97 }}
             className={cn(
               "relative w-full rounded-2xl overflow-hidden shadow-2xl border border-primary/30 bg-primary/10 dark:bg-black flex items-center justify-center",
-              hideHeader ? "min-h-[260px]" : "min-h-[300px] md:min-h-[360px]"
+              hideHeader ? "h-[260px]" : "h-[300px] md:h-[360px]"
             )}
           >
-            <SafeImage src={sanitizeImgUrl(capturedID)} alt="Captured ID" fill className="object-contain p-4" />
+            <SafeImage src={sanitizeImgUrl(capturedID)} alt="Captured ID" fill containerClassName="absolute inset-0" className="object-contain p-4" />
 
             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent pointer-events-none" />
 
@@ -215,12 +215,13 @@ const IDStep: React.FC<IDStepProps> = ({
           >
             <div className={cn(
               "relative w-full rounded-2xl overflow-hidden bg-slate-50 dark:bg-black shadow-2xl border border-slate-200 dark:border-white/10 flex items-center justify-center",
-              hideHeader ? "min-h-[250px]" : "min-h-[280px] md:min-h-[340px]"
+              hideHeader ? "h-[250px]" : "h-[280px] md:h-[340px]"
             )}>
               <SafeImage 
                 src={sanitizeImgUrl(previewUrl)}
                 alt="ID Preview" 
                 fill
+                containerClassName="absolute inset-0"
                 className="object-contain p-4" 
               />
 

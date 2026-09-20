@@ -1,10 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Modal from '@/components/modals/Modal';
 import { ReservationRequest } from '../hooks/use-reservation-logic';
-import Button from '@/components/common/Button';
 import Avatar from '@/components/common/Avatar';
 import { 
   IconUser, 
@@ -17,17 +15,17 @@ import {
   IconX,
   IconClock,
   IconChevronLeft,
-  IconChevronRight
+  IconChevronRight,
+  IconTag,
+  IconFileText
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/helper';
 import SafeImage from '@/components/common/SafeImage';
 import { getSafeImageSrcString } from '@/components/modals/inquiry-modal/InquiryModalUtils';
-import { useRouter, usePathname } from 'next/navigation';
 import { LandlordReservationCancelModal } from './landlord-reservation-cancel-modal';
-import { generateLeaseContractPDF } from '@/utils/contractPdfGenerator';
-import { IconFileText } from '@tabler/icons-react';
+import { generateLeaseContractPDF, previewPdfBlob } from '@/utils/contractPdfGenerator';
 
 interface LandlordReservationDetailsModalProps {
   reservation: ReservationRequest;
@@ -36,13 +34,6 @@ interface LandlordReservationDetailsModalProps {
   onUpdateStatus: (id: string, status: string, reason?: string) => Promise<void>;
 }
 
-const statusColors: Record<string, string> = {
-  PENDING_PAYMENT: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-  RESERVED: 'bg-green-500/10 text-green-600 border-green-500/20',
-  CHECKED_IN: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-  CANCELLED: 'bg-red-500/10 text-red-600 border-red-500/20',
-};
-
 export function LandlordReservationDetailsModal({
   reservation,
   isOpen,
@@ -50,20 +41,75 @@ export function LandlordReservationDetailsModal({
   onUpdateStatus
 }: LandlordReservationDetailsModalProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
     if (isOpen) {
-      setIsInitialLoading(true);
       setCurrentImageIndex(0);
-      const timer = setTimeout(() => setIsInitialLoading(false), 600);
-      return () => clearTimeout(timer);
+      setShowCancelModal(false);
     }
   }, [isOpen]);
+
+  const formatDate = useCallback((dateStr: string | Date | undefined) => {
+    if (!dateStr) return 'N/A';
+    try {
+      return format(new Date(dateStr), 'MMM d, yyyy');
+    } catch (e) {
+      return 'N/A';
+    }
+  }, []);
+
+  const getStatusBadge = useCallback((status: string) => {
+    switch (status) {
+      case 'PENDING_PAYMENT':
+        return {
+          label: 'Payment Pending',
+          className: 'bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-200 border-amber-300 dark:border-amber-800',
+        };
+      case 'RESERVED':
+      case 'CONFIRMED':
+        return {
+          label: 'Reservation Confirmed',
+          className: 'bg-primary/10 text-primary-dark dark:bg-primary/20 dark:text-primary-light border-primary/20',
+        };
+      case 'CHECKED_IN':
+        return {
+          label: 'Currently Checked In',
+          className: 'bg-blue-100 text-blue-900 dark:bg-blue-950/80 dark:text-blue-200 border-blue-300 dark:border-blue-800',
+        };
+      case 'CANCELLED':
+        return {
+          label: 'Cancelled',
+          className: 'bg-rose-100 text-rose-900 dark:bg-rose-950/80 dark:text-rose-200 border-rose-300 dark:border-rose-800',
+        };
+      default:
+        return {
+          label: status.replace('_', ' '),
+          className: 'bg-gray-100 text-gray-800 border-gray-300',
+        };
+    }
+  }, []);
+
+  const roomImages = useMemo(() => {
+    if (!reservation) return [];
+    if (reservation.room?.images && reservation.room.images.length > 0) {
+      return reservation.room.images.map(img => img.url);
+    }
+    if (reservation.listing?.images && reservation.listing.images.length > 0) {
+      return reservation.listing.images.map(img => img.url);
+    }
+    if (reservation.listing?.imageSrc) {
+      return [reservation.listing.imageSrc];
+    }
+    return ['/images/placeholder.jpg'];
+  }, [reservation]);
+
+  if (!isOpen || !reservation) return null;
+
+  const statusInfo = getStatusBadge(reservation.status);
+  const guestName = (reservation.user?.name || reservation.guestName) || 'Anonymous Guest';
+  const guestEmail = (reservation.user?.email || reservation.guestContact) || 'No contact specified';
 
   const handleAction = async (status: string, reason?: string) => {
     setIsLoading(true);
@@ -80,337 +126,318 @@ export function LandlordReservationDetailsModal({
 
   return (
     <>
-    <Modal isOpen={isOpen} onClose={onClose} title="Reservation Details" width="lg" hasFixedFooter>
-      <div className="space-y-8 max-h-[80vh] overflow-y-auto p-8 custom-scrollbar relative">
-        
-        <AnimatePresence mode="wait">
-          {isInitialLoading ? (
-            <motion.div 
-              key="loader"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="h-96 flex flex-col items-center justify-center gap-4"
-            >
-              <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Fetching Reservation Data...</p>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="content"
-              initial="hidden"
-              animate="visible"
-              variants={{
-                hidden: { opacity: 0 },
-                visible: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  }
-                }
-              }}
-              className="space-y-8"
-            >
-              {/* Profile Card */}
-              <motion.div 
-                variants={{
-                  hidden: { opacity: 0, scale: 0.95, y: 10 },
-                  visible: { opacity: 1, scale: 1, y: 0 }
-                }}
-                className="relative group"
+      <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} fullOnMobile={true}>
+        <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[82vh] overflow-hidden">
+          
+          {/* Top Header Bar */}
+          <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 bg-white dark:bg-gray-900">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 text-primary rounded-xl">
+                <IconCalendar size={20} />
+              </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white tracking-tight">
+                  Reservation Details
+                </h2>
+                <p className="text-[11px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 truncate max-w-[180px] sm:max-w-none">
+                  {guestName} • {reservation.listing.title}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className={cn("px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold border shadow-sm", statusInfo.className)}>
+                {statusInfo.label}
+              </span>
+              <button
+                onClick={onClose}
+                className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                title="Close"
               >
-                <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-emerald-500/20 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                <div className="relative flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800 backdrop-blur-sm">
-                  <div className="flex items-center gap-5">
-                     <Avatar 
-                        src={(reservation.user?.image || reservation.guestPhotoUrl)} 
-                        name={(reservation.user?.name || reservation.guestName)} 
-                        className="w-16 h-16 rounded-[1.25rem] shadow-2xl border-4 border-white dark:border-gray-800" 
-                     />
-                     <div>
-                        <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-none mb-2">{(reservation.user?.name || reservation.guestName) || 'Anonymous Guest'}</h3>
-                        <div className="flex items-center gap-2">
-                          <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Verified Identity</p>
-                        </div>
-                     </div>
-                  </div>
-                  <span className={cn(
-                    "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm backdrop-blur-md", 
-                    statusColors[reservation.status] || 'bg-gray-100 text-gray-500'
-                  )}>
-                    {reservation.status.replace('_', ' ')}
-                  </span>
-                </div>
-              </motion.div>
+                <IconX size={18} />
+              </button>
+            </div>
+          </div>
 
-              {/* Detailed Info Sections */}
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-7 space-y-4 sm:space-y-6 bg-slate-50/70 dark:bg-gray-950 custom-scrollbar overscroll-contain [transform:translateZ(0)]">
+            
+            {/* 2-Column Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Left Column: Guest Profile & Property Details */}
               <div className="space-y-6">
-                {/* Property Overview */}
-                <motion.div 
-                  variants={{
-                    hidden: { opacity: 0, x: -20 },
-                    visible: { opacity: 1, x: 0 }
-                  }}
-                  className="bg-gray-50/30 dark:bg-gray-800/30 p-6 rounded-3xl border border-gray-100/50 dark:border-gray-800/50"
-                >
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2 mb-4">
-                    <div className="w-1.5 h-3 bg-primary rounded-full"></div>
-                    Booking Details
-                  </span>
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className="w-full md:w-1/2 aspect-video rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 relative group/gallery">
-                      <AnimatePresence mode="wait">
-                        <SafeImage
-                          key={currentImageIndex}
-                          src={getSafeImageSrcString(
-                            (reservation.room?.images && reservation.room.images.length > 0) 
-                              ? reservation.room.images[currentImageIndex].url 
-                              : (reservation.listing?.images && reservation.listing.images.length > 0)
-                                ? reservation.listing.images[0].url
-                                : reservation.listing?.imageSrc || "/images/placeholder.jpg"
-                          )}
-                          alt={reservation.listing.title}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover/gallery:scale-110"
-                        />
-                      </AnimatePresence>
-
-                      {/* Gallery Navigation */}
-                      {reservation.room?.images && reservation.room.images.length > 1 && (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentImageIndex((prev) => (prev === 0 ? reservation.room!.images!.length - 1 : prev - 1));
-                            }}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
-                          >
-                            <IconChevronLeft size={18} />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentImageIndex((prev) => (prev === reservation.room!.images!.length - 1 ? 0 : prev + 1));
-                            }}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
-                          >
-                            <IconChevronRight size={18} />
-                          </button>
-                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-                            {reservation.room.images.map((_, idx) => (
-                              <div
-                                key={idx}
-                                className={cn(
-                                  "w-1.5 h-1.5 rounded-full transition-all",
-                                  idx === currentImageIndex ? "bg-white w-4" : "bg-white/50"
-                                )}
-                              />
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex-1 flex flex-col justify-center">
-                      <h4 className="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2">
-                        {reservation.listing.title}
-                      </h4>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
-                        Requested Room: <span className="text-primary">{reservation.room?.name || 'Standard Room'}</span>
-                      </p>
-                      <div className="mt-4 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-50 dark:border-gray-800/50 flex items-center gap-3">
-                        <IconMail size={16} className="text-primary" />
-                        <span className="text-xs font-bold text-gray-600 dark:text-gray-300 truncate">
-                          {(reservation.user?.email || reservation.guestContact)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Stay Logistics */}
-                <motion.div 
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 }
-                  }}
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-                >
-                  <div className="bg-gray-50/30 dark:bg-gray-800/30 p-5 rounded-3xl border border-gray-100/50 dark:border-gray-800/50 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                      <IconCalendar size={24} />
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">Check-In Date</p>
-                      <p className="text-sm font-black text-gray-900 dark:text-white">
-                        {format(new Date(reservation.moveInDate), 'MMMM do, yyyy')}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50/30 dark:bg-gray-800/30 p-5 rounded-3xl border border-gray-100/50 dark:border-gray-800/50 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
-                      <IconClock size={24} />
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">Stay Length</p>
-                      <p className="text-sm font-black text-gray-900 dark:text-white">
-                        {reservation.stayDuration} Days
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Financial Reference */}
-                <motion.div 
-                  variants={{
-                    hidden: { opacity: 0, scale: 0.95 },
-                    visible: { opacity: 1, scale: 1 }
-                  }}
-                  className="p-6 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-3xl border border-emerald-500/10 dark:border-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-4"
-                >
+                
+                {/* Guest Profile Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-950 flex items-center justify-center shadow-sm border border-emerald-500/20 shrink-0">
-                      <IconCreditCard size={24} className="text-emerald-600" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] block mb-1">Payment Info</span>
-                      <p className="text-sm font-black text-gray-900 dark:text-white leading-none">
-                        {(reservation as any).occupantsCount || 1} {(reservation as any).occupantsCount === 1 ? 'Person' : 'People'} × ₱{((reservation.room as any)?.reservationFee || (((reservation as any).totalPrice || 0) / ((reservation as any).occupantsCount || 1))).toLocaleString()}
+                    <Avatar 
+                      src={reservation.user?.image || reservation.guestPhotoUrl} 
+                      name={guestName} 
+                      className="w-14 h-14 rounded-2xl shadow-md border-2 border-primary/20 shrink-0" 
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-lg font-black text-gray-900 dark:text-white truncate">
+                        {guestName}
+                      </h3>
+                      <p className="text-xs font-bold text-gray-400 truncate">
+                        {guestEmail}
                       </p>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Total Fee Paid</p>
                     </div>
                   </div>
-                  <div className="bg-emerald-600 text-white px-6 py-2 rounded-2xl shadow-xl shadow-emerald-500/20">
-                    <span className="text-xl font-black tracking-tighter italic">₱{(reservation as any).totalPrice.toLocaleString()}</span>
+                </div>
+
+                {/* Room Showcase Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
+                  <div className="aspect-video w-full relative group/gallery bg-gray-100 dark:bg-gray-800">
+                    <SafeImage
+                      src={getSafeImageSrcString(roomImages[currentImageIndex])}
+                      alt={reservation.listing.title}
+                      unoptimized={true}
+                    />
+
+                    {roomImages.length > 1 && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImageIndex((prev) => (prev === 0 ? roomImages.length - 1 : prev - 1));
+                          }}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80"
+                        >
+                          <IconChevronLeft size={18} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImageIndex((prev) => (prev === roomImages.length - 1 ? 0 : prev + 1));
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80"
+                        >
+                          <IconChevronRight size={18} />
+                        </button>
+                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                          {roomImages.map((_, idx) => (
+                            <div
+                              key={idx}
+                              className={cn(
+                                "w-1.5 h-1.5 rounded-full transition-all",
+                                idx === currentImageIndex ? "bg-white w-4" : "bg-white/50"
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
-                </motion.div>
+
+                  <div className="p-5 space-y-2">
+                    <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight line-clamp-1">
+                      {reservation.listing.title}
+                    </h3>
+                    <p className="text-xs font-bold text-primary flex items-center gap-1.5">
+                      <IconHome size={14} />
+                      <span>{reservation.room?.name ? `${reservation.room.name} • ${(reservation.room as any)?.roomTypeDefinition?.name || (reservation.room as any)?.roomType || (typeof (reservation.listing as any)?.propertyType === 'object' ? (reservation.listing as any)?.propertyType?.name : (reservation.listing as any)?.propertyType) || 'Solo Room'}` : ((reservation.room as any)?.roomTypeDefinition?.name || (reservation.room as any)?.roomType || (typeof (reservation.listing as any)?.propertyType === 'object' ? (reservation.listing as any)?.propertyType?.name : (reservation.listing as any)?.propertyType) || 'Solo Room')}</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Stay Schedule Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                    <IconCalendar size={14} className="text-primary" />
+                    <span>Stay Logistics</span>
+                  </h4>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3.5 bg-primary/10 dark:bg-primary/20 border border-primary/20 rounded-xl text-center">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-primary-dark dark:text-primary-light block mb-1">
+                        Check-in Date
+                      </span>
+                      <span className="text-xs font-black text-primary-dark dark:text-white">
+                        {formatDate(reservation.moveInDate)}
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 rounded-xl text-center">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-blue-700 dark:text-blue-300 block mb-1">
+                        Stay Duration
+                      </span>
+                      <span className="text-xs font-black text-blue-950 dark:text-blue-100">
+                        {reservation.stayDuration} Days
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
               </div>
 
-              {/* Management Actions */}
-              <motion.div 
-                variants={{
-                  hidden: { opacity: 0, y: 30 },
-                  visible: { opacity: 1, y: 0 }
+              {/* Right Column: Financial Overview & Booking Reference */}
+              <div className="space-y-6">
+                
+                {/* Financial Overview Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                    <IconCreditCard size={14} className="text-primary" />
+                    <span>Payment & Deposit</span>
+                  </h4>
+
+                  <div className="space-y-3.5 divide-y divide-gray-100 dark:divide-gray-800">
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-2">
+                        <IconTag size={15} className="text-primary shrink-0" />
+                        <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Total Holding Deposit Paid</span>
+                      </div>
+                      <span className="text-lg font-black text-primary dark:text-primary-light">
+                        ₱{Number((reservation as any).totalPrice || 0).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Occupants Breakdown</span>
+                      <span className="text-xs font-black text-gray-900 dark:text-white">
+                        {(reservation as any).occupantsCount || 1} {(reservation as any).occupantsCount === 1 ? 'Person' : 'People'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Booking Details Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                    <IconUser size={14} className="text-primary" />
+                    <span>Booking Reference</span>
+                  </h4>
+
+                  <div className="space-y-3.5 divide-y divide-gray-100 dark:divide-gray-800">
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Reservation ID</span>
+                      <span className="text-xs font-mono font-bold text-gray-900 dark:text-white truncate max-w-[160px]">
+                        {reservation.id}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Listing Title</span>
+                      <span className="text-xs font-bold text-gray-900 dark:text-white truncate max-w-[160px]">
+                        {reservation.listing.title}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Created Timestamp */}
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-800 text-center">
+              <p className="text-[11px] font-bold text-gray-400 flex items-center justify-center gap-1.5">
+                <IconClock size={12} />
+                <span>Reservation initialized for {reservation.room?.name || (reservation.room as any)?.roomType || 'selected room'}</span>
+              </p>
+            </div>
+
+          </div>
+
+          {/* Action Footer */}
+          <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 shrink-0 shadow-lg">
+            <button
+              className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors text-center"
+              onClick={onClose}
+            >
+              Close
+            </button>
+            
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-2.5 w-full sm:w-auto">
+              <button
+                className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl transition-all flex items-center justify-center gap-2"
+                onClick={() => {
+                  const listingImg = (reservation.room?.images && reservation.room.images.length > 0) ? reservation.room.images[0].url : (reservation.listing?.images && reservation.listing.images.length > 0) ? reservation.listing.images[0].url : reservation.listing?.imageSrc;
+                  const event = new CustomEvent('open-landlord-chat', {
+                    detail: {
+                      listingId: reservation.listing.id,
+                      tenantId: reservation.user.id,
+                      tenantName: guestName,
+                      tenantImage: (reservation.user?.image || reservation.guestPhotoUrl) || '',
+                      listingTitle: reservation.listing.title,
+                      listingImage: listingImg || ''
+                    }
+                  });
+                  window.dispatchEvent(event);
+                  onClose();
                 }}
-                className="pt-8 border-t border-gray-100 dark:border-gray-800"
               >
-                <div className="flex items-center justify-between mb-6">
-                  <h4 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">Manage Booking</h4>
-                  <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800 mx-6"></div>
-                </div>
-                
-                <div className="flex flex-col gap-4">
-                  {/* Row 1: Primary Actions (Check-in & Cancel) */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {(reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED') && !(reservation as any).isArchived && (
-                      <Button 
-                        className="w-full bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 py-5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] group/act transition-all active:scale-95"
-                        onClick={() => handleAction('CHECKED_IN')}
-                        isLoading={isLoading}
-                      >
-                        <span className="flex items-center justify-center gap-2">
-                          <IconPlayerPlay size={18} fill="currentColor" className="group-hover:scale-110 transition-transform" />
-                          Confirm Check-In
-                        </span>
-                      </Button>
-                    )}
+                <IconMail size={14} />
+                <span>Chat with Guest</span>
+              </button>
 
-                    {reservation.status !== 'CANCELLED' && !(reservation as any).isArchived && (
-                      <Button 
-                        outline
-                        className={cn(
-                          "rounded-[1.25rem] py-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all group/rev active:scale-95",
-                          (reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED') 
-                            ? "border-rose-100 text-rose-500 hover:bg-rose-50 dark:border-rose-900/30" 
-                            : "sm:col-span-2 border-rose-100 text-rose-500 hover:bg-rose-50 dark:border-rose-900/30"
-                        )}
-                        onClick={() => setShowCancelModal(true)}
-                        isLoading={isLoading}
-                      >
-                        <span className="flex items-center justify-center gap-2">
-                           <IconX size={18} strokeWidth={3} className="group-hover:rotate-90 transition-transform" /> 
-                           Cancel Reservation
-                        </span>
-                      </Button>
-                    )}
-                  </div>
+              {(reservation.status === 'RESERVED' || reservation.status === 'CHECKED_IN' || reservation.status === 'COMPLETED') && (
+                <button
+                  disabled={isLoading}
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  onClick={async () => {
+                    const toastId = toast.loading("Generating Lease Contract...");
+                    setIsLoading(true);
+                    try {
+                      const res = await fetch(`/api/contracts/generate?listingId=${reservation.listing.id}&userId=${reservation.user.id}&roomId=${reservation.room?.id}`);
+                      if (!res.ok) throw new Error("Failed to fetch contract data");
+                      const data = await res.json();
+                      if ((data.contractMode === 'CUSTOM_PDF' || data.customPdfUrl) && data.customPdfUrl) {
+                        const success = await previewPdfBlob(data.customPdfUrl, "Custom Lease Contract Preview");
+                        if (success) {
+                          toast.success("Custom Lease Contract loaded!", { id: toastId });
+                          return;
+                        }
+                      }
+                      await generateLeaseContractPDF(`Lease_Contract_${reservation.listing.id}`, data);
+                      toast.success("Lease Contract downloaded successfully!", { id: toastId });
+                    } catch (e) {
+                      toast.error("Failed to generate Lease Contract.", { id: toastId });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                >
+                  <IconFileText size={14} />
+                  <span>Lease Contract</span>
+                </button>
+              )}
 
-                  {/* Row 2: Contract & Communication */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {(reservation.status === 'RESERVED' || reservation.status === 'CHECKED_IN' || reservation.status === 'COMPLETED') && (
-                      <Button
-                        outline
-                        className="w-full rounded-[1.25rem] py-5 border-teal-100 text-[10px] font-black uppercase tracking-[0.2em] group/contract flex items-center justify-center gap-3 transition-all active:scale-[0.98] hover:bg-teal-50 dark:hover:bg-teal-900/30 text-teal-600 dark:border-teal-900/30"
-                        isLoading={isLoading}
-                        onClick={async () => {
-                          const toastId = toast.loading("Generating Lease Contract...");
-                          setIsLoading(true);
-                          try {
-                            const res = await fetch(`/api/contracts/generate?listingId=${reservation.listing.id}&userId=${reservation.user.id}&roomId=${reservation.room?.id}`);
-                            if (!res.ok) throw new Error("Failed to fetch contract data");
-                            const data = await res.json();
-                            await generateLeaseContractPDF(`Lease_Contract_${reservation.listing.id}`, data);
-                            toast.success("Lease Contract downloaded successfully!", { id: toastId });
-                          } catch (e) {
-                            toast.error("Failed to generate Lease Contract.", { id: toastId });
-                          } finally {
-                            setIsLoading(false);
-                          }
-                        }}
-                      >
-                        <IconFileText size={18} className="group-hover/contract:scale-110 transition-transform text-teal-600" />
-                        Download Contract
-                      </Button>
-                    )}
+              {(reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED') && !(reservation as any).isArchived && (
+                <button
+                  disabled={isLoading}
+                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 shrink-0"
+                  onClick={() => handleAction('CHECKED_IN')}
+                >
+                  <IconPlayerPlay size={14} fill="currentColor" />
+                  <span>Confirm Check-In</span>
+                </button>
+              )}
 
-                    <Button
-                      outline
-                      className={cn(
-                        "w-full rounded-[1.25rem] py-5 border-gray-100 dark:border-gray-800 text-[10px] font-black uppercase tracking-[0.2em] group/chat flex items-center justify-center gap-3 transition-all active:scale-[0.98] hover:bg-gray-50 dark:hover:bg-gray-800/50",
-                        (reservation.status === 'RESERVED' || reservation.status === 'CHECKED_IN' || reservation.status === 'COMPLETED') ? "" : "sm:col-span-2"
-                      )}
-                      onClick={() => {
-                        const listingImg = (reservation.room?.images && reservation.room.images.length > 0) ? reservation.room.images[0].url : (reservation.listing?.images && reservation.listing.images.length > 0) ? reservation.listing.images[0].url : reservation.listing?.imageSrc;
-                        const event = new CustomEvent('open-landlord-chat', {
-                          detail: {
-                            listingId: reservation.listing.id,
-                            tenantId: reservation.user.id,
-                            tenantName: (reservation.user?.name || reservation.guestName) || 'Tenant',
-                            tenantImage: (reservation.user?.image || reservation.guestPhotoUrl) || '',
-                            listingTitle: reservation.listing.title,
-                            listingImage: listingImg || ''
-                          }
-                        });
-                        window.dispatchEvent(event);
-                        onClose();
-                      }}
-                    >
-                      <IconMail size={18} className="group-hover/chat:scale-110 transition-transform text-primary" />
-                      Chat with {(reservation.user?.name || reservation.guestName) || 'Tenant'}
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="mt-6 flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl">
-                  <IconClock size={12} className="text-gray-400" />
-                  <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest text-center px-4">
-                    This action will update the booking status immediately
-                  </p>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </Modal>
-    
-    {/* Standalone Cancel Modal (Portaled) */}
-    <LandlordReservationCancelModal
-      isOpen={showCancelModal}
-      onClose={() => setShowCancelModal(false)}
-      onConfirm={(reason) => handleAction('CANCELLED', reason)}
-      isLoading={isLoading}
-    />
+              {reservation.status !== 'CANCELLED' && !(reservation as any).isArchived && (
+                <button
+                  disabled={isLoading}
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  onClick={() => setShowCancelModal(true)}
+                >
+                  <IconX size={14} />
+                  <span>Cancel Reservation</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+        </div>
+      </Modal>
+      
+      {/* Standalone Cancel Modal */}
+      <LandlordReservationCancelModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={(reason) => handleAction('CANCELLED', reason)}
+        isLoading={isLoading}
+      />
     </>
   );
 }
+

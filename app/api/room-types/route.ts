@@ -7,18 +7,38 @@ export async function GET(req: NextRequest) {
     const propertyTypeId = searchParams.get("propertyTypeId");
     const propertyTypeName = searchParams.get("propertyType");
 
+    const param = propertyTypeId || propertyTypeName;
     let whereClause: any = { isActive: true };
-    if (propertyTypeId) {
-      whereClause.propertyTypeId = propertyTypeId;
-    } else if (propertyTypeName) {
+
+    if (param && param !== 'ALL') {
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(param);
+
       const propType = await db.propertyType.findFirst({
         where: {
-          name: { equals: propertyTypeName, mode: "insensitive" },
+          OR: [
+            ...(isObjectId ? [{ id: param }] : []),
+            { name: { equals: param, mode: "insensitive" } },
+          ],
           isActive: true,
         },
       });
+
       if (propType) {
         whereClause.propertyTypeId = propType.id;
+      } else if (isObjectId) {
+        whereClause.propertyTypeId = param;
+      } else {
+        const fuzzyType = await db.propertyType.findFirst({
+          where: {
+            name: { contains: param, mode: "insensitive" },
+            isActive: true,
+          }
+        });
+        if (fuzzyType) {
+          whereClause.propertyTypeId = fuzzyType.id;
+        } else {
+          whereClause.propertyTypeId = param;
+        }
       }
     }
 

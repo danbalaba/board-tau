@@ -110,13 +110,10 @@ describe('AllRoomsModal', () => {
     fireEvent.click(screen.getByRole('button', { name: /Filters/i }));
     
     // Find the dropdown for room type
-    // Since we didn't mock the dropdown fully, we can interact with it
-    const dropdownBtns = screen.getAllByRole('button');
-    // The Room Type dropdown is usually the second dropdown, or we can look for text
-    const roomTypeDropdown = screen.getByText('All Types');
+    const roomTypeDropdown = screen.getByText('All Room Types');
     fireEvent.click(roomTypeDropdown);
     
-    const soloOption = screen.getByText('Solo Room');
+    const soloOption = screen.getAllByText('Private Solo Room')[0];
     fireEvent.click(soloOption);
     
     expect(screen.getByText('Room A')).toBeInTheDocument();
@@ -126,7 +123,7 @@ describe('AllRoomsModal', () => {
   it('calls onViewDetails when clicking Details button', () => {
     render(<AllRoomsModal {...mockProps} />);
     
-    const detailsBtns = screen.getAllByText('Details');
+    const detailsBtns = screen.getAllByText('View Details');
     fireEvent.click(detailsBtns[0]);
     
     expect(mockProps.onViewDetails).toHaveBeenCalledWith(mockRooms[1]);
@@ -141,11 +138,11 @@ describe('AllRoomsModal', () => {
     expect(mockProps.onInquire).toHaveBeenCalledWith(mockRooms[0]);
   });
 
-  it('disables inquire button for unavailable room', () => {
+  it('disables action buttons when room is fully occupied', () => {
     render(<AllRoomsModal {...mockProps} />);
     
-    const fullBtn = screen.getByRole('button', { name: 'Full' });
-    expect(fullBtn).toBeDisabled();
+    const occupiedBtn = screen.getByRole('button', { name: 'Occupied' });
+    expect(occupiedBtn).toBeDisabled();
   });
 
   it('shows error toast when inquiring without user', () => {
@@ -154,7 +151,7 @@ describe('AllRoomsModal', () => {
     const inquireBtn = screen.getByText('Inquire');
     fireEvent.click(inquireBtn);
     
-    expect(toast.error).toHaveBeenCalledWith('Please log in to inquire');
+    expect(toast.error).toHaveBeenCalledWith('Please sign in to send an inquiry.');
     expect(mockProps.onInquire).not.toHaveBeenCalled();
   });
 });

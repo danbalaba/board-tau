@@ -32,11 +32,13 @@ export const getReservations = async (args: Record<string, string>) => {
         listing: {
           include: {
             images: true,
+            propertyType: true,
           },
         },
         room: {
           include: {
             images: true,
+            roomTypeDefinition: true,
           },
         },
       },

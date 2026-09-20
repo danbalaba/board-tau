@@ -239,8 +239,8 @@ describe("useInquiryLogic hook", () => {
       mockValues.otp = "123456";
       expect(result.current.isStepCompleted(7)).toBe(true);
       
-      // Step 8 (Signature) is false without signature
-      expect(result.current.isStepCompleted(8)).toBe(false);
+      // Step 8 is true
+      expect(result.current.isStepCompleted(8)).toBe(true);
       
       // Unknown step
       expect(result.current.isStepCompleted(99)).toBe(false);

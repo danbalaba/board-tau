@@ -367,6 +367,8 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
             permitFile={logic.permitFile}
             utilityBillFile={logic.utilityBillFile}
             fireSafetyFile={logic.fireSafetyFile}
+            onSubmit={logic.handleSubmit}
+            isSubmitting={logic.isSubmitting}
           />
         );
       default:
@@ -393,12 +395,12 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
     }
   }, [mobileStep, logic.isCheckingDraft, logic.hasSavedDraft, isSleepingMobile, logic.step]);
 
-  // Trigger celebration confetti burst when entering mobile step 15
+  // Trigger celebration confetti burst when entering mobile step 16 (You're All Set!) or desktop step 8 (Review & Submit)
   useEffect(() => {
-    if (mobileStep === 15) {
+    if (mobileStep === 16 || logic.step === 8) {
       triggerConfetti({ particleCount: 130 });
     }
-  }, [mobileStep]);
+  }, [mobileStep, logic.step]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {

@@ -9,34 +9,12 @@ import {
   ListChecks,
   Shield,
   Star,
-  X,
-  Search,
-  Building2,
-  MapPin,
-  ClipboardList,
-  ShieldCheck,
   Bed,
-  Layers,
   ChevronUp,
-  Lock,
-  Clock,
-  Wine,
-  VolumeX,
-  Ban,
-  Users,
-  Utensils,
-  Coffee,
-  Droplets,
-  Wind,
-  BookOpen,
-  Wifi,
-  Shirt,
-  Car,
-  PawPrint,
-  Check,
-  SlidersHorizontal
+  X,
+  Search
 } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { getDynamicIcon } from '@/lib/iconResolver';
 import { cn } from '@/utils/helper';
 import { useIsClient } from '@/hooks/useIsClient';
 import {
@@ -134,42 +112,8 @@ export function SharedAmenitiesModal({
   };
 
   const getItemIcon = (name: string, attrId?: string) => {
-    if (attrId) {
-      const cleanId = attrId.includes('|') ? attrId.split('|')[0] : attrId;
-      const matched = attributes.find(
-        (a) =>
-          a.id === cleanId ||
-          a.value === cleanId ||
-          a._id === cleanId ||
-          a.code === cleanId ||
-          cleanId.startsWith(a.id + '|')
-      );
-      if (matched && matched.icon) {
-        const IconObj = (LucideIcons as any)[matched.icon];
-        if (IconObj) return IconObj;
-      }
-    }
-
-    const n = (name || '').toLowerCase();
-    if (n.includes('curfew') || n.includes('gate lock')) return Lock;
-    if (n.includes('24/7 open gate') || n.includes('no curfew')) return Clock;
-    if (n.includes('pet')) return PawPrint;
-    if (n.includes('smoke')) return Ban;
-    if (n.includes('drink') || n.includes('alcohol')) return Wine;
-    if (n.includes('visitors') || n.includes('guests')) return Users;
-    if (n.includes('utensil') || n.includes('microwave') || n.includes('stove')) return Utensils;
-    if (n.includes('kettle') || n.includes('coffee')) return Coffee;
-    if (n.includes('fridge') || n.includes('refrigerator')) return Utensils;
-    if (n.includes('bidet') || n.includes('shower') || n.includes('water')) return Droplets;
-    if (n.includes('ac') || n.includes('aircon') || n.includes('inverter')) return Wind;
-    if (n.includes('curtain') || n.includes('blind') || n.includes('cabinet')) return Layers;
-    if (n.includes('desk') || n.includes('study') || n.includes('book')) return BookOpen;
-    if (n.includes('wifi') || n.includes('internet') || n.includes('fiber')) return Wifi;
-    if (n.includes('laundry') || n.includes('washing')) return Shirt;
-    if (n.includes('parking') || n.includes('car')) return Car;
-    if (n.includes('cctv') || n.includes('security') || n.includes('guard')) return ShieldCheck;
-
-    return Sparkles;
+    const cleanName = (name || '').trim();
+    return getDynamicIcon(cleanName, Sparkles);
   };
 
   const resolveAmenityName = (attrId: string) => {
@@ -398,7 +342,7 @@ export function SharedAmenitiesModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+          className="absolute inset-0 bg-slate-900/20 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-300"
         />
 
         {/* Modal Window */}

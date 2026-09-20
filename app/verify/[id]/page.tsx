@@ -44,7 +44,12 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
       room: {
         select: {
           name: true,
-          roomType: true,
+          roomTypeDefinition: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
       listing: {
@@ -167,7 +172,9 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
                 </div>
                 <div className="text-right">
                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Type</p>
-                   <p className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-lg uppercase">{reservation.room.roomType}</p>
+                   <p className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-lg uppercase">
+                     {reservation.room.roomTypeDefinition?.name || "Standard Room"}
+                   </p>
                 </div>
              </div>
           </div>

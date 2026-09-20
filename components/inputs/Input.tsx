@@ -27,6 +27,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   inputSize?: "default" | "small";
   helpText?: string;
+  focusColor?: "primary" | "amber";
 }
 
 const Input: React.FC<InputProps> = ({
@@ -46,10 +47,17 @@ const Input: React.FC<InputProps> = ({
   onChange: externalOnChange,
   inputSize = "default",
   helpText,
+  focusColor = "primary",
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const isPasswordInput = type === "password";
+
+  const isAmber = focusColor === "amber";
+  const focusBorderClass = isAmber ? "focus:border-amber-500 dark:focus:border-amber-400" : "focus:border-primary dark:focus:border-primary/60";
+  const focusTextClass = isAmber ? "group-focus-within:text-amber-600 dark:group-focus-within:text-amber-400" : "group-focus-within:text-primary";
+  const focusRingClass = isAmber ? "focus:ring-4 focus:ring-amber-500/10" : "focus:ring-4 focus:ring-primary/5";
+  const focusLabelClass = isAmber ? "peer-focus:text-amber-600 dark:peer-focus:text-amber-400" : "peer-focus:text-primary";
 
   // Get value from watch or external
   const internalValue = watch && watch(id);
@@ -102,7 +110,7 @@ const Input: React.FC<InputProps> = ({
               <Icon
                 size={isSmall ? 14 : 18}
                 className={cn(
-                  error ? "text-red-500" : "text-gray-400 group-focus-within:text-primary transition-colors duration-300"
+                  error ? "text-red-500" : cn("text-gray-400 transition-colors duration-300", focusTextClass)
                 )}
               />
             </div>
@@ -121,10 +129,10 @@ const Input: React.FC<InputProps> = ({
               isSmall ? "px-3 py-2.5 rounded-xl" : "px-4 py-4",
               error
               ? "border-red-500 focus:border-red-500 ring-4 ring-red-500/20 bg-red-50/30 dark:bg-red-950/30"
-              : "border-gray-200 dark:border-gray-700/50 focus:border-primary dark:focus:border-primary/60 shadow-sm hover:border-gray-200 dark:hover:border-gray-600",
+              : cn("border-gray-200 dark:border-gray-700/50 shadow-sm hover:border-gray-200 dark:hover:border-gray-600", focusBorderClass),
               Icon ? (isSmall ? "pl-9" : "pl-11") : "pl-4",
               isPasswordInput ? "pr-11" : "pr-4",
-              "focus:ring-4 focus:ring-primary/5 group-focus-within:shadow-xl group-focus-within:shadow-primary/5"
+              focusRingClass
             )}
             autoFocus={autoFocus}
           />
@@ -138,9 +146,10 @@ const Input: React.FC<InputProps> = ({
               Icon ? (isSmall ? "left-7" : "left-9") : "left-2.5",
               "peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-4 peer-placeholder-shown:bg-transparent",
               isSmall && "peer-placeholder-shown:translate-y-2",
-              "peer-focus:scale-75 peer-focus:-translate-y-0.5 peer-focus:text-primary peer-focus:bg-white dark:peer-focus:bg-gray-800",
+              "peer-focus:scale-75 peer-focus:-translate-y-0.5 peer-focus:bg-white dark:peer-focus:bg-gray-800",
+              focusLabelClass,
               value && "scale-75 -translate-y-0.5 bg-white dark:bg-gray-800",
-              error ? "text-red-500" : "text-gray-400"
+              error ? "text-red-500" : "text-slate-700 dark:text-gray-300"
             )}
           >
             {label} {required && <span className="text-red-500 ml-0.5">*</span>}
@@ -191,9 +200,9 @@ const Input: React.FC<InputProps> = ({
       <label
         htmlFor={id}
         className={cn(
-          "block font-black uppercase tracking-widest mb-2 ml-1 transition-all duration-300",
+          "block font-extrabold uppercase tracking-wider mb-2 ml-1 transition-all duration-300",
           isSmall ? "text-[9px]" : "text-xs",
-          error ? "text-red-500" : "text-gray-500 dark:text-gray-400 group-focus-within:text-primary"
+          error ? "text-red-500" : cn("text-gray-900 dark:text-gray-100 font-extrabold", focusTextClass)
         )}
       >
         <div className="flex items-center">
@@ -208,7 +217,7 @@ const Input: React.FC<InputProps> = ({
             <Icon
               size={isSmall ? 14 : 18}
               className={cn(
-                error ? "text-red-500" : "text-gray-400 group-focus-within:text-primary transition-colors duration-300"
+                error ? "text-red-500" : cn("text-gray-400 transition-colors duration-300", focusTextClass)
               )}
             />
           </div>
@@ -226,10 +235,10 @@ const Input: React.FC<InputProps> = ({
             isSmall ? "px-3 py-2.5 rounded-xl" : "px-4 py-3.5",
             error
               ? "border-red-500 focus:border-red-500 ring-4 ring-red-500/20 bg-red-50/30 dark:bg-red-950/30"
-              : "border-gray-100 dark:border-gray-700/50 focus:border-primary dark:focus:border-primary/60 shadow-sm hover:border-gray-200 dark:hover:border-gray-600",
+              : cn("border-gray-100 dark:border-gray-700/50 shadow-sm hover:border-gray-200 dark:hover:border-gray-600", focusBorderClass),
             Icon ? (isSmall ? "pl-9" : "pl-11") : "pl-4",
             isPasswordInput ? "pr-11" : "pr-4",
-            "focus:ring-4 focus:ring-primary/5 group-focus-within:shadow-xl group-focus-within:shadow-primary/5"
+            focusRingClass
           )}
           autoFocus={autoFocus}
         />

@@ -42,6 +42,16 @@ console.log = (...args: any[]) => {
   originalConsoleLog(...args);
 };
 
+// Global next/image mock for JSDOM testing
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: (props: any) => {
+    const { fill, priority, unoptimized, src, alt, ...rest } = props;
+    const resolvedSrc = typeof src === 'string' ? src : (src?.src || undefined);
+    return React.createElement('img', { src: resolvedSrc, alt, ...rest });
+  },
+}));
+
 // Global mocks for testing
 if (typeof window !== 'undefined') {
   Object.defineProperty(window, 'matchMedia', {
@@ -312,13 +322,18 @@ jest.mock('framer-motion', () => {
     'aside', 'form', 'input', 'label', 'textarea', 'select', 'option', 'svg', 'path'
   ]);
 
+  const motionCache: Record<string, any> = {};
+
   return {
     motion: new Proxy(
       {},
       {
         get: (_target, prop: string) => {
           const tagName = validTags.has(prop) ? prop : 'div';
-          return createMotionComponent(tagName);
+          if (!motionCache[tagName]) {
+            motionCache[tagName] = createMotionComponent(tagName);
+          }
+          return motionCache[tagName];
         },
       }
     ),

@@ -1,6 +1,7 @@
 import React from "react";
 import { FaCalendar, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
+import { Home } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, differenceInDays } from "date-fns";
 import { DayPicker, DateRange } from "react-day-picker";
@@ -150,9 +151,9 @@ const StayStep: React.FC<StayStepProps> = ({
                   --rdp-range_start-color: var(--primary-color);
                   --rdp-range_end-color: var(--primary-color);
                   --rdp-range_middle-background-color: var(--primary-light-color);
-                  --rdp-cell-size: 44px;
-                  --rdp-caption-font-size: 18px;
-                  font-size: 15px;
+                  --rdp-cell-size: 38px;
+                  --rdp-caption-font-size: 16px;
+                  font-size: 14px;
                   margin: 0;
                 }
                 .dark .rdp-root {
@@ -192,7 +193,7 @@ const StayStep: React.FC<StayStepProps> = ({
               className="mt-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-xl"
             >
               <div className="flex gap-3">
-                <span className="text-xl">🏠</span>
+                <Home className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-bold text-amber-800 dark:text-amber-300">Active Residence Conflict</p>
                   <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5 leading-relaxed">
@@ -211,7 +212,7 @@ const StayStep: React.FC<StayStepProps> = ({
           {showCalendar && (
             <motion.div 
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 420, opacity: 1 }}
+              animate={{ height: 350, opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3 }}
               className="w-full"

@@ -1,12 +1,29 @@
 "use client";
-import React from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import Modal from "../modals/Modal";
-import { X, Calendar, CreditCard, Info, Clock, Home, MapPin, CheckCircle as IconCircleCheck, ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { 
+  X, 
+  Calendar, 
+  CreditCard, 
+  Clock, 
+  Home, 
+  MapPin, 
+  CheckCircle as IconCircleCheck, 
+  ChevronLeft, 
+  ChevronRight, 
+  FileText,
+  Mail,
+  User,
+  Tag
+} from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
 import { cn } from "@/utils/helper";
 import { generateConfirmationSlipPDF } from "@/utils/slipGenerator";
-import { generateLeaseContractPDF } from "@/utils/contractPdfGenerator";
+import { generateLeaseContractPDF, previewPdfBlob } from "@/utils/contractPdfGenerator";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
+import { NotificationItem } from "@/context/NotificationContext";
+import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 interface ReservationListing {
   id: string;
@@ -17,6 +34,7 @@ interface ReservationListing {
   region?: string;
   country?: string;
   images?: Array<{ url: string }>;
+  propertyType?: any;
 }
 
 interface ReservationRoom {
@@ -24,7 +42,11 @@ interface ReservationRoom {
   name: string;
   price: number;
   reservationFee: number;
-  roomType: string;
+  roomType?: string;
+  roomTypeDefinition?: {
+    id?: string;
+    name: string;
+  };
   images: Array<{
     id: string;
     url: string;
@@ -50,11 +72,6 @@ interface Reservation {
   listing: ReservationListing;
   room: ReservationRoom;
 }
-
-import { NotificationItem } from "@/context/NotificationContext";
-import { motion, AnimatePresence } from "framer-motion";
-import { Mail } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 interface ReservationDetailsModalProps {
   reservation: Reservation;
@@ -83,10 +100,9 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
 }) => {
   const router = useRouter();
   const responsiveToast = useResponsiveToast();
-  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
-  const [activeNotification, setActiveNotification] = React.useState(notification);
-  
-  // "Freeze" the notification data so it doesn't vanish when marked as read
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [activeNotification, setActiveNotification] = useState(notification);
+
   React.useEffect(() => {
     if (notification && !activeNotification) {
       setActiveNotification(notification);
@@ -95,7 +111,6 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
 
   React.useEffect(() => {
     if (activeNotification) {
-      // Auto-dismiss after 8 seconds so the user can finish reading
       const timer = setTimeout(() => {
         setActiveNotification(undefined);
       }, 8000);
@@ -103,7 +118,6 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
     }
   }, [activeNotification]);
 
-  // Reset activeNotification when the modal is closed so it's fresh for next time
   React.useEffect(() => {
     if (!isOpen) {
       setActiveNotification(undefined);
@@ -117,131 +131,164 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
       }
     }
   }, [isOpen, activeNotification, onMarkAsRead]);
-  const images = reservation.room.images || [];
 
-  const formatDate = (dateString: string) => {
+  const images = useMemo(() => reservation?.room?.images || [], [reservation?.room?.images]);
+
+  const formatDate = useCallback((dateString: string) => {
+    if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     });
-  };
+  }, []);
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = useCallback((status: string) => {
     switch (status) {
       case "PENDING_PAYMENT":
-        return "bg-amber-100/50 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 border border-amber-200/50 dark:border-amber-800/50";
+        return {
+          label: "Payment Pending",
+          className: "bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-200 border-amber-300 dark:border-amber-800",
+        };
       case "RESERVED":
-        return "bg-emerald-100/50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 border border-emerald-200/50 dark:border-amber-800/50";
+        return {
+          label: "Reservation Confirmed",
+          className: "bg-primary/10 text-primary-dark dark:bg-primary/20 dark:text-primary-light border-primary/20",
+        };
       case "CHECKED_IN":
-        return "bg-blue-100/50 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 border border-blue-200/50 dark:border-blue-800/50";
+        return {
+          label: "Currently Checked In",
+          className: "bg-blue-100 text-blue-900 dark:bg-blue-950/80 dark:text-blue-200 border-blue-300 dark:border-blue-800",
+        };
       case "COMPLETED":
-        return "bg-purple-100/50 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200 border border-purple-200/50 dark:border-purple-800/50";
+        return {
+          label: "Stay Completed",
+          className: "bg-purple-100 text-purple-900 dark:bg-purple-950/80 dark:text-purple-200 border-purple-300 dark:border-purple-800",
+        };
       case "CANCELLED":
-      case "EXPIRED":
-        return "bg-gray-100/50 text-gray-800 dark:bg-gray-700/40 dark:text-gray-200 border border-gray-200/50 dark:border-gray-600/50";
+        return {
+          label: "Cancelled",
+          className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border-gray-300 dark:border-gray-700",
+        };
       default:
-        return "bg-gray-100 text-gray-800";
+        return {
+          label: status.replace("_", " "),
+          className: "bg-gray-100 text-gray-800 border-gray-300",
+        };
     }
-  };
+  }, []);
 
-  const getPaymentStatusColor = (status: string) => {
+  const getPaymentBadge = useCallback((status: string) => {
     switch (status) {
       case "PAID":
-        return "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800";
+        return {
+          label: "Paid",
+          className: "bg-primary/10 text-primary-dark dark:bg-primary/20 dark:text-primary-light border-primary/20",
+        };
       case "PENDING":
-        return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800";
+        return {
+          label: "Pending",
+          className: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800",
+        };
       case "FAILED":
-        return "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800";
+        return {
+          label: "Failed",
+          className: "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-800",
+        };
       default:
-        return "bg-gray-100 text-gray-800";
+        return {
+          label: status,
+          className: "bg-gray-100 text-gray-800 border-gray-300",
+        };
     }
-  };
+  }, []);
 
-  const displayLocation = [
-    reservation.listing.region,
-    reservation.listing.country
-  ].filter(Boolean).join(", ");
+  const displayLocation = useMemo(() => [
+    reservation?.listing?.region,
+    reservation?.listing?.country
+  ].filter(Boolean).join(", "), [reservation?.listing?.region, reservation?.listing?.country]);
 
-  const landlordId = String(reservation.listing.userId || "").trim();
+  const landlordId = useMemo(() => String(reservation?.listing?.userId || "").trim(), [reservation?.listing]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !reservation) return null;
 
   const canPay = reservation.status === "PENDING_PAYMENT";
-  const canCancel = reservation.status === "PENDING_PAYMENT" || reservation.status === "RESERVED";
+  const statusInfo = getStatusBadge(reservation.status);
+  const paymentInfo = getPaymentBadge(reservation.paymentStatus);
 
   return (
     <>
-    <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true}>
-      <div className="flex flex-col max-h-[85vh] sm:max-h-[70vh] overflow-hidden">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 ml-4 tracking-tight">
-            Reservation Details
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors group"
-          >
-            <X className="text-xl text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200" />
-          </button>
-        </div>
+      <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} fullOnMobile={true}>
+        <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[82vh] overflow-hidden">
+          
+          {/* Header Bar */}
+          <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 bg-white dark:bg-gray-900">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 text-primary rounded-xl">
+                <Calendar size={20} />
+              </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white tracking-tight">
+                  Reservation Details
+                </h2>
+                <p className="text-[11px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 truncate max-w-[180px] sm:max-w-none">
+                  {reservation.listing.title}
+                </p>
+              </div>
+            </div>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 sm:space-y-8 bg-gray-50/50 dark:bg-gray-900/50 custom-scrollbar">
-          {activeNotification && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={cn(
-                "p-6 border rounded-[32px] flex flex-col gap-4 shadow-sm mb-6",
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className={cn("px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold border shadow-sm", statusInfo.className)}>
+                {statusInfo.label}
+              </span>
+              <button
+                onClick={onClose}
+                className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                title="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Scrollable Content Container */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-7 space-y-4 sm:space-y-6 bg-slate-50/70 dark:bg-gray-950 custom-scrollbar overscroll-contain [transform:translateZ(0)]">
+            
+            {/* Notification Banner (if any) */}
+            {activeNotification && (
+              <div className={cn(
+                "p-5 border rounded-2xl flex items-start gap-3.5 shadow-sm",
                 reservation.status === "COMPLETED"
-                  ? "bg-purple-500/10 dark:bg-purple-500/20 border-purple-200 dark:border-purple-900/50"
-                  : "bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-200 dark:border-emerald-900/50"
-              )}
-            >
-              <div className="flex gap-4 items-start">
+                  ? "bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-900/60 text-purple-900 dark:text-purple-100"
+                  : "bg-primary/10 dark:bg-primary/20 border-primary/20 text-primary-dark dark:text-primary-light"
+              )}>
                 <div className={cn(
-                  "w-10 h-10 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg",
-                  reservation.status === "COMPLETED"
-                    ? "bg-purple-500 shadow-purple-500/20"
-                    : "bg-emerald-500 shadow-emerald-500/20"
+                  "p-2 text-white rounded-xl shrink-0 mt-0.5 shadow-sm",
+                  reservation.status === "COMPLETED" ? "bg-purple-600" : "bg-primary"
                 )}>
-                  {reservation.status === "COMPLETED" ? <IconCircleCheck size={20} /> : <Info size={20} />}
+                  <IconCircleCheck size={20} />
                 </div>
-                <div className="flex flex-col gap-1">
-                  <h4 className={cn(
-                    "text-sm font-black uppercase tracking-widest leading-none mb-1",
-                    reservation.status === "COMPLETED" ? "text-purple-600 dark:text-purple-400" : "text-emerald-600 dark:text-emerald-400"
-                  )}>
+                <div className="space-y-0.5 min-w-0">
+                  <h4 className="text-xs font-black uppercase tracking-wider">
                     {activeNotification.title}
                   </h4>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
+                  <p className="text-xs font-medium leading-relaxed">
                     {activeNotification.description}
                   </p>
                 </div>
               </div>
-            </motion.div>
-          )}
+            )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Column */}
-            <div className="space-y-6">
-              {/* Room Showcase */}
-              <div className="bg-white dark:bg-gray-800 rounded-[32px] overflow-hidden border border-gray-100 dark:border-gray-700 shadow-sm relative group">
-                <div className="aspect-video w-full relative group/gallery">
-                  <AnimatePresence mode="wait">
+            {/* 2-Column Responsive Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Left Column: Room Showcase & Financial Summary */}
+              <div className="space-y-6">
+                
+                {/* Room Showcase Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
+                  <div className="aspect-video w-full relative group/gallery bg-gray-100 dark:bg-gray-800">
                     <SafeImage
-                      key={currentImageIndex}
                       src={images.length > 0 
                         ? images[currentImageIndex]?.url 
                         : (reservation.listing?.images && reservation.listing.images.length > 0)
@@ -249,279 +296,291 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                           : reservation.listing.imageSrc || "/images/placeholder.jpg"
                       }
                       alt={reservation.room.name}
-                      priority={true}
                       unoptimized={true}
                     />
-                  </AnimatePresence>
 
-                  {images.length > 1 && (
-                    <>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-                        }}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
-                      >
-                        <ChevronLeft size={20} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-                        }}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
-                      >
-                        <ChevronRight size={20} />
-                      </button>
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-                        {images.map((_, idx) => (
-                          <div
-                            key={idx}
-                            className={cn(
-                              "w-1.5 h-1.5 rounded-full transition-all",
-                              idx === currentImageIndex ? "bg-white w-4" : "bg-white/50"
-                            )}
-                          />
-                        ))}
+                    {images.length > 1 && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+                          }}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80"
+                        >
+                          <ChevronLeft size={18} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80"
+                        >
+                          <ChevronRight size={18} />
+                        </button>
+                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                          {images.map((_, idx) => (
+                            <div
+                              key={idx}
+                              className={cn(
+                                "w-1.5 h-1.5 rounded-full transition-all",
+                                idx === currentImageIndex ? "bg-white w-4" : "bg-white/50"
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="p-5 space-y-3">
+                    <div>
+                      <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight line-clamp-1">
+                        {reservation.room.name}
+                      </h3>
+                      <p className="text-xs font-bold text-primary flex items-center gap-1.5 mt-1">
+                        <Home size={14} />
+                        <span>{reservation.listing.title}</span>
+                      </p>
+                    </div>
+
+                    {displayLocation && (
+                      <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/60 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800">
+                        <MapPin size={14} className="text-rose-500 shrink-0" />
+                        <span className="truncate">{displayLocation}</span>
                       </div>
-                    </>
-                  )}
-
-                  <div className="absolute top-4 left-4 flex gap-2 z-10">
-                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl backdrop-blur-md border border-white/20 ${getStatusColor(reservation.status)}`}>
-                      {reservation.status.replace('_', ' ')}
-                    </span>
-                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl backdrop-blur-md border border-white/20 ${getPaymentStatusColor(reservation.paymentStatus)}`}>
-                      {reservation.paymentStatus}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2 tracking-tight line-clamp-1">{reservation.room.name}</h3>
-                  <div className="flex items-center gap-2 text-primary font-bold mb-4">
-                    <Home size={16} />
-                    <span className="text-sm uppercase tracking-wide truncate">{reservation.listing.title}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-400 text-xs font-bold bg-gray-50 dark:bg-gray-900/50 p-3 rounded-2xl border border-gray-100 dark:border-gray-700/50">
-                    <MapPin size={14} className="text-rose-500" />
-                    {displayLocation || "Location Verified"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Pricing Summary */}
-              <div className="bg-white dark:bg-gray-800 rounded-[32px] p-6 shadow-sm border border-gray-100 dark:border-gray-700/50">
-                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Financial Summary</h3>
-                <div className="flex items-end gap-2 mb-6">
-                  <span className="text-4xl font-black text-gray-900 dark:text-white">₱ {reservation.totalPrice.toLocaleString()}</span>
-                  <span className="text-[10px] font-black text-emerald-600 mb-2 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded">Paid Deposit</span>
-                </div>
-                
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-4 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/10">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black text-primary uppercase tracking-widest leading-none mb-1">Fee Breakdown</span>
-                      <span className="text-xs font-bold text-gray-500">
-                        {reservation.occupantsCount || 1} {(reservation.occupantsCount === 1 ? 'Person' : 'People')} × ₱{( reservation.room.reservationFee || ((reservation.totalPrice || 0) / (reservation.occupantsCount || 1)) ).toLocaleString()}
-                      </span>
-                    </div>
-                    <span className="text-sm font-black text-gray-900 dark:text-white">₱ {reservation.totalPrice.toLocaleString()}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700/50">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Expected Monthly Rent</span>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">₱ {reservation.room.price.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column */}
-            <div className="space-y-6">
-              {/* Schedule Details */}
-              <div className="bg-white dark:bg-gray-800 rounded-[32px] p-6 shadow-sm border border-gray-100 dark:border-gray-700/50">
-                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 text-center lg:text-left">Schedule Information</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-emerald-50 dark:bg-emerald-900/20 p-5 rounded-[28px] border border-emerald-100 dark:border-emerald-800/50 flex flex-col items-center text-center">
-                    <div className="w-10 h-10 rounded-2xl bg-white dark:bg-gray-800 flex items-center justify-center text-emerald-500 shadow-sm border border-emerald-100 mb-3">
-                      <Calendar size={20} />
-                    </div>
-                    <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Check-In</span>
-                    <span className="text-sm font-black text-emerald-950 dark:text-emerald-100 line-clamp-1">{formatDate(reservation.startDate)}</span>
-                  </div>
-                  
-                  <div className="bg-rose-50 dark:bg-rose-900/20 p-5 rounded-[28px] border border-rose-100 dark:border-rose-800/50 flex flex-col items-center text-center">
-                    <div className="w-10 h-10 rounded-2xl bg-white dark:bg-gray-800 flex items-center justify-center text-rose-500 shadow-sm border border-rose-100 mb-3">
-                      <Calendar size={20} />
-                    </div>
-                    <span className="text-[9px] font-black text-rose-600 uppercase tracking-widest mb-1">Check-Out</span>
-                    <span className="text-sm font-black text-rose-950 dark:text-rose-100 line-clamp-1">{formatDate(reservation.endDate)}</span>
-                  </div>
-                </div>
-                
-                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 flex items-center justify-center gap-2">
-                   <Clock size={16} className="text-primary" />
-                   <span className="text-xs font-bold text-gray-600 dark:text-gray-300">Total Duration: {reservation.durationInDays} Nights</span>
-                </div>
-              </div>
-
-              {/* Occupant Information */}
-              <div className="bg-white dark:bg-gray-800 rounded-[32px] p-6 shadow-sm border border-gray-100 dark:border-gray-700/50">
-                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Booking Details</h3>
-                <div className="space-y-5">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Room Categories</span>
-                    <div className="flex flex-wrap gap-2 pt-1">
-                       <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-lg uppercase tracking-wider">{reservation.room.roomType}</span>
-                       <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-[10px] font-black rounded-lg uppercase tracking-wider">Verified Listing</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-100 dark:border-gray-700/50">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none block mb-3">Group Composition</span>
-                    <div className="flex items-center gap-4">
-                       <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-lg">
-                          {reservation.occupantsCount || 1}
-                       </div>
-                       <div className="flex flex-col">
-                          <span className="text-sm font-black text-gray-900 dark:text-white leading-none">Registered Members</span>
-                          <span className="text-xs font-bold text-gray-500 mt-1">Multi-occupancy Agreement Active</span>
-                       </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-100 dark:border-gray-700/50">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none block mb-1">Official Reference</span>
-                    <p className="text-xs font-bold text-gray-900 dark:text-white">ID: {reservation.id}</p>
-                    <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">Applied on {formatDateTime(reservation.createdAt)}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Details */}
-              {reservation.paymentMethod && (
-                <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded-[32px] p-6 border-2 border-emerald-100 dark:border-emerald-800/30 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12">
-                      <CreditCard size={60} className="text-emerald-500" />
-                  </div>
-                  <div className="relative flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg">
-                      <CreditCard size={14} />
-                    </div>
-                    <span className="text-[11px] font-black text-emerald-600 uppercase tracking-widest">Payment Verified</span>
-                  </div>
-                  <div className="relative space-y-1">
-                    <p className="text-sm font-black text-emerald-950 dark:text-emerald-100 capitalize">{reservation.paymentMethod.toLowerCase()} Transfer</p>
-                    {reservation.paymentReference && (
-                      <p className="text-[10px] font-bold text-emerald-600/70 dark:text-emerald-400/50 uppercase tracking-widest">Ref: {reservation.paymentReference}</p>
                     )}
                   </div>
                 </div>
+
+                {/* Financial Details Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                      <CreditCard size={14} className="text-primary" />
+                      <span>Payment Details</span>
+                    </h4>
+                    <span className={cn("px-2.5 py-0.5 rounded-md text-[11px] font-black uppercase border", paymentInfo.className)}>
+                      {paymentInfo.label}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3.5 divide-y divide-gray-100 dark:divide-gray-800">
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-2">
+                        <Tag size={15} className="text-primary shrink-0" />
+                        <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Reservation Holding Fee</span>
+                      </div>
+                      <span className="text-base font-black text-gray-900 dark:text-white">
+                        ₱{Number(reservation.totalPrice || 0).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Expected Monthly Rent</span>
+                      <span className="text-sm font-black text-gray-900 dark:text-white">
+                        ₱{Number(reservation.room.price || 0).toLocaleString()} <span className="text-xs font-semibold text-gray-400">/ mo</span>
+                      </span>
+                    </div>
+
+                    {reservation.paymentMethod && (
+                      <div className="pt-3 flex flex-col gap-1">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Payment Transfer Method</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-900 dark:text-white capitalize">
+                            {reservation.paymentMethod.toLowerCase()} Transfer
+                          </span>
+                          {reservation.paymentReference && (
+                            <span className="text-xs font-mono font-semibold text-gray-500 dark:text-gray-400">
+                              Ref: {reservation.paymentReference}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Column: Schedule & Booking Details */}
+              <div className="space-y-6">
+                
+                {/* Stay Schedule Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                    <Calendar size={14} className="text-primary" />
+                    <span>Stay Schedule</span>
+                  </h4>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3.5 bg-primary/10 dark:bg-primary/20 border border-primary/20 rounded-xl text-center">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-primary-dark dark:text-primary-light block mb-1">
+                        Check-in Date
+                      </span>
+                      <span className="text-xs font-black text-primary-dark dark:text-white">
+                        {formatDate(reservation.startDate)}
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 rounded-xl text-center">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 block mb-1">
+                        Check-out Date
+                      </span>
+                      <span className="text-xs font-black text-amber-950 dark:text-amber-100">
+                        {formatDate(reservation.endDate)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {Boolean(reservation.durationInDays) && (
+                    <div className="p-2.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-300">
+                      <Clock size={14} className="text-primary" />
+                      <span>Total Stay Duration: {reservation.durationInDays} Nights</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Booking Details Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                    <User size={14} className="text-primary" />
+                    <span>Booking Details</span>
+                  </h4>
+
+                  <div className="space-y-3.5 divide-y divide-gray-100 dark:divide-gray-800">
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Room Type</span>
+                      <span className="text-xs font-black text-gray-900 dark:text-white uppercase">
+                        {(reservation.room as any)?.roomTypeDefinition?.name || (reservation.room as any)?.roomType || (typeof (reservation.listing as any)?.propertyType === 'object' ? (reservation.listing as any)?.propertyType?.name : (reservation.listing as any)?.propertyType) || (Array.isArray((reservation.listing as any)?.category) ? (reservation.listing as any)?.category[0] : (reservation.listing as any)?.category) || "Solo Room"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Number of Guests</span>
+                      <span className="text-xs font-black text-gray-900 dark:text-white">
+                        {reservation.occupantsCount === 1 ? "1 Guest" : `${reservation.occupantsCount || 1} Guests`}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Booking Reference ID</span>
+                      <span className="text-xs font-mono font-bold text-gray-900 dark:text-white truncate max-w-[160px]">
+                        {reservation.id}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Simple Clean Timestamp */}
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-800 text-center">
+              <p className="text-[11px] font-bold text-gray-400 flex items-center justify-center gap-1.5">
+                <Clock size={12} />
+                <span>Reserved on {formatDate(reservation.createdAt)}</span>
+              </p>
+            </div>
+
+          </div>
+
+          {/* Action Footer */}
+          <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 shrink-0 shadow-lg">
+            <button
+              className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors text-center"
+              onClick={onClose}
+            >
+              Close
+            </button>
+            
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-2.5 w-full sm:w-auto">
+              <button
+                className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl transition-all flex items-center justify-center gap-2"
+                onClick={() => router.push(`/messages?listingId=${reservation.listingId}&otherUserId=${landlordId}`)}
+              >
+                <Mail size={14} />
+                <span>Chat with Host</span>
+              </button>
+
+              {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
+                <>
+                  <button
+                    className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl transition-all flex items-center justify-center gap-2"
+                    onClick={() => {
+                      responsiveToast.loading("Preparing boarding pass...");
+                      generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail)
+                        .then(() => responsiveToast.success("Boarding pass downloaded!"))
+                        .catch(() => responsiveToast.error("Could not generate boarding pass."));
+                    }}
+                  >
+                    <IconCircleCheck size={14} />
+                    <span>Boarding Pass</span>
+                  </button>
+
+                  <button
+                    className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl transition-all flex items-center justify-center gap-2"
+                    onClick={async () => {
+                      const toastId = responsiveToast.loading("Preparing lease contract...");
+                      try {
+                        const res = await fetch(`/api/contracts/generate?listingId=${reservation.listingId}&userId=${reservation.userId}&roomId=${reservation.roomId}`);
+                        if (!res.ok) throw new Error("Failed to fetch contract data");
+                        const data = await res.json();
+                        if ((data.contractMode === 'CUSTOM_PDF' || data.customPdfUrl) && data.customPdfUrl) {
+                          const success = await previewPdfBlob(data.customPdfUrl, "Custom Lease Contract Preview");
+                          if (success) {
+                            responsiveToast.success("Custom lease contract loaded!", { id: toastId });
+                            return;
+                          }
+                        }
+                        await generateLeaseContractPDF(`Lease_Contract_${reservation.listingId}`, data);
+                        responsiveToast.success("Lease contract downloaded!", { id: toastId });
+                      } catch (e) {
+                        responsiveToast.error("Could not generate lease contract.", { id: toastId });
+                      }
+                    }}
+                  >
+                    <FileText size={14} />
+                    <span>Lease Contract</span>
+                  </button>
+                </>
+              )}
+
+              {canPay && onPayNow && (
+                <button
+                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0"
+                  onClick={onPayNow}
+                >
+                  <CreditCard size={14} />
+                  <span>Pay Now</span>
+                </button>
+              )}
+
+              {onCancel && (
+                <button
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 rounded-xl transition-all flex items-center justify-center gap-2 border border-rose-200 dark:border-rose-800"
+                  onClick={onCancel}
+                >
+                  <X size={14} />
+                  <span>Cancel</span>
+                </button>
+              )}
+
+              {reservation.status === "COMPLETED" && (
+                <button
+                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                  onClick={() => router.push(`/listings/${reservation.listingId}`)}
+                >
+                  <Home size={14} />
+                  <span>View Listing</span>
+                </button>
               )}
             </div>
           </div>
-          
-          <div className="pt-8 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-2 opacity-50">
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                  <Clock size={10} /> Reservation created on {formatDateTime(reservation.createdAt)}
-              </p>
-          </div>
+
         </div>
-
-        {/* Note: I am now closing the main container BEFORE the footer to match Inquiry Modal structure */}
-      </div>
-
-      {/* Footer Actions - Now a sibling of the main container */}
-      <div className="p-4 sm:p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-100 dark:border-gray-700 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
-        <button
-          className="w-full sm:w-auto px-8 py-2.5 sm:py-3 text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-          onClick={onClose}
-        >
-          Go Back
-        </button>
-        
-        <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:gap-3">
-          {/* Top row: Chat Landlord + Download Pass (or Cancel / Pay Now) */}
-          <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-            <button
-              className="py-3 px-4 sm:px-10 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-primary bg-primary/10 dark:bg-primary/20 hover:bg-primary/20 dark:hover:bg-primary/30 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2 group/msg"
-              onClick={() => router.push(`/messages?listingId=${reservation.listingId}&otherUserId=${landlordId}`)}
-            >
-              <Mail size={14} strokeWidth={3} className="group-hover/msg:rotate-6 transition-transform" />
-              <span className="truncate">Chat Landlord</span>
-            </button>
-
-            {canCancel && onCancel && (
-              <button
-                className="py-3 px-4 sm:px-10 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-rose-600 bg-rose-50 dark:bg-rose-900/20 border-2 border-rose-100 dark:border-rose-800/50 rounded-2xl hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-all active:scale-95 flex items-center justify-center gap-2 group/cancel"
-                onClick={onCancel}
-              >
-                <X size={14} strokeWidth={3} className="group-hover/cancel:rotate-12 transition-transform" />
-                <span className="truncate">Cancel</span>
-              </button>
-            )}
-
-            {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
-              <button
-                className="py-3 px-4 sm:px-10 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-emerald-600 rounded-2xl hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/pass"
-                onClick={() => {
-                  responsiveToast.loading("Generating your Boarding Pass...");
-                  generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail)
-                    .then(() => responsiveToast.success("Confirmation Slip downloaded successfully!"))
-                    .catch(() => responsiveToast.error("Failed to generate Confirmation Slip."));
-                }}
-              >
-                <IconCircleCheck size={14} strokeWidth={3} className="group-hover/pass:scale-110 transition-transform" />
-                <span className="truncate">Download Pass</span>
-              </button>
-            )}
-
-            {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
-              <button
-                className="py-3 px-4 sm:px-10 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-teal-600 rounded-2xl hover:bg-teal-700 shadow-xl shadow-teal-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/contract"
-                onClick={async () => {
-                  const toastId = responsiveToast.loading("Generating your Lease Contract...");
-                  try {
-                    const res = await fetch(`/api/contracts/generate?listingId=${reservation.listingId}&userId=${reservation.userId}&roomId=${reservation.roomId}`);
-                    if (!res.ok) throw new Error("Failed to fetch contract data");
-                    const data = await res.json();
-                    await generateLeaseContractPDF(`Lease_Contract_${reservation.listingId}`, data);
-                    responsiveToast.success("Lease Contract downloaded successfully!", { id: toastId });
-                  } catch (e) {
-                    responsiveToast.error("Failed to generate Lease Contract.", { id: toastId });
-                  }
-                }}
-              >
-                <FileText size={14} strokeWidth={3} className="group-hover/contract:scale-110 transition-transform" />
-                <span className="truncate">Download Contract</span>
-              </button>
-            )}
-
-            {canPay && onPayNow && (
-              <button
-                className="col-span-2 sm:col-span-1 py-3 px-4 sm:px-10 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-primary rounded-2xl hover:bg-primary-dark shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/pay"
-                onClick={onPayNow}
-              >
-                <CreditCard size={14} strokeWidth={3} className="group-hover/pay:translate-x-0.5 transition-transform" />
-                <span className="truncate">Pay Now</span>
-              </button>
-            )}
-          </div>
-
-          {/* View Listing — full width row on mobile when COMPLETED (3 buttons exist) */}
-          {reservation.status === "COMPLETED" && (
-            <button
-              className="w-full sm:w-auto py-3 px-4 sm:px-10 text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-white bg-emerald-600 rounded-2xl hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 group/app"
-              onClick={() => router.push(`/listings/${reservation.listingId}`)}
-            >
-              <IconCircleCheck size={14} strokeWidth={3} className="group-hover/app:scale-110 transition-transform" />
-              <span className="truncate">View Listing</span>
-            </button>
-          )}
-        </div>
-      </div>
-    </Modal>
+      </Modal>
     </>
   );
 };

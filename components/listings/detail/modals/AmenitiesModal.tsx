@@ -5,7 +5,8 @@ import Modal from '@/components/modals/Modal';
 import { 
   Sparkles, X, CheckCircle2, Search, SlidersHorizontal, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft 
 } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { getCachedAttributes, getSyncAttributes } from '@/lib/landlordTaxonomyCache';
+import { getDynamicIcon } from '@/lib/iconResolver';
 
 interface AmenitiesModalProps {
   isOpen: boolean;
@@ -22,34 +23,36 @@ export default function AmenitiesModal({
 }: AmenitiesModalProps) {
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [attributes, setAttributes] = useState<any[]>(() => getSyncAttributes() || []);
   const tabsScrollRef = useRef<HTMLDivElement>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    getCachedAttributes().then(res => {
+      if (res && Array.isArray(res)) {
+        setAttributes(res);
+      }
+    });
+  }, []);
+
   // Dynamic Lucide Icon Resolver
-  const renderItemIcon = (iconName?: string, name?: string) => {
-    if (iconName && (LucideIcons as any)[iconName]) {
-      const DynamicIcon = (LucideIcons as any)[iconName];
-      return <DynamicIcon size={16} className="text-blue-500 shrink-0" />;
+  const renderItemIcon = (iconName?: string, name?: string, attrId?: string) => {
+    let resolvedIcon = iconName;
+
+    if (!resolvedIcon && attributes.length > 0) {
+      const matched = attributes.find((a: any) =>
+        (attrId && a.id === attrId) ||
+        (name && a.name?.toLowerCase() === name.toLowerCase())
+      );
+      if (matched?.icon) {
+        resolvedIcon = matched.icon;
+      }
     }
 
-    const lower = (name || '').toLowerCase();
-    if (lower.includes('wifi') || lower.includes('internet')) return <LucideIcons.Wifi size={16} className="text-blue-500 shrink-0" />;
-    if (lower.includes('car') || lower.includes('parking') || lower.includes('garage')) return <LucideIcons.Car size={16} className="text-blue-500 shrink-0" />;
-    if (lower.includes('bike') || lower.includes('bicycle')) return <LucideIcons.Bike size={16} className="text-blue-500 shrink-0" />;
-    if (lower.includes('stove') || lower.includes('cook') || lower.includes('kitchen') || lower.includes('eatery')) return <LucideIcons.Utensils size={16} className="text-blue-500 shrink-0" />;
-    if (lower.includes('refrigerator') || lower.includes('fridge')) return <LucideIcons.Refrigerator size={16} className="text-blue-500 shrink-0" />;
-    if (lower.includes('kettle') || lower.includes('coffee')) return <LucideIcons.Coffee size={16} className="text-blue-500 shrink-0" />;
-    if (lower.includes('microwave')) return <LucideIcons.Microwave size={16} className="text-blue-500 shrink-0" />;
-    if (lower.includes('laundry') || lower.includes('wash') || lower.includes('sampayan')) return <LucideIcons.WashingMachine size={16} className="text-blue-500 shrink-0" />;
-    if (lower.includes('water') || lower.includes('bidet') || lower.includes('droplet') || lower.includes('drum')) return <LucideIcons.Droplets size={16} className="text-blue-500 shrink-0" />;
-    if (lower.includes('generator') || lower.includes('pump') || lower.includes('power') || lower.includes('zap')) return <LucideIcons.Zap size={16} className="text-blue-500 shrink-0" />;
-    if (lower.includes('store') || lower.includes('shop') || lower.includes('sari-sari')) return <LucideIcons.ShoppingBag size={16} className="text-blue-500 shrink-0" />;
-    if (lower.includes('shower') || lower.includes('heater') || lower.includes('cr') || lower.includes('bath')) return <LucideIcons.ShowerHead size={16} className="text-blue-500 shrink-0" />;
-    if (lower.includes('study') || lower.includes('book')) return <LucideIcons.BookOpen size={16} className="text-blue-500 shrink-0" />;
-    if (lower.includes('caretaker') || lower.includes('housekeeping')) return <LucideIcons.UserCheck size={16} className="text-blue-500 shrink-0" />;
-    if (lower.includes('sofa') || lower.includes('lounge')) return <LucideIcons.Sofa size={16} className="text-blue-500 shrink-0" />;
+    const DynamicIcon = getDynamicIcon(resolvedIcon);
+    if (!DynamicIcon) return null;
 
-    return <CheckCircle2 size={16} className="text-blue-500 shrink-0" />;
+    return <DynamicIcon size={16} className="text-blue-500 shrink-0" />;
   };
 
   // Scroll category tabs left/right
@@ -256,7 +259,7 @@ export default function AmenitiesModal({
                         className="flex items-center gap-2.5 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/60 hover:border-blue-500/30 transition-colors"
                       >
                         <div className="p-1.5 bg-blue-500/10 rounded-lg shrink-0">
-                          {renderItemIcon(item.icon, item.name)}
+                          {renderItemIcon(item.icon, item.name, item.id)}
                         </div>
                         <span className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate" title={item.name}>
                           {item.name}
@@ -271,6 +274,7 @@ export default function AmenitiesModal({
                 {filteredFallbackItems.map((item: any, idx: number) => {
                   const name = typeof item === 'object' ? item.name || item.attribute?.name : String(item);
                   const iconName = typeof item === 'object' ? item.icon || item.attribute?.icon : '';
+                  const attrId = typeof item === 'object' ? item.id || item.attributeId || item.attribute?.id : undefined;
 
                   return (
                     <div 
@@ -278,7 +282,7 @@ export default function AmenitiesModal({
                       className="flex items-center gap-2.5 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/60"
                     >
                       <div className="p-1.5 bg-blue-500/10 rounded-lg shrink-0">
-                        {renderItemIcon(iconName, name)}
+                        {renderItemIcon(iconName, name, attrId)}
                       </div>
                       <span className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate" title={name}>
                         {name}

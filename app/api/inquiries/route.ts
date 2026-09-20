@@ -265,7 +265,12 @@ export async function GET(request: Request) {
             id: true,
             name: true,
             price: true,
-            roomType: true,
+            roomTypeDefinition: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
             images: true,
             reservationFee: true,
           },
@@ -276,7 +281,17 @@ export async function GET(request: Request) {
       },
     });
 
-    return NextResponse.json(inquiries);
+    const transformed = inquiries.map((inq: any) => ({
+      ...inq,
+      room: inq.room
+        ? {
+            ...inq.room,
+            roomType: inq.room.roomTypeDefinition?.name || "Standard Room",
+          }
+        : null,
+    }));
+
+    return NextResponse.json(transformed);
   } catch (error: any) {
     console.error("Error getting inquiries:", error);
     return NextResponse.json({ error: "Internal Server Error", message: error.message }, { status: 500 });

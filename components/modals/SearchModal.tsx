@@ -15,11 +15,14 @@ import {
   ArrowLeft,
   ChevronRight,
   RotateCcw,
+  MessageSquare,
 } from "lucide-react";
 import { KerbyMascot, KerbyPose, OutfitMode } from "./search-modal/KerbyMascot";
 import { useSearchLogic, STEPS } from "./search-modal/useSearchLogic";
 import ProgressBar from "./search-modal/components/ProgressBar";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
+
+import { getTaxonomyDataSync } from "@/lib/taxonomyCache";
 
 // Import Specialized & Reusable Step Components
 import CollegeStep from "./search-modal/steps/CollegeStep";
@@ -174,24 +177,24 @@ export default function SearchModal({
       setInUnitValidationError(false);
       setRulesValidationError(false);
 
-      // Clear pre-filled Branch B choices if switching to Branch A (Boarding House / Dormitory)
-      const isNewPropBranchB = 
-        currentPropType.toLowerCase().includes("apartment") ||
-        currentPropType.toLowerCase().includes("transient") ||
-        currentPropType.toLowerCase().includes("hostel") ||
-        currentPropType.toLowerCase().includes("whole house");
-
-      const currentKitchenSetup = watch("kitchenSetup");
-      const currentCrSetup = watch("crSetup");
-
-      if (!isNewPropBranchB) {
-        if (currentKitchenSetup === "PRIVATE_KITCHENETTE") {
-          actions.setCustomValue("kitchenSetup", "");
-        }
-        if (currentCrSetup === "PRIVATE_CR") {
-          actions.setCustomValue("crSetup", "");
-        }
-      }
+      // Reset all downstream property-type dependent selections in react-hook-form state
+      actions.setCustomValue("roomType", []);
+      actions.setCustomValue("bedType", "");
+      actions.setCustomValue("movingWithFriends", "");
+      actions.setCustomValue("availableSlots", 1);
+      actions.setCustomValue("occupants", 1);
+      actions.setCustomValue("capacity", "");
+      actions.setCustomValue("kitchenChoice", "");
+      actions.setCustomValue("bathroomChoice", "");
+      actions.setCustomValue("kitchenSetup", "");
+      actions.setCustomValue("crSetup", "");
+      actions.setCustomValue("amenities", []);
+      actions.setCustomValue("roomAmenities", []);
+      actions.setCustomValue("rules", []);
+      actions.setCustomValue("genderPolicy", "");
+      actions.setCustomValue("petPolicy", "");
+      actions.setCustomValue("visitorPolicy", "");
+      actions.setCustomValue("advanced", []);
     }
   }, [currentPropType, step]);
 
@@ -465,7 +468,13 @@ export default function SearchModal({
 
     if (step === STEPS.ROOM_CONFIG) {
       if (hasNoRoomTypes) {
-        actions.onNext();
+        setRoomValidationError(true);
+        toast({
+          title: "No Room Types Available",
+          description: `No room types are configured in the database for ${values.propertyTypeSelected[0] || 'this property type'}. Please click Back to select a different property type.`,
+          variant: "destructive",
+        });
+        contentBodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
 
@@ -551,16 +560,89 @@ export default function SearchModal({
     }
 
     if (step === STEPS.RULES) {
-      const tenantType = watch("tenantType");
       const genderPolicy = watch("genderPolicy");
+      const rulesSelected = values.rulesSelected || [];
 
-      if (rulesSubStep === 0 && !tenantType) {
-        setRulesValidationError(true);
-        contentBodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-        return;
+      let isCurrentSubStepValid = false;
+      if (rulesSubStep === 0) {
+        isCurrentSubStepValid = Boolean(genderPolicy);
+      } else {
+        const ruleTaxonomy = getTaxonomyDataSync("RULE");
+        const subGroups = ruleTaxonomy?.subGroups || [];
+        const attributes = ruleTaxonomy?.attributes || [];
+
+        const selectedProp = (values.propertyTypeSelected[0] || "Boarding House").toLowerCase().trim();
+        const isSingleGenderProperty = (() => {
+          if (!genderPolicy) return false;
+          const lower = (genderPolicy || "").toLowerCase();
+          return lower.includes("female-only") || lower.includes("female only") || lower.includes("male-only") || lower.includes("male only");
+        })();
+
+        const dbGroups = subGroups.filter(
+          (sg: any) =>
+            sg.type === "RULE" &&
+            sg.isActive &&
+            sg.key !== "GENDER_POLICY" &&
+            sg.key !== "SMOKE_ALCOHOL" &&
+            sg.key !== "SMOKE" &&
+            sg.key !== "ALCOHOL"
+        );
+
+        const standardOrder = ["CURFEW", "VISITOR_POLICY", "PET_POLICY", "SMOKING_POLICY", "ALCOHOL_POLICY"];
+        const sortedDbGroups = [...dbGroups].sort((a: any, b: any) => {
+          const idxA = standardOrder.indexOf((a.key || "").toUpperCase());
+          const idxB = standardOrder.indexOf((b.key || "").toUpperCase());
+          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+          if (idxA !== -1) return -1;
+          if (idxB !== -1) return 1;
+          return (a.displayOrder || 99) - (b.displayOrder || 99);
+        });
+
+        const validRuleSubGroups: any[] = [];
+        sortedDbGroups.forEach((sg: any) => {
+          const keyUpper = (sg.key || "").toUpperCase().trim();
+          const matchingAttrs = attributes.filter((attr: any) => {
+            if (!attr.isActive) return false;
+            if ((attr.subGroupKey || "").toUpperCase().trim() !== keyUpper) return false;
+
+            if (keyUpper === "VISITOR_POLICY" && isSingleGenderProperty) {
+              const nameLower = (attr.name || "").toLowerCase();
+              if (nameLower.includes("restricted")) return false;
+            }
+
+            const rawTypes = attr.propertyTypeNames || attr.propertyTypes || attr.propertyTypeIds || [];
+            if (!attr.isUniversal && rawTypes && rawTypes.length > 0) {
+              const match = rawTypes.some((pt: any) => {
+                const pName = (pt.name || pt || "").toString().toLowerCase().trim();
+                return pName.includes(selectedProp) || selectedProp.includes(pName);
+              });
+              if (!match) return false;
+            }
+            return attr.isUniversal ?? true;
+          });
+
+          if (matchingAttrs.length > 0) {
+            validRuleSubGroups.push({ sg, attrs: matchingAttrs });
+          }
+        });
+
+        const currentGroupObj = validRuleSubGroups[rulesSubStep - 1];
+        if (currentGroupObj) {
+          const { sg, attrs } = currentGroupObj;
+          isCurrentSubStepValid = attrs.some(
+            (attr: any) =>
+              rulesSelected.includes(attr.name) ||
+              rulesSelected.includes(attr.id) ||
+              rulesSelected.includes(String(attr.id)) ||
+              (sg.key === "PET_POLICY" && watch("petPolicy") === attr.id) ||
+              (sg.key === "VISITOR_POLICY" && watch("visitorPolicy") === attr.id)
+          );
+        } else {
+          isCurrentSubStepValid = rulesSelected.length > 0;
+        }
       }
 
-      if (rulesSubStep === 1 && !genderPolicy) {
+      if (!isCurrentSubStepValid) {
         setRulesValidationError(true);
         contentBodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
         return;
@@ -795,12 +877,10 @@ export default function SearchModal({
             onCloseModal?.();
           }
         }}
-        className={`w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-t md:border border-slate-200 dark:border-white/10 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden font-sans rounded-t-[32px] rounded-b-none md:rounded-3xl transition-colors duration-150 h-auto max-h-[88vh] mt-auto mb-0 ${
+        className={`w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-t md:border border-slate-200 dark:border-white/10 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden font-sans rounded-t-[32px] rounded-b-none md:rounded-3xl transition-colors duration-150 mt-auto mb-0 ${
           showWizard
-            ? isMapOverlay
-              ? "md:h-[80vh] md:max-h-[82vh] md:max-w-4xl mx-auto md:my-auto"
-              : "md:w-full md:h-full md:max-h-full mx-auto md:my-auto"
-            : "max-w-2xl mx-auto md:my-auto"
+            ? "w-full h-full mx-auto my-auto"
+            : "h-auto max-h-[88vh] max-w-2xl mx-auto md:my-auto"
         }`}
       >
         {/* Mobile Draggable Pull Handle Line */}
@@ -1051,7 +1131,8 @@ export default function SearchModal({
                         <span>Kerby Assistant</span>
                       </span>
                       <span className="text-[10px] text-[#2f7d6d] dark:text-emerald-400 font-semibold bg-[#2f7d6d]/10 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md flex items-center gap-1 border border-[#2f7d6d]/20">
-                        Tap for full advice 💬
+                        <MessageSquare className="w-3 h-3 shrink-0" />
+                        <span>Tap for full advice</span>
                       </span>
                     </div>
                     <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate mt-0.5">
@@ -1074,12 +1155,12 @@ export default function SearchModal({
                 </div>
 
                 {/* Scrollable Step Content Body */}
-                <div ref={contentBodyRef} className="flex-1 p-4 md:p-6 overflow-y-auto custom-scrollbar">
+                <div ref={contentBodyRef} className="flex-1 p-4 md:p-6 overflow-y-auto custom-scrollbar min-h-0">
                   {renderStepContent()}
                 </div>
 
                 {/* Bottom Action Footer Bar */}
-                <div className="px-4 md:px-6 py-3 md:py-4 pb-safe md:pb-4 border-t border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
+                <div className="px-4 md:px-6 py-3 md:py-4 pb-safe md:pb-4 border-t border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-md flex items-center justify-between gap-3 shrink-0 z-10">
                   {step > STEPS.COLLEGE ? (
                     <button
                       type="button"
@@ -1098,7 +1179,7 @@ export default function SearchModal({
                       <button
                         type="button"
                         onClick={handleNextStep}
-                        disabled={isStepLoading}
+                        disabled={isStepLoading || (step === STEPS.ROOM_CONFIG && hasNoRoomTypes)}
                         className="px-5 md:px-6 py-2.5 md:py-3 rounded-2xl font-bold text-xs shadow-md transition-all flex items-center gap-2 bg-[#2f7d6d] hover:bg-[#256659] text-white shadow-[#2f7d6d]/20 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isStepLoading ? (

@@ -170,7 +170,7 @@ export default function ContactSupportModal({ isOpen, onClose, initialSubject = 
                   )}
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-gray-500 dark:text-slate-400">Name</label>
+                    <label className="text-xs font-bold text-slate-700 dark:text-gray-300">Name</label>
                     <input
                       type="text"
                       required
@@ -183,7 +183,7 @@ export default function ContactSupportModal({ isOpen, onClose, initialSubject = 
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-gray-500 dark:text-slate-400">Email Address</label>
+                    <label className="text-xs font-bold text-slate-700 dark:text-gray-300">Email Address</label>
                     <input
                       type="email"
                       required
@@ -196,7 +196,7 @@ export default function ContactSupportModal({ isOpen, onClose, initialSubject = 
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-gray-500 dark:text-slate-400">Subject</label>
+                    <label className="text-xs font-bold text-slate-700 dark:text-gray-300">Subject</label>
                     <input
                       type="text"
                       required
@@ -209,7 +209,7 @@ export default function ContactSupportModal({ isOpen, onClose, initialSubject = 
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-gray-500 dark:text-slate-400">Message</label>
+                    <label className="text-xs font-bold text-slate-700 dark:text-gray-300">Message</label>
                     <textarea
                       required
                       maxLength={2000}

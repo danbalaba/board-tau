@@ -5,7 +5,8 @@ import Modal from '@/components/modals/Modal';
 import { 
   Shield, Users, Clock, PawPrint, VolumeX, X, Flame, Ban, Search, SlidersHorizontal, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft 
 } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { getCachedAttributes, getSyncAttributes } from '@/lib/landlordTaxonomyCache';
+import { getDynamicIcon } from '@/lib/iconResolver';
 
 interface RulesModalProps {
   isOpen: boolean;
@@ -27,46 +28,57 @@ export default function RulesModal({
   isOpen,
   onClose,
   rulesObj = {},
-  customRules = []
+  customRules = [],
+  rules = []
 }: RulesModalProps) {
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [attributes, setAttributes] = useState<any[]>(() => getSyncAttributes() || []);
   const tabsScrollRef = useRef<HTMLDivElement>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    getCachedAttributes().then(res => {
+      if (res && Array.isArray(res)) {
+        setAttributes(res);
+      }
+    });
+  }, []);
+
   // Dynamic Icon Resolver for Rules
-  const renderRuleIcon = (iconObj?: any, title?: string) => {
-    if (typeof iconObj === 'string' && (LucideIcons as any)[iconObj]) {
-      const DynamicIcon = (LucideIcons as any)[iconObj];
-      return <DynamicIcon size={18} className="text-purple-600 dark:text-purple-400 shrink-0" />;
+  const renderRuleIcon = (iconObj?: any, title?: string, attrId?: string) => {
+    let resolvedIcon: string | undefined = undefined;
+
+    if (typeof iconObj === 'string') {
+      resolvedIcon = iconObj;
     }
+
+    if (!resolvedIcon && attributes.length > 0) {
+      const matched = attributes.find((a: any) =>
+        (attrId && a.id === attrId) ||
+        (title && a.name?.toLowerCase() === title.toLowerCase())
+      );
+      if (matched?.icon) {
+        resolvedIcon = matched.icon;
+      }
+    }
+
     if (iconObj && typeof iconObj !== 'string') {
       const IconComp = iconObj;
       return <IconComp size={18} className="text-purple-600 dark:text-purple-400 shrink-0" />;
     }
 
-    const lower = (title || '').toLowerCase();
-    if (lower.includes('female') || lower.includes('male') || lower.includes('gender') || lower.includes('co-living')) {
-      return <Users size={18} className="text-purple-600 dark:text-purple-400 shrink-0" />;
-    }
-    if (lower.includes('curfew') || lower.includes('gate') || lower.includes('24/7') || lower.includes('night') || lower.includes('hours')) {
-      return <Clock size={18} className="text-purple-600 dark:text-purple-400 shrink-0" />;
-    }
-    if (lower.includes('visitor') || lower.includes('guest')) {
-      return <Users size={18} className="text-purple-600 dark:text-purple-400 shrink-0" />;
-    }
-    if (lower.includes('pet')) return <PawPrint size={18} className="text-purple-600 dark:text-purple-400 shrink-0" />;
-    if (lower.includes('smoke') || lower.includes('vape')) return <Flame size={18} className="text-purple-600 dark:text-purple-400 shrink-0" />;
-    if (lower.includes('alcohol') || lower.includes('drink') || lower.includes('wine')) return <Ban size={18} className="text-purple-600 dark:text-purple-400 shrink-0" />;
+    const DynamicIcon = getDynamicIcon(resolvedIcon);
+    if (!DynamicIcon) return null;
 
-    return <Shield size={18} className="text-purple-600 dark:text-purple-400 shrink-0" />;
+    return <DynamicIcon size={18} className="text-purple-600 dark:text-purple-400 shrink-0" />;
   };
 
   // Build active house rules from listing props
   const allHouseRules = useMemo(() => {
-    const active: { icon: any; title: string; subtitle?: string; category: string; key: string }[] = [];
+    const active: { icon: any; title: string; subtitle?: string; category: string; key: string; attrId?: string }[] = [];
 
-    const addRule = (item: { icon?: any; title: string; subtitle?: string; category?: string; key?: string }) => {
+    const addRule = (item: { icon?: any; title: string; subtitle?: string; category?: string; key?: string; attrId?: string }) => {
       let cleanTitle = item.title;
       let iconName = item.icon;
 
@@ -77,7 +89,7 @@ export default function RulesModal({
           iconName = parts[1].trim();
         }
       } else {
-        cleanTitle = item.title.trim();
+        cleanTitle = item.title?.trim() || '';
       }
 
       let category = item.category || '';
@@ -140,9 +152,28 @@ export default function RulesModal({
           subtitle,
           category,
           key,
+          attrId: item.attrId,
         });
       }
     };
+
+    if (rules && Array.isArray(rules)) {
+      rules.forEach(r => {
+        if (!r) return;
+        if (typeof r === 'object') {
+          addRule({
+            icon: r.icon || r.attribute?.icon,
+            title: r.name || r.title || r.attribute?.name || '',
+            subtitle: r.description || r.attribute?.description,
+            category: r.subGroupLabel || r.category,
+            key: r.subGroupKey || r.key,
+            attrId: r.id || r.attributeId || r.attribute?.id,
+          });
+        } else if (typeof r === 'string') {
+          addRule({ title: r });
+        }
+      });
+    }
 
     // Structured boolean rules
     if (rulesObj?.femaleOnly) {
@@ -186,7 +217,7 @@ export default function RulesModal({
     });
 
     return active;
-  }, [rulesObj, customRules]);
+  }, [rulesObj, customRules, rules]);
 
   // Order of categories matching taxonomy
   const categoryOrder = useMemo(() => ['GENDER', 'CURFEW', 'VISITORS', 'PETS', 'SMOKING', 'ALCOHOL', 'CUSTOM'], []);
@@ -393,7 +424,7 @@ export default function RulesModal({
                       className="flex items-start gap-3 p-3.5 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/60 hover:border-purple-500/30 transition-colors"
                     >
                       <div className="p-2 bg-purple-500/10 rounded-xl shrink-0">
-                        {renderRuleIcon(rule.icon, rule.title)}
+                        {renderRuleIcon(rule.icon, rule.title, rule.attrId)}
                       </div>
                       <div>
                         <h5 className="font-bold text-xs text-gray-900 dark:text-white">{rule.title}</h5>

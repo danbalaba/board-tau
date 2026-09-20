@@ -3,8 +3,8 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import * as LucideIcons from "lucide-react";
 import { X, CheckCircle2, MapPin, DoorOpen, Loader2, Star, ShieldCheck, FileText, Sparkles, User as UserIcon, BadgeCheck, AlertTriangle, Wifi, Car, Waves, Dumbbell, Wind, WashingMachine, Utensils, Refrigerator, Microwave, Droplets, Zap, Clock, Users, Flame, PawPrint, Camera, BookOpen, Square, Blinds, Bot, Send, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { getDynamicIcon } from "@/lib/iconResolver";
 import ReactMarkdown from "react-markdown";
 import { getComparedListings } from "@/app/actions/compare";
 import { useCompareStore } from "@/hooks/use-compare-store";
@@ -40,36 +40,15 @@ const parseCustomItem = (item: string) => {
 };
 
 const CustomIcon = ({ name, fallback: Fallback, className, size = 24 }: { name: string | null, fallback: any, className?: string, size?: number }) => {
-  const DynamicIcon = name ? (LucideIcons as any)[name] : null;
-  const IconComponent = DynamicIcon || Fallback;
+  const IconComponent = getDynamicIcon(name, Fallback);
   return <IconComponent className={className} size={size} />;
 };
 
 const getAmenityIcon = (amenityName: string) => {
   const { label, icon } = parseCustomItem(amenityName);
-  if (icon) return <CustomIcon name={icon} fallback={CheckCircle2} size={16} className="text-primary/70 shrink-0" />;
-  const name = label.toLowerCase();
-  if (name.includes('wifi')) return <Wifi size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('parking')) return <Car size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('pool')) return <Waves size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('gym')) return <Dumbbell size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('air conditioning')) return <Wind size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('laundry')) return <WashingMachine size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('kitchen') || name.includes('cooking')) return <Utensils size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('refrigerator')) return <Refrigerator size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('microwave')) return <Microwave size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('water')) return <Droplets size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('electricity')) return <Zap size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('curfew')) return <Clock size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('visitors')) return <Users size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('smoke') || name.includes('fire')) return <Flame size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('cctv') || name.includes('security')) return <Camera size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('pets')) return <PawPrint size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('desk') || name.includes('study friendly')) return <BookOpen size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('balcony')) return <Square size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('closet')) return <Blinds size={16} className="text-primary/70 shrink-0" />;
-  if (name.includes('quiet')) return <Wind size={16} className="text-primary/70 shrink-0" />;
-  return <CheckCircle2 size={16} className="text-primary/70 shrink-0" />;
+  const IconComp = getDynamicIcon(icon || label);
+  if (!IconComp) return null;
+  return <IconComp size={16} className="text-primary/70 shrink-0" />;
 };
 
 interface CompareModalProps {

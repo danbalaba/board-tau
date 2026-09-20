@@ -51,39 +51,81 @@ export async function GET(request: Request) {
 
     if (!inquiry) return NextResponse.json({ error: "Inquiry not found" }, { status: 404 });
 
-    // Fetch the lease contract
+    // Fetch the lease contract (if exists)
     const leaseContract = await db.leaseContract.findFirst({
       where: { listingId },
       include: { signatures: true }
     });
 
-    if (!leaseContract) return NextResponse.json({ error: "Lease contract not found" }, { status: 404 });
+    const businessInfo = (listing.businessInfo as any) || {};
+
+    // Extract custom PDF URL if landlord uploaded a custom contract PDF
+    const customPdfUrl =
+      leaseContract?.pdfUrl ||
+      businessInfo?.customPdfUrl ||
+      businessInfo?.documents?.customContract ||
+      null;
+
+    const contractMode =
+      businessInfo?.contractMode ||
+      businessInfo?.propertyConfig?.contractMode ||
+      (customPdfUrl ? "CUSTOM_PDF" : "AUTO_GEN");
 
     // Extract signatures
-    const landlordSig = leaseContract.signatures.find((s: any) => s.signerType === 'LANDLORD')?.signatureUrl || "";
-    const tenantSig = leaseContract.signatures.find((s: any) => s.signerType === 'TENANT' && s.signerId === tenantId)?.signatureUrl || "";
+    const landlordSig =
+      leaseContract?.signatures?.find((s: any) => s.signerType === 'LANDLORD')?.signatureUrl ||
+      businessInfo?.landlordSignatureBase64 ||
+      businessInfo?.propertyConfig?.landlordSignatureBase64 ||
+      "";
+
+    // Check for tenant signature in ContractSignature table or Inquiry
+    const tenantSigRecord = await db.contractSignature.findFirst({
+      where: {
+        signerId: tenantId,
+        signerType: "TENANT",
+        contract: { listingId }
+      },
+      orderBy: { signedAt: 'desc' }
+    });
+
+    const tenantSig =
+      leaseContract?.signatures?.find((s: any) => s.signerType === 'TENANT' && s.signerId === tenantId)?.signatureUrl ||
+      tenantSigRecord?.signatureUrl ||
+      "";
 
     // Generate contract hash
-    const contractContent = `${listingId}-${tenantId}-${inquiry.id}-${leaseContract.id}`;
+    const contractContent = `${listingId}-${tenantId}-${inquiry.id}-${leaseContract?.id || 'default'}`;
     const contractHash = crypto.createHash('sha256').update(contractContent).digest('hex').substring(0, 12).toUpperCase();
 
     // Format address
     const locationObj = listing.location as any;
     const propertyAddress = locationObj?.label || listing.region || "Verified Location";
 
+    // Deposit calculation (if <= 6, treated as months multiplier; otherwise raw peso value)
+    const rawDeposit = leaseContract?.depositAmount ?? businessInfo?.depositAmount ?? businessInfo?.propertyConfig?.depositAmount ?? 0;
+    const depositAmount = rawDeposit > 0 && rawDeposit <= 6 ? rawDeposit * room.price : Number(rawDeposit);
+
+    const moveOutNoticeDays = leaseContract?.moveOutNoticeDays ?? businessInfo?.moveOutNoticeDays ?? businessInfo?.propertyConfig?.moveOutNoticeDays ?? 30;
+
+    const customClauses = listing.customClauses && listing.customClauses.length > 0
+      ? listing.customClauses
+      : businessInfo?.customContractClauses || businessInfo?.propertyConfig?.customContractClauses || [];
+
     const contractData = {
       contractHash,
-      landlordName: listing.user.name || "Landlord",
+      contractMode,
+      customPdfUrl,
+      landlordName: listing.user.name || listing.user.businessName || "Landlord",
       tenantName: tenantUser.name || "Tenant",
       propertyName: listing.title,
       roomName: room.name,
       propertyAddress,
-      moveInDate: new Date(inquiry.moveInDate).toLocaleDateString(),
-      checkOutDate: new Date(inquiry.checkOutDate).toLocaleDateString(),
-      depositAmount: leaseContract.depositAmount * room.price, // assuming depositAmount is stored as number of months
+      moveInDate: new Date(inquiry.moveInDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+      checkOutDate: new Date(inquiry.checkOutDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+      depositAmount,
       rentAmount: room.price,
-      moveOutNoticeDays: leaseContract.moveOutNoticeDays,
-      customClauses: listing.customClauses || [],
+      moveOutNoticeDays,
+      customClauses,
       landlordSignatureBase64: landlordSig,
       tenantSignatureBase64: tenantSig,
     };

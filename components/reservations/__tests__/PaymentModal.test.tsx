@@ -44,11 +44,20 @@ const mockReservation = {
   }
 };
 
+// Mock Next Image
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: (props: any) => {
+    const { fill, priority, unoptimized, src, alt, ...rest } = props;
+    return <img src={src || undefined} alt={alt} {...rest} />;
+  },
+}));
+
 describe('PaymentModal', () => {
   beforeEach(() => {
     global.fetch = jest.fn();
     delete (window as any).location;
-    window.location = { href: '' } as any;
+    window.location = { href: 'http://localhost/' } as any;
   });
 
   afterEach(() => {
@@ -63,19 +72,22 @@ describe('PaymentModal', () => {
   it('renders correctly when open and shows summary', () => {
     render(<PaymentModal reservation={mockReservation} isOpen={true} onClose={() => {}} />);
     expect(screen.getByTestId('modal')).toBeInTheDocument();
-    expect(screen.getByText('Test Room')).toBeInTheDocument();
-    expect(screen.getByText('Test Listing')).toBeInTheDocument();
+    expect(screen.getAllByText('Test Room').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Test Listing').length).toBeGreaterThan(0);
   });
 
   it('handles payment success and redirects', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-      // Fixed: The API successfully returns the Stripe checkout session
       ok: true,
       json: async () => ({ url: 'https://checkout.stripe.com/test' })
     });
 
     render(<PaymentModal reservation={mockReservation} isOpen={true} onClose={() => {}} />);
     
+    // Check contract terms agreement
+    const checkbox = screen.getByRole('checkbox');
+    fireEvent.click(checkbox);
+
     // Default method should be GCASH as per mockReservation
     const gcashRadios = screen.getAllByDisplayValue('GCASH');
     const gcashRadio = gcashRadios[0] as HTMLInputElement;
@@ -100,6 +112,9 @@ describe('PaymentModal', () => {
 
     render(<PaymentModal reservation={mockReservation} isOpen={true} onClose={onClose} onPaymentSuccess={onPaymentSuccess} />);
     
+    const checkbox = screen.getByRole('checkbox');
+    fireEvent.click(checkbox);
+
     const slideConfirmBtn = screen.getAllByTestId('slide-confirm')[0];
     fireEvent.click(slideConfirmBtn);
 
@@ -118,11 +133,13 @@ describe('PaymentModal', () => {
 
     render(<PaymentModal reservation={mockReservation} isOpen={true} onClose={() => {}} />);
     
+    const checkbox = screen.getByRole('checkbox');
+    fireEvent.click(checkbox);
+
     const slideConfirmBtn = screen.getAllByTestId('slide-confirm')[0];
     fireEvent.click(slideConfirmBtn);
 
     await waitFor(() => {
-      // The UI currently doesn't display the error state, so we just verify it finishes processing.
       expect(slideConfirmBtn).toBeInTheDocument();
     });
   });

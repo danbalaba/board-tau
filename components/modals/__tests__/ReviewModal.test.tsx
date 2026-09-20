@@ -7,16 +7,20 @@ import { useEdgeStore } from '@/lib/edgestore';
 
 jest.mock('framer-motion', () => {
   const React = require('react');
+  const motionCache: Record<string, any> = {};
   return {
-    motion: {
-      div: React.forwardRef(({ children, initial, animate, exit, transition, whileHover, whileTap, layoutId, layout, ...props }: any, ref: any) => {
-        return <div ref={ref} {...props}>{children}</div>;
-      }),
-      button: React.forwardRef(({ children, initial, animate, exit, transition, whileHover, whileTap, layoutId, layout, ...props }: any, ref: any) => {
-        return <button ref={ref} {...props}>{children}</button>;
-      }),
-    },
     AnimatePresence: ({ children }: any) => <>{children}</>,
+    motion: new Proxy({}, {
+      get: (_, tag: string) => {
+        if (!motionCache[tag]) {
+          motionCache[tag] = React.forwardRef(({ children, initial, animate, exit, transition, whileHover, whileTap, layoutId, layout, ...props }: any, ref: any) => {
+            return React.createElement(tag, { ref, ...props }, children);
+          });
+          motionCache[tag].displayName = `MotionComponent_${String(tag)}`;
+        }
+        return motionCache[tag];
+      }
+    }),
   };
 });
 
@@ -111,14 +115,14 @@ describe('ReviewModal Component', () => {
     );
 
     expect(screen.getByText('Rate Your Stay')).toBeInTheDocument();
-    expect(screen.getByText('Cleanliness')).toBeInTheDocument();
-    expect(screen.getByText('Accuracy')).toBeInTheDocument();
-    expect(screen.getByText('Communication')).toBeInTheDocument();
-    expect(screen.getByText('Location')).toBeInTheDocument();
-    expect(screen.getByText('Value')).toBeInTheDocument();
+    expect(screen.getByText('Cleanliness & Hygiene')).toBeInTheDocument();
+    expect(screen.getByText('Listing Accuracy')).toBeInTheDocument();
+    expect(screen.getByText('Landlord & Host')).toBeInTheDocument();
+    expect(screen.getByText('Location & Safety')).toBeInTheDocument();
+    expect(screen.getByText('Value for Money')).toBeInTheDocument();
   });
 
-  it('progresses to step 2 when Next is clicked', async () => {
+  it('progresses to step 2 when Step 1 is rated and Next is clicked', async () => {
     render(
       <ReviewModal
         isOpen={true}
@@ -127,11 +131,14 @@ describe('ReviewModal Component', () => {
       />
     );
 
+    const stars = screen.getAllByTitle('5 Stars');
+    stars.forEach(s => fireEvent.click(s));
+
     fireEvent.click(screen.getByText(/Next Step/i));
 
     await waitFor(() => {
-      expect(screen.getByText('Share Details')).toBeInTheDocument();
-      expect(screen.getByPlaceholderText(/Share your thoughts/i)).toBeInTheDocument();
+      expect(screen.getByText('Write Your Review')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/What did you like most/i)).toBeInTheDocument();
     });
   });
 
@@ -144,12 +151,15 @@ describe('ReviewModal Component', () => {
       />
     );
 
+    const stars = screen.getAllByTitle('5 Stars');
+    stars.forEach(s => fireEvent.click(s));
+
     // Go to step 2
     fireEvent.click(screen.getByText(/Next Step/i));
 
     let textarea;
     await waitFor(() => {
-      textarea = screen.getByPlaceholderText(/Share your thoughts/i);
+      textarea = screen.getByPlaceholderText(/What did you like most/i);
     });
     
     fireEvent.change(textarea!, { target: { value: 'Short' } });
@@ -157,13 +167,11 @@ describe('ReviewModal Component', () => {
     fireEvent.click(screen.getByText(/Next Step/i));
 
     await waitFor(() => {
-      expect(mockErrorToast).toHaveBeenCalledWith(expect.objectContaining({
-        title: "More Detail Needed",
-      }));
+      expect(screen.getByText(/Please write at least 10 characters/i)).toBeInTheDocument();
     });
 
     // Should not progress to step 3
-    expect(screen.queryByText('Visual Proof')).not.toBeInTheDocument();
+    expect(screen.queryByText('Add Photos & Videos')).not.toBeInTheDocument();
   });
 
   it('progresses to step 3 with a valid comment', async () => {
@@ -175,11 +183,14 @@ describe('ReviewModal Component', () => {
       />
     );
 
+    const stars = screen.getAllByTitle('5 Stars');
+    stars.forEach(s => fireEvent.click(s));
+
     fireEvent.click(screen.getByText(/Next Step/i));
 
     let textarea;
     await waitFor(() => {
-      textarea = screen.getByPlaceholderText(/Share your thoughts/i);
+      textarea = screen.getByPlaceholderText(/What did you like most/i);
     });
     
     fireEvent.change(textarea!, { target: { value: 'This is a sufficiently long comment for the review.' } });
@@ -187,8 +198,8 @@ describe('ReviewModal Component', () => {
     fireEvent.click(screen.getByText(/Next Step/i));
 
     await waitFor(() => {
-      expect(screen.getByText('Visual Proof')).toBeInTheDocument();
-      expect(screen.getByText('Add photos & videos')).toBeInTheDocument();
+      expect(screen.getByText('Add Photos & Videos')).toBeInTheDocument();
+      expect(screen.getByText('Share photos or videos')).toBeInTheDocument();
     });
   });
 
@@ -206,20 +217,19 @@ describe('ReviewModal Component', () => {
       />
     );
 
-    // Click Skip Review
-    fireEvent.click(screen.getByText('Skip Review'));
+    // Click Skip Feedback
+    fireEvent.click(screen.getByText('Skip Feedback'));
 
     // Confirmation screen should appear
-    expect(screen.getByText('Confirm Skip')).toBeInTheDocument();
-    expect(screen.getByText('Yes, skip it')).toBeInTheDocument();
+    expect(screen.getByText('Skip giving feedback?')).toBeInTheDocument();
+    expect(screen.getByText('Skip for Now')).toBeInTheDocument();
 
     // Confirm skip
-    fireEvent.click(screen.getByText('Yes, skip it'));
+    fireEvent.click(screen.getByText('Skip for Now'));
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith('/api/reviews', expect.objectContaining({
         method: 'POST',
-        // Fixed: Skip Review now correctly submits the required "User skipped rating" payload
         body: expect.stringContaining('"comment":"User skipped rating."')
       }));
       expect(mockSuccessToast).toHaveBeenCalled();
@@ -243,12 +253,14 @@ describe('ReviewModal Component', () => {
     );
 
     // Step 1
+    const stars = screen.getAllByTitle('5 Stars');
+    stars.forEach(s => fireEvent.click(s));
     fireEvent.click(screen.getByText(/Next Step/i));
 
     // Step 2
     let textarea;
     await waitFor(() => {
-      textarea = screen.getByPlaceholderText(/Share your thoughts/i);
+      textarea = screen.getByPlaceholderText(/What did you like most/i);
     });
     
     fireEvent.change(textarea!, { target: { value: 'This is an excellent place to stay!' } });
@@ -284,11 +296,13 @@ describe('ReviewModal Component', () => {
       />
     );
 
+    const stars = screen.getAllByTitle('5 Stars');
+    stars.forEach(s => fireEvent.click(s));
     fireEvent.click(screen.getByText(/Next Step/i));
     
     let textarea;
     await waitFor(() => {
-      textarea = screen.getByPlaceholderText(/Share your thoughts/i);
+      textarea = screen.getByPlaceholderText(/What did you like most/i);
     });
     
     fireEvent.change(textarea!, { target: { value: 'Valid comment length!' } });
@@ -300,7 +314,6 @@ describe('ReviewModal Component', () => {
     fireEvent.click(screen.getByText('Submit Review'));
 
     await waitFor(() => {
-      // Fixed: Database errors are now correctly caught and surfaced via ErrorToast
       expect(mockErrorToast).toHaveBeenCalledWith(expect.objectContaining({
         description: 'Database error',
       }));

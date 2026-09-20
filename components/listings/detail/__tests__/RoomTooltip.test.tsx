@@ -29,8 +29,8 @@ describe('RoomTooltip', () => {
     render(<RoomTooltip room={mockRoom} isVisible={true} onViewDetails={onViewDetails} />);
     
     expect(screen.getByText('Room Sneak Peek')).toBeInTheDocument();
-    expect(screen.getByText('SOLO')).toBeInTheDocument();
-    expect(screen.getByText('2 Full Capacity')).toBeInTheDocument();
+    expect(screen.getByText('Private Solo Room')).toBeInTheDocument();
+    expect(screen.getByText('2 Guests')).toBeInTheDocument();
     expect(screen.getByText('15 sq.m.')).toBeInTheDocument();
     
     expect(screen.getByText('Wifi')).toBeInTheDocument();

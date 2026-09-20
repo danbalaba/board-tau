@@ -379,7 +379,7 @@ export const useInquiryLogic = (
       case 5: return capturedSelfie !== null;
       case 6: return capturedID !== null;
       case 7: return !!values.otp && values.otp.length === 6;
-      case 8: return tenantSignature.trim().length > 0;
+      case 8: return true;
       default: return false;
     }
   };

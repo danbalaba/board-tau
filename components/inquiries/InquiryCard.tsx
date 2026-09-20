@@ -3,7 +3,6 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Eye, Calendar, Home, Trash2, MapPin, User, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import SafeImage from "@/components/common/SafeImage";
 
 interface InquiryListing {
@@ -61,20 +60,20 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
 }) => {
   const router = useRouter();
 
-  // Status badge colors
+  // Status badge colors aligned with BoardTAU primary palette
   const getStatusColor = (status: string) => {
     switch (status) {
       case "PENDING":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200 border border-orange-200/50 dark:border-orange-800/50";
+        return "bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-200 border border-amber-200 dark:border-amber-800";
       case "APPROVED":
-        return "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200 border border-green-200/50 dark:border-green-800/50";
+        return "bg-primary/10 text-primary-dark dark:bg-primary/20 dark:text-primary-light border border-primary/20";
       case "REJECTED":
-        return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200 border border-red-200/50 dark:border-red-800/50";
+        return "bg-rose-100 text-rose-900 dark:bg-rose-950/80 dark:text-rose-200 border border-rose-200 dark:border-rose-800";
       case "CANCELLED":
       case "EXPIRED":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-700/40 dark:text-gray-200 border border-gray-200/50 dark:border-gray-600/50";
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 border border-gray-200";
     }
   };
 
@@ -87,8 +86,8 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
   };
 
   const displayLocation = [
-    inquiry.listing.region,
-    inquiry.listing.country
+    inquiry.listing?.region,
+    inquiry.listing?.country
   ].filter(Boolean).join(", ");
 
   return (
@@ -97,48 +96,36 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
       animate={hasNotification ? { 
         opacity: 1, 
         y: 0,
-        scale: [1, 1.03, 1],
+        scale: [1, 1.02, 1],
         boxShadow: [
-          "0 0 0 rgba(16, 185, 129, 0)",
-          "0 15px 35px rgba(16, 185, 129, 0.25)",
-          "0 0 0 rgba(16, 185, 129, 0)"
+          "0 0 0 rgba(47, 125, 109, 0)",
+          "0 12px 30px rgba(47, 125, 109, 0.25)",
+          "0 0 0 rgba(47, 125, 109, 0)"
         ]
       } : { 
         opacity: 1, 
         y: 0,
         scale: 1,
-        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" 
+        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05)" 
       }}
-      whileHover={{ y: -4, scale: 1.02 }}
+      whileHover={{ y: -4, scale: 1.01 }}
       transition={{ 
         opacity: { duration: 0.3 },
-        y: { 
-          duration: 0.3,
-          type: "spring", 
-          stiffness: 300, 
-          damping: 20 
-        },
+        y: { duration: 0.2, ease: "easeOut" },
         scale: { 
-          duration: 2, 
-          repeat: hasNotification ? Infinity : 0, 
-          ease: "easeInOut",
-          repeatDelay: 1
-        },
-        boxShadow: { 
           duration: 2, 
           repeat: hasNotification ? Infinity : 0, 
           ease: "easeInOut",
           repeatDelay: 1
         }
       }}
-      className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100 dark:border-gray-700/50 relative group flex flex-col h-full"
+      className="bg-white dark:bg-gray-800/90 rounded-2xl shadow-md hover:shadow-xl border border-gray-200/80 dark:border-gray-700/60 relative group flex flex-col h-full overflow-hidden transition-all duration-300"
     >
-      {/* Dynamic Background Glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
+      {/* Subtle Hover Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
       
       {/* Room Image */}
-      <div className="h-44 w-full bg-gray-200 dark:bg-gray-700 relative overflow-hidden z-10">
-        <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300 z-10" />
+      <div className="h-44 w-full bg-gray-100 dark:bg-gray-700 relative overflow-hidden shrink-0">
         <SafeImage
           src={(inquiry.room?.images && inquiry.room.images.length > 0) 
             ? inquiry.room.images[0].url 
@@ -147,109 +134,104 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
               : inquiry.listing?.imageSrc || "/images/placeholder.jpg"
           }
           alt={inquiry.room.name}
+          unoptimized={true}
         />
-        <div className="absolute top-3 left-3 z-20">
-          {hasNotification && (
-            <motion.div
-              animate={{ 
-                scale: [1, 1.05, 1],
-                boxShadow: ["0 0 0px rgba(16, 185, 129, 0)", "0 0 15px rgba(16, 185, 129, 0.5)", "0 0 0px rgba(16, 185, 129, 0)"]
-              }}
-              transition={{ repeat: Infinity, duration: 2.5 }}
-              className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg border border-white/20 flex items-center justify-center"
-            >
-              NEW UPDATE
-            </motion.div>
-          )}
-        </div>
+        
+        {hasNotification && (
+          <div className="absolute top-3 left-3 z-20">
+            <span className="bg-primary text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-md border border-white/20 flex items-center justify-center">
+              New Update
+            </span>
+          </div>
+        )}
 
         <div className="absolute top-3 right-3 z-20">
-          <span
-            className={`px-3 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm backdrop-blur-md flex items-center gap-1.5 ${getStatusColor(
-              inquiry.status
-            )}`}
-          >
-            {inquiry.status === "APPROVED" && <ArrowRight size={10} className="text-green-600 dark:text-green-400" />}
+          <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm flex items-center gap-1.5 ${getStatusColor(inquiry.status)}`}>
+            {inquiry.status === "APPROVED" && <ArrowRight size={10} className="text-primary" />}
             {inquiry.status}
           </span>
         </div>
       </div>
 
-      {/* Inquiry Info */}
+      {/* Inquiry Content */}
       <div className="p-5 flex-1 flex flex-col z-10 relative">
-        <div className="mb-4">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 truncate drop-shadow-sm mb-1">
+        <div className="mb-3">
+          <h3 className="text-lg font-black text-gray-900 dark:text-gray-100 truncate tracking-tight mb-1">
             {inquiry.room.name}
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 font-bold flex items-center gap-1.5 mb-2 truncate text-primary/80">
-            <Home className="text-primary" size={12} />
-            {inquiry.listing.title}
+          <p className="text-xs text-primary font-extrabold flex items-center gap-1.5 mb-1.5 truncate">
+            <Home size={13} className="shrink-0" />
+            <span className="truncate">{inquiry.listing.title}</span>
           </p>
-          <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-bold uppercase tracking-widest pl-0.5">
-            <MapPin size={10} className="text-primary/60" />
-            {displayLocation || "Location Not Specified"}
+          <div className="flex items-center gap-1 text-[11px] text-gray-400 font-bold uppercase tracking-wider">
+            <MapPin size={11} className="text-rose-500 shrink-0" />
+            <span className="truncate">{displayLocation || "Location Not Specified"}</span>
           </div>
         </div>
 
-        <p className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-600 dark:from-primary dark:to-emerald-400 mb-4 inline-block">
-          ₱ {inquiry.room.price.toLocaleString()}<span className="text-sm font-medium text-gray-500 dark:text-gray-400">/mo</span>
-        </p>
+        <div className="mb-4">
+          <p className="text-2xl font-black text-primary dark:text-primary-light inline-flex items-baseline gap-1">
+            ₱{Number(inquiry.room.price || 0).toLocaleString()}
+            <span className="text-xs font-bold text-gray-400 dark:text-gray-400">/mo</span>
+          </p>
+        </div>
 
-        {/* Details Grid */}
-        <div className="space-y-2.5 mb-6 flex-1 bg-gray-50/50 dark:bg-gray-900/30 p-3 rounded-xl border border-gray-100 dark:border-gray-700/50">
-          <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-            <div className="w-6 h-6 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary-light">
-               <Calendar size={12} />
+        {/* Details Card */}
+        <div className="space-y-2 mb-5 flex-1 bg-gray-50 dark:bg-gray-900/60 p-3 rounded-xl border border-gray-100 dark:border-gray-700/60">
+          <div className="flex items-center gap-2.5 text-xs text-gray-700 dark:text-gray-300">
+            <div className="w-5 h-5 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Calendar size={12} />
             </div>
-            <span className="font-medium text-xs">Check-in: <span className="text-gray-900 dark:text-white font-bold">{formatDate(inquiry.moveInDate)}</span></span>
+            <span className="font-semibold text-[11px]">
+              Check-in: <span className="text-gray-900 dark:text-white font-bold">{formatDate(inquiry.moveInDate)}</span>
+            </span>
           </div>
-          <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-            <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-               <User size={12} />
+          <div className="flex items-center gap-2.5 text-xs text-gray-700 dark:text-gray-300">
+            <div className="w-5 h-5 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <User size={12} />
             </div>
-            <span className="font-medium text-xs">
-              <span className="text-gray-900 dark:text-white font-bold">{inquiry.room.roomType === "SOLO" ? "Solo Room" : "Bedspace"}</span> •{" "}
-              {inquiry.occupantsCount} {inquiry.occupantsCount === 1 ? "person" : "people"}
+            <span className="font-semibold text-[11px]">
+              <span className="text-gray-900 dark:text-white font-bold">{inquiry.room.roomType === "SOLO" ? "Solo Room" : "Bedspace"}</span> • {inquiry.occupantsCount} {inquiry.occupantsCount === 1 ? "person" : "people"}
             </span>
           </div>
           {inquiry.status === "REJECTED" && inquiry.rejectionReason && (
-            <div className="mt-2 text-[10px] font-bold text-rose-500 bg-rose-50 dark:bg-rose-900/20 px-2 py-1.5 rounded-lg border border-rose-100 dark:border-rose-800/50 italic line-clamp-1">
-              Feedback: {inquiry.rejectionReason}
+            <div className="mt-2 text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/40 p-2 rounded-lg border border-rose-200 dark:border-rose-900/50 italic line-clamp-2">
+              Note: {inquiry.rejectionReason}
             </div>
           )}
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-3 mt-auto">
+        {/* Action Buttons */}
+        <div className="flex gap-2.5 mt-auto pt-1">
           <button
             onClick={onViewDetails}
-            className="flex-1 py-2.5 px-4 font-bold text-sm rounded-xl transition-all shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-2 group/btn"
+            className="flex-1 py-2.5 px-3 font-bold text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all shadow-sm"
           >
-            <Eye size={14} className="text-primary group-hover/btn:scale-110 transition-transform" />
-            Details
+            <Eye size={14} className="text-primary" />
+            <span>Details</span>
           </button>
 
           {inquiry.status === "APPROVED" ? (
-             <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  router.push("/reservations");
-                }}
-                className="flex-[1.5] py-2.5 px-2 sm:px-4 font-black text-[9px] sm:text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-md bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center gap-1.5 sm:gap-2 group/res"
-             >
-                <ArrowRight size={14} className="group-hover/res:translate-x-1 transition-transform" />
-                View Reservation
-             </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push("/reservations");
+              }}
+              className="flex-[1.4] py-2.5 px-3 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md bg-primary text-white hover:bg-primary-dark flex items-center justify-center gap-1.5"
+            >
+              <ArrowRight size={14} />
+              <span>View Reservation</span>
+            </button>
           ) : onCancel && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onCancel();
               }}
-              className="flex-1 py-2.5 px-4 font-bold text-sm rounded-xl transition-all shadow-sm border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 flex items-center justify-center gap-2 group/cancel"
+              className="flex-1 py-2.5 px-3 font-bold text-xs rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 flex items-center justify-center gap-1.5 transition-all shadow-sm"
             >
-              <Trash2 size={14} className="group-hover/cancel:rotate-12 transition-transform" />
-              Cancel
+              <Trash2 size={14} />
+              <span>Cancel</span>
             </button>
           )}
         </div>

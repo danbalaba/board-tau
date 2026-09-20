@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaIdCard, FaCamera, FaImage, FaTimes, FaCheckCircle, FaShieldAlt } from "react-icons/fa";
-import { Loader2, ScanLine, AlertCircle } from "lucide-react";
+import { Loader2, ScanLine, AlertCircle, RotateCcw } from "lucide-react";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { sanitizeImgUrl } from "@/lib/security/sanitize";
 import SafeImage from "@/components/common/SafeImage";
@@ -127,10 +127,9 @@ const IDStep: React.FC<IDStepProps> = ({
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.97 }}
-            className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-black flex items-center justify-center"
-            style={{ minHeight: 280 }}
+            className="relative w-full h-[280px] rounded-2xl overflow-hidden shadow-2xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-black flex items-center justify-center"
           >
-            <SafeImage src={sanitizeImgUrl(capturedID)} alt="Captured ID" fill className="object-contain p-4" />
+            <SafeImage src={sanitizeImgUrl(capturedID)} alt="Captured ID" fill containerClassName="absolute inset-0" className="object-contain p-4" />
 
             {/* Green success overlay at bottom */}
             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
@@ -178,11 +177,12 @@ const IDStep: React.FC<IDStepProps> = ({
             className="space-y-3"
           >
             {/* Preview card */}
-            <div className="relative w-full rounded-2xl overflow-hidden bg-gray-50 dark:bg-black shadow-2xl border border-gray-200 dark:border-white/10 flex items-center justify-center" style={{ minHeight: 250 }}>
+            <div className="relative w-full h-[280px] rounded-2xl overflow-hidden bg-gray-50 dark:bg-black shadow-2xl border border-gray-200 dark:border-white/10 flex items-center justify-center">
               <SafeImage 
                 src={sanitizeImgUrl(previewUrl)}
                 alt="ID Preview" 
                 fill
+                containerClassName="absolute inset-0"
                 className="object-contain p-4" 
               />
 
@@ -274,9 +274,9 @@ const IDStep: React.FC<IDStepProps> = ({
                 type="button"
                 disabled={isProcessing}
                 onClick={cancelUpload}
-                className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-gray-300 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-40 transition-all"
+                className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-gray-300 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-40 transition-all flex items-center justify-center gap-1.5"
               >
-                ↩ Retake
+                <RotateCcw size={14} /> Retake
               </button>
               <button
                 type="button"

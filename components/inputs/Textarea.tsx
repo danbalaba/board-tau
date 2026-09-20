@@ -54,8 +54,8 @@ const Textarea: React.FC<TextareaProps> = ({
       <label
         htmlFor={id}
         className={cn(
-          "block text-sm font-medium mb-2",
-          error ? "text-red-500" : "text-gray-700 dark:text-gray-300"
+          "block text-xs font-bold uppercase tracking-wider mb-2 ml-1 transition-all duration-300",
+          error ? "text-red-500" : "text-slate-700 dark:text-gray-300"
         )}
       >
         {label} {required && <span className="text-red-500 ml-0.5">*</span>}

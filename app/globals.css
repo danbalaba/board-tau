@@ -240,6 +240,7 @@ html[data-theme] {
   --color-primary: 0.47 0.35 148;
   /* #2f7d6d - BoardTAU Green */
   --color-primary-foreground: 0.98 0 0;
+  --primary-foreground: #ffffff;
   /* #f8faf9 */
   --color-secondary: 0.94 0 0;
   /* #f3f4f6 */
@@ -316,6 +317,7 @@ html[data-theme].dark {
   --color-primary: 0.47 0.35 148;
   /* #2f7d6d - BoardTAU Green */
   --color-primary-foreground: 0.98 0 0;
+  --primary-foreground: #ffffff;
   /* #f8fafc */
   --color-secondary: 0.25 0 0;
   /* #475569 - slate-600 */
@@ -458,12 +460,7 @@ html[data-theme] body {
 
 /* Apply theme fonts to body for all themes */
 [data-theme] body {
-  /* Remove Next.js font variables to allow theme variables from html to cascade */
-  --font-sans: initial;
-  --font-mono: initial;
-  --font-serif: initial;
-  /* Apply font-family - will now resolve from html's [data-theme] variables */
-  font-family: var(--font-sans);
+  font-family: var(--font-sans, system-ui, sans-serif);
 }
 
 .no-scroll {
