@@ -1,0 +1,35 @@
+name: Sentry Auto-Fix Workflow
+
+on:
+  repository_dispatch:
+    types: [sentry_issue_alert]
+  workflow_dispatch:
+    inputs:
+      issue_id:
+        description: 'Sentry Issue ID or Title'
+        required: true
+        default: 'BOARD-TAU-76'
+
+jobs:
+  sentry-autofix:
+    name: Sentry Automated Issue Triage & Diagnostics
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run Diagnostics & Type-Check
+        run: npm run type-check
+
+      - name: Run Test Suite Verification
+        run: npm run test
