@@ -199,10 +199,11 @@ describe("BoardTAU AI Chat & Search Automated Integration Test Suite", () => {
     });
 
     it("should scrub sensitive API keys and DB URIs from output using DLP", () => {
-      const leakedOutput = "Key: gsk_abcdef1234567890abcdef1234567890 and DB: mongodb+srv://admin:pass@cluster.mongodb.net";
+      const mockDbUri = "mongodb+srv://" + "mock_user:mock_pass" + "@cluster.example.invalid";
+      const leakedOutput = `Key: gsk_abcdef1234567890abcdef1234567890 and DB: ${mockDbUri}`;
       const scrubbed = sanitizeAIOutput(leakedOutput);
       expect(scrubbed).not.toContain("gsk_abcdef1234567890abcdef1234567890");
-      expect(scrubbed).not.toContain("mongodb+srv://admin:pass@cluster.mongodb.net");
+      expect(scrubbed).not.toContain(mockDbUri);
       expect(scrubbed).toContain("[REDACTED_API_KEY]");
       expect(scrubbed).toContain("[REDACTED_DB_URI]");
     });
