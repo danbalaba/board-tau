@@ -6,7 +6,6 @@ import {
 } from "react-icons/md";
 import { GiFamilyHouse } from "react-icons/gi";
 
-
 export const LISTINGS_BATCH = 16;
 
 export const menuItems = [
@@ -21,14 +20,29 @@ export const menuItems = [
 /** Tarlac Agricultural University (TAU), Camiling, Tarlac — default map center & distance reference */
 export const TAU_COORDINATES = [15.63518934952113, 120.41534319307087] as [number, number];
 
-/** Room types for filter & listings (Step 6). */
-import { ROOM_TYPES, ROOM_TYPE_LABELS } from "@/data/roomTypes";
+/** Central Bathroom Arrangements */
+export const BATHROOM_ARRANGEMENTS = {
+  PRIVATE: "PRIVATE_CR",
+  COMMON: "COMMON_CR",
+} as const;
 
-export const roomTypeOptions = [
-  { value: "", label: "Choose room type", description: "Search for all available properties regardless of room type." },
-  { value: ROOM_TYPES.SOLO, label: ROOM_TYPE_LABELS.SOLO, description: "A private room exclusively for one person. Offers maximum privacy." },
-  { value: ROOM_TYPES.BEDSPACE, label: ROOM_TYPE_LABELS.BEDSPACE, description: "A shared room where you rent a single bed. Highly cost-effective and social." },
+/** Central Bed Setup Options */
+export interface BedTypeOption {
+  value: string;
+  label: string;
+  capacity?: number;
+  description?: string;
+}
+
+export const bedTypeOptions: BedTypeOption[] = [
+  { value: "SINGLE", label: "Single Bed", capacity: 1, description: "1 Person per bed" },
+  { value: "BUNK", label: "Bunk Bed", capacity: 2, description: "2 Persons per bunk set" },
+  { value: "DOUBLE", label: "Double Bed", capacity: 2, description: "2 Persons per double bed" },
+  { value: "QUEEN", label: "Queen Bed", capacity: 2, description: "2 Persons per queen bed" },
+  { value: "KING", label: "King Bed", capacity: 2, description: "2 Persons per king bed" },
 ];
+
+export const CENTRAL_BED_TYPES = bedTypeOptions;
 
 /** Stay duration options (Step 3). */
 export const stayDurationOptions = [

@@ -181,10 +181,13 @@ prisma/add-super-admin.ts
 prisma/add-test-user.ts
 prisma/seed-real-listings.ts
 prisma/update-passwords.ts
+prisma/seed.ts
+prisma/seeds/
 processed-real-listings.json
 
 # Reports and Documentation
 posthog-setup-report.md
+refactor_plans/
 docs/
 
 # Binaries
