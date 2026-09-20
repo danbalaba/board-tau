@@ -89,7 +89,7 @@ export async function POST(request: Request) {
         await db.adminActivityLog.create({
           data: {
             adminId,
-            action: "CREATE",
+            action: "CREATE_SUB_GROUP",
             entityType: "AttributeSubGroup",
             entityId: subGroup.id,
             details: JSON.stringify({

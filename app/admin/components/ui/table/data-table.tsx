@@ -48,17 +48,17 @@ export function DataTable<TData>({
     <div className='space-y-4'>
       {children}
       <div className='relative'>
-        <div className='flex flex-col overflow-hidden rounded-[2rem] border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-lg'>
+        <div className='flex flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/40 backdrop-blur-xl shadow-lg'>
           <ScrollArea className='w-full'>
             <Table>
-              <TableHeader className='sticky top-0 z-10 border-b border-gray-100 dark:border-gray-800'>
+              <TableHeader className='sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80'>
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id} className="hover:bg-transparent border-b border-gray-100 dark:border-gray-800">
+                  <TableRow key={headerGroup.id} className="hover:bg-transparent border-b border-slate-200 dark:border-slate-800">
                     {headerGroup.headers.map((header) => (
                       <TableHead
                         key={header.id}
                         colSpan={header.colSpan}
-                        className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-gray-500"
+                        className="py-3.5 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400"
                         style={{
                           ...getCommonPinningStyles({ column: header.column })
                         }}
@@ -83,7 +83,7 @@ export function DataTable<TData>({
                     >
                       <div className="flex flex-col items-center justify-center">
                         <IconLoader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-                        <p className="text-sm font-bold tracking-widest uppercase text-muted-foreground dark:text-gray-300">Loading records...</p>
+                        <p className="text-sm font-semibold text-muted-foreground dark:text-slate-300">Loading records...</p>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -92,12 +92,12 @@ export function DataTable<TData>({
                     <TableRow
                       key={row.id}
                       data-state={row.getIsSelected() && 'selected'}
-                      className="group transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-800/30 border-b border-gray-100 dark:border-gray-800"
+                      className="group transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800/60"
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell
                           key={cell.id}
-                          className="py-5 px-6"
+                          className="py-3.5 px-4 text-sm font-normal text-slate-700 dark:text-slate-300"
                           style={{
                             ...getCommonPinningStyles({ column: cell.column })
                           }}
@@ -117,12 +117,12 @@ export function DataTable<TData>({
                       className='h-[400px] text-center'
                     >
                       <div className="flex flex-col items-center justify-center gap-3">
-                        <div className="w-16 h-16 rounded-3xl bg-muted/50 dark:bg-white/10 flex items-center justify-center">
-                          <IconInbox className="h-8 w-8 text-muted-foreground dark:text-gray-400" />
+                        <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800/60 flex items-center justify-center">
+                          <IconInbox className="h-8 w-8 text-slate-400 dark:text-slate-400" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold tracking-widest uppercase text-muted-foreground dark:text-gray-200">No Results Found</p>
-                          <p className="text-xs mt-1 text-muted-foreground/60 dark:text-gray-400">Try adjusting your filters or search terms.</p>
+                          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">No Results Found</p>
+                          <p className="text-xs mt-1 text-slate-500 dark:text-slate-400">Try adjusting your filters or search terms.</p>
                         </div>
                       </div>
                     </TableCell>
@@ -133,7 +133,7 @@ export function DataTable<TData>({
             <ScrollBar orientation='horizontal' />
           </ScrollArea>
           
-          <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-white/40 dark:bg-gray-900/40">
+          <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
             <DataTablePagination table={table} />
           </div>
         </div>

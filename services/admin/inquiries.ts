@@ -39,11 +39,25 @@ export async function getAdminInquiries(args: {
         }
       },
       room: {
-        select: { id: true, name: true, roomType: true }
+        select: {
+          id: true,
+          name: true,
+          roomTypeDefinition: { select: { id: true, name: true } },
+        }
       }
     },
   });
 
-  const nextCursor = inquiries.length > ADMIN_PAGE_SIZE ? inquiries[ADMIN_PAGE_SIZE - 1].id : null;
-  return { inquiries: inquiries.slice(0, ADMIN_PAGE_SIZE), nextCursor };
+  const transformedInquiries = inquiries.map((inq: any) => ({
+    ...inq,
+    room: inq.room
+      ? {
+          ...inq.room,
+          roomType: inq.room.roomTypeDefinition?.name || "Standard Room",
+        }
+      : null,
+  }));
+
+  const nextCursor = transformedInquiries.length > ADMIN_PAGE_SIZE ? transformedInquiries[ADMIN_PAGE_SIZE - 1].id : null;
+  return { inquiries: transformedInquiries.slice(0, ADMIN_PAGE_SIZE), nextCursor };
 }

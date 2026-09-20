@@ -11,6 +11,9 @@ import { AddAttributeModal } from "@/app/admin/features/property-configuration/c
 import { DeleteAttributeModal } from "@/app/admin/features/property-configuration/components/modals/delete-attribute-modal";
 import { IconDots } from "@tabler/icons-react";
 
+import { clearTaxonomyCache } from "@/lib/taxonomyCache";
+import { clearLandlordTaxonomyCache } from "@/lib/landlordTaxonomyCache";
+
 interface CellActionProps {
   data: any;
   subGroups?: any[];
@@ -35,6 +38,8 @@ export const CellAction: React.FC<CellActionProps> = ({ data, subGroups, onSucce
       });
 
       if (res.data?.success) {
+        clearTaxonomyCache();
+        clearLandlordTaxonomyCache();
         toast.success(`Attribute "${data.name}" ${newStatus ? "enabled" : "disabled"} successfully!`);
         if (onSuccess) onSuccess(res.data.data);
       } else {

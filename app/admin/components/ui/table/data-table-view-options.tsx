@@ -55,7 +55,7 @@ export function DataTableViewOptions<TData>({
           role='combobox'
           variant='outline'
           size='sm'
-          className='ml-auto hidden h-9 lg:flex hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/30 rounded-full bg-white/50 dark:bg-gray-900/50 backdrop-blur-md shadow-sm border-gray-200 dark:border-gray-800 transition-all duration-200 text-[13px] font-medium'
+          className='ml-auto hidden h-9 lg:flex hover:bg-primary/10 hover:text-primary dark:hover:text-primary hover:border-primary/30 rounded-full bg-white/50 dark:bg-gray-900/50 backdrop-blur-md shadow-sm border-gray-200 dark:border-gray-800 transition-all duration-200 text-[13px] font-medium'
         >
           <Settings2 className="w-4 h-4 mr-2" />
           View
@@ -100,9 +100,9 @@ export function DataTableViewOptions<TData>({
                     </span>
                     <div className={cn(
                       "ml-auto shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200",
-                      column.getIsVisible() ? 'bg-emerald-500/20 opacity-100 scale-100' : 'opacity-0 scale-75'
+                      column.getIsVisible() ? 'bg-primary/20 opacity-100 scale-100' : 'opacity-0 scale-75'
                     )}>
-                      <CheckIcon className='h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 font-bold' />
+                      <CheckIcon className='h-3.5 w-3.5 text-primary font-bold' />
                     </div>
                   </CommandItem>
                 );

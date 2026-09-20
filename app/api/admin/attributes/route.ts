@@ -147,7 +147,7 @@ export async function POST(request: Request) {
         await db.adminActivityLog.create({
           data: {
             adminId,
-            action: "CREATE",
+            action: "CREATE_ATTRIBUTE",
             entityType: "DynamicAttribute",
             entityId: attribute.id,
             details: JSON.stringify({

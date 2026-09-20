@@ -14,7 +14,7 @@ import ListingMenu from "./ListingMenu";
 import { usePathname } from "next/navigation";
 import { useCompareStore } from "@/hooks/use-compare-store";
 import { CheckSquare, Square, ChevronLeft, ChevronRight, Home } from "lucide-react";
-import * as LucideIcons from "lucide-react";
+import { getDynamicIcon } from "@/lib/iconResolver";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import HelpTooltip from "@/components/common/HelpTooltip";
 
@@ -137,9 +137,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
   
   // Resolve Property Type Icon
   const propType = (data as any).propertyType;
-  const PropertyIcon = propType?.icon && (LucideIcons as any)[propType.icon] 
-    ? (LucideIcons as any)[propType.icon] 
-    : Home;
+  const PropertyIcon = getDynamicIcon(propType?.icon, Home);
   
   // Smart image selection helper
   const getImageUrl = (img: any) => {

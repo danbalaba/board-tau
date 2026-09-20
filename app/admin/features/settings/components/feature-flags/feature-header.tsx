@@ -15,44 +15,74 @@ interface FeatureHeaderProps {
 
 export function FeatureHeader({ onAdd, search, setSearch, isLoading }: FeatureHeaderProps) {
   return (
-    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
-          <Flag className="h-8 w-8 text-primary" />
-          Platform Features
-        </h1>
-        <p className="text-sm font-medium text-gray-500 mt-1">
-          Turn experimental features on or off
-        </p>
-      </div>
-      
-      <div className="flex items-center gap-3 w-full md:w-auto">
-        {isLoading ? (
-          <>
-            <Skeleton className="h-11 w-full md:w-64 rounded-xl" />
-            <Skeleton className="h-11 w-32 rounded-xl shrink-0" />
-          </>
-        ) : (
-          <>
-            <div className="relative flex-1 md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search feature flags..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="pl-9 h-11 bg-white/50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 rounded-xl font-medium focus:ring-2 focus:ring-primary/20 transition-all w-full"
-              />
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="relative p-6 rounded-3xl border border-primary/10 shadow-lg overflow-hidden bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl mb-6"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/10 pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
+
+      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Title */}
+        <div className="flex items-center gap-4">
+          {isLoading ? (
+            <>
+              <Skeleton className="w-12 h-12 rounded-xl" />
+              <div>
+                <Skeleton className="h-7 w-48 mb-1.5 rounded-lg" />
+                <Skeleton className="h-3 w-64 rounded-md" />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-xl shadow-md flex items-center justify-center text-primary border border-gray-100 dark:border-gray-700 shrink-0">
+                <Flag size={24} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight flex items-center gap-3">
+                  Platform Features
+                </h1>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <p className="text-[10px] sm:text-[11px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-[0.18em]">
+                    Feature Toggles & Experimental Platform Capabilities
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Search & Action Controls */}
+        <div className="flex items-center gap-2.5 self-end md:self-auto flex-wrap w-full md:w-auto">
+          {isLoading ? (
+            <div className="flex items-center gap-2.5 w-full md:w-auto">
+              <Skeleton className="h-9 w-full md:w-60 rounded-xl" />
+              <Skeleton className="h-9 w-32 rounded-xl" />
             </div>
-            <Button 
-              onClick={onAdd}
-              className="h-11 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg bg-primary hover:bg-primary/90 hover:shadow-primary/20 hover:-translate-y-0.5 transition-all gap-2 shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              Add Feature
-            </Button>
-          </>
-        )}
+          ) : (
+            <>
+              <div className="relative flex-1 md:w-60">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
+                <Input
+                  placeholder="Search feature flags..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="pl-9 h-9 bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/80 rounded-xl font-bold focus:ring-2 focus:ring-primary/30 text-xs transition-all w-full text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 shadow-sm"
+                />
+              </div>
+              <Button 
+                onClick={onAdd}
+                className="h-9 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md bg-primary hover:bg-primary/90 text-white shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all gap-2 shrink-0 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
+                Add Feature
+              </Button>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

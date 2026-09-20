@@ -107,12 +107,12 @@ function DataTableToolbarFilter<TData>({
       case 'text':
         return (
           <div className="relative group">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors pointer-events-none" />
             <Input
               placeholder={columnMeta.placeholder ?? columnMeta.label}
               value={inputValue}
               onChange={(event) => setInputValue(event.target.value)}
-              className='h-9 w-40 lg:w-56 pl-9 pr-8 text-[13px] bg-white/50 dark:bg-gray-900/50 backdrop-blur-md rounded-full shadow-sm border-gray-200 dark:border-gray-800 focus-visible:ring-emerald-500/30 focus-visible:border-emerald-500 focus-visible:ring-2 transition-all duration-200 text-gray-700 dark:text-gray-200'
+              className='h-9 w-40 lg:w-56 pl-9 pr-8 text-[13px] bg-white/50 dark:bg-gray-900/50 backdrop-blur-md rounded-full shadow-sm border-gray-200 dark:border-gray-800 focus-visible:ring-primary/30 focus-visible:border-primary focus-visible:ring-2 transition-all duration-200 text-gray-700 dark:text-gray-200'
             />
             {inputValue && (
               <button
@@ -121,7 +121,7 @@ function DataTableToolbarFilter<TData>({
                   setInputValue('');
                   column.setFilterValue(undefined);
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors"
                 aria-label="Clear search"
               >
                 <X className="h-3.5 w-3.5" />

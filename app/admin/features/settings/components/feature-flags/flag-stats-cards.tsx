@@ -39,65 +39,72 @@ export function FlagStatsCards({ total, active, inactive, history = [] }: FlagSt
       bg: 'bg-blue-500/10',
       chartColor: '#3b82f6',
       icon: Flag,
+      badgeText: `${total} Configured`,
       trendData: getTrendData('totalFeatureFlags', total),
-      tooltip: { title: 'Total Features', desc: 'All registered platform features and global settings.' }
+      tooltip: { title: 'Total Feature Flags', desc: 'All registered platform feature toggles and capability settings.' }
     },
     { 
       label: 'Active Features', 
       value: active, 
-      color: 'text-emerald-500', 
-      bg: 'bg-emerald-500/10',
-      chartColor: '#10b981',
+      color: 'text-primary dark:text-emerald-400', 
+      bg: 'bg-primary/10',
+      chartColor: '#2f7d6d',
       icon: Zap,
+      badgeText: `${active} Active Now`,
       trendData: getTrendData('activeFeatureFlags', active),
-      tooltip: { title: 'Active Features', desc: 'Features that are currently turned ON.' }
+      tooltip: { title: 'Active Features', desc: 'Features that are currently turned ON for users.' }
     },
     { 
       label: 'Inactive Features', 
       value: inactive, 
-      color: 'text-gray-400', 
-      bg: 'bg-gray-500/10',
-      chartColor: '#9ca3af',
+      color: 'text-slate-500 dark:text-slate-400', 
+      bg: 'bg-slate-500/10',
+      chartColor: '#64748b',
       icon: PowerOff,
+      badgeText: `${inactive} Disabled`,
       trendData: getTrendData('inactiveFeatureFlags', inactive),
       tooltip: { title: 'Inactive Features', desc: 'Features that are currently turned OFF.' }
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <TooltipProvider delayDuration={100}>
         {stats.map((s, i) => (
           <Tooltip key={s.label}>
             <TooltipTrigger asChild>
               <motion.div 
-                initial={{ opacity: 0, y: 20 }} 
+                initial={{ opacity: 0, y: 16 }} 
                 animate={{ opacity: 1, y: 0 }} 
-                transition={{ delay: i * 0.1, duration: 0.4 }}
+                transition={{ delay: i * 0.08 }}
                 className="group relative cursor-default h-full"
               >
-                <Card className="relative overflow-hidden border-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl shadow-xl rounded-[2.5rem] transition-all hover:bg-white/50 dark:hover:bg-gray-900/50 hover:shadow-2xl flex flex-col h-full">
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 flex-none z-10 relative">
-                    <CardTitle className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                <Card className="cursor-default border-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl shadow-md rounded-2xl overflow-hidden group h-full transition-all hover:bg-white/50 dark:hover:bg-gray-900/50 hover:shadow-xl hover:-translate-y-0.5 p-5">
+                  <div className="flex flex-row items-center justify-between pb-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">
                       {s.label}
-                    </CardTitle>
-                    <div className={cn("p-3 rounded-2xl transition-transform group-hover:scale-110 shadow-sm", s.bg)}>
-                      <s.icon className={cn("h-5 w-5", s.color)} />
+                    </span>
+                    <div className={cn("p-2.5 rounded-xl transition-transform group-hover:scale-110", s.bg)}>
+                      <s.icon className={cn("h-4 w-4", s.color)} />
                     </div>
-                  </CardHeader>
-                  <CardContent className="pb-0 flex-1 flex flex-col justify-between z-10 relative">
-                    <div className="flex flex-col">
-                      <div className="text-4xl font-black tabular-nums tracking-tighter text-gray-900 dark:text-white mb-2">
-                        {s.value}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className={cn("flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest", s.bg, s.color)}>
-                          <TrendingUp className="w-3 h-3" />
-                          Stable
-                        </div>
+                  </div>
+
+                  <div>
+                    <div className="text-2xl font-black tabular-nums text-gray-900 dark:text-white tracking-tight">
+                      {s.value}
+                    </div>
+
+                    <div className="flex items-center flex-wrap gap-1.5 mt-1.5">
+                      <div className={cn("flex items-center gap-1.5 w-fit px-2 py-0.5 rounded-md", s.bg)}>
+                        <TrendingUp className={cn("w-3 h-3", s.color)} />
+                        <span className={cn("text-[9px] font-bold uppercase tracking-widest", s.color)}>
+                          {s.badgeText}
+                        </span>
                       </div>
                     </div>
-                    <div className="h-24 w-full mt-6 -mx-6 mb-[-1px]">
+
+                    {/* Sparkline Area Chart */}
+                    <div className="h-14 w-full mt-3 -mx-5 -mb-5">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={s.trendData}>
                           <defs>
@@ -110,14 +117,14 @@ export function FlagStatsCards({ total, active, inactive, history = [] }: FlagSt
                             type="monotone"
                             dataKey="v"
                             stroke={s.chartColor}
-                            strokeWidth={3}
+                            strokeWidth={2.5}
                             fill={`url(#gradient-flag-${i})`}
                             isAnimationActive={true}
                           />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
-                  </CardContent>
+                  </div>
                 </Card>
               </motion.div>
             </TooltipTrigger>

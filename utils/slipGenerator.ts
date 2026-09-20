@@ -99,7 +99,7 @@ export const generateConfirmationSlipPDF = async (reservation: any, tenantName: 
   doc.text(`Listing: ${reservation.listing.title}`, 110, startY + 8);
   const loc = [reservation.listing.region, reservation.listing.country].filter(Boolean).join(", ");
   doc.text(`Location: ${loc || "Not Specified"}`, 110, startY + 14);
-  doc.text(`Room Type: ${reservation.room.roomType || "Standard Room"}`, 110, startY + 20);
+  doc.text(`Room Type: ${reservation.room.roomType || reservation.room.roomTypeDefinition?.name || reservation.listing.propertyType?.name || reservation.listing.propertyType || "Solo Room"}`, 110, startY + 20);
   doc.text(`Room Name: ${reservation.room.name}`, 110, startY + 26);
 
   startY += 35;

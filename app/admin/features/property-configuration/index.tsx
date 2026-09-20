@@ -83,7 +83,7 @@ export function PropertyConfigurationClient() {
         "Active Status": c.isActive ? "Active" : "Disabled",
       }));
     } else {
-      title = "Amenities_Rules_Report";
+      title = "Attributes_Amenities_Rules_Report";
       exportData = attributes.map((a) => ({
         Name: a.name,
         Category: a.type,
@@ -111,7 +111,7 @@ export function PropertyConfigurationClient() {
   };
 
   return (
-    <div className="p-6 lg:p-10 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       {/* Header Banner */}
       <PropertyConfigurationHeader
         range={range}
@@ -143,10 +143,10 @@ export function PropertyConfigurationClient() {
         <div className="flex p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 backdrop-blur-xl w-fit gap-2">
           <button
             onClick={() => setActiveTab("property-types")}
-            className={`flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+            className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300 cursor-pointer ${
               activeTab === "property-types"
-                ? "bg-emerald-600 dark:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/5"
+                ? "bg-primary text-white shadow-md shadow-primary/20"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/5"
             }`}
           >
             <Building size={16} />
@@ -155,10 +155,10 @@ export function PropertyConfigurationClient() {
 
           <button
             onClick={() => setActiveTab("campus-landmarks")}
-            className={`flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+            className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300 cursor-pointer ${
               activeTab === "campus-landmarks"
-                ? "bg-emerald-600 dark:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/5"
+                ? "bg-primary text-white shadow-md shadow-primary/20"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/5"
             }`}
           >
             <MapPin size={16} />
@@ -167,14 +167,14 @@ export function PropertyConfigurationClient() {
 
           <button
             onClick={() => setActiveTab("dynamic-attributes")}
-            className={`flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+            className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300 cursor-pointer ${
               activeTab === "dynamic-attributes"
-                ? "bg-emerald-600 dark:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/5"
+                ? "bg-primary text-white shadow-md shadow-primary/20"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/5"
             }`}
           >
             <Sparkles size={16} />
-            <span>Amenities & Rules</span>
+            <span>Amenities, Rules & Features</span>
           </button>
         </div>
       )}
@@ -184,7 +184,7 @@ export function PropertyConfigurationClient() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="rounded-[2.5rem] border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 p-6 shadow-xl backdrop-blur-xl overflow-hidden"
+        className="rounded-[2.5rem] border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 p-6 shadow-xl backdrop-blur-xl overflow-hidden"
       >
         {activeTab === "property-types" && (
           <PropertyTable 

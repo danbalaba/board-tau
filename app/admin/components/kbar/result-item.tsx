@@ -1,6 +1,5 @@
 import type { ActionId, ActionImpl } from 'kbar';
 import * as React from 'react';
-import { motion } from 'framer-motion';
 import { IconChevronRight } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/app/admin/components/ui/badge';
@@ -30,24 +29,23 @@ const ResultItem = React.forwardRef(
       <div
         ref={ref}
         className={cn(
-          "group mx-3 my-1 px-4 py-3 rounded-2xl cursor-pointer transition-all duration-300 flex items-center justify-between relative overflow-hidden",
+          "group mx-3 my-1 px-4 py-3 rounded-2xl cursor-pointer transition-colors duration-150 flex items-center justify-between relative overflow-hidden",
           active 
-            ? "bg-primary/10 text-primary border-primary/20 shadow-sm z-10" 
-            : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+            ? "bg-primary/15 dark:bg-primary/20 text-primary dark:text-emerald-400 border border-primary/20 shadow-sm z-10" 
+            : "hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-800 dark:text-slate-200"
         )}
       >
         {active && (
-          <motion.div 
-            layoutId="active-indicator"
-            className="absolute left-0 top-3 bottom-3 w-1 bg-primary rounded-full shadow-[0_0_10px_rgba(47,125,109,0.5)]"
-            initial={{ opacity: 0, x: -5 }}
-            animate={{ opacity: 1, x: 0 }}
+          <div 
+            className="absolute left-0 top-2.5 bottom-2.5 w-1 bg-primary dark:bg-emerald-400 rounded-full shadow-[0_0_10px_rgba(47,125,109,0.5)] transition-all duration-150"
           />
         )}
         <div className="flex items-center gap-4 relative z-10 w-full ml-1">
           <div className={cn(
-            "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 flex-shrink-0",
-            active ? "bg-primary text-white scale-110 shadow-lg shadow-primary/25" : "bg-gray-100 dark:bg-gray-900 group-hover:bg-primary/10"
+            "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 flex-shrink-0",
+            active 
+              ? "bg-primary text-white shadow-md shadow-primary/30" 
+              : "bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-primary/15 group-hover:text-primary"
           )}>
             {action.icon}
           </div>
@@ -55,28 +53,32 @@ const ResultItem = React.forwardRef(
             <div className="flex items-center gap-2 truncate leading-none mb-1">
               {ancestors.length > 0 && ancestors.map((ancestor) => (
                 <React.Fragment key={ancestor.id}>
-                  <span className="text-[13px] font-bold tracking-tight truncate text-gray-500">
+                  <span className="text-xs font-bold tracking-tight truncate text-slate-500 dark:text-slate-400">
                     {ancestor.name}
                   </span>
-                  <span className="text-gray-400">›</span>
+                  <span className="text-slate-400 dark:text-slate-600">›</span>
                 </React.Fragment>
               ))}
               <span className={cn(
-                "text-[13px] font-bold tracking-tight truncate",
-                active ? "text-primary" : "text-gray-900 dark:text-white"
+                "text-sm font-bold tracking-tight truncate",
+                active 
+                  ? "text-primary dark:text-emerald-300" 
+                  : "text-slate-900 dark:text-slate-100"
               )}>
                 {action.name}
               </span>
               {action.section && !active && (
-                <Badge variant="outline" className="text-[9px] px-1.5 h-4 uppercase opacity-50 shrink-0 border-current">
+                <Badge variant="outline" className="text-[9px] px-2 py-0.5 uppercase tracking-widest shrink-0 font-bold border-primary/30 bg-primary/10 text-primary dark:text-emerald-400">
                   {action.section as string}
                 </Badge>
               )}
             </div>
             {action.subtitle && (
               <span className={cn(
-                "text-[11px] font-medium truncate flex items-center gap-1.5 leading-none",
-                active ? "text-primary/70" : "text-gray-500"
+                "text-xs font-semibold truncate flex items-center gap-1.5 leading-tight mt-0.5",
+                active 
+                  ? "text-primary/90 dark:text-emerald-300/90" 
+                  : "text-slate-600 dark:text-slate-400"
               )}>
                 {action.subtitle}
               </span>
@@ -85,10 +87,12 @@ const ResultItem = React.forwardRef(
           
           <div className="flex items-center gap-3">
             <IconChevronRight 
-              size={14} 
+              size={16} 
               className={cn(
-                "transition-all duration-300 shrink-0",
-                active ? "translate-x-0 text-primary opacity-100" : "-translate-x-2 text-gray-300 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"
+                "transition-all duration-150 shrink-0",
+                active 
+                  ? "translate-x-0 text-primary dark:text-emerald-400 opacity-100" 
+                  : "-translate-x-1 text-slate-400 dark:text-slate-500 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"
               )}
             />
           </div>

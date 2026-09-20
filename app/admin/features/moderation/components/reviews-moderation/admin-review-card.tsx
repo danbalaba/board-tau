@@ -7,10 +7,10 @@ import { Button } from '@/app/admin/components/ui/button';
 import SafeImage from '@/components/common/SafeImage';
 
 const statusConfig: Record<string, { color: string; bg: string; icon: any }> = {
-  pending: { color: 'text-amber-500', bg: 'bg-amber-500/10 border border-amber-500/20', icon: Clock },
-  approved: { color: 'text-emerald-500', bg: 'bg-emerald-500/10 border border-emerald-500/20', icon: CheckCircle2 },
-  rejected: { color: 'text-rose-500', bg: 'bg-rose-500/10 border border-rose-500/20', icon: XCircle },
-  archived: { color: 'text-gray-500', bg: 'bg-gray-500/10 border border-gray-500/20', icon: ArchiveRestore },
+  pending: { color: 'text-white', bg: 'bg-amber-500/90 text-white border-amber-400/50 shadow-lg shadow-amber-500/20', icon: Clock },
+  approved: { color: 'text-white', bg: 'bg-primary/90 text-white border-primary/40 shadow-lg shadow-primary/20', icon: CheckCircle2 },
+  rejected: { color: 'text-white', bg: 'bg-rose-500/90 text-white border-rose-400/50 shadow-lg shadow-rose-500/20', icon: XCircle },
+  archived: { color: 'text-white', bg: 'bg-slate-700/90 text-white border-slate-600/50 shadow-lg shadow-slate-700/20', icon: ArchiveRestore },
 };
 
 interface AdminReviewCardProps {
@@ -70,12 +70,14 @@ export function AdminReviewCard({
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h3 className="text-base font-black text-gray-900 dark:text-white truncate">{review.user?.name || 'Anonymous User'}</h3>
             {isItemArchived && (
-              <span className={cn("px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1", archiveConfig.bg, archiveConfig.color)}>
-                <ArchiveRestore size={10} /> archived
+              <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-sm", archiveConfig.bg)}>
+                <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                <span>archived</span>
               </span>
             )}
-            <span className={cn("px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1", rawConfig.bg, rawConfig.color)}>
-              <RawStatusIcon size={10} /> {rawStatus}
+            <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-sm", rawConfig.bg)}>
+              <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+              <span>{rawStatus}</span>
             </span>
           </div>
           <p className="text-xs font-bold text-gray-400 truncate flex items-center gap-1">
@@ -153,12 +155,14 @@ export function AdminReviewCard({
         
         <div className="relative z-10 flex items-center gap-1.5 flex-wrap max-w-[calc(100%-4rem)]">
           {isItemArchived && (
-            <span className={cn("px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm backdrop-blur-md", archiveConfig.bg, archiveConfig.color)}>
-              <ArchiveRestore size={12} /> archived
+            <span className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm backdrop-blur-md border", archiveConfig.bg)}>
+              <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+              <span>archived</span>
             </span>
           )}
-          <span className={cn("px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm backdrop-blur-md", rawConfig.bg, rawConfig.color)}>
-            <RawStatusIcon size={12} /> {rawStatus}
+          <span className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm backdrop-blur-md border", rawConfig.bg)}>
+            <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+            <span>{rawStatus}</span>
           </span>
         </div>
 

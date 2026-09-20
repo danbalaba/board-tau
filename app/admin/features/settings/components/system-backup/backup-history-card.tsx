@@ -94,31 +94,32 @@ export function BackupHistoryCard() {
   const getLogIcon = (action: string) => {
     switch (action) {
       case 'AUTOMATED_SYSTEM_BACKUP':
-        return <Clock className="h-4 w-4 text-emerald-500 shrink-0" />;
+        return <Clock className="h-4 w-4 text-emerald-400 shrink-0" />;
       case 'SYSTEM_BACKUP_DOWNLOAD':
-        return <User className="h-4 w-4 text-blue-500 shrink-0" />;
+        return <User className="h-4 w-4 text-primary shrink-0" />;
       case 'PRE_RESTORE_SAFETY_SNAPSHOT':
-        return <ShieldAlert className="h-4 w-4 text-amber-500 shrink-0" />;
+        return <ShieldAlert className="h-4 w-4 text-amber-400 shrink-0" />;
       default:
-        return <History className="h-4 w-4 text-gray-400 shrink-0" />;
+        return <History className="h-4 w-4 text-slate-400 shrink-0" />;
     }
   };
 
   const getLogLabel = (action: string, filename?: string) => {
     if (action === 'PRE_RESTORE_SAFETY_SNAPSHOT') return 'Safety Snapshot (Pre-Restore)';
     if (action === 'SYSTEM_BACKUP_DOWNLOAD') {
-      if (filename?.includes('manual_users')) return 'Manual Backup (Users)';
-      if (filename?.includes('manual_listings')) return 'Manual Backup (Listings)';
-      if (filename?.includes('manual_reservations')) return 'Manual Backup (Reservations)';
-      if (filename?.includes('manual_messages')) return 'Manual Backup (Messages)';
-      if (filename?.includes('manual_logs')) return 'Manual Backup (Logs)';
-      return 'Manual Backup (Full)';
+      if (filename?.includes('manual_taxonomy')) return 'Manual Backup (Dynamic Taxonomy)';
+      if (filename?.includes('manual_users')) return 'Manual Backup (Users & Access)';
+      if (filename?.includes('manual_listings')) return 'Manual Backup (Property Inventory)';
+      if (filename?.includes('manual_reservations')) return 'Manual Backup (Bookings & Leases)';
+      if (filename?.includes('manual_messages')) return 'Manual Backup (Messages & Reviews)';
+      if (filename?.includes('manual_logs')) return 'Manual Backup (Audit Logs & Config)';
+      return 'Manual Backup (Full Database)';
     }
-    return 'Automated Backup';
+    return 'Automated Cron Backup';
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.3 }}>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.3 }} className="h-full">
       <Card className="group h-full border-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl shadow-xl rounded-[2.5rem] border border-gray-200/50 dark:border-gray-800/50 overflow-hidden transition-all duration-500">
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-8 pt-8 pb-6 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-800/20">
           <div className="flex items-center gap-4">
@@ -126,41 +127,45 @@ export function BackupHistoryCard() {
               <History className="h-6 w-6" />
             </div>
             <div>
-              <CardTitle className="text-lg font-black tracking-tight text-gray-900 dark:text-white">Backup History</CardTitle>
-              <CardDescription className="text-xs font-medium text-gray-500">A unified log of all system backups and snapshots.</CardDescription>
+              <CardTitle className="text-lg font-black tracking-tight text-gray-900 dark:text-white">
+                Backup History
+              </CardTitle>
+              <CardDescription className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                A unified log of all system backups and snapshots.
+              </CardDescription>
             </div>
           </div>
           
           <div className="flex items-center">
             <Select value={filterRange} onValueChange={setFilterRange}>
-              <SelectTrigger className="h-9 w-[180px] text-xs font-bold">
+              <SelectTrigger className="h-9 w-[180px] text-xs font-bold bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
                 <SelectValue placeholder="All Time" />
               </SelectTrigger>
-              <SelectContent side="bottom">
-                <SelectItem value="all" className="text-xs font-bold">All Time</SelectItem>
-                <SelectItem value="24h" className="text-xs font-bold">Last 24 Hours</SelectItem>
-                <SelectItem value="7d" className="text-xs font-bold">Last 7 Days</SelectItem>
-                <SelectItem value="30d" className="text-xs font-bold">Last 30 Days</SelectItem>
+              <SelectContent side="bottom" className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-800">
+                <SelectItem value="all" className="text-xs font-bold text-gray-900 dark:text-white">All Time</SelectItem>
+                <SelectItem value="24h" className="text-xs font-bold text-gray-900 dark:text-white">Last 24 Hours</SelectItem>
+                <SelectItem value="7d" className="text-xs font-bold text-gray-900 dark:text-white">Last 7 Days</SelectItem>
+                <SelectItem value="30d" className="text-xs font-bold text-gray-900 dark:text-white">Last 30 Days</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardHeader>
         
-        <CardContent className="p-8 h-full flex flex-col min-h-[400px]">
+        <CardContent className="p-8 h-full flex flex-col justify-between min-h-[400px]">
           <div className="flex-1 space-y-4">
             {loadingLogs ? (
-              <div className="flex items-center justify-center h-full gap-2 text-gray-400 min-h-[250px]">
-                <Loader2 className="h-5 w-5 animate-spin" />
-                <span className="text-sm font-medium">Loading history...</span>
+              <div className="flex items-center justify-center h-full gap-2 text-gray-400 min-h-[220px]">
+                <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
+                <span className="text-sm font-medium">Loading history logs...</span>
               </div>
             ) : filteredLogs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full py-12 text-center opacity-60 min-h-[250px]">
-                <FileJson className="h-10 w-10 text-gray-300 mb-3" />
-                <p className="text-sm text-gray-500 font-medium">No backups found for this range.</p>
+              <div className="flex flex-col items-center justify-center h-full py-12 text-center opacity-60 min-h-[220px]">
+                <FileJson className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">No backups found for this range.</p>
               </div>
             ) : (
               <div className="flex flex-col h-full justify-between gap-6">
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {paginatedLogs.map((log) => (
                     <div key={log.id} className="flex gap-4 items-center group relative p-4 rounded-2xl bg-white/60 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600 transition-all shadow-sm">
                       {getLogIcon(log.action)}
@@ -168,7 +173,7 @@ export function BackupHistoryCard() {
                         <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
                           {getLogLabel(log.action, log.filename)}
                         </p>
-                        <p className="text-xs font-medium text-gray-500 mt-1 truncate">
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 truncate">
                           {new Date(log.createdAt).toLocaleString(undefined, {
                             dateStyle: 'medium',
                             timeStyle: 'short'
@@ -203,29 +208,29 @@ export function BackupHistoryCard() {
                 
                 {/* Advanced Pagination Footer matching data-table */}
                 <div className="flex w-full flex-col-reverse items-center justify-between gap-4 sm:flex-row pt-6 mt-auto border-t border-gray-100 dark:border-gray-800/50">
-                  <div className="text-muted-foreground flex-1 text-sm whitespace-nowrap">
+                  <div className="text-gray-500 dark:text-gray-400 flex-1 text-xs whitespace-nowrap font-medium">
                     {filteredLogs.length} total backup(s)
                   </div>
                   <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
                     <div className="flex items-center space-x-2">
-                      <p className="text-sm font-medium whitespace-nowrap">Rows per page</p>
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Rows per page</p>
                       <Select
                         value={`${pageSize}`}
                         onValueChange={(value) => setPageSize(Number(value))}
                       >
-                        <SelectTrigger className="h-8 w-[80px]">
+                        <SelectTrigger className="h-8 w-[70px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-xs">
                           <SelectValue placeholder={pageSize} />
                         </SelectTrigger>
-                        <SelectContent side="top">
+                        <SelectContent side="top" className="bg-white/95 dark:bg-gray-900/95 border-gray-200 dark:border-gray-800">
                           {[5, 10, 20, 50].map((size) => (
-                            <SelectItem key={size} value={`${size}`} className="text-sm font-medium">
+                            <SelectItem key={size} value={`${size}`} className="text-xs font-medium text-gray-900 dark:text-white">
                               {size}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="flex items-center justify-center text-sm font-medium">
+                    <div className="flex items-center justify-center text-xs font-bold text-gray-900 dark:text-white">
                       Page {currentPage} of {totalPages}
                     </div>
                     <div className="flex items-center space-x-1">
@@ -233,7 +238,7 @@ export function BackupHistoryCard() {
                         aria-label="Go to first page"
                         variant="outline"
                         size="icon"
-                        className="hidden h-8 w-8 p-0 lg:flex"
+                        className="hidden h-8 w-8 p-0 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 lg:flex"
                         onClick={() => setCurrentPage(1)}
                         disabled={currentPage === 1}
                       >
@@ -243,7 +248,7 @@ export function BackupHistoryCard() {
                         aria-label="Go to previous page"
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                         onClick={() => setCurrentPage(p => p - 1)}
                         disabled={currentPage === 1}
                       >
@@ -263,14 +268,14 @@ export function BackupHistoryCard() {
                       ))}
 
                       {pageNumbers.length < totalPages && (
-                        <span className="px-2 text-sm text-muted-foreground">...</span>
+                        <span className="px-2 text-xs text-gray-500">...</span>
                       )}
 
                       <Button
                         aria-label="Go to next page"
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                         onClick={() => setCurrentPage(p => p + 1)}
                         disabled={currentPage === totalPages}
                       >
@@ -280,7 +285,7 @@ export function BackupHistoryCard() {
                         aria-label="Go to last page"
                         variant="outline"
                         size="icon"
-                        className="hidden h-8 w-8 p-0 lg:flex"
+                        className="hidden h-8 w-8 p-0 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 lg:flex"
                         onClick={() => setCurrentPage(totalPages)}
                         disabled={currentPage === totalPages}
                       >

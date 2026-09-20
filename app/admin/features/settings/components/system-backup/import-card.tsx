@@ -18,11 +18,15 @@ export function ImportCard({ onImportClick, restoring }: ImportCardProps) {
             <HardDriveUpload className="h-6 w-6" />
           </div>
           <div>
-            <CardTitle className="text-lg font-black tracking-tight text-rose-900 dark:text-rose-400">Restore Data</CardTitle>
-            <CardDescription className="text-xs font-medium text-rose-600/70 dark:text-rose-400/70">Upload a backup file to replace the current data.</CardDescription>
+            <CardTitle className="text-lg font-black tracking-tight text-rose-900 dark:text-rose-400">
+              Restore Data
+            </CardTitle>
+            <CardDescription className="text-xs font-medium text-rose-600/70 dark:text-rose-400/70">
+              Upload a backup file to replace the current data.
+            </CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6 pt-8 pb-8 px-8">
+        <CardContent className="space-y-6 pt-8 pb-8 px-8 flex flex-col justify-between h-[calc(100%-88px)]">
           <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 flex gap-3">
             <AlertTriangle className="h-5 w-5 shrink-0 text-rose-500 mt-0.5" />
             <p className="text-xs font-semibold text-rose-800 dark:text-rose-300 leading-relaxed">
@@ -30,12 +34,12 @@ export function ImportCard({ onImportClick, restoring }: ImportCardProps) {
             </p>
           </div>
           
-          <div className="flex flex-col gap-4 mt-8">
+          <div className="flex flex-col gap-4 mt-auto">
             <Button
               type="button"
               onClick={onImportClick}
               disabled={restoring}
-              className="w-full h-12 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-widest rounded-xl gap-2 transition-all shadow-lg hover:shadow-rose-600/30 hover:-translate-y-0.5 disabled:opacity-80"
+              className="w-full h-12 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-widest rounded-xl gap-2 transition-all shadow-lg hover:shadow-rose-600/30 disabled:opacity-80"
             >
               {restoring ? (
                 <>

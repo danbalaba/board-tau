@@ -46,10 +46,10 @@ export const CollegeTable: React.FC<CollegeTableProps> = ({ data, isLoading, onR
             </div>
           ) : (
             <>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
                 TAU Campus Landmarks
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 font-medium">
                 Manage university colleges and campus landmarks for distance filtering.
               </p>
             </>
@@ -57,7 +57,7 @@ export const CollegeTable: React.FC<CollegeTableProps> = ({ data, isLoading, onR
         </div>
         <Modal>
           <Modal.Trigger name="add-college">
-            <Button className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-500/20 font-black uppercase tracking-wider text-xs gap-2">
+            <Button className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl shadow-md font-semibold text-xs gap-2">
               <Plus size={16} /> Add Landmark
             </Button>
           </Modal.Trigger>

@@ -112,15 +112,15 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot='select-item'
       className={cn(
-        "relative flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg py-2.5 pl-4 pr-10 text-[13px] sm:text-[14px] font-medium outline-none select-none transition-all duration-150 mb-0.5 last:mb-0 data-[highlighted]:bg-emerald-500/10 data-[highlighted]:text-emerald-600 dark:data-[highlighted]:text-emerald-400 text-gray-600 dark:text-gray-300 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[state=checked]:bg-emerald-500/10 data-[state=checked]:text-emerald-600 dark:data-[state=checked]:text-emerald-400 data-[state=checked]:font-bold",
+        "relative flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg py-2.5 pl-4 pr-10 text-[13px] sm:text-[14px] font-medium outline-none select-none transition-all duration-150 mb-0.5 last:mb-0 data-[highlighted]:bg-primary/10 data-[highlighted]:text-primary dark:data-[highlighted]:text-primary-light text-gray-600 dark:text-gray-300 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[state=checked]:bg-primary/10 data-[state=checked]:text-primary dark:data-[state=checked]:text-primary-light data-[state=checked]:font-semibold",
         className
       )}
       {...props}
     >
       <span className='absolute right-3 flex items-center justify-center'>
         <SelectPrimitive.ItemIndicator>
-          <div className="shrink-0 w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
-            <CheckIcon className='h-3 w-3 text-emerald-600 dark:text-emerald-400' strokeWidth={4} />
+          <div className="shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+            <CheckIcon className='h-3 w-3 text-primary' strokeWidth={4} />
           </div>
         </SelectPrimitive.ItemIndicator>
       </span>

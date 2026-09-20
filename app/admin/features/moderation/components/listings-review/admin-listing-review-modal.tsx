@@ -17,54 +17,60 @@ import {
   CircleDollarSign,
   FileText,
   Award,
-  Bath,
-  Bed,
-  Users,
-  Maximize2,
-  ListChecks,
-  Shield,
-  Star,
-  ClipboardList,
-  ShieldAlert,
-  Sparkles,
-  Wifi,
-  Wind,
-  SquareParking,
-  Waves,
-  Cigarette,
-  PawPrint,
-  Wine,
-  Flame,
-  WashingMachine,
-  Tv,
   Zap,
-  Droplets,
-  BookOpen,
-  Dumbbell,
-  Camera,
-  FileCheck,
-  Lock,
-  VolumeX,
-  Ban,
-  UserX,
-  Utensils,
-  Shirt,
-  ShoppingBag,
-  Car,
-  Bike,
-  Sofa,
-  UserCheck,
-  Coffee,
+  Tag,
+  Home,
+  Users,
+  Bed,
+  Bath,
+  Maximize2,
+  DollarSign,
+  Calendar,
   Layers,
-  CheckCircle2,
-  AlertCircle,
+  FileCheck,
+  Wifi,
+  Car,
+  Tv,
+  Utensils,
+  WashingMachine,
+  Refrigerator,
+  Shield,
+  Camera,
+  Wind,
+  Coffee,
+  Flame,
+  PenTool,
+  ExternalLink,
+  Download,
   Mail,
   Phone,
   ChevronLeft,
   ChevronRight,
   Archive,
-  RotateCcw
+  RotateCcw,
+  PawPrint,
+  Wine,
+  Droplets,
+  BookOpen,
+  Dumbbell,
+  Lock,
+  VolumeX,
+  Ban,
+  UserX,
+  Shirt,
+  ShoppingBag,
+  Bike,
+  Sofa,
+  UserCheck,
+  SquareParking,
+  ShieldAlert,
+  Sparkles,
+  CheckCircle2,
+  ListChecks,
+  Star,
+  AlertCircle
 } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, formatPropertyType } from '@/lib/utils';
@@ -73,6 +79,7 @@ import { AdminListingRejectModal } from './admin-listing-reject-modal';
 import { SharedAmenitiesModal } from '@/components/common/SharedAmenitiesModal';
 import { generateLeaseContractPDF } from '@/utils/contractPdfGenerator';
 
+import { getDynamicIcon } from '@/lib/iconResolver';
 import { 
   getCachedPropertyTypes, 
   getCachedAttributes, 
@@ -360,68 +367,19 @@ export function AdminListingReviewModal({
 
   // Dynamic Icon Resolver matching Taxonomy
   const getItemIcon = (name: string, attrId?: string) => {
-    if (attrId) {
-      const matched = attributes.find(a => a.id === attrId || a.value === attrId || a._id === attrId || a.code === attrId || attrId.startsWith(a.id + '|'));
-      if (matched && matched.icon) {
-        return matched.icon;
-      }
+    const cleanId = typeof attrId === 'string' && attrId.includes('|') ? attrId.split('|')[0] : attrId;
+    const cleanName = (name || '').trim();
+
+    const matched = attributes.find(a => 
+      (cleanId && (a.id === cleanId || a.value === cleanId || a._id === cleanId || a.code === cleanId || cleanId.startsWith(a.id + '|'))) ||
+      (cleanName && (a.name === cleanName || a.name?.toLowerCase() === cleanName.toLowerCase() || a.id === cleanName || a.code === cleanName))
+    );
+
+    if (matched && matched.icon) {
+      return getDynamicIcon(matched.icon);
     }
 
-    const n = (name || '').toLowerCase();
-
-    // Rules & Policies
-    if (n.includes("curfew") || n.includes("gate lock") || n.includes("8:00 pm") || n.includes("9:00 pm") || n.includes("10:00 pm")) return Lock;
-    if (n.includes("24/7 open gate") || n.includes("no curfew") || n.includes("open gate")) return Clock;
-    if (n.includes("quiet hours") || n.includes("quiet") || n.includes("noise")) return VolumeX;
-    if (n.includes("pet")) return PawPrint;
-    if (n.includes("smoke") || n.includes("smoking")) return Ban;
-    if (n.includes("drink") || n.includes("alcohol") || n.includes("liquor")) return Wine;
-    if (n.includes("female-only") || n.includes("female only") || n.includes("male-only") || n.includes("male only") || n.includes("no visitors")) return UserX;
-    if (n.includes("visitors") || n.includes("guests") || n.includes("mixed") || n.includes("coed") || n.includes("gender")) return Users;
-
-    // Kitchen & Appliances
-    if (n.includes("utensil") || n.includes("dishware") || n.includes("plate") || n.includes("spoon")) return Utensils;
-    if (n.includes("microwave")) return Utensils;
-    if (n.includes("rice cooker")) return Utensils;
-    if (n.includes("kettle")) return Coffee;
-    if (n.includes("stove") || n.includes("cook")) return Flame;
-    if (n.includes("fridge") || n.includes("refrigerator")) return Utensils;
-    if (n.includes("sink") || n.includes("dish drying") || n.includes("kitchen")) return Utensils;
-
-    // Bathroom & CR
-    if (n.includes("bidet")) return Droplets;
-    if (n.includes("shower") || n.includes("bath") || n.includes("cr")) return Bath;
-    if (n.includes("toilet") || n.includes("flush")) return Bath;
-    if (n.includes("mirror") || n.includes("vanity")) return Bath;
-    if (n.includes("water storage") || n.includes("drum") || n.includes("tabo") || n.includes("poso") || n.includes("tank")) return Droplets;
-
-    // Cooling & Fans
-    if (n.includes("inverter") || n.includes("split type") || n.includes("window type") || n.includes("ac") || n.includes("aircon") || n.includes("air conditioner")) return Wind;
-    if (n.includes("fan") || n.includes("exhaust")) return Wind;
-
-    // Furniture & Interior Features
-    if (n.includes("curtain") || n.includes("blind") || n.includes("screen") || n.includes("mosquito")) return Layers;
-    if (n.includes("cabinet") || n.includes("closet") || n.includes("wardrobe") || n.includes("storage")) return Layers;
-    if (n.includes("desk") || n.includes("chair") || n.includes("study") || n.includes("book")) return BookOpen;
-    if (n.includes("sofa") || n.includes("lounge") || n.includes("living") || n.includes("couch")) return Sofa;
-    if (n.includes("bed") || n.includes("mattress") || n.includes("pillow")) return Bed;
-    if (n.includes("lock") || n.includes("lockable")) return Lock;
-
-    // Utilities & Connectivity
-    if (n.includes("wifi") || n.includes("internet") || n.includes("fiber")) return Wifi;
-    if (n.includes("generator") || n.includes("electric") || n.includes("power") || n.includes("zap")) return Zap;
-    if (n.includes("laundry") || n.includes("washing") || n.includes("sampayan")) return WashingMachine;
-    if (n.includes("store") || n.includes("sari-sari") || n.includes("convenience") || n.includes("shop")) return ShoppingBag;
-    if (n.includes("parking") || n.includes("garage") || n.includes("car") || n.includes("motorcycle")) return SquareParking;
-    if (n.includes("bike") || n.includes("bicycle")) return Bike;
-    if (n.includes("caretaker") || n.includes("housekeeping") || n.includes("repairs")) return UserCheck;
-    if (n.includes("tv") || n.includes("smart tv")) return Tv;
-
-    // Security & Safety
-    if (n.includes("cctv") || n.includes("camera") || n.includes("security") || n.includes("guard")) return ShieldCheck;
-    if (n.includes("flood") || n.includes("fire") || n.includes("emergency") || n.includes("first aid")) return ShieldAlert;
-
-    return Sparkles;
+    return getDynamicIcon(cleanName);
   };
 
   const resolveAmenityName = (attrId: string) => {
@@ -613,8 +571,8 @@ export function AdminListingReviewModal({
   const resolvedKitchenSetup = useMemo(() => {
     if (!listing) return 'Not Specified';
     const raw = listing.kitchenSetup || listing.kitchenType || listing.propertyConfig?.kitchenSetup || listing.config?.kitchenSetup || listing.businessInfo?.kitchenSetup || '';
-    if (raw === 'SHARED') return 'Shared Common Kitchen';
-    if (raw === 'IN_UNIT') return 'Private In-Unit Kitchen';
+    if (raw === 'SHARED' || raw === 'SHARED_KITCHEN') return 'Shared Compound Kitchen';
+    if (raw === 'IN_UNIT' || raw === 'PRIVATE' || raw === 'PRIVATE_KITCHEN') return 'Private In-Unit Kitchen';
     if (raw === 'NONE' || raw === 'NO_KITCHEN') return 'No Kitchen Facility';
     if (raw && typeof raw === 'string' && raw.trim() !== '') return raw.replace(/_/g, ' ');
 
@@ -639,7 +597,7 @@ export function AdminListingReviewModal({
         name.includes('utensil') ||
         name.includes('kettle')
       ) {
-        return isApartmentOrFlatRate ? 'Private In-Unit Kitchen' : 'Shared Common Kitchen';
+        return isApartmentOrFlatRate ? 'Private In-Unit Kitchen' : 'Shared Compound Kitchen';
       }
     }
     return 'Not Specified';
@@ -1365,12 +1323,12 @@ export function AdminListingReviewModal({
 
                           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
                             <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Kitchen Setup</span>
-                            <p className="text-xs font-black text-primary uppercase">{resolvedKitchenSetup}</p>
+                            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase">{resolvedKitchenSetup}</p>
                           </div>
 
                           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
                             <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Bathroom Setup</span>
-                            <p className="text-xs font-black text-primary uppercase">{listing.bathroomSetup === 'PRIVATE' ? 'Own Private CR' : 'Shared Common CR'}</p>
+                            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase">{listing.bathroomSetup === 'PRIVATE' ? 'Own Private CR' : 'Shared Common CR'}</p>
                           </div>
                         </div>
                       </div>
@@ -1724,7 +1682,7 @@ export function AdminListingReviewModal({
 
                                       <div className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80">
                                         <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">CR Setup</span>
-                                        <p className="text-xs font-black text-primary uppercase">{isPrivateCR ? 'Own Private CR' : 'Shared Common CR'}</p>
+                                        <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase">{isPrivateCR ? 'Own Private CR' : 'Shared Common CR'}</p>
                                       </div>
                                     </div>
 
@@ -1996,7 +1954,7 @@ export function AdminListingReviewModal({
                             });
                             setStepChecklistsState(updated);
                           }}
-                          className="text-[10px] font-black uppercase tracking-wider text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/20 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer shrink-0"
+                          className="text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/30 px-3 py-1.5 rounded-xl active:scale-95 transition-all duration-200 cursor-pointer shrink-0 shadow-2xs"
                         >
                           {isCurrentStepAllChecked ? 'Uncheck All' : 'Verify All'}
                         </button>
@@ -2080,7 +2038,7 @@ export function AdminListingReviewModal({
           </div>
 
           {/* Moderation Footer */}
-          <div className="p-5 sm:p-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0 relative z-30">
+          <div className="p-4 sm:p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 shrink-0 relative z-30 shadow-xl">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 {TAB_ORDER.indexOf(activeTab) > 0 && (
@@ -2091,15 +2049,16 @@ export function AdminListingReviewModal({
                       const currIdx = TAB_ORDER.indexOf(activeTab);
                       if (currIdx > 0) setActiveTab(TAB_ORDER[currIdx - 1]);
                     }}
-                    className="h-11 px-5 text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="group h-11 sm:h-12 px-5 text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all duration-200 rounded-2xl flex items-center gap-2 cursor-pointer shadow-xs"
                   >
-                    <ChevronLeft size={16} /> Back Section
+                    <ChevronLeft size={16} className="transition-transform group-hover:-translate-x-1" />
+                    <span>Back Section</span>
                   </Button>
                 )}
-                <div className="hidden md:flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
-                  <Clock size={16} className={cn("shrink-0", isCurrentStepAllChecked ? "text-primary" : "text-amber-500 animate-pulse")} />
+                <div className="hidden md:flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-xs font-bold text-slate-600 dark:text-slate-300">
+                  <Clock size={16} className={cn("shrink-0 transition-colors", isCurrentStepAllChecked ? "text-primary" : "text-amber-500 animate-pulse")} />
                   <span>
-                    Section {TAB_ORDER.indexOf(activeTab) + 1} of 6 • {isCurrentStepAllChecked ? "Section audit verified! Click next." : `Verify all audit items (${currentStepChecklistItems.filter(i => stepChecklistsState[`${activeTab}_${i.id}`]).length}/${currentStepChecklistItems.length}) to proceed`}
+                    Section {TAB_ORDER.indexOf(activeTab) + 1} of 6 • {isCurrentStepAllChecked ? "Section audit verified! Ready for next step." : `Verify all audit items (${currentStepChecklistItems.filter(i => stepChecklistsState[`${activeTab}_${i.id}`]).length}/${currentStepChecklistItems.length}) to proceed`}
                   </span>
                 </div>
               </div>
@@ -2108,12 +2067,12 @@ export function AdminListingReviewModal({
                 <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
                   <Button 
                     type="button"
-                    variant="outline"
                     onClick={() => setShowRejectConfirm(true)}
                     disabled={isDeciding}
-                    className="flex-1 sm:flex-none h-11 px-5 text-xs font-black uppercase tracking-wider text-rose-500 border-rose-200 hover:bg-rose-50 dark:border-rose-900/40 dark:hover:bg-rose-900/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="group flex-1 sm:flex-none h-11 sm:h-12 px-5 text-xs font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200/80 dark:border-rose-500/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white hover:border-rose-500 active:scale-95 transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                   >
-                    <X size={16} /> Reject Listing
+                    <X size={16} className="transition-transform group-hover:rotate-90 duration-300" />
+                    <span>Reject Listing</span>
                   </Button>
 
                   {TAB_ORDER.indexOf(activeTab) < 5 ? (
@@ -2132,14 +2091,14 @@ export function AdminListingReviewModal({
                       }}
                       disabled={isDeciding || !isCurrentStepAllChecked}
                       className={cn(
-                        "flex-1 sm:flex-none h-11 px-7 text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2",
+                        "group flex-1 sm:flex-none h-11 sm:h-12 px-7 text-xs font-black uppercase tracking-wider rounded-2xl transition-all duration-200 flex items-center justify-center gap-2.5",
                         isCurrentStepAllChecked
-                          ? "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 cursor-pointer"
-                          : "bg-slate-200 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 border border-slate-300/60 dark:border-slate-700/60 cursor-not-allowed shadow-none"
+                          ? "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 active:scale-95 cursor-pointer"
+                          : "bg-slate-100 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 border border-slate-200/80 dark:border-slate-700/60 cursor-not-allowed shadow-none"
                       )}
                     >
                       <span>Confirm & Next Section</span>
-                      <ChevronRight size={16} />
+                      <ChevronRight size={16} className={cn("transition-transform duration-200", isCurrentStepAllChecked && "group-hover:translate-x-1")} />
                     </Button>
                   ) : (
                     <Button 
@@ -2150,22 +2109,23 @@ export function AdminListingReviewModal({
                       }}
                       disabled={isDeciding || !isCurrentStepAllChecked}
                       className={cn(
-                        "flex-1 sm:flex-none h-11 px-8 text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2",
+                        "group flex-1 sm:flex-none h-11 sm:h-12 px-8 text-xs font-black uppercase tracking-wider rounded-2xl transition-all duration-200 flex items-center justify-center gap-2.5",
                         isCurrentStepAllChecked
-                          ? "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 cursor-pointer"
-                          : "bg-slate-200 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 border border-slate-300/60 dark:border-slate-700/60 cursor-not-allowed shadow-none"
+                          ? "bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/30 active:scale-95 cursor-pointer"
+                          : "bg-slate-100 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 border border-slate-200/80 dark:border-slate-700/60 cursor-not-allowed shadow-none"
                       )}
                     >
-                      <Check size={16} /> Approve Listing
+                      <Check size={16} className={cn("transition-transform duration-200", isCurrentStepAllChecked && "group-hover:scale-110")} />
+                      <span>Approve Listing</span>
                     </Button>
                   )}
                 </div>
               ) : isArchived ? (
                 <div className="flex items-center justify-between gap-3 w-full">
-                  <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-black uppercase tracking-wider">
-                    <Archive size={14} /> Status: Archived
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-black uppercase tracking-wider">
+                    <Archive size={15} /> Status: Archived
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     {onRestore && (
                       <Button
                         type="button"
@@ -2173,16 +2133,16 @@ export function AdminListingReviewModal({
                           onRestore?.(listing);
                           onClose();
                         }}
-                        className="bg-amber-500 hover:bg-amber-600 text-white rounded-2xl px-5 py-2.5 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
+                        className="bg-amber-500 hover:bg-amber-600 text-white rounded-2xl h-11 sm:h-12 px-6 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md shadow-amber-500/25 active:scale-95 transition-all duration-200 cursor-pointer"
                       >
-                        <RotateCcw size={14} /> Restore Listing
+                        <RotateCcw size={15} /> Restore Listing
                       </Button>
                     )}
                     <Button
                       type="button"
                       onClick={onClose}
                       variant="outline"
-                      className="rounded-2xl px-5 py-2.5 text-xs font-black uppercase tracking-wider border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                      className="rounded-2xl h-11 sm:h-12 px-6 text-xs font-black uppercase tracking-wider border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all duration-200 cursor-pointer"
                     >
                       Close Inspection
                     </Button>
@@ -2191,17 +2151,17 @@ export function AdminListingReviewModal({
               ) : (
                 <div className="flex items-center justify-between gap-3 w-full">
                   <div className={cn(
-                    "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider border",
+                    "flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider border",
                     isApproved ? "bg-primary/10 text-primary border-primary/20" : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
                   )}>
-                    {isApproved ? <CheckCircle2 size={14} /> : <ShieldAlert size={14} />}
+                    {isApproved ? <CheckCircle2 size={15} /> : <ShieldAlert size={15} />}
                     <span>Status: {statusStr}</span>
                   </div>
                   <Button
                     type="button"
                     onClick={onClose}
                     variant="outline"
-                    className="rounded-2xl px-5 py-2.5 text-xs font-black uppercase tracking-wider border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                    className="rounded-2xl h-11 sm:h-12 px-6 text-xs font-black uppercase tracking-wider border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all duration-200 cursor-pointer"
                   >
                     Close Inspection
                   </Button>

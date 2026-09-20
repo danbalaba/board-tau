@@ -7,7 +7,7 @@ import Modal, { ModalContext } from "@/components/modals/Modal";
 import { motion, AnimatePresence } from "framer-motion";
 import * as LucideIcons from "lucide-react";
 import { Search, Sparkles, HelpCircle, Check, ArrowRight, ArrowLeft, Plus, X, SearchX, Loader2, AlertCircle, Lock, Home, Users, ShowerHead, DoorClosed, Globe, Target, Building } from "lucide-react";
-import { cn } from "@/utils/helper";
+import { cn, formatCleanTitle } from "@/utils/helper";
 import { toast } from "@/app/admin/components/ui/sonner";
 import { Label } from "@/app/admin/components/ui/label";
 import { Switch } from "@/app/admin/components/ui/switch";
@@ -21,6 +21,8 @@ import {
 import Input from "@/components/inputs/Input";
 
 import { clearTaxonomyCache } from "@/lib/taxonomyCache";
+import { clearLandlordTaxonomyCache } from "@/lib/landlordTaxonomyCache";
+import { getDynamicIcon } from "@/lib/iconResolver";
 
 interface AddAttributeModalProps {
   initialData?: any;
@@ -66,18 +68,7 @@ const SUB_GROUPS_PRESETS = [
 ];
 
 const getSafeLucideIcon = (iconName: string) => {
-  if (!iconName || iconName === "default" || iconName === "createLucideIcon" || iconName.startsWith("Lucide") || iconName === "Icon") {
-    return HelpCircle;
-  }
-  const IconObj = (LucideIcons as Record<string, any>)[iconName];
-  if (!IconObj) return HelpCircle;
-  if (typeof IconObj === "function" && IconObj.name === "createLucideIcon") {
-    return HelpCircle;
-  }
-  if (typeof IconObj === "function" || typeof IconObj === "object") {
-    return IconObj;
-  }
-  return HelpCircle;
+  return getDynamicIcon(iconName, HelpCircle);
 };
 
 export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
@@ -258,8 +249,12 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
   }, [fetchSubGroups]);
 
   const availableSubGroups = useMemo(() => {
+    if (!type) return [];
     const presets = SUB_GROUPS_PRESETS.filter((sg) => sg.type === type);
-    const dbList = dbSubGroups.map((sg) => ({
+    const filteredDbSubGroups = dbSubGroups.filter(
+      (sg) => !sg.type || sg.type.toUpperCase() === type.toUpperCase()
+    );
+    const dbList = filteredDbSubGroups.map((sg) => ({
       key: sg.key,
       label: sg.tabLabel || sg.title || sg.key,
       type: sg.type,
@@ -327,6 +322,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
 
         invalidateSubGroupsCache();
         clearTaxonomyCache();
+        clearLandlordTaxonomyCache();
 
         // Immediately update dbSubGroups state so it appears in the dropdown right now!
         setDbSubGroups((prev) => {
@@ -422,7 +418,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
     }
 
     if (currentStep === 2) {
-      const cleanName = name.trim().replace(/\s+/g, " ");
+      const cleanName = formatCleanTitle(name.trim().replace(/\s+/g, " "));
       const cleanDesc = description.trim().replace(/\s+/g, " ");
 
       if (!cleanName) {
@@ -487,7 +483,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
   const handleConfirmAndPublish = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const cleanName = name.trim().replace(/\s+/g, " ");
+    const cleanName = formatCleanTitle(name.trim().replace(/\s+/g, " "));
     if (!cleanName) {
       toast.error("Attribute name is required");
       return;
@@ -535,6 +531,8 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
         toast.success(`Dynamic Attribute "${cleanName}" published successfully!`);
       }
 
+      clearTaxonomyCache();
+      clearLandlordTaxonomyCache();
       handleClose();
       if (onSuccess) onSuccess(savedData || payload);
     } catch (error: any) {
@@ -561,7 +559,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
       <div className="shrink-0 space-y-3">
         <div className="flex items-center justify-between pb-3.5 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0">
               <Sparkles size={22} />
             </div>
             <div>
@@ -575,7 +573,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
           </div>
 
           {/* Step Counter Badge */}
-          <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-black uppercase tracking-wider shrink-0">
+          <div className="px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-black uppercase tracking-wider shrink-0">
             Step {currentStep} of 4
           </div>
         </div>
@@ -583,7 +581,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
         {/* Wizard Progress Bar */}
         <div className="w-full bg-slate-100 dark:bg-slate-900 h-1.5 rounded-full overflow-hidden">
           <motion.div
-            className="bg-emerald-500 h-full rounded-full"
+            className="bg-primary h-full rounded-full"
             initial={{ width: "25%" }}
             animate={{ width: `${currentStep * 25}%` }}
             transition={{ duration: 0.3 }}
@@ -592,7 +590,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
       </div>
 
       {/* Scrollable Wizard Body */}
-      <div className="flex-1 overflow-y-auto pr-1.5 py-1 space-y-5 scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto pr-1.5 py-1 space-y-5 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
         <AnimatePresence mode="wait">
           {/* STEP 1: Category & Sub-Group Selection */}
           {currentStep === 1 && (
@@ -625,13 +623,16 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                       className={cn(
                         "p-5 sm:p-6 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between group min-h-[100px]",
                         type === cat.id
-                          ? "bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold shadow-md ring-2 ring-emerald-500/20"
+                          ? (cat.id === "AMENITY" ? "bg-blue-500/10 border-blue-500 text-blue-600 dark:text-blue-400 font-bold shadow-md ring-2 ring-blue-500/20"
+                            : cat.id === "ROOM_AMENITY" ? "bg-indigo-500/10 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold shadow-md ring-2 ring-indigo-500/20"
+                            : cat.id === "RULE" ? "bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400 font-bold shadow-md ring-2 ring-amber-500/20"
+                            : "bg-violet-500/10 border-violet-500 text-violet-600 dark:text-violet-400 font-bold shadow-md ring-2 ring-violet-500/20")
                           : errors.type
                           ? "bg-rose-500/5 border-rose-500/50 text-slate-600 dark:text-slate-400 hover:border-rose-500"
-                          : "bg-slate-50/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-emerald-500/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/80"
+                          : "bg-slate-50/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-primary/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/80"
                       )}
                     >
-                      <div className="text-base font-black text-slate-900 dark:text-white mb-1.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                      <div className="text-base font-black text-slate-900 dark:text-white mb-1.5 transition-colors">
                         {cat.title}
                       </div>
                       <div className="text-xs font-medium leading-relaxed text-slate-500 dark:text-slate-400">{cat.desc}</div>
@@ -663,14 +664,14 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                         }}
                       >
                         <SelectTrigger className={cn(
-                          "w-full h-12 bg-white dark:bg-slate-900 border-2 rounded-2xl px-4 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all",
+                          "w-full h-12 bg-white dark:bg-slate-900 border-2 rounded-2xl px-4 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all",
                           errors.subGroupKey ? "border-rose-500 text-rose-600 ring-2 ring-rose-500/20" : "border-slate-200 dark:border-slate-800"
                         )}>
-                          <SelectValue placeholder="Select Sub-Group Category..." />
+                          <SelectValue placeholder={!type ? "Select Category Type First..." : "Select Sub-Group Category..."} />
                         </SelectTrigger>
                         <SelectContent position="popper" sideOffset={4} className="max-h-60 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[10050]">
                           {availableSubGroups.map((sg) => (
-                            <SelectItem key={sg.key} value={sg.key} className="py-2.5 px-4 text-xs font-bold hover:bg-emerald-500/10 dark:hover:bg-emerald-500/20 cursor-pointer">
+                            <SelectItem key={sg.key} value={sg.key} className="py-2.5 px-4 text-xs font-bold hover:bg-primary/10 dark:hover:bg-primary/20 cursor-pointer">
                               <div className="flex items-center justify-between gap-3 w-full">
                                 <span>{sg.label}</span>
                                 <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
@@ -691,9 +692,9 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsCreatingSubGroup(true)}
-                      className="h-12 px-5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 border-2 border-emerald-500/30 hover:border-emerald-500 text-emerald-600 dark:text-emerald-400 font-black text-xs transition-all flex items-center justify-center gap-2 shadow-sm shrink-0 cursor-pointer group"
+                      className="h-12 px-5 rounded-2xl bg-primary/10 hover:bg-primary/20 border-2 border-primary/30 hover:border-primary text-primary font-black text-xs transition-all flex items-center justify-center gap-2 shadow-sm shrink-0 cursor-pointer group"
                     >
-                      <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <div className="w-6 h-6 rounded-lg bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                         <Plus size={14} strokeWidth={3} />
                       </div>
                       <span>+ Create New Sub-Step</span>
@@ -704,10 +705,10 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="p-5 rounded-2xl bg-emerald-500/5 border-2 border-emerald-500/30 space-y-4 shadow-lg shadow-emerald-500/5"
+                    className="p-5 rounded-2xl bg-primary/5 border-2 border-primary/30 space-y-4 shadow-lg shadow-primary/5"
                   >
-                    <div className="flex items-center justify-between pb-2 border-b border-emerald-500/20">
-                      <div className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-tight flex items-center gap-2">
+                    <div className="flex items-center justify-between pb-2 border-b border-primary/20">
+                      <div className="text-xs font-black text-primary uppercase tracking-tight flex items-center gap-2">
                         <Sparkles size={16} />
                         <span>Create New Sub-Step Group</span>
                       </div>
@@ -735,7 +736,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                           }}
                           placeholder="e.g. Sports & Fitness"
                           className={cn(
-                            "w-full mt-1 bg-white dark:bg-slate-900 border rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-emerald-500 transition-all",
+                            "w-full mt-1 bg-white dark:bg-slate-900 border rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-primary transition-all",
                             subGroupError ? "border-rose-500 text-rose-600 ring-2 ring-rose-500/20" : "border-slate-200 dark:border-slate-800"
                           )}
                         />
@@ -747,11 +748,11 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                       </div>
                       <div>
                         <label className="text-[10px] font-bold uppercase text-slate-500 flex items-center gap-1">
-                          <Lock size={10} className="text-emerald-500" /> Auto-Generated System ID
+                          <Lock size={10} className="text-primary" /> Auto-Generated System ID
                         </label>
-                        <div className="w-full mt-1 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 select-none flex items-center justify-between">
+                        <div className="w-full mt-1 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-primary select-none flex items-center justify-between">
                           <span className="truncate">{newSubGroupKey || "AUTO_GENERATED_KEY"}</span>
-                          <span className="text-[9px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded font-sans uppercase font-bold shrink-0">Read Only</span>
+                          <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-sans uppercase font-bold shrink-0">Read Only</span>
                         </div>
                       </div>
                     </div>
@@ -763,7 +764,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                         value={newSubGroupTitle}
                         onChange={(e) => setNewSubGroupTitle(e.target.value)}
                         placeholder="e.g. Step 6-8: Sports, Fitness & Recreation Facilities"
-                        className="w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-emerald-500"
+                        className="w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-primary"
                       />
                     </div>
 
@@ -771,7 +772,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                       type="button"
                       onClick={handleSaveSubGroupInline}
                       disabled={isSavingSubGroup}
-                      className="w-full py-2.5 rounded-xl bg-emerald-500 text-white font-extrabold text-xs shadow-md hover:bg-emerald-600 transition-all"
+                      className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white font-extrabold text-xs shadow-md transition-all"
                     >
                       {isSavingSubGroup ? "Saving Sub-Step..." : "✓ Save Sub-Step Group"}
                     </button>
@@ -798,6 +799,9 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                   setName(e.target.value);
                   if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
                 }}
+                onBlur={() => {
+                  if (name.trim()) setName(formatCleanTitle(name));
+                }}
                 placeholder="e.g. Private Veranda / Terrace"
                 errors={errors}
                 required
@@ -821,13 +825,13 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
               {type === "ROOM_AMENITY" && (
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-primary">
                       Setup Context Scope *
                     </Label>
                     <span className={cn(
                       "text-[10px] font-bold px-2 py-0.5 rounded-md",
                       setupContext
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                        ? "bg-primary/10 text-primary border border-primary/20"
                         : "bg-rose-500/10 text-rose-500 border border-rose-500/20"
                     )}>
                       Selected: {setupContext ? setupContext.replace(/_/g, " ") : "None (Required)"}
@@ -853,18 +857,6 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                               title: "Shared / Common CR",
                               subtitle: "Restroom facility in shared hallway for all floor residents.",
                               icon: DoorClosed,
-                            },
-                            {
-                              id: "IN_UNIT",
-                              title: "In-Room / Private",
-                              subtitle: "Exclusive amenity inside tenant's bedroom.",
-                              icon: Home,
-                            },
-                            {
-                              id: "SHARED",
-                              title: "Shared / Common Area",
-                              subtitle: "Communal facility in shared hallway or lounge.",
-                              icon: Users,
                             },
                           ]
                         : isKitchen
@@ -911,16 +903,16 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                             className={cn(
                               "p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer flex items-start gap-3",
                               isSelected
-                                ? "bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-400 shadow-md shadow-emerald-500/10 ring-2 ring-emerald-500/20"
+                                ? "bg-primary/10 border-primary text-primary shadow-md shadow-primary/10 ring-2 ring-primary/20"
                                 : errors.setupContext
                                 ? "bg-rose-500/5 border-rose-500/40 text-slate-600 dark:text-slate-400 hover:border-rose-500/70"
-                                : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-emerald-500/40"
+                                : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-primary/40"
                             )}
                           >
                             <div className={cn(
                               "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition-all mt-0.5",
                               isSelected
-                                ? "bg-emerald-500 text-white border-emerald-500 shadow-sm"
+                                ? "bg-primary text-white border-primary shadow-sm"
                                 : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-400"
                             )}>
                               <CtxIcon size={18} />
@@ -928,7 +920,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                             <div className="space-y-0.5">
                               <div className="font-extrabold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
                                 {ctx.title}
-                                {isSelected && <Check size={14} className="text-emerald-500 shrink-0" strokeWidth={3} />}
+                                {isSelected && <Check size={14} className="text-primary shrink-0" strokeWidth={3} />}
                               </div>
                               <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
                                 {ctx.subtitle}
@@ -967,13 +959,13 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                   : "bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800"
               )}>
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
                     Choose an Icon *
                   </Label>
                   <span className={cn(
                     "text-[10px] font-bold px-2 py-0.5 rounded-md",
                     selectedIcon
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                      ? "bg-primary/10 text-primary border border-primary/20"
                       : "bg-rose-500/10 text-rose-500 border border-rose-500/20"
                   )}>
                     Selected: {selectedIcon || "None (Required)"}
@@ -981,16 +973,16 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                 </div>
 
                 {selectedIcon && (
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
+                  <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center shadow-md shrink-0">
                         {React.createElement(getSafeLucideIcon(selectedIcon), { size: 20 })}
                       </div>
                       <div>
-                        <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Active Selected Icon</span>
+                        <span className="text-[9px] font-black uppercase tracking-wider text-primary">Active Selected Icon</span>
                         <div className="font-extrabold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
                           <span>{selectedIcon}</span>
-                          <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-black">✓</span>
+                          <span className="w-3.5 h-3.5 rounded-full bg-primary text-white flex items-center justify-center text-[9px] font-black">✓</span>
                         </div>
                       </div>
                     </div>
@@ -1007,10 +999,10 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                     onKeyDown={(e) => {
                       if (e.key === "Enter") e.preventDefault();
                     }}
-                    className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 pl-10 pr-9 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-emerald-500 transition-all"
+                    className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 pl-10 pr-9 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-primary transition-all"
                   />
                   {isIconSearching ? (
-                    <Loader2 size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-emerald-500" />
+                    <Loader2 size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-primary" />
                   ) : searchQuery ? (
                     <button
                       type="button"
@@ -1028,7 +1020,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                 )}>
                   {isIconSearching ? (
                     <div className="col-span-full py-6 flex flex-col items-center justify-center gap-2 text-slate-400">
-                      <Loader2 size={20} className="animate-spin text-emerald-500" />
+                      <Loader2 size={20} className="animate-spin text-primary" />
                       <span className="text-xs font-bold">Searching icons...</span>
                     </div>
                   ) : filteredIcons.length === 0 ? (
@@ -1061,13 +1053,13 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                           className={cn(
                             "flex flex-col items-center justify-center p-2.5 rounded-xl border transition-all cursor-pointer relative group",
                             isSelected
-                              ? "bg-emerald-600 dark:bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20 ring-2 ring-emerald-500/30"
-                              : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-emerald-500/40"
+                              ? "bg-primary border-primary text-white shadow-lg shadow-primary/20 ring-2 ring-primary/30"
+                              : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-primary/40"
                           )}
                         >
                           <IconBtn size={18} />
                           {isSelected && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white text-emerald-600 flex items-center justify-center text-[9px] font-black shadow-md border border-emerald-500">
+                            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white text-primary flex items-center justify-center text-[9px] font-black shadow-md border border-primary">
                               ✓
                             </span>
                           )}
@@ -1087,13 +1079,13 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
               {/* Universal vs Targeted Availability Scoping */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
                     Availability Scope Mode *
                   </Label>
                   <span className={cn(
                     "text-[10px] font-bold px-2 py-0.5 rounded-md",
                     availabilityMode === "UNIVERSAL"
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                      ? "bg-primary/10 text-primary border border-primary/20"
                       : availabilityMode === "TARGETED"
                       ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20"
                       : "bg-rose-500/10 text-rose-500 border border-rose-500/20"
@@ -1116,16 +1108,16 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                     className={cn(
                       "p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer flex items-start gap-3",
                       availabilityMode === "UNIVERSAL"
-                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-400 shadow-md shadow-emerald-500/10"
+                        ? "bg-primary/10 border-primary text-primary shadow-md shadow-primary/10"
                         : errors.availabilityMode
                         ? "bg-rose-500/5 border-rose-500/40 text-slate-600 dark:text-slate-400 hover:border-rose-500/70"
-                        : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-emerald-500/40"
+                        : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-primary/40"
                     )}
                   >
                     <div className={cn(
                       "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition-all mt-0.5",
                       availabilityMode === "UNIVERSAL"
-                        ? "bg-emerald-500 text-white border-emerald-500 shadow-sm"
+                        ? "bg-primary text-white border-primary shadow-sm"
                         : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-400"
                     )}>
                       <Globe size={18} />
@@ -1133,7 +1125,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                     <div className="space-y-0.5">
                       <div className="font-extrabold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
                         Universal (All Categories)
-                        {availabilityMode === "UNIVERSAL" && <Check size={14} className="text-emerald-500 shrink-0" strokeWidth={3} />}
+                        {availabilityMode === "UNIVERSAL" && <Check size={14} className="text-primary shrink-0" strokeWidth={3} />}
                       </div>
                       <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
                         Applies automatically across all property categories in BoardTAU.
@@ -1277,7 +1269,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
               {/* Modernized Summary Card */}
               <div className="p-5 rounded-2xl bg-slate-50/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-slate-200/80 dark:border-slate-800/80">
-                  <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <div className="w-7 h-7 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                     <Check size={16} strokeWidth={3} />
                   </div>
                   <span className="font-extrabold text-xs uppercase tracking-wider text-slate-900 dark:text-white">
@@ -1302,7 +1294,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                       Target Classification
                     </span>
                     <div>
-                      <span className="px-2.5 py-1 rounded-lg text-[11px] font-extrabold uppercase tracking-wider bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                      <span className="px-2.5 py-1 rounded-lg text-[11px] font-extrabold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
                         {type ? type.replace(/_/g, " ") : "Not set"}
                       </span>
                     </div>
@@ -1324,7 +1316,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                       Attribute Icon
                     </span>
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <div className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                         {React.createElement(IconComponent, { size: 14 })}
                       </div>
                       <span className="font-bold text-slate-900 dark:text-white">{selectedIcon || "None"}</span>
@@ -1373,8 +1365,8 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                   Card Preview:
                 </Label>
-                <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-emerald-500 shadow-md flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-primary shadow-md flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center shrink-0">
                     {React.createElement(IconComponent, { size: 20 })}
                   </div>
                   <div>
@@ -1416,7 +1408,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
           <button
             type="button"
             onClick={handleNextStep}
-            className="h-11 px-7 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 cursor-pointer"
+            className="h-11 px-7 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-primary/20 transition-all flex items-center gap-2 cursor-pointer"
           >
             <span>Continue</span> <ArrowRight size={16} />
           </button>
@@ -1425,7 +1417,7 @@ export const AddAttributeModal: React.FC<AddAttributeModalProps> = ({
             type="button"
             disabled={isSubmitting}
             onClick={handleConfirmAndPublish}
-            className="h-11 px-7 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 cursor-pointer"
+            className="h-11 px-7 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-primary/20 transition-all flex items-center gap-2 cursor-pointer"
           >
             {isSubmitting ? (
               <span>Saving...</span>

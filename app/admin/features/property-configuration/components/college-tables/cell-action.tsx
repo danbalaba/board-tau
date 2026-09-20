@@ -47,30 +47,30 @@ export const CellAction: React.FC<CellActionProps> = ({ data, onRefresh }) => {
             <IconDots className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-2xl p-2 shadow-2xl w-48">
-          <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-2 py-1.5">Actions</DropdownMenuLabel>
-          <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800 my-1" />
+        <DropdownMenuContent align="end" className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl p-2 shadow-2xl w-48">
+          <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-2 py-1.5">Actions</DropdownMenuLabel>
+          <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
           <Modal.Trigger name={`edit-college-${data.id}`}>
-            <DropdownMenuItem onClick={() => setOpenDropdown(false)} className="cursor-pointer text-xs font-bold uppercase tracking-wider rounded-xl gap-2 py-2 text-gray-700 dark:text-gray-200 focus:bg-gray-100 dark:focus:bg-gray-800 focus:text-slate-900 dark:focus:text-white">
-              <Edit className="h-4 w-4 text-emerald-500" /> Edit Landmark
+            <DropdownMenuItem onClick={() => setOpenDropdown(false)} className="cursor-pointer text-xs font-semibold rounded-xl gap-2 py-2 text-slate-700 dark:text-slate-200 focus:bg-slate-100 dark:focus:bg-slate-800 focus:text-slate-900 dark:focus:text-white">
+              <Edit className="h-4 w-4 text-amber-500" /> Edit Landmark
             </DropdownMenuItem>
           </Modal.Trigger>
 
           {data.isActive ? (
-            <DropdownMenuItem onClick={toggleStatus} className="cursor-pointer text-xs font-bold uppercase tracking-wider rounded-xl gap-2 py-2 text-amber-600 dark:text-amber-400 focus:bg-amber-50 dark:focus:bg-amber-950/40 focus:text-amber-600 dark:focus:text-amber-400">
+            <DropdownMenuItem onClick={toggleStatus} className="cursor-pointer text-xs font-semibold rounded-xl gap-2 py-2 text-amber-600 dark:text-amber-400 focus:bg-amber-50 dark:focus:bg-amber-950/40 focus:text-amber-600 dark:focus:text-amber-400">
               <PowerOff className="h-4 w-4 text-amber-500" /> Disable Landmark
             </DropdownMenuItem>
           ) : (
-            <DropdownMenuItem onClick={toggleStatus} className="cursor-pointer text-xs font-bold uppercase tracking-wider rounded-xl gap-2 py-2 text-emerald-600 dark:text-emerald-400 focus:bg-emerald-50 dark:focus:bg-emerald-950/40 focus:text-emerald-600 dark:focus:text-emerald-400">
-              <Power className="h-4 w-4 text-emerald-500" /> Enable Landmark
+            <DropdownMenuItem onClick={toggleStatus} className="cursor-pointer text-xs font-semibold rounded-xl gap-2 py-2 text-amber-600 dark:text-amber-400 focus:bg-amber-50 dark:focus:bg-amber-950/40 focus:text-amber-600 dark:focus:text-amber-400">
+              <Power className="h-4 w-4 text-amber-500" /> Enable Landmark
             </DropdownMenuItem>
           )}
 
           {!data.isActive && (
             <>
-              <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800 my-1" />
+              <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
               <Modal.Trigger name={`delete-college-${data.id}`}>
-                <DropdownMenuItem onClick={() => setOpenDropdown(false)} className="cursor-pointer text-xs font-bold uppercase tracking-wider rounded-xl gap-2 py-2 text-rose-600 dark:text-rose-400 focus:bg-rose-50 dark:focus:bg-rose-950/40 focus:text-rose-600 dark:focus:text-rose-400">
+                <DropdownMenuItem onClick={() => setOpenDropdown(false)} className="cursor-pointer text-xs font-semibold rounded-xl gap-2 py-2 text-rose-600 dark:text-rose-400 focus:bg-rose-50 dark:focus:bg-rose-950/40 focus:text-rose-600 dark:focus:text-rose-400">
                   <Trash2 className="h-4 w-4 text-rose-500" /> Delete Landmark
                 </DropdownMenuItem>
               </Modal.Trigger>

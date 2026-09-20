@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
       where: search ? { name: { contains: search, mode: "insensitive" } } : undefined,
       orderBy: { createdAt: "desc" },
       include: {
+        roomTypes: true,
         _count: {
           select: { listings: true }
         }
