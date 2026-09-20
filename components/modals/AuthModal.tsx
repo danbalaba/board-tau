@@ -157,20 +157,32 @@ const AuthModal = ({
             });
             onCloseModal?.();
 
-            // Fetch user role to determine redirect
-            const response = await fetch('/api/auth/session');
-            const sessionData = await response.json();
+            // Fetch fresh user role with cache-busting to determine post-login redirect
+            let role: string | undefined;
+            try {
+              const response = await fetch(`/api/auth/session?t=${Date.now()}`, {
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache' },
+              });
+              const sessionData = await response.json();
+              role = sessionData?.user?.role?.toUpperCase();
+            } catch (err) {
+              console.warn('[AuthModal] Failed to fetch session post-login', err);
+            }
+
             const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
             const callbackUrl = urlParams?.get('callbackUrl');
 
             if (callbackUrl && callbackUrl !== '/') {
               router.push(callbackUrl);
-            } else if (sessionData.user?.role === 'admin' || sessionData.user?.role === 'ADMIN') {
+            } else if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
               router.push('/admin');
-            } else if (sessionData.user?.role === 'landlord' || sessionData.user?.role === 'LANDLORD') {
+              router.refresh();
+            } else if (role === 'LANDLORD' || role === 'HOST') {
               router.push('/landlord');
+              router.refresh();
             } else {
-              router.refresh(); // Default to refresh for regular users
+              router.refresh(); // Default to refresh for regular tenants
             }
           }
         } else {

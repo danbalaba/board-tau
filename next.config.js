@@ -14,19 +14,17 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   skipTrailingSlashRedirect: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error"] } : false,
+  },
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
-      { protocol: "https", hostname: "res.cloudinary.com", pathname: "**", port: "" },
+      { protocol: "https", hostname: "files.edgestore.dev", pathname: "**", port: "" },
       { protocol: "https", hostname: "lh3.googleusercontent.com", pathname: "**", port: "" },
       { protocol: "https", hostname: "avatars.githubusercontent.com", pathname: "**", port: "" },
-      { protocol: "https", hostname: "files.edgestore.dev", pathname: "**", port: "" },
       { protocol: "https", hostname: "images.unsplash.com", pathname: "**", port: "" },
-      { protocol: "https", hostname: "images.pexels.com", pathname: "**", port: "" },
       { protocol: "https", hostname: "plus.unsplash.com", pathname: "**", port: "" },
-      { protocol: "https", hostname: "api.slingacademy.com", pathname: "**", port: "" },
-      { protocol: "https", hostname: "img.clerk.com", pathname: "**", port: "" },
-      { protocol: "https", hostname: "clerk.com", pathname: "**", port: "" }
     ],
   },
   transpilePackages: ['geist'],

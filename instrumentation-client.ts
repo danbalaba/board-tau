@@ -18,18 +18,40 @@ Sentry.init({
       colorScheme: "system",
     }),
   ],
+  beforeSend(event, hint) {
+    const error = hint.originalException;
+    if (error && typeof error === "object" && "message" in error) {
+      const msg = String(error.message);
+      // Filter out benign browser warnings & network drops
+      if (
+        msg.includes("ResizeObserver loop limit exceeded") ||
+        msg.includes("ResizeObserver loop completed with undelivered notifications") ||
+        msg.includes("Failed to fetch") ||
+        msg.includes("Load failed") ||
+        msg.includes("NetworkError")
+      ) {
+        return null;
+      }
+    }
+    // Ignore browser extension stack traces
+    if (event.exception?.values?.some((e) => e.stacktrace?.frames?.some((f) => f.filename?.includes("chrome-extension://") || f.filename?.includes("moz-extension://")))) {
+      return null;
+    }
+    return event;
+  },
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
 
 import posthog from "posthog-js";
 
-if (process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) {
+const isProduction = process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_VERCEL_ENV === "production";
+
+if (process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && isProduction) {
   posthog.init(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN, {
     api_host: "/ingest",
     ui_host: "https://us.posthog.com",
     defaults: "2026-01-30",
     capture_exceptions: true,
-    debug: process.env.NODE_ENV === "development",
   });
 }

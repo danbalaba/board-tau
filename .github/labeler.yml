@@ -1,0 +1,29 @@
+# Labeler configuration for BoardTAU repository
+
+'area: ai':
+  - 'app/api/ai/**/*'
+  - 'lib/ai/**/*'
+  - 'components/ai/**/*'
+
+'area: auth':
+  - 'app/api/auth/**/*'
+  - 'lib/auth/**/*'
+  - 'middleware.ts'
+
+'area: database':
+  - 'prisma/**/*'
+  - 'lib/prisma.ts'
+
+'area: ui':
+  - 'components/**/*'
+  - 'app/**/*.tsx'
+
+'area: security':
+  - 'lib/security/**/*'
+  - '.github/workflows/codeql.yml'
+  - '.github/workflows/dependency-review.yml'
+
+'area: devops':
+  - '.github/**/*'
+  - 'package.json'
+  - 'next.config.mjs'

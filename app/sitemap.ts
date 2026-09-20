@@ -30,15 +30,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
     // Core pages
     { route: "", priority: 1.0 },
-    { route: "/listings", priority: 0.9 },
+    { route: "/become-a-host", priority: 0.9 },
     { route: "/faqs", priority: 0.8 },
 
     // About section
     { route: "/about", priority: 0.8 },
     { route: "/about/boardtau", priority: 0.8 },
-    { route: "/about/contact", priority: 0.7 },
 
-    // Hosting / Host information
+    // Hosting & Community standards
     { route: "/hosting/community-standards", priority: 0.7 },
     { route: "/hosting/guidelines", priority: 0.7 },
     { route: "/hosting/responsibilities", priority: 0.7 },
@@ -48,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { route: "/legal/terms", priority: 0.6 },
     { route: "/legal/privacy", priority: 0.6 },
     { route: "/legal/accessibility", priority: 0.5 },
-    { route: "/legal/help", priority: 0.5 },
+    { route: "/legal/help", priority: 0.7 },
 
     // Support
     { route: "/support/help-center", priority: 0.7 },

@@ -1,0 +1,45 @@
+# BoardTAU - Boarding House & Student Housing Platform for Tarlac Agricultural University (TAU)
+
+> BoardTAU is the official trusted housing platform for the Tarlac Agricultural University community in Camiling, Tarlac, Philippines. We provide a seamless, secure, and verified way for students and faculty to discover, compare, and reserve boarding houses, dormitories, and apartments.
+
+## Core Features
+- **4-Phase Search Wizard**: Search by TAU College proximity, room budget, bed setups, and verified amenities.
+- **Kerby AI Assistant**: AI-powered housing assistant providing distance breakdowns, room availability, and FAQ guidance.
+- **Digital Lease Signing**: Review and digitally sign official lease contracts directly on the platform.
+- **Biometric KYC Verification**: Identity verification for tenants and host safety.
+- **Verified Host Listings**: All properties are verified by platform administrators.
+
+## Full Public Site Routes & Documentation
+- **Homepage**: https://board-tau-rho.vercel.app/
+- **Become a Host**: https://board-tau-rho.vercel.app/become-a-host
+- **Frequently Asked Questions**: https://board-tau-rho.vercel.app/faqs
+
+### About BoardTAU
+- **About the Founders**: https://board-tau-rho.vercel.app/about
+- **How BoardTAU Works**: https://board-tau-rho.vercel.app/about/boardtau
+
+### Hosting & Community Standards
+- **Community Standards**: https://board-tau-rho.vercel.app/hosting/community-standards
+- **Hosting Guidelines**: https://board-tau-rho.vercel.app/hosting/guidelines
+- **Host Responsibilities**: https://board-tau-rho.vercel.app/hosting/responsibilities
+- **Host Safety**: https://board-tau-rho.vercel.app/hosting/safety
+
+### Support & Help
+- **Help Center**: https://board-tau-rho.vercel.app/support/help-center
+- **Contact Us**: https://board-tau-rho.vercel.app/support/contact
+- **How Booking Works**: https://board-tau-rho.vercel.app/support/how-booking-works
+- **Trust & Safety Guidelines**: https://board-tau-rho.vercel.app/support/safety-guidelines
+- **Cancellation Policy**: https://board-tau-rho.vercel.app/support/cancellation-policy
+
+### Legal & Policies
+- **Terms of Service**: https://board-tau-rho.vercel.app/legal/terms
+- **Privacy Policy**: https://board-tau-rho.vercel.app/legal/privacy
+- **Accessibility Support**: https://board-tau-rho.vercel.app/legal/accessibility
+- **Legal & Help Center**: https://board-tau-rho.vercel.app/legal/help
+
+## Contact & Social Media
+- Email: support@boardtau.xyz
+- Facebook: https://www.facebook.com/profile.php?id=61592140986863
+- X / Twitter: https://x.com/BoardTAU
+- TikTok: https://www.tiktok.com/@boardtau.official
+- Instagram: https://www.instagram.com/boardtau.official/

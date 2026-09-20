@@ -3,10 +3,11 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail } from 'lucide-react';
+import { Mail, Bug } from 'lucide-react';
 import { FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
 import { useSession } from 'next-auth/react';
+import * as Sentry from '@sentry/nextjs';
 import Modal from '../modals/Modal';
 import AuthModal from '../modals/AuthModal';
 import HostApplicationModal from '../modals/HostApplicationModal';
@@ -25,6 +26,29 @@ const Footer: React.FC = () => {
   const { data: session } = useSafeSession();
   const currentUser = session?.user;
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  const [supportSubject, setSupportSubject] = useState('');
+
+  const handleReportIssue = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      const feedback = Sentry.getFeedback();
+      if (feedback) {
+        const form = await feedback.createForm();
+        form.appendToDom();
+        form.open();
+        return;
+      }
+    } catch (err) {
+      console.error('Failed to open Sentry user feedback dialog:', err);
+    }
+    setSupportSubject('[Bug Report] Issue reported on ' + (typeof window !== 'undefined' ? window.location.pathname : 'BoardTAU'));
+    setIsSupportModalOpen(true);
+  };
+
+  const handleOpenContactSupport = () => {
+    setSupportSubject('');
+    setIsSupportModalOpen(true);
+  };
 
   return (
     <>
@@ -61,13 +85,22 @@ const Footer: React.FC = () => {
               {/* Contact Support CTA */}
               <div className="flex flex-col space-y-3 pt-1">
                 <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold">Need Help?</span>
-                <button
-                  onClick={() => setIsSupportModalOpen(true)}
-                  className="bg-[#2f7d6d] hover:bg-[#1e5146] text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm transition-all duration-300 hover:scale-[1.02] inline-flex items-center gap-2 w-fit cursor-pointer"
-                >
-                  <Mail className="w-4 h-4" />
-                  Contact Support
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={handleOpenContactSupport}
+                    className="bg-[#2f7d6d] hover:bg-[#1e5146] text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm transition-all duration-300 hover:scale-[1.02] inline-flex items-center gap-2 cursor-pointer"
+                  >
+                    <Mail className="w-4 h-4" />
+                    Contact Support
+                  </button>
+                  <button
+                    onClick={handleReportIssue}
+                    className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-xl font-semibold shadow-sm transition-all duration-300 hover:scale-[1.02] inline-flex items-center gap-2 cursor-pointer text-sm"
+                  >
+                    <Bug className="w-4 h-4" />
+                    Report Issue
+                  </button>
+                </div>
               </div>
 
               {/* Social Media Icons (Squircle Buttons in Brand Green) */}
@@ -175,6 +208,15 @@ const Footer: React.FC = () => {
                     </Link>
                   </li>
                   <li>
+                    <button
+                      onClick={handleReportIssue}
+                      className="text-sm hover:underline text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium inline-flex items-center gap-1.5 cursor-pointer text-left"
+                    >
+                      <Bug className="w-3.5 h-3.5" />
+                      Report an Issue
+                    </button>
+                  </li>
+                  <li>
                     <Link
                       href="/support/safety-guidelines"
                       prefetch={false}
@@ -250,7 +292,8 @@ const Footer: React.FC = () => {
       <ContactSupportModal
         isOpen={isSupportModalOpen}
         onClose={() => setIsSupportModalOpen(false)}
-        title="Contact Support"
+        initialSubject={supportSubject}
+        title={supportSubject.includes('Bug Report') ? 'Report an Issue' : 'Contact Support'}
       />
     </>
   );
