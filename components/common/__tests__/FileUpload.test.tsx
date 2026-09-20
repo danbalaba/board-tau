@@ -7,6 +7,10 @@ jest.mock('@/components/common/ResponsiveToast', () => ({
   useResponsiveToast: jest.fn(),
 }));
 
+jest.mock('@/utils/contractPdfGenerator', () => ({
+  previewPdfBlob: jest.fn(),
+}));
+
 describe('FileUpload', () => {
   const mockOnFileSelect = jest.fn();
   const mockOnPreview = jest.fn();
@@ -115,14 +119,14 @@ describe('FileUpload', () => {
         id="test-upload" 
         label="Upload File" 
         onFileSelect={mockOnFileSelect} 
-        fileName="uploaded.pdf"
-        fileUrl="https://example.com/uploaded.pdf"
+        fileName="uploaded.png"
+        fileUrl="https://example.com/uploaded.png"
       />
     );
     
-    fireEvent.click(screen.getByText('uploaded.pdf'));
+    fireEvent.click(screen.getByText('uploaded.png'));
     
-    expect(windowOpenSpy).toHaveBeenCalledWith('https://example.com/uploaded.pdf', '_blank');
+    expect(windowOpenSpy).toHaveBeenCalledWith('https://example.com/uploaded.png', '_blank');
     windowOpenSpy.mockRestore();
   });
 

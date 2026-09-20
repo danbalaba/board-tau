@@ -25,9 +25,12 @@ interface LandlordPropertyManagementProps {
 }
 
 const statusColors: Record<string, string> = {
-  active: 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
-  pending: 'bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20',
+  active: 'bg-primary/10 text-primary border-primary/20 dark:bg-primary/20 dark:text-primary-400 dark:border-primary/30',
+  ACTIVE: 'bg-primary/90 text-white border-primary/40',
+  pending: 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
+  PENDING: 'bg-amber-500/90 text-white border-amber-400/50',
   rejected: 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20',
+  REJECTED: 'bg-rose-500/90 text-white border-rose-400/50',
   flagged: 'bg-orange-50 text-orange-600 border-orange-100 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20',
 };
 

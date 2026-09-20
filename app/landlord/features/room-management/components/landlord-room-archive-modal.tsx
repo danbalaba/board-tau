@@ -53,13 +53,13 @@ export function LandlordRoomArchiveModal({
           >
             <div className={cn(
               "absolute top-0 left-0 w-full h-1.5",
-              isArchived ? "bg-emerald-500" : "bg-amber-500"
+              isArchived ? "bg-primary" : "bg-amber-500"
             )} />
             
             <div className="flex flex-col items-center text-center">
               <div className={cn(
                 "w-16 h-16 rounded-2xl flex items-center justify-center mb-6 animate-pulse",
-                isArchived ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500" : "bg-amber-50 dark:bg-amber-900/20 text-amber-500"
+                isArchived ? "bg-primary/10 text-primary" : "bg-amber-50 dark:bg-amber-900/20 text-amber-500"
               )}>
                 {isArchived ? <RotateCcw size={32} /> : <Archive size={32} />}
               </div>
@@ -82,7 +82,7 @@ export function LandlordRoomArchiveModal({
                   className={cn(
                     "w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl flex items-center justify-center gap-2",
                     isArchived 
-                      ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/20" 
+                      ? "bg-primary hover:bg-primary/90 text-white shadow-primary/20" 
                       : "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
                   )}
                 >

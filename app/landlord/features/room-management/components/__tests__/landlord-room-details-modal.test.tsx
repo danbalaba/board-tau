@@ -97,7 +97,7 @@ describe('LandlordRoomDetailsModal', () => {
       jest.advanceTimersByTime(1000);
     });
 
-    const closeBtn = screen.getByText(/Dismiss/i);
+    const closeBtn = screen.getByTestId('icon-X').closest('button')!;
     fireEvent.click(closeBtn);
     expect(mockOnClose).toHaveBeenCalled();
   });

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { 
   DoorOpen, 
@@ -19,16 +19,10 @@ import {
 import { motion, type Variants } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import SafeImage from '@/components/common/SafeImage';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/app/admin/components/ui/dropdown-menu';
 import { Button } from '@/app/admin/components/ui/button';
 import { Room } from '../hooks/use-room-logic';
+import { getSyncRoomTypes, getCachedRoomTypes } from '@/lib/landlordTaxonomyCache';
+import { getDynamicIcon } from '@/lib/iconResolver';
 
 interface LandlordRoomCardProps {
   room: Room;
@@ -54,6 +48,40 @@ export function LandlordRoomCard({
   formatStatus
 }: LandlordRoomCardProps) {
   const isGrid = viewMode === 'grid';
+  const [roomTypesList, setRoomTypesList] = React.useState<any[]>(() => getSyncRoomTypes() || []);
+
+  React.useEffect(() => {
+    if (roomTypesList.length === 0) {
+      getCachedRoomTypes().then((rts: any[]) => {
+        if (rts && rts.length > 0) setRoomTypesList(rts);
+      });
+    }
+  }, [roomTypesList.length]);
+
+  const matchedRoomType = useMemo(() => {
+    if (!room.roomType) return null;
+    const target = String(room.roomType).trim();
+    return roomTypesList.find((rt: any) =>
+      rt.id === target ||
+      rt.code === target ||
+      rt.name === target ||
+      rt.name?.toLowerCase() === target.toLowerCase() ||
+      rt.code?.toLowerCase() === target.toLowerCase()
+    );
+  }, [room.roomType, roomTypesList]);
+
+  const roomTypeLabel = useMemo(() => {
+    if ((room as any).roomTypeDefinition?.name) return (room as any).roomTypeDefinition.name;
+    if ((room as any).roomTypeName) return (room as any).roomTypeName;
+    if (matchedRoomType?.name) return matchedRoomType.name;
+    if (room.roomType === 'SOLO') return 'Private Solo Room';
+    if (room.roomType === 'BEDSPACE') return 'Shared Bedspace';
+    if (room.roomType === 'STUDIO') return 'Studio Unit';
+    if (room.roomType && !/^[a-f0-9]{24}$/i.test(room.roomType)) return room.roomType;
+    return 'Standard Room';
+  }, [matchedRoomType, room.roomType]);
+
+  const RoomTypeIcon = matchedRoomType?.icon ? getDynamicIcon(matchedRoomType.icon, Layers) : Layers;
 
   const containerVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
@@ -97,15 +125,15 @@ export function LandlordRoomCard({
           {/* Status badge — top left */}
           <div className="absolute top-3 left-3 z-20">
             <span className={cn(
-              "flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[8px] uppercase font-black tracking-widest shadow-lg backdrop-blur-md border", 
-              statusColors[room.status] || "bg-white text-gray-800 border-gray-200"
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] uppercase font-black tracking-wider shadow-lg backdrop-blur-md border", 
+              statusColors[room.status] || "bg-primary/90 text-white border-primary/40"
             )}>
-              <DoorOpen size={10} strokeWidth={3} />
+              <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
               {formatStatus(room.status)}
             </span>
           </div>
 
-          {/* Archive button — top right, inside image for correct stacking */}
+          {/* Archive button — top right */}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -114,7 +142,7 @@ export function LandlordRoomCard({
             className={cn(
               "absolute top-3 right-3 z-20 p-2 rounded-xl backdrop-blur-md transition-all duration-300 shadow-lg border",
               room.isArchived
-                ? "bg-emerald-500/80 text-white border-emerald-400/50 hover:bg-emerald-600"
+                ? "bg-primary/90 text-white border-primary/50 hover:bg-primary"
                 : "bg-white/80 dark:bg-gray-900/80 text-gray-500 hover:text-rose-500 border-gray-100 dark:border-gray-800 hover:border-rose-100"
             )}
             title={room.isArchived ? "Restore Room" : "Archive Room"}
@@ -142,18 +170,16 @@ export function LandlordRoomCard({
 
           {/* Stats Box */}
           <div className="flex items-center gap-3 mb-5 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-2xl border border-gray-100 dark:border-gray-800">
-            <div className="flex-1 flex items-center gap-3 border-r border-gray-200 dark:border-gray-700 pr-3">
-               <div className="p-1.5 bg-blue-100/50 dark:bg-blue-500/20 rounded-lg text-blue-600"><Layers size={14} /></div>
-               <div>
+            <div className="flex-1 flex items-center gap-2.5 border-r border-gray-200 dark:border-gray-700 pr-3 min-w-0">
+               <div className="p-1.5 bg-primary/10 rounded-lg text-primary shrink-0"><RoomTypeIcon size={14} /></div>
+               <div className="min-w-0">
                   <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Type</p>
-                  <p className="text-xs font-black text-gray-900 dark:text-white leading-none">{room.roomType}</p>
+                  <p className="text-xs font-black text-gray-900 dark:text-white leading-none truncate">{roomTypeLabel}</p>
                </div>
             </div>
-            <div className="flex-1 flex items-center gap-3">
-               <div className="p-1.5 bg-emerald-100/50 dark:bg-emerald-500/20 rounded-lg text-emerald-600">
-                  <Users size={14} />
-               </div>
-               <div>
+            <div className="flex-1 flex items-center gap-2.5 min-w-0">
+               <div className="p-1.5 bg-primary/10 rounded-lg text-primary shrink-0"><Users size={14} /></div>
+               <div className="min-w-0">
                   <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Slots</p>
                   <p className="text-xs font-black text-gray-900 dark:text-white leading-none">{room.availableSlots}/{room.capacity}</p>
                </div>
@@ -171,9 +197,9 @@ export function LandlordRoomCard({
              </div>
              <div className="text-right">
                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Safety</p>
-               <div className="flex items-center gap-1 text-[10px] font-black text-emerald-500 uppercase">
+               <div className="flex items-center gap-1 text-[10px] font-black text-primary uppercase">
                  <ShieldCheck size={12} />
-                 <span>Secure</span>
+                 <span>Verified</span>
                </div>
              </div>
           </div>
@@ -218,7 +244,9 @@ export function LandlordRoomCard({
         </div>
       </motion.div>
     );
-  }  /* List View */
+  }
+
+  /* List View */
   return (
     <motion.div
       variants={containerVariants}
@@ -239,12 +267,12 @@ export function LandlordRoomCard({
               <DoorOpen size={40} strokeWidth={1.5} />
             </div>
           )}
-          <div className="absolute top-4 left-4">
+          <div className="absolute top-4 left-4 z-20">
             <span className={cn(
-              "flex items-center gap-1.5 px-3 py-1 rounded-xl text-[9px] uppercase font-black tracking-widest shadow-lg backdrop-blur-md border",
-              statusColors[room.status] || "bg-white text-gray-800 border-gray-200"
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] uppercase font-black tracking-wider shadow-lg backdrop-blur-md border",
+              statusColors[room.status] || "bg-primary/90 text-white border-primary/40"
             )}>
-              <DoorOpen size={12} strokeWidth={3} />
+              <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
               {formatStatus(room.status)}
             </span>
           </div>
@@ -270,12 +298,12 @@ export function LandlordRoomCard({
           </div>
 
           <div className="flex items-center gap-4 flex-wrap mb-2">
-            <div className="flex items-center gap-3 px-5 py-2.5 bg-blue-50/50 dark:bg-blue-500/10 rounded-2xl border border-blue-100/50 dark:border-blue-500/20 shadow-sm">
-              <Layers size={18} className="text-blue-500" />
-              <span className="text-[11px] font-black uppercase tracking-widest text-gray-700 dark:text-gray-300">{room.roomType}</span>
+            <div className="flex items-center gap-3 px-5 py-2.5 bg-primary/5 rounded-2xl border border-primary/10 shadow-sm">
+              <RoomTypeIcon size={18} className="text-primary" />
+              <span className="text-[11px] font-black uppercase tracking-widest text-gray-700 dark:text-gray-300">{roomTypeLabel}</span>
             </div>
-            <div className="flex items-center gap-3 px-5 py-2.5 bg-emerald-50/50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-100/50 dark:border-emerald-500/20 shadow-sm">
-              <Users size={18} className="text-emerald-500" />
+            <div className="flex items-center gap-3 px-5 py-2.5 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/10 dark:border-primary/20 shadow-sm">
+              <Users size={18} className="text-primary" />
               <span className="text-[11px] font-black uppercase tracking-widest text-gray-700 dark:text-gray-300">{room.availableSlots}/{room.capacity} Slots Available</span>
             </div>
             <div className="flex items-center gap-3 px-5 py-2.5 bg-purple-50/50 dark:bg-purple-500/10 rounded-2xl border border-purple-100/50 dark:border-purple-500/20 shadow-sm">
@@ -300,7 +328,7 @@ export function LandlordRoomCard({
             {!room.isArchived && (
               <button
                 onClick={() => onEdit && onEdit(room)}
-                className="flex-1 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center group/btn shadow-sm border border-blue-100 dark:border-blue-900/30"
+                className="flex-1 rounded-2xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all flex items-center justify-center group/btn shadow-sm border border-primary/20"
                 title="Edit Details"
               >
                 <Pencil size={18} className="group-hover/btn:scale-110 transition-transform" />
@@ -312,7 +340,7 @@ export function LandlordRoomCard({
               className={cn(
                 "flex-1 rounded-2xl transition-all flex items-center justify-center group/btn shadow-sm border",
                 (room as any).isArchived 
-                  ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white" 
+                  ? "bg-primary/10 text-primary border-primary/20 hover:bg-primary hover:text-white" 
                   : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white"
               )}
               title={room.isArchived ? "Restore Room" : "Archive Room"}
@@ -340,26 +368,4 @@ export function LandlordRoomCard({
   );
 }
 
-function ArchiveButton({ room, onArchive }: { room: Room, onArchive: (r: Room) => void }) {
-  return (
-    <button 
-      onClick={(e) => {
-        e.stopPropagation();
-        onArchive(room);
-      }}
-      className={cn(
-        "absolute top-4 right-4 z-[60] p-2 rounded-xl backdrop-blur-md transition-all duration-300 shadow-lg border",
-        (room as any).isArchived 
-          ? "bg-emerald-500/80 text-white border-emerald-400/50 hover:bg-emerald-600" 
-          : "bg-white/80 dark:bg-gray-900/80 text-gray-500 hover:text-rose-500 border-gray-100 dark:border-gray-800 hover:border-rose-100"
-      )}
-      title={(room as any).isArchived ? "Restore Room" : "Archive Room"}
-    >
-      {(room as any).isArchived ? (
-        <RotateCcw size={16} strokeWidth={2.5} />
-      ) : (
-        <Archive size={16} strokeWidth={2.5} />
-      )}
-    </button>
-  );
-}
+export default LandlordRoomCard;

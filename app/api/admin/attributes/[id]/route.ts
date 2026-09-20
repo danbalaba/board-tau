@@ -70,8 +70,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       data: {
         ...(name && { name: name.trim().replace(/\s+/g, " ") }),
         ...(type && { type }),
-        subGroupKey: subGroupKey || null,
-        setupContext: type === "ROOM_AMENITY" ? (setupContext || null) : null,
+        ...(subGroupKey !== undefined && { subGroupKey: subGroupKey || null }),
+        ...(setupContext !== undefined && { setupContext: setupContext || null }),
         ...(description !== undefined && { description: description ? description.trim().replace(/\s+/g, " ") : null }),
         ...(icon !== undefined && { icon }),
         ...(isActive !== undefined && { isActive }),

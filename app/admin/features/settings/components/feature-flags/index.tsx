@@ -161,20 +161,20 @@ export function FeatureFlags() {
         history={history}
       />
       
-      <div className="space-y-4 pb-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10">
         <AnimatePresence mode="popLayout">
           {filtered.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="text-center py-16 bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl rounded-[2.5rem] border border-dashed border-gray-300 dark:border-gray-800 flex flex-col items-center justify-center shadow-sm"
+              className="lg:col-span-2 text-center py-16 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-[2.5rem] border border-dashed border-gray-300 dark:border-gray-800 flex flex-col items-center justify-center shadow-sm"
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 bg-gray-500/10 text-gray-400">
-                <Settings2 size={24} />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 bg-primary/10 text-primary dark:text-emerald-400 border border-primary/20">
+                <Settings2 size={28} />
               </div>
               <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">No Flags Found</h3>
-              <p className="text-sm font-medium text-gray-400 max-w-sm mx-auto leading-relaxed">
+              <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 max-w-sm mx-auto leading-relaxed">
                 Could not find any feature flags matching "{search}".
               </p>
             </motion.div>

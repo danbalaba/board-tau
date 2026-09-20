@@ -3,6 +3,8 @@ import { Upload, X } from "lucide-react";
 import { cn } from "@/utils/helper";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 
+import { previewPdfBlob } from "@/utils/contractPdfGenerator";
+
 export interface FileUploadProps {
   id: string;
   label: string;
@@ -143,7 +145,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
     if (onPreview) {
       onPreview();
     } else if (fileUrl) {
-      window.open(fileUrl, '_blank');
+      if (fileUrl.startsWith('blob:') || fileUrl.toLowerCase().includes('.pdf')) {
+        previewPdfBlob(fileUrl, fileName || 'Document Preview');
+      } else {
+        window.open(fileUrl, '_blank');
+      }
     }
   };
 

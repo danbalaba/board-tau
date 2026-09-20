@@ -15,6 +15,7 @@ import axios from 'axios';
 import HelpTooltip from '@/components/common/HelpTooltip';
 
 import { getCachedPropertyTypes, getSyncPropertyTypes } from '@/lib/landlordTaxonomyCache';
+import { formatCleanTitle } from '@/lib/utils';
 
 interface PropertyBasicStepProps {
   register: any;
@@ -92,7 +93,7 @@ export default function PropertyBasicStep({
 
   const businessDesc = watch('businessInfo.businessDescription') || '';
   const propertyDesc = watch('propertyInfo.description') || '';
-  const selectedTypeId = watch('businessInfo.businessType') || watch('propertyInfo.propertyTypeId');
+  const selectedTypeId = watch('propertyInfo.propertyTypeId') || watch('businessInfo.businessType');
   const selectedPropertyType = propertyTypes.find(pt => pt.id === selectedTypeId || pt.name === selectedTypeId);
 
   // Card Level Error Detection
@@ -197,6 +198,14 @@ export default function PropertyBasicStep({
             onInput={(e: any) => {
               e.target.value = e.target.value.replace(/[^a-zA-Z0-9\s-]/g, '');
             }}
+            onBlur={(e: any) => {
+              if (e.target.value && setValue) {
+                const formatted = formatCleanTitle(e.target.value);
+                if (formatted !== e.target.value) {
+                  setValue('businessInfo.businessName', formatted, { shouldValidate: true, shouldTouch: true });
+                }
+              }
+            }}
             validationRules={{
               required: "Business name must be at least 3 characters",
               minLength: { value: 3, message: "Business name must be at least 3 characters" }
@@ -204,7 +213,7 @@ export default function PropertyBasicStep({
           />
 
           <div className="relative" id="businessInfo.yearsExperience">
-            <label className={`block text-[11px] font-black uppercase tracking-widest mb-2 ml-1 ${hasExperienceError ? "text-rose-500" : "text-gray-400"}`}>
+            <label className={`block text-[11px] font-black uppercase tracking-widest mb-2 ml-1 ${hasExperienceError ? "text-rose-500" : "text-slate-700 dark:text-gray-300"}`}>
               Years of Experience <span className="text-rose-500 ml-0.5">*</span>
             </label>
             <Controller
@@ -447,6 +456,14 @@ export default function PropertyBasicStep({
               useStaticLabel 
               onInput={(e: any) => {
                 e.target.value = e.target.value.replace(/[^a-zA-Z0-9\s-]/g, '');
+              }}
+              onBlur={(e: any) => {
+                if (e.target.value && setValue) {
+                  const formatted = formatCleanTitle(e.target.value);
+                  if (formatted !== e.target.value) {
+                    setValue('propertyInfo.propertyName', formatted, { shouldValidate: true, shouldTouch: true });
+                  }
+                }
               }}
               validationRules={{
                 required: "Display name must be at least 3 characters",

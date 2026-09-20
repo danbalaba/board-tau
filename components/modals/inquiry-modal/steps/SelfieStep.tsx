@@ -1,7 +1,7 @@
 import React from "react";
 import Webcam from "react-webcam";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, RefreshCcw, Loader2, Eye } from "lucide-react";
+import { User, RefreshCcw, Loader2, Eye, CheckCircle } from "lucide-react";
 import { FaCamera, FaTimes } from "react-icons/fa";
 import { sanitizeImgUrl } from "@/lib/security/sanitize";
 import SafeImage from "@/components/common/SafeImage";
@@ -92,6 +92,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                 audio={false}
                 ref={webcamRef}
                 screenshotFormat="image/jpeg"
+                mirrored={facingMode === "user"}
                 videoConstraints={
                   selectedDeviceId
                     ? { deviceId: { exact: selectedDeviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
@@ -153,7 +154,8 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                       className="bg-emerald-600/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-emerald-400/30 flex items-center justify-center gap-3 shadow-[0_8px_32_rgba(0,0,0,0.3)] min-w-[200px]"
                     >
                        <div className="w-2 h-2 bg-white rounded-full animate-ping" />
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em]">Liveness Confirmed ✓</span>
+                       <CheckCircle size={14} className="text-white" />
+                       <span className="text-[10px] font-black uppercase tracking-[0.2em]">Liveness Confirmed</span>
                     </motion.div>
                   ) : isFaceAligned && livenessStatus === 'idle' && !isProcessing ? (
                     <motion.div

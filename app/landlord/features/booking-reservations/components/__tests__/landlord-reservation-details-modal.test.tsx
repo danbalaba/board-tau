@@ -84,7 +84,7 @@ describe('LandlordReservationDetailsModal', () => {
       expect(screen.getAllByText('Alice Smith').length).toBeGreaterThan(0);
     });
 
-    expect(screen.getByText('Luxury Condo')).toBeInTheDocument();
+    expect(screen.getAllByText('Luxury Condo').length).toBeGreaterThan(0);
     expect(screen.getByText('₱5,000')).toBeInTheDocument();
   });
 

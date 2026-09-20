@@ -41,15 +41,25 @@ export async function getLandlordRooms(args?: {
       include: {
         listing: {
           select: {
+            id: true,
             title: true,
             region: true,
-            status: true
+            status: true,
+            propertyTypeId: true,
+            bathroomCount: true,
+            propertyType: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
           }
         },
         images: true,
         roomLinks: {
           include: { attribute: true }
-        }
+        },
+        roomTypeDefinition: true
       },
       orderBy
     });
@@ -59,11 +69,14 @@ export async function getLandlordRooms(args?: {
       createdAt: room.createdAt.toISOString(),
       updatedAt: room.updatedAt.toISOString(),
       propertyId: room.listingId,
-      propertyTitle: room.listing.title,
-      propertyRegion: room.listing.region,
-      propertyStatus: room.listing.status,
+      propertyTitle: room.listing?.title,
+      propertyRegion: room.listing?.region,
+      propertyStatus: room.listing?.status,
+      propertyTypeId: room.listing?.propertyTypeId || room.listing?.propertyType?.id || null,
+      roomType: room.roomTypeDefinitionId || room.roomTypeDefinition?.code || room.roomTypeDefinition?.name || '',
       imageSrc: room.images[0]?.url || null,
       images: room.images.map((img: any) => img.url),
+      amenities: room.roomLinks.map((rl: any) => rl.attribute)
     }));
 
     return {
@@ -87,12 +100,57 @@ export async function createLandlordRoom(data: any) {
     throw new Error('Property not found or unauthorized');
   }
 
+  const imageUrls: string[] = Array.isArray(data.images) ? data.images : [];
+
+  // Resolve dynamic attribute IDs for room attribute links safely
+  const resolvedAttributeIds: string[] = [];
+  if (Array.isArray(data.amenities) && data.amenities.length > 0) {
+    for (const item of data.amenities) {
+      if (!item) continue;
+      const strVal = String(item).trim();
+      
+      // Try finding by ID
+      const byId = await db.dynamicAttribute.findUnique({ where: { id: strVal } });
+      if (byId) {
+        resolvedAttributeIds.push(byId.id);
+        continue;
+      }
+
+      // Try finding by name
+      let cleanName = strVal;
+      let iconName = "HelpCircle";
+      if (strVal.includes("||")) {
+        [cleanName, iconName] = strVal.split("||").map((s) => s.trim());
+      } else if (strVal.includes("|")) {
+        [cleanName, iconName] = strVal.split("|").map((s) => s.trim());
+      }
+
+      const byName = await db.dynamicAttribute.findFirst({ where: { name: cleanName } });
+      if (byName) {
+        resolvedAttributeIds.push(byName.id);
+        continue;
+      }
+
+      // Upsert custom room amenity attribute
+      const newAttr = await db.dynamicAttribute.create({
+        data: {
+          name: cleanName,
+          icon: iconName || "HelpCircle",
+          type: "ROOM_AMENITY",
+          isActive: true,
+          description: ""
+        }
+      });
+      resolvedAttributeIds.push(newAttr.id);
+    }
+  }
+
   const room = await db.room.create({
     data: {
       listingId: data.listingId,
       name: data.name,
       description: data.description || "",
-      roomType: data.roomType,
+      roomTypeDefinitionId: data.roomType,
       bathroomArrangement: data.bathroomArrangement || "PRIVATE_CR",
       bedType: data.bedType,
       bedCount: Number(data.bedCount) || 1,
@@ -104,15 +162,14 @@ export async function createLandlordRoom(data: any) {
       status: Number(data.availableSlots) === 0 ? 'FULL' : 'AVAILABLE',
       amenityNames: data.amenities || [],
       roomLinks: {
-        create: (data.amenities || []).map((id: string) => ({
-          attributeId: id
+        create: resolvedAttributeIds.map((attrId: string) => ({
+          attributeId: attrId
         }))
       }
     }
   });
 
   // Save uploaded image URLs to the RoomImage table
-  const imageUrls: string[] = Array.isArray(data.images) ? data.images : [];
   if (imageUrls.length > 0) {
     await db.roomImage.createMany({
       data: imageUrls.map((url: string, idx: number) => ({
@@ -126,3 +183,4 @@ export async function createLandlordRoom(data: any) {
 
   return room;
 }
+

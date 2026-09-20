@@ -1,27 +1,16 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import axios from "axios";
 import { fetchTaxonomyData, getTaxonomyDataSync } from "@/lib/taxonomyCache";
 import Heading from "@/components/common/Heading";
 import { motion, AnimatePresence } from "framer-motion";
-import * as LucideIcons from "lucide-react";
+import { getDynamicIcon } from "@/lib/iconResolver";
 import {
-  GraduationCap,
-  Briefcase,
-  Users,
-  UserX,
-  Clock,
-  Lock,
-  VolumeX,
-  AlertTriangle,
-  PawPrint,
-  Ban,
-  Wine,
   Check,
   RotateCcw,
   Sparkles,
   AlertCircle,
+  Lock,
 } from "lucide-react";
 import { FieldValues, UseFormRegister, UseFormWatch } from "react-hook-form";
 import { KerbyPose } from "../KerbyMascot";
@@ -41,19 +30,6 @@ interface RulesStepProps {
   onClearValidationError?: () => void;
   onLoadingChange?: (isLoading: boolean) => void;
 }
-
-const STATIC_CURFEW_OPTIONS = [
-  { id: "24/7 Open Gate Access (No Curfew)", name: "24/7 Open Gate Access (No Curfew)", desc: "Entry permitted at any time via key/RFID.", icon: Clock },
-  { id: "Night Curfew Enforced (10:00 PM)", name: "Night Curfew Enforced (10:00 PM)", desc: "Main gate locked at 10:00 PM.", icon: Lock },
-  { id: "Early Night Curfew Enforced (9:00 PM)", name: "Early Night Curfew Enforced (9:00 PM)", desc: "Main gate locked at 9:00 PM.", icon: Lock },
-  { id: "Strict Curfew with Gate Lock (8:00 PM)", name: "Strict Curfew with Gate Lock (8:00 PM)", desc: "Main gate locked early at 8:00 PM for maximum security.", icon: Lock },
-  { id: "Quiet Hours Enforced (10:00 PM - 6:00 AM)", name: "Quiet Hours Enforced (10:00 PM - 6:00 AM)", desc: "Quiet study environment strictly enforced late night.", icon: VolumeX },
-];
-
-const STATIC_SMOKE_OPTIONS = [
-  { id: "No Smoking Inside Property", name: "No Smoking Inside Property", desc: "Strict non-smoking policy inside rooms and indoor areas.", icon: Ban },
-  { id: "No Drinking / Alcohol Allowed", name: "No Drinking / Alcohol Allowed", desc: "Alcoholic beverages prohibited on property grounds.", icon: Wine },
-];
 
 export default function RulesStep({
   propertyTypeSelected = [],
@@ -104,43 +80,107 @@ export default function RulesStep({
       .finally(() => setIsLoading(false));
   }, []);
 
-  // Merge dynamic attributes with static options for Curfew & Smoke/Alcohol to ensure rich fallback
-  const curfewItems = useMemo(() => {
-    const dbCurfews = dynamicAttributes
-      .filter((attr) => attr.isActive && attr.subGroupKey === "CURFEW")
-      .map((attr) => ({
+  const isSingleGenderProperty = useMemo(() => {
+    if (!genderPolicy) return false;
+    const lower = (genderPolicy || "").toLowerCase();
+    return lower.includes("female-only") || lower.includes("female only") || lower.includes("male-only") || lower.includes("male only");
+  }, [genderPolicy]);
+
+  const isVisitorAttrVisible = React.useCallback((attr: any) => {
+    if ((attr.subGroupKey || "").toUpperCase().trim() !== "VISITOR_POLICY") return true;
+    if (!isSingleGenderProperty) return true;
+    const nameLower = (attr.name || "").toLowerCase();
+    if (nameLower.includes("restricted")) return false;
+    return true;
+  }, [isSingleGenderProperty]);
+
+  const isAttrMatchingPropertyType = React.useCallback(
+    (attr: any) => {
+      if (!attr || !attr.isActive) return false;
+      const selectedProp = (propertyTypeSelected[0] || "Boarding House").toLowerCase().trim();
+      const rawTypes = attr.propertyTypeNames || attr.propertyTypes || attr.propertyTypeIds || [];
+
+      if (!attr.isUniversal && rawTypes && rawTypes.length > 0) {
+        return rawTypes.some((pt: any) => {
+          const pName = (pt.name || pt || "").toString().toLowerCase().trim();
+          return pName.includes(selectedProp) || selectedProp.includes(pName);
+        });
+      }
+
+      return attr.isUniversal ?? true;
+    },
+    [propertyTypeSelected]
+  );
+
+  const getSubGroupItems = React.useCallback(
+    (subGroupKey: string, defaultIconName: string = "Sparkles") => {
+      const keyUpper = (subGroupKey || "").toUpperCase().trim();
+      const dbAttrs = dynamicAttributes.filter(
+        (attr) =>
+          attr.isActive &&
+          (attr.subGroupKey || "").toUpperCase().trim() === keyUpper &&
+          isVisitorAttrVisible(attr) &&
+          isAttrMatchingPropertyType(attr)
+      );
+
+      return dbAttrs.map((attr) => ({
         id: attr.name,
         name: attr.name,
-        desc: attr.description || `Custom ${attr.name} rule.`,
-        icon: (attr.icon && (LucideIcons as any)[attr.icon]) ? (LucideIcons as any)[attr.icon] : Clock,
+        title: attr.name,
+        desc: attr.description || `${attr.name} rule.`,
+        icon: getDynamicIcon(attr.icon, defaultIconName),
       }));
+    },
+    [dynamicAttributes, isVisitorAttrVisible, isAttrMatchingPropertyType]
+  );
 
-    if (dbCurfews.length === 0) return STATIC_CURFEW_OPTIONS;
+  const genderPolicyItems = useMemo(() => {
+    return getSubGroupItems("GENDER_POLICY", "Users");
+  }, [getSubGroupItems]);
 
-    // Merge static options that aren't in DB yet
-    const existingNames = new Set(dbCurfews.map((i) => i.name));
-    const extraStatics = STATIC_CURFEW_OPTIONS.filter((s) => !existingNames.has(s.name));
-    return [...dbCurfews, ...extraStatics];
-  }, [dynamicAttributes]);
+  const ruleSubGroupsList = useMemo(() => {
+    const dbGroups = dynamicSubGroups.filter(
+      (sg: any) =>
+        sg.type === "RULE" &&
+        sg.isActive &&
+        sg.key !== "GENDER_POLICY" &&
+        sg.key !== "SMOKE_ALCOHOL" &&
+        sg.key !== "SMOKE" &&
+        sg.key !== "ALCOHOL"
+    );
 
-  const smokeItems = useMemo(() => {
-    const dbSmokes = dynamicAttributes
-      .filter((attr) => attr.isActive && (attr.subGroupKey === "SMOKE_ALCOHOL" || attr.subGroupKey === "SMOKING_POLICY" || attr.subGroupKey === "ALCOHOL_POLICY"))
-      .map((attr) => ({
-        id: attr.name,
-        name: attr.name,
-        desc: attr.description || `Custom ${attr.name} rule.`,
-        icon: (attr.icon && (LucideIcons as any)[attr.icon]) ? (LucideIcons as any)[attr.icon] : Ban,
-      }));
+    const standardOrder = ["CURFEW", "VISITOR_POLICY", "PET_POLICY", "SMOKING_POLICY", "ALCOHOL_POLICY"];
+    const groups: { key: string; label: string; icon: any; items: any[] }[] = [];
+    const processedKeys = new Set<string>();
 
-    if (dbSmokes.length === 0) return STATIC_SMOKE_OPTIONS;
+    const sortedDbGroups = [...dbGroups].sort((a: any, b: any) => {
+      const idxA = standardOrder.indexOf((a.key || "").toUpperCase());
+      const idxB = standardOrder.indexOf((b.key || "").toUpperCase());
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return (a.displayOrder || 99) - (b.displayOrder || 99);
+    });
 
-    const existingNames = new Set(dbSmokes.map((i) => i.name));
-    const extraStatics = STATIC_SMOKE_OPTIONS.filter((s) => !existingNames.has(s.name));
-    return [...dbSmokes, ...extraStatics];
-  }, [dynamicAttributes]);
+    sortedDbGroups.forEach((sg: any) => {
+      const keyUpper = (sg.key || "").toUpperCase().trim();
+      const items = getSubGroupItems(keyUpper, sg.icon || "Sparkles");
 
-  const totalSubSteps = 6;
+      if (items.length > 0 && !processedKeys.has(keyUpper)) {
+        processedKeys.add(keyUpper);
+        groups.push({
+          key: sg.key,
+          label: sg.tabLabel || sg.title || sg.key.replace(/_/g, " "),
+          icon: getDynamicIcon(sg.icon, "Sparkles"),
+          items,
+        });
+      }
+    });
+
+    return groups;
+  }, [dynamicSubGroups, getSubGroupItems]);
+
+  const totalSubSteps = 1 + ruleSubGroupsList.length;
 
   useEffect(() => {
     if (onTotalSubStepsChange) {
@@ -151,66 +191,28 @@ export default function RulesStep({
   const getSubStepConfig = (index: number) => {
     if (index === 0) {
       return {
-        title: "Step 8-1: Tenant Type Preference",
-        subtitle: `Who should the ${propName} be tailored for?`,
-        speech: `Who should your ${propName} be tailored for?`,
-        pose: "thinking" as KerbyPose,
-        type: "tenant_type",
-        items: [],
-      };
-    }
-
-    if (index === 1) {
-      return {
-        title: "Step 8-2: Property Gender Policy",
+        title: "Step 8-1: Property Gender Policy",
         subtitle: `What gender occupancy rule do you prefer for your ${propName}?`,
         speech: `What gender occupancy rule do you prefer for your ${propName}?`,
         pose: "pointing" as KerbyPose,
         type: "gender_policy",
-        items: [],
+        key: "GENDER_POLICY",
+        items: genderPolicyItems,
       };
     }
 
-    if (index === 2) {
-      return {
-        title: "Step 8-3: Gate & Curfew Rules",
-        subtitle: `What curfew requirements fit your preferences for your ${propName}?`,
-        speech: `What curfew requirements fit your preferences for your ${propName}?`,
-        pose: "sleeping" as KerbyPose,
-        type: "curfew",
-        items: curfewItems,
-      };
-    }
-
-    if (index === 3) {
-      return {
-        title: "Step 8-4: Visitor & Guest Policy",
-        subtitle: `What visitor rules fit your preferences for your ${propName}?`,
-        speech: `What visitor rules fit your preferences for your ${propName}?`,
-        pose: "pointing" as KerbyPose,
-        type: "visitor_policy",
-        items: [],
-      };
-    }
-
-    if (index === 4) {
-      return {
-        title: "Step 8-5: Pet Policy",
-        subtitle: `Are pets allowed at your ${propName}?`,
-        speech: `Are pets allowed at your ${propName}?`,
-        pose: "thinking" as KerbyPose,
-        type: "pet_policy",
-        items: [],
-      };
-    }
+    const sgIndex = index - 1;
+    const sg = ruleSubGroupsList[sgIndex];
+    const label = sg?.label || "House Rule";
 
     return {
-      title: "Step 8-6: Smoke & Alcohol Restrictions",
-      subtitle: `What smoking and alcohol restrictions fit your preferences for your ${propName}?`,
-      speech: `What smoking and alcohol restrictions fit your preferences for your ${propName}?`,
-      pose: "studying" as KerbyPose,
-      type: "smoke_alcohol",
-      items: smokeItems,
+      title: `Step 8-${index + 1}: ${label}`,
+      subtitle: `What ${label.toLowerCase()} preferences do you have for your ${propName}?`,
+      speech: `What ${label.toLowerCase()} preferences do you have for your ${propName}?`,
+      pose: (index % 2 === 0 ? "thinking" : "pointing") as KerbyPose,
+      type: "rule_items",
+      key: sg?.key || "",
+      items: sg?.items || [],
     };
   };
 
@@ -222,46 +224,37 @@ export default function RulesStep({
     }
   }, [subStep, currentConfig.speech, currentConfig.pose, onUpdateKerbySpeech]);
 
-  const SUB_STEP_TABS = [
-    { label: "Tenant Type", index: 0 },
-    { label: "Gender Policy", index: 1 },
-    { label: "Curfew", index: 2 },
-    { label: "Visitor Policy", index: 3 },
-    { label: "Pet Policy", index: 4 },
-    { label: "Smoke & Alcohol", index: 5 },
-  ];
+  const SUB_STEP_TABS = useMemo(() => {
+    const base = [
+      { label: "Gender Policy", index: 0 },
+    ];
+
+    const ruleTabs = ruleSubGroupsList.map((sg, idx) => ({
+      label: sg.label,
+      index: 1 + idx,
+    }));
+
+    return [...base, ...ruleTabs];
+  }, [ruleSubGroupsList]);
 
   const hasCurrentSubStepSelections =
     subStep === 0
-      ? Boolean(tenantType)
-      : subStep === 1
       ? Boolean(genderPolicy)
-      : subStep === 3
-      ? Boolean(visitorPolicy)
-      : subStep === 4
-      ? Boolean(petPolicy)
       : currentConfig.items
       ? currentConfig.items.some((item: any) => rulesSelected.includes(item.id))
       : false;
 
   const handleClearSubStep = () => {
-    if (subStep === 0) setCustomValue("tenantType", "");
-    else if (subStep === 1) {
+    if (subStep === 0) {
       setCustomValue("genderPolicy", "");
       if (rulesSelected.includes("female-only")) toggleMulti("rules", "female-only");
       if (rulesSelected.includes("male-only")) toggleMulti("rules", "male-only");
-    } else if (subStep === 3) {
-      setCustomValue("visitorPolicy", "");
-      ["Visitors Allowed", "Male Guests Restricted from Female Rooms", "Strictly No Outside Visitors"].forEach((v: string) => {
-        if (rulesSelected.includes(v)) toggleMulti("rules", v);
-      });
-    } else if (subStep === 4) {
-      setCustomValue("petPolicy", "");
-      if (rulesSelected.includes("Pets Allowed")) toggleMulti("rules", "Pets Allowed");
     } else if (currentConfig.items) {
       currentConfig.items.forEach((item: any) => {
         if (rulesSelected.includes(item.id)) toggleMulti("rules", item.id);
       });
+      if (currentConfig.key === "PET_POLICY") setCustomValue("petPolicy", "");
+      if (currentConfig.key === "VISITOR_POLICY") setCustomValue("visitorPolicy", "");
     }
   };
 
@@ -276,11 +269,6 @@ export default function RulesStep({
       });
     }
   }, [subStep]);
-
-  const handleTenantTypeChoice = (choice: string) => {
-    setCustomValue("tenantType", choice);
-    if (onClearValidationError) onClearValidationError();
-  };
 
   const handleGenderPolicyChoice = (choice: string) => {
     setCustomValue("genderPolicy", choice);
@@ -331,7 +319,7 @@ export default function RulesStep({
       {/* SUB-STEP BREADCRUMB PILLS SKELETON OR LIVE */}
       {isLoading ? (
         <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-full">
-          {[1, 2, 3, 4, 5].map((i) => (
+          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
             <div key={i} className="h-7 w-20 rounded-full bg-slate-200/70 dark:bg-slate-800/70 shrink-0" />
           ))}
         </div>
@@ -351,7 +339,7 @@ export default function RulesStep({
                 onClick={() => !isLocked && setSubStep(tab.index)}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-black transition-all shrink-0 flex items-center gap-1.5 ${
                   isActive
-                    ? "bg-[#2f7d6d] text-white shadow-md ring-2 ring-[#2f7d6d]/30"
+                    ? "bg-[#2f7d6d]" + " text-white shadow-md ring-2 ring-[#2f7d6d]/30"
                     : isDone
                     ? "bg-slate-200 dark:bg-slate-800 text-[#2f7d6d] dark:text-emerald-400 font-bold"
                     : isLocked
@@ -390,80 +378,8 @@ export default function RulesStep({
         </div>
       ) : (
         <AnimatePresence mode="wait">
-        {/* SUB-STEP 8-1: TENANT TYPE */}
+        {/* SUB-STEP 8-1: GENDER POLICY (Index 0) */}
         {subStep === 0 && (
-          <motion.div
-            key="tenant_type"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="flex flex-col gap-4"
-          >
-            <div className={`p-4 rounded-2xl border transition-all flex flex-col gap-4 ${
-              showValidationError && !tenantType
-                ? "border-red-400 dark:border-red-600 bg-red-50/70 dark:bg-red-950/40"
-                : "border-transparent"
-            }`}>
-              {showValidationError && !tenantType && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
-                    <Sparkles size={16} />
-                    <span>Tenant Type Preference</span>
-                  </span>
-                  <span className="text-[11px] font-black text-white bg-red-600 dark:bg-red-700 px-2.5 py-0.5 rounded-lg border border-red-500 shrink-0 shadow-sm">
-                    Selection Required
-                  </span>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {[
-                  { id: "Students Only", title: "Students Only", desc: "Strictly enrolled college students for a quiet study environment", icon: GraduationCap },
-                  { id: "Faculty / Staff Preferred", title: "Faculty & Staff", desc: "Tailored for teachers and TAU university employees", icon: Briefcase },
-                  { id: "Open to Everyone", title: "Open to Everyone", desc: "Open to students, faculty, and general boarders", icon: Users },
-                ].map((c) => {
-                  const isSelected = tenantType === c.id;
-                  const Icon = c.icon;
-
-                  return (
-                    <div
-                      key={c.id}
-                      onClick={() => handleTenantTypeChoice(c.id)}
-                      className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                        isSelected
-                          ? "border-[#2f7d6d] bg-[#2f7d6d]/10 dark:border-emerald-400 shadow-md ring-2 ring-[#2f7d6d]/20"
-                          : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-slate-700"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className={`p-3 rounded-xl ${isSelected ? "bg-[#2f7d6d] text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-emerald-400 border border-slate-200 dark:border-slate-700"}`}>
-                          <Icon size={22} />
-                        </div>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? "border-[#2f7d6d] bg-[#2f7d6d] text-white" : "border-slate-300 dark:border-slate-600"}`}>
-                          {isSelected && <Check size={12} strokeWidth={3} />}
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        <h4 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">{c.title}</h4>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-snug">{c.desc}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {showValidationError && !tenantType && (
-                <p className="text-xs font-bold text-red-900 dark:text-red-200 bg-red-100 dark:bg-red-950/90 p-3 rounded-xl border border-red-300 dark:border-red-800 flex items-center gap-2 shadow-sm">
-                  <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
-                  <span>Please select a tenant type preference above before clicking Continue.</span>
-                </p>
-              )}
-            </div>
-          </motion.div>
-        )}
-
-        {/* SUB-STEP 8-2: GENDER POLICY */}
-        {subStep === 1 && (
           <motion.div
             key="gender_policy"
             initial={{ opacity: 0, y: 10 }}
@@ -489,11 +405,7 @@ export default function RulesStep({
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {[
-                  { id: "Female-Only Property", title: "Female-Only Property", desc: "Entire building is 100% female boarders only", icon: UserX },
-                  { id: "Male-Only Property", title: "Male-Only Property", desc: "Entire building is 100% male boarders only", icon: UserX },
-                  { id: "Male & Female Allowed (Mixed)", title: "Mixed (Male & Female)", desc: "Mixed male & female boarders in separate rooms/floors", icon: Users },
-                ].map((c) => {
+                {genderPolicyItems.map((c: any) => {
                   const isSelected = genderPolicy === c.id;
                   const Icon = c.icon;
 
@@ -516,7 +428,7 @@ export default function RulesStep({
                         </div>
                       </div>
                       <div className="mt-4">
-                        <h4 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">{c.title}</h4>
+                        <h4 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">{c.title || c.name}</h4>
                         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-snug">{c.desc}</p>
                       </div>
                     </div>
@@ -534,187 +446,81 @@ export default function RulesStep({
           </motion.div>
         )}
 
-        {/* SUB-STEP 8-3: CURFEW & GATE ACCESS */}
-        {subStep === 2 && (
+        {/* DYNAMIC TAXONOMY HOUSE RULES SUB-STEPS (Index 1+) */}
+        {subStep >= 1 && (
           <motion.div
-            key="curfew_rules"
+            key={`rule_substep_${subStep}_${currentConfig.key}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-3.5"
+            className="flex flex-col gap-4"
           >
-            {currentConfig.items?.map((opt: any) => {
-              const isSelected = rulesSelected.includes(opt.id);
-              const Icon = opt.icon;
-
-              return (
-                <div
-                  key={opt.id}
-                  onClick={() => toggleMulti("rules", opt.id)}
-                  className={`p-4 rounded-2xl cursor-pointer border-2 transition-all flex items-start justify-between ${
-                    isSelected
-                      ? "bg-[#2f7d6d]/10 border-[#2f7d6d] dark:border-emerald-400 shadow-md ring-2 ring-[#2f7d6d]/20"
-                      : "bg-white hover:border-slate-300 dark:bg-slate-900/60 dark:hover:border-slate-700 border-slate-200 dark:border-slate-800"
-                  }`}
-                >
-                  <div className="flex items-start gap-3.5">
-                    <div className={`p-2.5 rounded-xl shrink-0 ${isSelected ? "bg-[#2f7d6d] text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-emerald-400 border border-slate-200 dark:border-slate-700"}`}>
-                      <Icon size={20} />
-                    </div>
-                    <div>
-                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">{opt.name}</h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1 leading-snug">{opt.desc}</p>
-                    </div>
-                  </div>
-                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${isSelected ? "border-[#2f7d6d] bg-[#2f7d6d] text-white" : "border-slate-300 dark:border-slate-600"}`}>
-                    {isSelected && <Check size={12} strokeWidth={3} />}
-                  </div>
+            <div className={`p-4 rounded-2xl border transition-all flex flex-col gap-4 ${
+              showValidationError && !hasCurrentSubStepSelections
+                ? "border-red-400 dark:border-red-600 bg-red-50/70 dark:bg-red-950/40"
+                : "border-transparent"
+            }`}>
+              {showValidationError && !hasCurrentSubStepSelections && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                    <Sparkles size={16} />
+                    <span>{currentConfig.title}</span>
+                  </span>
+                  <span className="text-[11px] font-black text-white bg-red-600 dark:bg-red-700 px-2.5 py-0.5 rounded-lg border border-red-500 shrink-0 shadow-sm">
+                    Selection Required
+                  </span>
                 </div>
-              );
-            })}
-          </motion.div>
-        )}
+              )}
 
-        {/* SUB-STEP 8-4: VISITOR & GUEST POLICY (DYNAMIC BRANCHING) */}
-        {subStep === 3 && (
-          <motion.div
-            key="visitor_policy"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-3"
-          >
-            {(genderPolicy === "Male & Female Allowed (Mixed)"
-              ? [
-                  { id: "Visitors Allowed", title: "Visitors Allowed", desc: "Outside guests permitted on property", icon: Users },
-                  { id: "Male Guests Restricted from Female Rooms", title: "Restricted Guest Boundaries", desc: "Male guests restricted from female bedrooms", icon: AlertTriangle },
-                  { id: "Strictly No Outside Visitors", title: "No Outside Visitors", desc: "Outside guests prohibited past main gate", icon: UserX },
-                ]
-              : [
-                  { id: "Visitors Allowed", title: "Visitors Allowed", desc: "Outside guests permitted on property", icon: Users },
-                  { id: "Strictly No Outside Visitors", title: "No Outside Visitors", desc: "Outside guests prohibited past main gate", icon: UserX },
-                ]
-            ).map((c) => {
-              const isSelected = visitorPolicy === c.id;
-              const Icon = c.icon;
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {currentConfig.items?.map((opt: any) => {
+                  const isSelected = rulesSelected.includes(opt.id) || (currentConfig.key === "PET_POLICY" && petPolicy === opt.id);
+                  const Icon = opt.icon;
 
-              return (
-                <div
-                  key={c.id}
-                  onClick={() => {
-                    setCustomValue("visitorPolicy", c.id);
-                    toggleMulti("rules", c.id);
-                  }}
-                  className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                    isSelected
-                      ? "border-[#2f7d6d] bg-[#2f7d6d]/10 dark:border-emerald-400 shadow-md ring-2 ring-[#2f7d6d]/20"
-                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-slate-700"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className={`p-3 rounded-xl ${isSelected ? "bg-[#2f7d6d] text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-emerald-400 border border-slate-200 dark:border-slate-700"}`}>
-                      <Icon size={22} />
+                  return (
+                    <div
+                      key={opt.id}
+                      onClick={() => {
+                        if (currentConfig.key === "PET_POLICY") {
+                          setCustomValue("petPolicy", opt.id);
+                        }
+                        if (currentConfig.key === "VISITOR_POLICY") {
+                          setCustomValue("visitorPolicy", opt.id);
+                        }
+                        toggleMulti("rules", opt.id);
+                        if (onClearValidationError) onClearValidationError();
+                      }}
+                      className={`p-4 rounded-2xl cursor-pointer border-2 transition-all flex items-start justify-between ${
+                        isSelected
+                          ? "bg-[#2f7d6d]/10 border-[#2f7d6d] dark:border-emerald-400 shadow-md ring-2 ring-[#2f7d6d]/20"
+                          : "bg-white hover:border-slate-300 dark:bg-slate-900/60 dark:hover:border-slate-700 border-slate-200 dark:border-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3.5">
+                        <div className={`p-2.5 rounded-xl shrink-0 ${isSelected ? "bg-[#2f7d6d] text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-emerald-400 border border-slate-200 dark:border-slate-700"}`}>
+                          <Icon size={20} />
+                        </div>
+                        <div>
+                          <h4 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">{opt.name}</h4>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1 leading-snug">{opt.desc}</p>
+                        </div>
+                      </div>
+
+                      <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${isSelected ? "border-[#2f7d6d] bg-[#2f7d6d] text-white" : "border-slate-300 dark:border-slate-600"}`}>
+                        {isSelected && <Check size={12} strokeWidth={3} />}
+                      </div>
                     </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? "border-[#2f7d6d] bg-[#2f7d6d] text-white" : "border-slate-300 dark:border-slate-600"}`}>
-                      {isSelected && <Check size={12} strokeWidth={3} />}
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">{c.title}</h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-snug">{c.desc}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </motion.div>
-        )}
+                  );
+                })}
+              </div>
 
-        {/* SUB-STEP 8-5: PET POLICY */}
-        {subStep === 4 && (
-          <motion.div
-            key="pet_policy"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-          >
-            {[
-              { id: "Yes, bringing a pet!", title: "Yes, bringing a pet!", desc: "Filters listings that explicitly allow pets on property", icon: PawPrint, value: "Pets Allowed" },
-              { id: "No pet", title: "No pet", desc: "Show all available listings regardless of pet rules", icon: Users, value: "" },
-            ].map((c) => {
-              const isSelected = petPolicy === c.id;
-              const Icon = c.icon;
-
-              return (
-                <div
-                  key={c.id}
-                  onClick={() => {
-                    setCustomValue("petPolicy", c.id);
-                    if (c.value) toggleMulti("rules", c.value);
-                  }}
-                  className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                    isSelected
-                      ? "border-[#2f7d6d] bg-[#2f7d6d]/10 dark:border-emerald-400 shadow-md ring-2 ring-[#2f7d6d]/20"
-                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-slate-700"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className={`p-3.5 rounded-xl ${isSelected ? "bg-[#2f7d6d] text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-emerald-400 border border-slate-200 dark:border-slate-700"}`}>
-                      <Icon size={24} />
-                    </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? "border-[#2f7d6d] bg-[#2f7d6d] text-white" : "border-slate-300 dark:border-slate-600"}`}>
-                      {isSelected && <Check size={12} strokeWidth={3} />}
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <h4 className="font-extrabold text-base text-slate-900 dark:text-white leading-tight">{c.title}</h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-snug">{c.desc}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </motion.div>
-        )}
-
-        {/* SUB-STEP 8-6: SMOKE & ALCOHOL RESTRICTIONS */}
-        {subStep === 5 && (
-          <motion.div
-            key="smoke_alcohol"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-3.5"
-          >
-            {currentConfig.items?.map((opt: any) => {
-              const isSelected = rulesSelected.includes(opt.id);
-              const Icon = opt.icon;
-
-              return (
-                <div
-                  key={opt.id}
-                  onClick={() => toggleMulti("rules", opt.id)}
-                  className={`p-4 rounded-2xl cursor-pointer border-2 transition-all flex items-start justify-between ${
-                    isSelected
-                      ? "bg-[#2f7d6d]/10 border-[#2f7d6d] dark:border-emerald-400 shadow-md ring-2 ring-[#2f7d6d]/20"
-                      : "bg-white hover:border-slate-300 dark:bg-slate-900/60 dark:hover:border-slate-700 border-slate-200 dark:border-slate-800"
-                  }`}
-                >
-                  <div className="flex items-start gap-3.5">
-                    <div className={`p-2.5 rounded-xl shrink-0 ${isSelected ? "bg-[#2f7d6d] text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-emerald-400 border border-slate-200 dark:border-slate-700"}`}>
-                      <Icon size={20} />
-                    </div>
-                    <div>
-                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">{opt.name}</h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1 leading-snug">{opt.desc}</p>
-                    </div>
-                  </div>
-
-                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${isSelected ? "border-[#2f7d6d] bg-[#2f7d6d] text-white" : "border-slate-300 dark:border-slate-600"}`}>
-                    {isSelected && <Check size={12} strokeWidth={3} />}
-                  </div>
-                </div>
-              );
-            })}
+              {showValidationError && !hasCurrentSubStepSelections && (
+                <p className="text-xs font-bold text-red-900 dark:text-red-200 bg-red-100 dark:bg-red-950/90 p-3 rounded-xl border border-red-300 dark:border-red-800 flex items-center gap-2 shadow-sm">
+                  <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                  <span>Please select a preference above before clicking Continue.</span>
+                </p>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -722,3 +528,4 @@ export default function RulesStep({
     </motion.div>
   );
 }
+

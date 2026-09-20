@@ -57,12 +57,12 @@ export function DataTablePagination<TData>({
   return (
     <div
       className={cn(
-        'flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto sm:flex-row sm:gap-8',
+        'flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto sm:flex-row sm:gap-8 text-slate-600 dark:text-slate-400',
         className
       )}
       {...props}
     >
-      <div className='text-muted-foreground flex-1 text-sm whitespace-nowrap'>
+      <div className='flex-1 text-xs font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap'>
         {table.getFilteredSelectedRowModel().rows.length > 0 ? (
           <>
             {table.getFilteredSelectedRowModel().rows.length} of{' '}
@@ -73,88 +73,96 @@ export function DataTablePagination<TData>({
         )}
       </div>
       <div className='flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8'>
-        <div className='flex items-center space-x-2'>
-          <p className='text-sm font-medium whitespace-nowrap'>Rows per page</p>
+        <div className='flex items-center space-x-2.5'>
+          <p className='text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap'>Rows per page</p>
           <Select
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
               table.setPageSize(Number(value));
             }}
           >
-            <SelectTrigger className='h-8 w-[5.5rem] pl-3 pr-1.5 gap-1 [&[data-size]]:h-8'>
+            <SelectTrigger className='h-8 w-[5rem] pl-3 pr-1.5 gap-1 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs'>
               <SelectValue placeholder={table.getState().pagination.pageSize} />
             </SelectTrigger>
-            <SelectContent side='top'>
+            <SelectContent side='top' className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl">
               {pageSizeOptions.map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
+                <SelectItem key={pageSize} value={`${pageSize}`} className="text-xs font-medium">
                   {pageSize}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        <div className='flex items-center justify-center text-sm font-medium'>
+        <div className='flex items-center justify-center text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap'>
           Page {currentPage} of {totalPages}
         </div>
-        <div className='flex items-center space-x-1'>
+        <div className='flex items-center space-x-1.5'>
           <Button
             aria-label='Go to first page'
             variant='outline'
             size='icon'
-            className='hidden size-8 lg:flex'
+            className='hidden size-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 lg:flex'
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
           >
-            <ChevronsLeft />
+            <ChevronsLeft className="size-4" />
           </Button>
           <Button
             aria-label='Go to previous page'
             variant='outline'
             size='icon'
-            className='size-8'
+            className='size-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            <ChevronLeftIcon />
+            <ChevronLeftIcon className="size-4" />
           </Button>
 
           {/* Page numbers */}
-          {pageNumbers.map((pageNumber) => (
-            <Button
-              key={pageNumber}
-              variant={currentPage === pageNumber ? 'default' : 'outline'}
-              size='icon'
-              className='size-8'
-              onClick={() => table.setPageIndex(pageNumber - 1)}
-            >
-              {pageNumber}
-            </Button>
-          ))}
+          {pageNumbers.map((pageNumber) => {
+            const isSelected = currentPage === pageNumber;
+            return (
+              <Button
+                key={pageNumber}
+                variant={isSelected ? 'default' : 'outline'}
+                size='icon'
+                className={cn(
+                  'size-8 rounded-xl text-xs font-semibold transition-all',
+                  isSelected
+                    ? 'bg-primary text-white shadow-md shadow-primary/20 border-transparent'
+                    : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                )}
+                onClick={() => table.setPageIndex(pageNumber - 1)}
+              >
+                {pageNumber}
+              </Button>
+            );
+          })}
 
           {/* Ellipsis if needed */}
           {pageNumbers.length < totalPages && (
-            <span className='px-2 text-sm text-muted-foreground'>...</span>
+            <span className='px-1.5 text-xs font-medium text-slate-400 dark:text-slate-500'>...</span>
           )}
 
           <Button
             aria-label='Go to next page'
             variant='outline'
             size='icon'
-            className='size-8'
+            className='size-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            <ChevronRightIcon />
+            <ChevronRightIcon className="size-4" />
           </Button>
           <Button
             aria-label='Go to last page'
             variant='outline'
             size='icon'
-            className='hidden size-8 lg:flex'
+            className='hidden size-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 lg:flex'
             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
             disabled={!table.getCanNextPage()}
           >
-            <ChevronsRight />
+            <ChevronsRight className="size-4" />
           </Button>
         </div>
       </div>

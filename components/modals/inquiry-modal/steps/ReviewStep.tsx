@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { FaCheck, FaUser, FaIdCard, FaTimes } from "react-icons/fa";
-import { ShieldCheck, Search } from "lucide-react";
+import { ShieldCheck, Search, Eye, FileText, Info } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import SafeImage from "../../../common/SafeImage";
 import SignaturePad from "../../../common/SignaturePad";
+import { generateLeaseContractPDF, previewPdfBlob } from "@/utils/contractPdfGenerator";
 
 import { createPortal } from "react-dom";
 
@@ -22,6 +23,70 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
   watchedValues, capturedSelfie, capturedID, room, leaseContract, tenantSignature, setTenantSignature
 }) => {
   const [selectedPreview, setSelectedPreview] = useState<string | null>(null);
+  const [isPreviewingPdf, setIsPreviewingPdf] = useState(false);
+
+  const customPdfUrl =
+    leaseContract?.pdfUrl ||
+    room?.listing?.businessInfo?.customPdfUrl ||
+    room?.listing?.businessInfo?.documents?.customContract ||
+    room?.listing?.leaseContracts?.[0]?.pdfUrl;
+
+  const contractMode =
+    room?.listing?.businessInfo?.contractMode ||
+    room?.listing?.propertyConfig?.contractMode ||
+    (customPdfUrl ? "CUSTOM_PDF" : "AUTO_GEN");
+
+  const isCustomPdf = contractMode === "CUSTOM_PDF" || Boolean(customPdfUrl);
+
+  const handlePreviewContract = async () => {
+    try {
+      setIsPreviewingPdf(true);
+
+      if (isCustomPdf && customPdfUrl) {
+        const success = await previewPdfBlob(customPdfUrl, "Custom Lease Contract Preview");
+        if (success) return;
+        console.warn("Custom PDF URL could not be rendered, falling back to smart contract preview.");
+      }
+
+      const landlordName = room?.listing?.user?.name || room?.listing?.user?.businessName || "Landlord / Property Owner";
+      const propName = room?.listing?.title || "Boarding House Property";
+      const roomName = room?.name || "Selected Room / Unit";
+      const propAddress = room?.listing?.location?.address || room?.listing?.region || "Camiling, Tarlac";
+      const deposit = Number(leaseContract?.depositAmount) || 0;
+      const noticeDays = Number(leaseContract?.moveOutNoticeDays) || 30;
+      const clauses = room?.listing?.customClauses || leaseContract?.terms || [];
+      const landlordSig = leaseContract?.signatures?.find((s: any) => s.signerType === "LANDLORD")?.signatureUrl || "";
+
+      const pdfBlob = await generateLeaseContractPDF(
+        "Smart_Lease_Contract_Preview.pdf",
+        {
+          contractHash: `PREVIEW-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+          landlordName,
+          tenantName: "[APPLICANT TENANT]",
+          propertyName: propName,
+          roomName,
+          propertyAddress: propAddress,
+          moveInDate: watchedValues[1] ? format(new Date(watchedValues[1]), "MMMM dd, yyyy") : "Per Check-In Date",
+          checkOutDate: "Per Lease Duration",
+          depositAmount: deposit,
+          rentAmount: room?.price || 0,
+          moveOutNoticeDays: noticeDays,
+          customClauses: clauses,
+          landlordSignatureBase64: landlordSig,
+          tenantSignatureBase64: "",
+        },
+        true
+      );
+
+      if (pdfBlob) {
+        await previewPdfBlob(pdfBlob as Blob, "Smart Lease Contract Preview");
+      }
+    } catch (err) {
+      console.error("Failed to generate lease PDF preview:", err);
+    } finally {
+      setIsPreviewingPdf(false);
+    }
+  };
 
   const renderPreviewPortal = () => {
     if (typeof document === "undefined") return null;
@@ -156,30 +221,81 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           </div>
         </div>
 
-        {leaseContract && (
+        {(leaseContract || room?.listing) && (
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-               <ShieldCheck className="text-teal-600" size={18} />
-               <h4 className="font-bold text-gray-900 dark:text-gray-100">Lease Terms Preview</h4>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="text-teal-600 dark:text-teal-400" size={18} />
+                <h4 className="font-bold text-gray-900 dark:text-gray-100">Lease Terms & Contract Preview</h4>
+              </div>
+
+              {(isCustomPdf && customPdfUrl) || !isCustomPdf ? (
+                <button
+                  type="button"
+                  onClick={handlePreviewContract}
+                  disabled={isPreviewingPdf}
+                  className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+                >
+                  <Eye size={13} />
+                  <span>{isPreviewingPdf ? "Generating PDF..." : isCustomPdf ? "Preview Custom PDF" : "Preview Smart Lease PDF"}</span>
+                </button>
+              ) : null}
             </div>
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
-               <p><strong>Move-Out Notice Period:</strong> {leaseContract.moveOutNoticeDays || 30} days</p>
-               <p><strong>Security Deposit:</strong> ₱ {(leaseContract.depositAmount || 0).toLocaleString()}</p>
-               {leaseContract.terms?.length > 0 && (
-                 <>
-                   <p className="font-bold mt-2">Custom Clauses:</p>
-                   <ul className="list-disc pl-4 space-y-1">
-                     {leaseContract.terms.map((term: string, idx: number) => (
-                       <li key={idx}>{term}</li>
-                     ))}
-                   </ul>
-                 </>
-               )}
+
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+              {isCustomPdf ? (
+                <>
+                  <div className="p-3 bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 rounded-xl flex items-center justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-teal-800 dark:text-teal-200 min-w-0">
+                      <FileText size={16} className="text-teal-600 dark:text-teal-400 shrink-0" />
+                      <span className="truncate">Custom Landlord Lease Contract PDF</span>
+                    </div>
+                    {customPdfUrl && (
+                      <button
+                        type="button"
+                        onClick={handlePreviewContract}
+                        className="px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 shrink-0 shadow-sm cursor-pointer"
+                      >
+                        <Eye size={12} />
+                        <span>View PDF</span>
+                      </button>
+                    )}
+                  </div>
+                  <p><strong>Move-Out Notice Period:</strong> {leaseContract?.moveOutNoticeDays || 30} days</p>
+                  <p>
+                    <strong>Security Deposit:</strong>{" "}
+                    {leaseContract?.depositAmount && leaseContract.depositAmount > 0
+                      ? `₱ ${leaseContract.depositAmount.toLocaleString()}`
+                      : "Refer to Custom PDF Lease Document"}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p><strong>Move-Out Notice Period:</strong> {leaseContract?.moveOutNoticeDays || 30} days</p>
+                  <p>
+                    <strong>Security Deposit:</strong>{" "}
+                    {leaseContract?.depositAmount && leaseContract.depositAmount > 0
+                      ? `₱ ${leaseContract.depositAmount.toLocaleString()}`
+                      : "None Required (₱ 0)"}
+                  </p>
+                  {((room?.listing?.customClauses && room.listing.customClauses.length > 0) || (leaseContract?.terms && leaseContract.terms.length > 0)) && (
+                    <>
+                      <p className="font-bold mt-2 text-gray-800 dark:text-gray-200">Custom House Rules & Clauses:</p>
+                      <ul className="list-disc pl-4 space-y-1">
+                        {(room?.listing?.customClauses || leaseContract?.terms || []).map((term: string, idx: number) => (
+                          <li key={idx}>{term}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </>
+              )}
             </div>
             
-            <div className="p-4 bg-teal-50 dark:bg-teal-900/20 rounded-2xl border border-teal-100 dark:border-teal-800/50">
+            <div className="p-4 bg-teal-50/80 dark:bg-teal-900/20 rounded-2xl border border-teal-100 dark:border-teal-800/50 flex items-start gap-2.5">
+              <Info className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
               <p className="text-[11px] font-bold text-teal-800 dark:text-teal-300 leading-relaxed">
-                ℹ️ <strong>Legal Booking Lifecycle Notice</strong>: Submitting this inquiry sends your application to the landlord for approval. You will sign the official digital lease contract during reservation checkout after the landlord approves your application!
+                <strong>Legal Booking Lifecycle Notice</strong>: Submitting this inquiry sends your application to the landlord for approval. You will sign the official digital lease contract during reservation checkout after the landlord approves your application!
               </p>
             </div>
           </div>
@@ -192,3 +308,4 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
 };
 
 export default ReviewStep;
+

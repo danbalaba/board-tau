@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { useEdgeStore } from '@/lib/edgestore';
-import { ROOM_TYPES } from '@/data/roomTypes';
+
+
+import { validateField } from '../validation/room-schema';
+import { saveDraftToStorage, loadDraftFromStorage, clearDraftFromStorage } from '@/utils/draftStorage';
+import { formatCleanTitle } from '@/lib/utils';
 
 interface UseAddRoomModalProps {
   initialListingId?: string;
@@ -16,6 +21,7 @@ export const useAddRoomModal = ({
   onSuccess,
   onClose
 }: UseAddRoomModalProps) => {
+  const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [shakeKey, setShakeKey] = useState(0);
@@ -25,6 +31,7 @@ export const useAddRoomModal = ({
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [files, setFiles] = useState<File[]>([]);
+  const [restoredDraft, setRestoredDraft] = useState(false);
 
   const [formData, setFormData] = useState({
     listingId: initialListingId || '',
@@ -32,6 +39,7 @@ export const useAddRoomModal = ({
     description: '',
     roomType: '',
     bathroomArrangement: '',
+    kitchenSetup: '',
     bedType: '',
     bedCount: '',
     price: '',
@@ -42,6 +50,160 @@ export const useAddRoomModal = ({
     amenities: [] as string[],
     images: [] as string[]
   });
+
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [lastSavedTime, setLastSavedTime] = useState<string>('');
+  const [lastSavedTimestamp, setLastSavedTimestamp] = useState<number | null>(null);
+  const [hasSavedDraft, setHasSavedDraft] = useState(false);
+  const [savedDraftData, setSavedDraftData] = useState<any | null>(null);
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [isCheckingDraft, setIsCheckingDraft] = useState(!initialData);
+  const [activeAmenityCategory, setActiveAmenityCategory] = useState<string>('');
+
+  const draftKey = `add_room_modal_draft_${initialListingId || 'global'}`;
+
+  // CHECK DRAFT FROM INDEXEDDB ON MOUNT (CREATE MODE ONLY)
+  useEffect(() => {
+    if (initialData) {
+      setIsCheckingDraft(false);
+      return;
+    }
+    let isMounted = true;
+
+    const checkDraft = async () => {
+      try {
+        let saved = await loadDraftFromStorage(draftKey);
+        if (!saved && !initialListingId) {
+          saved = await loadDraftFromStorage('add_room_modal_draft_general');
+        }
+
+        if (isMounted && saved && saved.formData) {
+          const hasContent = Object.values(saved.formData).some(val => 
+            Array.isArray(val) ? val.length > 0 : Boolean(val && String(val).trim() !== '')
+          );
+          if (hasContent) {
+            setHasSavedDraft(true);
+            setSavedDraftData(saved);
+            setShowDraftModal(true);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to check room draft:', err);
+      } finally {
+        if (isMounted) {
+          setIsCheckingDraft(false);
+        }
+      }
+    };
+
+    checkDraft();
+
+    return () => { isMounted = false; };
+  }, [initialListingId, initialData, draftKey]);
+
+  // APPLY DRAFT INTO FORM ON USER CONFIRMATION
+  const applyDraft = () => {
+    if (savedDraftData && savedDraftData.formData) {
+      setFormData(prev => ({
+        ...prev,
+        ...savedDraftData.formData,
+        listingId: initialListingId || savedDraftData.formData.listingId || prev.listingId
+      }));
+      if (savedDraftData.currentStep && typeof savedDraftData.currentStep === 'number') {
+        setCurrentStep(savedDraftData.currentStep);
+      }
+      if (savedDraftData.activeAmenityCategory && typeof savedDraftData.activeAmenityCategory === 'string') {
+        setActiveAmenityCategory(savedDraftData.activeAmenityCategory);
+      }
+      setRestoredDraft(true);
+      setSaveStatus('saved');
+      const now = new Date();
+      setLastSavedTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      setLastSavedTimestamp(Date.now());
+      responsiveToast.info({
+        title: "DRAFT RESTORED",
+        description: "Restored your unsaved room progress."
+      });
+    }
+    setShowDraftModal(false);
+  };
+
+  // AUTO-SAVE FORM STATE TO INDEXEDDB
+  useEffect(() => {
+    if (initialData) return;
+    const hasData = Boolean(
+      formData.listingId ||
+      formData.name || 
+      formData.description || 
+      formData.roomType || 
+      formData.price || 
+      formData.images.length > 0 ||
+      formData.amenities.length > 0
+    );
+
+    if (hasData) {
+      const timer = setTimeout(() => {
+        setSaveStatus('saving');
+        const saveStartTime = Date.now();
+        saveDraftToStorage(draftKey, { formData, currentStep, activeAmenityCategory }).then(() => {
+          const elapsedTime = Date.now() - saveStartTime;
+          const minDisplay = Math.max(0, 500 - elapsedTime);
+          setTimeout(() => {
+            setSaveStatus('saved');
+            const now = new Date();
+            setLastSavedTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+            setLastSavedTimestamp(Date.now());
+          }, minDisplay);
+        }).catch(err => {
+          console.warn('Failed to auto-save room draft:', err);
+          setSaveStatus('idle');
+        });
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [formData, currentStep, activeAmenityCategory, draftKey, initialData]);
+
+  // DISCARD DRAFT AND CLEAR FROM INDEXEDDB
+  const discardDraft = async () => {
+    try {
+      await clearDraftFromStorage(draftKey);
+      await clearDraftFromStorage('add_room_modal_draft_general');
+    } catch (err) {
+      console.warn('Failed to clear room draft:', err);
+    }
+    setFormData({
+      listingId: initialListingId || '',
+      name: '',
+      description: '',
+      roomType: '',
+      bathroomArrangement: '',
+      kitchenSetup: '',
+      bedType: '',
+      bedCount: '',
+      price: '',
+      capacity: '',
+      availableSlots: '',
+      reservationFee: '',
+      size: '',
+      amenities: [],
+      images: []
+    });
+    setFiles([]);
+    setCurrentStep(1);
+    setErrors({});
+    setRestoredDraft(false);
+    setHasSavedDraft(false);
+    setSavedDraftData(null);
+    setShowDraftModal(false);
+    setSaveStatus('idle');
+    setLastSavedTimestamp(null);
+    setLastSavedTime('');
+    responsiveToast.success({
+      title: "DRAFT CLEARED",
+      description: "Form reset to default."
+    });
+  };
   
   // SYNC INITIAL DATA (EDIT MODE)
   React.useEffect(() => {
@@ -52,6 +214,7 @@ export const useAddRoomModal = ({
         description: initialData.description || '',
         roomType: initialData.roomType || '',
         bathroomArrangement: initialData.bathroomArrangement || '',
+        kitchenSetup: initialData.kitchenSetup || '',
         bedType: initialData.bedType || '',
         bedCount: initialData.bedCount?.toString() || '',
         price: initialData.price?.toString() || '',
@@ -69,85 +232,57 @@ export const useAddRoomModal = ({
     const newErrors: Record<string, string> = {};
     
     if (step === 1) {
-      if (!formData.listingId) newErrors.listingId = 'Please select a building';
-      if (!formData.name) newErrors.name = 'Room name is required';
-      if (!formData.roomType) newErrors.roomType = 'Please select a room category';
-      if (!formData.bathroomArrangement) newErrors.bathroomArrangement = 'Please select a bathroom setup';
+      const fieldsToValidate = ['listingId', 'name', 'roomType', 'bathroomArrangement', 'kitchenSetup'];
+      fieldsToValidate.forEach((f) => {
+        const err = validateField(f, (formData as any)[f]);
+        if (err) newErrors[f] = err;
+      });
     }
 
     if (step === 2) {
-      // Price
-      const price = Number(formData.price);
-      if (formData.price === undefined || formData.price === '') {
-        newErrors.price = 'Price is required';
-      } else if (price < 500) {
-        newErrors.price = 'Price must be at least ₱500';
-      } else if (price > 50000) {
-        newErrors.price = 'Price cannot exceed ₱50,000';
-      }
-
-      // Reservation Fee
-      const resFee = Number(formData.reservationFee);
-      if (formData.reservationFee === undefined || formData.reservationFee === '') {
-        newErrors.reservationFee = 'Reservation fee is required';
-      } else if (resFee < 500) {
-        newErrors.reservationFee = 'Fee must be at least ₱500';
-      } else if (resFee > 50000) {
-        newErrors.reservationFee = 'Fee cannot exceed ₱50,000';
-      }
-
-      if (!formData.bedType) newErrors.bedType = 'Bed type is required';
-      
-      // Bed Count
-      const bedCountStr = formData.bedCount;
-      if (bedCountStr === undefined || bedCountStr === '') {
-        newErrors.bedCount = 'Bed count is required';
-      } else {
-        const bedCount = Number(bedCountStr);
-        if (bedCount < 1) {
-          newErrors.bedCount = 'Bed count must be at least 1';
-        } else if (bedCount > 10) {
-          newErrors.bedCount = 'Bed count cannot exceed 10';
-        }
-      }
+      const fieldsToValidate = ['price', 'reservationFee', 'bedType', 'bedCount', 'size'];
+      fieldsToValidate.forEach((f) => {
+        const err = validateField(f, (formData as any)[f]);
+        if (err) newErrors[f] = err;
+      });
 
       // Capacity Logic (Specific to Bedspace)
       if (formData.bedCount && !newErrors.bedCount) {
         if (!formData.bedType) {
           newErrors.capacity = 'Please select a bed type';
         } else if (Number(formData.capacity) <= 0) {
-          newErrors.capacity = 'Capacity cannot be zero';
+          newErrors.capacity = 'Capacity cannot be zero or negative';
         } else if (formData.roomType === 'BEDSPACE' && Number(formData.capacity) <= 1) {
           newErrors.capacity = 'Bedspace capacity must be > 1';
         }
       }
-
-      // Size
-      const sizeStr = formData.size;
-      if (sizeStr === undefined || sizeStr === '') {
-        newErrors.size = 'Size is required';
-      } else {
-        const size = Number(sizeStr);
-        if (size < 5) {
-          newErrors.size = 'Size must be at least 5 sqm';
-        } else if (size > 100) {
-          newErrors.size = 'Size cannot exceed 100 sqm';
-        }
-      }
-
-      if (!formData.description || formData.description.length < 20) {
-        newErrors.description = 'Description needs at least 20 chars';
-      }
     }
 
     if (step === 3) {
+      const descErr = validateField('description', formData.description);
+      if (descErr) newErrors.description = descErr;
+
       if (files.length === 0 && formData.images.length === 0) {
         newErrors.images = 'At least one photo is required';
       }
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const isValid = Object.keys(newErrors).length === 0;
+
+    if (!isValid) {
+      const firstErrorField = Object.keys(newErrors)[0];
+      if (firstErrorField) {
+        setTimeout(() => {
+          const element = document.getElementById(`field-${firstErrorField}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 50);
+      }
+    }
+
+    return isValid;
   };
 
   const handleChange = (e: any) => {
@@ -158,16 +293,16 @@ export const useAddRoomModal = ({
       
       // AUTO CALCULATION LOGIC
       if (name === 'bedType' || name === 'bedCount' || name === 'roomType') {
-        const type = newData.roomType;
         const bType = newData.bedType;
         const bCount = newData.bedCount;
+        const bCountNum = Number(bCount);
         
-        if (!bType || !bCount || Number(bCount) === 0) {
+        if (!bType || !bCount || isNaN(bCountNum) || bCountNum <= 0) {
           newData.capacity = '';
-        } else if (type === 'BEDSPACE') {
-          newData.capacity = bType === 'BUNK' ? (Number(bCount) * 2).toString() : bCount.toString();
         } else {
-          newData.capacity = bCount.toString();
+          const isBunk = String(bType).toUpperCase().includes('BUNK') || String(bType).toUpperCase().includes('DECK');
+          const multiplier = isBunk ? 2 : 1;
+          newData.capacity = (bCountNum * multiplier).toString();
         }
         newData.availableSlots = newData.capacity;
       }
@@ -175,13 +310,17 @@ export const useAddRoomModal = ({
       return newData;
     });
 
-    if (errors[name]) {
-      setErrors(prev => {
+    // Real-time Zod validation error update
+    const err = validateField(name, value);
+    setErrors(prev => {
+      if (err) {
+        return { ...prev, [name]: err };
+      } else {
         const next = { ...prev };
         delete next[name];
         return next;
-      });
-    }
+      }
+    });
   };
 
   const handleCategoryToggle = (typeId: string) => {
@@ -234,14 +373,6 @@ export const useAddRoomModal = ({
       if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       setShakeKey(prev => prev + 1); // Trigger shake animation again
-      // Auto-scroll to first error
-      const firstErrorField = Object.keys(errors)[0];
-      if (firstErrorField) {
-        const element = document.getElementById(`field-${firstErrorField}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }
     }
   };
 
@@ -272,6 +403,7 @@ export const useAddRoomModal = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          name: formatCleanTitle(formData.name),
           images: imageUrls,
           price: Number(formData.price),
           capacity: Number(formData.capacity),
@@ -284,6 +416,11 @@ export const useAddRoomModal = ({
 
       if (response.ok) {
         setSubmitted(true);
+        clearDraftFromStorage(draftKey).catch(() => {});
+        clearDraftFromStorage('add_room_modal_draft_general').catch(() => {});
+        setRestoredDraft(false);
+        queryClient.invalidateQueries({ queryKey: ['landlordRooms'] });
+        queryClient.refetchQueries({ queryKey: ['landlordRooms'] });
         responsiveToast.success({
           title: "SUCCESS",
           description: initialData ? 'Unit updated!' : 'Unit published!'
@@ -327,6 +464,19 @@ export const useAddRoomModal = ({
     handleNext,
     handleBack,
     handleSubmit,
-    submitted
+    submitted,
+    restoredDraft,
+    discardDraft,
+    saveStatus,
+    lastSavedTime,
+    lastSavedTimestamp,
+    showDraftModal,
+    setShowDraftModal,
+    hasSavedDraft,
+    savedDraftData,
+    applyDraft,
+    isCheckingDraft,
+    activeAmenityCategory,
+    setActiveAmenityCategory
   };
 };

@@ -17,7 +17,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { motion, type Variants } from 'framer-motion';
-import { cn } from '@/utils/helper';
+import { cn, formatCleanTitle } from '@/utils/helper';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -93,7 +93,7 @@ export function LandlordPropertyCard({
                 ? "bg-amber-500/90 text-white border-amber-400/50 shadow-amber-500/20"
                 : property.status === 'REJECTED'
                 ? "bg-rose-500/90 text-white border-rose-400/50"
-                : statusColors[property.status] || "bg-emerald-500/90 text-white border-emerald-400/50"
+                : statusColors[property.status] || "bg-primary/90 text-white border-primary/40"
             )}>
               <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
               {formatStatus(property.status)}
@@ -111,7 +111,7 @@ export function LandlordPropertyCard({
           <div className="mb-3 sm:mb-4">
              <div className="flex items-center gap-2 mb-2 flex-wrap">
                {property.status === 'ACTIVE' ? (
-                 <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-100 dark:border-emerald-500/20 uppercase tracking-widest flex items-center gap-1">
+                 <span className="text-[8px] font-black text-primary bg-primary/10 dark:bg-primary/20 px-2 py-0.5 rounded-lg border border-primary/20 uppercase tracking-widest flex items-center gap-1">
                    <Sparkles size={10} /> Verified Listing
                  </span>
                ) : property.status === 'PENDING' ? (
@@ -129,9 +129,9 @@ export function LandlordPropertyCard({
                  {(property as any).address || (property as any).city || property.region || 'Camiling, Tarlac'}
                </div>
              </div>
-             <h3 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white leading-tight group-hover:text-primary transition-colors line-clamp-1 tracking-tight mb-2.5 sm:mb-4">
-               {property.title}
-             </h3>
+              <h3 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white leading-tight group-hover:text-primary transition-colors line-clamp-1 tracking-tight mb-2.5 sm:mb-4">
+                {formatCleanTitle(property.title)}
+              </h3>
           </div>
 
           {/* Stats Box - Mirrored from Inquiry Card style with Tenant-side terminology */}
@@ -147,7 +147,7 @@ export function LandlordPropertyCard({
                    </div>
                 </div>
                 <div className="flex-1 flex items-center gap-2.5 sm:gap-3">
-                   <div className="p-1.5 bg-emerald-100/50 dark:bg-emerald-500/20 rounded-lg text-emerald-600">
+                   <div className="p-1.5 bg-primary/10 dark:bg-primary/20 rounded-lg text-primary">
                       <Sparkles size={14} />
                    </div>
                    <div>
@@ -253,7 +253,7 @@ export function LandlordPropertyCard({
                    ? "bg-amber-500/90 text-white border-amber-400/50"
                    : property.status === 'REJECTED'
                    ? "bg-rose-500/90 text-white border-rose-400/50"
-                   : statusColors[property.status] || "bg-emerald-500/90 text-white border-emerald-400/50"
+                   : statusColors[property.status] || "bg-primary/90 text-white border-primary/40"
                )}>
                  <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-current animate-pulse" />
                  {formatStatus(property.status)}
@@ -274,7 +274,7 @@ export function LandlordPropertyCard({
                 </span>
               </div>
               <h3 className="text-sm sm:text-xl font-black text-gray-900 dark:text-white group-hover:text-primary transition-colors truncate tracking-tight">
-                {property.title}
+                {formatCleanTitle(property.title)}
               </h3>
             </div>
 
@@ -292,7 +292,7 @@ export function LandlordPropertyCard({
                 <Building2 size={12} /> 
                 <span>{property.rooms?.length || property.roomCount || 1} Units</span>
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50/60 dark:bg-emerald-500/10 rounded-xl border border-emerald-100/60 dark:border-emerald-500/20 text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase">
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 dark:bg-primary/20 rounded-xl border border-primary/20 text-[9px] font-black text-primary dark:text-primary-400 uppercase">
                 <Sparkles size={12} /> 
                 <span>{totalAvailable} Available Slots</span>
               </div>
@@ -334,7 +334,7 @@ export function LandlordPropertyCard({
             className={cn(
               "flex-1 sm:w-full rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 cursor-pointer border shadow-xs",
               (property as any).isArchived
-                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20"
+                ? "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
                 : "bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20"
             )}
             title={(property as any).isArchived ? "Restore Property" : "Archive Property"}
@@ -374,7 +374,7 @@ function ArchiveButton({
         className={cn(
           "p-2 rounded-xl backdrop-blur-md transition-all duration-300 shadow-lg border",
           (property as any).isArchived 
-            ? "bg-emerald-500/80 text-white border-emerald-400/50 hover:bg-emerald-600" 
+            ? "bg-primary/90 text-white border-primary/40 hover:bg-primary" 
             : "bg-white/80 dark:bg-gray-900/80 text-gray-500 hover:text-amber-500 border-gray-100 dark:border-gray-800 hover:border-amber-100"
         )}
         title={(property as any).isArchived ? "Restore Property" : "Archive Property"}

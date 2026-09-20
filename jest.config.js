@@ -11,6 +11,14 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
     '^jspdf$': 'jspdf/dist/jspdf.umd.min.js',
+    '^jose$': '<rootDir>/node_modules/jose/dist/node/cjs/index.js',
+    '^jose/(.*)$': '<rootDir>/node_modules/jose/dist/node/cjs/$1',
+    '^.*[\\\\/]node_modules[\\\\/]jose[\\\\/]dist[\\\\/]browser[\\\\/](.*)$': '<rootDir>/node_modules/jose/dist/node/cjs/$1',
+    '^@panva/hkdf$': '<rootDir>/node_modules/@panva/hkdf/dist/node/cjs/index.js',
+    '^.*[\\\\/]node_modules[\\\\/]@panva[\\\\/]hkdf[\\\\/]dist[\\\\/]web[\\\\/](.*)$': '<rootDir>/node_modules/@panva/hkdf/dist/node/cjs/$1',
+    '^preact-render-to-string$': '<rootDir>/node_modules/preact-render-to-string/dist/commonjs.js',
+    '^.*[\\\\/]node_modules[\\\\/]preact-render-to-string[\\\\/].*$': '<rootDir>/node_modules/preact-render-to-string/dist/commonjs.js',
+    '^preact$': '<rootDir>/node_modules/preact/dist/preact.js',
   },
   collectCoverage: false,
   collectCoverageFrom: [

@@ -54,7 +54,7 @@ describe('ListingDetailsClient Component', () => {
     owner: { id: 'owner-1', name: 'Landlord', image: null },
     categories: [{ label: 'Apartment', value: 'apartment', description: 'desc' }],
     description: 'A great place',
-    roomCount: 2,
+    roomCount: 1,
     bathroomCount: 1,
     latlng: [14.5, 121],
     amenities: ['WiFi', 'Air conditioning'],
@@ -80,9 +80,9 @@ describe('ListingDetailsClient Component', () => {
     render(<ListingDetailsClient {...mockProps} />);
     expect(screen.getByText('Hosted by Landlord')).toBeInTheDocument();
     
-    // Check counts (Total Rooms, Bathrooms, Available Units should all be 1 based on mockProps)
+    // Check counts (Total Rooms and Available Units should be 1 based on mockProps)
     const countElements = screen.getAllByText('1');
-    expect(countElements.length).toBeGreaterThanOrEqual(3);
+    expect(countElements.length).toBeGreaterThanOrEqual(2);
   });
 
   it('renders categories and description', () => {

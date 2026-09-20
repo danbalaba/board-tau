@@ -48,6 +48,11 @@ export const getLandlordInquiries = async (args?: {
             select: {
               url: true
             }
+          },
+          propertyType: {
+            select: {
+              name: true
+            }
           }
         },
       },
@@ -61,6 +66,11 @@ export const getLandlordInquiries = async (args?: {
           images: {
             select: {
               url: true
+            }
+          },
+          roomTypeDefinition: {
+            select: {
+              name: true
             }
           }
         },
@@ -99,10 +109,15 @@ export const getInquiryDetails = async (inquiryId: string) => {
           title: true,
           imageSrc: true,
           description: true,
-          amenities: true,
+          amenities_list: true,
           images: {
             select: {
               url: true
+            }
+          },
+          propertyType: {
+            select: {
+              name: true
             }
           }
         },
@@ -117,6 +132,11 @@ export const getInquiryDetails = async (inquiryId: string) => {
           images: {
             select: {
               url: true
+            }
+          },
+          roomTypeDefinition: {
+            select: {
+              name: true
             }
           }
         },

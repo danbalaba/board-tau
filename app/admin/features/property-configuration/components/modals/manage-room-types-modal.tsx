@@ -5,7 +5,7 @@ import Modal, { ModalContext } from "@/components/modals/Modal";
 import { motion, AnimatePresence } from "framer-motion";
 import * as LucideIcons from "lucide-react";
 import { Search, Hotel, Plus, Trash2, Edit2, Check, ArrowRight, ArrowLeft, HelpCircle, Power, PowerOff, Loader2, Sparkles, AlertCircle, SearchX, X, AlertTriangle, Bed, Users, Minus, Lock } from "lucide-react";
-import { cn } from "@/utils/helper";
+import { cn, formatCleanTitle } from "@/utils/helper";
 import { toast } from "@/app/admin/components/ui/sonner";
 import { Label } from "@/app/admin/components/ui/label";
 import Input from "@/components/inputs/Input";
@@ -213,7 +213,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
   };
 
   const handleAddBedSetup = () => {
-    const cleanName = newBedName.trim().replace(/\s+/g, " ");
+    const cleanName = formatCleanTitle(newBedName.trim().replace(/\s+/g, " "));
     const cleanCode = newBedCode.trim().replace(/[^A-Z0-9_]+/gi, "").toUpperCase();
     const cleanDesc = newBedDesc.trim().replace(/\s+/g, " ");
 
@@ -301,7 +301,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
     const newErrors: { name?: string; description?: string; icon?: string; bedSetups?: string } = {};
 
     if (currentStep === 1) {
-      const cleanName = name.trim().replace(/\s+/g, " ");
+      const cleanName = formatCleanTitle(name.trim().replace(/\s+/g, " "));
       const cleanDesc = description.trim().replace(/\s+/g, " ");
 
       if (!cleanName) {
@@ -343,7 +343,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
 
     if (currentStep === 3) {
       if (showAddBedForm) {
-        const cleanBedName = newBedName.trim().replace(/\s+/g, " ");
+        const cleanBedName = formatCleanTitle(newBedName.trim().replace(/\s+/g, " "));
         const cleanBedCode = newBedCode.trim().replace(/[^A-Z0-9_]+/gi, "").toUpperCase();
 
         if (cleanBedName && cleanBedCode) {
@@ -415,7 +415,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
 
   const handleConfirmAndPublish = async (e: React.MouseEvent) => {
     e.preventDefault();
-    const cleanName = name.trim().replace(/\s+/g, " ");
+    const cleanName = formatCleanTitle(name.trim().replace(/\s+/g, " "));
     const cleanDesc = description.trim().replace(/\s+/g, " ");
 
     if (!cleanName || !cleanDesc) {
@@ -461,7 +461,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
 
   return (
     <motion.div
-      className="space-y-0 max-h-[85vh] overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent p-6 text-slate-800 dark:text-slate-200 font-sans"
+      className="space-y-0 max-h-[85vh] overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent p-6 text-slate-800 dark:text-slate-200 font-sans"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
@@ -469,15 +469,15 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0">
             <Hotel size={24} />
           </div>
           <div>
-            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
               {viewMode === "list" ? "Manage Room Types" : editingId ? "Edit Room Type" : "Add New Room Type"}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Target Category: <span className="font-bold text-emerald-600 dark:text-emerald-400">{propertyType.name}</span>
+              Target Category: <span className="font-semibold text-primary">{propertyType.name}</span>
             </p>
           </div>
         </div>
@@ -487,12 +487,12 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
             <button
               type="button"
               onClick={openCreateForm}
-              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider shadow-md flex items-center gap-2 cursor-pointer transition-all"
+              className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold text-xs shadow-md flex items-center gap-2 cursor-pointer transition-all"
             >
               <Plus size={16} /> Add Room Type
             </button>
           ) : (
-            <div className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-black uppercase tracking-wider">
+            <div className="px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-semibold">
               Step {isFlatRate && currentStep === 4 ? 3 : currentStep} of {isFlatRate ? 3 : 4}
             </div>
           )}
@@ -542,7 +542,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                 <div className="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
                   <Hotel size={24} />
                 </div>
-                <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                <h4 className="font-bold text-sm text-slate-900 dark:text-white">
                   No Room Types Configured Yet
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
@@ -551,7 +551,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                 <button
                   type="button"
                   onClick={openCreateForm}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md inline-flex items-center gap-2 cursor-pointer transition-all"
+                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold text-xs shadow-md inline-flex items-center gap-2 cursor-pointer transition-all"
                 >
                   <Plus size={16} /> Add First Room Type
                 </button>
@@ -570,15 +570,15 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                       }`}
                     >
                       <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+                        <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0">
                           <Icon size={20} />
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">
+                            <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">
                               {rt.name}
                             </h4>
-                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold shrink-0 ${
                               rt.isFlatRate
                                 ? "bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800"
                                 : "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800"
@@ -597,7 +597,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                         <button
                           type="button"
                           onClick={() => openEditForm(rt)}
-                          className="p-2 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                          className="p-2 rounded-xl text-slate-500 hover:text-primary hover:bg-primary/10 dark:hover:bg-slate-800 transition-all cursor-pointer"
                           title="Edit Room Type"
                         >
                           <Edit2 size={16} />
@@ -608,7 +608,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                           className={`p-2 rounded-xl transition-all cursor-pointer ${
                             rt.isActive
                               ? "text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800"
-                              : "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-800"
+                              : "text-primary hover:bg-primary/10 dark:hover:bg-slate-800"
                           }`}
                           title={rt.isActive ? "Disable Room Type" : "Enable Room Type"}
                         >
@@ -646,7 +646,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
               <button
                 type="button"
                 onClick={handleClose}
-                className="h-11 px-6 rounded-2xl border-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                className="h-11 px-6 rounded-2xl border-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-all cursor-pointer"
               >
                 Close Manager
               </button>
@@ -666,7 +666,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
             {/* Progress Bar */}
             <div className="w-full bg-slate-100 dark:bg-slate-900 h-1.5 rounded-full overflow-hidden">
               <motion.div
-                className="bg-emerald-500 h-full rounded-full"
+                className="bg-primary h-full rounded-full"
                 initial={{ width: "25%" }}
                 animate={{ width: `${currentStep * 25}%` }}
                 transition={{ duration: 0.3 }}
@@ -683,6 +683,9 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                   onChange={(e) => {
                     setName(e.target.value);
                     if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+                  }}
+                  onBlur={() => {
+                    if (name.trim()) setName(formatCleanTitle(name));
                   }}
                   placeholder="e.g. Solo Room or Studio Unit"
                   errors={errors}
@@ -711,16 +714,16 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                     : "bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800"
                 )}>
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    <Label className="text-xs font-semibold text-primary">
                       Choose Room Type Icon *
                     </Label>
-                    <span className="text-[10px] text-slate-500 font-bold">
+                    <span className="text-[10px] text-slate-500 font-semibold">
                       Selected: {selectedIcon ? selectedIcon : <span className="text-amber-500">None</span>}
                     </span>
                   </div>
 
                   {errors.icon && (
-                    <p className="text-xs font-bold text-red-500 flex items-center gap-1.5">
+                    <p className="text-xs font-semibold text-red-500 flex items-center gap-1.5">
                       <AlertCircle size={14} /> <span>{errors.icon}</span>
                     </p>
                   )}
@@ -732,10 +735,10 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search icons..."
-                      className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 pl-10 pr-9 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-emerald-500 transition-all"
+                      className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 pl-10 pr-9 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:border-primary transition-all"
                     />
                     {isIconSearching ? (
-                      <Loader2 size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-emerald-500" />
+                      <Loader2 size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-primary" />
                     ) : searchQuery ? (
                       <button
                         type="button"
@@ -750,15 +753,15 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                   <div className="grid grid-cols-6 gap-2 max-h-[140px] min-h-[100px] overflow-y-auto p-2 bg-white dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800 custom-scrollbar">
                     {isIconSearching ? (
                       <div className="col-span-full py-6 flex flex-col items-center justify-center gap-2 text-slate-400">
-                        <Loader2 size={20} className="animate-spin text-emerald-500" />
-                        <span className="text-xs font-bold">Searching icons...</span>
+                        <Loader2 size={20} className="animate-spin text-primary" />
+                        <span className="text-xs font-semibold">Searching icons...</span>
                       </div>
                     ) : filteredIcons.length === 0 ? (
                       <div className="col-span-full py-6 flex flex-col items-center justify-center text-center gap-1.5 p-3">
                         <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 mb-0.5">
                           <SearchX size={18} />
                         </div>
-                        <p className="text-xs font-black text-slate-900 dark:text-white">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white">
                           No icons found matching &quot;{searchQuery}&quot;
                         </p>
                         <p className="text-[10px] text-slate-500 font-medium">
@@ -781,8 +784,8 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                             className={cn(
                               "flex flex-col items-center justify-center p-2.5 rounded-xl border transition-all cursor-pointer",
                               isSelected
-                                ? "bg-emerald-600 dark:bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                                : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-emerald-500/40"
+                                ? "bg-primary border-primary text-white shadow-lg shadow-primary/20"
+                                : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-primary/40"
                             )}
                           >
                             <IconBtn size={18} />
@@ -798,7 +801,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
             {/* STEP 2: Pricing */}
             {currentStep === 2 && (
               <div className="space-y-4">
-                <Label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Select Pricing & Billing Model *
                 </Label>
 
@@ -809,11 +812,11 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                     className={cn(
                       "p-4 rounded-2xl border text-left transition-all cursor-pointer",
                       !isFlatRate
-                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold"
-                        : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-emerald-500/40"
+                        ? "bg-primary/10 border-primary text-primary font-semibold"
+                        : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-primary/40"
                     )}
                   >
-                    <div className="text-sm font-black text-slate-900 dark:text-white mb-0.5">
+                    <div className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">
                       Per-Head Bedspace Pricing
                     </div>
                     <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -827,11 +830,11 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                     className={cn(
                       "p-4 rounded-2xl border text-left transition-all cursor-pointer",
                       isFlatRate
-                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold"
-                        : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-emerald-500/40"
+                        ? "bg-primary/10 border-primary text-primary font-semibold"
+                        : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-primary/40"
                     )}
                   >
-                    <div className="text-sm font-black text-slate-900 dark:text-white mb-0.5">
+                    <div className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">
                       Flat-Rate Whole Unit Pricing
                     </div>
                     <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -846,20 +849,20 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
             {currentStep === 3 && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Allowable Bed Setup Choices *
                   </Label>
                   <button
                     type="button"
                     onClick={() => setShowAddBedForm(!showAddBedForm)}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/30 text-primary text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                   >
                     <Plus size={14} /> Add Bed Setup Choice
                   </button>
                 </div>
 
                 {errors.bedSetups && (
-                  <p className="text-xs font-bold text-red-500 flex items-center gap-1.5 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800">
+                  <p className="text-xs font-semibold text-red-500 flex items-center gap-1.5 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800">
                     <AlertCircle size={14} /> <span>{errors.bedSetups}</span>
                   </p>
                 )}
@@ -871,7 +874,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                       animate={{ opacity: 1, height: "auto", scale: 1 }}
                       exit={{ opacity: 0, height: 0, scale: 0.98 }}
                       transition={{ duration: 0.25, ease: "easeInOut" }}
-                      className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/30 space-y-3 overflow-hidden"
+                      className="p-4 rounded-2xl bg-primary/5 border border-primary/30 space-y-3 overflow-hidden"
                     >
                       <div className="grid grid-cols-3 gap-3">
                         <input
@@ -889,7 +892,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                               .slice(0, 20);
                             setNewBedCode(autoCode);
                           }}
-                          className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs font-bold col-span-2"
+                          className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs font-semibold col-span-2"
                         />
                         <div className="relative">
                           <input
@@ -898,7 +901,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                             tabIndex={-1}
                             placeholder="AUTO_CODE"
                             value={newBedCode}
-                            className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 pr-8 text-xs font-black font-mono uppercase text-slate-500 dark:text-slate-400 cursor-not-allowed select-none"
+                            className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 pr-8 text-xs font-semibold font-mono uppercase text-slate-500 dark:text-slate-400 cursor-not-allowed select-none"
                             title="Bed code is auto-generated from the bed name"
                           />
                           <Lock size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -910,14 +913,14 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                           placeholder="Description (e.g. Spacious 2-pax double mattress frame)"
                           value={newBedDesc}
                           onChange={(e) => setNewBedDesc(e.target.value)}
-                          className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs font-bold col-span-2"
+                          className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs font-semibold col-span-2"
                         />
                         <div className="flex items-center justify-between bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1">
                           <div className="flex items-center gap-1.5">
-                            <Users size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            <Users size={14} className="text-primary shrink-0" />
                             <div>
-                              <label className="block text-[8px] font-black uppercase tracking-wider text-slate-400">Pax Limit</label>
-                              <span className="text-[11px] font-black text-slate-900 dark:text-white">
+                              <label className="block text-[8px] font-semibold uppercase tracking-wider text-slate-400">Pax Limit</label>
+                              <span className="text-[11px] font-bold text-slate-900 dark:text-white">
                                 {newBedPax} Pax
                               </span>
                             </div>
@@ -928,19 +931,19 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                               type="button"
                               onClick={() => setNewBedPax((prev) => Math.max(1, prev - 1))}
                               disabled={newBedPax <= 1}
-                              className="w-5 h-5 rounded bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-xs flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-emerald-500/10 hover:text-emerald-600 cursor-pointer transition-all"
+                              className="w-5 h-5 rounded bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-xs flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/10 hover:text-primary cursor-pointer transition-all"
                               title="Decrease Pax Capacity"
                             >
                               <Minus size={11} />
                             </button>
-                            <span className="w-4 text-center text-xs font-black text-emerald-600 dark:text-emerald-400">
+                            <span className="w-4 text-center text-xs font-bold text-primary">
                               {newBedPax}
                             </span>
                             <button
                               type="button"
                               onClick={() => setNewBedPax((prev) => Math.min(6, prev + 1))}
                               disabled={newBedPax >= 6}
-                              className="w-5 h-5 rounded bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-xs flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-emerald-500/10 hover:text-emerald-600 cursor-pointer transition-all"
+                              className="w-5 h-5 rounded bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-xs flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/10 hover:text-primary cursor-pointer transition-all"
                               title="Increase Pax Capacity (Max 6)"
                             >
                               <Plus size={11} />
@@ -959,14 +962,14 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                             setNewBedDesc("");
                             setNewBedPax(1);
                           }}
-                          className="px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-800 cursor-pointer"
+                          className="px-4 py-2 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-800 cursor-pointer"
                         >
                           Cancel
                         </button>
                         <button
                           type="button"
                           onClick={handleAddBedSetup}
-                          className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-lg cursor-pointer"
+                          className="px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold shadow-lg hover:bg-primary/90 cursor-pointer"
                         >
                           {editingBedCode ? "Update Bed Choice" : "Save Bed Choice"}
                         </button>
@@ -984,7 +987,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                       <div>
                         <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
                           <span>{idx + 1}. {bed.name} ({bed.code})</span>
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center gap-1">
                             <Users size={11} /> {bed.paxCapacity || 1} {(bed.paxCapacity || 1) === 1 ? "Pax" : "Pax"}
                           </span>
                         </div>
@@ -994,7 +997,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleOpenEditBedForm(bed)}
-                          className="p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                          className="p-2 rounded-xl text-slate-400 hover:text-primary hover:bg-primary/10 dark:hover:bg-slate-800 transition-all cursor-pointer"
                           title="Edit Bed Choice"
                         >
                           <Edit2 size={16} />
@@ -1023,10 +1026,10 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                 {/* Modernized Summary Card */}
                 <div className="p-5 rounded-2xl bg-slate-50/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
                   <div className="flex items-center gap-2 pb-3 border-b border-slate-200/80 dark:border-slate-800/80">
-                    <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <div className="w-7 h-7 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                       <Check size={16} strokeWidth={3} />
                     </div>
-                    <span className="font-extrabold text-xs uppercase tracking-wider text-slate-900 dark:text-white">
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">
                       Configuration Summary
                     </span>
                   </div>
@@ -1034,7 +1037,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                     {/* Property Category */}
                     <div className="space-y-1">
-                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                         Property Category
                       </span>
                       <div className="font-bold text-slate-900 dark:text-white">
@@ -1044,7 +1047,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
 
                     {/* Room Name */}
                     <div className="space-y-1">
-                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                         Room Name
                       </span>
                       <div className="font-bold text-slate-900 dark:text-white">
@@ -1054,11 +1057,11 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
 
                     {/* Room Icon */}
                     <div className="space-y-1">
-                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                         Room Icon
                       </span>
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                        <div className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                           {React.createElement(IconComponent, { size: 14 })}
                         </div>
                         <span className="font-bold text-slate-900 dark:text-white">{selectedIcon || "None"}</span>
@@ -1067,12 +1070,12 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
 
                     {/* Billing Structure */}
                     <div className="space-y-1">
-                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                         Billing Structure
                       </span>
                       <div>
                         <span className={cn(
-                          "inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-extrabold uppercase tracking-wider border",
+                          "inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-semibold border",
                           isFlatRate
                             ? "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20"
                             : "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20"
@@ -1085,7 +1088,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
 
                   {/* Allowable Bed Setups */}
                   <div className="space-y-1.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/60">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                       Allowable Bed Setup Choices ({bedSetups.length})
                     </span>
                     <div className="flex flex-wrap gap-1.5">
@@ -1102,7 +1105,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
 
                   {/* Overview & Details */}
                   <div className="space-y-1 pt-2 border-t border-slate-200/60 dark:border-slate-800/60">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                       Overview & Description
                     </span>
                     <p className="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
@@ -1113,11 +1116,11 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
 
                 {/* Live Tenant Card Preview */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                     Search Wizard Card Preview:
                   </Label>
-                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-emerald-500 shadow-md flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-primary shadow-md flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                       {React.createElement(IconComponent, { size: 20 })}
                     </div>
                     <div>
@@ -1135,7 +1138,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                 type="button"
                 onClick={handlePrevStep}
                 disabled={isSaving}
-                className="h-11 px-5 rounded-2xl border-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer"
+                className="h-11 px-5 rounded-2xl border-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer"
               >
                 <ArrowLeft size={16} /> {currentStep > 1 ? "Back" : "Back to List"}
               </button>
@@ -1145,7 +1148,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                   type="button"
                   onClick={handleNextStep}
                   disabled={isSaving}
-                  className="h-11 px-7 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 cursor-pointer"
+                  className="h-11 px-7 rounded-2xl bg-primary hover:bg-primary/90 active:bg-primary text-white font-semibold text-xs shadow-md shadow-primary/20 transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <span>Continue</span> <ArrowRight size={16} />
                 </button>
@@ -1154,7 +1157,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
                   type="button"
                   onClick={handleConfirmAndPublish}
                   disabled={isSaving}
-                  className="h-11 px-7 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 cursor-pointer"
+                  className="h-11 px-7 rounded-2xl bg-primary hover:bg-primary/90 active:bg-primary text-white font-semibold text-xs shadow-md shadow-primary/20 transition-all flex items-center gap-2 cursor-pointer"
                 >
                   {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} strokeWidth={3} />}
                   <span>{isSaving ? "Saving..." : editingId ? "Save & Update Room Type" : "Save & Create Room Type"}</span>

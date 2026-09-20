@@ -256,3 +256,91 @@ export const generateLeaseContractPDF = async (
     doc.save(`${filename}.pdf`);
   }
 };
+
+const blobToDataURL = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
+/**
+ * Safely opens a generated PDF Blob or PDF URL (blob:, data:, or http(s):) in a new browser tab using native PDF embed stream.
+ * Converts Blobs & blob: URLs to Data URLs to bypass Chromium about:blank cross-origin blob restrictions.
+ */
+export const previewPdfBlob = async (
+  blobOrUrl: Blob | string,
+  title: string = "Smart Lease Contract Preview"
+): Promise<boolean> => {
+  let dataUrl: string | null = null;
+  let rawBlob: Blob | null = null;
+
+  if (blobOrUrl instanceof Blob) {
+    rawBlob = blobOrUrl;
+  } else if (typeof blobOrUrl === "string") {
+    if (blobOrUrl.startsWith("data:")) {
+      dataUrl = blobOrUrl;
+    } else if (blobOrUrl.startsWith("blob:")) {
+      try {
+        const res = await fetch(blobOrUrl);
+        if (res.ok) {
+          rawBlob = await res.blob();
+        }
+      } catch (e) {
+        console.warn("Blob URL unreachable or expired:", e);
+      }
+    } else if (blobOrUrl.trim()) {
+      dataUrl = blobOrUrl;
+    }
+  }
+
+  if (rawBlob && !dataUrl) {
+    try {
+      dataUrl = await blobToDataURL(rawBlob);
+    } catch (e) {
+      console.error("Failed converting Blob to Data URL:", e);
+    }
+  }
+
+  if (!dataUrl) {
+    return false;
+  }
+
+  const win = window.open("", "_blank");
+  if (win) {
+    win.document.open();
+    win.document.write(`<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${title}</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #525659;
+      }
+      embed, object, iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <embed src="${dataUrl}" type="application/pdf" width="100%" height="100%" />
+  </body>
+</html>`);
+    win.document.close();
+    return true;
+  } else {
+    window.open(dataUrl, "_blank");
+    return true;
+  }
+};

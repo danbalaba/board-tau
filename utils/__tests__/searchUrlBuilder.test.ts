@@ -1,5 +1,4 @@
 import { buildSearchUrl } from '../searchUrlBuilder';
-import { ROOM_TYPES } from '@/data/roomTypes';
 
 jest.mock('query-string', () => ({
   parse: jest.fn((str) => {
@@ -78,7 +77,7 @@ describe('searchUrlBuilder', () => {
 
   it('ignores capacity if roomType is SOLO', () => {
     const url = buildSearchUrl({
-      roomType: ROOM_TYPES.SOLO,
+      roomType: 'SOLO',
       capacity: '4'
     }, null);
 

@@ -53,7 +53,7 @@ export const columns = (onRefresh?: () => void): ColumnDef<CollegeColumn>[] => [
     },
     enableColumnFilter: true,
     cell: ({ row }) => (
-      <span className="font-bold text-slate-900 dark:text-slate-100">{row.original.name}</span>
+      <span className="font-semibold text-slate-900 dark:text-slate-100">{row.original.name}</span>
     ),
   },
   {
@@ -68,7 +68,7 @@ export const columns = (onRefresh?: () => void): ColumnDef<CollegeColumn>[] => [
     enableColumnFilter: true,
     cell: ({ row }) => (
       <div className="text-center">
-        <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+        <span className="font-mono text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
           {row.original.code}
         </span>
       </div>
@@ -84,7 +84,7 @@ export const columns = (onRefresh?: () => void): ColumnDef<CollegeColumn>[] => [
       const lng = parseFloat(row.original.longitude as string).toFixed(4);
       return (
         <div className="text-center">
-          <span className="font-mono text-xs font-bold text-slate-600 dark:text-slate-300">
+          <span className="font-mono text-xs font-semibold text-slate-600 dark:text-slate-300">
             {lat}, {lng}
           </span>
         </div>
@@ -116,9 +116,9 @@ export const columns = (onRefresh?: () => void): ColumnDef<CollegeColumn>[] => [
     cell: ({ row }) => (
       <div className="text-center">
         <span
-          className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+          className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold ${
             row.original.isActive
-              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+              ? "bg-primary/10 text-primary border border-primary/20"
               : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
           }`}
         >

@@ -20,7 +20,7 @@ export function RestoreWarningModal({ isOpen, onClose, onConfirm }: RestoreWarni
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [verificationResult, setVerificationResult] = useState<{
     newRecordsFound: number;
-    stats: { users: number; reservations: number; listings: number };
+    stats: { users: number; reservations: number; listings: number; leaseContracts?: number };
   } | null>(null);
 
   const handleClose = () => {
@@ -118,8 +118,12 @@ export function RestoreWarningModal({ isOpen, onClose, onConfirm }: RestoreWarni
                       <AlertTriangle className="h-6 w-6" />
                     </div>
                     <div>
-                      <DialogTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">Restore System</DialogTitle>
-                      <DialogDescription className="text-xs font-medium text-rose-500 mt-1">This will overwrite current data.</DialogDescription>
+                      <DialogTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
+                        Restore System
+                      </DialogTitle>
+                      <DialogDescription className="text-xs font-medium text-rose-500 mt-1">
+                        This will overwrite current data.
+                      </DialogDescription>
                     </div>
                   </div>
                 </DialogHeader>
@@ -168,14 +172,18 @@ export function RestoreWarningModal({ isOpen, onClose, onConfirm }: RestoreWarni
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-12 text-center flex flex-col items-center justify-center min-h-[300px]">
                 <Loader2 className="h-10 w-10 text-rose-500 animate-spin mb-4" />
                 <h3 className="text-lg font-black text-gray-900 dark:text-white mb-2">Analyzing Backup File...</h3>
-                <p className="text-sm text-gray-500 font-medium">Checking for data gaps and validating integrity.</p>
+                <p className="text-sm text-gray-500 font-medium">Checking for data gaps and validating integrity across 33 collections.</p>
               </motion.div>
             ) : verificationResult ? (
               // STEP 2: VERIFICATION RESULTS & FINAL CONFIRMATION
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
                 <DialogHeader className="p-6 pb-0">
                   <div className="flex items-center gap-4 mb-4">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${verificationResult.newRecordsFound > 0 ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+                      verificationResult.newRecordsFound > 0 
+                        ? 'bg-amber-500/10 text-amber-500' 
+                        : 'bg-emerald-500/10 text-emerald-500'
+                    }`}>
                       {verificationResult.newRecordsFound > 0 ? <AlertTriangle className="h-6 w-6" /> : <Info className="h-6 w-6" />}
                     </div>
                     <div>
@@ -212,6 +220,12 @@ export function RestoreWarningModal({ isOpen, onClose, onConfirm }: RestoreWarni
                           <li className="flex items-center justify-between text-sm">
                             <span className="text-amber-700/70 dark:text-amber-500/70">New Listings</span>
                             <span className="font-bold text-amber-900 dark:text-amber-300">+{verificationResult.stats.listings}</span>
+                          </li>
+                        )}
+                        {(verificationResult.stats.leaseContracts || 0) > 0 && (
+                          <li className="flex items-center justify-between text-sm">
+                            <span className="text-amber-700/70 dark:text-amber-500/70">New Lease Contracts</span>
+                            <span className="font-bold text-amber-900 dark:text-amber-300">+{verificationResult.stats.leaseContracts}</span>
                           </li>
                         )}
                       </ul>

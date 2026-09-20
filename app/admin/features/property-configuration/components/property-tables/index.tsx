@@ -58,7 +58,7 @@ export function PropertyTable({ data, isLoading, onRefresh }: PropertyTableProps
         </div>
         <Modal>
           <Modal.Trigger name="add-property-type">
-            <Button className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-500/20 font-black uppercase tracking-wider text-xs gap-2">
+            <Button className="bg-primary hover:bg-primary/90 text-white rounded-xl shadow-md shadow-primary/20 font-semibold text-xs gap-2">
               <Plus size={16} /> Add Property Category
             </Button>
           </Modal.Trigger>

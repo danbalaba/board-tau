@@ -16,7 +16,6 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import Button from '../../common/Button';
 import { cn, formatPhoneNumber, formatPropertyType } from '@/utils/helper';
 import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
 import SafeImage from '../../common/SafeImage';
@@ -36,6 +35,8 @@ interface ReviewStepProps {
   permitFile: File | null;
   utilityBillFile?: File | null;
   fireSafetyFile: File | null;
+  onSubmit?: () => void;
+  isSubmitting?: boolean;
 }
 
 const SECTION_TABS = [
@@ -140,7 +141,9 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
   facadeFile,
   permitFile,
   utilityBillFile,
-  fireSafetyFile
+  fireSafetyFile,
+  onSubmit,
+  isSubmitting,
 }) => {
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(null);
   const [activeTab, setActiveTab] = useState<string>('PERSONAL');
@@ -507,8 +510,8 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
       </div>
 
       {/* Host Community Agreement & Data Protection Banner */}
-      <div className="-mx-1 sm:mx-0 mt-4 sm:mt-8 p-4 sm:p-6 rounded-3xl bg-amber-50/90 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 sm:gap-4 w-full md:w-auto">
+      <div className="-mx-1 sm:mx-0 mt-4 sm:mt-8 p-4 sm:p-6 rounded-3xl bg-amber-50/90 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 w-full">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0 border border-amber-500/20">
             <Info size={20} className="sm:w-6 sm:h-6" />
           </div>
@@ -519,15 +522,6 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
             </p>
           </div>
         </div>
-        
-        <Button 
-          outline 
-          type="button" 
-          onClick={onBack} 
-          className="flex items-center justify-center rounded-2xl px-5 py-2.5 uppercase text-[10px] sm:text-xs font-black tracking-wider gap-2 bg-white dark:bg-slate-900 shrink-0 w-full md:w-auto hover:border-amber-400 transition-all"
-        >
-          <ChevronLeft size={14} /> Back to Previous Step
-        </Button>
       </div>
 
       {/* Preview Overlay */}

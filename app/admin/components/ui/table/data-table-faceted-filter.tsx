@@ -85,7 +85,7 @@ export function DataTableFacetedFilter<TData, TValue>({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant='outline' size='sm' className='h-9 rounded-full bg-white/50 dark:bg-gray-900/50 backdrop-blur-md shadow-sm border-gray-200 dark:border-gray-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/30 transition-all duration-200 text-[13px] font-medium'>
+        <Button variant='outline' size='sm' className='h-9 rounded-full bg-white/50 dark:bg-gray-900/50 backdrop-blur-md shadow-sm border-gray-200 dark:border-gray-800 hover:bg-primary/10 hover:text-primary dark:hover:text-primary hover:border-primary/30 transition-all duration-200 text-[13px] font-medium'>
           {mounted && selectedValues?.size > 0 ? (
             <div
               role='button'
@@ -108,7 +108,7 @@ export function DataTableFacetedFilter<TData, TValue>({
               />
               <Badge
                 variant='secondary'
-                className='rounded-full px-1.5 bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border-0 font-medium lg:hidden'
+                className='rounded-full px-1.5 bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary border-0 font-medium lg:hidden'
               >
                 {selectedValues.size}
               </Badge>
@@ -116,7 +116,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                 {selectedValues.size > 2 ? (
                   <Badge
                     variant='secondary'
-                    className='rounded-full px-2 bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border-0 font-medium'
+                    className='rounded-full px-2 bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary border-0 font-medium'
                   >
                     {selectedValues.size} selected
                   </Badge>
@@ -127,7 +127,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                       <Badge
                         variant='secondary'
                         key={option.value}
-                        className='rounded-full px-2 bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border-0 font-medium'
+                        className='rounded-full px-2 bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary border-0 font-medium'
                       >
                         {option.label}
                       </Badge>
@@ -169,8 +169,8 @@ export function DataTableFacetedFilter<TData, TValue>({
                       className={cn(
                         'flex size-4 items-center justify-center rounded-[4px] border transition-all duration-200',
                         isSelected
-                          ? 'bg-emerald-500 border-emerald-500 text-white'
-                          : 'border-gray-300 dark:border-gray-600 opacity-50 [&_svg]:invisible group-hover:border-emerald-500/50'
+                          ? 'bg-primary border-primary text-white'
+                          : 'border-gray-300 dark:border-gray-600 opacity-50 [&_svg]:invisible group-hover:border-primary/50'
                       )}
                     >
                       <CheckIcon className="size-3 font-bold" />

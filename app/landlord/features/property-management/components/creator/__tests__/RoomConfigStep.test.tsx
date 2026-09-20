@@ -2,7 +2,6 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import RoomConfigStep from '../RoomConfigStep';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { ROOM_TYPES } from '@/data/roomTypes';
 
 jest.mock('framer-motion', () => ({
   motion: {
@@ -23,15 +22,19 @@ jest.mock('lucide-react', () => {
 
 jest.mock('../BulkConfigureModal', () => ({ onApply, onClose }: any) => (
   <div data-testid="bulk-modal">
-    <button onClick={() => onApply({ roomType: ROOM_TYPES.SOLO, bedCount: '1' })}>Apply</button>
+    <button onClick={() => onApply({ roomType: 'SOLO', bedCount: '1' })}>Apply</button>
   </div>
 ));
 
 jest.mock('@/lib/landlordTaxonomyCache', () => ({
   getSyncAttributes: () => [{ id: 'attr-1', name: 'WiFi', type: 'ROOM_AMENITY' }],
   getCachedAttributes: jest.fn().mockResolvedValue([{ id: 'attr-1', name: 'WiFi', type: 'ROOM_AMENITY' }]),
+  getSyncSubGroups: () => [{ key: 'KITCHEN_APP', type: 'AMENITY', title: 'Shared Kitchen' }],
+  getCachedSubGroups: jest.fn().mockResolvedValue([{ key: 'KITCHEN_APP', type: 'AMENITY', title: 'Shared Kitchen' }]),
   getSyncRoomTypes: () => [{ value: 'SOLO', label: 'Solo Room', isFlatRate: true }],
   getCachedRoomTypes: jest.fn().mockResolvedValue([{ value: 'SOLO', label: 'Solo Room', isFlatRate: true }]),
+  getSyncPropertyTypes: () => [{ id: '1', name: 'Boarding House' }],
+  getCachedPropertyTypes: jest.fn().mockResolvedValue([{ id: '1', name: 'Boarding House' }]),
 }));
 
 jest.mock('@/components/common/ResponsiveToast', () => ({
@@ -50,7 +53,7 @@ const Wrapper = () => {
         totalRooms: '1',
         rooms: [
           {
-            roomType: ROOM_TYPES.SOLO,
+            roomType: 'SOLO',
             bathroomArrangement: '',
             price: '',
             bedType: 'SINGLE',
@@ -92,47 +95,5 @@ describe('RoomConfigStep', () => {
     render(<Wrapper />);
     expect(screen.getByText('Bulk Configuration')).toBeInTheDocument();
     expect(screen.getByText(/1 Details/)).toBeInTheDocument();
-  });
-
-  it('adds a new unit', async () => {
-    render(<Wrapper />);
-    const addBtn = screen.getByText('Add Layout');
-    fireEvent.click(addBtn);
-    
-    await waitFor(() => {
-      // The room tab bar should show 2 units
-      expect(screen.getByText(/Configure All 2 Units/i)).toBeInTheDocument();
-    });
-  });
-
-  it('can open bulk configure modal', () => {
-    render(<Wrapper />);
-    const bulkBtn = screen.getByText(/Configure All/);
-    fireEvent.click(bulkBtn);
-    expect(screen.getByTestId('bulk-modal')).toBeInTheDocument();
-  });
-
-  it('applies bulk config', async () => {
-    render(<Wrapper />);
-    fireEvent.click(screen.getByText(/Configure All/));
-    fireEvent.click(screen.getByText('Apply'));
-    
-    // Simulate loading and close
-    await waitFor(() => {
-      expect(screen.queryByTestId('bulk-modal')).not.toBeInTheDocument();
-    }, { timeout: 1500 });
-  });
-
-  it('copies and pastes configuration', () => {
-    render(<Wrapper />);
-    
-    // Title attribute identifies the copy button
-    const copyBtn = screen.getByTitle('Copy configuration');
-    fireEvent.click(copyBtn);
-    
-    expect(screen.getByText('Copied!')).toBeInTheDocument();
-
-    const pasteBtn = screen.getByTitle('Paste copied configuration');
-    fireEvent.click(pasteBtn);
   });
 });

@@ -120,9 +120,9 @@ describe('ReservationDetailsModal', () => {
       />
     );
     
-    expect(screen.getByText('Reservation Details')).toBeInTheDocument();
+    expect(screen.getAllByText('Reservation Details').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Room A').length).toBeGreaterThan(0);
-    expect(screen.getByText('gcash Transfer')).toBeInTheDocument();
+    expect(screen.getAllByText(/gcash transfer/i).length).toBeGreaterThan(0);
     expect(screen.getByText('Ref: REF123')).toBeInTheDocument();
   });
 
@@ -195,7 +195,7 @@ describe('ReservationDetailsModal', () => {
       />
     );
     
-    const dlBtn = screen.getByText('Download Pass');
+    const dlBtn = screen.getByText('Boarding Pass');
     fireEvent.click(dlBtn);
     expect(generateConfirmationSlipPDF).toHaveBeenCalled();
   });
@@ -210,7 +210,7 @@ describe('ReservationDetailsModal', () => {
       />
     );
     
-    const chatBtn = screen.getByText('Chat Landlord');
+    const chatBtn = screen.getByText('Chat with Host');
     fireEvent.click(chatBtn);
     expect(mockPush).toHaveBeenCalledWith('/messages?listingId=list-1&otherUserId=landlord-1');
   });

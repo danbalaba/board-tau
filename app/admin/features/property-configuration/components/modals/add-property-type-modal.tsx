@@ -6,7 +6,7 @@ import { ModalContext } from "@/components/modals/Modal";
 import { motion } from "framer-motion";
 import * as LucideIcons from "lucide-react";
 import { Search, Building, Sparkles, Check, AlertCircle, SearchX, Loader2, X, HelpCircle } from "lucide-react";
-import { cn } from "@/utils/helper";
+import { cn, formatCleanTitle } from "@/utils/helper";
 import axios from "axios";
 import { toast } from "@/app/admin/components/ui/sonner";
 import { useRouter } from "next/navigation";
@@ -83,7 +83,7 @@ export const AddPropertyTypeModal: React.FC<AddPropertyTypeModalProps> = ({ onCl
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    const cleanName = name.trim().replace(/\s+/g, " ");
+    const cleanName = formatCleanTitle(name.trim().replace(/\s+/g, " "));
     const cleanDesc = description.trim().replace(/\s+/g, " ");
     const newErrors: { name?: string; description?: string } = {};
     let hasErr = false;
@@ -164,14 +164,14 @@ export const AddPropertyTypeModal: React.FC<AddPropertyTypeModalProps> = ({ onCl
       {/* Header Banner */}
       <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary dark:text-primary-light flex items-center justify-center border border-primary/20 shrink-0">
             <Building size={24} />
           </div>
           <div>
-            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
               {initialData ? "Edit Property Type" : "Add Property Type"}
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
               Define property classifications (*Apartment, Boarding House, Dormitory, etc.*).
             </p>
           </div>
@@ -197,6 +197,9 @@ export const AddPropertyTypeModal: React.FC<AddPropertyTypeModalProps> = ({ onCl
             onChange={(e) => {
               setName(e.target.value);
               if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+            }}
+            onBlur={() => {
+              if (name.trim()) setName(formatCleanTitle(name));
             }}
             placeholder="e.g. Apartment, Boarding House"
             disabled={isLoading}
@@ -229,10 +232,10 @@ export const AddPropertyTypeModal: React.FC<AddPropertyTypeModalProps> = ({ onCl
             : "bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800"
         )}>
           <div className="flex items-center justify-between">
-            <label className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+            <label className="text-xs font-semibold text-primary dark:text-primary-light flex items-center gap-1.5">
               <Sparkles size={14} /> Choose an Icon *
             </label>
-            <span className="text-[10px] text-slate-500 font-bold">
+            <span className="text-[10px] text-slate-500 font-semibold">
               Selected: {selectedIcon ? selectedIcon : <span className="text-amber-500">None</span>}
             </span>
           </div>
@@ -251,10 +254,10 @@ export const AddPropertyTypeModal: React.FC<AddPropertyTypeModalProps> = ({ onCl
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search 1,000+ Lucide icons..."
               disabled={isLoading}
-              className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 pl-10 pr-9 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-emerald-500 transition-all"
+              className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 pl-10 pr-9 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:border-primary transition-all"
             />
             {isIconSearching ? (
-              <Loader2 size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-emerald-500" />
+              <Loader2 size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-primary" />
             ) : searchQuery ? (
               <button
                 type="button"
@@ -269,15 +272,15 @@ export const AddPropertyTypeModal: React.FC<AddPropertyTypeModalProps> = ({ onCl
           <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 max-h-[140px] min-h-[100px] overflow-y-auto p-2 bg-white dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800 custom-scrollbar">
             {isIconSearching ? (
               <div className="col-span-full py-6 flex flex-col items-center justify-center gap-2 text-slate-400">
-                <Loader2 size={20} className="animate-spin text-emerald-500" />
-                <span className="text-xs font-bold">Searching icons...</span>
+                <Loader2 size={20} className="animate-spin text-primary" />
+                <span className="text-xs font-semibold">Searching icons...</span>
               </div>
             ) : filteredIcons.length === 0 ? (
               <div className="col-span-full py-6 flex flex-col items-center justify-center text-center gap-1.5 p-3">
                 <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 mb-0.5">
                   <SearchX size={18} />
                 </div>
-                <p className="text-xs font-black text-slate-900 dark:text-white">
+                <p className="text-xs font-bold text-slate-900 dark:text-white">
                   No icons found matching &quot;{searchQuery}&quot;
                 </p>
                 <p className="text-[10px] text-slate-500 font-medium">
@@ -303,8 +306,8 @@ export const AddPropertyTypeModal: React.FC<AddPropertyTypeModalProps> = ({ onCl
                     className={cn(
                       "flex flex-col items-center justify-center p-2.5 rounded-xl border transition-all cursor-pointer",
                       isSelected 
-                        ? "bg-emerald-600 dark:bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
-                        : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-emerald-500/40 hover:text-emerald-500"
+                        ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20" 
+                        : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-primary/40 hover:text-primary"
                     )}
                   >
                     <IconComp size={18} />
@@ -317,13 +320,13 @@ export const AddPropertyTypeModal: React.FC<AddPropertyTypeModalProps> = ({ onCl
 
         {/* Live Property Type Card Preview */}
         <div className="space-y-2 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+          <span className="text-[10px] font-semibold text-slate-500">
             Card Preview:
           </span>
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-[#2f7d6d] bg-[#2f7d6d]/10 dark:border-emerald-400 flex items-center justify-between shadow-md">
+          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-primary bg-primary/10 dark:border-primary flex items-center justify-between shadow-md">
             <div className="flex items-center gap-3.5">
               {SelectedIconComp ? (
-                <div className="p-3 rounded-xl bg-[#2f7d6d] text-white shadow-sm transition-all">
+                <div className="p-3 rounded-xl bg-primary text-primary-foreground shadow-xs transition-all">
                   <SelectedIconComp size={22} />
                 </div>
               ) : (
@@ -332,7 +335,7 @@ export const AddPropertyTypeModal: React.FC<AddPropertyTypeModalProps> = ({ onCl
                 </div>
               )}
               <div>
-                <h4 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">
+                <h4 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">
                   {name || "Property Type Name"}
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
@@ -340,7 +343,7 @@ export const AddPropertyTypeModal: React.FC<AddPropertyTypeModalProps> = ({ onCl
                 </p>
               </div>
             </div>
-            <div className="w-5 h-5 rounded-full border-2 border-[#2f7d6d] bg-[#2f7d6d] text-white flex items-center justify-center shrink-0">
+            <div className="w-5 h-5 rounded-full border-2 border-primary bg-primary text-primary-foreground flex items-center justify-center shrink-0">
               <Check size={12} strokeWidth={3} />
             </div>
           </div>
@@ -352,14 +355,14 @@ export const AddPropertyTypeModal: React.FC<AddPropertyTypeModalProps> = ({ onCl
             type="button"
             onClick={handleClose}
             disabled={isLoading}
-            className="h-11 px-6 rounded-2xl border-2 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+            className="h-11 px-6 rounded-2xl border-2 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-all cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isLoading}
-            className="h-11 px-7 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-500 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-40 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all cursor-pointer flex items-center gap-2"
+            className="h-11 px-7 rounded-2xl bg-primary hover:bg-primary/90 disabled:opacity-40 text-primary-foreground font-semibold text-xs shadow-md shadow-primary/20 transition-all cursor-pointer flex items-center gap-2"
           >
             {isLoading ? "Saving..." : <><Check size={16} strokeWidth={3} /> {initialData ? "Save & Update Property Type" : "Save & Create Property Type"}</>}
           </button>

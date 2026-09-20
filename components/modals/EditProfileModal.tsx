@@ -204,7 +204,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
             {/* Verification Details */}
             <motion.div variants={itemVariants} className="space-y-2 px-1">
-              <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-gray-300 uppercase tracking-widest mb-2">
                 Verification Details
               </label>
               <div className="flex items-center justify-between px-4 py-4 bg-gray-100/50 dark:bg-gray-800/80 rounded-2xl border border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed group transition-all">
@@ -287,7 +287,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             {/* Map — Dynamic, privacy-safe: coordinates stay in local state only */}
             <motion.div variants={itemVariants} className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-gray-300 uppercase tracking-widest">
                   Location Reference
                 </label>
                 <div className="flex items-center gap-1.5 text-[9px] font-black text-primary uppercase tracking-widest">

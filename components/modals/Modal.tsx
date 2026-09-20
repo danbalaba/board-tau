@@ -43,7 +43,7 @@ interface ModalProps {
   initialOpen?: string;
   onClose?: () => void;
   title?: string;
-  width?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  width?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
   hasFixedFooter?: boolean;
   closeOnOutsideClick?: boolean;
   noPadding?: boolean;
@@ -57,7 +57,7 @@ interface TriggerProps {
 }
 
 interface WindowProps extends TriggerProps {
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
   hasFixedFooter?: boolean;
   closeOnOutsideClick?: boolean;
   noPadding?: boolean;
@@ -117,7 +117,8 @@ const Modal: FC<ModalProps> & {
       sm: isFullMobile ? 'w-full sm:w-[92vw] max-w-[400px] md:w-[400px]' : 'w-[92vw] max-w-[400px] md:w-[400px]',
       md: isFullMobile ? 'w-full sm:w-[92vw] max-w-[500px] md:w-[500px]' : 'w-[92vw] max-w-[500px] md:w-[500px]',
       lg: isFullMobile ? 'w-full sm:w-[95vw] max-w-[800px] md:w-[800px]' : 'w-[95vw] max-w-[800px] md:w-[800px]',
-      xl: isFullMobile ? 'w-full sm:w-[95vw] max-w-[1100px] md:w-[1100px]' : 'w-[95vw] max-w-[1100px] md:w-[1100px]',
+      xl: isFullMobile ? 'w-full sm:w-[95vw] max-w-[1180px] md:w-[1180px]' : 'w-[95vw] max-w-[1180px] md:w-[1180px]',
+      '2xl': isFullMobile ? 'w-full sm:w-[96vw] max-w-[1300px] md:w-[1300px]' : 'w-[96vw] max-w-[1300px] md:w-[1300px]',
       full: 'w-full h-full'
     };
 
@@ -159,7 +160,7 @@ const Modal: FC<ModalProps> & {
                 "outline-none focus:outline-none overscroll-contain w-full",
                 widthClasses[width],
                 isFullMobile 
-                  ? "h-full sm:h-auto max-h-none sm:max-h-[90vh] rounded-none sm:rounded-card" 
+                  ? (width === 'full' ? "h-full rounded-none sm:rounded-card" : "h-full sm:h-auto max-h-none sm:max-h-[90vh] rounded-none sm:rounded-card")
                   : "max-h-[90vh] rounded-2xl sm:rounded-card",
                 hasFixedFooter ? "overflow-hidden" : "overflow-y-auto",
                 noPadding ? "bg-transparent border-0 shadow-none" : (isFullMobile ? "shadow-none sm:shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border-0 sm:border sm:border-white/20 dark:sm:border-white/10" : "shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border border-white/20 dark:border-white/10")
@@ -235,6 +236,7 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, 
     md: isFullMobile ? 'w-full sm:w-[92vw] max-w-[500px] md:w-[500px]' : 'w-[92vw] max-w-[500px] md:w-[500px]',
     lg: isFullMobile ? 'w-full sm:w-[95vw] max-w-[800px] md:w-[800px]' : 'w-[95vw] max-w-[800px] md:w-[800px]',
     xl: isFullMobile ? 'w-full sm:w-[95vw] max-w-[1100px] md:w-[1100px]' : 'w-[95vw] max-w-[1100px] md:w-[1100px]',
+    '2xl': isFullMobile ? 'w-full sm:w-[96vw] max-w-[1300px] md:w-[1300px]' : 'w-[96vw] max-w-[1300px] md:w-[1300px]',
     full: 'w-full h-full'
   };
   const { openName, close } = useContext(ModalContext);
@@ -314,7 +316,7 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, 
                 "outline-none focus:outline-none overscroll-contain w-full",
                 sizeClasses[size],
                 isFullMobile 
-                  ? "h-full sm:h-auto max-h-none sm:max-h-[90vh] rounded-none sm:rounded-card" 
+                  ? (size === 'full' ? "h-full rounded-none sm:rounded-card" : "h-full sm:h-auto max-h-none sm:max-h-[90vh] rounded-none sm:rounded-card")
                   : "max-h-[90vh] rounded-2xl sm:rounded-card",
                 hasFixedFooter ? "overflow-hidden" : "overflow-y-auto",
                 noPadding ? "bg-transparent border-0 shadow-none" : (isFullMobile ? "shadow-none sm:shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border-0 sm:border sm:border-white/20 dark:sm:border-white/10" : "shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border border-white/20 dark:border-white/10")

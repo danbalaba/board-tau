@@ -30,6 +30,8 @@ jest.mock('react-select', () => ({ options, onChange }: any) => (
 
 jest.mock('@/services/taxonomy', () => ({
   getActiveAttributes: jest.fn().mockResolvedValue([]),
+  getActiveSubGroups: jest.fn().mockResolvedValue([]),
+  getActiveRoomTypes: jest.fn().mockResolvedValue([]),
 }));
 
 jest.mock('@/components/common/ResponsiveToast', () => ({

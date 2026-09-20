@@ -31,6 +31,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useColleges } from "@/hooks/useColleges";
+import { formatCleanTitle } from "@/utils/helper";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useEdgeStore } from "@/lib/edgestore";
@@ -268,7 +269,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
     const newErrors: { name?: string; code?: string; latitude?: string; longitude?: string; logoUrl?: string } = {};
 
     if (currentStep === 1) {
-      const cleanName = formData.name.trim().replace(/\s+/g, " ");
+      const cleanName = formatCleanTitle(formData.name.trim().replace(/\s+/g, " "));
       const cleanCode = formData.code.trim().replace(/\s+/g, "").toUpperCase();
 
       if (!cleanName) {
@@ -323,7 +324,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanName = formData.name.trim().replace(/\s+/g, " ");
+    const cleanName = formatCleanTitle(formData.name.trim().replace(/\s+/g, " "));
     const cleanCode = formData.code.trim().replace(/\s+/g, "").toUpperCase();
 
     if (!cleanName || !cleanCode) {
@@ -376,7 +377,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.25 }}
-      className="p-6 sm:p-8 space-y-6 max-h-[85vh] overflow-y-auto custom-scrollbar text-slate-800 dark:text-slate-200 w-full"
+      className="p-6 sm:p-8 space-y-6 max-h-[85vh] overflow-y-auto custom-scrollbar text-slate-800 dark:text-slate-200 w-full font-sans"
     >
       {/* Header Banner */}
       <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
@@ -385,7 +386,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
             <MapPin size={24} />
           </div>
           <div>
-            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
               {initialData ? "Edit Campus Landmark" : "Add Campus Landmark"}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">
@@ -395,7 +396,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
         </div>
 
         {/* Step Indicator */}
-        <div className="px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-black uppercase tracking-wider shrink-0">
+        <div className="px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-semibold shrink-0">
           Step {currentStep} of 3
         </div>
       </div>
@@ -430,9 +431,15 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                   placeholder="e.g. College of Engineering and Technology"
                   value={formData.name}
                   onChange={handleChange}
+                  onBlur={() => {
+                    if (formData.name.trim()) {
+                      setFormData((prev) => ({ ...prev, name: formatCleanTitle(prev.name) }));
+                    }
+                  }}
                   errors={errors}
                   required
                   useStaticLabel
+                  focusColor="amber"
                 />
               </div>
               <div>
@@ -444,9 +451,15 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                   placeholder="e.g. CET"
                   value={formData.code}
                   onChange={handleChange}
+                  onBlur={() => {
+                    if (formData.code.trim()) {
+                      setFormData((prev) => ({ ...prev, code: prev.code.trim().toUpperCase() }));
+                    }
+                  }}
                   errors={errors}
                   required
                   useStaticLabel
+                  focusColor="amber"
                 />
               </div>
             </div>
@@ -497,8 +510,8 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                         </div>
                       </div>
                       <div className="text-left">
-                        <h4 className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-                          <Check size={14} className="text-emerald-500" /> Logo Uploaded
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                          <Check size={14} className="text-amber-500" /> Logo Uploaded
                         </h4>
                         <p className="text-[11px] text-slate-500 font-medium mt-0.5">Click image or eye icon to enlarge preview</p>
                       </div>
@@ -551,7 +564,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
               </div>
 
               {errors.logoUrl && (
-                <p className="text-xs font-bold text-rose-500 flex items-center gap-1.5 mt-1.5">
+                <p className="text-xs font-semibold text-rose-500 flex items-center gap-1.5 mt-1.5">
                   <AlertCircle size={14} /> {errors.logoUrl}
                 </p>
               )}
@@ -571,7 +584,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
             {/* GPS Presets Quick Picker */}
             <div className="p-3.5 rounded-2xl bg-amber-500/5 dark:bg-slate-900/80 border border-amber-500/20 dark:border-slate-800 space-y-2.5 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                   <Sparkles size={14} /> TAU Campus GPS Presets
                 </span>
                 <div className="flex items-center gap-3">
@@ -579,7 +592,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                     <button
                       type="button"
                       onClick={handleClearPreset}
-                      className="text-[11px] font-bold text-rose-500 hover:text-rose-600 flex items-center gap-1 cursor-pointer transition-colors"
+                      className="text-[11px] font-semibold text-rose-500 hover:text-rose-600 flex items-center gap-1 cursor-pointer transition-colors"
                     >
                       <X size={12} /> Clear Selection
                     </button>
@@ -597,9 +610,9 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                       type="button"
                       onClick={() => applyPreset(preset)}
                       title={isSelected ? "Click to unselect preset" : `Apply ${preset.name}`}
-                      className={`px-3 py-1 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                         isSelected
-                          ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25 border-amber-500"
+                          ? "bg-amber-500 text-white shadow-md border-amber-500"
                           : "bg-white dark:bg-slate-800 hover:bg-amber-500/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
                       }`}
                     >
@@ -629,14 +642,14 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                     <MapPin size={15} />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                    <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                       GPS Coordinates <span className="text-rose-500">*</span>
                     </h4>
                     <p className="text-[11px] text-slate-500 font-medium">Auto-updated on map click or pin drag</p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live Map Sync
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> Live Map Sync
                 </span>
               </div>
 
@@ -655,6 +668,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                     errors={errors}
                     required
                     useStaticLabel
+                    focusColor="amber"
                   />
                 </div>
                 <div>
@@ -671,6 +685,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                     errors={errors}
                     required
                     useStaticLabel
+                    focusColor="amber"
                   />
                 </div>
               </div>
@@ -688,12 +703,12 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
             className="space-y-4"
           >
             {/* Reassurance Header Banner */}
-            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+            <div className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
                 <CheckCircle2 size={20} />
               </div>
               <div>
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
+                <h4 className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
                   Ready for Campus Directory <Sparkles size={13} className="text-amber-500" />
                 </h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-snug">
@@ -705,10 +720,10 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
             {/* Live Student Search & Directory Card Preview */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1">
+                <span className="text-[10px] font-semibold text-slate-500 flex items-center gap-1">
                   <Eye size={12} className="text-amber-500" /> Live Search Card Preview
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                   ● Ready to Publish
                 </span>
               </div>
@@ -719,15 +734,15 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                     {previewUrl ? (
                       <SafeImage src={sanitizeImgUrl(previewUrl)} alt={formData.code || "College Logo"} fill className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-xs font-black text-amber-500">{formData.code || "TAU"}</span>
+                      <span className="text-xs font-bold text-amber-500">{formData.code || "TAU"}</span>
                     )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">
                         {formData.name || "TAU Campus Landmark"}
                       </h4>
-                      <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-black text-[10px] border border-amber-500/20">
+                      <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold text-[10px] border border-amber-500/20">
                         {formData.code}
                       </span>
                     </div>
@@ -743,40 +758,40 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
             {/* 4-Grid Configuration Highlights */}
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-1">
-                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-black uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-semibold uppercase tracking-wider">
                   <GraduationCap size={13} className="text-amber-500" /> Landmark Name
                 </div>
-                <p className="text-xs font-black text-slate-900 dark:text-white truncate">
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                   {formData.name || "N/A"}
                 </p>
                 <p className="text-[10px] text-slate-500 font-medium">Code: {formData.code || "N/A"}</p>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-1">
-                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-black uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-semibold uppercase tracking-wider">
                   <Navigation size={13} className="text-amber-500" /> GPS Pin Sync
                 </div>
-                <p className="text-xs font-black text-slate-900 dark:text-white truncate">
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                   {formData.latitude}, {formData.longitude}
                 </p>
                 <p className="text-[10px] text-slate-500 font-medium">Distance calculator ready</p>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-1">
-                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-black uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-semibold uppercase tracking-wider">
                   <Layers size={13} className="text-amber-500" /> Search Filter
                 </div>
-                <p className="text-xs font-black text-slate-900 dark:text-white truncate">
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                   Campus Landmark
                 </p>
                 <p className="text-[10px] text-slate-500 font-medium">Available in Student Search</p>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-1">
-                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-black uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-semibold uppercase tracking-wider">
                   <FileImage size={13} className="text-amber-500" /> Logo Asset
                 </div>
-                <p className="text-xs font-black text-slate-900 dark:text-white truncate">
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                   {previewUrl ? "Custom Logo Set" : "Default Badge"}
                 </p>
                 <p className="text-[10px] text-slate-500 font-medium">Rendered on Leaflet pins</p>
@@ -793,7 +808,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
             type="button"
             onClick={handlePrevStep}
             disabled={isLoading}
-            className="h-11 px-5 rounded-2xl border-2 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer"
+            className="h-11 px-5 rounded-2xl border-2 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer"
           >
             <ArrowLeft size={16} /> Back
           </button>
@@ -802,7 +817,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
             disabled={isLoading}
             onClick={onCloseModal}
             type="button"
-            className="h-11 px-5 rounded-2xl border-2 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+            className="h-11 px-5 rounded-2xl border-2 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-all cursor-pointer"
           >
             Cancel
           </button>
@@ -813,7 +828,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
             type="button"
             onClick={handleNextStep}
             disabled={isLoading}
-            className="h-11 px-7 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-40 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all flex items-center gap-2 cursor-pointer"
+            className="h-11 px-7 rounded-2xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 disabled:opacity-40 text-white font-semibold text-xs shadow-md shadow-amber-500/20 transition-all flex items-center gap-2 cursor-pointer"
           >
             <span>Continue</span> <ArrowRight size={16} />
           </button>
@@ -822,7 +837,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
             disabled={isLoading}
             onClick={onSubmit}
             type="button"
-            className="h-11 px-7 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-40 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all flex items-center gap-2 cursor-pointer"
+            className="h-11 px-7 rounded-2xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 disabled:opacity-40 text-white font-semibold text-xs shadow-md shadow-amber-500/20 transition-all flex items-center gap-2 cursor-pointer"
           >
             {isLoading ? "Saving..." : <><Check size={16} strokeWidth={3} /> {initialData ? "Save & Update Landmark" : "Save & Create Landmark"}</>}
           </button>
@@ -845,7 +860,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="relative max-w-2xl w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4"
+                className="relative max-w-2xl w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4 font-sans"
               >
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                   <div className="flex items-center gap-2.5">
@@ -853,10 +868,10 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                       <ImageIcon size={20} />
                     </div>
                     <div>
-                      <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
                         {formData.name || "College Logo Asset"}
                       </h3>
-                      <p className="text-[11px] text-slate-500 font-semibold mt-0.5">Full High-Resolution Image Preview</p>
+                      <p className="text-[11px] text-slate-500 font-medium mt-0.5">Full High-Resolution Image Preview</p>
                     </div>
                   </div>
                   <button
@@ -881,7 +896,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsPreviewModalOpen(false)}
-                    className="h-11 px-7 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all flex items-center justify-center cursor-pointer"
+                    className="h-11 px-7 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs shadow-md transition-all flex items-center justify-center cursor-pointer"
                   >
                     Close Preview
                   </button>

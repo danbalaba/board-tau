@@ -31,19 +31,24 @@ export async function GET(req: NextRequest) {
       isAutomated: true,
     };
 
-    // Level 0
+    // Level 0: Independent Models
     backupData.userRoles = await db.userRole.findMany();
     backupData.permissions = await db.permission.findMany();
     backupData.passwordResetTokens = await db.passwordResetToken.findMany();
-    backupData.dynamicAttributes = await db.dynamicAttribute.findMany();
+    backupData.propertyTypes = await db.propertyType.findMany();
+    backupData.campusColleges = await db.campusCollege.findMany();
+    backupData.attributeSubGroups = await db.attributeSubGroup.findMany();
     backupData.siteSettings = await db.siteSettings.findMany();
     backupData.featureFlags = await db.featureFlag.findMany();
     backupData.platformMetricSnapshots = await db.platformMetricSnapshot.findMany();
 
-    // Level 1
+    // Level 1: Sub-Definitions & Users
+    backupData.roomTypeDefinitions = await db.roomTypeDefinition.findMany();
+    backupData.dynamicAttributes = await db.dynamicAttribute.findMany();
     backupData.users = await db.user.findMany();
 
-    // Level 2
+    // Level 2: Bed Setups & User Dependencies
+    backupData.bedSetupDefinitions = await db.bedSetupDefinition.findMany();
     backupData.accounts = await db.account.findMany();
     backupData.hostApplications = await db.hostApplication.findMany();
     backupData.emailOTPs = await db.emailOTP.findMany();
@@ -54,20 +59,23 @@ export async function GET(req: NextRequest) {
     backupData.moderationLogs = await db.moderationLog.findMany();
     backupData.listings = await db.listing.findMany();
 
-    // Level 3
+    // Level 3: Listing Details & Contracts
+    backupData.listingImages = await db.listingImage.findMany();
     backupData.listingAttributeLinks = await db.listingAttributeLink.findMany();
-    backupData.roomTypeDefinitions = await db.roomTypeDefinition.findMany();
     backupData.rooms = await db.room.findMany();
+    backupData.leaseContracts = await db.leaseContract.findMany();
     backupData.messages = await db.message.findMany();
 
-    // Level 4
+    // Level 4: Room Details, Signatures & Inquiries
+    backupData.roomImages = await db.roomImage.findMany();
     backupData.roomAttributeLinks = await db.roomAttributeLink.findMany();
-    backupData.propertyTypes = await db.propertyType.findMany();
+    backupData.contractSignatures = await db.contractSignature.findMany();
+    backupData.inquiries = await db.inquiry.findMany();
 
-    // Level 5
+    // Level 5: Reservations
     backupData.reservations = await db.reservation.findMany();
     
-    // Level 6
+    // Level 6: Reviews
     backupData.reviews = await db.review.findMany();
 
 

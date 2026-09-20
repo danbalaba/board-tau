@@ -40,13 +40,8 @@ import {
   Shirt,
   ShoppingBag,
   Car,
-  Bike,
-  BookOpen,
-  Sofa,
-  UserCheck,
   Tv,
-  Fan,
-  ShowerHead,
+  WashingMachine,
   Refrigerator,
   Shield,
   Camera,
@@ -58,8 +53,15 @@ import {
   FileText,
   PenTool,
   ExternalLink,
-  Download
+  Download,
+  ShowerHead,
+  Sofa,
+  Fan,
+  BookOpen,
+  Bike,
+  UserCheck
 } from 'lucide-react';
+import { getDynamicIcon } from '@/lib/iconResolver';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/common/Button';
 import { cn } from '@/utils/helper';
@@ -67,7 +69,7 @@ import { sanitizeImgUrl } from '@/lib/security/sanitize';
 import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
 import SafeImage from '@/components/common/SafeImage';
 import { SharedAmenitiesModal } from '@/components/common/SharedAmenitiesModal';
-import { generateLeaseContractPDF } from '@/utils/contractPdfGenerator';
+import { generateLeaseContractPDF, previewPdfBlob } from '@/utils/contractPdfGenerator';
 
 const Map = dynamic(() => import('@/components/common/Map'), { ssr: false });
 import { 
@@ -395,64 +397,23 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
   };
 
   const getItemIcon = (name: string, attrId?: string) => {
-    const n = name.toLowerCase();
+    const cleanId = attrId ? (attrId.includes('|') ? attrId.split('|')[0] : attrId) : '';
+    const cleanName = (name || '').trim();
 
-    // Rules & Policies
-    if (n.includes("curfew") || n.includes("gate lock") || n.includes("8:00 pm") || n.includes("9:00 pm") || n.includes("10:00 pm")) return Lock;
-    if (n.includes("24/7 open gate") || n.includes("no curfew") || n.includes("open gate")) return Clock;
-    if (n.includes("quiet hours") || n.includes("quiet") || n.includes("noise")) return VolumeX;
-    if (n.includes("pet")) return PawPrint;
-    if (n.includes("smoke") || n.includes("smoking")) return Ban;
-    if (n.includes("drink") || n.includes("alcohol") || n.includes("liquor")) return Wine;
-    if (n.includes("female-only") || n.includes("female only") || n.includes("male-only") || n.includes("male only") || n.includes("no visitors")) return UserX;
-    if (n.includes("visitors") || n.includes("guests") || n.includes("mixed") || n.includes("coed") || n.includes("gender")) return Users;
+    const matched = attributes.find(a => 
+      (cleanId && (a.id === cleanId || a.value === cleanId || a._id === cleanId || a.code === cleanId || cleanId.startsWith(a.id + '|'))) ||
+      (cleanName && (a.name === cleanName || a.name?.toLowerCase() === cleanName.toLowerCase() || a.id === cleanName || a.code === cleanName))
+    );
 
-    // Kitchen & Appliances
-    if (n.includes("utensil") || n.includes("dishware") || n.includes("plate") || n.includes("spoon")) return Utensils;
-    if (n.includes("microwave")) return Utensils;
-    if (n.includes("rice cooker")) return Utensils;
-    if (n.includes("kettle")) return Coffee;
-    if (n.includes("stove") || n.includes("cook")) return Flame;
-    if (n.includes("fridge") || n.includes("refrigerator")) return Refrigerator;
-    if (n.includes("sink") || n.includes("dish drying") || n.includes("kitchen")) return Utensils;
+    if (matched && matched.icon) {
+      return getDynamicIcon(matched.icon);
+    }
 
-    // Bathroom & CR
-    if (n.includes("bidet")) return Droplets;
-    if (n.includes("shower") || n.includes("bath") || n.includes("cr")) return ShowerHead;
-    if (n.includes("toilet") || n.includes("flush")) return ShowerHead;
-    if (n.includes("mirror") || n.includes("vanity")) return ShowerHead;
-    if (n.includes("water storage") || n.includes("drum") || n.includes("tabo") || n.includes("poso") || n.includes("tank")) return Droplets;
-
-    // Cooling & Fans
-    if (n.includes("inverter") || n.includes("split type") || n.includes("window type") || n.includes("ac") || n.includes("aircon") || n.includes("air conditioner")) return Wind;
-    if (n.includes("fan") || n.includes("exhaust")) return Fan;
-
-    // Furniture & Interior Features
-    if (n.includes("curtain") || n.includes("blind") || n.includes("screen") || n.includes("mosquito")) return Layers;
-    if (n.includes("cabinet") || n.includes("closet") || n.includes("wardrobe") || n.includes("storage")) return Layers;
-    if (n.includes("desk") || n.includes("chair") || n.includes("study") || n.includes("book")) return BookOpen;
-    if (n.includes("sofa") || n.includes("lounge") || n.includes("living") || n.includes("couch")) return Sofa;
-    if (n.includes("bed") || n.includes("mattress") || n.includes("pillow")) return Bed;
-    if (n.includes("lock") || n.includes("lockable")) return Lock;
-
-    // Utilities & Connectivity
-    if (n.includes("wifi") || n.includes("internet") || n.includes("fiber")) return Wifi;
-    if (n.includes("generator") || n.includes("electric") || n.includes("power") || n.includes("zap")) return Zap;
-    if (n.includes("laundry") || n.includes("washing") || n.includes("sampayan")) return Shirt;
-    if (n.includes("store") || n.includes("sari-sari") || n.includes("convenience") || n.includes("shop")) return ShoppingBag;
-    if (n.includes("parking") || n.includes("garage") || n.includes("car") || n.includes("motorcycle")) return Car;
-    if (n.includes("bike") || n.includes("bicycle")) return Bike;
-    if (n.includes("caretaker") || n.includes("housekeeping") || n.includes("repairs")) return UserCheck;
-    if (n.includes("tv") || n.includes("smart tv")) return Tv;
-
-    // Security & Safety
-    if (n.includes("cctv") || n.includes("camera") || n.includes("security") || n.includes("guard")) return ShieldCheck;
-    if (n.includes("flood") || n.includes("fire") || n.includes("emergency") || n.includes("first aid")) return ShieldCheck;
-
-    return Sparkles;
+    return getDynamicIcon(cleanName);
   };
 
   const [mounted, setMounted] = useState(false);
+  const [isFullscreenMapOpen, setIsFullscreenMapOpen] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
   const [activeModalCategory, setActiveModalCategory] = useState<{
@@ -853,13 +814,13 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                 <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 sm:col-span-2 flex items-center justify-between">
                   <div>
                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">GPS Coordinates</span>
-                    <p className="text-xs font-black text-primary uppercase tracking-wider">
+                    <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
                       {Array.isArray(location.coordinates) && location.coordinates.length === 2
                         ? `Lat: ${Number(location.coordinates[0]).toFixed(4)}, Lng: ${Number(location.coordinates[1]).toFixed(4)}`
                         : 'Lat: 15.6980, Lng: 120.4285'}
                     </p>
                   </div>
-                  <span className="text-[10px] font-black px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 uppercase tracking-wider flex items-center gap-1">
+                  <span className="text-[10px] font-black px-3 py-1 rounded-full bg-primary/10 text-primary dark:text-primary-400 border border-primary/20 uppercase tracking-wider flex items-center gap-1">
                     <CheckCircle2 size={12} /> Pinpoint Saved
                   </span>
                 </div>
@@ -868,16 +829,47 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
 
             {/* Section 2: Interactive Map Preview */}
             <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-              <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
-                <Compass size={15} className="text-amber-500" />
-                <span>Verified Map Location Pin</span>
-              </h5>
-              <div className="h-[220px] rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-inner relative">
+              <div className="flex items-center justify-between">
+                <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+                  <Compass size={15} className="text-amber-500" />
+                  <span>Verified Map Location Pin</span>
+                </h5>
+                <button
+                  type="button"
+                  onClick={() => setIsFullscreenMapOpen(true)}
+                  className="text-primary hover:underline font-extrabold text-xs flex items-center gap-1 cursor-pointer"
+                >
+                  <Sparkles size={12} />
+                  <span>Fullscreen View</span>
+                </button>
+              </div>
+              <div className="h-[220px] rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-inner relative group">
                 <Map
                   center={Array.isArray(location.coordinates) && location.coordinates.length === 2 ? location.coordinates : [15.6980, 120.4285]}
-                  onLocationSelect={() => {}}
+                  readonly={true}
+                  allowPinDrop={false}
                   title={propertyInfo.propertyName || 'Property Location'}
                 />
+
+                {/* ⤢ Top Right Expand Icon Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsFullscreenMapOpen(true)}
+                  title="Expand Map"
+                  className="absolute top-3 right-3 z-[400] p-2.5 bg-white/90 dark:bg-slate-900/90 hover:bg-primary hover:text-white dark:hover:bg-primary backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg transition-all hover:scale-110 active:scale-95 cursor-pointer"
+                >
+                  <Maximize2 size={16} />
+                </button>
+
+                {/* Bottom Left Coordinates Badge inside Map */}
+                <div className="absolute bottom-3 left-3 z-[400] max-w-[calc(100%-60px)] truncate bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-md text-[9px] sm:text-[10px] font-black text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse shrink-0" />
+                  <span className="truncate">
+                    {Array.isArray(location.coordinates) && location.coordinates.length === 2
+                      ? `Lat: ${Number(location.coordinates[0]).toFixed(4)}, Lng: ${Number(location.coordinates[1]).toFixed(4)}`
+                      : 'Lat: 15.6980, Lng: 120.4285'}
+                  </span>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -927,19 +919,23 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
 
                 <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
                   <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Bathroom & CR Setup</span>
-                  <p className="text-xs font-black text-primary uppercase tracking-wider">{propertyConfig.bathroomSetup?.replace(/_/g, ' ') || 'Shared Bathroom'}</p>
+                  <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                    {propertyConfig.bathroomSetup === 'PRIVATE' || propertyConfig.bathroomSetup === 'PRIVATE_CR' ? 'Private Bathroom' : 'Shared Common CR'}
+                  </p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
                   <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Common CR Count</span>
                   <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                    {propertyConfig.bathroomSetup === 'PRIVATE' ? 'Private En-Suite' : propertyConfig.bathroomCount ? `${propertyConfig.bathroomCount} Common CRs` : 'Shared Hallway CR'}
+                    {propertyConfig.bathroomSetup === 'PRIVATE' || propertyConfig.bathroomSetup === 'PRIVATE_CR' ? 'N/A (Private)' : propertyConfig.bathroomCount ? `${propertyConfig.bathroomCount} Common CRs` : 'Shared Hallway CR'}
                   </p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
                   <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Kitchen Facilities Setup</span>
-                  <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">{propertyConfig.kitchenSetup?.replace(/_/g, ' ') || 'Shared Kitchen'}</p>
+                  <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                    {propertyConfig.kitchenSetup === 'IN_UNIT' || propertyConfig.kitchenSetup === 'PRIVATE' ? 'Private In-Unit Kitchen' : propertyConfig.kitchenSetup === 'NONE' ? 'No Kitchen Facility' : 'Shared Compound Kitchen'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -1090,7 +1086,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                     {customPdfUrl ? (
                       <button
                         type="button"
-                        onClick={() => window.open(customPdfUrl, '_blank')}
+                        onClick={() => previewPdfBlob(customPdfUrl, 'Custom Lease Contract Preview')}
                         className="px-3 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm"
                       >
                         <Eye size={13} />
@@ -1566,7 +1562,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           >
             <div className="flex items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-                <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
+                <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-primary/10 text-primary border border-primary/20 shrink-0">
                   <FileCheck size={18} className="sm:w-5 sm:h-5" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -1646,6 +1642,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
         onClose={() => setPreviewData(prev => ({ ...prev, isOpen: false }))}
         images={previewData.images}
         currentIndex={previewData.index}
+        onNavigate={(newIdx) => setPreviewData(prev => ({ ...prev, index: newIdx }))}
         title={previewData.title}
         isDocument={previewData.isDocument}
       />
@@ -1658,7 +1655,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[999999] flex items-center justify-center p-0 sm:p-6 bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-300"
+              className="fixed inset-0 z-[999999] flex items-center justify-center p-0 sm:p-6 bg-slate-900/20 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-300"
               onClick={() => setActiveModalCategory(null)}
             >
               <motion.div
@@ -1766,6 +1763,93 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                     className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
                     Close Preview
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* 🌐 PRECISION MAP LOCATION INSPECTION MODAL (Portaled directly to document.body) */}
+      {mounted && createPortal(
+        <AnimatePresence>
+          {isFullscreenMapOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[99999] bg-slate-900/20 dark:bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 md:p-8"
+              onClick={() => setIsFullscreenMapOpen(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.98, y: 10 }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-5xl h-full sm:h-[85vh] min-h-screen sm:min-h-[550px] bg-white dark:bg-slate-900 border-0 sm:border border-slate-200 dark:border-slate-800 rounded-none sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col font-sans"
+              >
+                {/* 1. Integrated Header */}
+                <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 sm:p-3 bg-amber-500/10 rounded-xl sm:rounded-2xl text-amber-500 shadow-inner shrink-0 border border-amber-500/20">
+                      <MapPin size={20} className="sm:w-5 sm:h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs sm:text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                        Verified Map Location Inspection
+                      </h3>
+                      <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 mt-0.5">
+                        {propertyInfo.propertyName || 'Property Location'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsFullscreenMapOpen(false)}
+                    className="p-2 sm:p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shrink-0 cursor-pointer"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* 2. Map Canvas Filling Middle Space */}
+                <div className="flex-1 w-full relative bg-slate-100 dark:bg-slate-950 overflow-hidden">
+                  <Map
+                    center={Array.isArray(location.coordinates) && location.coordinates.length === 2 ? location.coordinates : [15.6980, 120.4285]}
+                    readonly={true}
+                    allowPinDrop={false}
+                    title={propertyInfo.propertyName || 'Property Location'}
+                  />
+
+                  {/* Bottom Left Coordinates Badge inside Map */}
+                  <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-[400] max-w-[calc(100%-40px)] truncate bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl text-[10px] sm:text-xs font-black text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                    <span className="truncate">
+                      Lat: {(Array.isArray(location.coordinates) && location.coordinates.length === 2 ? Number(location.coordinates[0]) : 15.6980).toFixed(6)}, Lng: {(Array.isArray(location.coordinates) && location.coordinates.length === 2 ? Number(location.coordinates[1]) : 120.4285).toFixed(6)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 3. Integrated Footer */}
+                <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/80 flex flex-col md:flex-row items-center justify-between gap-3 shrink-0">
+                  <div className="w-full md:w-auto px-3.5 py-1.5 sm:px-4 sm:py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl sm:rounded-2xl text-slate-900 dark:text-white text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2">
+                    <CheckCircle2 size={14} className="sm:w-4 sm:h-4 text-primary" />
+                    <span>
+                      Verified Location: {(Array.isArray(location.coordinates) && location.coordinates.length === 2 ? Number(location.coordinates[0]) : 15.6980).toFixed(6)}, {(Array.isArray(location.coordinates) && location.coordinates.length === 2 ? Number(location.coordinates[1]) : 120.4285).toFixed(6)}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsFullscreenMapOpen(false)}
+                    className="w-full md:w-auto px-6 py-2.5 sm:px-8 sm:py-3 bg-primary hover:bg-primary/90 text-white rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Check size={14} className="sm:w-4 sm:h-4" />
+                    <span>Close Fullscreen View</span>
                   </button>
                 </div>
               </motion.div>

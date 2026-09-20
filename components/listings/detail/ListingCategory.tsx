@@ -2,7 +2,7 @@ import React from "react";
 import { IconType } from "react-icons";
 
 interface ListingCategoryProps {
-  icon: IconType;
+  icon: React.ComponentType<any> | any;
   label: string;
   description: string;
 }

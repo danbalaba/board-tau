@@ -2,7 +2,8 @@
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import queryString from "query-string";
-import * as LucideIcons from "lucide-react";
+import { Building } from "lucide-react";
+import { getDynamicIcon } from "@/lib/iconResolver";
 
 interface CategoryBoxProps {
   label: string;
@@ -43,9 +44,7 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
   }
 
   // Safely resolve the Lucide icon from the string name
-  const Icon = iconName && (LucideIcons as any)[iconName] 
-    ? (LucideIcons as any)[iconName] 
-    : LucideIcons.Building;
+  const Icon = getDynamicIcon(iconName, Building);
 
   return (
     <button

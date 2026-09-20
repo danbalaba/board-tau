@@ -44,11 +44,10 @@ import {
   BookOpen,
   Landmark,
   Droplets,
-  Zap,
+  WashingMachine,
+  Refrigerator,
   Shield,
-  ListChecks,
-  Star,
-  Focus,
+  Coffee,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -67,12 +66,14 @@ import {
   Bike,
   Sofa,
   UserCheck,
-  Coffee,
   Layers,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  ListChecks,
+  Star,
+  CheckCircle2
 } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { getDynamicIcon } from '@/lib/iconResolver';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import Button from '@/components/common/Button';
@@ -112,7 +113,37 @@ const PROPERTY_IMAGE_CATEGORIES = [
 ];
 
 const getParsedCoordinates = (prop: any): [number, number] => {
-  const raw = prop?.latlng || prop?.coordinates;
+  if (!prop) return [15.6371, 120.4090];
+
+  // 1. Direct latitude & longitude fields on property (from database Listing model)
+  const directLat = Number(prop.latitude ?? prop.lat);
+  const directLng = Number(prop.longitude ?? prop.lng);
+  if (!isNaN(directLat) && !isNaN(directLng) && (directLat !== 0 || directLng !== 0)) {
+    if (Math.abs(directLat) < 30 && Math.abs(directLng) > 100) return [directLat, directLng];
+    if (Math.abs(directLng) < 30 && Math.abs(directLat) > 100) return [directLng, directLat];
+  }
+
+  // 2. Nested location object check (prop.location)
+  if (prop.location && typeof prop.location === 'object') {
+    const locLat = Number(prop.location.latitude ?? prop.location.lat);
+    const locLng = Number(prop.location.longitude ?? prop.location.lng);
+    if (!isNaN(locLat) && !isNaN(locLng) && (locLat !== 0 || locLng !== 0)) {
+      if (Math.abs(locLat) < 30 && Math.abs(locLng) > 100) return [locLat, locLng];
+      if (Math.abs(locLng) < 30 && Math.abs(locLat) > 100) return [locLng, locLat];
+    }
+
+    if (Array.isArray(prop.location.coordinates) && prop.location.coordinates.length === 2) {
+      const v1 = Number(prop.location.coordinates[0]);
+      const v2 = Number(prop.location.coordinates[1]);
+      if (!isNaN(v1) && !isNaN(v2) && (v1 !== 0 || v2 !== 0)) {
+        if (Math.abs(v1) < 30 && Math.abs(v2) > 100) return [v1, v2];
+        if (Math.abs(v2) < 30 && Math.abs(v1) > 100) return [v2, v1];
+      }
+    }
+  }
+
+  // 3. Array coordinates / latlng
+  const raw = prop.latlng || prop.coordinates;
   if (Array.isArray(raw) && raw.length === 2) {
     const v1 = Number(raw[0]);
     const v2 = Number(raw[1]);
@@ -121,7 +152,9 @@ const getParsedCoordinates = (prop: any): [number, number] => {
       if (Math.abs(v2) < 30 && Math.abs(v1) > 100) return [v2, v1];
     }
   }
-  return [15.6885, 120.4146];
+
+  // 4. Default TAU Malacampa coordinate center
+  return [15.6371, 120.4090];
 };
 
 export function LandlordPropertyDetailsModal({
@@ -137,6 +170,7 @@ export function LandlordPropertyDetailsModal({
 
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'LOCATION' | 'CONFIG' | 'ROOMS' | 'IMAGES'>('OVERVIEW');
   const [selectedRoomIdx, setSelectedRoomIdx] = useState<number>(0);
+  const [isMapFullscreenOpen, setIsMapFullscreenOpen] = useState<boolean>(false);
   const roomTabContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -292,35 +326,27 @@ export function LandlordPropertyDetailsModal({
   }, [galleryPreview]);
 
   const getItemIcon = (name: string, attrId?: string) => {
-    if (attrId) {
-      const cleanId = attrId.includes('|') ? attrId.split('|')[0] : attrId;
-      const matched = attributes.find(a => a.id === cleanId || a.value === cleanId || a._id === cleanId || a.code === cleanId || cleanId.startsWith(a.id + '|'));
-      if (matched && matched.icon) {
-        const IconObj = (LucideIcons as any)[matched.icon];
-        if (IconObj) return IconObj;
-      }
+    const cleanName = (name || '').trim();
+
+    // 1. Try keyword matching on human name first if it resolves to a specific non-Sparkles icon
+    const nameMatchedIcon = getDynamicIcon(cleanName, null);
+    if (nameMatchedIcon && nameMatchedIcon !== Sparkles) {
+      return nameMatchedIcon;
     }
 
-    const n = (name || '').toLowerCase();
-    if (n.includes("curfew") || n.includes("gate lock")) return Lock;
-    if (n.includes("24/7 open gate") || n.includes("no curfew")) return Clock;
-    if (n.includes("pet")) return PawPrint;
-    if (n.includes("smoke")) return Ban;
-    if (n.includes("drink") || n.includes("alcohol")) return Wine;
-    if (n.includes("visitors") || n.includes("guests")) return Users;
-    if (n.includes("utensil") || n.includes("microwave") || n.includes("stove")) return Utensils;
-    if (n.includes("kettle") || n.includes("coffee")) return Coffee;
-    if (n.includes("fridge") || n.includes("refrigerator")) return Utensils;
-    if (n.includes("bidet") || n.includes("shower") || n.includes("water")) return Droplets;
-    if (n.includes("ac") || n.includes("aircon") || n.includes("inverter")) return Wind;
-    if (n.includes("curtain") || n.includes("blind") || n.includes("cabinet")) return Layers;
-    if (n.includes("desk") || n.includes("study") || n.includes("book")) return BookOpen;
-    if (n.includes("wifi") || n.includes("internet") || n.includes("fiber")) return Wifi;
-    if (n.includes("laundry") || n.includes("washing")) return Shirt;
-    if (n.includes("parking") || n.includes("car")) return Car;
-    if (n.includes("cctv") || n.includes("security") || n.includes("guard")) return ShieldCheck;
+    // 2. If taxonomy matched attribute has a specific non-Sparkles icon
+    const cleanId = attrId ? (attrId.includes('|') ? attrId.split('|')[0] : attrId) : '';
+    const matched = attributes.find(a => 
+      (cleanId && (a.id === cleanId || a.value === cleanId || a._id === cleanId || a.code === cleanId || cleanId.startsWith(a.id + '|'))) ||
+      (cleanName && (a.name === cleanName || a.name?.toLowerCase() === cleanName.toLowerCase() || a.id === cleanName || a.code === cleanName))
+    );
 
-    return Sparkles;
+    if (matched && matched.icon && matched.icon !== 'Sparkles' && matched.icon !== 'Sparkle') {
+      const IconObj = getDynamicIcon(matched.icon, null);
+      if (IconObj && IconObj !== Sparkles) return IconObj;
+    }
+
+    return getDynamicIcon(cleanName, Sparkles);
   };
 
   const resolveAmenityName = (attrId: string) => {
@@ -683,30 +709,35 @@ export function LandlordPropertyDetailsModal({
                 {/* Hero Showcase Banner */}
                 <div className="relative h-52 sm:h-72 w-full overflow-hidden group">
                   {bannerImages.length > 0 ? (
-                    <SafeImage 
-                      key={currentBannerImageIndex}
-                      src={bannerImages[currentBannerImageIndex]} 
-                      alt={property.title} 
-                      priority={true} 
-                    />
+                    <div 
+                      onClick={() => openGallery(bannerImages, currentBannerImageIndex, 'Property Cover Photos')}
+                      className="w-full h-full cursor-pointer relative z-0"
+                    >
+                      <SafeImage 
+                        key={currentBannerImageIndex}
+                        src={bannerImages[currentBannerImageIndex]} 
+                        alt={property.title} 
+                        priority={true} 
+                      />
+                    </div>
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
                       <Building2 size={64} className="text-gray-300 dark:text-gray-700" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent dark:from-gray-950 dark:via-gray-950/30" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent dark:from-gray-950 dark:via-gray-950/30 pointer-events-none z-10" />
                   
                   {bannerImages.length > 1 && (
                     <>
                       <button 
                         onClick={handlePrevBannerImage}
-                        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/40 backdrop-blur-xl border border-white/10 text-white rounded-xl sm:rounded-2xl opacity-70 sm:opacity-40 group-hover:opacity-100 transition-all hover:bg-black/60 hover:scale-110 pointer-events-auto z-40"
+                        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/40 backdrop-blur-xl border border-white/10 text-white rounded-xl sm:rounded-2xl opacity-70 sm:opacity-40 group-hover:opacity-100 transition-all hover:bg-black/60 hover:scale-110 pointer-events-auto z-40 cursor-pointer"
                       >
                         <ChevronLeft size={18} className="sm:w-5 sm:h-5" />
                       </button>
                       <button 
                         onClick={handleNextBannerImage}
-                        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/40 backdrop-blur-xl border border-white/10 text-white rounded-xl sm:rounded-2xl opacity-70 sm:opacity-40 group-hover:opacity-100 transition-all hover:bg-black/60 hover:scale-110 pointer-events-auto z-40"
+                        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/40 backdrop-blur-xl border border-white/10 text-white rounded-xl sm:rounded-2xl opacity-70 sm:opacity-40 group-hover:opacity-100 transition-all hover:bg-black/60 hover:scale-110 pointer-events-auto z-40 cursor-pointer"
                       >
                         <ChevronRight size={18} className="sm:w-5 sm:h-5" />
                       </button>
@@ -714,33 +745,36 @@ export function LandlordPropertyDetailsModal({
                   )}
 
                   {/* Banner Content Overlay */}
-                  <div className="absolute inset-0 p-4 sm:p-10 flex flex-col justify-between z-30">
-                    <div className="flex items-center justify-between">
+                  <div className="absolute inset-0 p-4 sm:p-10 flex flex-col justify-between z-30 pointer-events-none">
+                    <div className="flex items-center justify-between pointer-events-auto">
                       <div className={cn(
                         "inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl text-[8px] sm:text-[9px] uppercase font-black tracking-wider shadow-lg backdrop-blur-md border", 
                         property.status === 'PENDING'
                           ? "bg-amber-500/90 text-white border-amber-400/50 shadow-amber-500/20"
                           : property.status === 'REJECTED'
                           ? "bg-rose-500/90 text-white border-rose-400/50"
-                          : statusColors[property.status] || "bg-emerald-500/90 text-white border-emerald-400/50"
+                          : statusColors[property.status] || "bg-primary/90 text-white border-primary/40"
                       )}>
                         <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
                         <span>{formatStatus(property.status)}</span>
                       </div>
 
-                      <button onClick={onClose} className="p-2 sm:p-3 bg-black/30 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all border border-white/20 z-50 shadow-2xl">
+                      <button onClick={onClose} className="p-2 sm:p-3 bg-black/30 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all border border-white/20 z-50 shadow-2xl cursor-pointer">
                         <X size={16} className="sm:w-[18px] sm:h-[18px]" />
                       </button>
                     </div>
 
-                    <div className="space-y-1 sm:space-y-2">
+                    <div 
+                      onClick={() => openGallery(bannerImages, currentBannerImageIndex, 'Property Cover Photos')}
+                      className="space-y-1 sm:space-y-2 pointer-events-auto cursor-pointer"
+                    >
                       <h3 className="text-xl sm:text-4xl font-black text-white leading-tight drop-shadow-2xl tracking-tighter line-clamp-1">{property.title}</h3>
                       <div className="flex items-center gap-2 flex-wrap">
                         <div className="flex items-center gap-1.5 sm:gap-2 bg-black/30 backdrop-blur-md w-fit px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl border border-white/10 text-white/90 font-bold text-[10px] sm:text-xs">
                           <MapPin size={12} className="text-primary shrink-0 sm:w-3.5 sm:h-3.5" />
                           <span className="truncate max-w-[200px] sm:max-w-none">{(property as any).address || property.region || 'Camiling, Tarlac'}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 sm:gap-2 bg-emerald-500/80 backdrop-blur-md w-fit px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl border border-emerald-400/30 text-white font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-sm">
+                        <div className="flex items-center gap-1.5 sm:gap-2 bg-primary/90 backdrop-blur-md w-fit px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl border border-primary/30 text-white font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-sm">
                           <Building2 size={12} className="shrink-0 sm:w-3.5 sm:h-3.5" />
                           <span>{resolvedPropertyType}</span>
                         </div>
@@ -781,7 +815,7 @@ export function LandlordPropertyDetailsModal({
                 </div>
 
                 {/* Tab Content Body */}
-                <div className="p-3.5 sm:p-10 space-y-4 sm:space-y-6">
+                <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={activeTab}
@@ -797,7 +831,7 @@ export function LandlordPropertyDetailsModal({
                           {/* Highlights Grid */}
                           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
                             {[
-                              { label: 'Property Type', value: resolvedPropertyType, icon: Tag, color: 'text-emerald-500', bg: 'bg-emerald-500/5' },
+                              { label: 'Property Type', value: resolvedPropertyType, icon: Tag, color: 'text-primary', bg: 'bg-primary/5' },
                               { 
                                 label: 'Base Rent Starts At', 
                                 value: `₱${(property.price || 0).toLocaleString()}/mo`, 
@@ -893,20 +927,39 @@ export function LandlordPropertyDetailsModal({
 
                             {/* 2. Main Interactive Leaflet Map Showcase */}
                             <div className="p-4 sm:p-8 rounded-2xl sm:rounded-[2.5rem] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
-                              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-emerald-500 flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-gray-800">
-                                <MapPin size={16} />
-                                <span>Property Location & Map</span>
-                              </h4>
+                              <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                  <MapPin size={16} />
+                                  <span>Property Location & Map</span>
+                                </h4>
+                                <button
+                                  type="button"
+                                  onClick={() => setIsMapFullscreenOpen(true)}
+                                  className="px-3 py-1.5 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                                >
+                                  <Maximize2 size={12} /> Fullscreen View
+                                </button>
+                              </div>
 
                               {/* Leaflet Map Frame */}
-                              <div className="relative h-56 sm:h-96 w-full rounded-2xl sm:rounded-[2rem] overflow-hidden border border-gray-200 dark:border-gray-800 shadow-md z-0">
+                              <div className="relative h-56 sm:h-96 w-full rounded-2xl sm:rounded-[2rem] overflow-hidden border border-gray-200 dark:border-gray-800 shadow-md z-0 group">
                                 <Map
                                   center={[lat, lng]}
                                   title={property.title || "Property Location"}
                                   imageSrc={property.imageSrc}
                                   readonly={true}
-                                  allowPinDrop={true}
+                                  allowPinDrop={false}
                                 />
+
+                                {/* ⤢ Top Right Expand Icon Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => setIsMapFullscreenOpen(true)}
+                                  title="Expand Map Fullscreen"
+                                  className="absolute top-3 right-3 z-[400] p-2.5 bg-white/90 dark:bg-gray-900/90 hover:bg-primary hover:text-white backdrop-blur-md text-gray-700 dark:text-gray-200 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg transition-all hover:scale-110 active:scale-95 cursor-pointer"
+                                >
+                                  <Maximize2 size={16} />
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -1229,11 +1282,11 @@ export function LandlordPropertyDetailsModal({
                       {/* TAB 4: ROOM UNITS BREAKDOWN */}
                       {activeTab === 'ROOMS' && (
                         <div className="space-y-6">
-                          <div className="p-4 sm:p-8 rounded-2xl sm:rounded-[2.5rem] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm space-y-6">
-                            <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
+                          <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm space-y-4 sm:space-y-5">
+                            <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-gray-100 dark:border-gray-800">
                               <div className="flex items-center gap-3">
-                                <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                                  <Bed size={20} />
+                                <div className="p-2.5 sm:p-3 rounded-2xl bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                                  <Bed size={18} className="sm:w-5 sm:h-5" />
                                 </div>
                                 <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-gray-900 dark:text-white">Registered Room Units ({roomsList.length})</h4>
                               </div>
@@ -1270,7 +1323,7 @@ export function LandlordPropertyDetailsModal({
 
                             {/* Room Unit Display */}
                             {roomsList.length > 0 ? (
-                              <div className="grid grid-cols-1 gap-6">
+                              <div className="grid grid-cols-1 gap-4 sm:gap-5">
                                 {roomsList
                                   .filter((_: any, idx: number) => (selectedRoomIdx < roomsList.length ? selectedRoomIdx === idx : idx === 0))
                                   .map((room: any) => {
@@ -1290,7 +1343,7 @@ export function LandlordPropertyDetailsModal({
                                     const totalInUnitCount = groupedAmenities.reduce((sum, g) => sum + g.items.length, 0);
 
                                     return (
-                                      <div key={roomIdx} className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gray-50/70 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800 space-y-5 shadow-sm">
+                                      <div key={roomIdx} className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-gray-50/70 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800 space-y-4 shadow-sm">
                                         {/* Header */}
                                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-gray-200/60 dark:border-gray-700/60">
                                           <div className="flex items-center gap-3">
@@ -1564,6 +1617,88 @@ export function LandlordPropertyDetailsModal({
         onNavigate={(newIdx) => setGalleryPreview(prev => prev ? { ...prev, index: newIdx } : null)}
         title={galleryPreview?.category || 'Property Photo Preview'}
       />
+
+      {/* Interactive Fullscreen Map Modal */}
+      <AnimatePresence>
+        {isMapFullscreenOpen && (
+          <div className="fixed inset-0 z-[99999] bg-slate-900/20 dark:bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 md:p-8" onClick={() => setIsMapFullscreenOpen(false)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, y: 10 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-5xl h-full sm:h-[85vh] min-h-screen sm:min-h-[550px] bg-white dark:bg-gray-900 border-0 sm:border border-gray-200 dark:border-gray-800 rounded-none sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col font-sans"
+            >
+              {/* Header */}
+              <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-900 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary shrink-0 border border-primary/20">
+                    <MapPin size={20} className="sm:w-5 sm:h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                      Verified Map Location Inspection
+                    </h3>
+                    <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mt-0.5">
+                      {property.title || 'Property Location'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsMapFullscreenOpen(false)}
+                  className="p-2 sm:p-2.5 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-all shrink-0 cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Map Canvas */}
+              <div className="flex-1 w-full relative bg-gray-100 dark:bg-gray-950 overflow-hidden">
+                {(() => {
+                  const [modalLat, modalLng] = getParsedCoordinates(property);
+                  return (
+                    <Map
+                      center={[modalLat, modalLng]}
+                      readonly={true}
+                      allowPinDrop={false}
+                      title={property.title || 'Property Location'}
+                    />
+                  );
+                })()}
+
+                {/* Bottom Left Coordinates Badge inside Map */}
+                <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-[400] max-w-[calc(100%-40px)] truncate bg-white/90 dark:bg-gray-900/90 backdrop-blur-md px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xl text-[10px] sm:text-xs font-black text-gray-700 dark:text-gray-200 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse shrink-0" />
+                  <span className="truncate">
+                    Lat: {getParsedCoordinates(property)[0].toFixed(6)}, Lng: {getParsedCoordinates(property)[1].toFixed(6)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/80 flex flex-col md:flex-row items-center justify-between gap-3 shrink-0">
+                <div className="w-full md:w-auto px-3.5 py-1.5 sm:px-4 sm:py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl sm:rounded-2xl text-gray-900 dark:text-white text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2">
+                  <CheckCircle2 size={14} className="sm:w-4 sm:h-4 text-primary" />
+                  <span>
+                    Verified Location: {getParsedCoordinates(property)[0].toFixed(6)}, {getParsedCoordinates(property)[1].toFixed(6)}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsMapFullscreenOpen(false)}
+                  className="w-full md:w-auto px-6 py-2.5 sm:px-8 sm:py-3 bg-primary hover:bg-primary/90 text-white rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  Dismiss Map View
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Shared Amenities, Rules & Features Full Breakdown Modal */}
       <SharedAmenitiesModal

@@ -37,7 +37,7 @@ describe("InquiryModal Component", () => {
     // Default mock implementation for the hook
     (useInquiryLogic as jest.Mock).mockReturnValue({
       currentStep: 1,
-      totalSteps: 7,
+      totalSteps: 8,
       direction: 1,
       isStepCompleted: jest.fn().mockReturnValue(true),
       handleNextStep: jest.fn(),
@@ -115,12 +115,11 @@ describe("InquiryModal Component", () => {
     
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
-
   it("calls handleNextStep when Continue is clicked on a completed step", () => {
     const handleNextStepMock = jest.fn();
     (useInquiryLogic as jest.Mock).mockReturnValue({
       currentStep: 1,
-      totalSteps: 7,
+      totalSteps: 8,
       direction: 1,
       isStepCompleted: jest.fn().mockReturnValue(true),
       handleNextStep: handleNextStepMock,
@@ -156,10 +155,10 @@ describe("InquiryModal Component", () => {
   });
 
   it("renders all steps and success overlay", () => {
-    // We will render step 7 to cover the ReviewStep branch
+    // We will render step 8 to cover the ReviewStep branch
     (useInquiryLogic as jest.Mock).mockReturnValue({
-      currentStep: 7,
-      totalSteps: 7,
+      currentStep: 8,
+      totalSteps: 8,
       direction: 1,
       isStepCompleted: jest.fn().mockReturnValue(true),
       handleNextStep: jest.fn(),
@@ -194,7 +193,7 @@ describe("InquiryModal Component", () => {
     const setCurrentImageIndexMock = jest.fn();
     (useInquiryLogic as jest.Mock).mockReturnValue({
       currentStep: 2, // Cover Step 2 render
-      totalSteps: 7,
+      totalSteps: 8,
       direction: 1,
       isStepCompleted: jest.fn().mockReturnValue(true),
       handleNextStep: jest.fn(),
@@ -260,13 +259,13 @@ describe("InquiryModal Component", () => {
   });
 
   it("covers remaining step renders", () => {
-    // Just a loop to render steps 3, 4, 5, 6 to hit the switch cases in renderStepContent
-    const steps = [3, 4, 5, 6];
+    // Just a loop to render steps 3, 4, 5, 6, 7 to hit the switch cases in renderStepContent
+    const steps = [3, 4, 5, 6, 7];
     
     steps.forEach(step => {
       (useInquiryLogic as jest.Mock).mockReturnValue({
         currentStep: step,
-        totalSteps: 7,
+        totalSteps: 8,
         direction: 1,
         isStepCompleted: jest.fn().mockReturnValue(true),
         handleNextStep: jest.fn(),

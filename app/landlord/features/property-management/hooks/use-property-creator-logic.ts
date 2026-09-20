@@ -23,6 +23,7 @@ export interface RoomType {
 }
 
 import { saveDraftToStorage, loadDraftFromStorage, clearDraftFromStorage } from '@/utils/draftStorage';
+import { formatCleanTitle } from '@/lib/utils';
 
 export function usePropertyCreatorLogic(initialData: any) {
   const router = useRouter();
@@ -424,19 +425,14 @@ export function usePropertyCreatorLogic(initialData: any) {
           // toast notifications cleared for inline validation preference
 
           result.errors.forEach(err => {
-            const normalizedField = err.field.replace(/\[(\d+)\]/g, '.$1');
-            const bracketField = err.field.replace(/\.(\d+)\./g, '[$1].').replace(/\.(\d+)$/g, '[$1]');
+            const bracketField = err.field.includes('[') 
+              ? err.field 
+              : err.field.replace(/\.(\d+)\./g, '[$1].').replace(/\.(\d+)$/g, '[$1]');
             
-            setError(normalizedField as any, {
+            setError(bracketField as any, {
               type: 'manual',
               message: err.message
             });
-            if (bracketField !== normalizedField) {
-              setError(bracketField as any, {
-                type: 'manual',
-                message: err.message
-              });
-            }
           });
 
           setTimeout(() => {
@@ -444,44 +440,44 @@ export function usePropertyCreatorLogic(initialData: any) {
             const normalizedFieldId = firstField.replace(/\[(\d+)\]/g, '.$1');
             const bracketFieldId = firstField.replace(/\.(\d+)\./g, '[$1].').replace(/\.(\d+)$/g, '[$1]');
 
-            let element: HTMLElement | null = document.getElementById(bracketFieldId) || document.getElementById(normalizedFieldId) || document.getElementById(firstField);
+            let roomCardEl: HTMLElement | null = null;
+            if (firstField.includes('propertyConfig.rooms')) {
+              const match = firstField.match(/rooms[\.\[](\d+)/);
+              const roomIdx = match ? match[1] : '0';
+              roomCardEl = document.getElementById(`room-card-${roomIdx}`);
+            }
+
+            let element: HTMLElement | null = roomCardEl || document.getElementById(bracketFieldId) || document.getElementById(normalizedFieldId) || document.getElementById(firstField);
             if (!element) {
               element = document.querySelector(`[name="${bracketFieldId}"]`) || document.querySelector(`[name="${normalizedFieldId}"]`) || document.querySelector(`[name="${firstField}"]`);
             }
             if (!element && (firstField === 'businessInfo.businessType' || firstField === 'propertyInfo.propertyTypeId')) {
               element = document.getElementById('businessInfo.businessType');
             }
-            if (!element && firstField.includes('propertyConfig.rooms')) {
-              const match = firstField.match(/rooms[\.\[](\d+)/);
-              const roomIdx = match ? match[1] : '0';
-              element = document.getElementById(`room-card-${roomIdx}`);
-            }
 
-            const targetToScroll = element?.closest('.rounded-\\[2\\.5rem\\]') as HTMLElement || element;
+            const targetToScroll = roomCardEl || element?.closest('.rounded-\\[2\\.5rem\\]') as HTMLElement || element;
             const scrollContainer = document.getElementById('scroll-container');
 
-            if (targetToScroll && scrollContainer) {
-              const containerRect = scrollContainer.getBoundingClientRect();
-              const targetRect = targetToScroll.getBoundingClientRect();
-              const targetTop = (targetRect.top + scrollContainer.scrollTop) - containerRect.top - 40;
+            if (targetToScroll) {
+              if (scrollContainer) {
+                const containerRect = scrollContainer.getBoundingClientRect();
+                const targetRect = targetToScroll.getBoundingClientRect();
+                const targetTop = (targetRect.top + scrollContainer.scrollTop) - containerRect.top - 20;
 
-              scrollContainer.scrollTo({
-                top: Math.max(0, targetTop),
-                behavior: 'smooth'
-              });
+                scrollContainer.scrollTo({
+                  top: Math.max(0, targetTop),
+                  behavior: 'smooth'
+                });
+              } else {
+                targetToScroll.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
 
               targetToScroll.classList.add('animate-shake');
               setTimeout(() => {
                 targetToScroll?.classList.remove('animate-shake');
               }, 1500);
-
-              if (element && typeof element.focus === 'function') {
-                element.focus({ preventScroll: true });
-              }
-            } else if (targetToScroll) {
-              targetToScroll.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-          }, 50);
+          }, 100);
         }
         return;
       }
@@ -809,7 +805,7 @@ export function usePropertyCreatorLogic(initialData: any) {
 
       // 4. Map Customized Rooms for the Dashboard
       const finalRooms = (data.propertyConfig.rooms || []).map((room: any, i: number) => ({
-        name: `Room ${i + 1}`,
+        name: formatCleanTitle(room.name || `Room ${i + 1}`),
         roomType: room.roomType,
         bathroomArrangement: room.bathroomArrangement,
         price: parseInt(room.price) || parseInt(data.propertyInfo.price),
@@ -828,8 +824,9 @@ export function usePropertyCreatorLogic(initialData: any) {
 
       // 4. Transform data for API - Flattens the structure to match the existing createProperty service
       const payload = {
-        title: data.propertyInfo.propertyName,
+        title: formatCleanTitle(data.propertyInfo.propertyName),
         description: data.propertyInfo.description,
+        propertyTypeId: data.propertyInfo?.propertyTypeId || data.businessInfo?.businessType || null,
         price: parseInt(data.propertyInfo.price),
         roomCount: finalRooms.length,
         bathroomCount: parseInt(data.propertyConfig.bathroomCount),
@@ -876,7 +873,9 @@ export function usePropertyCreatorLogic(initialData: any) {
         },
         businessInfo: {
           ...data.businessInfo,
+          businessName: formatCleanTitle(data.businessInfo?.businessName),
           kitchenSetup: data.propertyConfig?.kitchenSetup || '',
+
           bathroomSetup: data.propertyConfig?.bathroomSetup || '',
           contractMode: data.propertyConfig?.contractMode || 'AUTO_GEN',
           customPdfUrl: finalCustomPdfUrl,

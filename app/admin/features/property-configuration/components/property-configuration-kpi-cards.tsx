@@ -45,27 +45,6 @@ function getRangeLabel(r?: string) {
   }
 }
 
-// ─── Simple Non-Technical Trend Helper ────────────────────────────────────────
-function computeTrend(current: number, previous: number, staticFallbackLabel: string) {
-  if (current === 0 && previous === 0) {
-    return { label: "No data", color: "text-blue-500", bg: "bg-blue-500/10", icon: Minus };
-  }
-
-  const diff = current - previous;
-
-  if (diff === 0) {
-    return { label: staticFallbackLabel, color: "text-blue-500", bg: "bg-blue-500/10", icon: Minus };
-  }
-
-  const isUp = diff > 0;
-  return {
-    label: `${isUp ? "+" : ""}${diff} Added`,
-    color: isUp ? "text-emerald-500" : "text-rose-500",
-    bg: isUp ? "bg-emerald-500/10" : "bg-rose-500/10",
-    icon: isUp ? ArrowUpRight : ArrowDownRight,
-  };
-}
-
 // ─── Real Data-Driven Sparkline Points Generator ─────────────────────────────
 function generateDataSparkline(items: any[], totalVal: number, rangeDays: number) {
   if (!items || items.length === 0) {
@@ -107,19 +86,55 @@ export const PropertyConfigurationKpiCards: React.FC<PropertyConfigurationKpiCar
   const rangeDays = range === "7d" ? 7 : range === "90d" ? 90 : range === "1y" ? 365 : 30;
 
   const kpis = useMemo(() => {
-    const activePropTypes = propertyTypes.filter((p) => p.isActive !== false);
+    const safeProps = Array.isArray(propertyTypes) ? propertyTypes : [];
+    const safeCols = Array.isArray(colleges) ? colleges : [];
+    const safeAttrs = Array.isArray(attributes) ? attributes : [];
+
+    const activePropTypes = safeProps.filter((p) => p && p.isActive !== false);
     const activeCount = activePropTypes.length;
-    const disabledCount = propertyTypes.length - activeCount;
+    const disabledCount = safeProps.length - activeCount;
+
+    const allRoomTypes = safeProps.flatMap((pt) => (pt && Array.isArray(pt.roomTypes) ? pt.roomTypes : []));
+    const roomTypesCount = totalRoomTypesCount > 0 ? totalRoomTypesCount : allRoomTypes.length;
+    const flatRateCount = allRoomTypes.filter((rt) => rt && rt.isFlatRate).length;
+    const perHeadCount = allRoomTypes.length - flatRateCount;
 
     const propTrend = {
       label: disabledCount > 0 ? `${activeCount} Active · ${disabledCount} Disabled` : `${activeCount} Active`,
-      color: "text-emerald-500",
-      bg: "bg-emerald-500/10",
+      color: "text-primary dark:text-emerald-400",
+      bg: "bg-primary/10",
       icon: Building,
     };
-    const roomTrend = computeTrend(totalRoomTypesCount, 0, "Flat & Per-head");
-    const collegeTrend = computeTrend(colleges.length, 0, "TAU Ecosystem");
-    const attrTrend = computeTrend(attributes.length, 0, "System Rules");
+
+    const roomTrend = {
+      label: roomTypesCount > 0 ? `${flatRateCount} Flat · ${perHeadCount} Per-Head` : "No room setups yet",
+      color: "text-blue-500",
+      bg: "bg-blue-500/10",
+      icon: DoorOpen,
+    };
+
+    const collegeActiveCount = safeCols.filter((c) => c && c.isActive !== false).length;
+    const collegeTrend = {
+      label: `${collegeActiveCount} Active Landmarks`,
+      color: "text-amber-500",
+      bg: "bg-amber-500/10",
+      icon: MapPin,
+    };
+
+    const amenitiesCount = safeAttrs.filter((a) => a && a.type === "AMENITY").length;
+    const roomAmenitiesCount = safeAttrs.filter((a) => a && a.type === "ROOM_AMENITY").length;
+    const rulesCount = safeAttrs.filter((a) => a && a.type === "RULE").length;
+    const featuresCount = safeAttrs.filter((a) => a && a.type === "FEATURE").length;
+    const universalCount = safeAttrs.filter((a) => a && a.isUniversal).length;
+
+    const attrTrend = {
+      label: safeAttrs.length > 0
+        ? `${amenitiesCount} Shared · ${roomAmenitiesCount} Room · ${rulesCount} Rules · ${featuresCount} Features`
+        : "No attributes configured",
+      color: "text-purple-500",
+      bg: "bg-purple-500/10",
+      icon: Sparkles,
+    };
 
     return [
       {
@@ -127,59 +142,59 @@ export const PropertyConfigurationKpiCards: React.FC<PropertyConfigurationKpiCar
         value: activeCount,
         trend: propTrend,
         icon: Building,
-        color: "text-emerald-500",
-        bg: "bg-emerald-500/10",
-        chartColor: "#10b981",
+        color: "text-primary dark:text-emerald-400",
+        bg: "bg-primary/10",
+        chartColor: "#2f7d6d",
         trendData: generateDataSparkline(activePropTypes, activeCount, rangeDays),
         tooltip: {
           title: "PROPERTY CATEGORIES",
-          description: "Active accommodation classifications configured for BoardTAU (Apartment, Boarding House, Dorm, etc.).",
-          detail: `${activeCount} active categories (${disabledCount} disabled) across ${propertyTypes.length} total.`,
+          description: "Active accommodation classifications configured for BoardTAU (Apartment, Boarding House, Dorm, Bedspace Facility, etc.).",
+          detail: `${activeCount} active categories (${disabledCount} disabled) out of ${safeProps.length} total.`,
         },
       },
       {
         label: "Room Setups & Layouts",
-        value: totalRoomTypesCount,
+        value: roomTypesCount,
         trend: roomTrend,
         icon: DoorOpen,
         color: "text-blue-500",
         bg: "bg-blue-500/10",
         chartColor: "#3b82f6",
-        trendData: generateDataSparkline([], totalRoomTypesCount, rangeDays),
+        trendData: generateDataSparkline(allRoomTypes, roomTypesCount, rangeDays),
         tooltip: {
           title: "ROOM SETUPS & LAYOUTS",
           description: "Configured room definitions (Solo, Studio, Bedspace) tied to property categories.",
-          detail: "Includes both flat-rate units and per-head bedspace pricing.",
+          detail: `${roomTypesCount} total setups (${flatRateCount} flat-rate units, ${perHeadCount} per-head bedspaces).`,
         },
       },
       {
         label: "TAU Campus Landmarks",
-        value: colleges.length,
+        value: safeCols.length,
         trend: collegeTrend,
         icon: MapPin,
         color: "text-amber-500",
         bg: "bg-amber-500/10",
         chartColor: "#f59e0b",
-        trendData: generateDataSparkline(colleges, colleges.length, rangeDays),
+        trendData: generateDataSparkline(safeCols, safeCols.length, rangeDays),
         tooltip: {
           title: "TAU CAMPUS LANDMARKS",
           description: "Tarlac Agricultural University colleges and landmarks mapped for student proximity search.",
-          detail: `${colleges.length} university landmarks active on TAU Leaflet map.`,
+          detail: `${collegeActiveCount} active university landmarks on TAU Leaflet map.`,
         },
       },
       {
-        label: "Amenities & Rules",
-        value: attributes.length || 50,
+        label: "Amenities, Rules & Features",
+        value: safeAttrs.length,
         trend: attrTrend,
         icon: Sparkles,
         color: "text-purple-500",
         bg: "bg-purple-500/10",
         chartColor: "#a855f7",
-        trendData: generateDataSparkline(attributes, attributes.length || 50, rangeDays),
+        trendData: generateDataSparkline(safeAttrs, safeAttrs.length, rangeDays),
         tooltip: {
-          title: "AMENITIES & RULES",
-          description: "Dynamic property amenities, room features, house rules, and security infrastructure.",
-          detail: `${attributes.filter((a) => a.isUniversal).length} universal amenities active across all property types.`,
+          title: "AMENITIES, RULES & FEATURES",
+          description: "Platform dynamic attributes across Shared Amenities, Room Amenities, House Rules, and Security & Features.",
+          detail: `Breakdown: ${amenitiesCount} Shared, ${roomAmenitiesCount} Room, ${rulesCount} House Rules, ${featuresCount} Security & Features (${universalCount} universal).`,
         },
       },
     ];
@@ -199,39 +214,40 @@ export const PropertyConfigurationKpiCards: React.FC<PropertyConfigurationKpiCar
             >
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Card className="cursor-default border-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl shadow-lg rounded-[2rem] overflow-hidden group h-full transition-all hover:bg-white/50 dark:hover:bg-gray-900/50 hover:shadow-2xl hover:-translate-y-0.5">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                      <CardTitle className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                  <Card className="cursor-default border-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl shadow-md rounded-2xl overflow-hidden group h-full transition-all hover:bg-white/50 dark:hover:bg-gray-900/50 hover:shadow-xl hover:-translate-y-0.5 p-5">
+                    <div className="flex flex-row items-center justify-between pb-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">
                         {stat.label}
-                      </CardTitle>
-                      <div className={cn("p-3 rounded-2xl transition-transform group-hover:scale-110", stat.bg)}>
-                        <stat.icon className={cn("h-5 w-5", stat.color)} />
+                      </span>
+                      <div className={cn("p-2.5 rounded-xl transition-transform group-hover:scale-110", stat.bg)}>
+                        <stat.icon className={cn("h-4 w-4", stat.color)} />
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-black tabular-nums text-gray-900 dark:text-white tracking-tighter">
+                    </div>
+
+                    <div>
+                      <div className="text-2xl font-black tabular-nums text-gray-900 dark:text-white tracking-tight">
                         {isAnyLoading ? (
-                          <div className="h-9 w-16 bg-muted/50 dark:bg-white/10 animate-pulse rounded-xl" />
+                          <div className="h-7 w-16 bg-muted/50 dark:bg-white/10 animate-pulse rounded-lg" />
                         ) : (
                           stat.value.toLocaleString()
                         )}
                       </div>
 
                       {/* Dynamic Trend & Range Badges */}
-                      <div className="flex items-center flex-wrap gap-1.5 mt-2">
-                        <div className={cn("flex items-center gap-1.5 w-fit px-2 py-1 rounded-lg", stat.trend.bg)}>
+                      <div className="flex items-center flex-wrap gap-1.5 mt-1.5">
+                        <div className={cn("flex items-center gap-1.5 w-fit px-2 py-0.5 rounded-md", stat.trend.bg)}>
                           <TrendIcon className={cn("w-3 h-3", stat.trend.color)} />
                           <span className={cn("text-[9px] font-bold uppercase tracking-widest", stat.trend.color)}>
                             {stat.trend.label}
                           </span>
                         </div>
-                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded-lg">
+                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest bg-gray-50 dark:bg-gray-800/50 px-2 py-0.5 rounded-md">
                           vs {getRangeLabel(range)}
                         </span>
                       </div>
 
                       {/* Sparkline Area Chart */}
-                      <div className="h-20 w-full mt-6 -mx-6 mb-[-1.5rem]">
+                      <div className="h-14 w-full mt-3 -mx-5 -mb-5">
                         <ResponsiveContainer width="100%" height="100%">
                           <AreaChart data={stat.trendData}>
                             <defs>
@@ -244,7 +260,7 @@ export const PropertyConfigurationKpiCards: React.FC<PropertyConfigurationKpiCar
                               type="monotone"
                               dataKey="v"
                               stroke={stat.chartColor}
-                              strokeWidth={3}
+                              strokeWidth={2.5}
                               fill={`url(#gradient-cfg-${i})`}
                               isAnimationActive={true}
                               animationDuration={1500}
@@ -253,7 +269,7 @@ export const PropertyConfigurationKpiCards: React.FC<PropertyConfigurationKpiCar
                           </AreaChart>
                         </ResponsiveContainer>
                       </div>
-                    </CardContent>
+                    </div>
                   </Card>
                 </TooltipTrigger>
 

@@ -54,6 +54,8 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: 'desc' },
         include: {
           user: { select: { id: true, name: true, email: true } },
+          propertyType: { select: { name: true, icon: true } },
+          images: { select: { url: true }, take: 1 },
           rooms: { select: { id: true } },
           reservations: { select: { id: true } },
           reviews: { select: { id: true } },
@@ -67,11 +69,17 @@ export async function GET(req: NextRequest) {
       id: property.id,
       title: property.title,
       description: property.description,
+      image: property.images?.[0]?.url || property.imageSrc || '/images/placeholder.jpg',
+      location: (typeof property.location === 'object' && property.location?.address) 
+        ? `${property.location.address}, ${property.location.city || 'Camiling'}` 
+        : (property.country || 'Camiling, Tarlac (Near TAU)'),
       owner: property.user,
+      propertyTypeName: property.propertyType?.name || 'Boarding House',
+      propertyTypeIcon: property.propertyType?.icon || 'Building',
       price: property.price,
       status: property.status,
-      rating: property.rating,
-      reviewCount: property.reviewCount,
+      rating: property.rating || 0,
+      reviewCount: property.reviewCount || 0,
       roomsCount: property.rooms.length,
       bookingsCount: property.reservations.length,
       createdAt: property.createdAt,

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import SafeImage from '@/components/common/SafeImage';
 import { cn } from '@/utils/helper';
@@ -188,13 +189,16 @@ export function AdminModerationActionLoaderModal({
     return () => clearInterval(timer);
   }, [isOpen, LOADING_TIPS.length]);
 
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const currentStageNum = externalStage !== undefined ? externalStage : internalStage;
   const currentStageObj = STAGES.find((s) => s.id === currentStageNum) || STAGES[0];
   const activeProgress = externalProgress !== undefined ? externalProgress : internalProgress;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[10000] flex flex-col justify-between items-center p-4 sm:p-12 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-3xl overflow-y-auto overflow-x-hidden max-w-full w-full text-slate-900 dark:text-white antialiased transition-colors duration-300">
       {/* Ambient Background Glowing Lights */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -420,6 +424,7 @@ export function AdminModerationActionLoaderModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

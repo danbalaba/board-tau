@@ -169,7 +169,7 @@ function AutoSaveBadge({
         "relative w-[130px] h-7 px-2.5 rounded-full border transition-colors duration-300 flex items-center justify-center shrink-0 overflow-hidden select-none",
         isSaving 
           ? "bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/20" 
-          : "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+          : "bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-400 border-primary/20"
       )}
     >
       <AnimatePresence initial={false}>
@@ -195,8 +195,8 @@ function AutoSaveBadge({
             className="flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider whitespace-nowrap w-full"
           >
             <span className="relative flex h-2 w-2 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
             </span>
             <span className="truncate">{relativeText || 'Auto-Saved'}</span>
           </motion.div>
@@ -610,9 +610,9 @@ export function LandlordPropertyCreator({ initialData = {} }: { initialData?: an
                         <h1 className="text-lg sm:text-2xl font-black text-gray-900 dark:text-white leading-tight">
                            {isEditMode ? (isRejected ? 'Update & Resubmit Listing' : 'Edit Property Details') : 'New Property Listing'}
                         </h1>
-                        <p className="text-[10px] sm:text-[11px] text-gray-500 font-bold uppercase tracking-wider mt-0.5">
-                           {STEPS[currentStep].title} Step • {currentStep + 1} / {STEPS.length}
-                        </p>
+                         <p className="text-[10px] sm:text-[11px] text-gray-500 font-bold uppercase tracking-wider mt-0.5">
+                            {(STEPS[currentStep] || STEPS[0])?.title} Step • {currentStep + 1} / {STEPS.length}
+                         </p>
                      </div>
                   </div>
 
@@ -697,7 +697,7 @@ export function LandlordPropertyCreator({ initialData = {} }: { initialData?: an
                         isActive 
                           ? "bg-primary text-white shadow-lg shadow-primary/25 scale-[1.02] ring-2 ring-primary/20" 
                           : isCompleted 
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20" 
+                            ? "bg-primary/10 text-primary dark:text-primary-400 border border-primary/30 hover:bg-primary/20" 
                             : isLocked
                               ? "bg-gray-200/40 dark:bg-gray-800/40 text-gray-400 dark:text-gray-500 border border-transparent cursor-not-allowed opacity-50"
                               : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-primary/40 hover:text-primary shadow-sm"
@@ -709,7 +709,7 @@ export function LandlordPropertyCreator({ initialData = {} }: { initialData?: an
                         isActive 
                           ? "bg-white/20 text-white" 
                           : isCompleted 
-                            ? "bg-emerald-500 text-white" 
+                            ? "bg-primary text-white" 
                             : isLocked
                               ? "bg-transparent text-gray-400 dark:text-gray-500"
                               : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"

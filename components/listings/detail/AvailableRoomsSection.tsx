@@ -9,7 +9,7 @@ import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import AllRoomsModal from "./AllRoomsModal";
 import RoomDetailsModal from "./RoomDetailsModal";
-import { Eye, Users, Layers, Info, CheckCircle2, XCircle, DoorOpen, ArrowRight } from "lucide-react";
+import { Eye, Users, Layers, Info, CheckCircle2, XCircle, DoorOpen, ArrowRight, Wrench } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
 import RoomTooltip from "./RoomTooltip";
 
@@ -30,6 +30,9 @@ interface Room {
   description?: string;
   size?: number;
   bedType?: string;
+  bedCount?: number;
+  bathroomArrangement?: string;
+  kitchenSetup?: string;
   amenities?: string[];
   reservationFee: number;
   imageSrc?: string;
@@ -328,22 +331,21 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
                   {/* Status Badge */}
                   <div className="absolute top-4 right-4 z-10">
                     <div
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-md border shadow-lg flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] backdrop-blur-md border shadow-md flex items-center gap-1.5 ${
                         room.status === "AVAILABLE"
-                          ? "bg-primary/60 border-white/30 text-white"
-                          : "bg-rose-500/60 border-white/30 text-white"
+                          ? "bg-[#2f7d6d] border-white/30 text-white"
+                          : room.status === "MAINTENANCE"
+                          ? "bg-amber-600 border-white/30 text-white"
+                          : "bg-rose-600 border-white/30 text-white"
                       }`}
                     >
+                      <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                       {room.status === "AVAILABLE" ? (
-                        <>
-                          <CheckCircle2 size={12} />
-                          Available
-                        </>
+                        <>Available</>
+                      ) : room.status === "MAINTENANCE" ? (
+                        <>Under Maintenance</>
                       ) : (
-                        <>
-                          <XCircle size={12} />
-                          Full
-                        </>
+                        <>Fully Occupied</>
                       )}
                     </div>
                   </div>
@@ -428,6 +430,8 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
                   >
                     {room.status === "AVAILABLE" ? (
                       <>Inquire Now</>
+                    ) : room.status === "MAINTENANCE" ? (
+                      <>Under Maintenance</>
                     ) : (
                       <>Room Full</>
                     )}

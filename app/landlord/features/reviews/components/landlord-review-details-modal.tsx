@@ -64,7 +64,7 @@ interface LandlordReviewDetailsModalProps {
 
 const statusColors: Record<string, string> = {
   pending: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-  approved: 'bg-green-500/10 text-green-600 border-green-500/20',
+  approved: 'bg-primary/10 text-primary border-primary/20',
   rejected: 'bg-red-500/10 text-red-600 border-red-500/20',
 };
 
@@ -218,7 +218,7 @@ export function LandlordReviewDetailsModal({
                      <div>
                         <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-none mb-2">{review.user.name || 'Anonymous Guest'}</h3>
                         <div className="flex items-center gap-2">
-                          <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                          <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Verified Guest Review</p>
                         </div>
                      </div>
@@ -372,17 +372,17 @@ export function LandlordReviewDetailsModal({
                 </div>
 
                 {review.response ? (
-                   <div className="bg-emerald-500/5 dark:bg-emerald-500/10 p-6 rounded-[2rem] border border-emerald-500/10 dark:border-emerald-500/20 relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-8 text-emerald-500/10 group-hover:text-emerald-500/20 transition-colors">
+                   <div className="bg-primary/10 p-6 rounded-[2rem] border border-primary/20 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-8 text-primary/10 group-hover:text-primary/20 transition-colors">
                         <IconHome size={100} />
                       </div>
                       <div className="relative z-10">
                         <div className="flex items-center gap-3 mb-4">
-                           <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center">
+                           <div className="w-10 h-10 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center">
                               <IconCircleCheck size={20} />
                            </div>
                            <div>
-                             <h6 className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Response Sent</h6>
+                             <h6 className="text-[10px] font-black uppercase tracking-widest text-primary dark:text-primary-light">Response Sent</h6>
                              <p className="text-[8px] font-bold text-gray-400 uppercase">Replied on: {new Date(review.respondedAt!).toLocaleDateString()}</p>
                            </div>
                         </div>

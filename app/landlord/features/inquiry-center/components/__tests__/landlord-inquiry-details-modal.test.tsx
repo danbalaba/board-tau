@@ -113,9 +113,9 @@ describe('LandlordInquiryDetailsModal', () => {
     jest.useRealTimers();
   });
 
-  it('renders loading state initially', () => {
+  it('renders details when modal is open', () => {
     render(<LandlordInquiryDetailsModal inquiry={mockInquiry} isOpen={true} onClose={jest.fn()} onUpdateStatus={jest.fn()} />);
-    expect(screen.getByText('Loading Inquiry Data...')).toBeInTheDocument();
+    expect(screen.getByText('Inquiry Details')).toBeInTheDocument();
   });
 
   it('renders details after loading completes', () => {
@@ -129,7 +129,7 @@ describe('LandlordInquiryDetailsModal', () => {
     expect(screen.getByText('Sunny Apartment')).toBeInTheDocument();
     expect(screen.getByText('Solo Buyout Request')).toBeInTheDocument();
     expect(screen.getByText(/Can I bring my cat\?/i)).toBeInTheDocument();
-    expect(screen.getAllByText('PENDING').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Inquiry Pending').length).toBeGreaterThan(0);
   });
 
   it('calls onUpdateStatus when Approve is clicked', async () => {
@@ -175,8 +175,7 @@ describe('LandlordInquiryDetailsModal', () => {
       jest.advanceTimersByTime(600);
     });
 
-    expect(screen.getByText(/Decision already made:/i)).toBeInTheDocument();
-    expect(screen.getAllByText('APPROVED').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Inquiry Approved').length).toBeGreaterThan(0);
     expect(screen.queryByText(/Approve Inquiry/i)).not.toBeInTheDocument();
   });
 });

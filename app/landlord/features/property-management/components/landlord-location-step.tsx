@@ -332,7 +332,7 @@ const LandlordLocationStep: React.FC<LandlordLocationStepProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[99999] bg-slate-950/70 dark:bg-black/80 backdrop-blur-xl flex items-center justify-center p-0 sm:p-4 md:p-8"
+              className="fixed inset-0 z-[99999] bg-slate-900/20 dark:bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 md:p-8"
               onClick={() => setIsFullscreenMapOpen(false)}
             >
               <motion.div

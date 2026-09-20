@@ -85,7 +85,7 @@ describe('LandlordRoomEditModal', () => {
         initialData={mockRoom}
       />
     );
-    expect(screen.getByText(/Save Changes/i)).toBeInTheDocument();
+    expect(screen.getByText(/Save Unit Changes|Save Changes/i)).toBeInTheDocument();
     expect(screen.getByText(/Cancel/i)).toBeInTheDocument();
   });
 

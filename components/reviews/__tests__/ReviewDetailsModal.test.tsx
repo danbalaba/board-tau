@@ -102,7 +102,7 @@ describe('ReviewDetailsModal', () => {
     // Mobile expand button is the first button inside the modal content
     fireEvent.click(buttons[1]); // Close button is likely index 0 in our mock or index 1
     // Actually let's search by text inside the button
-    const expandBtn = screen.getByText('Property Details').closest('button');
+    const expandBtn = screen.getByText('Property Info').closest('button');
     if (expandBtn) fireEvent.click(expandBtn);
     
     // Assert expanded content is visible

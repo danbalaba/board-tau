@@ -21,19 +21,20 @@ interface RoomAddModernSelectProps {
   label?: string;
   className?: string;
   instanceId?: string;
+  hasError?: boolean;
 }
 
 const CustomOption = (props: OptionProps<Option, false>) => {
   return (
     <components.Option {...props}>
       <div className="flex items-center justify-between w-full">
-        <div className="flex items-center gap-3">
-          {props.data.icon && <span className="shrink-0 text-primary opacity-80 scale-100">{props.data.icon}</span>}
-          <span className="truncate font-black tracking-tight text-[12px] sm:text-[13px]">{props.data.label}</span>
+        <div className="flex items-center gap-2.5 min-w-0">
+          {props.data.icon && <span className="shrink-0 text-primary">{props.data.icon}</span>}
+          <span className="font-black tracking-wider text-[11px] sm:text-xs uppercase whitespace-nowrap">{props.data.label}</span>
         </div>
         {props.isSelected && (
-          <div className="shrink-0 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-            <Check size={10} className="text-white" strokeWidth={4} />
+          <div className="shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center ml-2">
+            <Check size={12} className="text-primary" strokeWidth={3.5} />
           </div>
         )}
       </div>
@@ -44,10 +45,7 @@ const CustomOption = (props: OptionProps<Option, false>) => {
 const CustomSingleValue = (props: SingleValueProps<Option, false>) => {
   return (
     <components.SingleValue {...props}>
-      <div className="flex items-center gap-2.5">
-        {props.data.icon && <span className="shrink-0 text-primary scale-110">{props.data.icon}</span>}
-        <span className="truncate font-black tracking-tight text-gray-900 dark:text-white uppercase text-[11px] sm:text-[13px]">{props.data.label}</span>
-      </div>
+      <span className="truncate font-black tracking-wider text-gray-900 dark:text-white uppercase text-[11px] sm:text-xs">{props.data.label}</span>
     </components.SingleValue>
   );
 };
@@ -56,10 +54,10 @@ const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => {
   return (
     <components.DropdownIndicator {...props}>
       <div className={cn(
-        "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300 mr-1",
+        "w-7 h-7 rounded-xl flex items-center justify-center transition-all duration-300 mr-0.5",
         props.selectProps.menuIsOpen
-          ? "bg-primary text-white rotate-180"
-          : "bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-primary"
+          ? "bg-primary/20 text-primary rotate-180"
+          : "bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-primary"
       )}>
         <ChevronDown size={14} strokeWidth={3} />
       </div>
@@ -70,7 +68,7 @@ const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => {
 const CustomMenu = (props: MenuProps<Option, false, GroupBase<Option>>) => {
   return (
     <components.Menu {...props}>
-      <div className="animate-in fade-in slide-in-from-top-2 duration-300 outline-none">
+      <div className="animate-in fade-in slide-in-from-top-2 duration-200 outline-none">
         {props.children}
       </div>
     </components.Menu>
@@ -80,7 +78,7 @@ const CustomMenu = (props: MenuProps<Option, false, GroupBase<Option>>) => {
 const CustomMenuList = (props: MenuListProps<Option, false, GroupBase<Option>>) => {
   return (
     <components.MenuList {...props}>
-      <div className="py-3 px-2">
+      <div className="p-1.5 space-y-1">
         {props.children}
       </div>
     </components.MenuList>
@@ -91,11 +89,12 @@ const RoomAddModernSelect: React.FC<RoomAddModernSelectProps> = ({
   options,
   value,
   onChange,
-  placeholder = "Select Building...",
+  placeholder = "SELECT PROPERTY / BUILDING...",
   icon,
   label,
   className,
   instanceId,
+  hasError = false,
 }) => {
   const [isMounted, setIsMounted] = React.useState(false);
   const [portalTarget, setPortalTarget] = React.useState<HTMLElement | null>(null);
@@ -112,15 +111,18 @@ const RoomAddModernSelect: React.FC<RoomAddModernSelectProps> = ({
   return (
     <div className={cn("relative w-full", className)}>
       {label && (
-        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-3 ml-1">
+        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3 ml-1">
           {label}
         </label>
       )}
       <div className={cn(
-        "flex items-center gap-4 bg-gray-50/50 dark:bg-gray-800/40 border-2 border-gray-100 dark:border-white/5 focus-within:border-primary/40 focus-within:ring-8 focus-within:ring-primary/5 transition-all duration-500 rounded-[2rem] px-6 py-1",
+        "flex items-center gap-2.5 sm:gap-3 border-2 transition-all duration-300 rounded-[2rem] px-3.5 sm:px-4 py-1 min-h-[52px]",
+        hasError
+          ? "border-rose-500 ring-4 ring-rose-500/10 bg-rose-500/5 dark:bg-rose-950/20"
+          : "bg-gray-50/80 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700/80 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10"
       )}>
-        <div className="shrink-0 text-primary/60">
-           {icon || <Search size={20} />}
+        <div className="shrink-0 text-primary">
+           {selectedOption?.icon || icon || <Search size={18} />}
         </div>
         <div className="flex-1 min-w-0">
           <Select<Option, false>
@@ -149,28 +151,31 @@ const RoomAddModernSelect: React.FC<RoomAddModernSelectProps> = ({
               }),
               menu: (base) => ({
                 ...base,
-                width: '100%',
-                minWidth: 'max-content',
-                marginTop: '12px',
+                minWidth: '100%',
+                width: 'max-content',
+                maxWidth: '340px',
+                marginTop: '8px',
                 zIndex: 999999
               }),
             }}
             classNames={{
-              control: () => "cursor-pointer font-bold flex items-center w-full py-4",
+              control: () => "cursor-pointer font-extrabold flex items-center w-full py-2.5",
               valueContainer: () => "flex-1 overflow-hidden py-0",
-              singleValue: () => "text-gray-900 dark:text-white truncate",
-              input: () => "m-0 p-0 text-gray-900 dark:text-white font-bold",
+              singleValue: () => "text-gray-900 dark:text-white truncate font-black uppercase tracking-wider text-xs",
+              input: () => "m-0 p-0 text-gray-900 dark:text-white font-extrabold text-xs uppercase tracking-wider",
               indicatorsContainer: () => "shrink-0",
-              menu: () => "absolute z-50 w-full bg-white dark:bg-[#111827] border border-gray-100 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-[2rem] overflow-hidden",
+              menu: () => "absolute z-[999999] min-w-full w-max max-w-[340px] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 shadow-2xl rounded-[1.8rem] overflow-hidden",
               option: ({ isFocused, isSelected }) => cn(
-                "cursor-pointer transition-all duration-200 rounded-2xl mb-1 last:mb-0 px-4 py-3.5",
-                isFocused && !isSelected ? "bg-primary/5 text-primary" : "text-gray-600 dark:text-gray-400",
-                isSelected && "bg-primary text-white font-black",
-                !isFocused && !isSelected && "hover:bg-primary/5 hover:text-primary"
+                "cursor-pointer transition-all duration-150 rounded-xl px-3.5 py-2.5 text-xs uppercase tracking-wider mb-1 last:mb-0",
+                isSelected
+                  ? "bg-primary/10 text-primary font-black border border-primary/20"
+                  : isFocused
+                    ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-extrabold"
+                    : "bg-transparent text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-700/50"
               ),
-              placeholder: () => "text-gray-300 dark:text-gray-600 truncate font-black tracking-[0.15em] uppercase text-[11px]",
-              menuList: () => "max-h-[350px] overflow-y-auto custom-scrollbar",
-              noOptionsMessage: () => "text-[10px] font-black uppercase tracking-widest text-gray-400 py-6",
+              placeholder: () => "text-gray-400 dark:text-gray-500 truncate font-black tracking-widest uppercase text-[10px] sm:text-[11px]",
+              menuList: () => "max-h-[280px] overflow-y-auto custom-scrollbar p-1.5",
+              noOptionsMessage: () => "text-[10px] font-black uppercase tracking-widest text-gray-400 py-6 text-center",
             }}
             menuPlacement="bottom"
           />

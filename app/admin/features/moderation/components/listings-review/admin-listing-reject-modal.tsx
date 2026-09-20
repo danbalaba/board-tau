@@ -313,7 +313,7 @@ export function AdminListingRejectModal({
               type="button"
               variant="outline"
               onClick={onClose}
-              className="rounded-2xl px-6 py-3 text-xs font-black uppercase tracking-wider"
+              className="rounded-2xl h-11 sm:h-12 px-6 text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all duration-200 cursor-pointer shadow-xs"
             >
               Cancel
             </Button>
@@ -322,14 +322,14 @@ export function AdminListingRejectModal({
               type="submit"
               disabled={isSubmitting || !customNote.trim()}
               className={cn(
-                "rounded-2xl px-8 py-3 text-xs font-black uppercase tracking-wider transition-all gap-2 shadow-lg",
+                "group rounded-2xl h-11 sm:h-12 px-8 text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer",
                 isSubmitting || !customNote.trim()
-                  ? "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
-                  : "bg-rose-500 text-white hover:bg-rose-600 shadow-rose-500/20"
+                  ? "bg-slate-100 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 border border-slate-200/80 dark:border-slate-700/60 cursor-not-allowed shadow-none"
+                  : "bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/25 active:scale-95"
               )}
             >
               <span>{isSubmitting ? 'Rejecting...' : 'Confirm Rejection'}</span>
-              <ArrowRight size={14} />
+              <ArrowRight size={15} className={cn("transition-transform duration-200", customNote.trim() && "group-hover:translate-x-1")} />
             </Button>
           </div>
         </form>

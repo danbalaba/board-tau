@@ -23,7 +23,7 @@ export default async function LandlordLayout({
   const landlord = await requireLandlord();
 
   return (
-    <div className={`${inter.variable} ${inter.className} font-sans antialiased`}>
+    <div className={`${inter.variable} ${inter.className} [--font-sans:var(--font-inter)] font-sans antialiased`}>
       <LandlordLayoutClient user={landlord}>
         {children}
       </LandlordLayoutClient>

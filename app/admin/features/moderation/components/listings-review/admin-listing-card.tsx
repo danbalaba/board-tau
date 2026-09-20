@@ -28,11 +28,11 @@ interface AdminListingCardProps {
 }
 
 const statusConfig: Record<string, { color: string; bg: string; icon: any }> = {
-  pending: { color: 'text-amber-500', bg: 'bg-amber-500/10 border border-amber-500/20', icon: Clock },
-  approved: { color: 'text-emerald-500', bg: 'bg-emerald-500/10 border border-emerald-500/20', icon: CheckCircle2 },
-  active: { color: 'text-emerald-500', bg: 'bg-emerald-500/10 border border-emerald-500/20', icon: CheckCircle2 },
-  rejected: { color: 'text-rose-500', bg: 'bg-rose-500/10 border border-rose-500/20', icon: XCircle },
-  archived: { color: 'text-gray-500', bg: 'bg-gray-500/10 border border-gray-500/20', icon: ArchiveRestore },
+  pending: { color: 'text-white', bg: 'bg-amber-500/90 text-white border-amber-400/50 shadow-lg shadow-amber-500/20', icon: Clock },
+  approved: { color: 'text-white', bg: 'bg-primary/90 text-white border-primary/40 shadow-lg shadow-primary/20', icon: CheckCircle2 },
+  active: { color: 'text-white', bg: 'bg-primary/90 text-white border-primary/40 shadow-lg shadow-primary/20', icon: CheckCircle2 },
+  rejected: { color: 'text-white', bg: 'bg-rose-500/90 text-white border-rose-400/50 shadow-lg shadow-rose-500/20', icon: XCircle },
+  archived: { color: 'text-white', bg: 'bg-slate-700/90 text-white border-slate-600/50 shadow-lg shadow-slate-700/20', icon: ArchiveRestore },
 };
 
 export function AdminListingCard({
@@ -101,19 +101,19 @@ export function AdminListingCard({
               <div className="absolute top-2 left-2 z-20 flex flex-wrap gap-1">
                 {isItemArchived && (
                   <span className={cn(
-                    "flex items-center gap-1 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-wider shadow-md backdrop-blur-md border",
-                    archiveConfig.bg, archiveConfig.color
+                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[8px] font-black uppercase tracking-wider shadow-md backdrop-blur-md border",
+                    archiveConfig.bg
                   )}>
-                    <ArchiveRestore size={10} strokeWidth={2} />
-                    archived
+                    <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                    <span>archived</span>
                   </span>
                 )}
                 <span className={cn(
-                  "flex items-center gap-1 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-wider shadow-md backdrop-blur-md border",
-                  rawConfig.bg, rawConfig.color
+                  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[8px] font-black uppercase tracking-wider shadow-md backdrop-blur-md border",
+                  rawConfig.bg
                 )}>
-                  <RawStatusIcon size={10} strokeWidth={2} />
-                  {rawStatus}
+                  <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                  <span>{rawStatus}</span>
                 </span>
               </div>
 
@@ -310,19 +310,19 @@ export function AdminListingCard({
         <div className="absolute top-3 left-3 z-20 flex flex-wrap gap-1.5 max-w-[calc(100%-4rem)]">
           {isItemArchived && (
             <span className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-md backdrop-blur-md border",
-              archiveConfig.bg, archiveConfig.color
+              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-md backdrop-blur-md border",
+              archiveConfig.bg
             )}>
-              <ArchiveRestore size={11} strokeWidth={2} />
-              archived
+              <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+              <span>archived</span>
             </span>
           )}
           <span className={cn(
-            "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-md backdrop-blur-md border",
-            rawConfig.bg, rawConfig.color
+            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-md backdrop-blur-md border",
+            rawConfig.bg
           )}>
-            <RawStatusIcon size={11} strokeWidth={2} />
-            {rawStatus}
+            <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+            <span>{rawStatus}</span>
           </span>
         </div>
 

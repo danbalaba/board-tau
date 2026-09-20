@@ -47,20 +47,20 @@ describe('ReviewCard', () => {
     const reviewWithResponse = { ...mockReview, response: 'Thank you!' };
     render(<ReviewCard review={reviewWithResponse as any} onViewDetails={jest.fn()} />);
     
-    expect(screen.getByText('Responded')).toBeInTheDocument();
+    expect(screen.getByText('Landlord Replied')).toBeInTheDocument();
   });
 
   it('displays NEW MESSAGE notification if hasNotification is true', () => {
     render(<ReviewCard review={mockReview as any} onViewDetails={jest.fn()} hasNotification={true} />);
     
-    expect(screen.getByText('NEW MESSAGE')).toBeInTheDocument();
+    expect(screen.getByText('New Reply')).toBeInTheDocument();
   });
 
   it('calls onViewDetails when Details button is clicked', () => {
     const onViewDetails = jest.fn();
     render(<ReviewCard review={mockReview as any} onViewDetails={onViewDetails} />);
     
-    const detailsButton = screen.getByRole('button', { name: /details/i });
+    const detailsButton = screen.getByRole('button', { name: /View Review Details/i });
     fireEvent.click(detailsButton);
     expect(onViewDetails).toHaveBeenCalledTimes(1);
   });

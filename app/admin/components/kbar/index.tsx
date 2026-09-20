@@ -89,18 +89,18 @@ function KBarComponent({ children }: { children: React.ReactNode }) {
       )}
       <KBarPortal>
         <KBarPositioner className="fixed inset-0 z-[100000] p-4 bg-gray-950/40 backdrop-blur-md animate-in fade-in duration-300">
-          <KBarAnimator className="w-full max-w-2xl bg-white/90 dark:bg-gray-950/90 backdrop-blur-2xl rounded-[2.5rem] border border-white/20 dark:border-white/5 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 slide-in-from-top-4 duration-300 flex flex-col">
-            <div className="relative border-b border-gray-100 dark:border-gray-800/50 shrink-0">
+          <KBarAnimator className="w-full max-w-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-[2.5rem] border border-slate-200/80 dark:border-slate-800 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 slide-in-from-top-4 duration-300 flex flex-col">
+            <div className="relative border-b border-slate-100 dark:border-slate-800 shrink-0">
               <div className="flex items-center px-8 py-6">
-                <div className="mr-4 flex items-center justify-center w-10 h-10 rounded-2xl bg-primary/10 text-primary shadow-sm shadow-primary/20 shrink-0">
+                <div className="mr-4 flex items-center justify-center w-10 h-10 rounded-2xl bg-primary/10 text-primary dark:text-emerald-400 shadow-sm shadow-primary/20 shrink-0">
                   <IconSearch size={20} strokeWidth={2.5} />
                 </div>
                 <KBarSearch 
-                  className="w-full bg-transparent border-none text-lg font-bold outline-none focus:ring-0 placeholder:text-gray-400 dark:placeholder:text-gray-600" 
-                  placeholder="What can I help you find?" 
+                  className="w-full bg-transparent border-none text-lg font-bold outline-none focus:ring-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500" 
+                  placeholder="Type a command or search..." 
                 />
                 <div className="flex items-center gap-2 ml-4 shrink-0">
-                  <div className="flex items-center justify-center h-7 px-2 font-black border border-primary/20 bg-primary/5 text-primary tracking-tighter text-[10px] rounded-md uppercase">
+                  <div className="flex items-center justify-center h-7 px-2 font-black border border-primary/20 bg-primary/10 text-primary dark:text-emerald-400 tracking-tighter text-[10px] rounded-md uppercase">
                     ESC
                   </div>
                 </div>
@@ -111,19 +111,19 @@ function KBarComponent({ children }: { children: React.ReactNode }) {
               <RenderResults />
             </div>
 
-            <div className="px-8 py-4 bg-gray-50/50 dark:bg-white/[0.02] border-t border-gray-100 dark:border-gray-800/50 flex items-center justify-between shrink-0">
+            <div className="px-8 py-4 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                  <kbd className="p-1 px-1.5 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 shadow-sm">⏎</kbd>
+                <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                  <kbd className="p-1 px-1.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 shadow-sm font-bold">⏎</kbd>
                   <span>Select</span>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                  <kbd className="p-1 px-1.5 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 shadow-sm">↑↓</kbd>
+                <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                  <kbd className="p-1 px-1.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 shadow-sm font-bold">↑↓</kbd>
                   <span>Navigate</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary/60">
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary dark:text-emerald-400">
+                <div className="w-2 h-2 rounded-full bg-primary dark:bg-emerald-400 animate-pulse" />
                 Quick Search
               </div>
             </div>

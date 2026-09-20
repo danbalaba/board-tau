@@ -10,7 +10,7 @@ import { BackupHistoryCard } from './backup-history-card';
 import { RestoreWarningModal } from './restore-warning-modal';
 
 export function SystemBackup() {
-  const [backupScope, setBackupScope] = useState('');
+  const [backupScope, setBackupScope] = useState('all');
   const [exporting, setExporting] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -78,11 +78,16 @@ export function SystemBackup() {
     }
   };
 
+  const handleRefreshLogs = () => {
+    window.dispatchEvent(new Event('refreshBackupLogs'));
+    toast.success('Backup logs refreshed.');
+  };
+
   return (
-    <div className="p-6 lg:p-10">
-      <BackupHeader />
+    <div className="p-6 lg:p-10 space-y-6">
+      <BackupHeader onRefresh={handleRefreshLogs} />
       
-      <div className="grid gap-6 lg:grid-cols-2 pb-6">
+      <div className="grid gap-6 lg:grid-cols-2">
         <ExportCard 
           backupScope={backupScope}
           setBackupScope={setBackupScope}
@@ -96,7 +101,7 @@ export function SystemBackup() {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2 pb-10">
+      <div className="grid gap-6 lg:grid-cols-2">
         <AutomatedBackupCard />
         <BackupHistoryCard />
       </div>

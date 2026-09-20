@@ -16,9 +16,10 @@ import {
   Dumbbell, Wind, WashingMachine, Utensils, Refrigerator, Microwave, Droplets, Zap, Clock,
   Users, Flame, PawPrint, Camera, BookOpen, Square, Blinds, Lightbulb, Bell, Ban, Brush, Info,
   HelpCircle, Sparkles, Star, Heart, Share, Trash2, Edit, Save, Plus, ArrowRight, ArrowLeft,
-  Search, Shield, Key, Lock, Fingerprint, Activity, Smartphone, ListChecks, Coffee, Building2, FileText
+  Search, Shield, Key, Lock, Fingerprint, Activity, Smartphone, ListChecks, Coffee, Building2, FileText, Tag
 } from "lucide-react";
-import * as LucideIcons from 'lucide-react';
+import { getDynamicIcon } from "@/lib/iconResolver";
+import { formatCleanTitle } from "@/lib/utils";
 import Modal from "@/components/modals/Modal";
 import ListingReviews from "./ListingReviews";
 import { ListingRecommendations } from "./ListingRecommendations";
@@ -103,6 +104,8 @@ interface ListingDetailsClientProps {
   region?: string | null;
   country?: string | null;
   leaseContract?: any;
+  kitchenSetup?: string | null;
+  bathroomSetup?: string | null;
 }
 
 const EXPANDED_AMENITIES = [
@@ -153,9 +156,12 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
   rules,
   features,
   leaseContract,
+  kitchenSetup,
+  bathroomSetup,
 }) => {
   const { attributes, resolveAmenityName } = useDynamicAttributes();
   const [dbSubGroups, setDbSubGroups] = useState<any[]>(() => getSyncSubGroups() || []);
+  const [isMounted, setIsMounted] = useState(false);
 
   const [amenitiesModalConfig, setAmenitiesModalConfig] = useState<{
     isOpen: boolean;
@@ -166,6 +172,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
   });
 
   useEffect(() => {
+    setIsMounted(true);
     getCachedSubGroups().then(sgs => { if (sgs) setDbSubGroups(sgs); });
   }, []);
 
@@ -226,63 +233,32 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
     return groupedAmenitiesBySubGroup.reduce((sum, g) => sum + g.items.length, 0);
   }, [groupedAmenitiesBySubGroup]);
 
-  // Dynamic Icon Resolver for Preview Sections
+  // Dynamic Icon Resolver for Preview Sections (Purely DB taxonomy driven)
   const renderDynamicIcon = (iconName?: any, titleName?: string, themeColor: 'blue' | 'purple' | 'amber' = 'blue') => {
     let IconComp: any = null;
 
-    if (typeof iconName === 'string' && iconName && (LucideIcons as any)[iconName]) {
-      IconComp = (LucideIcons as any)[iconName];
+    if (typeof iconName === 'string' && iconName) {
+      IconComp = getDynamicIcon(iconName);
     } else if (iconName && typeof iconName !== 'string') {
       IconComp = iconName;
     }
 
-    if (!IconComp && titleName) {
-      const lower = titleName.toLowerCase();
-      // Rules fallback
-      if (lower.includes('visitor') || lower.includes('guest')) IconComp = Users;
-      else if (lower.includes('female') || lower.includes('male') || lower.includes('gender') || lower.includes('co-living')) IconComp = Users;
-      else if (lower.includes('curfew') || lower.includes('gate') || lower.includes('24/7') || lower.includes('night')) IconComp = Clock;
-      else if (lower.includes('pet')) IconComp = PawPrint;
-      else if (lower.includes('smoke') || lower.includes('vape')) IconComp = Flame;
-      else if (lower.includes('alcohol') || lower.includes('drink') || lower.includes('wine')) IconComp = Ban;
-      // Safety fallback
-      else if (lower.includes('cctv') || lower.includes('camera')) IconComp = Camera;
-      else if (lower.includes('guard') || lower.includes('security')) IconComp = Shield;
-      else if (lower.includes('rfid') || lower.includes('keycard')) IconComp = LucideIcons.CreditCard;
-      else if (lower.includes('lock') || lower.includes('door')) IconComp = LucideIcons.KeyRound;
-      else if (lower.includes('biometric') || lower.includes('fingerprint')) IconComp = LucideIcons.Fingerprint;
-      else if (lower.includes('flood')) IconComp = ShieldCheck;
-      else if (lower.includes('fire') || lower.includes('extinguisher')) IconComp = Flame;
-      else if (lower.includes('smoke detector') || lower.includes('alarm')) IconComp = LucideIcons.AlertCircle;
-      else if (lower.includes('light') || lower.includes('hallway') || lower.includes('sun')) IconComp = LucideIcons.Sun;
-      else if (lower.includes('first aid') || lower.includes('medical') || lower.includes('cross')) IconComp = LucideIcons.Cross;
-      // Amenities fallback
-      else if (lower.includes('wifi') || lower.includes('internet')) IconComp = Wifi;
-      else if (lower.includes('parking') || lower.includes('car')) IconComp = Car;
-      else if (lower.includes('laundry') || lower.includes('washing')) IconComp = WashingMachine;
-      else if (lower.includes('cook') || lower.includes('stove') || lower.includes('eatery') || lower.includes('dining')) IconComp = Utensils;
-      else if (lower.includes('refrigerator') || lower.includes('fridge')) IconComp = Refrigerator;
-      else if (lower.includes('microwave')) IconComp = Microwave;
-      else if (lower.includes('generator') || lower.includes('power')) IconComp = Zap;
-      else if (lower.includes('water') || lower.includes('pump') || lower.includes('tank')) IconComp = Droplets;
-      else if (lower.includes('study') || lower.includes('desk')) IconComp = BookOpen;
-      else if (lower.includes('lounge') || lower.includes('sofa')) IconComp = LucideIcons.Sofa;
-      else if (lower.includes('store')) IconComp = LucideIcons.Store;
+    if (!IconComp && titleName && attributes.length > 0) {
+      const matched = attributes.find((a: any) => a.name?.toLowerCase() === titleName.toLowerCase());
+      if (matched?.icon) {
+        IconComp = getDynamicIcon(matched.icon);
+      }
     }
 
-    if (!IconComp) {
-      if (themeColor === 'purple') IconComp = Shield;
-      else if (themeColor === 'amber') IconComp = ShieldCheck;
-      else IconComp = CheckCircle2;
-    }
+    if (!IconComp) return null;
 
     const colorClasses = {
-      blue: 'text-blue-600 dark:text-blue-400',
       purple: 'text-purple-600 dark:text-purple-400',
       amber: 'text-amber-600 dark:text-amber-400',
-    }[themeColor];
+      blue: 'text-blue-600 dark:text-blue-400',
+    };
 
-    return <IconComp size={18} className={`${colorClasses} shrink-0`} />;
+    return <IconComp size={16} className={`${colorClasses[themeColor]} shrink-0`} />;
   };
 
   // Dynamic Resolution of Safety Features for preview and SafetyModal
@@ -489,6 +465,26 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
     });
     return avail.length > 0 ? avail.length : rooms.length;
   }, [rooms]);
+
+  const bathroomFacilityText = useMemo(() => {
+    if (bathroomSetup === 'PRIVATE' || bathroomSetup === 'PRIVATE_CR') {
+      return 'Private Bathrooms';
+    }
+    if (bathroomCount && bathroomCount > 1) {
+      return `${bathroomCount} Shared Bathrooms`;
+    }
+    return 'Shared Common CR';
+  }, [bathroomSetup, bathroomCount]);
+
+  const kitchenSetupText = useMemo(() => {
+    if (kitchenSetup === 'IN_UNIT' || kitchenSetup === 'PRIVATE' || kitchenSetup === 'PRIVATE_KITCHEN') {
+      return 'Private In-Unit Kitchen';
+    }
+    if (kitchenSetup === 'NONE' || kitchenSetup === 'NO_KITCHEN') {
+      return 'No Kitchen Facility';
+    }
+    return 'Shared Compound Kitchen';
+  }, [kitchenSetup]);
   const [isLoading, startTransition] = useTransition();
   const router = useRouter();
   const { success, error } = useResponsiveToast();
@@ -625,9 +621,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
   };
 
   const CustomIcon = ({ name, fallback: Fallback, className, size = 24 }: { name: string | null, fallback: any, className?: string, size?: number }) => {
-    // Try to find the icon in the Lucide library dynamically
-    const DynamicIcon = name ? (LucideIcons as any)[name] : null;
-    const IconComponent = DynamicIcon || Fallback;
+    const IconComponent = getDynamicIcon(name, Fallback);
     return <IconComponent className={className} size={size} />;
   };
 
@@ -773,37 +767,68 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
             />
           </motion.section>
 
-          {/* Room Details Grid */}
+          {/* Property Overview Grid */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6">Property Overview</h2>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="p-5 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-2xl border border-indigo-100/80 dark:border-indigo-900/30 shadow-sm flex flex-col items-center justify-center gap-2 hover:shadow-md transition-shadow">
-                <div className="p-2.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
-                  <DoorOpen size={24} />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {/* Card 1: Total Rooms */}
+              <div className="p-5 rounded-3xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100/80 dark:border-indigo-900/30 flex flex-col justify-between min-h-[140px] transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-0.5">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <DoorOpen size={20} />
                 </div>
-                <p className="text-xl font-black text-gray-900 dark:text-white">{rooms.length || roomCount}</p>
-                <p className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-center">Total Rooms</p>
-              </div>
-              <div className="p-5 bg-teal-50/50 dark:bg-teal-950/20 rounded-2xl border border-teal-100/80 dark:border-teal-900/30 shadow-sm flex flex-col items-center justify-center gap-2 hover:shadow-md transition-shadow">
-                <div className="p-2.5 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl">
-                  <Bath size={24} />
+                <div>
+                  <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{rooms.length || roomCount}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mt-0.5">Total Rooms</p>
                 </div>
-                <p className="text-xl font-black text-gray-900 dark:text-white">{bathroomCount}</p>
-                <p className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-center">Bathrooms</p>
               </div>
+
+              {/* Card 2: Bathroom Facility */}
+              <div className="p-5 rounded-3xl bg-teal-50/50 dark:bg-teal-950/20 border border-teal-100/80 dark:border-teal-900/30 flex flex-col justify-between min-h-[140px] transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/5 hover:-translate-y-0.5">
+                <div className="w-10 h-10 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                  <Bath size={20} />
+                </div>
+                <div>
+                  <p className="text-sm sm:text-base font-black text-gray-900 dark:text-white tracking-tight leading-snug">
+                    {bathroomFacilityText}
+                  </p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mt-0.5">Bathroom Facility</p>
+                </div>
+              </div>
+
+              {/* Card 3: Kitchen Setup */}
+              <div className="p-5 rounded-3xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100/80 dark:border-amber-900/30 flex flex-col justify-between min-h-[140px] transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/5 hover:-translate-y-0.5">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                  <Utensils size={20} />
+                </div>
+                <div>
+                  <p className="text-sm sm:text-base font-black text-gray-900 dark:text-white tracking-tight leading-snug">
+                    {kitchenSetupText}
+                  </p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mt-0.5">Kitchen Setup</p>
+                </div>
+              </div>
+
+              {/* Card 4: Available Units */}
               <button
                 onClick={() => document.getElementById('available-rooms')?.scrollIntoView({ behavior: 'smooth' })}
-                className="p-5 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/20 dark:border-primary/30 shadow-sm flex flex-col items-center justify-center gap-2 hover:shadow-md hover:border-primary transition-all group cursor-pointer"
+                className="p-5 rounded-3xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100/80 dark:border-emerald-900/30 flex flex-col justify-between min-h-[140px] transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 group text-left cursor-pointer"
               >
-                <div className="p-2.5 bg-primary/10 text-primary dark:text-primary-light rounded-xl group-hover:scale-110 transition-transform">
-                  <CheckCircle2 size={24} />
+                <div className="flex items-center justify-between w-full">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+                    <CheckCircle2 size={20} />
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    View <ArrowRight size={10} />
+                  </span>
                 </div>
-                <p className="text-xl font-black text-gray-900 dark:text-white">{availableUnitsCount}</p>
-                <p className="text-[10px] font-black text-primary dark:text-primary-light uppercase tracking-widest text-center">Available Units</p>
+                <div>
+                  <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{availableUnitsCount}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">Available Units</p>
+                </div>
               </button>
             </div>
           </motion.section>
@@ -858,7 +883,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
                 <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6">Listing Categories</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {listingCategories.map((cat, idx) => {
-                    const CategoryIcon = cat.icon && (LucideIcons as any)[cat.icon] ? (LucideIcons as any)[cat.icon] : LucideIcons.Tag;
+                    const CategoryIcon = getDynamicIcon(cat.icon, Tag);
                     return (
                       <ListingCategory
                         key={idx}
@@ -901,6 +926,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="bg-blue-500/5 dark:bg-blue-500/10 p-5 sm:p-8 rounded-3xl sm:rounded-[2.5rem] border border-blue-500/20 space-y-4 sm:space-y-6"
+            suppressHydrationWarning
           >
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-lg sm:text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white flex items-center gap-2.5 sm:gap-3">
@@ -909,14 +935,14 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
                 </div>
                 <span className="leading-tight">Shared Property Amenities</span>
               </h2>
-              {totalAmenityCount > 0 && (
+              {isMounted && totalAmenityCount > 0 && (
                 <span className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-black text-[10px] sm:text-xs uppercase tracking-wider border border-blue-500/20 shrink-0">
                   {totalAmenityCount} Amenities
                 </span>
               )}
             </div>
 
-            {previewAmenities.length > 0 ? (
+            {(isMounted ? previewAmenities.length > 0 : false) ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3.5">
                 {previewAmenities.map((item, idx) => (
                   <div key={idx} className="flex items-center gap-2.5 sm:gap-3.5 p-3 sm:p-4 bg-white dark:bg-gray-900 rounded-xl sm:rounded-2xl border border-blue-500/10 shadow-sm hover:border-blue-500/30 transition-all min-w-0">
@@ -941,7 +967,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
               </div>
             )}
 
-            {totalAmenityCount > 0 && (
+            {isMounted && totalAmenityCount > 0 && (
               <button
                 onClick={() => setShowAmenitiesModal(true)}
                 className="px-4 sm:px-6 py-3 sm:py-3.5 w-full md:w-auto bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800/50 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-black uppercase tracking-widest text-blue-700 dark:text-blue-400 hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
@@ -959,6 +985,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="bg-purple-500/5 dark:bg-purple-500/10 p-5 sm:p-8 rounded-3xl sm:rounded-[2.5rem] border border-purple-500/20 space-y-4 sm:space-y-6"
+            suppressHydrationWarning
           >
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-lg sm:text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white flex items-center gap-2.5 sm:gap-3">
@@ -967,14 +994,14 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
                 </div>
                 <span className="leading-tight">House Rules & Policies</span>
               </h2>
-              {activeHouseRules.length > 0 && (
+              {isMounted && activeHouseRules.length > 0 && (
                 <span className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-black text-[10px] sm:text-xs uppercase tracking-wider border border-purple-500/20 shrink-0">
                   {activeHouseRules.length} Guidelines
                 </span>
               )}
             </div>
 
-            {activeHouseRules.length > 0 ? (
+            {(isMounted ? activeHouseRules.length > 0 : false) ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3.5">
                 {activeHouseRules.map((rule, idx) => (
                   <div key={idx} className="flex items-start gap-2.5 sm:gap-3.5 p-3 sm:p-4 bg-white dark:bg-gray-900 rounded-xl sm:rounded-2xl border border-purple-500/10 shadow-sm hover:border-purple-500/30 transition-all min-w-0">
@@ -1002,7 +1029,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
               </div>
             )}
 
-            {activeHouseRules.length > 0 && (
+            {isMounted && activeHouseRules.length > 0 && (
               <button
                 onClick={() => setShowRulesModal(true)}
                 className="px-4 sm:px-6 py-3 sm:py-3.5 w-full md:w-auto bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800/50 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-400 hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
@@ -1020,6 +1047,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="bg-amber-500/5 dark:bg-amber-500/10 p-5 sm:p-8 rounded-3xl sm:rounded-[2.5rem] border border-amber-500/20 space-y-4 sm:space-y-6"
+            suppressHydrationWarning
           >
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-lg sm:text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white flex items-center gap-2.5 sm:gap-3">
@@ -1028,14 +1056,14 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
                 </div>
                 <span className="leading-tight">Security & Safety Measures</span>
               </h2>
-              {resolvedFeatures.length > 0 && (
+              {isMounted && resolvedFeatures.length > 0 && (
                 <span className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-black text-[10px] sm:text-xs uppercase tracking-wider border border-amber-500/20 shrink-0">
                   {resolvedFeatures.length} Measures
                 </span>
               )}
             </div>
 
-            {resolvedFeatures.length > 0 ? (
+            {(isMounted ? resolvedFeatures.length > 0 : false) ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3.5">
                 {resolvedFeatures.map((feat, idx) => (
                   <div key={idx} className="flex items-start gap-2.5 sm:gap-3.5 p-3 sm:p-4 bg-white dark:bg-gray-900 rounded-xl sm:rounded-2xl border border-amber-500/10 shadow-sm hover:border-amber-500/30 transition-all min-w-0">
@@ -1063,7 +1091,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
               </div>
             )}
 
-            {resolvedFeatures.length > 0 && (
+            {isMounted && resolvedFeatures.length > 0 && (
               <button
                 onClick={() => setShowSafetyModal(true)}
                 className="px-4 sm:px-6 py-3 sm:py-3.5 w-full md:w-auto bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-800/50 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-400 hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"

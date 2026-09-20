@@ -109,6 +109,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
               audio={false}
               ref={webcamRef as any}
               screenshotFormat="image/jpeg"
+              mirrored={facingMode === "user"}
               videoConstraints={
                 selectedDeviceId
                   ? { deviceId: { exact: selectedDeviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }

@@ -146,7 +146,7 @@ describe('ReservationCard', () => {
       />
     );
     
-    const rateBtn = screen.getByText(/Rate Experience/i);
+    const rateBtn = screen.getByText(/^Rate$/i);
     expect(rateBtn).toBeInTheDocument();
     fireEvent.click(rateBtn);
     expect(mockOnReview).toHaveBeenCalled();
@@ -160,7 +160,7 @@ describe('ReservationCard', () => {
       />
     );
     
-    expect(screen.getByText(/Experience Rated/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Rated$/i)).toBeInTheDocument();
     expect(screen.getByText('Reviewed')).toBeInTheDocument(); // Badge
   });
 });

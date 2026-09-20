@@ -1,19 +1,13 @@
 import React, { useEffect, useState } from "react";
 import Heading from "@/components/common/Heading";
 import { motion } from "framer-motion";
-import * as LucideIcons from "lucide-react";
 import { Building, Home, RotateCcw, Sparkles, AlertCircle } from "lucide-react";
+import { getDynamicIcon } from "@/lib/iconResolver";
 import HelpTooltip from "@/components/common/HelpTooltip";
 import axios from "axios";
 
 const getSafeLucideIcon = (iconName: string) => {
-  if (!iconName) return Building;
-  const IconObj = (LucideIcons as Record<string, any>)[iconName];
-  if (!IconObj) return Building;
-  if (typeof IconObj === "function" || typeof IconObj === "object") {
-    return IconObj;
-  }
-  return Building;
+  return getDynamicIcon(iconName, Building);
 };
 
 interface PropertyTypeStepProps {
@@ -87,6 +81,17 @@ export default function PropertyTypeStep({
     setCustomValue("availableSlots", 1);
     setCustomValue("occupants", 1);
     setCustomValue("capacity", newPropType === "Boarding House" ? 2 : 1);
+    setCustomValue("kitchenChoice", "");
+    setCustomValue("bathroomChoice", "");
+    setCustomValue("kitchenSetup", "");
+    setCustomValue("crSetup", "");
+    setCustomValue("amenities", []);
+    setCustomValue("roomAmenities", []);
+    setCustomValue("rules", []);
+    setCustomValue("genderPolicy", "");
+    setCustomValue("petPolicy", "");
+    setCustomValue("visitorPolicy", "");
+    setCustomValue("advanced", []);
   };
 
   const handleSelect = (typeName: string) => {

@@ -9,141 +9,186 @@ import { Input } from '@/app/admin/components/ui/input';
 import { Badge } from '@/app/admin/components/ui/badge';
 import {
   IconSearch,
-  IconFilter,
   IconMapPin,
   IconCircleCheckFilled,
-  IconChartBar,
-  IconDotsVertical
+  IconUser,
+  IconBuilding,
+  IconBed,
+  IconCalendar,
+  IconInbox
 } from '@tabler/icons-react';
 import SafeImage from '@/components/common/SafeImage';
+import Skeleton from '@/components/common/Skeleton';
+import Link from 'next/link';
 
-export interface Property {
+export interface PropertyListing {
   id: string;
-  name: string;
-  location: string;
-  type: string;
-  status: 'available' | 'occupied' | 'maintenance';
-  price: number;
-  rating: number;
-  occupancy: number;
-  image: string;
+  title: string;
+  description?: string;
+  image?: string;
+  location?: string;
+  owner?: { id: string; name?: string; email?: string };
+  propertyTypeName?: string;
+  price?: number;
+  status?: string;
+  rating?: number;
+  reviewCount?: number;
+  roomsCount?: number;
+  bookingsCount?: number;
+  createdAt?: string;
 }
 
-const statusStyles = {
-  available: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-  occupied: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-  maintenance: 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+const getStatusBadge = (status?: string) => {
+  const s = (status || 'PENDING').toUpperCase();
+  if (s === 'ACTIVE' || s === 'APPROVED') {
+    return { label: 'Active', style: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20' };
+  }
+  if (s === 'PENDING') {
+    return { label: 'Pending Review', style: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20' };
+  }
+  if (s === 'REJECTED' || s === 'ARCHIVED') {
+    return { label: 'Inactive', style: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20' };
+  }
+  return { label: s, style: 'bg-gray-500/10 text-gray-700 dark:text-gray-300 border-gray-500/20' };
 };
 
 interface DirectoryListViewProps {
-  properties: Property[];
+  properties: PropertyListing[];
   viewMode: 'grid' | 'list';
+  isLoading?: boolean;
+  searchQuery?: string;
+  onSearchChange?: (val: string) => void;
 }
 
-export function DirectoryListView({ properties, viewMode }: DirectoryListViewProps) {
+export function DirectoryListView({
+  properties,
+  viewMode,
+  isLoading,
+  searchQuery = '',
+  onSearchChange
+}: DirectoryListViewProps) {
   return (
     <div className="space-y-6">
-      {/* Search & Filtering */}
+      {/* Search Bar */}
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
         className="flex flex-col gap-4 sm:flex-row sm:items-center"
       >
         <div className="relative flex-1">
-          <IconSearch className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+          <IconSearch className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input 
-            placeholder="Search by name, location or asset ID..." 
-            className="h-14 pl-12 rounded-[1.5rem] bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl border border-gray-100 dark:border-gray-800 shadow-sm transition-all focus-visible:ring-blue-500/20 text-sm font-bold"
+            value={searchQuery}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            placeholder="Search boarding houses by name, location, or owner..." 
+            className="h-11 pl-11 rounded-2xl bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl border border-gray-200/80 dark:border-gray-800 shadow-xs focus-visible:ring-primary/20 text-xs font-semibold text-gray-900 dark:text-white"
           />
         </div>
-        <Button variant="outline" className="h-14 px-6 gap-2 rounded-[1.5rem] shadow-sm font-black uppercase tracking-widest text-[10px] border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl">
-          <IconFilter className="h-4 w-4 text-blue-500" /> Advanced Filters
-        </Button>
       </motion.div>
 
-      {/* Property Grid/List */}
-      <div className={viewMode === 'grid' ? "grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4" : "flex flex-col gap-4"}>
-        <AnimatePresence mode="popLayout">
-          {properties.map((property, idx) => (
-            <motion.div
-              key={property.id}
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ delay: idx * 0.05 }}
-            >
-              <Card className={cn(
-                "group relative overflow-hidden border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-lg hover:shadow-2xl transition-all duration-500 rounded-[2rem]",
-                viewMode === 'list' && 'flex flex-row items-center p-3'
-              )}>
-                <div className={cn(
-                  "relative overflow-hidden",
-                  viewMode === 'grid' ? 'aspect-[4/3]' : 'h-32 w-48 rounded-xl shrink-0'
-                )}>
-                  <SafeImage 
-                    src={property.image} 
-                    alt={property.name} 
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/20 to-transparent flex flex-col justify-end p-5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                    <Button size="sm" className="w-full gap-2 font-black uppercase tracking-widest text-[9px] h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/20 hover:bg-white/30 text-white transition-all shadow-xl">
-                      <IconChartBar className="h-4 w-4" /> Management Portal
-                    </Button>
-                  </div>
-                  <Badge className={cn(
-                    "absolute left-4 top-4 border-none shadow-xl uppercase font-black tracking-widest text-[8px] px-3 py-1 rounded-lg backdrop-blur-md",
-                    statusStyles[property.status]
-                  )}>
-                    {property.status}
-                  </Badge>
-                </div>
-                
-                <div className={cn("flex-1", viewMode === 'grid' ? 'p-6' : 'px-8')}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <h3 className="font-black text-lg text-gray-900 dark:text-white tracking-tight leading-tight truncate">{property.name}</h3>
-                        {property.rating >= 4.9 && <IconCircleCheckFilled className="h-4 w-4 text-blue-500 shrink-0 drop-shadow-sm" />}
-                      </div>
-                      <p className="mt-2 flex items-center gap-1.5 text-[10px] text-gray-500 uppercase font-bold tracking-widest truncate">
-                        <IconMapPin className="h-3 w-3" /> {property.location}
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100 dark:hover:bg-gray-800">
-                      <IconDotsVertical className="h-4 w-4 text-gray-500" />
-                    </Button>
-                  </div>
-                  
-                  <div className="mt-5 grid grid-cols-2 gap-4 border-t border-gray-100 dark:border-gray-800 pt-5">
-                    <div>
-                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Base Rate</p>
-                      <div className="flex items-baseline gap-0.5 mt-1">
-                        <span className="text-sm font-black text-gray-900 dark:text-white">$</span>
-                        <span className="text-xl font-black tabular-nums text-gray-900 dark:text-white">{property.price.toLocaleString()}</span>
-                        <span className="text-[10px] font-bold text-gray-400 ml-1">/mo</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Occupancy</p>
-                      <div className="flex items-center justify-end gap-2 mt-1.5">
-                        <div className="h-1.5 w-16 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden hidden sm:block">
-                          <div 
-                            className={cn("h-full rounded-full transition-all duration-1000", property.occupancy > 90 ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]')} 
-                            style={{ width: `${property.occupancy}%` }} 
-                          />
-                        </div>
-                        <p className="text-xl font-black tabular-nums leading-none text-gray-900 dark:text-white">{property.occupancy}%</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
+      {/* Grid or List View Container */}
+      {isLoading ? (
+        <div className={viewMode === 'grid' ? "grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4" : "flex flex-col gap-4"}>
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="p-4 rounded-[2rem] border border-gray-100 dark:border-gray-800 bg-white/40 dark:bg-gray-900/40 space-y-3">
+              <Skeleton className="h-40 w-full rounded-2xl" />
+              <Skeleton className="h-5 w-3/4 rounded-lg" />
+              <Skeleton className="h-3 w-1/2 rounded-md" />
+            </Card>
           ))}
-        </AnimatePresence>
-      </div>
+        </div>
+      ) : properties.length === 0 ? (
+        <div className="py-16 px-6 text-center rounded-[2.5rem] border border-dashed border-gray-200 dark:border-gray-800 bg-white/40 dark:bg-gray-900/40 flex flex-col items-center justify-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+            <IconInbox size={24} />
+          </div>
+          <h3 className="text-base font-black text-gray-900 dark:text-white">No Property Listings Found</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 max-w-sm">
+            {searchQuery ? `No boarding houses matched "${searchQuery}". Try a different search term.` : 'No property listings registered in the database yet.'}
+          </p>
+        </div>
+      ) : (
+        <div className={viewMode === 'grid' ? "grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4" : "flex flex-col gap-4"}>
+          <AnimatePresence mode="popLayout">
+            {properties.map((property, idx) => {
+              const statusBadge = getStatusBadge(property.status);
+              const formattedPrice = property.price ? `₱${property.price.toLocaleString()}` : 'Price set per room';
+
+              return (
+                <motion.div
+                  key={property.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ delay: idx * 0.04 }}
+                >
+                  <Card className={cn(
+                    "group relative overflow-hidden border border-gray-100 dark:border-gray-800 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl shadow-lg hover:shadow-2xl transition-all duration-300 rounded-[2rem]",
+                    viewMode === 'list' && 'flex flex-col sm:flex-row sm:items-center p-3 gap-4'
+                  )}>
+                    <div className={cn(
+                      "relative overflow-hidden shrink-0",
+                      viewMode === 'grid' ? 'aspect-[4/3] w-full' : 'h-36 w-full sm:w-48 rounded-2xl'
+                    )}>
+                      <SafeImage 
+                        src={property.image || '/images/placeholder.jpg'} 
+                        alt={property.title} 
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <Badge className={cn(
+                        "absolute left-3 top-3 border font-extrabold uppercase tracking-wider text-[9px] px-2.5 py-0.5 rounded-full backdrop-blur-md shadow-sm",
+                        statusBadge.style
+                      )}>
+                        {statusBadge.label}
+                      </Badge>
+                    </div>
+                    
+                    <div className={cn("flex-1 flex flex-col justify-between", viewMode === 'grid' ? 'p-5' : 'p-2 sm:p-0')}>
+                      <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <span className="text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1 mb-1">
+                              <IconBuilding size={12} /> {property.propertyTypeName || 'Boarding House'}
+                            </span>
+                            <h3 className="font-black text-base text-gray-900 dark:text-white tracking-tight leading-tight truncate" title={property.title}>
+                              {property.title}
+                            </h3>
+                          </div>
+                        </div>
+
+                        <p className="mt-2 flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400 font-bold truncate">
+                          <IconMapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" /> 
+                          <span>{property.location || 'Camiling, Tarlac (Near TAU)'}</span>
+                        </p>
+
+                        <p className="mt-1 flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400 font-medium truncate">
+                          <IconUser className="h-3.5 w-3.5 text-gray-400 shrink-0" /> 
+                          <span>Owner: <strong className="text-gray-700 dark:text-gray-300">{property.owner?.name || 'Landlord'}</strong></span>
+                        </p>
+                      </div>
+                      
+                      <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                        <div>
+                          <p className="text-[9px] font-extrabold uppercase text-gray-400 tracking-wider">Monthly Rent</p>
+                          <p className="text-sm font-black text-gray-900 dark:text-white tabular-nums">
+                            {formattedPrice} <span className="text-[10px] font-normal text-gray-400">/mo</span>
+                          </p>
+                        </div>
+                        <div className="text-right flex items-center gap-2">
+                          <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                            <IconBed size={14} className="text-primary" /> {property.roomsCount || 0} Rooms
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }

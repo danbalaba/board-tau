@@ -141,7 +141,7 @@ function CommandItem({
       data-slot='command-item'
       className={cn(
         "relative flex w-full cursor-pointer items-center gap-3 rounded-lg py-2.5 px-3 text-[13px] sm:text-[14px] font-medium outline-none select-none transition-all duration-150 mb-0.5 last:mb-0",
-        "data-[selected=true]:bg-emerald-500/10 data-[selected=true]:text-emerald-600 dark:data-[selected=true]:text-emerald-400 text-gray-600 dark:text-gray-300",
+        "data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary dark:data-[selected=true]:text-primary text-gray-600 dark:text-gray-300",
         "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
         "data-[selected=true]:font-bold",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0",

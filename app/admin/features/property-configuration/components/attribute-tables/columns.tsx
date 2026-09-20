@@ -18,10 +18,10 @@ export type DynamicAttributeColumn = {
 };
 
 const TYPE_CONFIG = {
-  AMENITY: { label: "Shared Amenity", bg: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  ROOM_AMENITY: { label: "Room Amenity", bg: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
-  RULE: { label: "House Rule", bg: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-  FEATURE: { label: "Security & Feature", bg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+  AMENITY: { label: "Shared Amenity", bg: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" },
+  ROOM_AMENITY: { label: "Room Amenity", bg: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20" },
+  RULE: { label: "House Rule", bg: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" },
+  FEATURE: { label: "Security & Feature", bg: "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20" },
 };
 
 const SUB_GROUP_CATEGORY_PRESETS: Record<string, string[]> = {
@@ -153,16 +153,17 @@ export const getColumns = (
   // A. Add sub-groups from database API
   const categorySubGroups = subGroups.filter((sg) => sg.type === activeCategory || !sg.type);
   categorySubGroups.forEach((sg) => {
-    const label = sg.tabLabel || sg.title || SUB_GROUP_LABELS[sg.key] || formatKeyToTitle(sg.key);
+    const label = SUB_GROUP_LABELS[sg.key] || sg.tabLabel || sg.title || formatKeyToTitle(sg.key);
     optionsMap.set(sg.key, label);
   });
 
   // B. Add sub-groups present in current attributes data
   const relevantAttributes = attributesData.filter((attr) => attr.type === activeCategory || activeCategory === "ALL");
   relevantAttributes.forEach((attr) => {
-    if (attr.subGroupKey && !optionsMap.has(attr.subGroupKey)) {
-      const label = SUB_GROUP_LABELS[attr.subGroupKey] || formatKeyToTitle(attr.subGroupKey);
-      optionsMap.set(attr.subGroupKey, label);
+    const key = attr.subGroupKey || "GENERAL";
+    if (!optionsMap.has(key)) {
+      const label = key === "GENERAL" ? "General / Unassigned" : (SUB_GROUP_LABELS[key] || formatKeyToTitle(key));
+      optionsMap.set(key, label);
     }
   });
 
@@ -191,12 +192,13 @@ export const getColumns = (
     enableColumnFilter: activeCategory !== "ALL",
     filterFn: (row, id, filterValue: string[]) => {
       if (!filterValue || filterValue.length === 0) return true;
-      const rowVal = String(row.getValue(id) || "");
+      const rawVal = row.getValue(id);
+      const rowVal = rawVal ? String(rawVal) : "GENERAL";
       return filterValue.includes(rowVal);
     },
     cell: ({ row }) => {
       const sgKey = (row.original as any).subGroupKey;
-      const displayLabel = sgKey ? SUB_GROUP_LABELS[sgKey] || formatKeyToTitle(sgKey) : "General";
+      const displayLabel = sgKey ? (optionsMap.get(sgKey) || SUB_GROUP_LABELS[sgKey] || formatKeyToTitle(sgKey)) : "General";
       return (
         <div className="text-center">
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
@@ -299,8 +301,8 @@ export const getColumns = (
           <span
             className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
               isActive
-                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                ? "bg-primary/10 text-primary dark:text-primary-light border border-primary/20"
+                : "bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-500/20"
             }`}
           >
             {isActive ? "Active" : "Disabled"}

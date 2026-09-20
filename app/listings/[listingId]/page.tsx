@@ -92,14 +92,14 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
 
   // Extract dynamic attributes from listingLinks
   const dynamicAmenities = listing.listingLinks
-    ?.map((link: any) => link.attribute?.id || link.attributeId || `${link.attribute?.label || link.attribute?.name}${link.attribute?.icon ? `|${link.attribute?.icon}` : ''}`)
+    ?.map((link: any) => link.attribute?.id || link.attributeId || `${link.attribute?.name || link.attribute?.label}${link.attribute?.icon ? `|${link.attribute?.icon}` : ''}`)
     .filter(Boolean) || [];
   
   amenities.push(...dynamicAmenities);
 
   const dynamicFeatures = listing.listingLinks
     ?.filter((link: any) => link.attribute.category === 'FEATURE' || link.attribute.type === 'FEATURE')
-    .map((link: any) => `${link.attribute.label || link.attribute.name}${link.attribute.icon ? `|${link.attribute.icon}` : ''}`) || [];
+    .map((link: any) => `${link.attribute?.name || link.attribute?.label}${link.attribute?.icon ? `|${link.attribute.icon}` : ''}`) || [];
 
   const featuresObj = {
     ...features,
@@ -108,7 +108,7 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
 
   const dynamicRules = listing.listingLinks
     ?.filter((link: any) => link.attribute.category === 'RULE' || link.attribute.type === 'RULE')
-    .map((link: any) => `${link.attribute.label || link.attribute.name}${link.attribute.icon ? `|${link.attribute.icon}` : ''}`) || [];
+    .map((link: any) => `${link.attribute?.name || link.attribute?.label}${link.attribute?.icon ? `|${link.attribute.icon}` : ''}`) || [];
 
   const rulesObj = {
     ...(listing.rules || {}),
@@ -234,6 +234,8 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
             description={description}
             roomCount={roomCount}
             bathroomCount={bathroomCount}
+            kitchenSetup={(listing as any).kitchenSetup || (listing.businessInfo as any)?.kitchenSetup || (listing.businessInfo as any)?.kitchenFacility || null}
+            bathroomSetup={(listing as any).bathroomSetup || (listing.businessInfo as any)?.bathroomSetup || null}
             latlng={[listing.latitude || 0, listing.longitude || 0]}
             amenities={amenities}
             rules={rulesObj}
@@ -243,11 +245,19 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
             images={normalizedImages}
             reviews={listing.reviews}
             rooms={rooms.map((r: any) => {
-              const roomAmenities = r.roomLinks?.map((link: any) => `${link.attribute.label}${link.attribute.icon ? `|${link.attribute.icon}` : ''}`) || [];
+              const roomAmenities = r.roomLinks
+                ?.map((link: any) => {
+                  const attrName = link.attribute?.name || link.attribute?.label || '';
+                  return attrName ? `${attrName}${link.attribute?.icon ? `|${link.attribute.icon}` : ''}` : '';
+                })
+                .filter(Boolean) || [];
               return {
                 ...r,
                 roomType: r.roomTypeDefinition ? (r.roomTypeDefinition.isFlatRate ? 'SOLO' : 'BEDSPACE') : (r.capacity === 1 ? 'SOLO' : 'BEDSPACE'),
-                amenities: [...(r.amenityNames || []), ...roomAmenities]
+                amenities: [...(r.amenityNames || []), ...roomAmenities],
+                kitchenSetup: r.kitchenSetup || r.kitchenType || (listing as any).kitchenSetup || (listing.businessInfo as any)?.kitchenSetup || (listing.businessInfo as any)?.kitchenFacility || null,
+                bathroomArrangement: r.bathroomArrangement || r.bathroomSetup || (listing as any).bathroomSetup || (listing.businessInfo as any)?.bathroomSetup || null,
+                listing: listing,
               };
             })}
             region={region}

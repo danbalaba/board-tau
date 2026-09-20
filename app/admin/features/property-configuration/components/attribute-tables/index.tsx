@@ -170,7 +170,7 @@ export function AttributeTable({ data = [], isLoading, onRefresh }: AttributeTab
         </div>
         <Modal>
           <Modal.Trigger name="add-attribute">
-            <Button className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-500/20 font-black uppercase tracking-wider text-xs gap-2">
+            <Button className="bg-primary hover:bg-primary/90 text-white rounded-xl shadow-lg shadow-primary/20 font-black uppercase tracking-wider text-xs gap-2">
               <Plus size={16} /> Add Amenity / Rule
             </Button>
           </Modal.Trigger>
@@ -233,7 +233,7 @@ export function AttributeTable({ data = [], isLoading, onRefresh }: AttributeTab
           onClick={() => handleCategoryChange("FEATURE")}
           className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
             activeCategory === "FEATURE"
-              ? "bg-emerald-600 dark:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+              ? "bg-violet-600 dark:bg-violet-500 text-white shadow-lg shadow-violet-500/20"
               : "bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800"
           }`}
         >

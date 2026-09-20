@@ -85,7 +85,7 @@ describe('InquiryCard', () => {
     expect(screen.getByText('Room A')).toBeInTheDocument();
     expect(screen.getByText('Beautiful Boarding House')).toBeInTheDocument();
     expect(screen.getByText('PENDING')).toBeInTheDocument();
-    expect(screen.getByText('₱ 1,500')).toBeInTheDocument();
+    expect(screen.getByText(/1,500/)).toBeInTheDocument();
   });
 
   it('calls onViewDetails when Details button is clicked', () => {

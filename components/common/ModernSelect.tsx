@@ -141,7 +141,7 @@ const ModernSelect: React.FC<ModernSelectProps> = ({
   return (
     <div className={cn("flex flex-col gap-1.5 w-full sm:w-auto", className)}>
       {label && (
-        <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">
+        <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-gray-300 ml-1">
           {label}
         </label>
       )}

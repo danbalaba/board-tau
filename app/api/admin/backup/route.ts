@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const scope = searchParams.get('scope') || 'all'; // all, users, listings, reservations, reviews, messages
+    const scope = searchParams.get('scope') || 'all'; // all, taxonomy, users, listings, reservations, messages, logs
     const tablesParam = searchParams.get('tables');
     const specificTables = tablesParam ? tablesParam.split(',') : [];
 
@@ -29,21 +29,24 @@ export async function GET(req: NextRequest) {
       scope,
     };
 
-    // Level 0: Independent Tables
+    // Level 0: Independent Models (No FK dependencies)
     if (shouldInclude('userRoles', scope === 'all' || scope === 'users')) {
       backupData.userRoles = await db.userRole.findMany();
     }
     if (shouldInclude('permissions', scope === 'all' || scope === 'users')) {
       backupData.permissions = await db.permission.findMany();
     }
-    if (shouldInclude('passwordResetTokens', scope === 'all' || scope === 'users')) {
+    if (shouldInclude('passwordResetTokens', scope === 'all' || scope === 'users' || scope === 'logs')) {
       backupData.passwordResetTokens = await db.passwordResetToken.findMany();
     }
-    if (shouldInclude('categories', scope === 'all' || scope === 'listings')) {
+    if (shouldInclude('propertyTypes', scope === 'all' || scope === 'taxonomy' || scope === 'listings')) {
       backupData.propertyTypes = await db.propertyType.findMany();
     }
-    if (shouldInclude('dynamicAttributes', scope === 'all' || scope === 'listings')) {
-      backupData.dynamicAttributes = await db.dynamicAttribute.findMany();
+    if (shouldInclude('campusColleges', scope === 'all' || scope === 'taxonomy')) {
+      backupData.campusColleges = await db.campusCollege.findMany();
+    }
+    if (shouldInclude('attributeSubGroups', scope === 'all' || scope === 'taxonomy' || scope === 'listings')) {
+      backupData.attributeSubGroups = await db.attributeSubGroup.findMany();
     }
     if (shouldInclude('siteSettings', scope === 'all' || scope === 'logs')) {
       backupData.siteSettings = await db.siteSettings.findMany();
@@ -55,12 +58,21 @@ export async function GET(req: NextRequest) {
       backupData.platformMetricSnapshots = await db.platformMetricSnapshot.findMany();
     }
 
-    // Level 1: Core User
+    // Level 1: Core Sub-Dependencies
+    if (shouldInclude('roomTypeDefinitions', scope === 'all' || scope === 'taxonomy' || scope === 'listings')) {
+      backupData.roomTypeDefinitions = await db.roomTypeDefinition.findMany();
+    }
+    if (shouldInclude('dynamicAttributes', scope === 'all' || scope === 'taxonomy' || scope === 'listings')) {
+      backupData.dynamicAttributes = await db.dynamicAttribute.findMany();
+    }
     if (shouldInclude('users', scope === 'all' || scope === 'users')) {
       backupData.users = await db.user.findMany();
     }
 
-    // Level 2: User Dependencies
+    // Level 2: User & Room Sub-Type Dependencies
+    if (shouldInclude('bedSetupDefinitions', scope === 'all' || scope === 'taxonomy' || scope === 'listings')) {
+      backupData.bedSetupDefinitions = await db.bedSetupDefinition.findMany();
+    }
     if (shouldInclude('accounts', scope === 'all' || scope === 'users')) {
       backupData.accounts = await db.account.findMany();
     }
@@ -89,7 +101,7 @@ export async function GET(req: NextRequest) {
       backupData.listings = await db.listing.findMany();
     }
 
-    // Level 3: Listing Details
+    // Level 3: Listing Details & Lease Contracts
     if (shouldInclude('listingImages', scope === 'all' || scope === 'listings')) {
       backupData.listingImages = await db.listingImage.findMany();
     }
@@ -99,16 +111,22 @@ export async function GET(req: NextRequest) {
     if (shouldInclude('rooms', scope === 'all' || scope === 'listings')) {
       backupData.rooms = await db.room.findMany();
     }
+    if (shouldInclude('leaseContracts', scope === 'all' || scope === 'reservations' || scope === 'listings')) {
+      backupData.leaseContracts = await db.leaseContract.findMany();
+    }
     if (shouldInclude('messages', scope === 'all' || scope === 'messages')) {
       backupData.messages = await db.message.findMany();
     }
 
-    // Level 4: Room Details & Initial Transactions
+    // Level 4: Room Details, Signatures & Inquiries
     if (shouldInclude('roomImages', scope === 'all' || scope === 'listings')) {
       backupData.roomImages = await db.roomImage.findMany();
     }
     if (shouldInclude('roomAttributeLinks', scope === 'all' || scope === 'listings')) {
       backupData.roomAttributeLinks = await db.roomAttributeLink.findMany();
+    }
+    if (shouldInclude('contractSignatures', scope === 'all' || scope === 'reservations')) {
+      backupData.contractSignatures = await db.contractSignature.findMany();
     }
     if (shouldInclude('inquiries', scope === 'all' || scope === 'reservations')) {
       backupData.inquiries = await db.inquiry.findMany();

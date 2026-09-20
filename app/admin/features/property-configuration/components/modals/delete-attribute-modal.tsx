@@ -7,6 +7,9 @@ import axios from "axios";
 import { Button } from "@/app/admin/components/ui/button";
 import { motion } from "framer-motion";
 
+import { clearTaxonomyCache } from "@/lib/taxonomyCache";
+import { clearLandlordTaxonomyCache } from "@/lib/landlordTaxonomyCache";
+
 interface DeleteAttributeModalProps {
   attribute: {
     id?: string;
@@ -37,6 +40,8 @@ export function DeleteAttributeModal({
       const res = await axios.delete(`/api/admin/attributes/${targetId}`);
 
       if (res.data?.success) {
+        clearTaxonomyCache();
+        clearLandlordTaxonomyCache();
         toast.success(`Dynamic Attribute "${attribute.name}" deleted successfully.`);
         if (onSuccess) onSuccess(targetId);
         onCloseModal?.();

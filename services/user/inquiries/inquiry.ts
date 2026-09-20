@@ -57,6 +57,11 @@ export const getInquiriesByUser = async (userId: string) => {
             title: true,
             imageSrc: true,
             images: true,
+            propertyType: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
         room: {
@@ -65,6 +70,11 @@ export const getInquiriesByUser = async (userId: string) => {
             name: true,
             price: true,
             images: true,
+            roomTypeDefinition: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },
@@ -100,6 +110,20 @@ export const getInquiriesByListing = async (listingId: string) => {
             name: true,
             price: true,
             images: true,
+            roomTypeDefinition: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        listing: {
+          select: {
+            propertyType: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },

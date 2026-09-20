@@ -47,7 +47,7 @@ export const columns: ColumnDef<PropertyTypeColumn>[] = [
     enableColumnFilter: true,
     cell: ({ row }) => (
       <div className="flex flex-col">
-        <span className="font-bold text-slate-800 dark:text-slate-200">{row.original.name}</span>
+        <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">{row.original.name}</span>
         {row.original.description && (
           <span className="text-xs text-slate-500 max-w-[240px] truncate" title={row.original.description}>
             {row.original.description}
@@ -63,7 +63,7 @@ export const columns: ColumnDef<PropertyTypeColumn>[] = [
     meta: { label: "Attached Listings" },
     cell: ({ row }) => {
       return (
-        <div className="text-center font-bold text-slate-700 dark:text-slate-300">
+        <div className="text-center font-medium text-sm text-slate-700 dark:text-slate-300">
           {row.original._count?.listings || 0}
         </div>
       );
@@ -95,9 +95,9 @@ export const columns: ColumnDef<PropertyTypeColumn>[] = [
       const isActive = row.original.isActive;
       return (
         <div className="text-center">
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
             isActive 
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-500/20" 
+              ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light border border-primary/20" 
               : "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-500/20"
           }`}>
             {isActive ? "Active" : "Disabled"}
@@ -113,7 +113,7 @@ export const columns: ColumnDef<PropertyTypeColumn>[] = [
     meta: { label: "Created Date" },
     cell: ({ row }) => {
       return (
-        <div className="text-center text-sm font-semibold text-slate-600 dark:text-slate-400">
+        <div className="text-center text-sm font-normal text-slate-600 dark:text-slate-400">
           {format(new Date(row.original.createdAt), "MMM d, yyyy")}
         </div>
       );

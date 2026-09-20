@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import * as LucideIcons from "lucide-react";
+import { getDynamicIcon } from "@/lib/iconResolver";
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -12,6 +12,7 @@ import {
   FileText, 
   Sparkles, 
   User as UserIcon, 
+  UserCheck,
   BadgeCheck, 
   AlertTriangle, 
   Wifi, 
@@ -41,7 +42,8 @@ import {
   Lock,
   Ban,
   Wine,
-  Maximize2
+  Maximize2,
+  Building2
 } from "lucide-react";
 import SafeImage from "../common/SafeImage";
 
@@ -139,37 +141,13 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
     return cleanId;
   }, [attributes]);
 
-  const getItemIcon = useCallback((name: string, attrId?: string) => {
-    if (attrId) {
-      const cleanId = attrId.includes('|') ? attrId.split('|')[0] : attrId;
-      const matched = attributes.find(a => a.id === cleanId || a.value === cleanId || a._id === cleanId || a.code === cleanId || cleanId.startsWith(a.id + '|'));
-      if (matched && matched.icon) {
-        const IconObj = (LucideIcons as any)[matched.icon];
-        if (IconObj) return IconObj;
-      }
-    }
+  const getItemIcon = useCallback((name: string, attrId?: string, explicitIcon?: string) => {
+    const inputStr = (explicitIcon && explicitIcon !== 'Sparkles' && explicitIcon !== 'Sparkle')
+      ? `${name}|${explicitIcon}`
+      : name;
 
-    const n = (name || '').toLowerCase();
-    if (n.includes("curfew") || n.includes("gate lock")) return Lock;
-    if (n.includes("24/7 open gate") || n.includes("no curfew")) return Clock;
-    if (n.includes("pet")) return PawPrint;
-    if (n.includes("smoke")) return Ban;
-    if (n.includes("drink") || n.includes("alcohol")) return Wine;
-    if (n.includes("visitors") || n.includes("guests")) return Users;
-    if (n.includes("utensil") || n.includes("microwave") || n.includes("stove")) return Utensils;
-    if (n.includes("kettle") || n.includes("coffee")) return Utensils;
-    if (n.includes("fridge") || n.includes("refrigerator")) return Refrigerator;
-    if (n.includes("bidet") || n.includes("shower") || n.includes("water")) return Droplets;
-    if (n.includes("ac") || n.includes("aircon") || n.includes("inverter")) return Wind;
-    if (n.includes("curtain") || n.includes("blind") || n.includes("cabinet")) return Layers;
-    if (n.includes("desk") || n.includes("study") || n.includes("book")) return BookOpen;
-    if (n.includes("wifi") || n.includes("internet") || n.includes("fiber")) return Wifi;
-    if (n.includes("laundry") || n.includes("washing")) return WashingMachine;
-    if (n.includes("parking") || n.includes("car")) return Car;
-    if (n.includes("cctv") || n.includes("security") || n.includes("guard")) return ShieldCheck;
-
-    return Sparkles;
-  }, [attributes]);
+    return getDynamicIcon(inputStr, Sparkles);
+  }, []);
 
   const getImageUrl = (img: any) => {
     if (!img) return null;
@@ -265,7 +243,7 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
     ];
 
     const SECURITY_SUBGROUPS = new Set(['SECURITY', 'DISASTER_SAFETY', 'DISASTER_PREP', 'SAFETY', 'FIRE_SAFETY']);
-    const list: string[] = [];
+    const list: { id: string; name: string; icon?: string }[] = [];
 
     rawFeatures.forEach(attrId => {
       if (!attrId) return;
@@ -280,14 +258,20 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
       const isSecurity = type === 'FEATURE' || SECURITY_SUBGROUPS.has(key) ||
         (lower.includes('smoke detector') || lower.includes('fire extinguisher') || lower.includes('first aid') || lower.includes('emergency hallway') || lower.includes('flood-free') || lower.includes('security') || lower.includes('cctv') || lower.includes('keycard') || lower.includes('biometric'));
 
-      if (isSecurity && !list.includes(name)) {
-        list.push(name);
+      if (isSecurity && !list.some(item => item.name === name)) {
+        list.push({ id: attrId, name, icon: matchedAttr?.icon });
       }
     });
 
-    if (listing.features?.security24h && !list.includes('24/7 Security Guard')) list.push('24/7 Security Guard');
-    if (listing.features?.cctv && !list.includes('CCTV Cameras')) list.push('CCTV Cameras');
-    if (listing.features?.fireSafety && !list.includes('Fire Safety Extinguishers')) list.push('Fire Safety Extinguishers');
+    if (listing.features?.security24h && !list.some(i => i.name === '24/7 Security Guard')) {
+      list.push({ id: 'security24h', name: '24/7 Security Guard', icon: 'ShieldCheck' });
+    }
+    if (listing.features?.cctv && !list.some(i => i.name === 'CCTV Cameras')) {
+      list.push({ id: 'cctv', name: 'CCTV Cameras', icon: 'Camera' });
+    }
+    if (listing.features?.fireSafety && !list.some(i => i.name === 'Fire Safety Extinguishers')) {
+      list.push({ id: 'fireSafety', name: 'Fire Safety Extinguishers', icon: 'Flame' });
+    }
 
     return list;
   }, [listing, attributes, resolveAmenityName]);
@@ -312,7 +296,7 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
   }, [listing.rooms]);
 
   const propType = listing.propertyType;
-  const PropertyIcon = propType?.icon && (LucideIcons as any)[propType.icon] ? (LucideIcons as any)[propType.icon] : LucideIcons.Building2;
+  const PropertyIcon = getDynamicIcon(propType?.icon, Building2);
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800">
@@ -530,7 +514,7 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
             </div>
 
             <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-purple-200/40 dark:border-purple-500/20">
-              <div className="p-1.5 bg-purple-500/10 rounded-lg text-purple-500"><Users size={15} /></div>
+              <div className="p-1.5 bg-purple-500/10 rounded-lg text-purple-500"><UserCheck size={15} /></div>
               <div>
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Visitor Policy</p>
                 <p className="font-bold text-slate-800 dark:text-slate-200">{rulesObject?.visitorsAllowed ? "Visitors Allowed" : "No Visitors Allowed"}</p>
@@ -564,12 +548,12 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
           </div>
 
           <div className="flex flex-wrap gap-1.5">
-            {resolvedFeatures.map((featName, i) => {
-              const ItemIcon = getItemIcon(featName);
+            {resolvedFeatures.map((feat, i) => {
+              const ItemIcon = getItemIcon(feat.name, feat.id, feat.icon);
               return (
                 <span key={i} className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-900 border border-amber-200/60 dark:border-amber-500/30 text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
                   <ItemIcon size={13} className="text-amber-500 shrink-0" />
-                  <span>{featName}</span>
+                  <span>{feat.name}</span>
                 </span>
               );
             })}

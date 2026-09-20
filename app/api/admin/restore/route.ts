@@ -61,13 +61,16 @@ export async function POST(req: NextRequest) {
       const newUsersCount = await db.user.count({ where: { createdAt: { gt: backupDate } } });
       const newReservationsCount = await db.reservation.count({ where: { createdAt: { gt: backupDate } } });
       const newListingsCount = await db.listing.count({ where: { createdAt: { gt: backupDate } } });
+      const newContractsCount = await db.leaseContract.count({ where: { createdAt: { gt: backupDate } } });
       
+      const totalNew = newUsersCount + newReservationsCount + newListingsCount + newContractsCount;
       return NextResponse.json({
-        newRecordsFound: newUsersCount + newReservationsCount + newListingsCount,
+        newRecordsFound: totalNew,
         stats: {
           users: newUsersCount,
           reservations: newReservationsCount,
-          listings: newListingsCount
+          listings: newListingsCount,
+          leaseContracts: newContractsCount,
         }
       });
     }
@@ -109,15 +112,22 @@ export async function POST(req: NextRequest) {
       const safetyData: any = { timestamp: new Date().toISOString(), scope: 'all' };
       safetyData.userRoles = await db.userRole.findMany();
       safetyData.permissions = await db.permission.findMany();
+      safetyData.propertyTypes = await db.propertyType.findMany();
+      safetyData.campusColleges = await db.campusCollege.findMany();
+      safetyData.attributeSubGroups = await db.attributeSubGroup.findMany();
+      safetyData.roomTypeDefinitions = await db.roomTypeDefinition.findMany();
+      safetyData.bedSetupDefinitions = await db.bedSetupDefinition.findMany();
+      safetyData.dynamicAttributes = await db.dynamicAttribute.findMany();
       safetyData.users = await db.user.findMany();
       safetyData.accounts = await db.account.findMany();
       safetyData.reservations = await db.reservation.findMany();
       safetyData.listings = await db.listing.findMany();
       safetyData.rooms = await db.room.findMany();
+      safetyData.leaseContracts = await db.leaseContract.findMany();
+      safetyData.contractSignatures = await db.contractSignature.findMany();
       safetyData.messages = await db.message.findMany();
       safetyData.inquiries = await db.inquiry.findMany();
       safetyData.reviews = await db.review.findMany();
-      // ... Add others as needed for a quick safety snapshot
       
       const safetyJsonString = JSON.stringify(safetyData);
       const safetyEncrypted = encryptMessage(safetyJsonString);
@@ -151,19 +161,24 @@ export async function POST(req: NextRequest) {
     }
 
     // --- RESTORE IN STRICT DEPENDENCY ORDER ---
-    // Level 0
+    // Level 0: Independent Models
     restoredCounts.userRoles = await restoreCollection(db.userRole, body.userRoles);
     restoredCounts.permissions = await restoreCollection(db.permission, body.permissions);
     restoredCounts.passwordResetTokens = await restoreCollection(db.passwordResetToken, body.passwordResetTokens);
-    restoredCounts.dynamicAttributes = await restoreCollection(db.dynamicAttribute, body.dynamicAttributes);
+    restoredCounts.propertyTypes = await restoreCollection(db.propertyType, body.propertyTypes);
+    restoredCounts.campusColleges = await restoreCollection(db.campusCollege, body.campusColleges);
+    restoredCounts.attributeSubGroups = await restoreCollection(db.attributeSubGroup, body.attributeSubGroups);
     restoredCounts.siteSettings = await restoreCollection(db.siteSettings, body.siteSettings);
     restoredCounts.featureFlags = await restoreCollection(db.featureFlag, body.featureFlags);
     restoredCounts.platformMetricSnapshots = await restoreCollection(db.platformMetricSnapshot, body.platformMetricSnapshots);
 
-    // Level 1
+    // Level 1: Sub-Definitions & Users
+    restoredCounts.roomTypeDefinitions = await restoreCollection(db.roomTypeDefinition, body.roomTypeDefinitions);
+    restoredCounts.dynamicAttributes = await restoreCollection(db.dynamicAttribute, body.dynamicAttributes);
     restoredCounts.users = await restoreCollection(db.user, body.users, currentUserId);
 
-    // Level 2
+    // Level 2: Bed Setups & User Dependencies
+    restoredCounts.bedSetupDefinitions = await restoreCollection(db.bedSetupDefinition, body.bedSetupDefinitions);
     restoredCounts.accounts = await restoreCollection(db.account, body.accounts, currentUserId, 'userId');
     restoredCounts.hostApplications = await restoreCollection(db.hostApplication, body.hostApplications, currentUserId, 'userId');
     restoredCounts.emailOTPs = await restoreCollection(db.emailOTP, body.emailOTPs, currentUserId, 'userId');
@@ -174,21 +189,23 @@ export async function POST(req: NextRequest) {
     restoredCounts.moderationLogs = await restoreCollection(db.moderationLog, body.moderationLogs);
     restoredCounts.listings = await restoreCollection(db.listing, body.listings);
 
-    // Level 3
+    // Level 3: Listing Details & Contracts
     restoredCounts.listingImages = await restoreCollection(db.listingImage, body.listingImages);
     restoredCounts.listingAttributeLinks = await restoreCollection(db.listingAttributeLink, body.listingAttributeLinks);
     restoredCounts.rooms = await restoreCollection(db.room, body.rooms);
+    restoredCounts.leaseContracts = await restoreCollection(db.leaseContract, body.leaseContracts);
     restoredCounts.messages = await restoreCollection(db.message, body.messages);
 
-    // Level 4
+    // Level 4: Room Details, Signatures & Inquiries
     restoredCounts.roomImages = await restoreCollection(db.roomImage, body.roomImages);
     restoredCounts.roomAttributeLinks = await restoreCollection(db.roomAttributeLink, body.roomAttributeLinks);
+    restoredCounts.contractSignatures = await restoreCollection(db.contractSignature, body.contractSignatures);
     restoredCounts.inquiries = await restoreCollection(db.inquiry, body.inquiries);
 
-    // Level 5
+    // Level 5: Reservations
     restoredCounts.reservations = await restoreCollection(db.reservation, body.reservations);
     
-    // Level 6
+    // Level 6: Reviews
     restoredCounts.reviews = await restoreCollection(db.review, body.reviews);
 
     // Clean up empty counts
