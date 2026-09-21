@@ -604,7 +604,6 @@ html[data-theme] body {
 }
 
 
-
 @keyframes shake-horizontal {
 
   0%,
@@ -777,4 +776,26 @@ html.dark .leaflet-control-layers-list label:hover {
 .animate-kerby-shadow {
   animation: floatShadowGpu 3.8s ease-in-out infinite;
   will-change: transform, opacity;
-}
+}
+
+/* ===== SENTRY FEEDBACK MODAL CUSTOM BRANDING ===== */
+.sentry-feedback,
+dialog.sentry-feedback {
+  --sentry-feedback-submit-bg: #2f7d6d !important;
+  --sentry-feedback-submit-hover-bg: #266558 !important;
+  --sentry-feedback-submit-color: #ffffff !important;
+  --sentry-feedback-primary: #2f7d6d !important;
+  --sentry-feedback-accent: #2f7d6d !important;
+  --sentry-feedback-focus-border: #2f7d6d !important;
+  font-family: var(--font-sans, system-ui, sans-serif) !important;
+  border-radius: 16px !important;
+}
+
+/* Completely remove/hide the floating button at bottom right */
+#sentry-feedback-trigger,
+.sentry-feedback-trigger,
+[data-sentry-feedback-trigger] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

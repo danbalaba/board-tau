@@ -15,7 +15,31 @@ Sentry.init({
   sendDefaultPii: true,
   integrations: [
     Sentry.feedbackIntegration({
+      autoInject: false,
+      showTrigger: false,
       colorScheme: "system",
+      themeLight: {
+        submitBackground: "#2f7d6d",
+        submitHoverBackground: "#266558",
+        submitBorder: "#2f7d6d",
+        submitOutline: "#2f7d6d",
+        inputFocusBorder: "#2f7d6d",
+        highlightColor: "#2f7d6d",
+        cancelBackground: "#f3f4f6",
+        cancelHoverBackground: "#e5e7eb",
+      },
+      themeDark: {
+        submitBackground: "#2f7d6d",
+        submitHoverBackground: "#266558",
+        submitBorder: "#2f7d6d",
+        submitOutline: "#2f7d6d",
+        inputFocusBorder: "#2f7d6d",
+        highlightColor: "#2f7d6d",
+        background: "#0f172a",
+        foreground: "#f8fafc",
+        cancelBackground: "#1e293b",
+        cancelHoverBackground: "#334155",
+      },
     }),
   ],
   beforeSend(event, hint) {
