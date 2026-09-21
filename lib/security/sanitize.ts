@@ -93,7 +93,7 @@ export function sanitizeAIOutput(output: string): string {
   // Mask API Keys (Groq, Gemini, Stripe, SendGrid, JWTs, etc.)
   sanitized = sanitized.replace(/(gsk_[a-zA-Z0-9_-]{20,})/gi, "[REDACTED_API_KEY]");
   sanitized = sanitized.replace(/(AIzaSy[a-zA-Z0-9_-]{33})/g, "[REDACTED_API_KEY]");
-  sanitized = sanitized.replace(/(sk_[live|test]_[a-zA-Z0-9]{24,})/gi, "[REDACTED_API_KEY]");
+  sanitized = sanitized.replace(/(sk_(?:live|test)_[a-zA-Z0-9]{24,})/gi, "[REDACTED_API_KEY]");
   sanitized = sanitized.replace(/(eyJ[a-zA-Z0-9_-]{10,}\.eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,})/g, "[REDACTED_JWT_TOKEN]");
 
   // Mask Connection Strings (MongoDB, Redis, Postgres)
@@ -146,5 +146,3 @@ export function sanitizeImgUrl(url: string | null | undefined): string {
 
   return '';
 }
-
-

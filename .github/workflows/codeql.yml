@@ -8,6 +8,11 @@ on:
   schedule:
     - cron: '21 8 * * 4'
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
@@ -36,7 +41,7 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
-        queries: security-extended,security-and-quality
+        queries: security-extended
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3

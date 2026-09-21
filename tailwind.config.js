@@ -68,6 +68,9 @@ module.exports = {
         md: 'var(--radius-md)',
         lg: 'var(--radius-lg)',
         xl: 'var(--radius-xl)',
+        card: '16px',
+        input: '12px',
+        pill: '9999px',
       },
       boxShadow: {
         '2xs': 'var(--shadow-2xs)',
@@ -102,11 +105,6 @@ module.exports = {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
         'hero-gradient': 'linear-gradient(135deg, var(--tw-gradient-stops))',
-      },
-      borderRadius: {
-        card: '16px',
-        input: '12px',
-        pill: '9999px',
       },
       transitionTimingFunction: {
         smooth: 'cubic-bezier(0.4, 0, 0.2, 1)',

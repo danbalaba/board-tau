@@ -10,9 +10,14 @@ on:
     paths:
       - 'prisma/**'
 
+permissions:
+  contents: read
+
 jobs:
   prisma-validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
