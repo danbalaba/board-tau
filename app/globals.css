@@ -782,7 +782,7 @@ html.dark .leaflet-control-layers-list label:hover {
 .sentry-feedback,
 dialog.sentry-feedback {
   --sentry-feedback-submit-bg: #2f7d6d !important;
-  --sentry-feedback-submit-hover-bg: #266558 !important;
+  --sentry-feedback-submit-hover-bg: #1e5146 !important;
   --sentry-feedback-submit-color: #ffffff !important;
   --sentry-feedback-primary: #2f7d6d !important;
   --sentry-feedback-accent: #2f7d6d !important;
@@ -798,4 +798,154 @@ dialog.sentry-feedback {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
+}
+
+/* Hide Sentry logo / branding icon in feedback headers & footers */
+.sentry-feedback__branding,
+.sentry-feedback header svg,
+.sentry-feedback [data-sentry-branding],
+.sentry-feedback a[aria-label*="Sentry"],
+dialog.sentry-feedback header svg,
+dialog.sentry-feedback [data-sentry-branding],
+[data-sentry-feedback] header svg {
+  display: none !important;
+}
+
+/* Light Mode Theme Overrides for Sentry Feedback Dialogs & Screens */
+:root:not(.dark) {
+  --sentry-feedback-background: #ffffff !important;
+  --sentry-feedback-foreground: #111827 !important;
+  --sentry-feedback-input-background: #ffffff !important;
+  --sentry-feedback-input-color: #111827 !important;
+  --sentry-feedback-input-border: #d1d5db !important;
+  --sentry-feedback-input-focus-border: #2f7d6d !important;
+  --sentry-feedback-submit-background: #2f7d6d !important;
+  --sentry-feedback-submit-hover-background: #1e5146 !important;
+  --sentry-feedback-submit-color: #ffffff !important;
+  --sentry-feedback-cancel-background: #f3f4f6 !important;
+  --sentry-feedback-cancel-hover-background: #e5e7eb !important;
+  --sentry-feedback-cancel-color: #374151 !important;
+  --sentry-feedback-primary: #2f7d6d !important;
+  --sentry-feedback-accent: #2f7d6d !important;
+}
+
+:root:not(.dark) .sentry-feedback,
+:root:not(.dark) dialog.sentry-feedback,
+:root:not(.dark) [data-sentry-feedback] {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+:root:not(.dark) .sentry-feedback input,
+:root:not(.dark) .sentry-feedback textarea,
+:root:not(.dark) dialog.sentry-feedback input,
+:root:not(.dark) dialog.sentry-feedback textarea {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+}
+
+:root:not(.dark) .sentry-feedback input::placeholder,
+:root:not(.dark) .sentry-feedback textarea::placeholder,
+:root:not(.dark) dialog.sentry-feedback input::placeholder,
+:root:not(.dark) dialog.sentry-feedback textarea::placeholder {
+  color: #6b7280 !important;
+}
+
+:root:not(.dark) .sentry-feedback label,
+:root:not(.dark) dialog.sentry-feedback label,
+:root:not(.dark) .sentry-feedback h2,
+:root:not(.dark) dialog.sentry-feedback h2,
+:root:not(.dark) .sentry-feedback header {
+  color: #111827 !important;
+}
+
+/* Dark Mode Theme Overrides for Sentry Feedback Dialogs & Screens */
+html.dark {
+  --sentry-feedback-background: #0f172a !important;
+  --sentry-feedback-foreground: #f8fafc !important;
+  --sentry-feedback-input-background: #1e293b !important;
+  --sentry-feedback-input-color: #f8fafc !important;
+  --sentry-feedback-input-border: #334155 !important;
+  --sentry-feedback-input-focus-border: #2f7d6d !important;
+  --sentry-feedback-submit-background: #2f7d6d !important;
+  --sentry-feedback-submit-hover-background: #1e5146 !important;
+  --sentry-feedback-submit-color: #ffffff !important;
+  --sentry-feedback-cancel-background: #1e293b !important;
+  --sentry-feedback-cancel-hover-background: #334155 !important;
+  --sentry-feedback-cancel-color: #cbd5e1 !important;
+  --sentry-feedback-primary: #2f7d6d !important;
+  --sentry-feedback-accent: #2f7d6d !important;
+}
+
+html.dark .sentry-feedback,
+html.dark dialog.sentry-feedback,
+html.dark [data-sentry-feedback] {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .sentry-feedback input,
+html.dark .sentry-feedback textarea,
+html.dark dialog.sentry-feedback input,
+html.dark dialog.sentry-feedback textarea {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+html.dark .sentry-feedback input::placeholder,
+html.dark .sentry-feedback textarea::placeholder,
+html.dark dialog.sentry-feedback input::placeholder,
+html.dark dialog.sentry-feedback textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+html.dark .sentry-feedback label,
+html.dark dialog.sentry-feedback label,
+html.dark .sentry-feedback h2,
+html.dark dialog.sentry-feedback h2,
+html.dark .sentry-feedback header {
+  color: #f8fafc !important;
+}
+
+/* Fullscreen screenshot modal backdrop & container styling */
+.sentry-feedback__screenshot-modal,
+[data-sentry-feedback-screenshot-modal],
+dialog.sentry-feedback--fullscreen,
+.sentry-feedback--fullscreen {
+  background-color: rgba(15, 23, 42, 0.85) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+:root:not(.dark) .sentry-feedback__screenshot-modal,
+:root:not(.dark) [data-sentry-feedback-screenshot-modal],
+:root:not(.dark) .sentry-feedback--fullscreen {
+  background-color: rgba(248, 250, 249, 0.85) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Buttons in Sentry Feedback modal (Submit / Add Screenshot / Cancel) */
+.sentry-feedback button[type="submit"],
+dialog.sentry-feedback button[type="submit"],
+.sentry-feedback__submit,
+[data-sentry-feedback] button[type="submit"] {
+  background-color: #2f7d6d !important;
+  color: #ffffff !important;
+  border-color: #2f7d6d !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.sentry-feedback button[type="submit"]:hover,
+dialog.sentry-feedback button[type="submit"]:hover,
+.sentry-feedback__submit:hover,
+[data-sentry-feedback] button[type="submit"]:hover {
+  background-color: #1e5146 !important;
+  border-color: #1e5146 !important;
 }

@@ -95,9 +95,9 @@ const Footer: React.FC = () => {
                   </button>
                   <button
                     onClick={handleReportIssue}
-                    className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-xl font-semibold shadow-sm transition-all duration-300 hover:scale-[1.02] inline-flex items-center gap-2 cursor-pointer text-sm"
+                    className="bg-[#2f7d6d]/10 text-[#2f7d6d] dark:bg-[#2f7d6d]/20 dark:text-[#52b6a1] border border-[#2f7d6d]/20 dark:border-[#2f7d6d]/40 hover:bg-[#2f7d6d]/20 dark:hover:bg-[#2f7d6d]/30 px-4 py-2.5 rounded-xl font-semibold shadow-xs transition-all duration-300 hover:scale-[1.02] inline-flex items-center gap-2 cursor-pointer text-sm"
                   >
-                    <Bug className="w-4 h-4" />
+                    <Bug className="w-4 h-4 text-[#2f7d6d] dark:text-[#52b6a1]" />
                     Report Issue
                   </button>
                 </div>
@@ -210,9 +210,8 @@ const Footer: React.FC = () => {
                   <li>
                     <button
                       onClick={handleReportIssue}
-                      className="text-sm hover:underline text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium inline-flex items-center gap-1.5 cursor-pointer text-left"
+                      className="text-sm hover:underline text-gray-600 dark:text-slate-400 hover:text-black dark:hover:text-white cursor-pointer text-left transition-colors duration-200"
                     >
-                      <Bug className="w-3.5 h-3.5" />
                       Report an Issue
                     </button>
                   </li>
