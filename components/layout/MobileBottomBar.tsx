@@ -7,6 +7,7 @@ import { User } from "next-auth";
 import Modal from "@/components/modals/Modal";
 import AuthModal from "@/components/modals/AuthModal";
 import { useNotification } from "@/context/NotificationContext";
+import { useScrollDirection } from "@/hooks/use-scroll-direction";
 
 interface MobileBottomBarProps {
   user?: (User & { id: string; role?: string });
@@ -14,8 +15,7 @@ interface MobileBottomBarProps {
 
 const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
   const router = useRouter();
-  const [scrollDirection, setScrollDirection] = useState<"up" | "down" | "">("");
-  const [lastY, setLastY] = useState(0);
+  const scrollDirection = useScrollDirection();
   const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
   const isMessages = pathname.startsWith('/messages');
   const isBecomeAHost = pathname.startsWith('/become-a-host');
@@ -33,26 +33,6 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
     const timer = setTimeout(checkErrorPage, 60);
     return () => clearTimeout(timer);
   }, [pathname]);
-
-  // Implement scroll direction tracking
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentY = window.scrollY;
-
-      if (currentY === 0) {
-        setScrollDirection("");
-      } else if (currentY > lastY) {
-        setScrollDirection("down");
-      } else {
-        setScrollDirection("up");
-      }
-
-      setLastY(currentY);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastY]);
 
   if (isErrorPage || isBecomeAHost) return null;
 
