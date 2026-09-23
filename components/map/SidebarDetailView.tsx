@@ -83,7 +83,7 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
 
   const [amenitiesModalConfig, setAmenitiesModalConfig] = useState<{
     isOpen: boolean;
-    initialCategory: 'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY' | 'ROOMS';
+    initialCategory: 'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY';
   }>({
     isOpen: false,
     initialCategory: 'ALL'
@@ -359,9 +359,14 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
              <PropertyIcon size={12} /> <span>{categoryVal}</span>
            </div>
            <h3 className="font-black text-white text-2xl leading-tight line-clamp-2 drop-shadow-md">{listing.title}</h3>
-           <div className="flex items-center gap-1 text-sm text-slate-200 font-medium">
-             <MapPin size={14} className="shrink-0 text-primary" /> <span className="truncate">{listing.region || listing.address || 'Camiling, Tarlac'}</span>
-           </div>
+            <div className="flex items-center gap-1 text-sm text-slate-200 font-medium">
+              <MapPin size={14} className="shrink-0 text-primary" /> 
+              <span className="truncate">
+                {listing.region 
+                  ? `${listing.region}${listing.country ? `, ${listing.country}` : ''}` 
+                  : listing.address || 'Tarlac, Philippines'}
+              </span>
+            </div>
          </div>
       </div>
 

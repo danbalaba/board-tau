@@ -128,7 +128,7 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
     label: listing.propertyType.name,
     description: listing.propertyType.description || "",
     value: listing.propertyType.name,
-    icon: listing.propertyType.icon,
+    icon: listing.propertyType.icon || undefined,
   }] : [];
 
   // Guaranteed true average based on fetched reviews

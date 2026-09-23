@@ -827,6 +827,19 @@ dialog.sentry-feedback [data-sentry-branding],
   --sentry-feedback-cancel-color: #374151 !important;
   --sentry-feedback-primary: #2f7d6d !important;
   --sentry-feedback-accent: #2f7d6d !important;
+
+  /* Sentry internal Shadow Root CSS variable overrides */
+  --background: #ffffff !important;
+  --foreground: #111827 !important;
+  --input-bg: #ffffff !important;
+  --input-color: #111827 !important;
+  --input-border: #d1d5db !important;
+  --submit-bg: #2f7d6d !important;
+  --submit-hover-bg: #1e5146 !important;
+  --submit-color: #ffffff !important;
+  --cancel-bg: #f3f4f6 !important;
+  --cancel-hover-bg: #e5e7eb !important;
+  --cancel-color: #374151 !important;
 }
 
 :root:not(.dark) .sentry-feedback,
@@ -878,6 +891,19 @@ html.dark {
   --sentry-feedback-cancel-color: #cbd5e1 !important;
   --sentry-feedback-primary: #2f7d6d !important;
   --sentry-feedback-accent: #2f7d6d !important;
+
+  /* Sentry internal Shadow Root CSS variable overrides */
+  --background: #0f172a !important;
+  --foreground: #f8fafc !important;
+  --input-bg: #1e293b !important;
+  --input-color: #f8fafc !important;
+  --input-border: #334155 !important;
+  --submit-bg: #2f7d6d !important;
+  --submit-hover-bg: #1e5146 !important;
+  --submit-color: #ffffff !important;
+  --cancel-bg: #1e293b !important;
+  --cancel-hover-bg: #334155 !important;
+  --cancel-color: #cbd5e1 !important;
 }
 
 html.dark .sentry-feedback,
@@ -919,6 +945,7 @@ html.dark .sentry-feedback header {
 dialog.sentry-feedback--fullscreen,
 .sentry-feedback--fullscreen {
   background-color: rgba(15, 23, 42, 0.85) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
   backdrop-filter: blur(8px) !important;
 }
 
@@ -926,6 +953,7 @@ dialog.sentry-feedback--fullscreen,
 :root:not(.dark) [data-sentry-feedback-screenshot-modal],
 :root:not(.dark) .sentry-feedback--fullscreen {
   background-color: rgba(248, 250, 249, 0.85) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
   backdrop-filter: blur(8px) !important;
 }
 

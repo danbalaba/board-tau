@@ -165,7 +165,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
 
   const [amenitiesModalConfig, setAmenitiesModalConfig] = useState<{
     isOpen: boolean;
-    initialCategory: 'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY' | 'ROOMS';
+    initialCategory: 'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY';
   }>({
     isOpen: false,
     initialCategory: 'ALL'
