@@ -268,8 +268,9 @@ CRITICAL INSTRUCTIONS FOR OUTPUT FORMAT:
 1. Return raw JSON:
    {
      "reply": "Your markdown formatted reply here",
-     "suggestedPrompts": ["Follow up question 1?", "Follow up question 2?"]
+     "suggestedPrompts": ["Contextual question 1?", "Contextual question 2?"]
    }
+   IMPORTANT: "suggestedPrompts" MUST contain 2-3 real, specific, dynamic follow-up questions tailored to the user's inquiry (e.g., "How do I book a viewing?", "What is required for tenant KYC?"). NEVER return generic literal text like "Follow up question 1?".
 2. Generate Action Buttons ONLY for page navigation using syntax: [NAV: Label](/url). Example: [NAV: Browse Listings](/) or [NAV: Create Account](/login). NEVER generate [NAV: Inquire Now] buttons.
 3. STRICTLY NO EMOJIS in your reply or suggestedPrompts. Keep it 100% professional.
 `;
@@ -291,6 +292,30 @@ CRITICAL INSTRUCTIONS FOR OUTPUT FORMAT:
     if (aiResult.data) {
       // Data Loss Prevention (DLP): Scrub any accidental secret leakage from output
       aiResult.data.reply = sanitizeAIOutput(aiResult.data.reply);
+
+      // Sanitize suggestedPrompts: Filter out dummy placeholder strings if LLM returns them
+      const DEFAULT_CHAT_PROMPTS = [
+        "How do I book a room on BoardTAU?",
+        "What is required for tenant KYC verification?",
+        "How close are these properties to TAU campus?"
+      ];
+
+      if (Array.isArray(aiResult.data.suggestedPrompts)) {
+        const cleanedPrompts = aiResult.data.suggestedPrompts.filter((p: string) =>
+          typeof p === "string" &&
+          !/follow\s*up/i.test(p) &&
+          !/question\s*\d+/i.test(p) &&
+          p.trim().length > 5
+        );
+
+        if (cleanedPrompts.length === 0) {
+          aiResult.data.suggestedPrompts = DEFAULT_CHAT_PROMPTS;
+        } else {
+          aiResult.data.suggestedPrompts = cleanedPrompts;
+        }
+      } else {
+        aiResult.data.suggestedPrompts = DEFAULT_CHAT_PROMPTS;
+      }
 
       await cache.set(cacheKey, aiResult.data, 86400); // 24 hours
       return NextResponse.json(aiResult.data);

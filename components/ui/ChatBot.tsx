@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, ChevronDown, ChevronUp, Sparkles, Maximize2, Minimize2, RotateCcw } from 'lucide-react';
+import { X, Send, ChevronDown, ChevronUp, Sparkles, Maximize2, Minimize2, RotateCcw, Copy, Check, Volume2, VolumeX } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,7 @@ import Image from 'next/image';
 import Modal from '@/components/modals/Modal';
 import AuthModal from '@/components/modals/AuthModal';
 import { useScrollDirection } from '@/hooks/use-scroll-direction';
+import { useCompareStore } from '@/hooks/use-compare-store';
 
 const TypingIndicator = () => (
   <div className="flex gap-1.5 items-center px-1">
@@ -111,12 +112,131 @@ export default function ChatBot() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
+
   const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
   const router = useRouter();
   const isListingDetail = pathname.startsWith('/listings/') && pathname.split('/').length > 2;
+  const { selectedListingIds } = useCompareStore();
+  const hasCompareBar = pathname === '/favorites' && selectedListingIds.length > 0;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollDirection = useScrollDirection();
-  const isHiddenOnMobile = scrollDirection === "up" || scrollDirection === "";
+  const isHiddenOnMobile = scrollDirection === "down";
+
+  // Pre-warm Web Speech API voices
+  useEffect(() => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  // Stop speech when drawer closes
+  useEffect(() => {
+    if (!isOpen && typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setSpeakingIndex(null);
+    }
+  }, [isOpen]);
+
+  const handleCopyMessage = (content: string, index: number) => {
+    const plainText = content
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/[*_#`~|]/g, '')
+      .trim();
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(plainText);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    }
+  };
+
+  const handleToggleSpeech = (content: string, index: number) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      return;
+    }
+
+    if (speakingIndex === index) {
+      window.speechSynthesis.cancel();
+      setSpeakingIndex(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    // Auto-scroll smooth to top of spoken message
+    setTimeout(() => {
+      const msgElement = document.getElementById(`chatbot-message-${index}`);
+      if (msgElement) {
+        msgElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 50);
+
+    // Smart phonetic pre-processing for fluent Taglish / Philippine reading
+    const textToRead = content
+      .replace(/\[BOOK:?\s*([^\]]+)\]\([^)]+\)/gi, 'Proceed to reserve $1.')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/₱\s*(\d+(?:,\d+)*)/g, '$1 pesos')
+      .replace(/\/mo\b/gi, ' per month')
+      .replace(/\b24\/7\b/gi, 'twenty four seven')
+      .replace(/\bTAU\b/g, 'T A U')
+      .replace(/\bCCTV\b/g, 'C C T V')
+      .replace(/\bWiFi\b/gi, 'why fy')
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '')
+      .replace(/[*_#`~|]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(textToRead);
+
+    // Auto-select best available voice (Tagalog/Philippine or High-Quality Natural voice)
+    const voices = window.speechSynthesis.getVoices();
+    const phVoice = voices.find(v => 
+      v.lang.toLowerCase().includes("tl") || 
+      v.lang.toLowerCase().includes("fil") || 
+      v.lang.toLowerCase().includes("ph") ||
+      v.name.toLowerCase().includes("philippines")
+    );
+    const naturalVoice = voices.find(v => 
+      v.name.toLowerCase().includes("natural") || 
+      v.name.toLowerCase().includes("online") || 
+      v.name.toLowerCase().includes("google us english") ||
+      v.name.toLowerCase().includes("samantha") ||
+      v.name.toLowerCase().includes("zira")
+    );
+
+    if (phVoice) {
+      utterance.voice = phVoice;
+      utterance.lang = phVoice.lang;
+    } else if (naturalVoice) {
+      utterance.voice = naturalVoice;
+    }
+
+    utterance.rate = 0.95;
+    utterance.pitch = 1.05;
+
+    utterance.onend = () => {
+      setSpeakingIndex(null);
+    };
+    utterance.onerror = (e) => {
+      if (e.error !== "interrupted" && e.error !== "canceled") {
+        console.warn("Speech synthesis error:", e);
+      }
+      setSpeakingIndex(null);
+    };
+
+    setSpeakingIndex(index);
+    window.speechSynthesis.speak(utterance);
+  };
 
   // Mark component as mounted/loaded
   useEffect(() => {
@@ -134,6 +254,10 @@ export default function ChatBot() {
 
   const handleClearChat = () => {
     if (isResetting) return;
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setSpeakingIndex(null);
+    }
     setIsResetting(true);
     setMessages([]); // Immediately clear old messages so typing indicator is front and center
     setSuggestedPrompts([]); // Temporarily hide chips during loader
@@ -194,6 +318,11 @@ export default function ChatBot() {
 
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
+
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setSpeakingIndex(null);
+    }
 
     const newMessages = [...messages, { role: 'user', content: text } as Message];
     setMessages(newMessages);
@@ -274,7 +403,7 @@ export default function ChatBot() {
             exit={{ x: "100%", opacity: 0 }}
             transition={{ type: "spring", stiffness: 320, damping: 30 }}
             className={cn(
-              "fixed top-0 right-0 bottom-0 z-[100] flex flex-col bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl font-sans overflow-hidden border-l border-slate-200/80 dark:border-white/10 shadow-[-15px_0_50px_rgba(0,0,0,0.35)]",
+              "fixed top-0 right-0 bottom-0 z-[160] flex flex-col bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl font-sans overflow-hidden border-l border-slate-200/80 dark:border-white/10 shadow-[-15px_0_50px_rgba(0,0,0,0.35)]",
               "w-full md:w-[440px] h-[100dvh] rounded-none"
             )}
           >
@@ -320,6 +449,7 @@ export default function ChatBot() {
             <div id="chatbot-scrollable" className="flex-1 overflow-y-auto overscroll-none p-4 space-y-4 bg-slate-50/50 dark:bg-slate-900/40 custom-scrollbar">
               {messages.map((msg, idx) => (
                 <motion.div
+                  id={`chatbot-message-${idx}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   key={idx}
@@ -401,6 +531,54 @@ export default function ChatBot() {
                       )
                     ) : (
                       msg.content
+                    )}
+                    {/* Action Toolbar for AI responses: Copy & Voice AI (Listen/Stop) */}
+                    {msg.role === 'assistant' && (
+                      <div className="flex items-center gap-1.5 pt-1.5 mt-1 border-t border-slate-200/60 dark:border-white/10 justify-start">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyMessage(msg.content, idx)}
+                          className="flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-[#2f7d6d] dark:hover:text-emerald-400 transition-colors px-2 py-0.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-white/10 cursor-pointer"
+                          title="Copy message to clipboard"
+                        >
+                          {copiedIndex === idx ? (
+                            <>
+                              <Check size={12} className="text-emerald-500 shrink-0" />
+                              <span className="text-emerald-500 font-extrabold">Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={12} className="shrink-0" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+
+                        {typeof window !== "undefined" && "speechSynthesis" in window && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSpeech(msg.content, idx)}
+                            className={`flex items-center gap-1 text-[11px] font-bold transition-colors px-2 py-0.5 rounded-full cursor-pointer ${
+                              speakingIndex === idx
+                                ? "text-rose-500 bg-rose-500/15 dark:bg-rose-500/20 hover:bg-rose-500/25"
+                                : "text-slate-500 dark:text-slate-400 hover:text-[#2f7d6d] dark:hover:text-emerald-400 hover:bg-slate-200/60 dark:hover:bg-white/10"
+                            }`}
+                            title={speakingIndex === idx ? "Stop Listening" : "Listen to Kerby"}
+                          >
+                            {speakingIndex === idx ? (
+                              <>
+                                <VolumeX size={12} className="animate-pulse shrink-0 text-rose-500" />
+                                <span className="font-extrabold text-rose-500">Stop</span>
+                              </>
+                            ) : (
+                              <>
+                                <Volume2 size={12} className="shrink-0" />
+                                <span>Listen</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </motion.div>
@@ -492,8 +670,8 @@ export default function ChatBot() {
 
       {/* Floating Toggle Button */}
       <div className={cn(
-        `fixed ${isListingDetail ? 'bottom-32' : 'bottom-20'} right-4 md:bottom-8 md:right-8 z-[50] transition-transform duration-300 ease-in-out`,
-        isHiddenOnMobile && !isOpen ? "translate-y-48 md:translate-y-0" : "translate-y-0",
+        `fixed ${isListingDetail ? 'bottom-32' : hasCompareBar ? 'bottom-40' : 'bottom-20'} right-4 md:bottom-8 md:right-8 z-[50] transition-all duration-300 ease-in-out`,
+        isHiddenOnMobile && !isOpen ? "translate-y-96 opacity-0 pointer-events-none md:translate-y-0 md:opacity-100 md:pointer-events-auto" : "translate-y-0 opacity-100",
         pathname.startsWith('/become-a-host') && "hidden md:block"
       )}>
 
