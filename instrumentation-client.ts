@@ -18,7 +18,6 @@ Sentry.init({
       autoInject: false,
       showTrigger: false,
       showBranding: false,
-      colorScheme: "system",
       themeLight: {
         background: "#ffffff",
         foreground: "#111827",

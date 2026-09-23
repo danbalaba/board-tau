@@ -34,6 +34,12 @@ const Footer: React.FC = () => {
       const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
       const feedback = Sentry.getFeedback();
       if (feedback) {
+        // Remove existing form nodes to ensure theme re-initialization
+        if (typeof document !== 'undefined') {
+          const existingForms = document.querySelectorAll('.sentry-feedback, dialog.sentry-feedback, [data-sentry-feedback]');
+          existingForms.forEach((el) => el.remove());
+        }
+
         const form = await feedback.createForm({
           colorScheme: isDark ? 'dark' : 'light',
           showBranding: false,
