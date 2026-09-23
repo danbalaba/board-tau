@@ -187,7 +187,7 @@ export function LandlordPropertyDetailsModal({
   const [configSubFilter, setConfigSubFilter] = useState<'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY'>('ALL');
   const [amenitiesModalConfig, setAmenitiesModalConfig] = useState<{
     isOpen: boolean;
-    initialCategory: 'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY' | 'ROOMS';
+    initialCategory: 'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY';
   }>({
     isOpen: false,
     initialCategory: 'ALL'

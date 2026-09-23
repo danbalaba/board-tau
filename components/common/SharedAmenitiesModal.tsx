@@ -9,7 +9,6 @@ import {
   ListChecks,
   Shield,
   Star,
-  Bed,
   ChevronUp,
   X,
   Search
@@ -28,7 +27,7 @@ export interface SharedAmenitiesModalProps {
   isOpen: boolean;
   onClose: () => void;
   propertyTitle?: string;
-  initialCategory?: 'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY' | 'ROOMS';
+  initialCategory?: 'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY';
   amenities?: string[] | any[];
   customRules?: string[];
   customFeatures?: string[];
@@ -66,7 +65,7 @@ export function SharedAmenitiesModal({
   const isClient = useIsClient();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY' | 'ROOMS'>(
+  const [activeCategory, setActiveCategory] = useState<'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY'>(
     initialCategory
   );
   
@@ -75,8 +74,7 @@ export function SharedAmenitiesModal({
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     AMENITIES: true,
     RULES: true,
-    SECURITY: true,
-    ROOMS: true
+    SECURITY: true
   });
 
   useEffect(() => {
@@ -367,8 +365,6 @@ export function SharedAmenitiesModal({
                     ? 'House Rules & Policies Breakdown'
                     : activeCategory === 'SECURITY'
                     ? 'Security & Safety Features Breakdown'
-                    : activeCategory === 'ROOMS'
-                    ? 'In-Unit Room Amenities Breakdown'
                     : propertyTitle}
                 </h3>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block truncate">
@@ -419,8 +415,7 @@ export function SharedAmenitiesModal({
                 { id: 'ALL', label: 'All Categories', count: totalGrandCount },
                 { id: 'AMENITIES', label: 'Shared Amenities', count: totalAmenitiesCount },
                 { id: 'RULES', label: 'House Rules', count: totalRulesCount },
-                { id: 'SECURITY', label: 'Security & Safety', count: totalFeaturesCount },
-                ...(rooms && rooms.length > 0 ? [{ id: 'ROOMS', label: `In-Unit Rooms (${rooms.length})`, count: rooms.length }] : [])
+                { id: 'SECURITY', label: 'Security & Safety', count: totalFeaturesCount }
               ].map((cat) => (
                 <button
                   key={cat.id}
@@ -483,9 +478,9 @@ export function SharedAmenitiesModal({
                     >
                       {filteredTaxonomy.amenitiesBySubGroup.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
-                          {filteredTaxonomy.amenitiesBySubGroup.map((group) => (
+                          {filteredTaxonomy.amenitiesBySubGroup.map((group, groupIdx) => (
                             <div
-                              key={group.key}
+                              key={group.key || `amenity-group-${groupIdx}`}
                               className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 space-y-2 shadow-sm"
                             >
                               <span className="text-[9px] font-black uppercase tracking-wider text-blue-500 block">
@@ -496,7 +491,7 @@ export function SharedAmenitiesModal({
                                   const ItemIcon = getItemIcon(item);
                                   return (
                                     <span
-                                      key={i}
+                                      key={`amenity-item-${i}-${item}`}
                                       className="px-3 py-1.5 rounded-xl bg-blue-50/60 dark:bg-slate-800 border border-blue-200/60 dark:border-blue-500/30 text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5 shadow-sm"
                                     >
                                       <ItemIcon size={13} className="text-blue-500 shrink-0" />
@@ -549,9 +544,9 @@ export function SharedAmenitiesModal({
                     >
                       {filteredTaxonomy.rulesBySubGroup.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
-                          {filteredTaxonomy.rulesBySubGroup.map((group) => (
+                          {filteredTaxonomy.rulesBySubGroup.map((group, groupIdx) => (
                             <div
-                              key={group.key}
+                              key={group.key || `rule-group-${groupIdx}`}
                               className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 space-y-2 shadow-sm"
                             >
                               <span className="text-[9px] font-black uppercase tracking-wider text-purple-500 block">
@@ -562,7 +557,7 @@ export function SharedAmenitiesModal({
                                   const ItemIcon = getItemIcon(item);
                                   return (
                                     <span
-                                      key={i}
+                                      key={`rule-item-${i}-${item}`}
                                       className="px-3 py-1.5 rounded-xl bg-purple-50/60 dark:bg-slate-800 border border-purple-200/60 dark:border-purple-500/30 text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5 shadow-sm"
                                     >
                                       <ItemIcon size={13} className="text-purple-500 shrink-0" />
@@ -617,9 +612,9 @@ export function SharedAmenitiesModal({
                     >
                       {filteredTaxonomy.featuresBySubGroup.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
-                          {filteredTaxonomy.featuresBySubGroup.map((group) => (
+                          {filteredTaxonomy.featuresBySubGroup.map((group, groupIdx) => (
                             <div
-                              key={group.key}
+                              key={group.key || `feature-group-${groupIdx}`}
                               className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 space-y-2 shadow-sm"
                             >
                               <span className="text-[9px] font-black uppercase tracking-wider text-amber-500 block">
@@ -630,7 +625,7 @@ export function SharedAmenitiesModal({
                                   const ItemIcon = getItemIcon(item);
                                   return (
                                     <span
-                                      key={i}
+                                      key={`feature-item-${i}-${item}`}
                                       className="px-3 py-1.5 rounded-xl bg-amber-50/60 dark:bg-slate-800 border border-amber-200/60 dark:border-amber-500/30 text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5 shadow-sm"
                                     >
                                       <ItemIcon size={13} className="text-amber-500 shrink-0" />
@@ -653,82 +648,6 @@ export function SharedAmenitiesModal({
               </div>
             )}
 
-            {/* SECTION 4: IN-UNIT ROOM AMENITIES (IF ROOMS PASSED) */}
-            {rooms && rooms.length > 0 && (activeCategory === 'ALL' || activeCategory === 'ROOMS') && (
-              <div className="p-5 sm:p-6 rounded-3xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-4">
-                <div
-                  onClick={() => toggleSection('ROOMS')}
-                  className="flex items-center justify-between cursor-pointer select-none pb-3 border-b border-slate-200/80 dark:border-slate-800 group"
-                >
-                  <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-500 flex items-center gap-2">
-                    <Bed size={16} />
-                    <span>In-Unit Room Amenities ({rooms.length} Units)</span>
-                  </h4>
-                  <div className="p-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 group-hover:text-indigo-500 transition-colors">
-                    <motion.div animate={{ rotate: expandedSections.ROOMS ? 0 : 180 }} transition={{ duration: 0.2 }}>
-                      <ChevronUp size={14} />
-                    </motion.div>
-                  </div>
-                </div>
-
-                <AnimatePresence initial={false}>
-                  {expandedSections.ROOMS && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden space-y-4"
-                    >
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
-                        {rooms.map((room, idx) => {
-                          const roomAmenities: string[] = Array.isArray(room.amenities) ? room.amenities : [];
-                          return (
-                            <div
-                              key={idx}
-                              className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 space-y-2 shadow-sm"
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-black text-slate-900 dark:text-white uppercase truncate">
-                                  {room.name || room.title || `Room ${idx + 1}`}
-                                </span>
-                                {room.price && (
-                                  <span className="text-[10px] font-black text-primary uppercase">
-                                    ₱{Number(room.price).toLocaleString()}/mo
-                                  </span>
-                                )}
-                              </div>
-
-                              <div className="flex flex-wrap gap-1.5 pt-1">
-                                {roomAmenities.length > 0 ? (
-                                  roomAmenities.map((attrId, i) => {
-                                    const name = resolveAmenityName(attrId);
-                                    const ItemIcon = getItemIcon(name, attrId);
-                                    return (
-                                      <span
-                                        key={i}
-                                        className="px-2.5 py-1 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[9px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5"
-                                      >
-                                        <ItemIcon size={12} className="text-purple-500 shrink-0" />
-                                        <span>{name}</span>
-                                      </span>
-                                    );
-                                  })
-                                ) : (
-                                  <span className="text-[10px] font-medium text-slate-400 italic">
-                                    Standard room setup
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
           </div>
 
           {/* Bottom Action Footer */}

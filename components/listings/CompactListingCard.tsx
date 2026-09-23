@@ -41,8 +41,12 @@ const CompactListingCard: React.FC<CompactListingCardProps> = ({
             {data.title}
           </h3>
           <p className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1 mt-1 truncate">
-            <MapPin size={12} />
-            {data.country || 'Location'}
+            <MapPin size={12} className="shrink-0 text-primary" />
+            <span className="truncate">
+              {data.region
+                ? `${data.region}${data.country ? `, ${data.country}` : ''}`
+                : `Tarlac${data.country ? `, ${data.country}` : ', Philippines'}`}
+            </span>
           </p>
         </div>
         

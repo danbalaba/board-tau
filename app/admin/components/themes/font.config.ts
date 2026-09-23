@@ -16,59 +16,70 @@ import { cn } from '@/lib/utils';
 
 const fontSans = Geist({
   subsets: ['latin'],
-  variable: '--font-sans'
+  variable: '--font-sans',
+  display: 'swap',
 });
 
 const fontMono = Geist_Mono({
   subsets: ['latin'],
-  variable: '--font-mono'
+  variable: '--font-mono',
+  display: 'swap',
 });
 
 const fontInstrument = Instrument_Sans({
   subsets: ['latin'],
-  variable: '--font-instrument'
+  variable: '--font-instrument',
+  display: 'swap',
 });
 
 const fontNotoMono = Noto_Sans_Mono({
   subsets: ['latin'],
-  variable: '--font-noto-mono'
+  variable: '--font-noto-mono',
+  display: 'swap',
 });
 
 const fontMullish = Mulish({
   subsets: ['latin'],
-  variable: '--font-mullish'
+  variable: '--font-mullish',
+  display: 'swap',
 });
 
 const fontInter = Inter({
   subsets: ['latin'],
-  variable: '--font-inter'
+  variable: '--font-inter',
+  display: 'swap',
 });
 
 const fontArchitectsDaughter = Architects_Daughter({
   subsets: ['latin'],
   weight: '400',
-  variable: '--font-architects-daughter'
+  variable: '--font-architects-daughter',
+  display: 'swap',
 });
 
 const fontDMSans = DM_Sans({
   subsets: ['latin'],
-  variable: '--font-dm-sans'
+  variable: '--font-dm-sans',
+  display: 'swap',
 });
 
 const fontFiraCode = Fira_Code({
   subsets: ['latin'],
-  variable: '--font-fira-code'
+  variable: '--font-fira-code',
+  display: 'swap',
 });
 
 const fontOutfit = Outfit({
   subsets: ['latin'],
-  variable: '--font-outfit'
+  variable: '--font-outfit',
+  display: 'swap',
 });
 
 const fontSpaceMono = Space_Mono({
   subsets: ['latin'],
   weight: ['400', '700'],
-  variable: '--font-space-mono'
+  variable: '--font-space-mono',
+  display: 'swap',
 });
 
 export const fontVariables = cn(

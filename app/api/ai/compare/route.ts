@@ -130,23 +130,26 @@ export async function POST(req: Request) {
     }).join("\n\n--------------------------\n\n");
 
     const systemPrompt = `
-      You are a professional, helpful, and friendly property advisor for BoardTAU (a boarding house system for TAU students). 
-      The user is comparing the following properties:
+      You are Kerby, a professional, thorough, and helpful AI Housing Advisor for BoardTAU (the official student housing platform for Tarlac Agricultural University students).
+      The user is comparing the following properties side-by-side:
       
       ${formattedListings}
       
-      Your goal is to answer their questions based ONLY on the property data provided above. 
-      Keep your answer concise, easy to read, and formatted with markdown if necessary (bullet points are great).
-      
-      CRITICAL INSTRUCTIONS:
-      1. You MUST return your response as a raw JSON object with the following structure:
+      Your goal is to answer their question with rich, detailed, and objective insights based ONLY on the property data provided above.
+
+      CRITICAL FORMATTING & CONTENT INSTRUCTIONS:
+      1. Whenever comparing properties or providing a breakdown, USE MARKDOWN COMPARISON TABLES with clear columns (e.g. Property Name | Rent Price | Room Options | Security & Features | House Rules).
+      2. Provide a detailed, in-depth breakdown covering key student concerns: Budget & Value, Utility Resilience (Power/Water Backup), Internet Connectivity, Security/Safety Features, and House Rules (Curfew, Guests).
+      3. For each property, highlight key Pros & Cons when relevant.
+      4. You MUST return your response as a raw JSON object with the following structure:
          {
-           "reply": "Your markdown formatted reply here",
-           "suggestedPrompts": ["Follow up question 1?", "Follow up question 2?"]
+           "reply": "Your detailed markdown formatted reply here",
+           "suggestedPrompts": ["Contextual question 1?", "Contextual question 2?", "Contextual question 3?"]
          }
-      2. If you are making a strong recommendation for a specific property, OR if the user expresses they want to proceed with a property, you MUST include a booking action button in your \`reply\` using this exact markdown link syntax: [BOOK: {Listing Title}](/listings/{ID})
-      3. Do not include markdown codeblocks (\`\`\`json) in your final output, just raw valid JSON.
-      4. STRICTLY NO EMOJIS. Do not use any emojis in your \`reply\` or your \`suggestedPrompts\`. Keep it 100% professional.
+         CRITICAL: "suggestedPrompts" MUST contain 3 real, specific, dynamic follow-up questions tailored to this property comparison (e.g., "Which property has better internet?", "Are utility bills included?", "Which listing is closer to TAU?"). NEVER return generic literal text like "Follow up question 1?".
+      5. If you recommend a specific property, include a action button in your \`reply\` using this exact syntax: [BOOK: {Listing Title}](/listings/{ID})
+      6. Do not wrap output in markdown codeblocks (\`\`\`json). Return raw JSON only.
+      7. STRICTLY NO EMOJIS in your \`reply\` or \`suggestedPrompts\`. Keep it clean, professional, and easy to read.
     `;
 
     const { generateAIResponse } = await import("@/lib/ai/ai-provider");
@@ -159,6 +162,31 @@ export async function POST(req: Request) {
 
     if (aiResult.data) {
       aiResult.data.reply = sanitizeAIOutput(aiResult.data.reply);
+
+      // Sanitize suggestedPrompts: Filter out dummy placeholder strings if LLM returns them
+      const DEFAULT_COMPARE_PROMPTS = [
+        "Which property offers the best value for money?",
+        "Compare the security and safety features.",
+        "Which property is closest to TAU campus?"
+      ];
+
+      if (Array.isArray(aiResult.data.suggestedPrompts)) {
+        const cleanedPrompts = aiResult.data.suggestedPrompts.filter((p: string) => 
+          typeof p === "string" && 
+          !/follow\s*up/i.test(p) && 
+          !/question\s*\d+/i.test(p) &&
+          p.trim().length > 5
+        );
+
+        if (cleanedPrompts.length === 0) {
+          aiResult.data.suggestedPrompts = DEFAULT_COMPARE_PROMPTS;
+        } else {
+          aiResult.data.suggestedPrompts = cleanedPrompts;
+        }
+      } else {
+        aiResult.data.suggestedPrompts = DEFAULT_COMPARE_PROMPTS;
+      }
+
       // Save successful response to cache for 7 Days
       await cache.set(cacheKey, aiResult.data, 604800);
       return NextResponse.json(aiResult.data);

@@ -100,7 +100,9 @@ export default function ListingPinCard({ listing, onClose, onViewDetails }: List
               <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                 <span className="flex items-center gap-1">
                   <MapPin size={11} style={{ color: "var(--primary-color)" }} />
-                  {listing.region || listing.lga || "Tarlac"}
+                  {listing.region 
+                    ? `${listing.region}${listing.country ? `, ${listing.country}` : ''}`
+                    : "Tarlac, Philippines"}
                 </span>
                 {availableRooms !== null && (
                   <span className="flex items-center gap-1">

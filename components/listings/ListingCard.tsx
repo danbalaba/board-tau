@@ -3,9 +3,9 @@
 import React from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Listing } from "@prisma/client";
-import { Star, MapPin, DoorOpen, Sparkles, CheckCircle, Flame } from "lucide-react";
+import { Star, MapPin, DoorOpen, Sparkles, CheckCircle, Flame, AlertTriangle } from "lucide-react";
 
 import HeartButton from "../favorites/HeartButton";
 import SafeImage from "../common/SafeImage";
@@ -135,7 +135,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
     return 85 + (Math.abs(hash) % 14);
   }, [matchScore, data.id]);
   
-  // Resolve Property Type Icon
+  // Resolve Property Type from Database Relation
   const propType = (data as any).propertyType;
   const PropertyIcon = getDynamicIcon(propType?.icon, Home);
   
@@ -184,6 +184,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
 
   const isCompareMode = pathname === "/favorites";
   const isSelectedForCompare = selectedListingIds.includes(data.id);
+  const [isLimitError, setIsLimitError] = React.useState(false);
 
   const handleCompareClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -192,14 +193,13 @@ const ListingCard: React.FC<ListingCardProps> = ({
       removeListing(data.id);
     } else {
       if (selectedListingIds.length >= 3) {
-        const now = Date.now();
-        if (now - lastToastTime > 3000) {
-          lastToastTime = now;
-          toast.info(
-            { title: "Comparison Updated", description: "The oldest listing was removed to make room for this one." },
-            { id: "compare-update" }
-          );
-        }
+        setIsLimitError(true);
+        setTimeout(() => setIsLimitError(false), 1500);
+        toast.warning(
+          { title: "Comparison Limit Reached", description: "You can compare up to 3 listings at once. Please unselect a listing first." },
+          { id: "compare-limit" }
+        );
+        return;
       }
       addListing(data.id);
     }
@@ -224,23 +224,29 @@ const ListingCard: React.FC<ListingCardProps> = ({
             }
           }}
           className={`flex flex-col gap-0 w-full h-full p-2 md:p-2.5 bg-white dark:bg-slate-800/40 backdrop-blur-sm border rounded-[1.5rem] md:rounded-[2rem] md:group-hover/card:bg-primary/5 md:dark:group-hover/card:bg-slate-800/60 md:group-hover/card:border-primary/30 md:group-hover/card:shadow-2xl md:group-hover/card:shadow-primary/5 transition-all duration-300 ${
-            isHeld 
-              ? 'border-primary/50 shadow-2xl shadow-primary/30 bg-primary/5 dark:bg-slate-800/80 z-40' 
-              : 'border-slate-200 dark:border-slate-700/50'
+            isLimitError
+              ? 'border-rose-500 ring-4 ring-rose-500/40 shadow-xl shadow-rose-500/20 bg-rose-500/5 dark:bg-rose-950/30 z-40'
+              : isHeld 
+                ? 'border-primary/50 shadow-2xl shadow-primary/30 bg-primary/5 dark:bg-slate-800/80 z-40' 
+                : 'border-slate-200 dark:border-slate-700/50'
           }`}
           initial={{ opacity: 0, y: 15 }}
-          animate={isHighlighted ? { 
-            opacity: 1, 
+          animate={isLimitError ? {
+            opacity: 1,
             y: 0,
-            scale: isHeld ? 1.02 : [1, 1.03, 1],
+            scale: 1,
+            x: [-8, 8, -6, 6, -4, 4, -2, 2, 0]
+          } : isHighlighted && !isHeld ? { 
+            scale: [1, 1.015, 1],
             boxShadow: [
-              "0 0 0 rgba(var(--primary), 0)",
-              "0 15px 35px rgba(var(--primary), 0.25)",
-              "0 0 0 rgba(var(--primary), 0)"
+              "0 0 0 0px rgba(16, 185, 129, 0)",
+              "0 0 0 8px rgba(16, 185, 129, 0.4)",
+              "0 0 0 0px rgba(16, 185, 129, 0)"
             ]
           } : { opacity: 1, y: 0, scale: isHeld ? 1.02 : 1 }}
           whileHover={{ y: -8 }}
           transition={{ 
+            x: { duration: 0.45, ease: "easeInOut" },
             opacity: { duration: 0.3 },
             y: { duration: 0.3, type: "spring", stiffness: 300, damping: 20 },
             scale: { 
@@ -259,6 +265,20 @@ const ListingCard: React.FC<ListingCardProps> = ({
         >
           {/* ── Image Container (Screenshot Layout) ── */}
           <div className="relative overflow-hidden rounded-[1.5rem] aspect-[5/4] bg-slate-100 dark:bg-slate-900 shadow-inner group/swiper">
+            {/* Single Centered Limit Error Overlay Banner */}
+            <AnimatePresence>
+              {isLimitError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.9, x: "-50%" }}
+                  animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+                  exit={{ opacity: 0, y: -8, scale: 0.9, x: "-50%" }}
+                  className="absolute top-3 left-1/2 z-50 bg-rose-600/95 backdrop-blur-md text-white font-black text-[11px] uppercase tracking-wider py-1.5 px-3.5 rounded-full shadow-2xl border border-rose-400 flex items-center justify-center gap-1.5 whitespace-nowrap pointer-events-none"
+                >
+                  <AlertTriangle size={14} className="animate-pulse shrink-0 text-amber-300" />
+                  <span>Max 3 Selected!</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
             {allImages.length > 1 ? (
               <Swiper
                 modules={[Navigation, Pagination]}
@@ -325,7 +345,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
             </div>
 
             {/* Top Right Actions */}
-            <div className="absolute top-3 right-3 z-30 flex flex-col gap-2 items-end">
+            <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
               <HeartButton
                 listingId={data.id}
                 hasFavorited={hasFavorited}
@@ -333,43 +353,48 @@ const ListingCard: React.FC<ListingCardProps> = ({
               
               {/* Compare Button */}
               {isCompareMode && (
-                <button 
+                <motion.button 
                   type="button"
                   onClick={handleCompareClick}
-                  className={`p-1.5 rounded-full backdrop-blur-md transition flex items-center justify-center ${
-                    isSelectedForCompare 
-                      ? "bg-primary text-white shadow-lg border border-primary/50" 
-                      : "bg-white/80 dark:bg-slate-800/80 hover:bg-white text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700"
+                  animate={isLimitError ? { x: [-4, 4, -3, 3, -1, 1, 0], scale: [1, 1.15, 1] } : {}}
+                  transition={{ duration: 0.35 }}
+                  className={`p-1.5 rounded-full backdrop-blur-md transition-all flex items-center justify-center ${
+                    isLimitError
+                      ? "bg-rose-500 text-white shadow-lg shadow-rose-500/40 border border-rose-400 ring-4 ring-rose-500/30"
+                      : isSelectedForCompare 
+                        ? "bg-primary text-white shadow-lg border border-primary/50" 
+                        : "bg-white/80 dark:bg-slate-800/80 hover:bg-white text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700"
                   }`}
                   title={isSelectedForCompare ? "Remove from compare" : "Add to compare"}
                 >
                   {isSelectedForCompare ? <CheckSquare size={16} /> : <Square size={16} />}
-                </button>
+                </motion.button>
               )}
             </div>
 
-            {/* Bottom Controls Overlay (Badges + Price) */}
-            <div className="absolute bottom-6 md:bottom-3 left-2 right-2 md:left-3 md:right-3 z-10 flex flex-col md:flex-row md:items-end justify-end md:justify-between gap-1 md:gap-2 pointer-events-none">
-              {/* Left Side: Category Placeholder */}
-              <div className="flex items-center gap-1.5 flex-wrap max-w-[80%] md:max-w-[50%] self-start">
-                {propType?.name && (
-                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-800 dark:text-slate-200 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700/50 shadow-sm flex items-center gap-1.5 pointer-events-auto">
-                    <PropertyIcon size={12} className="text-primary" />
-                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider line-clamp-1">
-                      {propType.name}
-                    </span>
-                  </div>
-                )}
-              </div>
+            {/* Bottom Controls Overlay (Property Type + Price Stacked) */}
+            <div className="absolute bottom-2 md:bottom-3 left-2 right-2 md:left-3 md:right-3 z-10 flex flex-col items-start gap-1 pointer-events-none">
+              {/* Property Type Badge */}
+              {propType?.name && (
+                <div 
+                  title={propType.name}
+                  className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-slate-800 dark:text-slate-200 px-2 py-0.5 md:px-2.5 md:py-1 rounded-md border border-slate-200/80 dark:border-slate-700/60 shadow-sm flex items-center gap-1.5 pointer-events-auto max-w-[95%]"
+                >
+                  <PropertyIcon size={12} className="text-primary shrink-0" />
+                  <span className="text-[9px] md:text-[10px] font-extrabold uppercase tracking-wide truncate">
+                    {propType.name}
+                  </span>
+                </div>
+              )}
 
-              {/* Right Side: Price Pill */}
-              <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-900 dark:text-white px-1.5 py-0.5 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-2xl flex items-center gap-0.5 md:gap-1 font-black text-[9px] md:text-xs shrink-0 pointer-events-auto self-start md:self-auto">
+              {/* Price Pill */}
+              <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-slate-900 dark:text-white px-2 py-0.5 md:px-2.5 md:py-1 rounded-md border border-slate-200/80 dark:border-slate-700/60 shadow-sm flex items-center gap-1 font-black text-[9.5px] md:text-xs pointer-events-auto">
                 {!reservation && !(propType?.isFlatRate) && (
                   <span className="text-[8px] md:text-[9px] text-slate-500 font-bold uppercase tracking-tight">From</span>
                 )}
-                <span className="text-primary">₱</span>
-                <span>{formatPrice(price)}</span>
-                {!reservation && <span className="text-[7px] md:text-[8px] text-slate-500 dark:text-slate-400 font-normal">/mo</span>}
+                <span className="text-primary font-black">₱</span>
+                <span className="font-black">{formatPrice(price)}</span>
+                {!reservation && <span className="text-[7.5px] md:text-[8.5px] text-slate-500 dark:text-slate-400 font-normal">/mo</span>}
               </div>
             </div>
           </div>

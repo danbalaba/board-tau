@@ -26,9 +26,13 @@ jest.mock('@/components/common/HelpTooltip', () => {
 jest.mock('framer-motion', () => {
   const React = require('react');
   return {
+    AnimatePresence: ({ children }: any) => <>{children}</>,
     motion: {
       div: React.forwardRef(({ children, whileHover, ...props }: any, ref: any) => (
         <div ref={ref} {...props}>{children}</div>
+      )),
+      button: React.forwardRef(({ children, whileHover, ...props }: any, ref: any) => (
+        <button ref={ref} {...props}>{children}</button>
       )),
     },
   };
@@ -145,7 +149,11 @@ describe('ListingCard Component', () => {
     
     const compareBtn = screen.getByTitle('Add to compare');
     fireEvent.click(compareBtn);
-    expect(mockToast.info).toHaveBeenCalled();
+    expect(mockToast.warning).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Comparison Limit Reached" }),
+      expect.anything()
+    );
+    expect(mockCompareStore.addListing).not.toHaveBeenCalled();
   });
 
   it('renders ListingSkeleton without crashing', () => {

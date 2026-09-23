@@ -1,6 +1,143 @@
 import React from 'react';
 import * as LucideIcons from 'lucide-react';
-import { Sparkles } from 'lucide-react';
+import {
+  Sparkles,
+  ShieldCheck,
+  Camera,
+  Lock,
+  Zap,
+  AlertTriangle,
+  HeartPulse,
+  Waves,
+  Flame,
+  Bell,
+  Shield,
+  UserCheck,
+  Clock,
+  Users,
+  UserX,
+  PawPrint,
+  CigaretteOff,
+  WineOff,
+  Store,
+  ShoppingBag,
+  Wifi,
+  Wind,
+  Fan,
+  Droplets,
+  WashingMachine,
+  Utensils,
+  Refrigerator,
+  Microwave,
+  Car,
+  Dumbbell,
+  BookOpen,
+  Bed,
+  Trees,
+  Blinds,
+  Tv,
+  Building2,
+  Ban,
+  CheckCircle2,
+  FileText,
+  MapPin,
+  DoorOpen,
+  Star,
+  BadgeCheck,
+  Warehouse,
+  Bike,
+  CircleDot,
+  Sun,
+  Sofa,
+  Droplet,
+  User,
+  Wrench,
+  UtensilsCrossed,
+  ShowerHead,
+  Laptop,
+  Archive,
+  Square,
+  CreditCard,
+  KeyRound,
+  Fingerprint,
+  AlertCircle,
+  Cross,
+  DoorClosed,
+  Home,
+  Hotel,
+  Sprout,
+  Building
+} from 'lucide-react';
+
+// Static Icon Map prevents Turbopack from tree-shaking icons away when dynamically requested
+const STATIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
+  Sparkles,
+  ShieldCheck,
+  Camera,
+  Lock,
+  Zap,
+  AlertTriangle,
+  HeartPulse,
+  Waves,
+  Flame,
+  Bell,
+  Shield,
+  UserCheck,
+  Clock,
+  Users,
+  UserX,
+  PawPrint,
+  CigaretteOff,
+  WineOff,
+  Store,
+  ShoppingBag,
+  Wifi,
+  Wind,
+  Fan,
+  Droplets,
+  WashingMachine,
+  Utensils,
+  Refrigerator,
+  Microwave,
+  Car,
+  Dumbbell,
+  BookOpen,
+  Bed,
+  Trees,
+  Blinds,
+  Tv,
+  Building2,
+  Ban,
+  CheckCircle2,
+  FileText,
+  MapPin,
+  DoorOpen,
+  Star,
+  BadgeCheck,
+  Warehouse,
+  Bike,
+  CircleDot,
+  Sun,
+  Sofa,
+  Droplet,
+  User,
+  Wrench,
+  UtensilsCrossed,
+  ShowerHead,
+  Laptop,
+  Archive,
+  Square,
+  CreditCard,
+  KeyRound,
+  Fingerprint,
+  AlertCircle,
+  Cross,
+  DoorClosed,
+  Home,
+  Hotel,
+  Sprout,
+  Building,
+};
 
 // Common keyword fallback map for attributes, features, rules, and amenities
 const FEATURE_ICON_KEYWORD_MAP: [RegExp, string][] = [
@@ -26,6 +163,9 @@ const FEATURE_ICON_KEYWORD_MAP: [RegExp, string][] = [
   [/alcohol|drinking/i, 'WineOff'],
 
   // Shared Amenities & Comfort
+  [/convenience store|sari-sari|sari sari|store|shop/i, 'Store'],
+  [/carinderia|eatery/i, 'Utensils'],
+  [/water refilling|water tank|water pump|poso/i, 'Droplets'],
   [/wifi|wi-fi|internet/i, 'Wifi'],
   [/aircon|air conditioning|ac\b|cooling/i, 'Wind'],
   [/fan/i, 'Fan'],
@@ -39,10 +179,11 @@ const FEATURE_ICON_KEYWORD_MAP: [RegExp, string][] = [
   [/gym|fitness/i, 'Dumbbell'],
   [/study|desk|table/i, 'BookOpen'],
   [/bed|mattress/i, 'Bed'],
-  [/balcony|terrace/i, 'Square'],
+  [/balcony|veranda|terrace|roof deck|garden/i, 'Trees'],
   [/curtain|blinds/i, 'Blinds'],
   [/tv|television/i, 'Tv'],
   [/elevator|lift/i, 'Building2'],
+  [/caretaker|housekeeping|maintenance/i, 'UserCheck'],
   [/generator|power/i, 'Zap'],
 ];
 
@@ -52,7 +193,7 @@ const FEATURE_ICON_KEYWORD_MAP: [RegExp, string][] = [
  */
 export function getDynamicIcon(iconName?: string | null, fallbackIcon: any = Sparkles): React.ComponentType<any> {
   const fallback = typeof fallbackIcon === 'string'
-    ? (LucideIcons as Record<string, any>)[fallbackIcon] || Sparkles
+    ? (STATIC_ICON_MAP[fallbackIcon] || (LucideIcons as Record<string, any>)[fallbackIcon] || Sparkles)
     : fallbackIcon || Sparkles;
 
   if (!iconName) {
@@ -72,8 +213,11 @@ export function getDynamicIcon(iconName?: string | null, fallbackIcon: any = Spa
   // Helper to test if a key resolves to a valid non-Sparkles Lucide icon
   const getSpecificIcon = (key?: string | null) => {
     if (!key || key === 'Sparkles' || key === 'Sparkle') return null;
+
+    // Check Static Map first (prevents Turbopack tree-shaking missing module factory errors)
+    if (STATIC_ICON_MAP[key]) return STATIC_ICON_MAP[key];
     
-    // Direct lookup
+    // Direct lookup fallback
     const direct = (LucideIcons as Record<string, any>)[key];
     if (direct && typeof direct !== 'string' && direct !== Sparkles) return direct;
 
@@ -81,6 +225,8 @@ export function getDynamicIcon(iconName?: string | null, fallbackIcon: any = Spa
     const pascal = key
       .replace(/(?:^|[\s-_])([a-z0-9])/gi, (_, char) => char.toUpperCase())
       .replace(/[\s-_]/g, '');
+    if (STATIC_ICON_MAP[pascal]) return STATIC_ICON_MAP[pascal];
+
     const pascalComp = (LucideIcons as Record<string, any>)[pascal];
     if (pascalComp && typeof pascalComp !== 'string' && pascalComp !== Sparkles) return pascalComp;
 
@@ -92,6 +238,7 @@ export function getDynamicIcon(iconName?: string | null, fallbackIcon: any = Spa
     if (!text) return null;
     for (const [pattern, lucideKey] of FEATURE_ICON_KEYWORD_MAP) {
       if (pattern.test(text)) {
+        if (STATIC_ICON_MAP[lucideKey]) return STATIC_ICON_MAP[lucideKey];
         const MatchedComp = (LucideIcons as Record<string, any>)[lucideKey];
         if (MatchedComp && typeof MatchedComp !== 'string') {
           return MatchedComp;
@@ -118,4 +265,3 @@ export function getDynamicIcon(iconName?: string | null, fallbackIcon: any = Spa
   // 4. Final fallback
   return fallback;
 }
-

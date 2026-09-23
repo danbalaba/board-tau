@@ -6,6 +6,7 @@ import { Share, Heart, ChevronLeft, MapPin, Star, ShieldCheck, Tag, X, Copy, Mai
 import { LuBadgeCheck } from "react-icons/lu";
 import { FaFacebook, FaTwitter } from "react-icons/fa";
 import HeartButton from "@/components/favorites/HeartButton";
+import { getDynamicIcon } from "@/lib/iconResolver";
 
 interface ListingHeaderProps {
   title: string;
@@ -18,6 +19,7 @@ interface ListingHeaderProps {
   categories?: {
     label: string;
     value: string;
+    icon?: string;
   }[] | null;
 }
 
@@ -163,7 +165,7 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
             )}
 
             {listingCategories && listingCategories.map((cat, idx) => {
-              const CategoryIcon = Tag;
+              const CategoryIcon = getDynamicIcon(cat.icon, Tag);
               return (
                 <motion.div
                   key={idx}

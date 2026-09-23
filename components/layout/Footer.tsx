@@ -31,9 +31,13 @@ const Footer: React.FC = () => {
   const handleReportIssue = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
+      const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
       const feedback = Sentry.getFeedback();
       if (feedback) {
-        const form = await feedback.createForm();
+        const form = await feedback.createForm({
+          colorScheme: isDark ? 'dark' : 'light',
+          showBranding: false,
+        });
         form.appendToDom();
         form.open();
         return;
