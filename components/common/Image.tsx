@@ -10,7 +10,7 @@ const CustomImage = ({
   className,
   priority = false,
   effect,
-  sizes
+  sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 }: {
   imageSrc: string;
   fill?: boolean;
@@ -35,7 +35,7 @@ const CustomImage = ({
       alt={alt}
       onLoad={() => setIsImageLoaded(true)}
       priority={priority}
-      sizes={sizes}
+      sizes={fill ? sizes : undefined}
       unoptimized
     />
   );

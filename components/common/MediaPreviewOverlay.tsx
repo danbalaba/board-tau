@@ -253,7 +253,7 @@ const MediaPreviewOverlay: React.FC<MediaPreviewOverlayProps> = ({
                           <span className="text-[7px] font-black uppercase tracking-tighter text-white/80">PDF</span>
                         </div>
                       ) : (
-                        <SafeImage src={img} alt="" className="w-full h-full object-cover" />
+                        <SafeImage src={img} alt="" sizes="56px" className="w-full h-full object-cover" />
                       )}
                     </button>
                   );
