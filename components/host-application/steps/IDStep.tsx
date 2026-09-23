@@ -3,7 +3,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaIdCard, FaCamera, FaImage, FaTimes, FaCheckCircle, FaShieldAlt } from "react-icons/fa";
-import { Loader2, AlertCircle, Info, ChevronLeft, X, Check, User, ShieldCheck, CreditCard } from "lucide-react";
+import { Loader2, AlertCircle, Info, ChevronLeft, X, Check, User, ShieldCheck, CreditCard, RotateCcw } from "lucide-react";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import SafeImage from "@/components/common/SafeImage";
 import { cn } from "@/utils/helper";
@@ -308,10 +308,16 @@ const IDStep: React.FC<IDStepProps> = ({
               <button
                 type="button"
                 disabled={isProcessing}
-                onClick={cancelUpload}
-                className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-40 transition-all cursor-pointer"
+                onClick={() => {
+                  if (selfieRetakeNeeded && handleRetakeSelfie) {
+                    handleRetakeSelfie();
+                  } else {
+                    cancelUpload();
+                  }
+                }}
+                className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
-                ↩ Retake
+                <RotateCcw size={14} /> {selfieRetakeNeeded ? "Retake Selfie" : "Retake"}
               </button>
               <button
                 type="button"

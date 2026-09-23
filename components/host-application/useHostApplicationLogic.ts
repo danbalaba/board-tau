@@ -604,8 +604,10 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
 
   const handleRetakeSelfie = () => {
     setCapturedSelfie(null);
+    setCapturedID(null);
     setSelfieRetakeNeeded(false);
     setStep(6);
+    setMobileStep(14);
   };
 
   const nextStep = async () => {

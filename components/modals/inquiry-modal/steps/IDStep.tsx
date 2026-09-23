@@ -273,10 +273,16 @@ const IDStep: React.FC<IDStepProps> = ({
               <button
                 type="button"
                 disabled={isProcessing}
-                onClick={cancelUpload}
-                className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-gray-300 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-40 transition-all flex items-center justify-center gap-1.5"
+                onClick={() => {
+                  if (selfieRetakeNeeded && handleRetakeSelfie) {
+                    handleRetakeSelfie();
+                  } else {
+                    cancelUpload();
+                  }
+                }}
+                className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-gray-300 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-40 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <RotateCcw size={14} /> Retake
+                <RotateCcw size={14} /> {selfieRetakeNeeded ? "Retake Selfie" : "Retake"}
               </button>
               <button
                 type="button"

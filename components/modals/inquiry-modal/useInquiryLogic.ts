@@ -358,6 +358,7 @@ export const useInquiryLogic = (
 
   const handleRetakeSelfie = () => {
     setCapturedSelfie(null);
+    setCapturedID(null);
     setSelfieRetakeNeeded(false);
     setCurrentStep(5);
   };
