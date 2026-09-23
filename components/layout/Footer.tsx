@@ -164,13 +164,29 @@ const Footer: React.FC = () => {
                 </h3>
                 <ul className="space-y-3">
                   <li>
-                    <Link
-                      href="/become-a-host"
-                      prefetch={false}
-                      className="text-sm hover:underline text-gray-600 dark:text-slate-400 hover:text-black dark:hover:text-white"
-                    >
-                      Become a Host
-                    </Link>
+                    {currentUser ? (
+                      <Link
+                        href="/become-a-host"
+                        prefetch={false}
+                        className="text-sm hover:underline text-gray-600 dark:text-slate-400 hover:text-black dark:hover:text-white"
+                      >
+                        Become a Host
+                      </Link>
+                    ) : (
+                      <Modal>
+                        <Modal.Trigger name="Login">
+                          <button
+                            type="button"
+                            className="text-sm hover:underline text-gray-600 dark:text-slate-400 hover:text-black dark:hover:text-white cursor-pointer text-left bg-transparent border-none p-0 font-normal"
+                          >
+                            Become a Host
+                          </button>
+                        </Modal.Trigger>
+                        <Modal.Window name="Login" size="sm" closeOnOutsideClick={false}>
+                          <AuthModal name="Login" />
+                        </Modal.Window>
+                      </Modal>
+                    )}
                   </li>
                   <li>
                     <Link

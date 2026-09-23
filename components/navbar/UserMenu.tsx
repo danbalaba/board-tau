@@ -28,7 +28,8 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
-  const hasCallbackUrl = !user && !!callbackUrl;
+  const loginParam = searchParams.get("login");
+  const hasCallbackUrl = !user && (!!callbackUrl || loginParam === "true");
   const [isPending, startTransition] = useTransition();
   const { startLoading } = useLoading();
   const { onOpen } = useMenuPanel();

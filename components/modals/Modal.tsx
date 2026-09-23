@@ -198,6 +198,12 @@ const Modal: FC<ModalProps> & {
   // Existing context-based API
   const [openName, setOpenName] = useState(initialOpen);
 
+  useEffect(() => {
+    if (initialOpen) {
+      setOpenName(initialOpen);
+    }
+  }, [initialOpen]);
+
   const close = useCallback(() => {
     setOpenName("");
   }, []);
