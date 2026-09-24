@@ -119,6 +119,26 @@ const IDStep: React.FC<IDStepProps> = ({
         </div>
       </div>
 
+      {/* Top-Level Selfie Retake Banner */}
+      {selfieRetakeNeeded && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between p-3.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-sm shadow-sm"
+        >
+          <div className="flex items-center gap-2.5 text-red-600 dark:text-red-400 font-semibold text-xs sm:text-sm">
+            <AlertCircle size={18} className="shrink-0 text-red-500" />
+            <span>Your live selfie was too blurry to verify.</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleRetakeSelfie}
+            className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+          >
+            Retake Selfie
+          </button>
+        </motion.div>
+      )}
+
       <AnimatePresence mode="wait">
         {/* ─── STATE 1: Captured & Verified ─── */}
         {capturedID ? (

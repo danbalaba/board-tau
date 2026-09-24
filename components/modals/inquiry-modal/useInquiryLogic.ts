@@ -328,6 +328,8 @@ export const useInquiryLogic = (
 
       if (!selfieDescriptor) {
         setSelfieRetakeNeeded(true);
+        setCapturedSelfie(null);
+        setCapturedID(null);
         responsiveToast.error("Could not verify your live selfie. Please retake it.");
         return;
       }
@@ -462,6 +464,10 @@ export const useInquiryLogic = (
   };
 
   const handlePrevStep = () => {
+    if (currentStep === 6 && selfieRetakeNeeded) {
+      handleRetakeSelfie();
+      return;
+    }
     setDirection(-1);
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };

@@ -575,6 +575,8 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
 
       if (!selfieDescriptor) {
         setSelfieRetakeNeeded(true);
+        setCapturedSelfie(null);
+        setCapturedID(null);
         toast.error("Could not verify your live selfie. Please retake it.");
         return;
       }
@@ -699,6 +701,10 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
   };
 
   const prevStep = () => {
+    if (step === 7 && selfieRetakeNeeded) {
+      handleRetakeSelfie();
+      return;
+    }
     setIsLoadingStep(true);
     setDirection(-1);
     setTimeout(() => {

@@ -34,7 +34,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
     return () => clearTimeout(timer);
   }, [pathname]);
 
-  if (isErrorPage || isBecomeAHost) return null;
+  if (isErrorPage || isBecomeAHost || isMessages) return null;
 
   const isHidden = !isMessages && scrollDirection === "down";
 
