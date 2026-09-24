@@ -202,13 +202,13 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2.5 mt-auto pt-1">
+        <div className="flex items-center gap-2 mt-auto pt-1 w-full">
           <button
             onClick={onViewDetails}
-            className="flex-1 py-2.5 px-3 font-bold text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all shadow-sm"
+            className="flex-1 py-2.5 px-2.5 sm:px-3 font-bold text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all shadow-sm min-w-0"
           >
-            <Eye size={14} className="text-primary" />
-            <span>Details</span>
+            <Eye size={14} className="text-primary shrink-0" />
+            <span className="truncate">Details</span>
           </button>
 
           {inquiry.status === "APPROVED" ? (
@@ -217,10 +217,10 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
                 e.stopPropagation();
                 router.push("/reservations");
               }}
-              className="flex-[1.4] py-2.5 px-3 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md bg-primary text-white hover:bg-primary-dark flex items-center justify-center gap-1.5"
+              className="flex-[1.4] py-2.5 px-2.5 sm:px-3 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md bg-primary text-white hover:bg-primary-dark flex items-center justify-center gap-1.5 min-w-0"
             >
-              <ArrowRight size={14} />
-              <span>View Reservation</span>
+              <ArrowRight size={14} className="shrink-0" />
+              <span className="truncate">View Reservation</span>
             </button>
           ) : onCancel && (
             <button
@@ -228,10 +228,10 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
                 e.stopPropagation();
                 onCancel();
               }}
-              className="flex-1 py-2.5 px-3 font-bold text-xs rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 flex items-center justify-center gap-1.5 transition-all shadow-sm"
+              className="flex-1 py-2.5 px-2.5 sm:px-3 font-bold text-xs rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 flex items-center justify-center gap-1.5 transition-all shadow-sm min-w-0"
             >
-              <Trash2 size={14} />
-              <span>Cancel</span>
+              <Trash2 size={14} className="shrink-0" />
+              <span className="truncate">Cancel</span>
             </button>
           )}
         </div>

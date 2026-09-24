@@ -241,14 +241,52 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
                     </span>
                 </div>
 
-                <div className="flex flex-wrap sm:flex-nowrap gap-2.5 mt-auto">
+                <div className="flex items-center gap-2 mt-auto w-full">
                     <button
                         onClick={onViewDetails}
-                        className="flex-1 py-2.5 px-3 font-bold text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                        className="flex-1 py-2.5 px-2.5 sm:px-3 font-bold text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all shadow-sm min-w-0"
                     >
-                        <Eye size={14} className="text-primary" />
-                        <span>Details</span>
+                        <Eye size={14} className="text-primary shrink-0" />
+                        <span className="truncate">Details</span>
                     </button>
+
+                    {canPay && onPayNow && (
+                        <button
+                            onClick={onPayNow}
+                            className="flex-1 py-2.5 px-2.5 sm:px-3 font-black text-xs uppercase tracking-wider text-white bg-primary rounded-xl hover:bg-primary-dark shadow-md transition-all flex justify-center items-center gap-1.5 min-w-0"
+                        >
+                            <Check size={14} className="shrink-0" /> <span className="truncate">Pay Now</span>
+                        </button>
+                    )}
+
+                    {reservation.status === "COMPLETED" && (
+                        reservation.hasReview ? (
+                            <div className="flex-1 py-2.5 px-2.5 sm:px-3 font-bold text-xs text-primary bg-primary/10 rounded-xl border border-primary/20 flex justify-center items-center gap-1.5 min-w-0">
+                                <Check size={14} className="shrink-0" />
+                                <span className="truncate">Rated</span>
+                            </div>
+                        ) : (
+                            onReview && (
+                                <button
+                                    onClick={onReview}
+                                    className="flex-1 py-2.5 px-2.5 sm:px-3 font-bold text-xs text-white bg-purple-600 rounded-xl hover:bg-purple-700 shadow-md transition-all flex justify-center items-center gap-1.5 min-w-0"
+                                >
+                                    <Star size={14} className="fill-white shrink-0" />
+                                    <span className="truncate">Rate</span>
+                                </button>
+                            )
+                        )
+                    )}
+
+                    {!canPay && reservation.status !== "COMPLETED" && canCancel && onCancel && (
+                        <button
+                            onClick={onCancel}
+                            className="flex-1 py-2.5 px-2.5 sm:px-3 font-bold text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 dark:text-rose-400 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors flex justify-center items-center gap-1.5 border border-rose-200 dark:border-rose-900/30 min-w-0"
+                        >
+                            <X size={14} className="shrink-0" />
+                            <span className="truncate">Cancel</span>
+                        </button>
+                    )}
 
                     {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
                         <button
@@ -262,44 +300,6 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
                             className="w-10 h-10 shrink-0 font-bold text-xs text-primary bg-primary/10 rounded-xl hover:bg-primary/20 border border-primary/20 transition-all flex justify-center items-center"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                        </button>
-                    )}
-
-                    {canPay && onPayNow && (
-                        <button
-                            onClick={onPayNow}
-                            className="w-full sm:w-auto sm:flex-[1.4] py-2.5 px-3 font-black text-xs uppercase tracking-wider text-white bg-primary rounded-xl hover:bg-primary-dark shadow-md transition-all flex justify-center items-center gap-1.5"
-                        >
-                            <Check size={14} /> <span>Pay Now</span>
-                        </button>
-                    )}
-
-                    {reservation.status === "COMPLETED" && (
-                        reservation.hasReview ? (
-                            <div className="w-full sm:w-auto sm:flex-[1.4] py-2.5 px-3 font-bold text-xs text-primary bg-primary/10 rounded-xl border border-primary/20 flex justify-center items-center gap-1.5">
-                                <Check size={14} />
-                                <span>Rated</span>
-                            </div>
-                        ) : (
-                            onReview && (
-                                <button
-                                    onClick={onReview}
-                                    className="w-full sm:w-auto sm:flex-[1.4] py-2.5 px-3 font-bold text-xs text-white bg-purple-600 rounded-xl hover:bg-purple-700 shadow-md transition-all flex justify-center items-center gap-1.5"
-                                >
-                                    <Star size={14} className="fill-white" />
-                                    <span>Rate</span>
-                                </button>
-                            )
-                        )
-                    )}
-
-                    {!canPay && reservation.status !== "COMPLETED" && canCancel && onCancel && (
-                        <button
-                            onClick={onCancel}
-                            className="w-full sm:w-auto sm:flex-1 py-2.5 px-3 font-bold text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 dark:text-rose-400 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors flex justify-center items-center gap-1.5 border border-rose-200 dark:border-rose-900/30"
-                        >
-                            <X size={14} />
-                            <span>Cancel</span>
                         </button>
                     )}
                 </div>

@@ -516,69 +516,11 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
           </div>
 
           {/* Clean Action Footer */}
-          <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 shrink-0 shadow-lg">
-            <button
-              className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors text-center"
-              onClick={onClose}
-            >
-              Close
-            </button>
+          <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 shadow-lg">
             
-            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-2.5 w-full sm:w-auto">
-              <button
-                className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl transition-all flex items-center justify-center gap-2"
-                onClick={() => router.push(`/messages?listingId=${inquiry.listingId}&otherUserId=${landlordId}`)}
-              >
-                <Mail size={14} />
-                <span>Chat with Host</span>
-              </button>
-
-              <button
-                className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-xl transition-all flex items-center justify-center gap-2"
-                onClick={async () => {
-                  const toastId = responsiveToast.loading("Preparing lease contract...");
-                  try {
-                    const res = await fetch(`/api/contracts/generate?listingId=${inquiry.listingId}&userId=${inquiry.userId}&roomId=${inquiry.roomId}`);
-                    if (!res.ok) throw new Error("Failed to fetch contract data");
-                    const data = await res.json();
-                    if ((data.contractMode === 'CUSTOM_PDF' || data.customPdfUrl) && data.customPdfUrl) {
-                      const success = await previewPdfBlob(data.customPdfUrl, "Custom Lease Contract Preview");
-                      if (success) {
-                        responsiveToast.success("Custom lease contract loaded!", { id: toastId });
-                        return;
-                      }
-                    }
-                    await generateLeaseContractPDF(`Lease_Contract_${inquiry.listingId}`, data);
-                    responsiveToast.success("Lease contract downloaded!", { id: toastId });
-                  } catch (e) {
-                    responsiveToast.error("Could not generate lease contract.", { id: toastId });
-                  }
-                }}
-              >
-                <FileText size={14} />
-                <span>Lease Contract</span>
-              </button>
-
-              {onCancel && inquiry.status === "PENDING" && (
-                <button
-                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 rounded-xl transition-all flex items-center justify-center gap-2"
-                  onClick={onCancel}
-                >
-                  <Trash2 size={14} />
-                  <span>Cancel Request</span>
-                </button>
-              )}
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-2.5 w-full sm:w-auto order-1 sm:order-2">
               
-              {inquiry.status === "REJECTED" && (
-                <button
-                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0"
-                  onClick={() => router.push(`/listings/${inquiry.listingId}?room=${inquiry.roomId}&autoInquire=true`)}
-                >
-                  <Home size={14} />
-                  <span>Apply Again</span>
-                </button>
-              )}
-              
+              {/* Primary Actions (View Reservation if Approved, Apply Again if Rejected) */}
               {inquiry.status === "APPROVED" && (
                 <button
                   className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0"
@@ -588,7 +530,73 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                   <span>View Reservation</span>
                 </button>
               )}
+
+              {inquiry.status === "REJECTED" && (
+                <button
+                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0"
+                  onClick={() => router.push(`/listings/${inquiry.listingId}?room=${inquiry.roomId}&autoInquire=true`)}
+                >
+                  <Home size={14} />
+                  <span>Apply Again</span>
+                </button>
+              )}
+
+              {/* Communication & Documents Pair: Chat with Host & Lease Contract (2-Column Grid on Mobile) */}
+              <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:flex-row sm:gap-2.5">
+                <button
+                  className="w-full sm:w-auto px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 truncate"
+                  onClick={() => router.push(`/messages?listingId=${inquiry.listingId}&otherUserId=${landlordId}`)}
+                >
+                  <Mail size={14} className="shrink-0" />
+                  <span className="truncate">Chat with Host</span>
+                </button>
+
+                <button
+                  className="w-full sm:w-auto px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 truncate"
+                  onClick={async () => {
+                    const toastId = responsiveToast.loading("Preparing lease contract...");
+                    try {
+                      const res = await fetch(`/api/contracts/generate?listingId=${inquiry.listingId}&userId=${inquiry.userId}&roomId=${inquiry.roomId}`);
+                      if (!res.ok) throw new Error("Failed to fetch contract data");
+                      const data = await res.json();
+                      if ((data.contractMode === 'CUSTOM_PDF' || data.customPdfUrl) && data.customPdfUrl) {
+                        const success = await previewPdfBlob(data.customPdfUrl, "Custom Lease Contract Preview");
+                        if (success) {
+                          responsiveToast.success("Custom lease contract loaded!", { id: toastId });
+                          return;
+                        }
+                      }
+                      await generateLeaseContractPDF(`Lease_Contract_${inquiry.listingId}`, data);
+                      responsiveToast.success("Lease contract downloaded!", { id: toastId });
+                    } catch (e) {
+                      responsiveToast.error("Could not generate lease contract.", { id: toastId });
+                    }
+                  }}
+                >
+                  <FileText size={14} className="shrink-0" />
+                  <span className="truncate">Lease Contract</span>
+                </button>
+              </div>
+
+              {/* Cancel Request (if Pending) */}
+              {onCancel && inquiry.status === "PENDING" && (
+                <button
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 rounded-xl transition-all flex items-center justify-center gap-2"
+                  onClick={onCancel}
+                >
+                  <Trash2 size={14} />
+                  <span>Cancel Request</span>
+                </button>
+              )}
+
             </div>
+
+            <button
+              className="w-full sm:w-auto px-5 py-2 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors text-center order-2 sm:order-1"
+              onClick={onClose}
+            >
+              Close
+            </button>
           </div>
 
         </div>
