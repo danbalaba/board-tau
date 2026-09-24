@@ -162,24 +162,24 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       title="Edit My Account"
       closeOnOutsideClick={false}
       hasFixedFooter={true}
+      fullOnMobile={true}
     >
       <motion.div 
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="flex flex-col h-[90vh] md:h-[80vh] p-3 md:p-6 overflow-hidden"
+        className="flex flex-col h-full sm:h-[80vh] max-h-[calc(100dvh-60px)] sm:max-h-none p-3 sm:p-6 overflow-hidden"
       >
         {/* Profile Badge Header */}
-        <div className="flex flex-col items-center justify-center mb-8 pt-2">
-          <div className="w-20 h-20 bg-primary/10 dark:bg-primary/20 rounded-[2rem] flex items-center justify-center mb-4 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <User className="w-10 h-10 text-primary" />
+        <div className="flex flex-row items-center gap-3.5 mb-3 sm:mb-6 pt-1 shrink-0 px-1">
+          <div className="w-11 h-11 sm:w-16 sm:h-16 bg-primary/10 dark:bg-primary/20 rounded-2xl flex items-center justify-center shrink-0">
+            <User className="w-5 h-5 sm:w-8 sm:h-8 text-primary" />
           </div>
-          <div className="text-center">
-            <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.2em] mb-1">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               Account Management
             </p>
-            <h4 className="text-xs font-medium text-gray-400 dark:text-gray-500 px-6 leading-relaxed">
+            <h4 className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-gray-500 leading-snug line-clamp-2">
               Update your public presence and contact details for the BoardTAU community.
             </h4>
           </div>
@@ -187,7 +187,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Scrollable fields area */}
-          <div className="flex-1 space-y-5 md:space-y-6 bg-gray-50/30 dark:bg-white/[0.02] backdrop-blur-md px-3 md:px-6 pt-4 md:pt-6 pb-4 md:pb-6 rounded-3xl md:rounded-[2rem] border border-gray-100/50 dark:border-white/[0.05] shadow-inner overflow-y-auto custom-scrollbar min-h-0 mb-3 md:mb-4">
+          <div className="flex-1 space-y-4 sm:space-y-6 bg-gray-50/30 dark:bg-white/[0.02] backdrop-blur-md px-3 sm:px-6 pt-4 sm:pt-6 pb-4 sm:pb-6 rounded-2xl sm:rounded-[2rem] border border-gray-100/50 dark:border-white/[0.05] shadow-inner overflow-y-auto custom-scrollbar min-h-0 mb-3 sm:mb-4">
             {/* Full Name */}
             <motion.div variants={itemVariants} className="relative group">
               <ModalInput
@@ -204,16 +204,16 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
             {/* Verification Details */}
             <motion.div variants={itemVariants} className="space-y-2 px-1">
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-gray-300 uppercase tracking-widest mb-2">
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-gray-300 uppercase tracking-widest mb-1.5">
                 Verification Details
               </label>
-              <div className="flex items-center justify-between px-4 py-4 bg-gray-100/50 dark:bg-gray-800/80 rounded-2xl border border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed group transition-all">
-                <div className="flex items-center gap-3">
-                  <Mail size={18} className="text-gray-400" />
-                  <span className="text-sm font-medium text-gray-900 dark:text-white tracking-tight">{profile.email}</span>
+              <div className="flex items-center justify-between px-3.5 py-3 sm:py-4 bg-gray-100/50 dark:bg-gray-800/80 rounded-2xl border border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed group transition-all">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Mail size={16} className="text-gray-400 shrink-0" />
+                  <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white tracking-tight truncate">{profile.email}</span>
                 </div>
                 {profile.emailVerified && (
-                  <div className="flex items-center gap-1.5 bg-green-500/10 px-2.5 py-1.5 rounded-xl border border-green-500/20">
+                  <div className="flex items-center gap-1.5 bg-green-500/10 px-2.5 py-1 rounded-xl border border-green-500/20 shrink-0">
                     <CheckCircle className="w-3.5 h-3.5 text-green-500" />
                     <span className="text-[10px] font-black text-green-600 dark:text-green-400 uppercase">OFFICIAL</span>
                   </div>
@@ -236,7 +236,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             </motion.div>
 
             {/* City & Region Row */}
-            <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4 relative group">
+            <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 relative group">
               <ModalInput
                 id="city"
                 label="City"
@@ -260,8 +260,8 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             </motion.div>
 
             {/* Home Address Search */}
-            <motion.div variants={itemVariants} className="flex items-end gap-3">
-              <div className="flex-1">
+            <motion.div variants={itemVariants} className="flex items-end gap-2.5 sm:gap-3">
+              <div className="flex-1 min-w-0">
                 <ModalInput
                   id="address"
                   label="Home Address"
@@ -277,7 +277,8 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 type="button"
                 onClick={handleAddressSearch}
                 disabled={isSearching}
-                className="h-[52px] px-4 bg-primary text-white rounded-2xl hover:bg-primary/90 transition-all flex items-center justify-center shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 mb-[2px]"
+                className="h-[52px] w-[52px] shrink-0 bg-primary text-white rounded-2xl hover:bg-primary/90 transition-all flex items-center justify-center shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 mb-[2px]"
+                title="Search location"
               >
                 {isSearching ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" /> : <Search size={18} />}
               </button>
@@ -295,7 +296,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   <span>Search to Update Map</span>
                 </div>
               </div>
-              <div className="h-[180px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-inner relative">
+              <div className="h-[140px] sm:h-[180px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-inner relative">
                 <Map
                   center={mapCenter}
                   readonly={false}
@@ -322,7 +323,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 errors={errors as any}
                 watch={watch as any}
                 placeholder="Tell us a bit about yourself..."
-                rows={4}
+                rows={3}
                 required={false}
                 className="w-full text-sm font-medium rounded-2xl bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 focus:border-primary transition-all duration-300"
               />
@@ -330,21 +331,21 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
           </div>
           
           {/* Sticky Action Buttons */}
-          <div className="flex-shrink-0 flex gap-4 pt-4 border-t border-gray-100/50 dark:border-white/[0.05]">
+          <div className="shrink-0 flex gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 pb-2 sm:pb-0">
             <Button
               type="button"
               variant="secondary"
               outline={true}
               onClick={handleCancel}
               disabled={isLoading}
-              className="flex-1 h-14 rounded-2xl font-bold border-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all text-sm uppercase tracking-wider"
+              className="flex-1 h-12 sm:h-14 rounded-2xl font-bold border-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all text-xs sm:text-sm uppercase tracking-wider"
             >
               Back
             </Button>
             <Button
               type="submit"
               disabled={isLoading}
-              className="flex-1 h-14 rounded-2xl font-bold shadow-2xl shadow-primary/25 bg-primary dark:bg-gradient-to-r dark:from-primary dark:to-primary/90 text-white hover:scale-[1.02] active:scale-[0.98] transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2"
+              className="flex-1 h-12 sm:h-14 rounded-2xl font-bold shadow-xl shadow-primary/25 bg-primary dark:bg-gradient-to-r dark:from-primary dark:to-primary/90 text-white hover:scale-[1.01] active:scale-[0.98] transition-all text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2"
               isLoading={isLoading}
             >
               Save Changes
