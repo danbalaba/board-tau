@@ -22,39 +22,33 @@ export function LandlordBookingStatusBadge({ status, className }: StatusBadgePro
       case 'pending_payment':
         return {
           label: 'Awaiting Payment',
-          classes: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-          icon: <IconClock size={14} />
+          classes: 'bg-amber-500/90 text-white border-amber-400/40',
         };
       case 'confirmed':
       case 'reserved':
         return {
           label: 'Securely Reserved',
-          classes: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-          icon: <IconCircleCheck size={14} />
+          classes: 'bg-emerald-500/90 text-white border-emerald-400/40',
         };
       case 'checked_in':
         return {
           label: 'Currently In-house',
-          classes: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-          icon: <IconPlayerPlay size={14} fill="currentColor" />
+          classes: 'bg-blue-500/90 text-white border-blue-400/40',
         };
       case 'completed':
         return {
           label: 'Stay Completed',
-          classes: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
-          icon: <IconHomeCheck size={14} />
+          classes: 'bg-purple-500/90 text-white border-purple-400/40',
         };
       case 'cancelled':
         return {
           label: 'Stay Revoked',
-          classes: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
-          icon: <IconCircleX size={14} />
+          classes: 'bg-rose-500/90 text-white border-rose-400/40',
         };
       default:
         return {
-          label: status,
-          classes: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200',
-          icon: null
+          label: status.replace('_', ' '),
+          classes: 'bg-gray-800/90 text-white border-gray-700/40',
         };
     }
   };
@@ -62,13 +56,13 @@ export function LandlordBookingStatusBadge({ status, className }: StatusBadgePro
   const config = getStatusConfig(status);
 
   return (
-    <div className={cn(
-      "flex items-center gap-2 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] border shadow-sm backdrop-blur-md",
+    <span className={cn(
+      "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider shadow-lg backdrop-blur-md border",
       config.classes,
       className
     )}>
-      {config.icon}
+      <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
       {config.label}
-    </div>
+    </span>
   );
 }

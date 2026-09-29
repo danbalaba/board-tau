@@ -70,10 +70,10 @@ export function LandlordPropertyCard({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 sm:p-6 rounded-[22px] sm:rounded-3xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col h-full"
+        className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-2.5 sm:p-6 rounded-2xl sm:rounded-3xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col h-full"
       >
         {/* Top Image Section */}
-        <div className="relative h-40 sm:h-48 w-full rounded-[16px] sm:rounded-2xl overflow-hidden mb-4 sm:mb-6 bg-gray-100 dark:bg-gray-800 z-10 flex-shrink-0">
+        <div className="relative h-28 sm:h-48 w-full rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 sm:mb-6 bg-gray-100 dark:bg-gray-800 z-10 flex-shrink-0">
           {property.imageSrc ? (
             <SafeImage 
               src={property.imageSrc} 
@@ -82,13 +82,13 @@ export function LandlordPropertyCard({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300">
-              <Building2 size={32} strokeWidth={1.5} />
+              <Building2 size={24} className="sm:w-8 sm:h-8" strokeWidth={1.5} />
             </div>
           )}
           
-          <div className="absolute top-3 left-3 z-20">
+          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-20 scale-90 sm:scale-100 origin-top-left">
             <span className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] uppercase font-black tracking-wider shadow-lg backdrop-blur-md border", 
+              "flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl text-[8px] sm:text-[9px] uppercase font-black tracking-wider shadow-lg backdrop-blur-md border", 
               property.status === 'PENDING'
                 ? "bg-amber-500/90 text-white border-amber-400/50 shadow-amber-500/20"
                 : property.status === 'REJECTED'
@@ -108,51 +108,51 @@ export function LandlordPropertyCard({
 
         {/* Content Section */}
         <div className="flex-1 flex flex-col z-10">
-          <div className="mb-3 sm:mb-4">
-             <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <div className="mb-2 sm:mb-4">
+             <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 flex-wrap">
                {property.status === 'ACTIVE' ? (
-                 <span className="text-[8px] font-black text-primary bg-primary/10 dark:bg-primary/20 px-2 py-0.5 rounded-lg border border-primary/20 uppercase tracking-widest flex items-center gap-1">
-                   <Sparkles size={10} /> Verified Listing
+                 <span className="text-[7px] sm:text-[8px] font-black text-primary bg-primary/10 dark:bg-primary/20 px-1.5 sm:px-2 py-0.5 rounded-md sm:rounded-lg border border-primary/20 uppercase tracking-widest flex items-center gap-1">
+                   <Sparkles size={10} /> Verified
                  </span>
                ) : property.status === 'PENDING' ? (
-                 <span className="text-[8px] font-black text-amber-600 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-100 dark:border-amber-500/20 uppercase tracking-widest flex items-center gap-1">
-                   <Building2 size={10} /> Pending Verification
+                 <span className="text-[7px] sm:text-[8px] font-black text-amber-600 bg-amber-50 dark:bg-amber-500/10 px-1.5 sm:px-2 py-0.5 rounded-md sm:rounded-lg border border-amber-100 dark:border-amber-500/20 uppercase tracking-widest flex items-center gap-1">
+                   <Building2 size={10} /> Pending
                  </span>
                ) : (
-                 <span className="text-[8px] font-black text-rose-600 bg-rose-50 dark:bg-rose-500/10 px-2 py-0.5 rounded-lg border border-rose-100 dark:border-rose-500/20 uppercase tracking-widest flex items-center gap-1">
-                   Needs Revision
+                 <span className="text-[7px] sm:text-[8px] font-black text-rose-600 bg-rose-50 dark:bg-rose-500/10 px-1.5 sm:px-2 py-0.5 rounded-md sm:rounded-lg border border-rose-100 dark:border-rose-500/20 uppercase tracking-widest flex items-center gap-1">
+                   Revision
                  </span>
                )}
 
-               <div className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest">
-                 <MapPin size={10} className="text-gray-300 dark:text-gray-600" />
-                 {(property as any).address || (property as any).city || property.region || 'Camiling, Tarlac'}
+               <div className="flex items-center gap-1 text-[8px] sm:text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest truncate">
+                 <MapPin size={9} className="text-gray-300 dark:text-gray-600 shrink-0" />
+                 <span className="truncate">{(property as any).address || (property as any).city || property.region || 'Camiling, Tarlac'}</span>
                </div>
              </div>
-              <h3 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white leading-tight group-hover:text-primary transition-colors line-clamp-1 tracking-tight mb-2.5 sm:mb-4">
+              <h3 className="text-xs sm:text-xl font-black text-gray-900 dark:text-white leading-tight group-hover:text-primary transition-colors line-clamp-1 tracking-tight mb-1.5 sm:mb-4">
                 {formatCleanTitle(property.title)}
               </h3>
           </div>
 
-          {/* Stats Box - Mirrored from Inquiry Card style with Tenant-side terminology */}
+          {/* Stats Box */}
           {(() => {
             const totalAvailable = property.rooms?.reduce((acc: number, r: any) => acc + (r.availableSlots || 0), 0) || 0;
             return (
-              <div className="flex items-center gap-2.5 sm:gap-3 mb-4 sm:mb-5 bg-gray-50 dark:bg-gray-800/50 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-800">
-                <div className="flex-1 flex items-center gap-2.5 sm:gap-3 border-r border-gray-200 dark:border-gray-700 pr-2.5 sm:pr-3">
-                   <div className="p-1.5 bg-blue-100/50 dark:bg-blue-500/20 rounded-lg text-blue-600"><Building2 size={14} /></div>
-                   <div>
-                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Units</p>
-                      <p className="text-xs font-black text-gray-900 dark:text-white leading-none">{property.rooms?.length || property.roomCount || 1}</p>
+              <div className="flex items-center gap-1.5 sm:gap-3 mb-2.5 sm:mb-5 bg-gray-50 dark:bg-gray-800/50 p-1.5 sm:p-3 rounded-lg sm:rounded-2xl border border-gray-100 dark:border-gray-800">
+                <div className="flex-1 flex items-center gap-1 sm:gap-3 border-r border-gray-200 dark:border-gray-700 pr-1 sm:pr-3">
+                   <div className="p-1 sm:p-1.5 bg-blue-100/50 dark:bg-blue-500/20 rounded-md sm:rounded-lg text-blue-600 shrink-0"><Building2 size={12} className="sm:w-3.5 sm:h-3.5" /></div>
+                   <div className="min-w-0">
+                      <p className="text-[7px] sm:text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5 sm:mb-1">Units</p>
+                      <p className="text-[10px] sm:text-xs font-black text-gray-900 dark:text-white leading-none">{property.rooms?.length || property.roomCount || 1}</p>
                    </div>
                 </div>
-                <div className="flex-1 flex items-center gap-2.5 sm:gap-3">
-                   <div className="p-1.5 bg-primary/10 dark:bg-primary/20 rounded-lg text-primary">
-                      <Sparkles size={14} />
+                <div className="flex-1 flex items-center gap-1 sm:gap-3 min-w-0">
+                   <div className="p-1 sm:p-1.5 bg-primary/10 dark:bg-primary/20 rounded-md sm:rounded-lg text-primary shrink-0">
+                      <Sparkles size={12} className="sm:w-3.5 sm:h-3.5" />
                    </div>
-                   <div>
-                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Avail.</p>
-                      <p className="text-xs font-black text-gray-900 dark:text-white leading-none">{totalAvailable} Slots</p>
+                   <div className="min-w-0">
+                      <p className="text-[7px] sm:text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5 sm:mb-1">Avail.</p>
+                      <p className="text-[10px] sm:text-xs font-black text-gray-900 dark:text-white leading-none truncate">{totalAvailable} Slots</p>
                    </div>
                 </div>
               </div>
@@ -160,33 +160,30 @@ export function LandlordPropertyCard({
           })()}
 
           {/* Price Row */}
-          <div className="flex items-center justify-between mb-4 sm:mb-6 px-1">
+          <div className="flex items-center justify-between mb-2.5 sm:mb-6 px-0.5">
              <div>
-               <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Rent Starts At</p>
-               <div className="flex items-baseline gap-1">
-                 <span className="text-base sm:text-lg font-black text-primary tracking-tighter leading-none">₱{property.price.toLocaleString()}</span>
-                 <span className="text-[9px] font-bold text-gray-500 uppercase">/ month</span>
+               <p className="text-[7px] sm:text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Rent Starts</p>
+               <div className="flex items-baseline gap-0.5 sm:gap-1">
+                 <span className="text-xs sm:text-lg font-black text-primary tracking-tighter leading-none">₱{property.price.toLocaleString()}</span>
+                 <span className="text-[7px] sm:text-[9px] font-bold text-gray-500 uppercase">/mo</span>
                </div>
              </div>
-             <div className="text-right">
-               <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Property Type</p>
-               <p className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-tight truncate max-w-[110px]">
+             <div className="text-right min-w-0">
+               <p className="text-[7px] sm:text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Type</p>
+               <p className="text-[8px] sm:text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-tight truncate max-w-[65px] sm:max-w-[110px]">
                  {(property as any).propertyType?.name || (property as any).category || (property as any).categories?.[0]?.category?.label || 'Boarding House'}
                </p>
              </div>
           </div>
 
-          {/* Footer Actions - Single Row Layout on Mobile & Desktop */}
-          <div className="flex items-center gap-2 pt-4 sm:pt-6 border-t border-gray-100 dark:border-gray-800 mt-auto">
+          {/* Footer Actions */}
+          <div className="flex items-center gap-1.5 sm:gap-2 pt-2.5 sm:pt-4 border-t border-gray-100 dark:border-gray-800 mt-auto w-full">
             <Button
-              outline
               onClick={() => onView(property)}
-              className="flex-1 rounded-xl sm:rounded-2xl py-2.5 sm:py-3 text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 dark:hover:text-primary border-gray-200 dark:border-gray-700 shadow-sm cursor-pointer"
+              className="flex-1 h-10 rounded-xl px-2 text-[10px] sm:text-xs font-black uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200/60 dark:border-gray-700/60 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <span className="flex items-center justify-center gap-1.5 sm:gap-2">
-                <Eye size={14} />
-                Preview
-              </span>
+              <Eye size={14} />
+              <span>Preview</span>
             </Button>
 
             {!(property as any).isArchived && (
@@ -197,27 +194,24 @@ export function LandlordPropertyCard({
               >
                  <Button
                    className={cn(
-                     "w-full rounded-xl sm:rounded-2xl py-2.5 sm:py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-xl group/btn cursor-pointer",
+                     "w-full h-10 rounded-xl px-2 text-[10px] sm:text-xs font-black uppercase tracking-wider text-white shadow-md transition-all group/btn cursor-pointer flex items-center justify-center gap-1.5",
                      property.status === 'REJECTED'
                        ? "bg-rose-500 hover:bg-rose-600 shadow-rose-500/20"
                        : "bg-primary hover:bg-primary/90 shadow-primary/20"
                    )}
                  >
-                   <span className="flex items-center justify-center gap-1.5 sm:gap-2">
-                     <Pencil size={14} className="group-hover:scale-110 transition-transform" />
-                     {property.status === 'REJECTED' ? 'Resubmit' : 'Edit'}
-                   </span>
+                   <Pencil size={14} className="group-hover:scale-110 transition-transform" />
+                   <span>{property.status === 'REJECTED' ? 'Resubmit' : 'Edit'}</span>
                  </Button>
               </Link>
             )}
             {(property as any).isArchived && (
               <Button
-               outline
                onClick={() => onDelete(property)}
-               className="flex-1 rounded-xl sm:rounded-2xl py-2.5 sm:py-3 border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white dark:border-rose-900/30 dark:hover:bg-rose-900 transition-all group/btn flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer"
+               className="flex-1 h-10 rounded-xl px-2 border border-rose-200 text-rose-500 hover:bg-rose-500 hover:text-white dark:border-rose-900/40 dark:hover:bg-rose-900 transition-all group/btn flex items-center justify-center gap-1.5 cursor-pointer text-[10px] sm:text-xs font-black uppercase tracking-wider"
               >
                 <Trash2 size={14} className="group-hover:rotate-12 transition-transform" />
-                 <span className="text-[10px] font-black uppercase tracking-widest">Delete</span>
+                <span>Delete</span>
               </Button>
             )}
           </div>
