@@ -51,7 +51,7 @@ export function LandlordAnalyticsHeader({
               Analytics & Performance
             </h1>
             <p className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-              High-level overview of your rental empire's performance
+              Check total revenue, room occupancy, and earnings reports
             </p>
           </div>
         </div>
@@ -70,6 +70,8 @@ export function LandlordAnalyticsHeader({
           />
           <GenerateReportButton 
             onGeneratePDF={handleGenerateReport || (async () => {})}
+            outline={false}
+            className="h-10 sm:h-12 px-4 sm:px-6 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] sm:text-[11px] tracking-widest shadow-lg shadow-primary/25 border-b-4 border-primary/30 active:border-b-0 active:translate-y-0.5 transition-all flex items-center gap-2 shrink-0"
           />
         </div>
       </div>

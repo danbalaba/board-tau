@@ -66,6 +66,8 @@ describe('LandlordPropertyHeader', () => {
     onGenerateReport: mockOnGenerateReport,
     categoryFilter: 'all',
     setCategoryFilter: mockSetCategoryFilter,
+    statusFilter: 'all',
+    setStatusFilter: jest.fn(),
     uniqueCategories: ['Apartment', 'House'],
     onClear: mockOnClear,
     isArchived: false,
