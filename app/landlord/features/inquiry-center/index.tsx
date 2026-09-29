@@ -126,7 +126,7 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.15 }}
             >
               {filteredInquiries.length > 0 && (
                 <div className="flex items-center gap-2 mb-6">
@@ -164,7 +164,7 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
                     key="list"
                     className={cn(
                       viewMode === "grid"
-                        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                        ? "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-6"
                         : "space-y-4"
                     )}
                   >

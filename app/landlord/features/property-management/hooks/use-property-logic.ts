@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
-import { getAllLandlordProperties } from '@/services/landlord/properties';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DateRange } from 'react-day-picker';
-
 import { clearDraftFromStorage } from '@/utils/draftStorage';
 
 export interface Property {
@@ -69,6 +67,7 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
   const [sortBy, setSortBy] = useState('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [isArchived, setIsArchived] = useState(false);
 
   // Pagination State
@@ -84,11 +83,26 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
   // Search state
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const isFirstRender = useRef(true);
+
+  // Trigger loader animation when filters change
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setIsFilterLoading(true);
+    const timer = setTimeout(() => {
+      setIsFilterLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, categoryFilter, statusFilter, sortBy, isArchived]);
 
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, categoryFilter, sortBy, isArchived]);
+  }, [searchQuery, categoryFilter, statusFilter, sortBy, isArchived]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -133,15 +147,28 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
     onError: () => responsiveToast.error({ title: 'ERROR', description: 'Failed to delete property.' }),
   });
 
-  // Unique categories extraction
+  // Unique property types / categories extraction
   const uniqueCategories = useMemo(() => {
     const cats = listings.reduce((acc: string[], property) => {
-      property.categories?.forEach((cat: any) => {
-        const name = cat?.category?.name || (typeof cat === 'string' ? cat : cat.name);
-        if (name && !acc.includes(name)) acc.push(name);
-      });
+      const typeName = (property as any).propertyType?.name 
+        || (typeof (property as any).propertyType === 'string' ? (property as any).propertyType : null)
+        || property.categories?.[0]?.category?.name 
+        || (typeof property.categories?.[0] === 'string' ? property.categories[0] : property.categories?.[0]?.name);
+
+      if (typeName && !acc.includes(typeName)) {
+        acc.push(typeName);
+      }
       return acc;
     }, []);
+
+    // Also include categories inside categories array if any
+    listings.forEach(p => {
+      p.categories?.forEach((cat: any) => {
+        const name = cat?.category?.name || (typeof cat === 'string' ? cat : cat?.name);
+        if (name && !cats.includes(name)) cats.push(name);
+      });
+    });
+
     return cats.sort();
   }, [listings]);
 
@@ -149,22 +176,43 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
   const filteredListings = useMemo(() => {
     let result = listings.filter(p => !!(p as any).isArchived === isArchived);
     
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(p => 
-        p.title.toLowerCase().includes(query) || 
-        p.region?.toLowerCase().includes(query) ||
-        p.description.toLowerCase().includes(query)
-      );
+    if (searchQuery && searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(p => {
+        const titleMatch = p.title?.toLowerCase().includes(query);
+        const regionMatch = p.region?.toLowerCase().includes(query);
+        
+        const categoryMatch = p.categories?.some((cat: any) => {
+          const name = cat?.category?.name || (typeof cat === 'string' ? cat : cat?.name);
+          return name?.toLowerCase().includes(query);
+        });
+        
+        const propertyTypeMatch = (p as any).propertyType?.name?.toLowerCase().includes(query) || (typeof (p as any).propertyType === 'string' && (p as any).propertyType.toLowerCase().includes(query));
+
+        // For short queries (< 4 chars like "ha", "apt", "bh"), match title, region, category & propertyType only
+        if (query.length < 4) {
+          return titleMatch || regionMatch || categoryMatch || propertyTypeMatch;
+        }
+
+        const descriptionMatch = p.description?.toLowerCase().includes(query);
+        return titleMatch || regionMatch || categoryMatch || propertyTypeMatch || descriptionMatch;
+      });
     }
 
     if (categoryFilter !== 'all') {
-      result = result.filter(p => 
-        p.categories?.some((cat: any) => {
+      result = result.filter(p => {
+        const propType = (p as any).propertyType?.name || (typeof (p as any).propertyType === 'string' ? (p as any).propertyType : null);
+        const matchesType = propType === categoryFilter;
+        const matchesCategory = p.categories?.some((cat: any) => {
           const name = cat?.category?.name || (typeof cat === 'string' ? cat : cat.name);
           return name === categoryFilter;
-        })
-      );
+        });
+        return matchesType || matchesCategory;
+      });
+    }
+
+    if (statusFilter !== 'all') {
+      result = result.filter(p => (p.status || '').toLowerCase() === statusFilter.toLowerCase());
     }
 
     return result.sort((a, b) => {
@@ -177,7 +225,7 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
         default: return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }
     });
-  }, [listings, sortBy, searchQuery, categoryFilter, isArchived]);
+  }, [listings, sortBy, searchQuery, categoryFilter, statusFilter, isArchived]);
 
   const paginatedListings = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -205,6 +253,7 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
 
   const handleClearFilters = useCallback(() => {
     setCategoryFilter('all');
+    setStatusFilter('all');
     setIsArchived(false);
     setSearchInput('');
     setSearchQuery('');
@@ -271,6 +320,7 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
 
   return {
     listings: paginatedListings,
+    allListings: listings,
     totalListings: filteredListings.length,
     currentPage,
     setCurrentPage,
@@ -294,10 +344,12 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
     setViewMode,
     categoryFilter,
     setCategoryFilter,
+    statusFilter,
+    setStatusFilter,
     isArchived,
     setIsArchived,
     uniqueCategories,
-    isLoading: isQueryLoading,
+    isLoading: isQueryLoading || isFilterLoading,
     searchQuery: searchInput,
     setSearchQuery: setSearchInput,
     handleConfirmDelete,

@@ -1,35 +1,38 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Modal from '@/components/modals/Modal';
 import { Booking } from '../hooks/use-booking-logic';
-import { LandlordBookingStatusBadge } from './landlord-booking-status-badge';
-import Button from '@/components/common/Button';
 import Avatar from '@/components/common/Avatar';
 import { 
   IconUser, 
   IconMail, 
   IconCalendar, 
-  IconHome, 
+  IconBuilding, 
   IconCreditCard, 
-  IconPlayerPlay, 
   IconCheck, 
   IconX,
   IconClock,
   IconChevronLeft,
-  IconChevronRight
+  IconChevronRight,
+  IconTag,
+  IconFileText,
+  IconEye,
+  IconShieldCheck,
+  IconDeviceMobile,
+  IconMessage,
+  IconHome
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
-import toast from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { useEffect } from 'react';
+import { cn } from '@/utils/helper';
 import SafeImage from '@/components/common/SafeImage';
 import { getSafeImageSrcString } from '@/components/modals/inquiry-modal/InquiryModalUtils';
-import { useRouter, usePathname } from 'next/navigation';
+import { generateLeaseContractPDF, previewPdfBlob } from '@/utils/contractPdfGenerator';
+import { useResponsiveToast } from '@/components/common/ResponsiveToast';
+import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
 
 interface LandlordBookingDetailsModalProps {
-  booking: Booking;
+  booking: Booking | null;
   isOpen: boolean;
   onClose: () => void;
   onUpdateStatus: (id: string, status: string) => Promise<void>;
@@ -43,285 +46,530 @@ export function LandlordBookingDetailsModal({
   onUpdateStatus,
   isUpdatingStatus
 }: LandlordBookingDetailsModalProps) {
+  const responsiveToast = useResponsiveToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const router = useRouter();
-  const pathname = usePathname();
+
+  // Media Overlay state
+  const [mediaOverlay, setMediaOverlay] = useState<{
+    isOpen: boolean;
+    images: string[];
+    currentIndex: number;
+    title: string;
+    isDocument?: boolean;
+  }>({
+    isOpen: false,
+    images: [],
+    currentIndex: 0,
+    title: '',
+    isDocument: false,
+  });
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && booking) {
       setIsInitialLoading(true);
       setCurrentImageIndex(0);
-      const timer = setTimeout(() => setIsInitialLoading(false), 600);
+      setMediaOverlay({
+        isOpen: false,
+        images: [],
+        currentIndex: 0,
+        title: '',
+        isDocument: false,
+      });
+      const timer = setTimeout(() => setIsInitialLoading(false), 400);
       return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, booking]);
+
+  const formatDate = useCallback((dateStr: string | Date | undefined) => {
+    if (!dateStr) return 'N/A';
+    try {
+      return format(new Date(dateStr), 'MMM d, yyyy');
+    } catch (e) {
+      return 'N/A';
+    }
+  }, []);
+
+  const getStatusBadge = useCallback((status: string) => {
+    switch (status?.toUpperCase()) {
+      case 'CHECKED_IN':
+        return {
+          label: 'Currently In-House',
+          className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30',
+        };
+      case 'COMPLETED':
+        return {
+          label: 'Stay Completed',
+          className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+        };
+      case 'CANCELLED':
+        return {
+          label: 'Booking Cancelled',
+          className: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
+        };
+      default:
+        return {
+          label: status?.replace('_', ' ') || 'BOOKING',
+          className: 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-200',
+        };
+    }
+  }, []);
+
+  const roomImages = useMemo(() => {
+    if (!booking) return [];
+    if (booking.room?.images && booking.room.images.length > 0) {
+      return booking.room.images.map(img => img.url);
+    }
+    if (booking.listing?.images && booking.listing.images.length > 0) {
+      return booking.listing.images.map(img => img.url);
+    }
+    if (booking.listing?.imageSrc) {
+      return [booking.listing.imageSrc];
+    }
+    return ['/images/placeholder.jpg'];
+  }, [booking]);
+
+  if (!isOpen || !booking) return null;
+
+  const statusInfo = getStatusBadge(booking.status);
+  const guestName = (booking.user?.name || booking.guestName) || 'Anonymous Guest';
+  const guestEmail = (booking.user?.email || booking.guestContact) || 'No contact specified';
+  const signedGuestPhoto = booking.guestPhotoUrl || booking.user?.image || null;
+  const signedGuestId = booking.guestIdUrl || null;
+  const occupantsCount = (booking as any).occupantsCount || 1;
 
   const handleAction = async (status: string) => {
     setIsLoading(true);
     try {
       await onUpdateStatus(booking.id, status);
-      toast.success(`Booking status updated to ${status.replace('_', ' ')}`);
+      responsiveToast.success(`Booking status updated to ${status.replace('_', ' ')}`);
       onClose();
     } catch (error) {
-      toast.error('Failed to update status');
+      responsiveToast.error('Failed to update booking status');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Booking Details" width="lg" hasFixedFooter>
-      <div className="space-y-8 max-h-[70vh] overflow-y-auto p-8 custom-scrollbar">
-        
-        <AnimatePresence mode="wait">
-          {isInitialLoading ? (
-            <motion.div 
-              key="loader"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="h-96 flex flex-col items-center justify-center gap-4"
-            >
-              <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading Stay Information...</p>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="content"
-              initial="hidden"
-              animate="visible"
-              variants={{
-                hidden: { opacity: 0 },
-                visible: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  }
-                }
-              }}
-              className="space-y-8"
-            >
-              {/* Profile Card */}
-              <motion.div 
-                variants={{
-                  hidden: { opacity: 0, scale: 0.95, y: 10 },
-                  visible: { opacity: 1, scale: 1, y: 0 }
-                }}
-                className="relative group"
-              >
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                <div className="relative flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800 backdrop-blur-sm">
-                  <div className="flex items-center gap-5">
-                     <Avatar 
-                        src={(booking.user?.image || booking.guestPhotoUrl)} 
-                        name={(booking.user?.name || booking.guestName)} 
-                        className="w-16 h-16 rounded-[1.25rem] shadow-2xl border-4 border-white dark:border-gray-800" 
-                     />
-                     <div>
-                        <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-none mb-2">{(booking.user?.name || booking.guestName) || 'Anonymous Guest'}</h3>
-                        <div className="flex items-center gap-2">
-                          <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
-                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ongoing Stay</p>
-                        </div>
-                     </div>
-                  </div>
-                  <LandlordBookingStatusBadge status={booking.status} />
-                </div>
-              </motion.div>
-
-              {/* Detailed Info Sections */}
-              <div className="space-y-6">
-                {/* Property Overview */}
-                <motion.div 
-                  variants={{
-                    hidden: { opacity: 0, x: -20 },
-                    visible: { opacity: 1, x: 0 }
-                  }}
-                  className="bg-gray-50/30 dark:bg-gray-800/30 p-6 rounded-3xl border border-gray-100/50 dark:border-gray-800/50"
-                >
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2 mb-4">
-                    <div className="w-1.5 h-3 bg-primary rounded-full"></div>
-                    Booked Room
-                  </span>
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className="w-full md:w-1/2 aspect-video rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 relative group/gallery">
-                      <AnimatePresence mode="wait">
-                        <SafeImage
-                          key={currentImageIndex}
-                          src={getSafeImageSrcString(
-                            (booking.room?.images && booking.room.images.length > 0) 
-                              ? booking.room.images[currentImageIndex].url 
-                              : (booking.listing?.images && booking.listing.images.length > 0)
-                                ? booking.listing.images[0].url
-                                : booking.listing?.imageSrc || "/images/placeholder.jpg"
-                          )}
-                          alt={booking.listing.title}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover/gallery:scale-110"
-                        />
-                      </AnimatePresence>
-
-                      {/* Gallery Navigation */}
-                      {booking.room?.images && booking.room.images.length > 1 && (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentImageIndex((prev) => (prev === 0 ? booking.room!.images!.length - 1 : prev - 1));
-                            }}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
-                          >
-                            <IconChevronLeft size={18} />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentImageIndex((prev) => (prev === booking.room!.images!.length - 1 ? 0 : prev + 1));
-                            }}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/70 z-10"
-                          >
-                            <IconChevronRight size={18} />
-                          </button>
-                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-                            {booking.room.images.map((_, idx) => (
-                              <div
-                                key={idx}
-                                className={cn(
-                                  "w-1.5 h-1.5 rounded-full transition-all",
-                                  idx === currentImageIndex ? "bg-white w-4" : "bg-white/50"
-                                )}
-                              />
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex-1 flex flex-col justify-center">
-                      <h4 className="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2">
-                        {booking.listing.title}
-                      </h4>
-                      <div className="space-y-3 mt-4">
-                        <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-50 dark:border-gray-800/50 shadow-sm">
-                          <IconMail size={16} className="text-primary" />
-                          <span className="text-xs font-bold text-gray-600 dark:text-gray-300 truncate">
-                            {(booking.user?.email || booking.guestContact)}
-                          </span>
-                        </div>
-                        <div className="flex items-start gap-3 p-4 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
-                          <IconCreditCard size={20} className="text-emerald-500 mt-0.5" />
-                          <div className="flex flex-col">
-                            <span className="text-sm font-black text-gray-900 dark:text-gray-100">
-                              ₱{booking.totalPrice.toLocaleString()} Total Paid
-                            </span>
-                            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-0.5">
-                              {(booking as any).occupantsCount || 1} {(booking as any).occupantsCount === 1 ? 'Person' : 'People'} • ₱{(((booking as any).room as any)?.reservationFee || (((booking as any).totalPrice || 0) / ((booking as any).occupantsCount || 1))).toLocaleString()} each
-                            </span>
-                            <span className="text-[9px] font-black text-emerald-600 uppercase mt-1 tracking-[0.2em]">Verified • {booking.paymentStatus}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Stay Logistics */}
-                <motion.div 
-                   variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 }
-                  }}
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-                >
-                  <div className="bg-gray-50/30 dark:bg-gray-800/30 p-5 rounded-3xl border border-gray-100/50 dark:border-gray-800/50 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                      <IconCalendar size={24} />
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">Start Date</p>
-                      <p className="text-sm font-black text-gray-900 dark:text-white">
-                        {format(new Date(booking.startDate), 'MMMM do, yyyy')}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50/30 dark:bg-gray-800/30 p-5 rounded-3xl border border-gray-100/50 dark:border-gray-800/50 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-600 shrink-0">
-                      <IconCheck size={24} />
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">End Date</p>
-                      <p className="text-sm font-black text-gray-900 dark:text-white">
-                        {format(new Date(booking.endDate), 'MMMM do, yyyy')}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
+    <>
+      <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} fullOnMobile={true}>
+        <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl">
+          
+          {/* Top Header Bar - Mobile Collision Proof */}
+          <div className="px-3.5 sm:px-8 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0 bg-white dark:bg-gray-900">
+            <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1 pr-2">
+              <div className="p-2 bg-primary/10 text-primary rounded-xl shrink-0">
+                <IconHome size={18} className="sm:w-5 sm:h-5" />
               </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-sm sm:text-xl font-black text-gray-900 dark:text-white tracking-tight leading-none">
+                    Booking Details
+                  </h2>
+                  <span className={cn("px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border shadow-2xs sm:hidden shrink-0", statusInfo.className)}>
+                    {statusInfo.label}
+                  </span>
+                </div>
+                <p className="text-[10px] sm:text-xs font-bold text-gray-400 dark:text-gray-500 truncate max-w-[130px] sm:max-w-md mt-0.5 leading-tight">
+                  {guestName} • {booking.listing.title}
+                </p>
+              </div>
+            </div>
 
-              {/* Management Actions */}
-              <motion.div 
-                variants={{
-                  hidden: { opacity: 0, y: 30 },
-                  visible: { opacity: 1, y: 0 }
-                }}
-                className="pt-8 border-t border-gray-100 dark:border-gray-800"
+            <div className="flex items-center gap-2 shrink-0">
+              <span className={cn("hidden sm:inline-flex px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border shadow-xs", statusInfo.className)}>
+                {statusInfo.label}
+              </span>
+              <button
+                onClick={onClose}
+                aria-label="Close"
+                className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer shrink-0"
+                title="Close"
               >
-                <div className="flex items-center justify-between mb-6">
-                  <h4 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">Manage Stay</h4>
-                  <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800 mx-6"></div>
-                </div>
-                
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="mt-6 flex flex-col gap-4">
-                    <Button
-                      outline
-                      className="w-full rounded-[1.25rem] py-4 border-gray-100 dark:border-gray-800 text-[10px] font-black uppercase tracking-[0.2em] group/chat flex items-center justify-center gap-2"
-                      onClick={() => {
-                        const listingImg = (booking.room?.images && booking.room.images.length > 0) ? booking.room.images[0].url : (booking.listing?.images && booking.listing.images.length > 0) ? booking.listing.images[0].url : booking.listing?.imageSrc;
-                        const event = new CustomEvent('open-landlord-chat', {
-                          detail: {
-                            listingId: booking.listing.id,
-                            tenantId: booking.user.id,
-                            tenantName: (booking.user?.name || booking.guestName) || 'Tenant',
-                            tenantImage: (booking.user?.image || booking.guestPhotoUrl) || '',
-                            listingTitle: booking.listing.title,
-                            listingImage: listingImg || ''
-                          }
-                        });
-                        window.dispatchEvent(event);
-                        onClose();
-                      }}
-                    >
-                      <IconMail size={18} className="group-hover/chat:scale-110 transition-transform text-primary" />
-                      Chat with {(booking.user?.name || booking.guestName) || 'Tenant'}
-                    </Button>
-                  </div>
+                <IconX size={18} className="sm:w-5 sm:h-5" />
+              </button>
+            </div>
+          </div>
 
-                  {booking.status === 'CHECKED_IN' && !(booking as any).isArchived && (
-                    <Button 
-                      className="w-full bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 py-5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] group/act"
-                      onClick={() => handleAction('COMPLETED')}
-                      isLoading={isLoading || isUpdatingStatus}
-                    >
-                      <span className="flex items-center justify-center gap-2">
-                        <IconCheck size={18} className="group-hover:scale-110 transition-transform" />
-                        Complete Stay & Ask for Review
-                      </span>
-                    </Button>
-                  )}
+          {/* Main Content Area - Mobile & Desktop Responsive */}
+          <div className="flex-1 overflow-y-auto p-3.5 sm:p-7 space-y-3.5 sm:space-y-4 bg-slate-50/50 dark:bg-gray-950/60 custom-scrollbar overscroll-contain">
+            {isInitialLoading ? (
+              <div className="h-64 sm:h-96 flex flex-col items-center justify-center gap-3 py-12">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin shadow-lg" />
+                <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-gray-400">Loading Booking Details...</p>
+              </div>
+            ) : (
+              <>
+                {/* Walk-In / In-House Banner */}
+            {booking.isWalkIn && (
+              <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-xl sm:rounded-2xl flex items-center gap-3 shadow-xs text-blue-900 dark:text-blue-100">
+                <div className="p-1.5 sm:p-2 bg-blue-600 text-white rounded-lg sm:rounded-xl shrink-0">
+                  <IconUser size={16} />
                 </div>
-                
-                <div className="mt-6 flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl">
-                  <IconClock size={12} className="text-gray-400" />
-                  <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-relaxed text-center px-4">
-                    This will end the stay and notify the student to leave a review.
+                <div className="min-w-0">
+                  <h4 className="text-[11px] sm:text-xs font-black uppercase tracking-wider leading-none mb-0.5 sm:mb-1">
+                    Walk-In Active Booking
+                  </h4>
+                  <p className="text-[10px] sm:text-xs font-medium leading-tight text-blue-800 dark:text-blue-200">
+                    Active stay registered on-site by landlord.
                   </p>
                 </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </Modal>  );
+              </div>
+            )}
+
+            {/* Responsive 2-Column Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-5 items-start">
+              
+              {/* Left Column: Property Showcase & Stay Logistics */}
+              <div className="space-y-3.5 sm:space-y-4 flex flex-col">
+                
+                {/* Room Showcase Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-xs">
+                  <div 
+                    onClick={() => setMediaOverlay({
+                      isOpen: true,
+                      images: roomImages,
+                      currentIndex: currentImageIndex,
+                      title: `${booking.listing.title} - Showcase`,
+                      isDocument: false,
+                    })}
+                    className="relative h-44 sm:h-60 w-full group/gallery bg-gray-100 dark:bg-gray-800 cursor-zoom-in overflow-hidden"
+                  >
+                    <SafeImage
+                      src={getSafeImageSrcString(roomImages[currentImageIndex])}
+                      alt={booking.listing.title}
+                      className="w-full h-full object-cover group-hover/gallery:scale-105 transition-transform duration-500"
+                      unoptimized={true}
+                    />
+
+                    {/* Preview overlay indicator */}
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/gallery:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white text-xs font-black uppercase tracking-wider backdrop-blur-[2px]">
+                      <IconEye size={18} />
+                      <span>View Gallery ({roomImages.length} Photos)</span>
+                    </div>
+
+                    {roomImages.length > 1 && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImageIndex((prev) => (prev === 0 ? roomImages.length - 1 : prev - 1));
+                          }}
+                          className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors z-10"
+                        >
+                          <IconChevronLeft size={16} className="sm:w-4 sm:h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImageIndex((prev) => (prev === roomImages.length - 1 ? 0 : prev + 1));
+                          }}
+                          className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors z-10"
+                        >
+                          <IconChevronRight size={16} className="sm:w-4 sm:h-4" />
+                        </button>
+                        <div className="absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-1.5 z-10">
+                          {roomImages.map((_, idx) => (
+                            <div
+                              key={idx}
+                              className={cn(
+                                "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all",
+                                idx === currentImageIndex ? "bg-white w-3 sm:w-4" : "bg-white/50"
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="p-3.5 sm:p-5 space-y-1 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800/60">
+                    <h3 className="text-sm sm:text-lg font-black text-gray-900 dark:text-white tracking-tight truncate">
+                      {booking.listing.title}
+                    </h3>
+                    <p className="text-[11px] sm:text-xs font-bold text-primary flex items-center gap-1.5">
+                      <IconBuilding size={14} className="shrink-0" />
+                      <span className="truncate">
+                        {booking.room?.name ? `${booking.room.name} • ${(booking.room as any)?.roomTypeDefinition?.name || (booking.room as any)?.roomType || (typeof (booking.listing as any)?.propertyType === 'object' ? (booking.listing as any)?.propertyType?.name : (booking.listing as any)?.propertyType) || 'Solo Room'}` : ((booking.room as any)?.roomTypeDefinition?.name || (booking.room as any)?.roomType || (typeof (booking.listing as any)?.propertyType === 'object' ? (booking.listing as any)?.propertyType?.name : (booking.listing as any)?.propertyType) || 'Solo Room')}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Stay Schedule / Logistics Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-gray-100 dark:border-gray-800 shadow-xs space-y-3">
+                  <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                    <IconCalendar size={14} className="text-primary shrink-0" />
+                    <span>Stay Logistics</span>
+                  </h4>
+
+                  <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                    <div className="p-2.5 sm:p-3 bg-primary/10 dark:bg-primary/20 border border-primary/20 rounded-xl sm:rounded-2xl text-center">
+                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-primary-dark dark:text-primary-light block mb-0.5">
+                        Start Date
+                      </span>
+                      <span className="text-xs sm:text-sm font-black text-primary-dark dark:text-white">
+                        {formatDate(booking.startDate)}
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 sm:p-3 bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/80 rounded-xl sm:rounded-2xl text-center">
+                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-purple-700 dark:text-purple-300 block mb-0.5">
+                        End Date
+                      </span>
+                      <span className="text-xs sm:text-sm font-black text-purple-950 dark:text-purple-100">
+                        {formatDate(booking.endDate)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs">
+                    <span className="text-gray-500 dark:text-gray-400 font-bold flex items-center gap-1.5 text-[11px] sm:text-xs">
+                      <IconUser size={14} className="text-primary shrink-0" />
+                      <span>Occupants</span>
+                    </span>
+                    <span className="font-black text-gray-900 dark:text-white text-xs sm:text-sm">
+                      {occupantsCount} {occupantsCount === 1 ? 'Person' : 'People'}
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Column: Guest Profile, Financials & Reference */}
+              <div className="space-y-3.5 sm:space-y-4 flex flex-col">
+                
+                {/* Guest Profile & Contact Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-gray-100 dark:border-gray-800 shadow-xs space-y-3">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <Avatar 
+                      src={booking.user?.image || booking.guestPhotoUrl} 
+                      name={guestName} 
+                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl shadow-xs border-2 border-primary/20 shrink-0" 
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm sm:text-lg font-black text-gray-900 dark:text-white truncate leading-tight">
+                        {guestName}
+                      </h3>
+                      <p className="text-[11px] sm:text-xs font-bold text-gray-400 truncate leading-tight mt-0.5">
+                        {guestEmail}
+                      </p>
+                    </div>
+                  </div>
+
+                  {booking.guestContact && (
+                    <div className="p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center justify-between text-[11px] sm:text-xs">
+                      <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 font-bold">
+                        <IconDeviceMobile size={14} className="text-primary shrink-0" />
+                        <span>Contact Info</span>
+                      </div>
+                      <span className="font-black text-gray-900 dark:text-white truncate max-w-[140px] sm:max-w-[180px]">
+                        {booking.guestContact}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Financial Summary Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-gray-100 dark:border-gray-800 shadow-xs space-y-2.5">
+                  <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                    <IconCreditCard size={14} className="text-primary" />
+                    <span>Payment Breakdown</span>
+                  </h4>
+
+                  <div className="flex items-center justify-between pt-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <IconTag size={15} className="text-primary shrink-0" />
+                      <span className="text-[11px] sm:text-xs font-bold text-gray-500 dark:text-gray-400">Total Paid Amount</span>
+                    </div>
+                    <span className="text-base sm:text-xl font-black text-primary dark:text-primary-light">
+                      ₱{Number(booking.totalPrice || 0).toLocaleString()} Total Paid
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800/60">
+                    <span className="text-[11px] sm:text-xs font-bold text-gray-500 dark:text-gray-400">Payment Status</span>
+                    <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                      Verified • {booking.paymentStatus || 'Paid'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Verification & Booking Reference Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-gray-100 dark:border-gray-800 shadow-xs space-y-3">
+                  <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                    <IconShieldCheck size={14} className="text-primary" />
+                    <span>Booking Reference</span>
+                  </h4>
+
+                  <div className="p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center justify-between text-[11px] sm:text-xs">
+                    <span className="text-gray-500 dark:text-gray-400 font-bold">Booking ID</span>
+                    <span className="font-mono font-black text-gray-900 dark:text-white truncate max-w-[140px] sm:max-w-[180px]">
+                      {booking.id}
+                    </span>
+                  </div>
+
+                  {/* Verification Docs thumbnails if available */}
+                  {(signedGuestPhoto || signedGuestId) && (
+                    <div className="grid grid-cols-2 gap-2.5 sm:gap-3 pt-1">
+                      {signedGuestPhoto && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-gray-400">Guest Photo</span>
+                          <div 
+                            onClick={() => setMediaOverlay({
+                              isOpen: true,
+                              images: [signedGuestPhoto],
+                              currentIndex: 0,
+                              title: `Guest Photo - ${guestName}`,
+                              isDocument: true,
+                            })}
+                            className="group relative h-20 sm:h-24 rounded-xl sm:rounded-2xl overflow-hidden shadow-xs cursor-pointer border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"
+                          >
+                            <SafeImage 
+                              src={signedGuestPhoto} 
+                              alt="Guest Photo" 
+                              className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+                              unoptimized={true}
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 text-white text-[10px] font-black uppercase tracking-wider backdrop-blur-[1px]">
+                              <IconEye size={14} />
+                              <span>Preview</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {signedGuestId && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-gray-400">Government ID</span>
+                          <div 
+                            onClick={() => setMediaOverlay({
+                              isOpen: true,
+                              images: [signedGuestId],
+                              currentIndex: 0,
+                              title: `Government ID - ${guestName}`,
+                              isDocument: true,
+                            })}
+                            className="group relative h-20 sm:h-24 rounded-xl sm:rounded-2xl overflow-hidden shadow-xs cursor-pointer border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"
+                          >
+                            <SafeImage 
+                              src={signedGuestId} 
+                              alt="Guest Government ID" 
+                              className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+                              unoptimized={true}
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 text-white text-[10px] font-black uppercase tracking-wider backdrop-blur-[1px]">
+                              <IconEye size={14} />
+                              <span>Preview</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </div>
+
+            {/* Initialized Timestamp */}
+            <div className="pt-1 sm:pt-2 text-center">
+              <p className="text-[10px] sm:text-xs font-bold text-gray-400 flex items-center justify-center gap-1.5">
+                <IconClock size={12} className="sm:w-3.5 sm:h-3.5" />
+                <span>Booking stay active since {formatDate(booking.startDate)}</span>
+              </p>
+            </div>
+            </>
+            )}
+
+          </div>
+
+          {/* Action Footer Bar - Compact Mobile Rows & Desktop Single Row */}
+          <div className="px-3.5 sm:px-8 py-3 sm:py-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0 shadow-lg">
+            
+            {/* Left Action: Chat with Guest */}
+            <button
+              className="w-full sm:w-auto h-10 sm:h-11 px-4 sm:px-5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+              onClick={() => {
+                const listingImg = (booking.room?.images && booking.room.images.length > 0) ? booking.room.images[0].url : (booking.listing?.images && booking.listing.images.length > 0) ? booking.listing.images[0].url : booking.listing?.imageSrc;
+                const event = new CustomEvent('open-landlord-chat', {
+                  detail: {
+                    listingId: booking.listing.id,
+                    tenantId: booking.user.id,
+                    tenantName: guestName,
+                    tenantImage: (booking.user?.image || booking.guestPhotoUrl) || '',
+                    listingTitle: booking.listing.title,
+                    listingImage: listingImg || ''
+                  }
+                });
+                window.dispatchEvent(event);
+                onClose();
+              }}
+            >
+              <IconMessage size={16} />
+              <span>Chat with Guest</span>
+            </button>
+            
+            {/* Right Primary Actions */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                disabled={isLoading}
+                className="flex-1 sm:flex-none h-10 sm:h-11 px-4 sm:px-5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                onClick={async () => {
+                  const toastId = responsiveToast.loading("Generating Lease Contract...");
+                  setIsLoading(true);
+                  try {
+                    const res = await fetch(`/api/contracts/generate?listingId=${booking.listing.id}&userId=${booking.user.id}&roomId=${booking.room?.id}`);
+                    if (!res.ok) throw new Error("Failed to fetch contract data");
+                    const data = await res.json();
+                    if ((data.contractMode === 'CUSTOM_PDF' || data.customPdfUrl) && data.customPdfUrl) {
+                      const success = await previewPdfBlob(data.customPdfUrl, "Custom Lease Contract Preview");
+                      if (success) {
+                        responsiveToast.success("Custom Lease Contract loaded!", { id: toastId });
+                        return;
+                      }
+                    }
+                    await generateLeaseContractPDF(`Lease_Contract_${booking.listing.id}`, data);
+                    responsiveToast.success("Lease Contract downloaded successfully!", { id: toastId });
+                  } catch (e) {
+                    responsiveToast.error("Failed to generate Lease Contract.", { id: toastId });
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+              >
+                <IconFileText size={15} />
+                <span>Lease Contract</span>
+              </button>
+
+              {booking.status === 'CHECKED_IN' && !(booking as any).isArchived && (
+                <button
+                  disabled={isLoading || isUpdatingStatus}
+                  className="flex-1 sm:flex-none h-10 sm:h-11 px-4 sm:px-6 text-[11px] sm:text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary/90 rounded-xl sm:rounded-2xl shadow-md transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 shrink-0 cursor-pointer"
+                  onClick={() => handleAction('COMPLETED')}
+                >
+                  <IconCheck size={15} />
+                  <span>Complete Stay</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+        </div>
+      </Modal>
+
+      {/* Global Media Preview Overlay */}
+      <MediaPreviewOverlay
+        isOpen={mediaOverlay.isOpen}
+        onClose={() => setMediaOverlay(prev => ({ ...prev, isOpen: false }))}
+        images={mediaOverlay.images}
+        currentIndex={mediaOverlay.currentIndex}
+        onNavigate={(idx) => setMediaOverlay(prev => ({ ...prev, currentIndex: idx }))}
+        title={mediaOverlay.title}
+        isDocument={mediaOverlay.isDocument}
+      />
+    </>
+  );
 }

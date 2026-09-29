@@ -33,24 +33,24 @@ interface ChartPieLabelProps {
 }
 
 const colors = [
-  "#10b981", // Emerald Green
-  "#3b82f6", // Vibrant Royal Blue
-  "#8b5cf6", // Radiant Purple/Violet
-  "#f59e0b", // Amber Gold
-  "#ec4899", // Electric Pink
-  "#06b6d4", // Cyan
-  "#f97316", // Coral Orange
+  "#2f7d6d", // BoardTAU Emerald Teal
+  "#6366f1", // Modern Indigo
+  "#f59e0b", // Warm Amber Gold
+  "#06b6d4", // Vibrant Sky Cyan
+  "#ec4899", // Radiant Rose
+  "#8b5cf6", // Electric Purple
+  "#10b981", // Fresh Mint
 ];
 
 const categoryColorMap: Record<string, string> = {
-  "Boarding House": "#10b981",
-  "Apartment": "#3b82f6",
-  "Studio": "#8b5cf6",
-  "House": "#f59e0b",
-  "Transient House": "#ec4899",
-  "Agri-Hostel": "#06b6d4",
-  "Dormitory": "#f97316",
-  "Other": "#64748b",
+  "Boarding House": "#2f7d6d", // Primary BoardTAU Teal
+  "Apartment": "#6366f1",      // Indigo
+  "Dormitory": "#f59e0b",      // Warm Amber
+  "Studio": "#8b5cf6",         // Purple
+  "House": "#10b981",          // Mint Green
+  "Transient House": "#06b6d4",// Cyan
+  "Agri-Hostel": "#ec4899",    // Rose Pink
+  "Other": "#64748b",          // Slate Neutral
 };
 
 const defaultChartData: ChartDataItem[] = [
@@ -86,6 +86,10 @@ export function ChartPieLabel({ data }: ChartPieLabelProps) {
     setActiveMetric(val as keyof typeof chartConfig);
     setTick(t => t + 1);
   };
+
+  const totalMetricValue = React.useMemo(() => {
+    return processedData.reduce((acc, curr) => acc + (Number(curr[activeMetric]) || 0), 0);
+  }, [processedData, activeMetric]);
 
   return (
     <Card className="pt-0 pb-0 border-none shadow-none bg-transparent">
@@ -128,50 +132,61 @@ export function ChartPieLabel({ data }: ChartPieLabelProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="px-0! pt-4 flex flex-col items-center justify-start">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[215px] sm:h-[250px] w-full"
-        >
-          <PieChart key={`${activeMetric}-${tick}`}>
-            <ChartTooltip
-              content={
-                <ChartTooltipContent 
-                  className="w-[170px] p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-xs font-medium"
-                  nameKey="type" 
-                />
-              }
-            />
-            <Pie
-              data={processedData}
-              dataKey={activeMetric}
-              nameKey="type"
-              cx="50%"
-              cy="45%"
-              innerRadius={viewType === "donut" ? 50 : 0}
-              outerRadius={80}
-              strokeWidth={3}
-              stroke="transparent"
-              paddingAngle={4}
-            >
-              {processedData.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={entry.fill}
-                  className="transition-opacity hover:opacity-90 cursor-pointer"
-                  style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.08))" }}
-                />
-              ))}
-            </Pie>
-            <Legend 
-              verticalAlign="bottom" 
-              align="center"
-              iconType="circle"
-              wrapperStyle={{ paddingTop: "12px" }}
-              formatter={(value) => <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200 mx-1">{value}</span>}
-            />
-          </PieChart>
-        </ChartContainer>
+      <CardContent className="px-0! pt-4 flex flex-col items-center justify-start min-h-[240px]">
+        {totalMetricValue === 0 ? (
+          <div className="flex flex-col items-center justify-center h-[215px] sm:h-[250px] w-full text-center px-4">
+            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-slate-400 mb-2">
+              <Layers className="w-6 h-6 opacity-60" />
+            </div>
+            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 max-w-[200px]">
+              No {activeMetric === 'revenue' ? 'revenue' : 'units'} recorded yet across property categories
+            </p>
+          </div>
+        ) : (
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-[215px] sm:h-[250px] w-full"
+          >
+            <PieChart key={`${activeMetric}-${tick}`}>
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent 
+                    className="w-[170px] p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-xs font-medium"
+                    nameKey="type" 
+                  />
+                }
+              />
+              <Pie
+                data={processedData}
+                dataKey={activeMetric}
+                nameKey="type"
+                cx="50%"
+                cy="45%"
+                innerRadius={viewType === "donut" ? 50 : 0}
+                outerRadius={80}
+                strokeWidth={3}
+                stroke="transparent"
+                paddingAngle={4}
+              >
+                {processedData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.fill}
+                    className="transition-opacity hover:opacity-90 cursor-pointer"
+                    style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.08))" }}
+                  />
+                ))}
+              </Pie>
+              <Legend 
+                verticalAlign="bottom" 
+                align="center"
+                iconType="circle"
+                wrapperStyle={{ paddingTop: "12px" }}
+                formatter={(value) => <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200 mx-1">{value}</span>}
+              />
+            </PieChart>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   )

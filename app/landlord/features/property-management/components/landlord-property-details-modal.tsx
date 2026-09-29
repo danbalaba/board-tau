@@ -976,8 +976,8 @@ export function LandlordPropertyDetailsModal({
                             const totalFeaturesCount = groupedSubStepItems.featuresBySubGroup.reduce((acc, g) => acc + g.items.length, 0);
 
                             return (
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-1">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 w-full">
+                                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden w-full sm:w-auto flex-1 min-w-0">
                                   {[
                                     { id: 'ALL', label: 'All Categories', count: totalAmenitiesCount + totalRulesCount + totalFeaturesCount },
                                     { id: 'AMENITIES', label: 'Amenities', count: totalAmenitiesCount },
@@ -1009,7 +1009,7 @@ export function LandlordPropertyDetailsModal({
                                 <button
                                   type="button"
                                   onClick={() => setAmenitiesModalConfig({ isOpen: true, initialCategory: 'ALL' })}
-                                  className="px-3 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer shrink-0"
+                                  className="w-full sm:w-auto px-3 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer shrink-0"
                                 >
                                   <Maximize2 size={13} /> Expand Full Breakdown
                                 </button>

@@ -41,6 +41,7 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
   const { startLoading } = useLoading();
   const {
     listings,
+    allListings,
     totalListings,
     currentPage,
     setCurrentPage,
@@ -64,6 +65,8 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
     setSearchQuery,
     categoryFilter,
     setCategoryFilter,
+    statusFilter,
+    setStatusFilter,
     isArchived,
     setIsArchived,
     uniqueCategories,
@@ -111,10 +114,12 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
         setViewMode={setViewMode}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        listings={listings}
+        listings={allListings || listings}
         onGenerateReport={handleGenerateReport}
         categoryFilter={categoryFilter}
         setCategoryFilter={setCategoryFilter}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
         uniqueCategories={uniqueCategories}
         onClear={handleClearFilters}
         isArchived={isArchived}
@@ -141,7 +146,7 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.15 }}
               className="flex-1 flex flex-col justify-between"
             >
               {/* Results count */}
@@ -195,7 +200,7 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
                 <div 
                   className={cn(
                     viewMode === 'grid' 
-                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6" 
+                      ? "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-6" 
                       : "flex flex-col gap-2.5 sm:gap-4"
                   )}
                 >

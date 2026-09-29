@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
@@ -70,6 +70,23 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
     setReservations(initialReservations);
   }, [initialReservations]);
 
+  // Filter loader state
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const isFirstRender = useRef(true);
+
+  // Trigger loader animation when filters change
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setIsFilterLoading(true);
+    const timer = setTimeout(() => {
+      setIsFilterLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedStatus, sortBy, isArchived]);
+
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -96,6 +113,16 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
     }
     
     result.sort((a, b) => {
+      if (sortBy === 'price_desc') {
+        const priceA = a.totalPrice || a.room?.price || 0;
+        const priceB = b.totalPrice || b.room?.price || 0;
+        return priceB - priceA;
+      }
+      if (sortBy === 'price_asc') {
+        const priceA = a.totalPrice || a.room?.price || 0;
+        const priceB = b.totalPrice || b.room?.price || 0;
+        return priceA - priceB;
+      }
       const timeA = new Date(a.createdAt).getTime();
       const timeB = new Date(b.createdAt).getTime();
       return sortBy === 'oldest' ? timeA - timeB : timeB - timeA;
@@ -277,6 +304,6 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
     handleUpdateStatus,
     handleGenerateReport,
     updatingId,
-    isLoading
+    isLoading: isLoading || isFilterLoading
   };
 }

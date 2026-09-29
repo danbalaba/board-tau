@@ -15,6 +15,7 @@ interface MediaPreviewOverlayProps {
   onNavigate?: (index: number) => void;
   title?: string;
   isDocument?: boolean;
+  showExternalLink?: boolean;
 }
 
 const checkIsPdf = (url: string): boolean => {
@@ -30,7 +31,8 @@ const MediaPreviewOverlay: React.FC<MediaPreviewOverlayProps> = ({
   currentIndex = 0,
   onNavigate,
   title,
-  isDocument = false
+  isDocument = false,
+  showExternalLink = false
 }) => {
   const [mounted, setMounted] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
@@ -123,7 +125,7 @@ const MediaPreviewOverlay: React.FC<MediaPreviewOverlayProps> = ({
 
             {/* Header Right Actions */}
             <div className="flex items-center gap-3">
-              {currentSrc && (
+              {showExternalLink && currentSrc && (
                 <a
                   href={currentSrc}
                   target="_blank"

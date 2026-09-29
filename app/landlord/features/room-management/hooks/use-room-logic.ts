@@ -53,6 +53,7 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
     property: 'all',
     type: 'all',
     capacity: 'all',
+    status: 'all',
     isArchived: false,
     sortBy: 'newest',
     searchQuery: '',
@@ -74,6 +75,22 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
     }, 300);
   }, []);
 
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const isFirstRender = useRef(true);
+
+  // Trigger loader animation when filters change
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setIsFilterLoading(true);
+    const timer = setTimeout(() => {
+      setIsFilterLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [filters]);
+
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -87,6 +104,7 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
     if (filters.property !== 'all') params.append('listingId', filters.property);
     if (filters.type !== 'all') params.append('roomType', filters.type);
     if (filters.capacity !== 'all') params.append('capacity', filters.capacity);
+    if (filters.status !== 'all') params.append('status', filters.status);
     params.append('isArchived', filters.isArchived ? 'true' : 'false');
     if (filters.sortBy) params.append('sortBy', filters.sortBy);
     if (filters.searchQuery) params.append('search', filters.searchQuery);
@@ -332,6 +350,7 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
       property: 'all',
       type: 'all',
       capacity: 'all',
+      status: 'all',
       isArchived: false,
       sortBy: 'newest',
       searchQuery: ''
@@ -448,6 +467,8 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
     setTypeFilter: (val: string) => setFilters(prev => ({ ...prev, type: val })),
     capacityFilter: filters.capacity,
     setCapacityFilter: (val: string) => setFilters(prev => ({ ...prev, capacity: val })),
+    statusFilter: filters.status,
+    setStatusFilter: (val: string) => setFilters(prev => ({ ...prev, status: val })),
     isArchived: filters.isArchived,
     setIsArchived: (val: boolean) => setFilters(prev => ({ ...prev, isArchived: val })),
     uniqueProperties: masterProperties,
@@ -457,7 +478,7 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
     isLoadingMore: isFetchingNextPage,
     handleLoadMore,
     // Status
-    isLoading,
+    isLoading: isLoading || isQueryLoading || isFilterLoading,
     // Actions
     handleConfirmDelete,
     handleGenerateReport,

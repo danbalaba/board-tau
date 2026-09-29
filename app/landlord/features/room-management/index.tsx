@@ -53,6 +53,8 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
     setTypeFilter,
     capacityFilter,
     setCapacityFilter,
+    statusFilter,
+    setStatusFilter,
     archiveModalOpen,
     setArchiveModalOpen,
     addModalOpen,
@@ -99,6 +101,8 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
         setTypeFilter={setTypeFilter}
         capacityFilter={capacityFilter}
         setCapacityFilter={setCapacityFilter}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
         uniqueProperties={uniqueProperties}
         uniqueCapacities={uniqueCapacities}
         onClear={handleClearFilters}
@@ -127,7 +131,7 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.15 }}
             >
               {/* Results count */}
               {totalCount > 0 && (
@@ -172,7 +176,7 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
                 <>
                   <div className={cn(
                     viewMode === 'grid'
-                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                      ? "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-6"
                       : "flex flex-col gap-4"
                   )}>
                     {rooms.map((room, idx) => (
