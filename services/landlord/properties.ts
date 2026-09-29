@@ -338,7 +338,7 @@ export const createProperty = async (data: any) => {
       const landlordProperties = await db.listing.findMany({
         where: {
           userId: landlord.id,
-          deletedAt: null
+          isArchived: false
         },
         select: { id: true, title: true }
       });
