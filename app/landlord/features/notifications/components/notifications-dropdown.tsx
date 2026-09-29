@@ -83,7 +83,7 @@ export function NotificationsDropdown() {
             <motion.span 
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1.5 bg-primary text-[9px] font-black text-white rounded-full flex items-center justify-center ring-2 ring-white dark:ring-gray-900 shadow-xl shadow-primary/20 z-10"
+              className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1.5 bg-gradient-to-r from-rose-500 to-red-600 text-[10px] font-black text-white rounded-full flex items-center justify-center ring-2 ring-white dark:ring-gray-900 shadow-lg shadow-rose-500/40 z-10 leading-none"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
             </motion.span>

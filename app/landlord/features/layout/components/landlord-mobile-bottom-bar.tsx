@@ -1,22 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { LayoutDashboard, Building2, ClipboardList, MessageSquare, Menu } from "lucide-react";
+import { LayoutDashboard, Building2, ClipboardList, CalendarDays, Menu } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useMenuPanel } from "@/hooks/use-menu-panel";
 import { useNotifications } from "@/app/landlord/features/notifications/hooks/use-notifications";
-import { useMessagingHub } from "@/app/landlord/features/messaging-hub/hooks/use-messaging-hub";
 
 export default function LandlordMobileBottomBar() {
   const router = useRouter();
   const pathname = (typeof usePathname === "function" ? usePathname() : "") || "";
   const { onOpen: openMenuPanel } = useMenuPanel();
   const { unreadCount: unreadNotifCount } = useNotifications();
-  const { conversations } = useMessagingHub();
-
-  const totalUnreadMessages = conversations
-    ? conversations.filter((c) => !c.isArchived).reduce((acc, c) => acc + (c.unreadCount || 0), 0)
-    : 0;
 
   const [scrollDirection, setScrollDirection] = useState<"up" | "down" | "">("");
   const lastYRef = React.useRef(0);
@@ -89,9 +83,10 @@ export default function LandlordMobileBottomBar() {
   };
 
   const isDashboardActive = pathname === "/landlord";
-  const isPropertiesActive = pathname.startsWith("/landlord/properties") || pathname.startsWith("/landlord/rooms");
-  const isInquiriesActive = pathname.startsWith("/landlord/inquiries") || pathname.startsWith("/landlord/reservations") || pathname.startsWith("/landlord/bookings");
-  const isMessagesActive = pathname.startsWith("/landlord/messages");
+  const isPropertiesActive = pathname.startsWith("/landlord/properties");
+  const isInquiriesActive = pathname.startsWith("/landlord/inquiries");
+  const isBookingsActive = pathname.startsWith("/landlord/bookings");
+  const isMenuActive = !isDashboardActive && !isPropertiesActive && !isInquiriesActive && !isBookingsActive;
 
   return (
     <div
@@ -146,7 +141,7 @@ export default function LandlordMobileBottomBar() {
             <div className="relative">
               <ClipboardList className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
               {unreadNotifCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-1 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                <span className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 bg-gradient-to-r from-rose-500 to-red-600 text-white text-[10px] font-black rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-900 shadow-md shadow-rose-500/40 z-10 leading-none">
                   {unreadNotifCount > 9 ? "9+" : unreadNotifCount}
                 </span>
               )}
@@ -156,26 +151,19 @@ export default function LandlordMobileBottomBar() {
             )}
           </button>
 
-          {/* Messages */}
+          {/* Bookings */}
           <button
             type="button"
-            onClick={() => redirect("/landlord/messages")}
+            onClick={() => redirect("/landlord/bookings")}
             className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full transition-all duration-300 ${
-              isMessagesActive
+              isBookingsActive
                 ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold scale-105 backdrop-blur-xl"
                 : "text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10"
             }`}
           >
-            <div className="relative">
-              <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
-              {totalUnreadMessages > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-1 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-900 animate-pulse">
-                  {totalUnreadMessages > 9 ? "9+" : totalUnreadMessages}
-                </span>
-              )}
-            </div>
-            {isMessagesActive && (
-              <span className="text-xs sm:text-sm font-extrabold whitespace-nowrap">Messages</span>
+            <CalendarDays className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
+            {isBookingsActive && (
+              <span className="text-xs sm:text-sm font-extrabold whitespace-nowrap">Bookings</span>
             )}
           </button>
 
@@ -183,9 +171,16 @@ export default function LandlordMobileBottomBar() {
           <button
             type="button"
             onClick={openMenuPanel}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-full transition-all duration-300 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10"
+            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full transition-all duration-300 ${
+              isMenuActive
+                ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold scale-105 backdrop-blur-xl"
+                : "text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10"
+            }`}
           >
-            <Menu className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 text-[#2f7d6d] dark:text-emerald-400" />
+            <Menu className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 ${isMenuActive ? "text-white" : "text-[#2f7d6d] dark:text-emerald-400"}`} />
+            {isMenuActive && (
+              <span className="text-xs sm:text-sm font-extrabold whitespace-nowrap">Menu</span>
+            )}
           </button>
         </div>
       </div>

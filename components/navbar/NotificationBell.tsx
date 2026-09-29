@@ -86,7 +86,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ user }) => {
           >
             <Bell size={20} className="group-hover:text-primary dark:group-hover:text-primary-light-color transition-colors" />
             {unreadStats.total > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-600 rounded-full border border-white dark:border-gray-900 animate-pulse"></span>
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-600 rounded-full border border-white dark:border-gray-900"></span>
             )}
           </button>
         </Menu.Toggle>

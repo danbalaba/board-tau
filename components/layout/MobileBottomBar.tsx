@@ -177,7 +177,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
               <div className="relative">
                 <Bell className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
                 {unreadStats && unreadStats.total > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-1 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                  <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-1 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-900">
                     {unreadStats.total > 9 ? "9+" : unreadStats.total}
                   </span>
                 )}

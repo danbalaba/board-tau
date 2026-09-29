@@ -11,7 +11,6 @@ import {
   CalendarDays,
   Star,
   BarChart3,
-  MessageSquare,
   Settings,
   LogOut,
   ExternalLink,
@@ -83,7 +82,11 @@ export default function LandlordRightSwipePanel({ user: initialUser }: LandlordR
 
   const redirect = (url: string) => {
     onClose();
-    router.push(url);
+    if (url === '/landlord/messages') {
+      router.push('/landlord?openChat=true');
+    } else {
+      router.push(url);
+    }
   };
 
   const handleLogoutClick = () => {
@@ -108,7 +111,6 @@ export default function LandlordRightSwipePanel({ user: initialUser }: LandlordR
     { href: '/landlord/bookings', label: 'Bookings', icon: CalendarDays },
     { href: '/landlord/reviews', label: 'Reviews', icon: Star },
     { href: '/landlord/analytics', label: 'Analytics', icon: BarChart3 },
-    { href: '/landlord/messages', label: 'Messages', icon: MessageSquare },
   ];
 
   return (
@@ -169,7 +171,12 @@ export default function LandlordRightSwipePanel({ user: initialUser }: LandlordR
                   <div className="flex items-center gap-3">
                     <div className="relative shrink-0">
                       <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-primary/30">
-                        <Avatar src={currentUser.image || currentUser.profileImage} alt={currentUser.name || 'Landlord'} />
+                        <Avatar 
+                          src={currentUser.image || currentUser.profileImage} 
+                          alt={currentUser.name || 'Landlord'} 
+                          name={currentUser.name || currentUser.email}
+                          className="w-full h-full"
+                        />
                       </div>
                       <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-gray-900 rounded-full" />
                     </div>
@@ -227,7 +234,11 @@ export default function LandlordRightSwipePanel({ user: initialUser }: LandlordR
                       </div>
 
                       {item.badge && item.badge > 0 ? (
-                        <span className="px-2 py-0.5 text-[10px] font-black bg-red-500 text-white rounded-full">
+                        <span className={`px-2.5 py-0.5 min-w-[22px] text-[10px] font-black rounded-full flex items-center justify-center shadow-md leading-none ${
+                          isActive
+                            ? 'bg-white text-[#2f7d6d] shadow-black/10 font-black'
+                            : 'bg-rose-500 text-white shadow-rose-500/30 border border-rose-400/30'
+                        }`}>
                           {item.badge > 9 ? '9+' : item.badge}
                         </span>
                       ) : null}
@@ -241,13 +252,22 @@ export default function LandlordRightSwipePanel({ user: initialUser }: LandlordR
                 <button
                   type="button"
                   onClick={() => redirect('/')}
-                  className="flex items-center justify-between w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
+                  className="w-full p-3 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-700 dark:text-emerald-300 transition-all flex items-center justify-between group shadow-sm my-2"
                 >
                   <div className="flex items-center gap-3">
-                    <ExternalLink className="w-5 h-5 text-emerald-500" />
-                    <span className="font-semibold text-sm">Student View</span>
+                    <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <ExternalLink className="w-4 h-4 stroke-[2.5]" />
+                    </div>
+                    <div className="text-left">
+                      <span className="block font-black text-xs uppercase tracking-wider text-emerald-800 dark:text-emerald-200 leading-tight">
+                        Student View
+                      </span>
+                      <span className="block text-[10px] font-bold text-emerald-600/80 dark:text-emerald-400/80 uppercase tracking-widest leading-tight mt-0.5">
+                        Public Housing Portal
+                      </span>
+                    </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <ChevronRight className="w-4 h-4 text-emerald-500 group-hover:translate-x-0.5 transition-transform" />
                 </button>
 
                 {/* Log Out */}
