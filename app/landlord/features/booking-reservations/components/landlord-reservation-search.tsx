@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { IconSearch, IconX, IconCalendar, IconUser } from '@tabler/icons-react';
+import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -24,6 +25,8 @@ export function LandlordReservationSearch({
   const [isFocused, setIsFocused] = useState(false);
   const [suggestions, setSuggestions] = useState<ReservationRequest[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const isSearching = localQuery !== debouncedQuery;
 
   useEffect(() => {
     setLocalQuery(searchQuery);
@@ -60,9 +63,13 @@ export function LandlordReservationSearch({
   }, []);
 
   return (
-    <div ref={containerRef} className="relative w-full lg:w-80 group">
+    <div ref={containerRef} className="relative w-full lg:w-80 group z-30">
       <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors z-20">
-        <IconSearch size={18} strokeWidth={2.5} />
+        {isSearching ? (
+          <Loader2 size={18} className="animate-spin text-primary" />
+        ) : (
+          <IconSearch size={18} strokeWidth={2.5} />
+        )}
       </div>
       <input
         type="text"
