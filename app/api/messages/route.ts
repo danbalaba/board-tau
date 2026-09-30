@@ -17,8 +17,9 @@ async function assertCanMessageForListing(params: {
   listingId: string;
   currentUserId: string;
   otherUserId: string;
+  isWrite?: boolean;
 }) {
-  const { listingId, currentUserId, otherUserId } = params;
+  const { listingId, currentUserId, otherUserId, isWrite = false } = params;
 
   const listing = await db.listing.findUnique({
     where: { id: listingId },
@@ -40,14 +41,36 @@ async function assertCanMessageForListing(params: {
 
   const tenantId = isCurrentLandlord ? otherUserId : currentUserId;
 
-  // Strict policy: tenant must have an inquiry or reservation for the listing.
-  const [inquiry, reservation] = await Promise.all([
-    db.inquiry.findFirst({ where: { listingId, userId: tenantId }, select: { id: true } }),
-    db.reservation.findFirst({ where: { listingId, userId: tenantId }, select: { id: true } }),
-  ]);
+  if (isWrite) {
+    // When sending a new message, require an active inquiry or active reservation
+    const [activeInquiry, activeReservation] = await Promise.all([
+      db.inquiry.findFirst({
+        where: { listingId, userId: tenantId, status: { in: ["PENDING", "APPROVED"] } },
+        select: { id: true },
+      }),
+      db.reservation.findFirst({
+        where: { listingId, userId: tenantId, status: { in: ["PENDING_PAYMENT", "RESERVED", "CHECKED_IN"] } },
+        select: { id: true },
+      }),
+    ]);
 
-  if (!inquiry && !reservation) {
-    return { ok: false as const, status: 403, message: "Tenant has no relationship with this listing" };
+    if (!activeInquiry && !activeReservation) {
+      return {
+        ok: false as const,
+        status: 403,
+        message: "Messaging is closed for this listing because the reservation or inquiry is completed or cancelled.",
+      };
+    }
+  } else {
+    // For reading message history (GET), tenant must have any inquiry or reservation record
+    const [inquiry, reservation] = await Promise.all([
+      db.inquiry.findFirst({ where: { listingId, userId: tenantId }, select: { id: true } }),
+      db.reservation.findFirst({ where: { listingId, userId: tenantId }, select: { id: true } }),
+    ]);
+
+    if (!inquiry && !reservation) {
+      return { ok: false as const, status: 403, message: "Tenant has no relationship with this listing" };
+    }
   }
 
   return { ok: true as const, listingTitle: listing.title, landlordId, tenantId };
@@ -126,6 +149,7 @@ export async function POST(request: NextRequest) {
     listingId,
     currentUserId: user.id,
     otherUserId: receiverId,
+    isWrite: true,
   });
 
   if (!can.ok) return jsonError(can.message, can.status);
