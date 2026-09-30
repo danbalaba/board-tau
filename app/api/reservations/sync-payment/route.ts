@@ -46,7 +46,7 @@ export async function GET() {
       const generatedRef = pendingReservation.paymentReference || `REF-${pendingReservation.id.slice(-8).toUpperCase()}`;
       const methodStr = pendingReservation.paymentMethod || "GCASH";
 
-      updatedReservation = await db.reservation.update({
+      updatedReservation = await (db.reservation as any).update({
         where: { 
           id: pendingReservation.id,
           status: "PENDING_PAYMENT" 

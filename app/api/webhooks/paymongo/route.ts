@@ -51,7 +51,7 @@ export async function POST(req: Request) {
 
             const methodStr = (metadata?.paymentMethod || pendingReservation.paymentMethod || "GCASH").toUpperCase();
 
-            updatedReservation = await db.reservation.update({
+            updatedReservation = await (db.reservation as any).update({
               where: { id: pendingReservation.id },
               data: {
                 status: "RESERVED",

@@ -34,7 +34,7 @@ export async function GET(req: Request) {
         const mockMethodStr = (method ? method.toUpperCase() : pendingReservation.paymentMethod || "GCASH").toUpperCase();
         const mockPaymentRef = `TXN-${mockMethodStr}-${pendingReservation.id.slice(-8).toUpperCase()}`;
 
-        updatedReservation = await db.reservation.update({
+        updatedReservation = await (db.reservation as any).update({
           where: { id: pendingReservation.id },
           data: {
             status: "RESERVED",
