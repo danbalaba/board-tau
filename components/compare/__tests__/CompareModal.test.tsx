@@ -3,14 +3,44 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import CompareModal from '../CompareModal';
 import { getComparedListings } from '@/app/actions/compare';
 
+const mockListing = {
+  id: '1',
+  title: 'Test Listing 1',
+  price: 1000,
+  region: 'City A',
+  amenities: { wifi: true, pool: true },
+  features: { cctv: true, security24h: false },
+  rules: { petsAllowed: true },
+  user: { name: 'Host A', image: null },
+  category: ['Condo'],
+  imageSrc: 'img1.jpg',
+  images: ['img2.jpg'],
+  reviews: [{ rating: 5 }, { rating: 4 }]
+};
+
+const mockClearListings = jest.fn();
+const mockGetCachedListings = jest.fn(() => [mockListing]);
+const mockSetCachedListings = jest.fn();
+
 jest.mock('@/app/actions/compare', () => ({
-  getComparedListings: jest.fn()
+  getComparedListings: jest.fn(() => Promise.resolve([mockListing]))
 }));
 
 jest.mock('@/hooks/use-compare-store', () => ({
   useCompareStore: () => ({
-    clearListings: jest.fn()
+    clearListings: mockClearListings,
+    getCachedListings: mockGetCachedListings,
+    setCachedListings: mockSetCachedListings
   })
+}));
+
+jest.mock('@/lib/landlordTaxonomyCache', () => ({
+  getCachedPropertyTypes: jest.fn(() => Promise.resolve([])),
+  getCachedAttributes: jest.fn(() => Promise.resolve([])),
+  getCachedSubGroups: jest.fn(() => Promise.resolve([])),
+  getSyncPropertyTypes: jest.fn(() => []),
+  getSyncAttributes: jest.fn(() => []),
+  getSyncSubGroups: jest.fn(() => [])
 }));
 
 jest.mock('swiper/react', () => ({
@@ -32,28 +62,15 @@ jest.mock('react-markdown', () => {
     return <div data-testid="react-markdown">{children}</div>;
   };
 });
+jest.mock('remark-gfm', () => jest.fn());
 
 describe('CompareModal', () => {
   let mockFetch: jest.Mock;
 
-  const mockListing = {
-    id: '1',
-    title: 'Test Listing 1',
-    price: 1000,
-    region: 'City A',
-    amenities: { wifi: true, pool: true },
-    features: { cctv: true, security24h: false },
-    rules: { petsAllowed: true },
-    user: { name: 'Host A', image: null },
-    category: ['Condo'],
-    imageSrc: 'img1.jpg',
-    images: ['img2.jpg'],
-    reviews: [{ rating: 5 }, { rating: 4 }]
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
     (getComparedListings as jest.Mock).mockResolvedValue([mockListing]);
+    mockGetCachedListings.mockReturnValue([mockListing]);
     
     mockFetch = jest.fn(() =>
       Promise.resolve({
@@ -80,21 +97,19 @@ describe('CompareModal', () => {
   it('loads and displays listings', async () => {
     render(<CompareModal isOpen={true} onClose={jest.fn()} listingIds={['1']} />);
     
-    expect(screen.getByText(/Fetching listing data/i)).toBeInTheDocument();
-    
     await waitFor(() => {
-      expect(screen.getByText('Test Listing 1')).toBeInTheDocument();
+      expect(screen.getAllByText('Test Listing 1').length).toBeGreaterThan(0);
     });
     
-    expect(screen.getByText('₱')).toBeInTheDocument(); // currency symbol
-    expect(screen.getByText('1,000')).toBeInTheDocument(); // price formatted
+    expect(screen.getAllByText('₱').length).toBeGreaterThan(0); // currency symbol
+    expect(screen.getAllByText('1,000').length).toBeGreaterThan(0); // price formatted
   });
 
   it('handles chat submission', async () => {
     render(<CompareModal isOpen={true} onClose={jest.fn()} listingIds={['1']} />);
     
     await waitFor(() => {
-      expect(screen.getByText('Test Listing 1')).toBeInTheDocument();
+      expect(screen.getAllByText('Test Listing 1').length).toBeGreaterThan(0);
     });
     
     const input = screen.getByPlaceholderText(/Ask about these properties/i);
@@ -118,7 +133,7 @@ describe('CompareModal', () => {
     render(<CompareModal isOpen={true} onClose={jest.fn()} listingIds={['1']} />);
     
     await waitFor(() => {
-      expect(screen.getByText('Test Listing 1')).toBeInTheDocument();
+      expect(screen.getAllByText('Test Listing 1').length).toBeGreaterThan(0);
     });
     
     const promptBtn = screen.getByText('Which property offers the best value for money?');
@@ -134,21 +149,21 @@ describe('CompareModal', () => {
     render(<CompareModal isOpen={true} onClose={jest.fn()} listingIds={['1']} />);
     
     await waitFor(() => {
-      expect(screen.getByText('Test Listing 1')).toBeInTheDocument();
+      expect(screen.getAllByText('Test Listing 1').length).toBeGreaterThan(0);
     });
     
-    const aiAdvisorBtn = screen.getByText('AI Advisor', { selector: 'button' });
-    fireEvent.click(aiAdvisorBtn);
+    const kerbyAiBtn = screen.getByText('Kerby AI', { selector: 'span' }).closest('button')!;
+    fireEvent.click(kerbyAiBtn);
     
     await waitFor(() => {
-      expect(screen.getByText('AI Advisor', { selector: 'button' })).toHaveClass('text-primary');
+      expect(kerbyAiBtn).toHaveClass('text-[#2f7d6d]');
     });
     
-    const dataSheetBtn = screen.getByText('Data Sheet', { selector: 'button' });
-    fireEvent.click(dataSheetBtn);
+    const propertySpecsBtn = screen.getByText('Property Specs', { selector: 'span' }).closest('button')!;
+    fireEvent.click(propertySpecsBtn);
     
     await waitFor(() => {
-      expect(screen.getByText('Data Sheet', { selector: 'button' })).toHaveClass('text-primary');
+      expect(propertySpecsBtn).toHaveClass('text-[#2f7d6d]');
     });
   });
 });
