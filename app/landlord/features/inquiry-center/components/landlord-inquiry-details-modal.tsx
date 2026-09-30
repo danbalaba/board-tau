@@ -153,7 +153,8 @@ export function LandlordInquiryDetailsModal({
     }
   };
 
-  const canChat = inquiry.status === 'PENDING' || inquiry.status === 'APPROVED';
+  const isPastStay = inquiry.checkOutDate ? new Date(inquiry.checkOutDate) < new Date() : false;
+  const canChat = (inquiry.status === 'PENDING' || inquiry.status === 'APPROVED') && !isPastStay;
 
   return (
     <>
@@ -532,7 +533,7 @@ export function LandlordInquiryDetailsModal({
             ) : (
               <div
                 className="w-full sm:w-auto h-10 sm:h-11 px-4 sm:px-5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-gray-400 bg-gray-100 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed"
-                title="Messaging is closed for rejected or cancelled inquiries"
+                title={isPastStay ? "Messaging is closed because the stay period has ended" : "Messaging is closed for rejected or cancelled inquiries"}
               >
                 <IconMessage size={16} className="opacity-50" />
                 <span>Chat Closed</span>

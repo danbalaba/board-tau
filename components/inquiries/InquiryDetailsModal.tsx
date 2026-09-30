@@ -194,7 +194,8 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
 
   if (!isOpen || !inquiry) return null;
 
-  const canChat = inquiry.status === "PENDING" || inquiry.status === "APPROVED";
+  const isPastStay = inquiry.checkOutDate ? new Date(inquiry.checkOutDate) < new Date() : false;
+  const canChat = (inquiry.status === "PENDING" || inquiry.status === "APPROVED") && !isPastStay;
   const statusInfo = getStatusBadge(inquiry.status);
 
   return (
@@ -555,7 +556,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                 ) : (
                   <div
                     className="w-full sm:w-auto px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-gray-400 bg-gray-100 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 cursor-not-allowed truncate"
-                    title="Messaging is closed for rejected or cancelled inquiries"
+                    title={isPastStay ? "Messaging is closed because the stay period has ended" : "Messaging is closed for rejected or cancelled inquiries"}
                   >
                     <Mail size={14} className="shrink-0 opacity-50" />
                     <span className="truncate">Chat Closed</span>

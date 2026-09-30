@@ -42,14 +42,25 @@ async function assertCanMessageForListing(params: {
   const tenantId = isCurrentLandlord ? otherUserId : currentUserId;
 
   if (isWrite) {
-    // When sending a new message, require an active inquiry or active reservation
+    const now = new Date();
+    // When sending a new message, require an active inquiry or active reservation that has not expired
     const [activeInquiry, activeReservation] = await Promise.all([
       db.inquiry.findFirst({
-        where: { listingId, userId: tenantId, status: { in: ["PENDING", "APPROVED"] } },
+        where: {
+          listingId,
+          userId: tenantId,
+          status: { in: ["PENDING", "APPROVED"] },
+          checkOutDate: { gte: now },
+        },
         select: { id: true },
       }),
       db.reservation.findFirst({
-        where: { listingId, userId: tenantId, status: { in: ["PENDING_PAYMENT", "RESERVED", "CHECKED_IN"] } },
+        where: {
+          listingId,
+          userId: tenantId,
+          status: { in: ["PENDING_PAYMENT", "RESERVED", "CHECKED_IN"] },
+          endDate: { gte: now },
+        },
         select: { id: true },
       }),
     ]);
@@ -58,7 +69,7 @@ async function assertCanMessageForListing(params: {
       return {
         ok: false as const,
         status: 403,
-        message: "Messaging is closed for this listing because the reservation or inquiry is completed or cancelled.",
+        message: "Messaging is closed for this listing because the stay period has ended or status is inactive.",
       };
     }
   } else {
