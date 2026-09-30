@@ -133,6 +133,7 @@ export function LandlordBookingDetailsModal({
   if (!isOpen || !booking) return null;
 
   const statusInfo = getStatusBadge(booking.status);
+  const canChat = booking.status === 'CHECKED_IN';
   const guestName = (booking.user?.name || booking.guestName) || 'Anonymous Guest';
   const guestEmail = (booking.user?.email || booking.guestContact) || 'No contact specified';
   const signedGuestPhoto = booking.guestPhotoUrl || booking.user?.image || null;
@@ -490,27 +491,37 @@ export function LandlordBookingDetailsModal({
           <div className="px-3.5 sm:px-8 py-3 sm:py-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0 shadow-lg">
             
             {/* Left Action: Chat with Guest */}
-            <button
-              className="w-full sm:w-auto h-10 sm:h-11 px-4 sm:px-5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
-              onClick={() => {
-                const listingImg = (booking.room?.images && booking.room.images.length > 0) ? booking.room.images[0].url : (booking.listing?.images && booking.listing.images.length > 0) ? booking.listing.images[0].url : booking.listing?.imageSrc;
-                const event = new CustomEvent('open-landlord-chat', {
-                  detail: {
-                    listingId: booking.listing.id,
-                    tenantId: booking.user.id,
-                    tenantName: guestName,
-                    tenantImage: (booking.user?.image || booking.guestPhotoUrl) || '',
-                    listingTitle: booking.listing.title,
-                    listingImage: listingImg || ''
-                  }
-                });
-                window.dispatchEvent(event);
-                onClose();
-              }}
-            >
-              <IconMessage size={16} />
-              <span>Chat with Guest</span>
-            </button>
+            {canChat ? (
+              <button
+                className="w-full sm:w-auto h-10 sm:h-11 px-4 sm:px-5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                onClick={() => {
+                  const listingImg = (booking.room?.images && booking.room.images.length > 0) ? booking.room.images[0].url : (booking.listing?.images && booking.listing.images.length > 0) ? booking.listing.images[0].url : booking.listing?.imageSrc;
+                  const event = new CustomEvent('open-landlord-chat', {
+                    detail: {
+                      listingId: booking.listing.id,
+                      tenantId: booking.user.id,
+                      tenantName: guestName,
+                      tenantImage: (booking.user?.image || booking.guestPhotoUrl) || '',
+                      listingTitle: booking.listing.title,
+                      listingImage: listingImg || ''
+                    }
+                  });
+                  window.dispatchEvent(event);
+                  onClose();
+                }}
+              >
+                <IconMessage size={16} />
+                <span>Chat with Guest</span>
+              </button>
+            ) : (
+              <div
+                className="w-full sm:w-auto h-10 sm:h-11 px-4 sm:px-5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-gray-400 bg-gray-100 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed"
+                title="Messaging is closed for completed or cancelled stays"
+              >
+                <IconMessage size={16} className="opacity-50" />
+                <span>Chat Closed</span>
+              </div>
+            )}
             
             {/* Right Primary Actions */}
             <div className="flex items-center gap-2 w-full sm:w-auto">

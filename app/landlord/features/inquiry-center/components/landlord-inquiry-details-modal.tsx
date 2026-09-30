@@ -153,6 +153,8 @@ export function LandlordInquiryDetailsModal({
     }
   };
 
+  const canChat = inquiry.status === 'PENDING' || inquiry.status === 'APPROVED';
+
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} fullOnMobile={true}>
@@ -505,27 +507,37 @@ export function LandlordInquiryDetailsModal({
           <div className="px-3.5 sm:px-8 py-3 sm:py-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0 shadow-lg">
             
             {/* Left Action: Chat with Tenant */}
-            <button
-              className="w-full sm:w-auto h-10 sm:h-11 px-4 sm:px-5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
-              onClick={() => {
-                const listingImg = (inquiry.room?.images && inquiry.room.images.length > 0) ? inquiry.room.images[0].url : inquiry.listing.imageSrc;
-                const event = new CustomEvent('open-landlord-chat', {
-                  detail: {
-                    listingId: inquiry.listing.id,
-                    tenantId: inquiry.user.id,
-                    tenantName: inquiry.user.name || 'Tenant',
-                    tenantImage: inquiry.user.image || '',
-                    listingTitle: inquiry.listing.title,
-                    listingImage: listingImg || ''
-                  }
-                });
-                window.dispatchEvent(event);
-                onClose();
-              }}
-            >
-              <IconMessage size={16} />
-              <span>Chat with Tenant</span>
-            </button>
+            {canChat ? (
+              <button
+                className="w-full sm:w-auto h-10 sm:h-11 px-4 sm:px-5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                onClick={() => {
+                  const listingImg = (inquiry.room?.images && inquiry.room.images.length > 0) ? inquiry.room.images[0].url : inquiry.listing.imageSrc;
+                  const event = new CustomEvent('open-landlord-chat', {
+                    detail: {
+                      listingId: inquiry.listing.id,
+                      tenantId: inquiry.user.id,
+                      tenantName: inquiry.user.name || 'Tenant',
+                      tenantImage: inquiry.user.image || '',
+                      listingTitle: inquiry.listing.title,
+                      listingImage: listingImg || ''
+                    }
+                  });
+                  window.dispatchEvent(event);
+                  onClose();
+                }}
+              >
+                <IconMessage size={16} />
+                <span>Chat with Tenant</span>
+              </button>
+            ) : (
+              <div
+                className="w-full sm:w-auto h-10 sm:h-11 px-4 sm:px-5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-gray-400 bg-gray-100 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed"
+                title="Messaging is closed for rejected or cancelled inquiries"
+              >
+                <IconMessage size={16} className="opacity-50" />
+                <span>Chat Closed</span>
+              </div>
+            )}
             
             {/* Right Primary Actions */}
             <div className="flex items-center gap-2 w-full sm:w-auto">
