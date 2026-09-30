@@ -194,6 +194,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
 
   if (!isOpen || !inquiry) return null;
 
+  const canChat = inquiry.status === "PENDING" || inquiry.status === "APPROVED";
   const statusInfo = getStatusBadge(inquiry.status);
 
   return (
@@ -543,13 +544,23 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
 
               {/* Communication & Documents Pair: Chat with Host & Lease Contract (2-Column Grid on Mobile) */}
               <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:flex-row sm:gap-2.5">
-                <button
-                  className="w-full sm:w-auto px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 truncate"
-                  onClick={() => router.push(`/messages?listingId=${inquiry.listingId}&otherUserId=${landlordId}`)}
-                >
-                  <Mail size={14} className="shrink-0" />
-                  <span className="truncate">Chat with Host</span>
-                </button>
+                {canChat ? (
+                  <button
+                    className="w-full sm:w-auto px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 truncate"
+                    onClick={() => router.push(`/messages?listingId=${inquiry.listingId}&otherUserId=${landlordId}`)}
+                  >
+                    <Mail size={14} className="shrink-0" />
+                    <span className="truncate">Chat with Host</span>
+                  </button>
+                ) : (
+                  <div
+                    className="w-full sm:w-auto px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-gray-400 bg-gray-100 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 cursor-not-allowed truncate"
+                    title="Messaging is closed for rejected or cancelled inquiries"
+                  >
+                    <Mail size={14} className="shrink-0 opacity-50" />
+                    <span className="truncate">Chat Closed</span>
+                  </div>
+                )}
 
                 <button
                   className="w-full sm:w-auto px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 truncate"

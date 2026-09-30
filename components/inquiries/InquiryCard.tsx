@@ -226,7 +226,7 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
               <ArrowRight size={14} className="shrink-0" />
               <span className="truncate">View Reservation</span>
             </button>
-          ) : onCancel && (
+          ) : (inquiry.status === "PENDING" && onCancel) ? (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -237,7 +237,7 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
               <Trash2 size={14} className="shrink-0" />
               <span className="truncate">Cancel</span>
             </button>
-          )}
+          ) : null}
         </div>
       </div>
     </motion.div>

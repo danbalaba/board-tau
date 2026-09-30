@@ -213,6 +213,8 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
   if (!isOpen || !reservation) return null;
 
   const canPay = reservation.status === "PENDING_PAYMENT";
+  const canCancel = reservation.status === "PENDING_PAYMENT" || reservation.status === "RESERVED";
+  const canChat = reservation.status === "PENDING_PAYMENT" || reservation.status === "RESERVED" || reservation.status === "CHECKED_IN";
   const statusInfo = getStatusBadge(reservation.status);
   const paymentInfo = getPaymentBadge(reservation.paymentStatus);
 
@@ -502,13 +504,23 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                 </button>
               )}
 
-              <button
-                className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl transition-all flex items-center justify-center gap-2"
-                onClick={() => router.push(`/messages?listingId=${reservation.listingId}&otherUserId=${landlordId}`)}
-              >
-                <Mail size={14} />
-                <span>Chat with Host</span>
-              </button>
+              {canChat ? (
+                <button
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl transition-all flex items-center justify-center gap-2"
+                  onClick={() => router.push(`/messages?listingId=${reservation.listingId}&otherUserId=${landlordId}`)}
+                >
+                  <Mail size={14} />
+                  <span>Chat with Host</span>
+                </button>
+              ) : (
+                <div
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-gray-400 bg-gray-100 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed"
+                  title="Messaging is closed for completed or cancelled stays"
+                >
+                  <Mail size={14} className="opacity-50" />
+                  <span>Chat Closed</span>
+                </div>
+              )}
 
               {/* Documents Group: Boarding Pass & Lease Contract (Side-by-side 2-column grid on mobile) */}
               {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
@@ -555,12 +567,12 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
               )}
 
               {/* Secondary Actions Group: Cancel & View Listing */}
-              {((onCancel) || (reservation.status === "COMPLETED")) && (
+              {((onCancel && canCancel) || (reservation.status === "COMPLETED")) && (
                 <div className={cn(
                   "w-full sm:w-auto sm:flex sm:flex-row sm:gap-2.5",
-                  (onCancel && reservation.status === "COMPLETED") ? "grid grid-cols-2 gap-2" : "flex flex-col sm:flex-row gap-2.5"
+                  (onCancel && canCancel && reservation.status === "COMPLETED") ? "grid grid-cols-2 gap-2" : "flex flex-col sm:flex-row gap-2.5"
                 )}>
-                  {onCancel && (
+                  {onCancel && canCancel && (
                     <button
                       className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 rounded-xl transition-all flex items-center justify-center gap-2 border border-rose-200 dark:border-rose-800"
                       onClick={onCancel}

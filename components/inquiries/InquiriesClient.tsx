@@ -33,6 +33,7 @@ import ModernLoader from "@/components/common/ModernLoader";
 import Modal from "@/components/modals/Modal";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { UserMobileFilterSheet } from "@/components/common/UserMobileFilterSheet";
+import { useNotification, NotificationItem } from "@/context/NotificationContext";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -130,7 +131,7 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
   const [cancelReason, setCancelReason] = useState("");
   const [inquiryToCancel, setInquiryToCancel] = useState<Inquiry | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
-  const unreadNotifications = notifications.filter(n => !n.isRead && n.type === "inquiry");
+  const unreadNotifications = notifications.filter((n: NotificationItem) => !n.isRead && n.type === "inquiry");
   const hasAutoOpened = useRef(false);
 
   // Auto-open modal if ID is in URL
