@@ -52,6 +52,7 @@ const customJestConfig = {
   testPathIgnorePatterns: [
     '/node_modules/',
     '/.next/',
+    '/e2e/',
     '/tests/__template__/',
     // Integration tests require a live MongoDB — run these locally only
     'services/listing/__tests__/search.integration.test.ts'
