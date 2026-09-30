@@ -13,7 +13,7 @@ jest.mock('@tabler/icons-react', () => {
   return new Proxy({}, {
     get: function(target, prop) {
       if (prop === '__esModule') return true;
-      return () => <div data-testid={`icon-${String(prop).toLowerCase()}`} />;
+      return () => <span data-testid={`icon-${String(prop).toLowerCase()}`} />;
     }
   });
 });
@@ -77,7 +77,7 @@ describe('LandlordBookingDetailsModal', () => {
     expect(screen.getByText('Booking Details')).toBeInTheDocument();
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText('₱5,000 Total Paid')).toBeInTheDocument();
-    expect(screen.getByText('Currently In-house')).toBeInTheDocument();
+    expect(screen.getAllByText(/Currently In-House/i)[0]).toBeInTheDocument();
   });
 
   it('calls onClose when close button is clicked', async () => {

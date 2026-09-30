@@ -3,12 +3,21 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { LandlordReservationHeader } from '../landlord-reservation-header';
 import { ReservationRequest } from '../../hooks/use-reservation-logic';
 
+jest.mock('lucide-react', () => {
+  return new Proxy({}, {
+    get: function (target, prop) {
+      if (prop === 'displayName') return 'LucideIcon';
+      return () => <span data-testid={`icon-${String(prop).toLowerCase()}`} />;
+    }
+  });
+});
+
 jest.mock('@tabler/icons-react', () => {
   return new Proxy({}, {
     get: function (target, prop) {
       if (typeof prop === 'string' && prop.startsWith('Icon')) {
         return ({ "data-testid": testId, ...props }: any) => (
-          <div data-testid={testId || `icon-${prop.toLowerCase()}`} {...props} />
+          <span data-testid={testId || `icon-${prop.toLowerCase()}`} {...props} />
         );
       }
       return target[prop as keyof typeof target];
@@ -70,13 +79,12 @@ describe('LandlordReservationHeader', () => {
   it('renders header text and actions', () => {
     render(<LandlordReservationHeader {...mockProps} />);
     expect(screen.getByText('Reservations')).toBeInTheDocument();
-    expect(screen.getByText('View Archived')).toBeInTheDocument();
+    expect(screen.getByText('Archived')).toBeInTheDocument();
   });
 
   it('calls setViewMode when view toggles are clicked', () => {
     render(<LandlordReservationHeader {...mockProps} />);
-    const gridBtn = screen.getByTestId('icon-iconlayoutgrid').parentElement;
-    const listBtn = screen.getByTestId('icon-iconlist').parentElement;
+    const listBtn = screen.getByTestId('icon-list').closest('button');
     
     fireEvent.click(listBtn!);
     expect(mockProps.setViewMode).toHaveBeenCalledWith('list');

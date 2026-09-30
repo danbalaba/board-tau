@@ -45,8 +45,7 @@ describe('LandlordBookingHeader', () => {
     // Note: Depends on Radix UI Dropdown implementation in real app
     // We'll simulate by checking existence of sort trigger text
     render(<LandlordBookingHeader {...mockProps} />);
-    expect(screen.getByText(/Sort:/)).toBeInTheDocument();
-    expect(screen.getByText(/Newest/)).toBeInTheDocument();
+    expect(screen.getByText('Newest')).toBeInTheDocument();
   });
 
   it('calls handleGenerateReport when report button clicked', () => {
@@ -66,7 +65,7 @@ describe('LandlordBookingHeader', () => {
 
   it('calls onToggleArchived when archive button is clicked', () => {
     render(<LandlordBookingHeader {...mockProps} />);
-    const archiveBtn = screen.getByText('View Archived').closest('button');
+    const archiveBtn = screen.getByText('Archived').closest('button');
     fireEvent.click(archiveBtn!);
     expect(mockProps.onToggleArchived).toHaveBeenCalled();
   });

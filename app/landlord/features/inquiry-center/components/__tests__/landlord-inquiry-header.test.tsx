@@ -104,7 +104,7 @@ describe('LandlordInquiryHeader', () => {
     render(<LandlordInquiryHeader {...defaultProps} />);
     const sortItems = screen.getAllByTestId('dropdown-item');
     // Click oldest
-    fireEvent.click(sortItems.find(item => item.textContent?.includes('Oldest First')) as HTMLElement);
+    fireEvent.click(sortItems.find(item => item.textContent?.toUpperCase().includes('OLDEST')) as HTMLElement);
     expect(mockSetSortBy).toHaveBeenCalledWith('oldest');
   });
 
@@ -112,13 +112,13 @@ describe('LandlordInquiryHeader', () => {
     render(<LandlordInquiryHeader {...defaultProps} />);
     const statusItems = screen.getAllByTestId('dropdown-item');
     // Click Pending
-    fireEvent.click(statusItems.find(item => item.textContent?.includes('Pending')) as HTMLElement);
+    fireEvent.click(statusItems.find(item => item.textContent?.toUpperCase().includes('PENDING')) as HTMLElement);
     expect(mockSetSelectedStatus).toHaveBeenCalledWith('PENDING');
   });
 
   it('calls onToggleArchived when archive toggle is clicked', () => {
     render(<LandlordInquiryHeader {...defaultProps} />);
-    const archiveBtn = screen.getByText('View Archived');
+    const archiveBtn = screen.getByText('Archived');
     fireEvent.click(archiveBtn);
     expect(mockOnToggleArchived).toHaveBeenCalledTimes(1);
   });

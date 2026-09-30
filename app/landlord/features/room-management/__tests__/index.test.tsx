@@ -117,7 +117,7 @@ describe('RoomManagementDashboard', () => {
 
   it('renders the dashboard header and search', () => {
     render(<RoomManagementDashboard initialData={{ rooms: mockRooms as any, nextCursor: null }} />);
-    expect(screen.getByText(/Rooms/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Rooms/i })).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/Search rooms.../i)).toBeInTheDocument();
   });
 

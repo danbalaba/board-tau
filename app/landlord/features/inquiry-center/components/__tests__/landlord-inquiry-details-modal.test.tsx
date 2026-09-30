@@ -70,7 +70,7 @@ jest.mock('framer-motion', () => {
 jest.mock('@tabler/icons-react', () => {
   return new Proxy({}, {
     get: function(target, prop) {
-      return () => <div data-testid={`icon-${String(prop).toLowerCase()}`} />;
+      return () => <span data-testid={`icon-${String(prop).toLowerCase()}`} />;
     }
   });
 });
@@ -140,7 +140,7 @@ describe('LandlordInquiryDetailsModal', () => {
       jest.advanceTimersByTime(600);
     });
 
-    const approveBtn = screen.getByText(/Approve Inquiry/i);
+    const approveBtn = screen.getByRole('button', { name: /Approve/i });
     await act(async () => {
       fireEvent.click(approveBtn);
     });
@@ -156,7 +156,7 @@ describe('LandlordInquiryDetailsModal', () => {
       jest.advanceTimersByTime(600);
     });
 
-    const declineBtn = screen.getByText(/Decline Inquiry/i);
+    const declineBtn = screen.getByRole('button', { name: /Decline/i });
     fireEvent.click(declineBtn);
 
     const confirmDecline = screen.getByText('Confirm Decline Mock');
@@ -176,6 +176,6 @@ describe('LandlordInquiryDetailsModal', () => {
     });
 
     expect(screen.getAllByText('Inquiry Approved').length).toBeGreaterThan(0);
-    expect(screen.queryByText(/Approve Inquiry/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Approve/i })).not.toBeInTheDocument();
   });
 });
