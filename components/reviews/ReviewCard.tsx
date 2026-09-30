@@ -128,20 +128,21 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
             )}
           </AnimatePresence>
 
-          <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm bg-primary/10 text-primary-dark dark:bg-primary/20 dark:text-primary-light border border-primary/20">
+          <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-[#2f7d6d] text-white border border-white/30 flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
             Verified Stay
           </span>
         </div>
 
         {/* Rating Badge on Top Right */}
         <div className="absolute top-3 right-3 z-20 flex flex-col items-end gap-1.5">
-          <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm bg-amber-100/90 text-amber-900 dark:bg-amber-950/80 dark:text-amber-200 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
-            <Star size={11} className="text-amber-500 fill-amber-500" />
+          <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-amber-500 text-white border border-white/30 flex items-center gap-1">
+            <Star size={11} className="text-white fill-white" />
             <span>{review.rating.toFixed(1)}</span>
           </span>
 
           {review.response && (
-            <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm bg-purple-100 text-purple-900 dark:bg-purple-950/80 dark:text-purple-200 border border-purple-200 dark:border-purple-800 flex items-center gap-1">
+            <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-purple-600 text-white border border-white/30 flex items-center gap-1">
               <Check size={10} />
               <span>Replied</span>
             </span>

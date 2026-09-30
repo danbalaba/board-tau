@@ -78,43 +78,50 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
         switch (reservation.status) {
             case "PENDING_PAYMENT":
                 return (
-                    <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm bg-amber-100/90 text-amber-900 dark:bg-amber-950/80 dark:text-amber-200 border border-amber-200 dark:border-amber-800">
+                    <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-amber-500 text-white border border-white/30 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                         Pending Payment
                     </span>
                 );
             case "RESERVED":
                 return (
-                    <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm bg-primary/10 text-primary-dark dark:bg-primary/20 dark:text-primary-light border border-primary/20">
+                    <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-[#2f7d6d] text-white border border-white/30 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                         Reserved
                     </span>
                 );
             case "CHECKED_IN":
                 return (
-                    <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm bg-blue-100 text-blue-900 dark:bg-blue-950/80 dark:text-blue-200 border border-blue-200 dark:border-blue-800">
+                    <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-[#2f7d6d] text-white border border-white/30 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                         Checked In
                     </span>
                 );
             case "COMPLETED":
                 return (
-                    <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm bg-purple-100 text-purple-900 dark:bg-purple-950/80 dark:text-purple-200 border border-purple-200 dark:border-purple-800">
+                    <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-purple-600 text-white border border-white/30 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                         Completed
                     </span>
                 );
             case "CANCELLED":
                 return (
-                    <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm bg-rose-100 text-rose-900 dark:bg-rose-950/80 dark:text-rose-200 border border-rose-200 dark:border-rose-800">
+                    <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-rose-600 text-white border border-white/30 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                         Cancelled
                     </span>
                 );
             case "EXPIRED":
                 return (
-                    <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                    <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-gray-600 text-white border border-white/30 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                         Expired
                     </span>
                 );
             default:
                 return (
-                    <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm bg-gray-100 text-gray-800">
+                    <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-gray-600 text-white border border-white/30 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                         {reservation.status}
                     </span>
                 );
@@ -190,7 +197,8 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
                 <div className="absolute top-3 right-3 z-20 flex flex-col items-end gap-1.5">
                     {getStatusBadge()}
                     {reservation.hasReview && (
-                        <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm bg-purple-100/90 text-purple-900 dark:bg-purple-950/80 dark:text-purple-200 border border-purple-200 dark:border-purple-800">
+                        <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md bg-purple-600 text-white border border-white/30 flex items-center gap-1">
+                            <Check size={10} />
                             Reviewed
                         </span>
                     )}

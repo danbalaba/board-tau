@@ -60,20 +60,20 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
 }) => {
   const router = useRouter();
 
-  // Status badge colors aligned with BoardTAU primary palette
+  // Status badge colors aligned with BoardTAU primary #2f7d6d palette
   const getStatusColor = (status: string) => {
     switch (status) {
       case "PENDING":
-        return "bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-200 border border-amber-200 dark:border-amber-800";
+        return "bg-amber-500 text-white border-white/30 shadow-md";
       case "APPROVED":
-        return "bg-primary/10 text-primary-dark dark:bg-primary/20 dark:text-primary-light border border-primary/20";
+        return "bg-[#2f7d6d] text-white border-white/30 shadow-md";
       case "REJECTED":
-        return "bg-rose-100 text-rose-900 dark:bg-rose-950/80 dark:text-rose-200 border border-rose-200 dark:border-rose-800";
+        return "bg-rose-600 text-white border-white/30 shadow-md";
       case "CANCELLED":
       case "EXPIRED":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700";
+        return "bg-gray-600 text-white border-white/30 shadow-md";
       default:
-        return "bg-gray-100 text-gray-800 border border-gray-200";
+        return "bg-gray-600 text-white border-white/30 shadow-md";
     }
   };
 
@@ -119,7 +119,8 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
           repeatDelay: 1
         }
       }}
-      className="bg-white dark:bg-gray-800/90 rounded-2xl shadow-md hover:shadow-xl border border-gray-200/80 dark:border-gray-700/60 relative group flex flex-col h-full overflow-hidden transition-all duration-300"
+      onClick={onViewDetails}
+      className="bg-white dark:bg-gray-800/90 rounded-2xl shadow-md hover:shadow-xl border border-gray-200/80 dark:border-gray-700/60 relative group flex flex-col h-full overflow-hidden transition-all duration-300 cursor-pointer"
     >
       {/* Subtle Hover Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
@@ -146,8 +147,8 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
         )}
 
         <div className="absolute top-3 right-3 z-20">
-          <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-sm flex items-center gap-1.5 ${getStatusColor(inquiry.status)}`}>
-            {inquiry.status === "APPROVED" && <ArrowRight size={10} className="text-primary" />}
+          <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md border flex items-center gap-1.5 ${getStatusColor(inquiry.status)}`}>
+            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
             {inquiry.status}
           </span>
         </div>
@@ -204,7 +205,10 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
         {/* Action Buttons */}
         <div className="flex items-center gap-2 mt-auto pt-1 w-full">
           <button
-            onClick={onViewDetails}
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails();
+            }}
             className="flex-1 py-2.5 px-2.5 sm:px-3 font-bold text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all shadow-sm min-w-0"
           >
             <Eye size={14} className="text-primary shrink-0" />
