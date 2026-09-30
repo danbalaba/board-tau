@@ -295,7 +295,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
             <div className="p-4 bg-teal-50/80 dark:bg-teal-900/20 rounded-2xl border border-teal-100 dark:border-teal-800/50 flex items-start gap-2.5">
               <Info className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
               <p className="text-[11px] font-bold text-teal-800 dark:text-teal-300 leading-relaxed">
-                <strong>Legal Booking Lifecycle Notice</strong>: Submitting this inquiry sends your application to the landlord for approval. You will sign the official digital lease contract during reservation checkout after the landlord approves your application!
+                <strong>Legal Booking Lifecycle Notice</strong>: Submitting this inquiry sends your application to the landlord for approval. You will review and digitally accept the official lease contract terms via checkbox during reservation checkout after the landlord approves your application!
               </p>
             </div>
           </div>
