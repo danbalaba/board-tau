@@ -141,8 +141,8 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} closeOnOutsideClick={false}>
-      <div className="h-[88vh] max-h-[820px] min-h-[580px] overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-3xl border border-white/10 shadow-2xl">
+    <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} closeOnOutsideClick={false} fullOnMobile={true}>
+      <div className="h-full sm:h-[88vh] sm:max-h-[820px] sm:min-h-[580px] overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl border-0 sm:border sm:border-white/10 shadow-2xl">
         {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 z-20 bg-white dark:bg-gray-900">
           <div className="flex flex-col">

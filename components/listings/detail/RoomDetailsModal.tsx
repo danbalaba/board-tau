@@ -361,7 +361,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
           initial="hidden"
           animate="show"
           exit="exit"
-          className="fixed inset-0 z-[10500] flex items-center justify-center p-4 md:p-8 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-md"
+          className="fixed inset-0 z-[10500] flex items-center justify-center p-0 md:p-8 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-md"
           onClick={onClose}
         >
           {/* Ambient glow orbs */}
@@ -374,12 +374,12 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
             initial="hidden"
             animate="show"
             exit="exit"
-            className="relative w-full max-w-5xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col"
+            className="relative w-full max-w-5xl h-full md:h-auto max-h-full md:max-h-[90vh] bg-white dark:bg-gray-900 rounded-none md:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col"
             onClick={e => e.stopPropagation()}
           >
             {/* ── HERO IMAGE GALLERY ─────────────────── */}
             <div 
-              className="relative h-64 sm:h-80 flex-shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-900 group cursor-pointer"
+              className="relative h-48 sm:h-64 lg:h-80 flex-shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-900 group cursor-pointer"
               onClick={() => {
                 if (images.length > 0) {
                   setMediaPreviewState({ isOpen: true, index: currentImageIndex });
@@ -563,18 +563,18 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
                       {activeTab === 'OVERVIEW' && (
                         <div className="space-y-6">
                           {/* Attribute Cards Grid */}
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
                             {cardAttributes.map((attr, i) => (
                               <div
                                 key={i}
-                                className="p-4 rounded-3xl bg-gray-50 dark:bg-gray-800/50 flex flex-col gap-3 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 border border-transparent"
+                                className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-gray-50 dark:bg-gray-800/50 flex flex-row sm:flex-col items-center sm:items-start gap-2.5 sm:gap-3 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 border border-transparent"
                               >
-                                <div className="w-10 h-10 rounded-2xl bg-white dark:bg-gray-800 flex items-center justify-center text-primary shadow-sm">
-                                  <attr.icon size={18} />
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white dark:bg-gray-800 flex items-center justify-center text-primary shadow-sm shrink-0">
+                                  <attr.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                                 </div>
-                                <div>
-                                  <p className="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-1">{attr.label}</p>
-                                  <p className="text-xs font-black uppercase leading-tight text-gray-900 dark:text-white">{attr.value}</p>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-0.5 sm:mb-1 truncate">{attr.label}</p>
+                                  <p className="text-[11px] sm:text-xs font-black uppercase leading-tight text-gray-900 dark:text-white truncate">{attr.value}</p>
                                 </div>
                               </div>
                             ))}
@@ -587,7 +587,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
                                 <div className="w-3 h-0.5 bg-primary rounded-full" />
                                 About This Room
                               </h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-medium bg-gray-50 dark:bg-gray-800/40 p-5 rounded-3xl border border-gray-100 dark:border-gray-800">
+                              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-medium bg-gray-50 dark:bg-gray-800/40 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-gray-800">
                                 {room.description}
                               </p>
                             </div>
@@ -738,8 +738,8 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
                   </AnimatePresence>
                 </div>
 
-                {/* RIGHT — Sticky Action Panel */}
-                <div className="lg:col-span-1 p-6 sm:p-8 flex flex-col gap-6">
+                {/* RIGHT — Sticky Action Panel (Desktop Only) */}
+                <div className="hidden lg:flex lg:col-span-1 p-6 sm:p-8 flex-col gap-6">
                   {/* Price recap card */}
                   <div className="p-6 rounded-3xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
                     <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Monthly Rate</p>
@@ -832,6 +832,58 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Mobile Fixed Bottom Action Bar */}
+            <div className="lg:hidden shrink-0 p-3.5 sm:p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3 z-40 shadow-lg">
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">₱{room.price.toLocaleString()}</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">/mo</span>
+                </div>
+                {room.reservationFee > 0 && (
+                  <span className="text-[9px] font-black text-primary truncate">
+                    ₱{room.reservationFee.toLocaleString()} reservation fee
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {room.status === "MAINTENANCE" ? (
+                  <button
+                    disabled
+                    className="px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 font-black text-[11px] uppercase tracking-widest flex items-center gap-1.5 cursor-not-allowed border border-amber-200/60"
+                  >
+                    <Wrench size={14} />
+                    Maintenance
+                  </button>
+                ) : user && isAvailable ? (
+                  <button
+                    onClick={onInquire}
+                    className="px-5 py-3 rounded-xl bg-primary hover:bg-primary/90 text-white font-black text-[11px] uppercase tracking-widest shadow-lg shadow-primary/25 flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <MessageSquare size={14} />
+                    <span>Send Inquiry</span>
+                    <ArrowRight size={13} />
+                  </button>
+                ) : !isAvailable ? (
+                  <button
+                    disabled
+                    className="px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[11px] uppercase tracking-widest flex items-center gap-1.5 cursor-not-allowed"
+                  >
+                    <Ban size={14} />
+                    Occupied
+                  </button>
+                ) : (
+                  <button
+                    onClick={onInquire}
+                    className="px-4 py-3 rounded-xl bg-primary/10 text-primary font-black text-[10px] uppercase tracking-widest border border-primary/20 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Shield size={14} />
+                    Sign in to Inquire
+                  </button>
+                )}
               </div>
             </div>
 

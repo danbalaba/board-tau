@@ -112,8 +112,8 @@ const IDStep: React.FC<IDStepProps> = ({
   };
 
   const handleTakePhotoClick = () => {
-    const isMobileDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0) && window.innerWidth < 768;
-    if (isMobileDevice && fileInputRef.current) {
+    const isMobileSmartphone = typeof window !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && window.innerWidth < 768;
+    if (isMobileSmartphone && fileInputRef.current) {
       fileInputRef.current.click();
     } else {
       setIsCameraActive(true);

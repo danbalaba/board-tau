@@ -120,7 +120,7 @@ const OTPVerifyStep: React.FC<OTPVerifyStepProps> = ({
         <p className="text-sm font-black text-blue-600 dark:text-blue-400 tracking-wide select-all">{userEmail}</p>
       </div>
 
-      <div className="px-2">
+      <div className="w-full px-0 sm:px-2">
         <OtpInput
           id="otp"
           label="6-Digit Verification Code"

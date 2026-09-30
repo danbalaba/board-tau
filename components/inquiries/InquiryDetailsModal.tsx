@@ -592,7 +592,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
             </div>
 
             <button
-              className="w-full sm:w-auto px-5 py-2 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors text-center order-2 sm:order-1"
+              className="hidden sm:block w-full sm:w-auto px-5 py-2 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors text-center order-2 sm:order-1"
               onClick={onClose}
             >
               Close
