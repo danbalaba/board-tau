@@ -861,7 +861,7 @@ export function LandlordPropertyDetailsModal({
                               <div className="w-3 h-0.5 bg-primary rounded-full" />
                               <span>About this Property</span>
                             </h4>
-                            <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm font-medium whitespace-pre-wrap">
+                            <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm font-medium whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                               {property.description || "No description provided."}
                             </p>
                           </div>
@@ -1621,26 +1621,26 @@ export function LandlordPropertyDetailsModal({
       {/* Interactive Fullscreen Map Modal */}
       <AnimatePresence>
         {isMapFullscreenOpen && (
-          <div className="fixed inset-0 z-[99999] bg-slate-900/20 dark:bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 md:p-8" onClick={() => setIsMapFullscreenOpen(false)}>
+          <div className="fixed inset-0 z-[99999] bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 md:p-8" onClick={() => setIsMapFullscreenOpen(false)}>
             <motion.div
               initial={{ opacity: 0, scale: 0.98, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98, y: 10 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-5xl h-full sm:h-[85vh] min-h-screen sm:min-h-[550px] bg-white dark:bg-gray-900 border-0 sm:border border-gray-200 dark:border-gray-800 rounded-none sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col font-sans"
+              className="w-full max-w-5xl h-[100dvh] max-h-[100dvh] sm:h-[85vh] sm:min-h-[550px] bg-white dark:bg-gray-900 border-0 sm:border border-gray-200 dark:border-gray-800 rounded-none sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col font-sans"
             >
               {/* Header */}
-              <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-900 shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary shrink-0 border border-primary/20">
-                    <MapPin size={20} className="sm:w-5 sm:h-5" />
+              <div className="px-3.5 py-3 sm:px-6 sm:py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-900 shrink-0">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-2">
+                  <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary shrink-0 border border-primary/20">
+                    <MapPin size={18} className="sm:w-5 sm:h-5" />
                   </div>
-                  <div>
-                    <h3 className="text-xs sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                  <div className="min-w-0">
+                    <h3 className="text-xs sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
                       Verified Map Location Inspection
                     </h3>
-                    <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mt-0.5">
+                    <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mt-0.5 truncate">
                       {property.title || 'Property Location'}
                     </p>
                   </div>
@@ -1649,7 +1649,7 @@ export function LandlordPropertyDetailsModal({
                 <button
                   type="button"
                   onClick={() => setIsMapFullscreenOpen(false)}
-                  className="p-2 sm:p-2.5 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-all shrink-0 cursor-pointer"
+                  className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-all shrink-0 cursor-pointer"
                 >
                   <X size={18} />
                 </button>
@@ -1679,8 +1679,8 @@ export function LandlordPropertyDetailsModal({
               </div>
 
               {/* Footer */}
-              <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/80 flex flex-col md:flex-row items-center justify-between gap-3 shrink-0">
-                <div className="w-full md:w-auto px-3.5 py-1.5 sm:px-4 sm:py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl sm:rounded-2xl text-gray-900 dark:text-white text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2">
+              <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/80 flex flex-row items-center justify-between gap-3 shrink-0 pb-6 sm:pb-4">
+                <div className="hidden sm:flex w-full md:w-auto px-3.5 py-1.5 sm:px-4 sm:py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl sm:rounded-2xl text-gray-900 dark:text-white text-[10px] sm:text-xs font-black uppercase tracking-wider items-center justify-center gap-2">
                   <CheckCircle2 size={14} className="sm:w-4 sm:h-4 text-primary" />
                   <span>
                     Verified Location: {getParsedCoordinates(property)[0].toFixed(6)}, {getParsedCoordinates(property)[1].toFixed(6)}
@@ -1690,7 +1690,7 @@ export function LandlordPropertyDetailsModal({
                 <button
                   type="button"
                   onClick={() => setIsMapFullscreenOpen(false)}
-                  className="w-full md:w-auto px-6 py-2.5 sm:px-8 sm:py-3 bg-primary hover:bg-primary/90 text-white rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full sm:w-auto px-6 py-2.5 sm:px-8 sm:py-3 bg-primary hover:bg-primary/90 text-white rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 cursor-pointer ml-auto"
                 >
                   Dismiss Map View
                 </button>
