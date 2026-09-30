@@ -9,7 +9,8 @@ import ReservationCard from "@/components/reservations/ReservationCard";
 import ReservationDetailsModal from "@/components/reservations/ReservationDetailsModal";
 import PaymentModal from "@/components/reservations/PaymentModal";
 import ReviewModal from "@/components/modals/ReviewModal";
-import { Search, Filter, Loader2, ArrowUpDown, Clock, DollarSign, CheckCircle, RefreshCcw } from "lucide-react";
+import { Search, Filter, Loader2, ArrowUpDown, Clock, DollarSign, CheckCircle, RefreshCcw, Check } from "lucide-react";
+import { cn } from "@/utils/helper";
 import { motion, AnimatePresence } from "framer-motion";
 import ModernSelect from "@/components/common/ModernSelect";
 import ConfirmModal from "@/components/common/ConfirmModal";
@@ -31,6 +32,7 @@ import Modal from "@/components/modals/Modal";
 import ModernLoader from "@/components/common/ModernLoader";
 import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
+import { UserMobileFilterSheet } from "@/components/common/UserMobileFilterSheet";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -353,43 +355,107 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                 backBtn
             />
 
-            {/* Filters and Search - Always visible */}
+            {/* Search and Filter Bar - Responsive Layout */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-8 mb-10 flex flex-col md:flex-row items-center gap-4 bg-white/50 dark:bg-gray-800/50 p-4 rounded-2xl backdrop-blur-md border border-gray-100 dark:border-gray-700/50 shadow-sm relative z-20"
             >
-                {/* Search */}
-                <div className="relative flex-[5]">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Search by room name or location..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 border border-transparent rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-sm transition-all"
-                    />
+                {/* Search & Mobile Filter Trigger */}
+                <div className="flex items-center gap-2 w-full md:flex-[5]">
+                    <div className="relative flex-1 min-w-0">
+                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search by room name or location..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border border-transparent rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-sm transition-all text-sm"
+                        />
+                    </div>
+
+                    {/* Mobile Filter Sheet Drawer */}
+                    <UserMobileFilterSheet
+                        activeFilterCount={(statusFilter !== "ALL" ? 1 : 0) + (sortBy !== "newest" ? 1 : 0)}
+                        onClearAll={() => {
+                            setStatusFilter("ALL");
+                            setSortBy("newest");
+                        }}
+                    >
+                        <div className="space-y-6">
+                            {/* Status Section */}
+                            <div className="space-y-2.5">
+                                <span className="text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                                    <Filter size={14} className="text-primary" /> Reservation Status
+                                </span>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {statusOptions.map((opt) => (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            onClick={() => setStatusFilter(opt.value)}
+                                            className={cn(
+                                                "px-3 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider border transition-all flex items-center justify-between cursor-pointer",
+                                                statusFilter === opt.value
+                                                    ? "bg-primary/10 text-primary border-primary/30 font-black shadow-xs"
+                                                    : "bg-gray-50 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 border-gray-200/60 dark:border-gray-700/60 hover:bg-gray-100"
+                                            )}
+                                        >
+                                            <span className="truncate">{opt.label}</span>
+                                            {statusFilter === opt.value && <Check size={14} strokeWidth={3} className="text-primary shrink-0 ml-1" />}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Sort Section */}
+                            <div className="space-y-2.5">
+                                <span className="text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                                    <ArrowUpDown size={14} className="text-primary" /> Sort Order
+                                </span>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {sortOptions.map((opt) => (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            onClick={() => setSortBy(opt.value)}
+                                            className={cn(
+                                                "px-3.5 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider border transition-all flex items-center justify-between cursor-pointer",
+                                                sortBy === opt.value
+                                                    ? "bg-primary/10 text-primary border-primary/30 font-black shadow-xs"
+                                                    : "bg-gray-50 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 border-gray-200/60 dark:border-gray-700/60 hover:bg-gray-100"
+                                            )}
+                                        >
+                                            <span className="truncate">{opt.label}</span>
+                                            {sortBy === opt.value && <Check size={14} strokeWidth={3} className="text-primary shrink-0 ml-1" />}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </UserMobileFilterSheet>
                 </div>
 
-                {/* Status Filter */}
-                <ModernSelect
-                    instanceId="status-filter"
-                    options={statusOptions}
-                    value={statusFilter}
-                    onChange={setStatusFilter}
-                    icon={<Filter size={18} />}
-                    className="md:w-max min-w-[200px]"
-                />
+                {/* Desktop Inline Filters */}
+                <div className="hidden md:flex items-center gap-4">
+                    <ModernSelect
+                        instanceId="status-filter"
+                        options={statusOptions}
+                        value={statusFilter}
+                        onChange={setStatusFilter}
+                        icon={<Filter size={18} />}
+                        className="w-max min-w-[200px]"
+                    />
 
-                {/* Sort */}
-                <ModernSelect
-                    instanceId="sort-filter"
-                    options={sortOptions}
-                    value={sortBy}
-                    onChange={setSortBy}
-                    icon={<ArrowUpDown size={18} />}
-                    className="md:w-max min-w-[204px]"
-                />
+                    <ModernSelect
+                        instanceId="sort-filter"
+                        options={sortOptions}
+                        value={sortBy}
+                        onChange={setSortBy}
+                        icon={<ArrowUpDown size={18} />}
+                        className="w-max min-w-[204px]"
+                    />
+                </div>
             </motion.div>
 
             {isLoading ? (
