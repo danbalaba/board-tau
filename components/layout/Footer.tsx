@@ -25,8 +25,15 @@ const useSafeSession = () => {
 const Footer: React.FC = () => {
   const { data: session } = useSafeSession();
   const currentUser = session?.user;
+  const [isMounted, setIsMounted] = React.useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [supportSubject, setSupportSubject] = useState('');
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const isAuthenticatedUser = isMounted && !!currentUser;
 
   const handleReportIssue = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -164,7 +171,7 @@ const Footer: React.FC = () => {
                 </h3>
                 <ul className="space-y-3">
                   <li>
-                    {currentUser ? (
+                    {isAuthenticatedUser ? (
                       <Link
                         href="/become-a-host"
                         prefetch={false}
