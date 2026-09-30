@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { IconChevronLeft, IconChevronRight, IconChevronDown } from '@tabler/icons-react';
+import React, { useState } from 'react';
+import { ChevronLeft, ChevronRight, ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/utils/helper';
 import {
   DropdownMenu,
@@ -29,6 +29,8 @@ export function LandlordPagination({
   totalItems,
   itemName = "items"
 }: LandlordPaginationProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
   if (totalItems === 0) return null;
 
   const startItem = (currentPage - 1) * itemsPerPage + 1;
@@ -60,24 +62,41 @@ export function LandlordPagination({
           Showing {startItem}-{endItem} of {totalItems} {itemName}
         </span>
 
-        <DropdownMenu>
+        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-gray-700 text-[11px] font-black text-gray-700 dark:text-gray-200 hover:text-primary transition-all shadow-xs cursor-pointer shrink-0">
+            <button className={cn(
+              "flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-white dark:bg-gray-800/90 rounded-xl sm:rounded-2xl border text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-all duration-300 shadow-xs cursor-pointer shrink-0 select-none",
+              isOpen
+                ? "border-primary bg-primary/10 text-primary shadow-sm ring-2 ring-primary/20"
+                : "border-gray-200/80 dark:border-gray-700/80 text-gray-700 dark:text-gray-200 hover:border-primary/50 hover:text-primary"
+            )}>
               <span>{itemsPerPage} per page</span>
-              <IconChevronDown size={14} className="opacity-50 shrink-0" />
+              <div className={cn(
+                "w-5 h-5 rounded-lg flex items-center justify-center transition-all duration-300 shrink-0",
+                isOpen
+                  ? "bg-primary/20 text-primary rotate-180"
+                  : "bg-gray-100 dark:bg-gray-700/60 text-gray-400 group-hover:text-primary"
+              )}>
+                <ChevronDown size={13} strokeWidth={2.5} />
+              </div>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-xl z-[150]">
+          <DropdownMenuContent align="end" className="min-w-[140px] bg-white dark:bg-[#111827] border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-1.5 shadow-2xl z-[150] space-y-1">
             {[10, 20, 30, 50].map((size) => (
               <DropdownMenuItem
                 key={size}
                 onClick={() => onItemsPerPageChange(size)}
                 className={cn(
-                  "cursor-pointer px-3 py-2 text-xs font-bold transition-all",
-                  itemsPerPage === size ? "bg-primary/10 text-primary font-black" : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  "cursor-pointer px-3 py-2.5 rounded-xl text-[10px] sm:text-[11px] uppercase tracking-wider font-black transition-all flex items-center justify-between select-none",
+                  itemsPerPage === size 
+                    ? "bg-primary/10 text-primary font-black border border-primary/20" 
+                    : "text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-100 dark:hover:bg-gray-800/80"
                 )}
               >
-                {size} per page
+                <span>{size} per page</span>
+                {itemsPerPage === size && (
+                  <Check size={14} className="text-primary shrink-0 ml-2" strokeWidth={3} />
+                )}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -91,7 +110,7 @@ export function LandlordPagination({
           disabled={currentPage === 1}
           className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:text-primary hover:border-primary/50 hover:bg-primary/5 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-xs font-extrabold cursor-pointer"
         >
-          <IconChevronLeft size={16} strokeWidth={2.5} />
+          <ChevronLeft size={16} strokeWidth={2.5} />
           <span className="sm:hidden text-[10px] font-black uppercase tracking-wider">Prev</span>
         </button>
 
@@ -123,7 +142,7 @@ export function LandlordPagination({
           className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:text-primary hover:border-primary/50 hover:bg-primary/5 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-xs font-extrabold cursor-pointer"
         >
           <span className="sm:hidden text-[10px] font-black uppercase tracking-wider">Next</span>
-          <IconChevronRight size={16} strokeWidth={2.5} />
+          <ChevronRight size={16} strokeWidth={2.5} />
         </button>
       </div>
 
