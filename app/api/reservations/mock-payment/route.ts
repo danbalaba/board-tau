@@ -31,11 +31,16 @@ export async function GET(req: Request) {
           return NextResponse.json({ success: true, message: "Already paid" });
         }
 
+        const mockMethodStr = (method ? method.toUpperCase() : pendingReservation.paymentMethod || "GCASH").toUpperCase();
+        const mockPaymentRef = `TXN-${mockMethodStr}-${pendingReservation.id.slice(-8).toUpperCase()}`;
+
         updatedReservation = await db.reservation.update({
           where: { id: pendingReservation.id },
           data: {
             status: "RESERVED",
             paymentStatus: "PAID",
+            paymentMethod: mockMethodStr as any,
+            paymentReference: mockPaymentRef,
           },
           include: {
             listing: true,

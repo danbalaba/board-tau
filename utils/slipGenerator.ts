@@ -149,15 +149,48 @@ export const generateConfirmationSlipPDF = async (reservation: any, tenantName: 
 
   startY += 10;
 
+  const formatPaymentMethod = (methodRaw?: string, inquiryMethodRaw?: string): string => {
+    const method = (methodRaw || inquiryMethodRaw || "").toUpperCase();
+    if (method === "STRIPE" || method === "CREDIT_CARD" || method === "CARD") {
+      return "Credit / Debit Card (Stripe)";
+    }
+    if (method === "GCASH") {
+      return "GCash E-Wallet";
+    }
+    if (method === "MAYA") {
+      return "Maya Wallet";
+    }
+    if (method === "CASH") {
+      return "Cash Payment";
+    }
+    if (method === "BANK_TRANSFER") {
+      return "Bank Transfer";
+    }
+    return "Online Payment";
+  };
+
+  const formatPaymentReference = (ref?: string, resId?: string): string => {
+    if (ref && ref.trim() && ref.trim().toUpperCase() !== "N/A") {
+      return ref.trim();
+    }
+    if (resId) {
+      return `REF-${resId.slice(-8).toUpperCase()}`;
+    }
+    return "N/A";
+  };
+
+  const displayPaymentMethod = formatPaymentMethod(reservation.paymentMethod, reservation.inquiry?.paymentMethod);
+  const displayPaymentReference = formatPaymentReference(reservation.paymentReference, reservation.id);
+
   autoTable(doc, {
     startY: startY,
     head: [["Total Bill", "Amount Paid", "Payment Method", "Payment Reference"]],
     body: [
       [
-        `PHP ${reservation.totalPrice.toLocaleString()}`,
-        `PHP ${reservation.totalPrice.toLocaleString()}`,
-        reservation.paymentMethod || "Direct Payment",
-        reservation.paymentReference || "N/A"
+        `PHP ${Number(reservation.totalPrice || 0).toLocaleString()}`,
+        `PHP ${Number(reservation.totalPrice || 0).toLocaleString()}`,
+        displayPaymentMethod,
+        displayPaymentReference
       ]
     ],
     theme: "plain",
