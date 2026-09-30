@@ -94,21 +94,21 @@ export default function LandlordMobileBottomBar() {
         isHidden ? "translate-y-28 opacity-0" : "translate-y-0 opacity-100"
       }`}
     >
-      <div className="max-w-md mx-auto pointer-events-auto bg-white/60 dark:bg-slate-900/65 backdrop-blur-3xl border border-white/50 dark:border-white/20 ring-1 ring-white/30 dark:ring-white/10 shadow-[0_16px_45px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_55px_rgba(0,0,0,0.65)] rounded-[32px] px-3.5 py-2.5 flex items-center justify-around font-sans">
-        <div className="flex items-center justify-around w-full gap-1.5">
+      <div className="max-w-md mx-auto pointer-events-auto bg-white/60 dark:bg-slate-900/65 backdrop-blur-3xl border border-white/50 dark:border-white/20 ring-1 ring-white/30 dark:ring-white/10 shadow-[0_16px_45px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_55px_rgba(0,0,0,0.65)] rounded-[32px] px-2 py-2 sm:px-3.5 sm:py-2.5 flex items-center justify-around font-sans overflow-hidden">
+        <div className="flex items-center justify-around w-full gap-0.5 sm:gap-1.5">
           {/* Dashboard */}
           <button
             type="button"
             onClick={() => redirect("/landlord")}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full transition-all duration-300 ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded-full transition-all duration-300 ${
               isDashboardActive
-                ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold scale-105 backdrop-blur-xl"
+                ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold backdrop-blur-xl"
                 : "text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10"
             }`}
           >
             <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
             {isDashboardActive && (
-              <span className="text-xs sm:text-sm font-extrabold whitespace-nowrap">Dashboard</span>
+              <span className="text-[11px] sm:text-xs font-extrabold whitespace-nowrap truncate max-w-[85px] sm:max-w-none">Dashboard</span>
             )}
           </button>
 
@@ -116,15 +116,15 @@ export default function LandlordMobileBottomBar() {
           <button
             type="button"
             onClick={() => redirect("/landlord/properties")}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full transition-all duration-300 ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded-full transition-all duration-300 ${
               isPropertiesActive
-                ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold scale-105 backdrop-blur-xl"
+                ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold backdrop-blur-xl"
                 : "text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10"
             }`}
           >
             <Building2 className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
             {isPropertiesActive && (
-              <span className="text-xs sm:text-sm font-extrabold whitespace-nowrap">Properties</span>
+              <span className="text-[11px] sm:text-xs font-extrabold whitespace-nowrap truncate max-w-[85px] sm:max-w-none">Properties</span>
             )}
           </button>
 
@@ -132,9 +132,9 @@ export default function LandlordMobileBottomBar() {
           <button
             type="button"
             onClick={() => redirect("/landlord/inquiries")}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full transition-all duration-300 ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded-full transition-all duration-300 ${
               isInquiriesActive
-                ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold scale-105 backdrop-blur-xl"
+                ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold backdrop-blur-xl"
                 : "text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10"
             }`}
           >
@@ -147,7 +147,7 @@ export default function LandlordMobileBottomBar() {
               )}
             </div>
             {isInquiriesActive && (
-              <span className="text-xs sm:text-sm font-extrabold whitespace-nowrap">Inquiries</span>
+              <span className="text-[11px] sm:text-xs font-extrabold whitespace-nowrap truncate max-w-[85px] sm:max-w-none">Inquiries</span>
             )}
           </button>
 
@@ -155,15 +155,15 @@ export default function LandlordMobileBottomBar() {
           <button
             type="button"
             onClick={() => redirect("/landlord/bookings")}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full transition-all duration-300 ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded-full transition-all duration-300 ${
               isBookingsActive
-                ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold scale-105 backdrop-blur-xl"
+                ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold backdrop-blur-xl"
                 : "text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10"
             }`}
           >
             <CalendarDays className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
             {isBookingsActive && (
-              <span className="text-xs sm:text-sm font-extrabold whitespace-nowrap">Bookings</span>
+              <span className="text-[11px] sm:text-xs font-extrabold whitespace-nowrap truncate max-w-[85px] sm:max-w-none">Bookings</span>
             )}
           </button>
 
@@ -171,15 +171,15 @@ export default function LandlordMobileBottomBar() {
           <button
             type="button"
             onClick={openMenuPanel}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full transition-all duration-300 ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded-full transition-all duration-300 ${
               isMenuActive
-                ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold scale-105 backdrop-blur-xl"
+                ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold backdrop-blur-xl"
                 : "text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10"
             }`}
           >
             <Menu className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 ${isMenuActive ? "text-white" : "text-[#2f7d6d] dark:text-emerald-400"}`} />
             {isMenuActive && (
-              <span className="text-xs sm:text-sm font-extrabold whitespace-nowrap">Menu</span>
+              <span className="text-[11px] sm:text-xs font-extrabold whitespace-nowrap truncate max-w-[85px] sm:max-w-none">Menu</span>
             )}
           </button>
         </div>
