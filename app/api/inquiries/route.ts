@@ -275,6 +275,17 @@ export async function GET(request: Request) {
             reservationFee: true,
           },
         },
+        reservations: {
+          select: {
+            id: true,
+            status: true,
+            paymentStatus: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 1,
+        },
       },
       orderBy: {
         createdAt: "desc",

@@ -100,7 +100,26 @@ export function LandlordInquiryDetailsModal({
     }
   }, []);
 
-  const getStatusBadge = useCallback((status: string) => {
+  const getStatusBadge = useCallback((status: string, reservationStatus?: string) => {
+    if (reservationStatus === "COMPLETED") {
+      return {
+        label: "Stay Completed",
+        className: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30",
+      };
+    }
+    if (reservationStatus === "CHECKED_IN") {
+      return {
+        label: "Checked In",
+        className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+      };
+    }
+    if (reservationStatus === "CANCELLED") {
+      return {
+        label: "Cancelled",
+        className: "bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-200",
+      };
+    }
+
     switch (status) {
       case 'PENDING':
         return {
@@ -141,7 +160,8 @@ export function LandlordInquiryDetailsModal({
 
   if (!isOpen || !inquiry) return null;
 
-  const statusInfo = getStatusBadge(inquiry.status);
+  const reservationStatus = (inquiry as any).reservations?.[0]?.status;
+  const statusInfo = getStatusBadge(inquiry.status, reservationStatus);
   const reservationFee = (inquiry as any).reservationFee || inquiry.room?.reservationFee || 0;
 
   const handleAction = async (status: string, reason?: string) => {
@@ -154,7 +174,7 @@ export function LandlordInquiryDetailsModal({
   };
 
   const isPastStay = inquiry.checkOutDate ? new Date(inquiry.checkOutDate) < new Date() : false;
-  const canChat = (inquiry.status === 'PENDING' || inquiry.status === 'APPROVED') && !isPastStay;
+  const canChat = (inquiry.status === 'PENDING' || inquiry.status === 'APPROVED') && !isPastStay && reservationStatus !== "COMPLETED" && reservationStatus !== "CANCELLED";
 
   return (
     <>

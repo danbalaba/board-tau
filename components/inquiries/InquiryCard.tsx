@@ -43,6 +43,7 @@ interface Inquiry {
   rejectionReason?: string;
   listing: InquiryListing;
   room: InquiryRoom;
+  reservations?: Array<{ id: string; status: string; paymentStatus?: string }>;
 }
 
 interface InquiryCardProps {
@@ -60,20 +61,28 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
 }) => {
   const router = useRouter();
 
-  // Status badge colors aligned with BoardTAU primary #2f7d6d palette
-  const getStatusColor = (status: string) => {
-    switch (status) {
+  const reservationStatus = (inquiry as any).reservations?.[0]?.status;
+
+  const getDisplayBadge = () => {
+    if (reservationStatus === "COMPLETED") {
+      return { label: "COMPLETED", color: "bg-purple-600 text-white border-white/30 shadow-md" };
+    }
+    if (reservationStatus === "CHECKED_IN") {
+      return { label: "CHECKED IN", color: "bg-emerald-600 text-white border-white/30 shadow-md" };
+    }
+    if (reservationStatus === "CANCELLED") {
+      return { label: "CANCELLED", color: "bg-gray-600 text-white border-white/30 shadow-md" };
+    }
+
+    switch (inquiry.status) {
       case "PENDING":
-        return "bg-amber-500 text-white border-white/30 shadow-md";
+        return { label: "PENDING", color: "bg-amber-500 text-white border-white/30 shadow-md" };
       case "APPROVED":
-        return "bg-[#2f7d6d] text-white border-white/30 shadow-md";
+        return { label: "APPROVED", color: "bg-[#2f7d6d] text-white border-white/30 shadow-md" };
       case "REJECTED":
-        return "bg-rose-600 text-white border-white/30 shadow-md";
-      case "CANCELLED":
-      case "EXPIRED":
-        return "bg-gray-600 text-white border-white/30 shadow-md";
+        return { label: "REJECTED", color: "bg-rose-600 text-white border-white/30 shadow-md" };
       default:
-        return "bg-gray-600 text-white border-white/30 shadow-md";
+        return { label: inquiry.status, color: "bg-gray-600 text-white border-white/30 shadow-md" };
     }
   };
 
@@ -147,9 +156,9 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
         )}
 
         <div className="absolute top-3 right-3 z-20">
-          <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md border flex items-center gap-1.5 ${getStatusColor(inquiry.status)}`}>
+          <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg backdrop-blur-md border flex items-center gap-1.5 ${getDisplayBadge().color}`}>
             <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            {inquiry.status}
+            {getDisplayBadge().label}
           </span>
         </div>
       </div>

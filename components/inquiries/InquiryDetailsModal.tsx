@@ -150,7 +150,26 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
     });
   }, []);
 
-  const getStatusBadge = useCallback((status: string) => {
+  const getStatusBadge = useCallback((status: string, reservationStatus?: string) => {
+    if (reservationStatus === "COMPLETED") {
+      return {
+        label: "Stay Completed",
+        className: "bg-purple-100 text-purple-900 dark:bg-purple-950/80 dark:text-purple-200 border-purple-300 dark:border-purple-800",
+      };
+    }
+    if (reservationStatus === "CHECKED_IN") {
+      return {
+        label: "Checked In",
+        className: "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/80 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800",
+      };
+    }
+    if (reservationStatus === "CANCELLED") {
+      return {
+        label: "Cancelled",
+        className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border-gray-300 dark:border-gray-700",
+      };
+    }
+
     switch (status) {
       case "PENDING":
         return {
@@ -194,9 +213,10 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
 
   if (!isOpen || !inquiry) return null;
 
+  const reservationStatus = (inquiry as any).reservations?.[0]?.status;
   const isPastStay = inquiry.checkOutDate ? new Date(inquiry.checkOutDate) < new Date() : false;
-  const canChat = (inquiry.status === "PENDING" || inquiry.status === "APPROVED") && !isPastStay;
-  const statusInfo = getStatusBadge(inquiry.status);
+  const canChat = (inquiry.status === "PENDING" || inquiry.status === "APPROVED") && !isPastStay && reservationStatus !== "COMPLETED" && reservationStatus !== "CANCELLED";
+  const statusInfo = getStatusBadge(inquiry.status, reservationStatus);
 
   return (
     <>

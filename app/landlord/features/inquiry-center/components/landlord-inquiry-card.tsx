@@ -72,6 +72,26 @@ export function LandlordInquiryCard({
     return inquiry.listing?.imageSrc || "/images/placeholder.jpg";
   };
 
+  const reservationStatus = (inquiry as any).reservations?.[0]?.status;
+
+  const getDisplayBadge = () => {
+    if (reservationStatus === "COMPLETED") {
+      return { label: "COMPLETED", colorClass: "bg-purple-600 text-white border-white/30 shadow-md" };
+    }
+    if (reservationStatus === "CHECKED_IN") {
+      return { label: "CHECKED IN", colorClass: "bg-emerald-600 text-white border-white/30 shadow-md" };
+    }
+    if (reservationStatus === "CANCELLED") {
+      return { label: "CANCELLED", colorClass: "bg-gray-600 text-white border-white/30 shadow-md" };
+    }
+    return {
+      label: inquiry.status,
+      colorClass: statusColors[inquiry.status] || "bg-primary/90 text-white border-primary/40"
+    };
+  };
+
+  const badge = getDisplayBadge();
+
   if (isGrid) {
     return (
       <motion.div 
@@ -92,10 +112,10 @@ export function LandlordInquiryCard({
           <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-20 scale-90 sm:scale-100 origin-top-left">
             <span className={cn(
               "flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl text-[8px] sm:text-[9px] uppercase font-black tracking-wider shadow-lg backdrop-blur-md border",
-              statusColors[inquiry.status] || "bg-primary/90 text-white border-primary/40"
+              badge.colorClass
             )}>
               <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-              {inquiry.status}
+              {badge.label}
             </span>
           </div>
 
