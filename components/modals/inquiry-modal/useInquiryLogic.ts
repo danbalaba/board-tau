@@ -40,9 +40,14 @@ export const useInquiryLogic = (
 
   // Step & Image State
   const [currentStep, setCurrentStep] = useState(1);
+  const [maxUnlockedStep, setMaxUnlockedStep] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    setMaxUnlockedStep((prev) => Math.max(prev, currentStep));
+  }, [currentStep]);
 
   // KYC States
   const webcamRef = useRef<Webcam>(null);
@@ -472,6 +477,13 @@ export const useInquiryLogic = (
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
+  const handleStepClick = (targetStep: number) => {
+    if (targetStep <= maxUnlockedStep && targetStep !== currentStep) {
+      setDirection(targetStep > currentStep ? 1 : -1);
+      setCurrentStep(targetStep);
+    }
+  };
+
   const onSubmitForm = async (data: FormData) => {
     try {
       setIsUploading(true);
@@ -562,7 +574,8 @@ export const useInquiryLogic = (
     register, handleFormSubmit: handleFormSubmit(onSubmitForm),
     errors, setValue, getValues, trigger, watch, control, clearErrors,
     watchedValues,
-    isStepCompleted, handleNextStep, handlePrevStep,
+    isStepCompleted, handleNextStep, handlePrevStep, handleStepClick,
+    maxUnlockedStep,
     handleCaptureSelfie, handleCaptureID, toggleCamera,
     activeStay, userEmail,
     resendCooldown, setResendCooldown,
