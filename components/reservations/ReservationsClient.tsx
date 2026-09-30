@@ -575,8 +575,10 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                 width="md"
                 title=""
                 closeOnOutsideClick={false}
+                hasFixedFooter={true}
+                fullOnMobile={true}
             >
-                <div className="overflow-hidden rounded-3xl relative">
+                <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl relative">
                     {/* X Close Button */}
                     <button
                         onClick={() => setShowCancelReason(false)}
@@ -586,7 +588,7 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                         <X size={18} />
                     </button>
                     {/* Header Banner - theme-aware */}
-                    <div className="bg-primary/10 dark:bg-primary/5 p-5 border-b border-primary/20 dark:border-primary/10 flex items-center gap-4">
+                    <div className="bg-primary/10 dark:bg-primary/5 p-5 pr-12 border-b border-primary/20 dark:border-primary/10 flex items-center gap-4 shrink-0">
                         <div className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 flex-shrink-0">
                             <AlertCircle size={20} strokeWidth={2.5} />
                         </div>
@@ -598,61 +600,64 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                         </div>
                     </div>
 
-                    <div className="p-6">
-                        <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-5 leading-relaxed">
-                            Please let the landlord know why you're cancelling. This helps with record keeping and keeps the platform fair.
-                        </p>
+                    {/* Body Content */}
+                    <div className="p-6 overflow-y-auto flex-1 sm:flex-initial flex flex-col justify-between sm:block overscroll-contain">
+                        <div>
+                            <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-5 leading-relaxed">
+                                Please let the landlord know why you're cancelling. This helps with record keeping and keeps the platform fair.
+                            </p>
 
-                        <div className="grid grid-cols-1 gap-2 mb-5">
-                            {[
-                                { label: "Financial constraints", icon: <DollarSign size={16} /> },
-                                { label: "Family emergency / Health reasons", icon: <HeartPulse size={16} /> },
-                                { label: "Found a better boarding house", icon: <Building2 size={16} /> },
-                                { label: "Change of residence plan (Relocation)", icon: <Truck size={16} /> },
-                                { label: "School/Work schedule changed", icon: <GraduationCap size={16} /> },
-                                { label: "Other", icon: <MoreHorizontal size={16} /> }
-                            ].map((item, index) => (
-                                <motion.button
-                                    key={item.label}
-                                    initial={{ opacity: 0, x: -8 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: index * 0.04 }}
-                                    onClick={() => setCancelReason(item.label)}
-                                    className={`group flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left ${cancelReason === item.label
-                                        ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary shadow-sm ring-2 ring-primary/10"
-                                        : "border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 bg-gray-50/80 dark:bg-gray-900/50 text-gray-600 dark:text-gray-300"
-                                    }`}
-                                >
-                                    <div className={`p-2 rounded-xl flex-shrink-0 transition-colors ${cancelReason === item.label
-                                        ? "bg-primary text-white"
-                                        : "bg-white dark:bg-gray-800 text-gray-400 group-hover:text-primary dark:group-hover:text-primary"
-                                    }`}>
-                                        {item.icon}
-                                    </div>
-                                    <span className="text-sm font-bold tracking-tight">{item.label}</span>
-                                </motion.button>
-                            ))}
+                            <div className="grid grid-cols-1 gap-2 mb-5">
+                                {[
+                                    { label: "Financial constraints", icon: <DollarSign size={16} /> },
+                                    { label: "Family emergency / Health reasons", icon: <HeartPulse size={16} /> },
+                                    { label: "Found a better boarding house", icon: <Building2 size={16} /> },
+                                    { label: "Change of residence plan (Relocation)", icon: <Truck size={16} /> },
+                                    { label: "School/Work schedule changed", icon: <GraduationCap size={16} /> },
+                                    { label: "Other", icon: <MoreHorizontal size={16} /> }
+                                ].map((item, index) => (
+                                    <motion.button
+                                        key={item.label}
+                                        initial={{ opacity: 0, x: -8 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: index * 0.04 }}
+                                        onClick={() => setCancelReason(item.label)}
+                                        className={`group flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left ${cancelReason === item.label
+                                            ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary shadow-sm ring-2 ring-primary/10"
+                                            : "border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 bg-gray-50/80 dark:bg-gray-900/50 text-gray-600 dark:text-gray-300"
+                                        }`}
+                                    >
+                                        <div className={`p-2 rounded-xl flex-shrink-0 transition-colors ${cancelReason === item.label
+                                            ? "bg-primary text-white"
+                                            : "bg-white dark:bg-gray-800 text-gray-400 group-hover:text-primary dark:group-hover:text-primary"
+                                        }`}>
+                                            {item.icon}
+                                        </div>
+                                        <span className="text-sm font-bold tracking-tight">{item.label}</span>
+                                    </motion.button>
+                                ))}
+                            </div>
+
+                            <AnimatePresence>
+                                {cancelReason === "Other" && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="overflow-hidden mb-5"
+                                    >
+                                        <textarea
+                                            autoFocus
+                                            placeholder="Please specify your reason here..."
+                                            className="w-full p-4 border border-gray-100 dark:border-gray-800 dark:bg-gray-900 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none text-sm font-medium transition-all min-h-[100px] dark:text-white resize-none"
+                                            onChange={(e) => setCancelReason(e.target.value)}
+                                        />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
 
-                        <AnimatePresence>
-                            {cancelReason === "Other" && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: "auto" }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    className="overflow-hidden mb-5"
-                                >
-                                    <textarea
-                                        autoFocus
-                                        placeholder="Please specify your reason here..."
-                                        className="w-full p-4 border border-gray-100 dark:border-gray-800 dark:bg-gray-900 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none text-sm font-medium transition-all min-h-[100px] dark:text-white resize-none"
-                                        onChange={(e) => setCancelReason(e.target.value)}
-                                    />
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-3 pt-3 sm:pt-0">
                             <Button
                                 outline
                                 onClick={() => setShowCancelReason(false)}

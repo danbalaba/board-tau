@@ -9,11 +9,14 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { pusherClient } from "@/lib/pusher-client";
 import toast from "react-hot-toast";
+import { verifyRestrictionToken } from "@/lib/security-tokens";
 
 const AccountBannedPage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const email = searchParams.get("email");
+  const token = searchParams.get("token");
+  const payload = verifyRestrictionToken(token);
+  const email = payload?.email || searchParams.get("email");
 
   useEffect(() => {
     if (!email) return;

@@ -18,6 +18,7 @@ import SpinnerMini from "../common/Loader";
 import { registerUser } from "@/services/auth";
 import { sendOTP, verifyOTP } from "@/services/user/otp";
 import { validateOTP } from "@/lib/validators";
+import { createRestrictionToken } from "@/lib/security-tokens";
 import {
   signupResolver,
   loginResolver,
@@ -142,6 +143,46 @@ const AuthModal = ({
             redirect: false,
           });
 
+          // Check if NextAuth redirected to a restriction page or returned a restriction error
+          const targetUrl = callback?.url || "";
+          const targetError = callback?.error || "";
+
+          if (
+            targetUrl.includes("AccountSuspended") || 
+            targetUrl.includes("/auth/suspended") || 
+            targetError.includes("AccountSuspended")
+          ) {
+            onCloseModal?.();
+            window.location.href = `/api/auth/error?error=AccountSuspended:${encodeURIComponent(email)}`;
+            return;
+          }
+
+          if (
+            targetUrl.includes("AccountBanned") || 
+            targetUrl.includes("/auth/banned") || 
+            targetError.includes("AccountBanned")
+          ) {
+            onCloseModal?.();
+            window.location.href = `/api/auth/error?error=AccountBanned:${encodeURIComponent(email)}`;
+            return;
+          }
+
+          if (
+            targetUrl.includes("AccountLocked") || 
+            targetUrl.includes("/auth/locked") || 
+            targetError.includes("AccountLocked")
+          ) {
+            responsiveToast.error(
+              "Access Denied: Your account is currently under a 24-hour security lock due to multiple failed OTP attempts. Please try again later or contact support.",
+              { duration: 5000 }
+            );
+            setTimeout(() => {
+              onCloseModal?.();
+              window.location.href = `/api/auth/error?error=AccountLocked:${encodeURIComponent(email)}`;
+            }, 2000);
+            return;
+          }
+
           if (callback?.error) {
             // If login failed because email is not verified, open OTP modal
             if (callback.error.includes("Email not verified")) {
@@ -205,11 +246,20 @@ const AuthModal = ({
             { duration: 5000 }
           );
 
-          // Delayed redirect to give the user time to read the toast
           setTimeout(() => {
             onCloseModal?.();
-            router.push(`/auth/locked?email=${encodeURIComponent(email || userEmail)}&secure=1`);
+            window.location.href = `/api/auth/error?error=AccountLocked:${encodeURIComponent(email || userEmail)}`;
           }, 2000);
+        } else if (error.message.includes("AccountSuspended")) {
+          const parts = error.message.split(":");
+          const targetEmail = parts.length > 1 && parts[1] ? parts[1] : (watch("email") || userEmail);
+          onCloseModal?.();
+          window.location.href = `/api/auth/error?error=AccountSuspended:${encodeURIComponent(targetEmail)}`;
+        } else if (error.message.includes("AccountBanned")) {
+          const parts = error.message.split(":");
+          const targetEmail = parts.length > 1 && parts[1] ? parts[1] : (watch("email") || userEmail);
+          onCloseModal?.();
+          window.location.href = `/api/auth/error?error=AccountBanned:${encodeURIComponent(targetEmail)}`;
         } else {
           responsiveToast.error(error.message);
         }
