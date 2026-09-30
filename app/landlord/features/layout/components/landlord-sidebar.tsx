@@ -47,6 +47,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/app/admin/components/ui/tooltip';
+import Skeleton from '@/components/common/Skeleton';
+import { KerbyMascot } from '@/components/modals/search-modal/KerbyMascot';
+import { useKerby } from '@/lib/context/KerbyContext';
 
 const navItems = [
   {
@@ -91,9 +94,191 @@ const navItems = [
   },
 ];
 
-import Skeleton from '@/components/common/Skeleton';
-import { KerbyMascot } from '@/components/modals/search-modal/KerbyMascot';
-import { useKerby } from '@/lib/context/KerbyContext';
+const LANDLORD_TIPS: Record<string, Array<{ speech: string; asset: string; pose: string; badge: string }>> = {
+  properties: [
+    {
+      speech: "Host Tip: Detailed property descriptions with nearby TAU landmarks attract up to 40% more student views!",
+      asset: "/assets/mascot/kerby-landlord-blueprint.png",
+      pose: "pointing",
+      badge: "Property Listing Tip",
+    },
+    {
+      speech: "Host Tip: High-quality photos of your facade & common areas build instant trust with student boarders.",
+      asset: "/assets/mascot/kerby-editor-basics.png",
+      pose: "pointing",
+      badge: "Photo Quality Tip",
+    },
+    {
+      speech: "Host Tip: Keep your property address and walking distance to campus gates accurate on the map!",
+      asset: "/assets/mascot/kerby-desktop-location.png",
+      pose: "studying",
+      badge: "Location Accuracy",
+    },
+    {
+      speech: "Host Tip: Specify water, electricity, and WiFi inclusion rules clearly to prevent tenant misunderstandings.",
+      asset: "/assets/mascot/kerby-editor-rules.png",
+      pose: "pointing",
+      badge: "Utility Inclusion Tip",
+    },
+  ],
+  rooms: [
+    {
+      speech: "Host Tip: Group beds into clear Solo Room or Bedspace listings so students can filter easily!",
+      asset: "/assets/mascot/kerby-editor-rooms.png",
+      pose: "excited",
+      badge: "Room Layout Tip",
+    },
+    {
+      speech: "Host Tip: Keep available slot counts updated in real time so boarders don't apply to full rooms.",
+      asset: "/assets/mascot/kerby-halfbody-keys.png",
+      pose: "pointing",
+      badge: "Slot Management",
+    },
+    {
+      speech: "Host Tip: Highlighting aircon, study desks, and private CR amenities increases solo room bookings!",
+      asset: "/assets/mascot/kerby-desktop-compliance.png",
+      pose: "excited",
+      badge: "In-Unit Amenities",
+    },
+    {
+      speech: "Host Tip: Mention gender policies (e.g. Female Only) early to help students find suitable accommodation.",
+      asset: "/assets/mascot/kerby-mobile-role.png",
+      pose: "studying",
+      badge: "House Rules Tip",
+    },
+  ],
+  inquiries: [
+    {
+      speech: "Host Tip: Replying within 15 minutes doubles your reservation conversion rate!",
+      asset: "/assets/mascot/kerby-phone-contact.png",
+      pose: "pointing",
+      badge: "Fast Response Tip",
+    },
+    {
+      speech: "Host Tip: Friendly, polite answers to student questions create a welcoming first impression.",
+      asset: "/assets/mascot/kerby-casual-loving.png",
+      pose: "loving",
+      badge: "Hospitality Tip",
+    },
+    {
+      speech: "Host Tip: Direct inquiring students to submit an online reservation once they select a room.",
+      asset: "/assets/mascot/kerby-mobile-contact.png",
+      pose: "pointing",
+      badge: "Booking Flow Tip",
+    },
+  ],
+  reservations: [
+    {
+      speech: "Host Tip: Review and confirm student reservation holds promptly to lock in upcoming term bookings!",
+      asset: "/assets/mascot/kerby-halfbody-keys.png",
+      pose: "waving",
+      badge: "Reservation Hold",
+    },
+    {
+      speech: "Host Tip: Verify payment receipts quickly so student boarders receive their official booking receipt.",
+      asset: "/assets/mascot/kerby-landlord-checklist.png",
+      pose: "studying",
+      badge: "Payment Verification",
+    },
+    {
+      speech: "Host Tip: Send clear move-in instructions once a student's reservation deposit is approved.",
+      asset: "/assets/mascot/kerby-desktop-welcome.png",
+      pose: "excited",
+      badge: "Move-In Readiness",
+    },
+  ],
+  bookings: [
+    {
+      speech: "Host Tip: Track active tenancy contract start & end dates to prepare for semester turnovers.",
+      asset: "/assets/mascot/kerby-halfbody-revenue.png",
+      pose: "excited",
+      badge: "Contract Tracking",
+    },
+    {
+      speech: "Host Tip: Send friendly reminders 3 days before monthly rental payments are due.",
+      asset: "/assets/mascot/kerby-landlord-verified.png",
+      pose: "pointing",
+      badge: "Rental Collection",
+    },
+    {
+      speech: "Host Tip: Keep record of tenant emergency contact details for a safe, worry-free boarding house.",
+      asset: "/assets/mascot/kerby-401-security.png",
+      pose: "studying",
+      badge: "Tenant Safety",
+    },
+  ],
+  reviews: [
+    {
+      speech: "Host Tip: Outstanding tenant reviews build top reputation across the TAU student community!",
+      asset: "/assets/mascot/kerby-halfbody-rating.png",
+      pose: "loving",
+      badge: "Reputation Builder",
+    },
+    {
+      speech: "Host Tip: Thank student boarders for positive feedback and respond constructively to suggestions.",
+      asset: "/assets/mascot/kerby-desktop-review.png",
+      pose: "waving",
+      badge: "Review Engagement",
+    },
+    {
+      speech: "Host Tip: Maintaining a 4.5+ star rating boosts your property to the top of TAU search results!",
+      asset: "/assets/mascot/kerby-halfbody-celebrate-popper.png",
+      pose: "excited",
+      badge: "Top Rated Host",
+    },
+  ],
+  analytics: [
+    {
+      speech: "Host Tip: Monitor listing page views and peak inquiry times to adjust your seasonal pricing!",
+      asset: "/assets/mascot/kerby-admin-audit-specs.png",
+      pose: "studying",
+      badge: "Analytics Insights",
+    },
+    {
+      speech: "Host Tip: Properties with complete amenity tags receive 3x higher conversion rates!",
+      asset: "/assets/mascot/kerby-halfbody-pointing.png",
+      pose: "pointing",
+      badge: "Conversion Strategy",
+    },
+    {
+      speech: "Host Tip: Track your monthly revenue growth to plan property improvements & room upgrades.",
+      asset: "/assets/mascot/kerby-halfbody-revenue.png",
+      pose: "excited",
+      badge: "Financial Growth",
+    },
+  ],
+  default: [
+    {
+      speech: "Mabuhay Host! Kerby is here to help you manage your TAU listings smoothly.",
+      asset: "/assets/mascot/kerby-casual-waving.png",
+      pose: "waving",
+      badge: "Host Assistant",
+    },
+    {
+      speech: "Host Tip: Keep your contact number and chat availability active during enrolment season!",
+      asset: "/assets/mascot/kerby-phone-contact.png",
+      pose: "pointing",
+      badge: "Peak Season Tip",
+    },
+    {
+      speech: "Host Tip: Clear house rules and transparent pricing make student onboarding seamless.",
+      asset: "/assets/mascot/kerby-editor-rules.png",
+      pose: "studying",
+      badge: "Host Best Practice",
+    },
+  ]
+};
+
+const getCategoryKey = (path: string): string => {
+  if (path.startsWith('/landlord/properties')) return 'properties';
+  if (path.startsWith('/landlord/rooms')) return 'rooms';
+  if (path.startsWith('/landlord/inquiries')) return 'inquiries';
+  if (path.startsWith('/landlord/reservations')) return 'reservations';
+  if (path.startsWith('/landlord/bookings')) return 'bookings';
+  if (path.startsWith('/landlord/reviews')) return 'reviews';
+  if (path.startsWith('/landlord/analytics')) return 'analytics';
+  return 'default';
+};
 
 export default function LandlordSidebar() {
   const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
@@ -102,6 +287,24 @@ export default function LandlordSidebar() {
   const { theme } = useTheme();
   const { kerbyState } = useKerby();
   const [mounted, setMounted] = useState(false);
+  const [tipIndex, setTipIndex] = useState(0);
+
+  const categoryKey = getCategoryKey(pathname);
+  const currentPool = LANDLORD_TIPS[categoryKey] || LANDLORD_TIPS.default;
+
+  useEffect(() => {
+    setTipIndex(0);
+  }, [categoryKey]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTipIndex((prev) => (prev + 1) % currentPool.length);
+    }, 22000); // Rotates every 22 seconds for comfortable reading
+
+    return () => clearInterval(interval);
+  }, [currentPool]);
+
+  const activeTip = currentPool[tipIndex % currentPool.length];
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -291,15 +494,16 @@ export default function LandlordSidebar() {
           </div>
         ) : isDashboardPage ? null : (
           <div className="relative flex flex-col items-center justify-end w-full overflow-visible">
-            {/* Mascot in Sidebar with Transparent Background & Northeast Slant Speech Bubble (Active on non-dashboard subpages) */}
+            {/* Mascot in Sidebar with Dynamic 10s Rotating Tips & Assets */}
             <div className="w-full flex flex-col items-center overflow-visible">
               <KerbyMascot 
-                pose={(kerbyState?.pose as any) || "waving"}
+                pose={(kerbyState?.pose as any) || (activeTip.pose as any)}
                 outfitMode="casual"
-                speechText={kerbyState?.speech || "Mabuhay Host! Ready to manage your TAU listings today?"}
-                badgeLabel={kerbyState?.badge || "Host Assistant"}
+                customAssetSrc={activeTip.asset}
+                speechText={kerbyState?.speech || activeTip.speech}
+                badgeLabel={kerbyState?.badge || activeTip.badge}
                 transparentBg={true}
-                bubblePosition="top-right"
+                bubblePosition="top"
               />
             </div>
           </div>

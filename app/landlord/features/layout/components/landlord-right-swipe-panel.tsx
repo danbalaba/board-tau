@@ -193,7 +193,7 @@ export default function LandlordRightSwipePanel({ user: initialUser }: LandlordR
                     </div>
                   </div>
 
-                  {/* Settings Hub Button */}
+                  {/* Settings Button */}
                   <button
                     type="button"
                     onClick={() => {
@@ -204,7 +204,7 @@ export default function LandlordRightSwipePanel({ user: initialUser }: LandlordR
                   >
                     <div className="flex items-center gap-2">
                       <Settings className="w-4 h-4 text-violet-500" />
-                      <span>Settings Hub</span>
+                      <span>Settings</span>
                     </div>
                     <ChevronRight className="w-4 h-4 text-gray-400" />
                   </button>

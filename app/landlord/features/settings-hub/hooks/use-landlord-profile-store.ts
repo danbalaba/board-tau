@@ -16,7 +16,7 @@ interface UserProfile {
   bio?: string;
 }
 
-type SettingsTab = 'profile' | 'notifications' | 'payment' | 'security';
+type SettingsTab = 'profile' | 'security';
 
 interface LandlordProfileStore {
   user: UserProfile | null;

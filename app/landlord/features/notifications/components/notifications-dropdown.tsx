@@ -22,7 +22,6 @@ import {
   ArrowRight, 
   CheckCheck, 
   Trash2, 
-  Settings, 
   Loader2, 
   Inbox 
 } from 'lucide-react';
@@ -234,46 +233,38 @@ export function NotificationsDropdown() {
           </AnimatePresence>
         </div>
 
-        <DropdownMenuSeparator className="bg-gray-100 dark:border-gray-800/80 my-2 mx-4" />
-        
         {/* Footer Actions */}
-        <div className="p-3 space-y-2">
-           {unreadCount > 0 && (
-             <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                markAllAsRead();
-              }}
-              disabled={isMarkingRead}
-              className="w-full h-10 flex items-center justify-center gap-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-black uppercase tracking-wider transition-all border border-primary/20 disabled:opacity-50 active:scale-95 cursor-pointer"
-             >
-               {isMarkingRead ? <Loader2 size={14} className="animate-spin" /> : <CheckCheck size={14} />}
-               <span>Mark All as Read</span>
-             </button>
-           )}
-           
-           {notifications.length > 0 && (
-             <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                clearAll();
-              }}
-              disabled={isClearing}
-              className="w-full h-10 flex items-center justify-center gap-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-black uppercase tracking-wider transition-all border border-gray-200 dark:border-gray-700 disabled:opacity-50 active:scale-95 cursor-pointer"
-             >
-               {isClearing ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-               <span>Clear All Notifications</span>
-             </button>
-           )}
-
-           <Link 
-            href="/landlord/settings?tab=notifications"
-            className="w-full h-11 flex items-center justify-center gap-2 rounded-2xl bg-primary text-white hover:bg-primary/90 text-[10px] font-black uppercase tracking-[0.15em] transition-all shadow-lg shadow-primary/20 active:scale-[0.98] cursor-pointer"
-           >
-             <Settings size={15} />
-             <span>Notification Settings</span>
-           </Link>
-        </div>
+        {(unreadCount > 0 || notifications.length > 0) && (
+          <div className="p-3 space-y-2 border-t border-gray-100 dark:border-gray-800/80">
+            {unreadCount > 0 && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  markAllAsRead();
+                }}
+                disabled={isMarkingRead}
+                className="w-full h-10 flex items-center justify-center gap-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-black uppercase tracking-wider transition-all border border-primary/20 disabled:opacity-50 active:scale-95 cursor-pointer"
+              >
+                {isMarkingRead ? <Loader2 size={14} className="animate-spin" /> : <CheckCheck size={14} />}
+                <span>Mark All as Read</span>
+              </button>
+            )}
+            
+            {notifications.length > 0 && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearAll();
+                }}
+                disabled={isClearing}
+                className="w-full h-10 flex items-center justify-center gap-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-black uppercase tracking-wider transition-all border border-gray-200 dark:border-gray-700 disabled:opacity-50 active:scale-95 cursor-pointer"
+              >
+                {isClearing ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                <span>Clear All Notifications</span>
+              </button>
+            )}
+          </div>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

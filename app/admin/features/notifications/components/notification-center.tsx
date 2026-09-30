@@ -21,7 +21,6 @@ import {
   Star, 
   ArrowRight, 
   CheckCheck, 
-  Settings, 
   Loader2, 
   Inbox 
 } from 'lucide-react';
@@ -198,31 +197,21 @@ export function NotificationCenter() {
           </AnimatePresence>
         </div>
 
-        <DropdownMenuSeparator className="bg-gray-100 dark:border-gray-800/80 my-2 mx-4" />
-        
         {/* Footer Actions */}
-        <div className="p-3 space-y-2">
-           {count > 0 && (
-             <button 
+        {count > 0 && (
+          <div className="p-3 border-t border-gray-100 dark:border-gray-800/80">
+            <button 
               onClick={(e) => {
                 e.stopPropagation();
                 markAllAsRead();
               }}
               className="w-full h-10 flex items-center justify-center gap-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-black uppercase tracking-wider transition-all border border-primary/20 active:scale-95 cursor-pointer"
-             >
-               <CheckCheck size={14} />
-               <span>Mark All as Read</span>
-             </button>
-           )}
-
-           <Link 
-            href="/admin"
-            className="w-full h-11 flex items-center justify-center gap-2 rounded-2xl bg-primary text-white hover:bg-primary/90 text-[10px] font-black uppercase tracking-[0.15em] transition-all shadow-lg shadow-primary/20 active:scale-[0.98] cursor-pointer"
-           >
-             <Settings size={15} />
-             <span>Notification Settings</span>
-           </Link>
-        </div>
+            >
+              <CheckCheck size={14} />
+              <span>Mark All as Read</span>
+            </button>
+          </div>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

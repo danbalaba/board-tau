@@ -234,14 +234,6 @@ const Footer: React.FC = () => {
                     </Link>
                   </li>
                   <li>
-                    <button
-                      onClick={handleReportIssue}
-                      className="text-sm hover:underline text-gray-600 dark:text-slate-400 hover:text-black dark:hover:text-white cursor-pointer text-left transition-colors duration-200"
-                    >
-                      Report an Issue
-                    </button>
-                  </li>
-                  <li>
                     <Link
                       href="/support/safety-guidelines"
                       prefetch={false}

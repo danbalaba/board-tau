@@ -6,56 +6,106 @@ export interface AddressInfo {
   coordinates: [number, number];
 }
 
-// Simple geocoding service with local fallback
-export const geocodeAddress = async (address: string): Promise<AddressInfo | null> => {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000); // Increased timeout to 15 seconds
+const TOWN_COORDINATES: Record<string, [number, number]> = {
+  paniqui: [15.6661, 120.5814],
+  camiling: [15.6980, 120.4285],
+  gerona: [15.6053, 120.5986],
+  moncada: [15.7342, 120.5881],
+  capas: [15.3347, 120.5908],
+  concepcion: [15.3242, 120.6558],
+  victoria: [15.5767, 120.6806],
+  'tarlac city': [15.4802, 120.5979],
+  tarlac: [15.4802, 120.5979],
+  bamban: [15.2811, 120.5694],
+  'santa ignacia': [15.6147, 120.4358],
+  'san jose': [15.4678, 120.4708],
+  'san manuel': [15.8272, 120.6125],
+  pula: [15.6352, 120.4153],
+  tau: [15.6352, 120.4153],
+};
 
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1`,
-      {
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'BoardTAU/1.0'
-        }
-      }
-    );
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      throw new Error(`Geocoding API error: ${response.status}`);
+const getTownFallbackCoords = (query: string): [number, number] => {
+  const lower = query.toLowerCase();
+  for (const [town, coords] of Object.entries(TOWN_COORDINATES)) {
+    if (lower.includes(town)) {
+      return coords;
     }
+  }
+  return [15.635189, 120.415343]; // Default TAU Camiling
+};
 
-    const data = await response.json();
+// Geocoding service with multi-level query fallback & town dictionary lookup
+export const geocodeAddress = async (address: string): Promise<AddressInfo | null> => {
+  if (!address || !address.trim()) return null;
 
-    if (data.length === 0) {
+  const tryFetchNominatim = async (queryStr: string) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryStr)}&limit=1&addressdetails=1`,
+        {
+          signal: controller.signal,
+          headers: { 'User-Agent': 'BoardTAU/1.0' }
+        }
+      );
+      clearTimeout(timeout);
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data && data.length > 0 ? data[0] : null;
+    } catch {
+      clearTimeout(timeout);
       return null;
     }
+  };
 
-    const result = data[0];
+  try {
+    // 1. Try exact address string query
+    let result = await tryFetchNominatim(address);
 
-    // Parse address components - now with structured address details from API
-    const addressParts = parseAddress(result.display_name, result.address);
+    // 2. If no result and address contains commas, try simplified query (e.g. "Paniqui, Tarlac, Philippines")
+    if (!result && address.includes(',')) {
+      const parts = address.split(',').map(p => p.trim()).filter(Boolean);
+      if (parts.length > 2) {
+        const simplified = parts.slice(-3).join(', ');
+        result = await tryFetchNominatim(simplified);
+      }
+      if (!result && parts.length > 1) {
+        const townProvince = parts.slice(-2).join(', ');
+        result = await tryFetchNominatim(townProvince);
+      }
+    }
 
-    return {
-      address: result.display_name,
-      city: addressParts.city || '',
-      province: addressParts.province || '',
-      zipCode: addressParts.zipCode || '',
-      coordinates: [parseFloat(result.lat), parseFloat(result.lon)]
-    };
-  } catch (error) {
-    console.error('Geocoding error:', error);
+    if (result) {
+      const addressParts = parseAddress(result.display_name, result.address);
+      return {
+        address: result.display_name,
+        city: addressParts.city || '',
+        province: addressParts.province || '',
+        zipCode: addressParts.zipCode || '',
+        coordinates: [parseFloat(result.lat), parseFloat(result.lon)]
+      };
+    }
 
-    // Local fallback for development and testing
+    // 3. Fallback to town lookup dictionary if nominatim returned empty
+    const fallbackCoords = getTownFallbackCoords(address);
     return {
       address: address,
-      city: 'Tarlac City',
+      city: 'Tarlac',
       province: 'Tarlac',
       zipCode: '2300',
-      coordinates: [15.635189, 120.415343]
+      coordinates: fallbackCoords
+    };
+
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    const fallbackCoords = getTownFallbackCoords(address);
+    return {
+      address: address,
+      city: 'Tarlac',
+      province: 'Tarlac',
+      zipCode: '2300',
+      coordinates: fallbackCoords
     };
   }
 };

@@ -30,6 +30,7 @@ interface KerbyMascotProps {
   guideType?: 'host' | 'search' | 'student';
   showCloseButton?: boolean;
   disableTyping?: boolean;
+  customAssetSrc?: string;
 }
 
 export const KerbyMascot: React.FC<KerbyMascotProps> = ({
@@ -43,6 +44,7 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
   guideType = 'host',
   showCloseButton = true,
   disableTyping = false,
+  customAssetSrc,
 }) => {
   const [displayedText, setDisplayedText] = useState("");
   const [isTypingComplete, setIsTypingComplete] = useState(false);
@@ -85,7 +87,7 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
     };
   }, [speechText, disableTyping]);
 
-  const assetSrc = `/assets/mascot/kerby-${outfitMode}-${pose}.png`;
+  const assetSrc = customAssetSrc || `/assets/mascot/kerby-${outfitMode}-${pose}.png`;
 
   const isNortheast = bubblePosition === 'top-right' || bubblePosition === 'right';
 
@@ -111,7 +113,9 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
         {isBubbleOpen ? (
           <div className={cn(
             "transition-all duration-300 pointer-events-auto w-full flex flex-col items-center",
-            isNortheast ? "z-[99999] absolute bottom-[420px] left-[230px] sm:left-[250px] w-80 sm:w-96" : "relative z-20 mb-1"
+            transparentBg 
+              ? "z-[99999] absolute bottom-full mb-3 left-6 sm:left-10 w-80 sm:w-84 drop-shadow-2xl" 
+              : "relative z-20 mb-1"
           )}>
             <motion.div
               initial={{ opacity: 0, scale: 0.85, y: isNortheast ? 15 : -10 }}
@@ -179,28 +183,36 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
 
             {/* Slant Connecting Thought Dots: Small Circle (bottom-left near Kerby's ear) -> Medium -> Large Circle (top-right touching speech bubble) */}
             {!isNortheast && (
-              <div className="w-full flex justify-end pr-14 sm:pr-20 -mb-3.5 mt-1 pointer-events-none z-10">
+              <div className={cn(
+                "w-full flex -mb-3.5 mt-1 pointer-events-none z-10",
+                transparentBg ? "justify-end pr-24 sm:pr-28" : "justify-end pr-14 sm:pr-20"
+              )}>
                 <div className="flex flex-col items-end gap-1">
                   {/* Top Right: Large Circle */}
                   <div className="w-4 h-4 rounded-full bg-white dark:bg-[#0E1A1E] border-2 border-slate-300 dark:border-[#2f7d6d]/50 shadow-sm" />
                   {/* Middle: Medium Circle (slanted left ↙) */}
-                  <div className="w-2.5 h-2.5 rounded-full bg-white dark:bg-[#0E1A1E] border border-slate-300 dark:border-[#2f7d6d]/50 shadow-2xs -translate-x-2" />
-                  {/* Bottom Left: Small Circle (closest to Kerby's ear) */}
-                  <div className="w-1.5 h-1.5 rounded-full bg-white dark:bg-[#0E1A1E] border border-slate-300 dark:border-[#2f7d6d]/50 shadow-2xs -translate-x-4" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-white dark:bg-[#0E1A1E] border border-slate-300 dark:border-[#2f7d6d]/50 shadow-2xs -translate-x-2.5" />
+                  {/* Bottom Left: Small Circle (closest to Kerby's head) */}
+                  <div className="w-1.5 h-1.5 rounded-full bg-white dark:bg-[#0E1A1E] border border-slate-300 dark:border-[#2f7d6d]/50 shadow-2xs -translate-x-5" />
                 </div>
               </div>
             )}
           </div>
         ) : (
-          /* Minimized State: Floating Top-Most z-[99999] Position */
+          /* Minimized State: Top-Right Badge inside mascot container bounds */
           <motion.button
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsBubbleOpen(true)}
-            className="absolute bottom-[410px] left-[240px] sm:left-[255px] z-[99999] flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white dark:bg-[#0E1A1E] border-2 border-slate-200 dark:border-[#2f7d6d]/50 text-slate-800 dark:text-white shadow-2xl cursor-pointer group pointer-events-auto whitespace-nowrap"
+            className={cn(
+              "z-30 flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white dark:bg-[#0E1A1E] border-2 border-slate-200 dark:border-[#2f7d6d]/50 text-slate-800 dark:text-white shadow-xl cursor-pointer group pointer-events-auto whitespace-nowrap transition-all duration-300",
+              transparentBg
+                ? "absolute -top-7 right-2 sm:right-4"
+                : "absolute -top-7 right-2 sm:right-4"
+            )}
             title="Click to view Kerby's tip"
           >
             <div className="flex items-center gap-1">
@@ -238,12 +250,15 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
               key={assetSrc}
               src={assetSrc}
               alt={`Kerby mascot - ${outfitMode} ${pose}`}
-              initial={{ opacity: 0, scale: 0.85, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.85, y: -15 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.94 }}
+              transition={{ 
+                duration: 0.45, 
+                ease: [0.4, 0, 0.2, 1] 
+              }}
               className={cn(
-                "object-contain filter drop-shadow-[0_25px_35px_rgba(0,0,0,0.45)] transition-transform duration-300",
+                "object-contain filter drop-shadow-[0_25px_35px_rgba(0,0,0,0.45)] transition-all duration-500",
                 transparentBg
                   ? "w-[280px] h-[280px] sm:w-[330px] sm:h-[330px] max-w-none transform scale-110 sm:scale-125"
                   : "w-full max-w-[290px] sm:max-w-[340px] md:max-w-[380px] lg:max-w-[410px] h-auto max-h-[440px] transform scale-105"
