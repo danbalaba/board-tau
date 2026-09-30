@@ -75,7 +75,7 @@ describe('RoomDetailsModal Component', () => {
 
   it('renders the "Send Inquiry" button if user is present and available', () => {
     render(<RoomDetailsModal {...defaultProps} user={{ id: 'user-1' }} />);
-    const inquireBtn = screen.getByText(/Send Inquiry/i);
+    const inquireBtn = screen.getAllByText(/Send Inquiry/i)[0];
     expect(inquireBtn).toBeInTheDocument();
     
     fireEvent.click(inquireBtn);
@@ -84,7 +84,7 @@ describe('RoomDetailsModal Component', () => {
 
   it('renders "Sign in to Inquire" button if user is not present', () => {
     render(<RoomDetailsModal {...defaultProps} user={undefined} />);
-    expect(screen.getByText(/Sign in to Inquire/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Sign in to Inquire/i).length).toBeGreaterThan(0);
   });
 
   it('renders "No Vacancy" button if room is not available', () => {

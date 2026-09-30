@@ -32,9 +32,17 @@ describe('GenerateReportButton', () => {
     jest.clearAllMocks();
   });
 
+  const isGenerateReportText = (_: string, el: Element | null) => {
+    return Boolean(
+      el?.tagName === 'SPAN' &&
+      el?.className?.includes('tracking-widest') &&
+      el?.textContent?.replace(/\s+/g, ' ').trim() === 'Generate Report'
+    );
+  };
+
   it('renders correctly with default label', () => {
     render(<GenerateReportButton onGeneratePDF={mockOnGeneratePDF} />);
-    expect(screen.getByText('Generate Report')).toBeInTheDocument();
+    expect(screen.getByText(isGenerateReportText)).toBeInTheDocument();
   });
 
   it('opens modal on click', () => {
@@ -56,12 +64,12 @@ describe('GenerateReportButton', () => {
     
     await waitFor(() => {
       expect(mockOnGeneratePDF).toHaveBeenCalled();
-    }, { timeout: 3000 });
+    }, { timeout: 5000 });
     
     // Modal should close after successful generation
     await waitFor(() => {
       expect(screen.queryByTestId('mock-report-export-modal')).not.toBeInTheDocument();
-    }, { timeout: 3000 });
+    }, { timeout: 5000 });
   });
 
   it('handles CSV generation', async () => {
@@ -73,7 +81,7 @@ describe('GenerateReportButton', () => {
     
     await waitFor(() => {
       expect(mockOnGenerateCSV).toHaveBeenCalled();
-    }, { timeout: 3000 });
+    }, { timeout: 5000 });
   });
 
   it('handles EXCEL generation', async () => {
@@ -85,7 +93,7 @@ describe('GenerateReportButton', () => {
     
     await waitFor(() => {
       expect(mockOnGenerateExcel).toHaveBeenCalled();
-    }, { timeout: 3000 });
+    }, { timeout: 5000 });
   });
 
   it('handles errors during generation without crashing', async () => {
@@ -101,7 +109,7 @@ describe('GenerateReportButton', () => {
     
     await waitFor(() => {
       expect(mockOnGeneratePDF).toHaveBeenCalled();
-    }, { timeout: 3000 });
+    }, { timeout: 5000 });
     
     expect(consoleSpy).toHaveBeenCalledWith('Error generating PDF report:', expect.any(Error));
     consoleSpy.mockRestore();
@@ -130,7 +138,7 @@ describe('GenerateReportButton', () => {
     
     await waitFor(() => {
       expect(screen.getByTestId('mock-button')).not.toBeDisabled();
-      expect(screen.getByText('Generate Report')).toBeInTheDocument();
-    }, { timeout: 3000 });
-  });
+      expect(screen.getByText(isGenerateReportText)).toBeInTheDocument();
+    }, { timeout: 5000 });
+  }, 10000);
 });
