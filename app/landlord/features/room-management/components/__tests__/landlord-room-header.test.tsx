@@ -50,6 +50,8 @@ describe('LandlordRoomHeader', () => {
     setTypeFilter: jest.fn(),
     capacityFilter: 'all',
     setCapacityFilter: jest.fn(),
+    statusFilter: 'all',
+    setStatusFilter: jest.fn(),
     uniqueProperties: [],
     uniqueCapacities: [],
     onClear: jest.fn(),

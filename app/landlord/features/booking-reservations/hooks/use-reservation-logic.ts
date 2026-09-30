@@ -28,6 +28,7 @@ export interface ReservationRequest {
     image?: string | null;
   };
   isWalkIn?: boolean;
+  totalPrice?: number;
   guestName?: string | null;
   guestContact?: string | null;
   guestPhotoUrl?: string | null;

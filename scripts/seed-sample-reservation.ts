@@ -31,7 +31,7 @@ async function main() {
   console.log(`Found Landlord: ${landlord.name || landlord.email} (${landlord.id})`);
 
   // 2. Find a listing & room for this landlord
-  let listing = landlord.listings[0];
+  let listing: any = landlord.listings[0];
   if (!listing) {
     console.log('No existing listing found for landlord. Creating a sample listing...');
     listing = await prisma.listing.create({
@@ -48,7 +48,7 @@ async function main() {
     });
   }
 
-  let room = listing.rooms?.[0];
+  let room: any = listing.rooms?.[0];
   if (!room) {
     console.log('No existing room found for listing. Creating a sample room...');
     room = await prisma.room.create({
