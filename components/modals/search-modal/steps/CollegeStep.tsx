@@ -157,7 +157,7 @@ export default function CollegeStep({ college, setCustomValue, mapCenter, onLoad
             />
           </div>
           <div 
-            className="h-[220px] sm:h-[260px] md:h-[380px] rounded-2xl overflow-hidden shadow-md border border-gray-200 dark:border-gray-700 relative mt-1 transition-all duration-300"
+            className="w-full h-[220px] sm:h-[260px] md:h-[380px] min-h-[220px] rounded-2xl overflow-hidden shadow-md border border-gray-200 dark:border-gray-700 relative mt-1 transition-all duration-300 bg-slate-100 dark:bg-slate-900"
           >
             <Map 
               center={activeLandmark ? activeLandmark.coords : mapCenter} 
