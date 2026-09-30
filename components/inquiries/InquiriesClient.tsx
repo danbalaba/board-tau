@@ -34,6 +34,7 @@ import Modal from "@/components/modals/Modal";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { UserMobileFilterSheet } from "@/components/common/UserMobileFilterSheet";
 import { useNotification, NotificationItem } from "@/context/NotificationContext";
+import { CancellationStrikeWarningCard } from "@/components/common/CancellationStrikeWarningCard";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -131,6 +132,8 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
   const [cancelReason, setCancelReason] = useState("");
   const [inquiryToCancel, setInquiryToCancel] = useState<Inquiry | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [strikeStatus, setStrikeStatus] = useState<any>(null);
+  const [isLoadingStrikeStatus, setIsLoadingStrikeStatus] = useState(false);
   const unreadNotifications = notifications.filter((n: NotificationItem) => !n.isRead && n.type === "inquiry");
   const hasAutoOpened = useRef(false);
 
@@ -175,9 +178,25 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
     return () => clearTimeout(timer);
   }, [searchQuery, statusFilter, sortBy, isMounted]);
 
+  const fetchStrikeStatus = async () => {
+    setIsLoadingStrikeStatus(true);
+    try {
+      const res = await fetch("/api/user/strike-status");
+      if (res.ok) {
+        const data = await res.json();
+        setStrikeStatus(data);
+      }
+    } catch (err) {
+      console.error("Error fetching strike status:", err);
+    } finally {
+      setIsLoadingStrikeStatus(false);
+    }
+  };
+
   const handleCancelClick = (inquiry: Inquiry) => {
     setInquiryToCancel(inquiry);
     setShowCancelConfirm(true);
+    fetchStrikeStatus();
   };
 
   const handleConfirmCancel = () => {
@@ -475,7 +494,12 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
               cancelLabel="No, Keep It"
               isLoading={isCancelling}
               variant="danger"
-            />
+            >
+              <CancellationStrikeWarningCard 
+                strikeStatus={strikeStatus} 
+                isLoading={isLoadingStrikeStatus} 
+              />
+            </ConfirmModal>
           </Modal>
 
           {/* Inquiry Cancellation Reason Modal */}
@@ -516,6 +540,11 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
                   <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-5 leading-relaxed">
                     Select why you are withdrawing this inquiry. This helps with record keeping and keeps the platform fair.
                   </p>
+                  
+                  <CancellationStrikeWarningCard 
+                    strikeStatus={strikeStatus} 
+                    isLoading={isLoadingStrikeStatus} 
+                  />
                   
                   <div className="grid grid-cols-1 gap-2 mb-5">
                     {[

@@ -33,6 +33,7 @@ import ModernLoader from "@/components/common/ModernLoader";
 import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { UserMobileFilterSheet } from "@/components/common/UserMobileFilterSheet";
+import { CancellationStrikeWarningCard } from "@/components/common/CancellationStrikeWarningCard";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -124,6 +125,8 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
     const [reservationToCancel, setReservationToCancel] = useState<Reservation | null>(null);
     const [showCancelReason, setShowCancelReason] = useState(false);
     const [cancelReason, setCancelReason] = useState("");
+    const [strikeStatus, setStrikeStatus] = useState<any>(null);
+    const [isLoadingStrikeStatus, setIsLoadingStrikeStatus] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
 
@@ -270,9 +273,25 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
         setShowPaymentModal(true);
     };
 
+    const fetchStrikeStatus = async () => {
+        setIsLoadingStrikeStatus(true);
+        try {
+            const res = await fetch("/api/user/strike-status");
+            if (res.ok) {
+                const data = await res.json();
+                setStrikeStatus(data);
+            }
+        } catch (err) {
+            console.error("Error fetching strike status:", err);
+        } finally {
+            setIsLoadingStrikeStatus(false);
+        }
+    };
+
     const handleCancelClick = (reservation: Reservation) => {
         setReservationToCancel(reservation);
         setShowCancelConfirm(true);
+        fetchStrikeStatus();
     };
 
     const handleConfirmCancel = () => {
@@ -565,7 +584,12 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                     cancelLabel="No, Keep It"
                     isLoading={isCancelling}
                     variant="danger"
-                />
+                >
+                    <CancellationStrikeWarningCard 
+                        strikeStatus={strikeStatus} 
+                        isLoading={isLoadingStrikeStatus} 
+                    />
+                </ConfirmModal>
             </Modal>
 
             {/* Cancel Reason Modal */}
@@ -606,6 +630,11 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                             <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-5 leading-relaxed">
                                 Please let the landlord know why you're cancelling. This helps with record keeping and keeps the platform fair.
                             </p>
+
+                            <CancellationStrikeWarningCard 
+                                strikeStatus={strikeStatus} 
+                                isLoading={isLoadingStrikeStatus} 
+                            />
 
                             <div className="grid grid-cols-1 gap-2 mb-5">
                                 {[
