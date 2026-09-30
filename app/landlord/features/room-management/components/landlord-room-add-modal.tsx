@@ -584,7 +584,7 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
           </motion.div>
         </div>
       ) : (
-        <div key="main-modal" className="fixed inset-0 z-[500] flex items-center justify-center p-4 sm:p-6">
+        <div key="main-modal" className="fixed inset-0 z-[500] flex items-center justify-center p-0 sm:p-4 md:p-6">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -597,35 +597,37 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 30 }}
-            className="relative w-full max-w-5xl h-[88vh] min-h-[620px] max-h-[820px] bg-white dark:bg-[#111827] rounded-[2.5rem] shadow-2xl flex flex-col border border-gray-100 dark:border-white/5 overflow-hidden my-auto"
+            className="relative w-full h-full sm:h-[88vh] sm:max-w-5xl sm:min-h-[620px] sm:max-h-[820px] bg-white dark:bg-[#111827] rounded-none sm:rounded-[2.5rem] shadow-2xl flex flex-col border-0 sm:border border-gray-100 dark:border-white/5 overflow-hidden my-auto"
           >
             {/* Sticky Header — Compact Geometry */}
-            <div className="absolute top-0 left-0 right-0 h-[80px] bg-white/90 dark:bg-[#111827]/90 backdrop-blur-xl border-b border-gray-100 dark:border-white/5 z-50 flex items-center justify-between px-6 sm:px-8 rounded-t-[2.5rem]">
-               <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-inner border border-primary/20">
-                     <DoorOpen size={22} />
+            <div className="absolute top-0 left-0 right-0 h-[70px] sm:h-[80px] bg-white/90 dark:bg-[#111827]/90 backdrop-blur-xl border-b border-gray-100 dark:border-white/5 z-50 flex items-center justify-between px-4 sm:px-8 rounded-t-none sm:rounded-t-[2.5rem]">
+               <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary shadow-inner border border-primary/20 shrink-0">
+                     <DoorOpen size={20} className="sm:w-5 sm:h-5" />
                   </div>
-                  <div>
-                     <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tight leading-tight uppercase">
+                  <div className="min-w-0">
+                     <h2 className="text-base sm:text-xl font-black text-gray-900 dark:text-white tracking-tight leading-tight uppercase truncate">
                         {initialData ? 'Sync Unit Details' : 'Add New Unit'}
                      </h2>
-                      <p className="text-[10px] font-black text-primary/60 uppercase tracking-[0.25em] mt-0.5">STEP {currentStep || 1} OF 3: {(STEPS[(currentStep || 1) - 1] || STEPS[0])?.title}</p>
+                      <p className="text-[9px] sm:text-[10px] font-black text-primary/60 uppercase tracking-[0.18em] sm:tracking-[0.25em] mt-0.5 truncate">STEP {currentStep || 1} OF 3: {(STEPS[(currentStep || 1) - 1] || STEPS[0])?.title}</p>
                   </div>
                </div>
-               <div className="flex items-center gap-3">
+               <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                   {!initialData && (
-                    <AutoSaveBadge 
-                      saveStatus={saveStatus} 
-                      lastSavedTimestamp={lastSavedTimestamp} 
-                      lastSavedTime={lastSavedTime} 
-                    />
+                    <div className="hidden xs:block sm:block">
+                      <AutoSaveBadge 
+                        saveStatus={saveStatus} 
+                        lastSavedTimestamp={lastSavedTimestamp} 
+                        lastSavedTime={lastSavedTime} 
+                      />
+                    </div>
                   )}
 
                   {(restoredDraft || saveStatus === 'saved' || lastSavedTimestamp) && !initialData && (
                     <button
                       type="button"
                       onClick={discardDraft}
-                      className="px-3 py-1.5 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-500 hover:text-white text-rose-600 dark:text-rose-400 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-rose-200 dark:border-rose-800/60 cursor-pointer flex items-center gap-1.5 shadow-sm"
+                      className="px-2.5 sm:px-3 py-1.5 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-500 hover:text-white text-rose-600 dark:text-rose-400 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition-all border border-rose-200 dark:border-rose-800/60 cursor-pointer flex items-center gap-1.5 shadow-sm"
                       title="Discard Draft"
                     >
                       <Trash2 size={13} />
@@ -633,13 +635,13 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
                     </button>
                   )}
 
-                  <button onClick={onClose} className="w-9 h-9 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-400 hover:bg-rose-500 hover:text-white transition-all border border-gray-100 dark:border-white/5">
-                     <X size={18} />
+                  <button onClick={onClose} className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-400 hover:bg-rose-500 hover:text-white transition-all border border-gray-100 dark:border-white/5 cursor-pointer shrink-0">
+                     <X size={16} className="sm:w-[18px] sm:h-[18px]" />
                   </button>
                </div>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto px-6 sm:px-8 pt-[95px] pb-5 space-y-6 relative [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-[82px] sm:pt-[95px] pb-5 space-y-6 relative [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               <div className="flex gap-2 h-1.5 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden mb-6">
                  {STEPS.map((step) => (
                    <div 
@@ -772,11 +774,11 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
                             {selectedProperty && <span className="text-[9px] text-primary font-black uppercase tracking-wider bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">{dynamicLabels.availableBadge}</span>}
                           </label>
                           <div className={cn(
-                            "grid grid-cols-2 gap-3 transition-all duration-300",
+                            "grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 transition-all duration-300",
                             errors.roomType ? "p-2 rounded-3xl border-2 border-rose-500 ring-4 ring-rose-500/10 bg-rose-500/5" : ""
                           )}>
                              {isLoadingRoomTypes ? (
-                               <div className="col-span-2 py-4 flex flex-col items-center justify-center gap-2 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-primary/20 text-primary animate-pulse">
+                               <div className="col-span-full py-4 flex flex-col items-center justify-center gap-2 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-primary/20 text-primary animate-pulse">
                                  <Loader2 size={18} className="animate-spin text-primary" />
                                  <span className="text-[10px] font-black uppercase tracking-widest text-primary">Fetching Categories...</span>
                                </div>
@@ -790,7 +792,7 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
                                     type="button"
                                     onClick={() => handleCategoryToggle(t.value || t.id)}
                                     className={cn(
-                                      "flex items-center gap-3 p-3 rounded-2xl border-2 transition-all text-left group relative overflow-hidden cursor-pointer",
+                                      "flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border-2 transition-all text-left group relative overflow-hidden cursor-pointer min-h-[56px]",
                                       isSelected 
                                         ? "border-primary bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20" 
                                         : errors.roomType 
@@ -799,22 +801,22 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
                                     )}
                                    >
                                       <div className={cn(
-                                        "p-2.5 rounded-xl transition-all shrink-0",
+                                        "p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all shrink-0",
                                         isSelected ? "bg-primary text-white scale-105" : "bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:scale-105"
                                       )}>
-                                         <Icon size={18} />
+                                         <Icon size={16} className="sm:w-[18px] sm:h-[18px]" />
                                       </div>
-                                      <div className="flex-1 min-w-0 pr-4">
-                                        <span className={cn("text-xs font-black uppercase tracking-wider block line-clamp-1 leading-tight", isSelected ? "text-primary" : "text-gray-900 dark:text-white")}>
+                                      <div className="flex-1 min-w-0 pr-5">
+                                        <span className={cn("text-[11px] sm:text-xs font-black uppercase tracking-wider block truncate leading-tight", isSelected ? "text-primary" : "text-gray-900 dark:text-white")}>
                                           {t.label || t.name}
                                         </span>
-                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight block truncate mt-0.5">
+                                        <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-tight block truncate mt-0.5">
                                           {t.description || (t.isFlatRate ? 'Flat-rate unit' : 'Per head room')}
                                         </span>
                                       </div>
                                       
                                       {isSelected && (
-                                         <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-primary">
+                                         <div className="absolute right-2 top-1/2 -translate-y-1/2 text-primary">
                                             <CheckCircle2 size={16} />
                                          </div>
                                       )}
@@ -822,7 +824,7 @@ export const LandlordRoomAddModal: React.FC<LandlordRoomAddModalProps> = ({
                                  );
                                })
                              ) : (
-                               <div className="col-span-2 p-4 text-center text-xs text-gray-400 font-bold border border-dashed rounded-2xl">
+                               <div className="col-span-full p-4 text-center text-xs text-gray-400 font-bold border border-dashed rounded-2xl">
                                   Please select a property building first
                                </div>
                              )}
