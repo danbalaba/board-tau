@@ -13,7 +13,7 @@
     "test:coverage": "jest --coverage --passWithNoTests",
     "test:e2e": "playwright test",
     "seed": "npx prisma db seed",
-    "postinstall": "prisma generate",
+    "postinstall": "npx prisma generate",
     "build:check": "next build",
     "redis:flush": "tsx --env-file=.env scripts/flush-redis.ts",
     "seed:test-user": "tsx prisma/seed-real-listing.ts",
