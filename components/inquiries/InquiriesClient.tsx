@@ -193,10 +193,10 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
     }
   };
 
-  const handleCancelClick = (inquiry: Inquiry) => {
+  const handleCancelClick = async (inquiry: Inquiry) => {
     setInquiryToCancel(inquiry);
+    await fetchStrikeStatus();
     setShowCancelConfirm(true);
-    fetchStrikeStatus();
   };
 
   const handleConfirmCancel = () => {

@@ -210,9 +210,9 @@ describe('InquiriesClient', () => {
   });
 
   it('handles cancellation flow', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
-      json: async () => ({ success: true })
+      json: async () => ({ success: true, strikesCount: 0 })
     });
 
     render(<InquiriesClient initialInquiries={mockInquiries} currentUserId="user-1" />);
@@ -220,10 +220,14 @@ describe('InquiriesClient', () => {
     
     // Find Cancel buttons (only available for PENDING status - Room A)
     const cancelBtns = screen.getAllByRole('button', { name: 'Cancel' });
-    fireEvent.click(cancelBtns[0]);
+    await act(async () => {
+      fireEvent.click(cancelBtns[0]);
+    });
     
     // Confirm Cancellation modal
-    expect(screen.getByText('Cancel Inquiry?')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Cancel Inquiry?')).toBeInTheDocument();
+    });
     const confirmCancelBtn = screen.getByText('Yes, Cancel');
     fireEvent.click(confirmCancelBtn);
     

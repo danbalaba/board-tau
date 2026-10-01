@@ -288,10 +288,10 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
         }
     };
 
-    const handleCancelClick = (reservation: Reservation) => {
+    const handleCancelClick = async (reservation: Reservation) => {
         setReservationToCancel(reservation);
+        await fetchStrikeStatus();
         setShowCancelConfirm(true);
-        fetchStrikeStatus();
     };
 
     const handleConfirmCancel = () => {

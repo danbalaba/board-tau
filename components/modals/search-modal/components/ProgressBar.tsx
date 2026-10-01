@@ -30,22 +30,42 @@ export default function ProgressBar({
   const mobileScrollRef = useRef<HTMLDivElement | null>(null);
   const activePillRef = useRef<HTMLButtonElement | null>(null);
 
-  // Auto-scroll active carousel pill to center on step change
+  // Auto-scroll active carousel pill to center on step change or layout mount
   useEffect(() => {
-    if (activePillRef.current && mobileScrollRef.current) {
+    const scrollPillIntoCenter = () => {
       const container = mobileScrollRef.current;
-      const pill = activePillRef.current;
-      const containerWidth = container.offsetWidth;
-      const pillLeft = pill.offsetLeft;
-      const pillWidth = pill.offsetWidth;
-      
-      const scrollGoal = pillLeft - (containerWidth / 2) + (pillWidth / 2);
-      container.scrollTo({
-        left: scrollGoal,
-        behavior: "smooth",
-      });
-    }
-  }, [currentStepId]);
+      if (!container) return;
+
+      const children = Array.from(container.children) as HTMLElement[];
+      const targetPill = children[activeIndex];
+
+      if (targetPill) {
+        const containerWidth = container.clientWidth;
+        const pillLeft = targetPill.offsetLeft;
+        const pillWidth = targetPill.offsetWidth;
+
+        // Guard: Ensure flexbox layout has positioned the target pill before scrolling
+        if (containerWidth > 0 && pillWidth > 0 && (activeIndex === 0 || pillLeft > 0)) {
+          const targetScrollLeft = Math.max(0, pillLeft - containerWidth / 2 + pillWidth / 2);
+
+          container.scrollTo({
+            left: targetScrollLeft,
+            behavior: "smooth",
+          });
+        }
+      }
+    };
+
+    // Immediate + multi-stage timers to handle dynamic imports & modal animations
+    requestAnimationFrame(scrollPillIntoCenter);
+    const timers = [20, 100, 250, 450, 700].map((delay) =>
+      setTimeout(scrollPillIntoCenter, delay)
+    );
+
+    return () => {
+      timers.forEach(clearTimeout);
+    };
+  }, [currentStepId, activeIndex]);
 
   return (
     <div className="w-full flex flex-col gap-2.5 py-1 px-1 md:px-6">
@@ -88,7 +108,7 @@ export default function ProgressBar({
         {/* Carousel Pill Strip */}
         <div 
           ref={mobileScrollRef}
-          className="flex items-center gap-2 overflow-x-auto py-1 px-0.5 no-scrollbar hide-scrollbar scroll-smooth"
+          className="relative flex items-center gap-2 overflow-x-auto py-1 px-0.5 no-scrollbar hide-scrollbar scroll-smooth"
         >
           {steps.map((stepObj, index) => {
             const stepNum = index + 1;
@@ -100,6 +120,7 @@ export default function ProgressBar({
               <motion.button
                 key={stepObj.id}
                 ref={isCurrent ? activePillRef : null}
+                data-active={isCurrent ? "true" : "false"}
                 type="button"
                 layout
                 onClick={() => {

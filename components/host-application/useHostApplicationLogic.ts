@@ -522,6 +522,11 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
     // 3. Perform ML face validation
     try {
       const result = await faceEngine.validateFace(video);
+      if (stepRef.current !== 6) {
+        console.warn("Selfie scan aborted: User navigated away from selfie step.");
+        return;
+      }
+
       if (!result.isValid) {
         toast.error(result.reason || "Selfie verification failed.");
         return;
@@ -542,6 +547,7 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
     }
 
     setIsIDProcessing(true);
+    const startStep = stepRef.current;
 
     try {
       const reader = new FileReader();
@@ -572,6 +578,11 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
         faceMatcher.getFaceDescriptorCached(selfieCacheKey, selfieImg),
         faceMatcher.getFaceDescriptorCached(idCacheKey, idImg, 0.2)
       ]);
+
+      if (stepRef.current !== 7 || stepRef.current !== startStep) {
+        console.warn("ID scan aborted: User navigated away from ID step.");
+        return;
+      }
 
       if (!selfieDescriptor) {
         setSelfieRetakeNeeded(true);
@@ -613,6 +624,8 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
   };
 
   const nextStep = async () => {
+    if (isIDProcessing || isProcessing || isSubmitting || isLoadingStep) return;
+
     let isValid = true;
     if (step === 1) {
       isValid = await trigger(['contactInfo']);
@@ -701,6 +714,8 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
   };
 
   const prevStep = () => {
+    if (isIDProcessing || isProcessing || isSubmitting || isLoadingStep) return;
+
     if (step === 7 && selfieRetakeNeeded) {
       handleRetakeSelfie();
       return;
@@ -819,6 +834,7 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
     nextStep, prevStep,
     handleCaptureSelfie, handleCaptureID,
     isProcessing,
+    isSelfieProcessing: isProcessing,
     isIDProcessing,
     selfieRetakeNeeded,
     handleRetakeSelfie,
