@@ -112,7 +112,7 @@ describe('LandlordRoomCard', () => {
         formatStatus={mockFormatStatus}
       />
     );
-    const viewBtn = screen.getByText(/Manage/i);
+    const viewBtn = screen.getByText(/Details/i);
     fireEvent.click(viewBtn);
     expect(mockOnView).toHaveBeenCalledWith(mockRoom);
   });

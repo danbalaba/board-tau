@@ -16,6 +16,7 @@ export async function GET(request: Request) {
     const listingId = searchParams.get("listingId") || undefined;
     const roomType = searchParams.get("roomType") || undefined;
     const capacity = searchParams.get("capacity") ? Number(searchParams.get("capacity")) : undefined;
+    const status = searchParams.get("status") || undefined;
     const isArchived = searchParams.get("isArchived") === 'true' ? true : searchParams.get("isArchived") === 'false' ? false : undefined;
     const sortBy = searchParams.get("sortBy") || undefined;
     const search = searchParams.get("search") || undefined;
@@ -25,6 +26,7 @@ export async function GET(request: Request) {
       listingId, 
       roomType, 
       capacity, 
+      status,
       isArchived, 
       sortBy,
       search 

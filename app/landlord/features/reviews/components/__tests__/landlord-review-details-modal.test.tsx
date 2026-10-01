@@ -59,7 +59,7 @@ describe('LandlordReviewDetailsModal', () => {
     (global.fetch as jest.Mock).mockImplementationOnce(() => new Promise(() => {})); // Never resolves
     
     render(<LandlordReviewDetailsModal isOpen={true} onClose={mockOnClose} reviewId="review-1" />);
-    expect(screen.getByText('Loading Photos & Videos...')).toBeInTheDocument();
+    expect(screen.getByText('Loading Review Details...')).toBeInTheDocument();
   });
 
   it('renders review details after fetching', async () => {

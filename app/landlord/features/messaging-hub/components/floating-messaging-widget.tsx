@@ -1,14 +1,11 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   IconMessage, 
   IconX, 
   IconChevronLeft,
-  IconSearch,
-  IconDotsVertical,
-  IconSend,
   IconArrowsMaximize
 } from '@tabler/icons-react';
 import { useMessagingHub } from '../hooks/use-messaging-hub';
@@ -20,12 +17,13 @@ import { useSession } from 'next-auth/react';
 import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-const FloatingMessagingWidget = () => {
+export function FloatingMessagingWidget() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isFullView, setIsFullView] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [view, setView] = useState<'list' | 'chat'>('list');
   const [showInfo, setShowInfo] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -50,9 +48,8 @@ const FloatingMessagingWidget = () => {
     undoUnarchive,
     commitUnarchive,
     deleteConversation,
-    markAsUnread,
-    refreshConversations
-  } = useMessagingHub([], isOpen);
+    markAsUnread
+  } = useMessagingHub([], isOpen || isMobileOpen || isFullView);
 
   const lastProcessedLink = useRef<string | null>(null);
 
@@ -69,6 +66,7 @@ const FloatingMessagingWidget = () => {
 
     if (openChat === 'true') {
       setIsOpen(true);
+      setIsMobileOpen(true);
       
       if (listingId && tenantId) {
         const match = conversations.find(c => c.listingId === listingId && c.tenantId === tenantId);
@@ -76,7 +74,6 @@ const FloatingMessagingWidget = () => {
           setActiveConversation(match);
           setView('chat');
         } else {
-          // If no existing conversation, check if we have enough data to build a placeholder
           const tenantName = searchParams.get('tenantName');
           const tenantImage = searchParams.get('tenantImage');
           const listingTitle = searchParams.get('listingTitle');
@@ -103,7 +100,6 @@ const FloatingMessagingWidget = () => {
         }
       }
       
-      // Clean up URL without refreshing to prevent re-triggering on manual refresh
       const params = new URLSearchParams(searchParams.toString());
       params.delete('openChat');
       params.delete('listingId');
@@ -125,6 +121,7 @@ const FloatingMessagingWidget = () => {
       const { listingId, tenantId, tenantName, tenantImage, listingTitle, listingImage } = customEvent.detail;
       
       setIsOpen(true);
+      setIsMobileOpen(true);
       
       const match = conversations.find(c => c.listingId === listingId && c.tenantId === tenantId);
       if (match) {
@@ -169,140 +166,254 @@ const FloatingMessagingWidget = () => {
   if (!session?.user) return null;
 
   return (
-    <div className="hidden md:flex fixed bottom-8 right-8 z-[100] flex-col items-end">
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20, transformOrigin: 'bottom right' }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="mb-4 w-[380px] sm:w-[420px] h-[600px] max-h-[80vh] bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col"
-          >
-            {/* Widget Header */}
-            <div className="px-6 py-4 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-900 shrink-0">
-              <div className="flex items-center gap-3">
-                {view === 'chat' && (
-                  <button 
-                    onClick={handleBackToList}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors text-gray-500"
-                  >
-                    <IconChevronLeft size={20} />
-                  </button>
+    <>
+      {/* 1. MOBILE PEEKING TAB (left edge anchored, visible on < md) */}
+      <div className="md:hidden fixed left-0 top-1/2 -translate-y-1/2 z-[100]">
+        <motion.button
+          whileHover={{ x: 4 }}
+          whileTap={{ scale: 0.92 }}
+          onClick={() => setIsMobileOpen(true)}
+          className={cn(
+            "relative flex items-center gap-2 py-3 pl-3 pr-3.5 rounded-r-2xl shadow-2xl border-y border-r transition-all duration-300 backdrop-blur-xl group cursor-pointer",
+            totalUnread > 0 
+              ? "bg-rose-500 text-white border-rose-400/50 shadow-rose-500/30" 
+              : "bg-primary text-white border-white/20 shadow-primary/30"
+          )}
+          title="Open Landlord Messages Inbox"
+        >
+          <div className="relative">
+            <IconMessage size={22} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+            {totalUnread > 0 && (
+              <span className="absolute -top-2.5 -right-2.5 min-w-[18px] h-[18px] bg-white text-rose-600 text-[9px] font-black flex items-center justify-center rounded-full border border-rose-500 shadow-md px-1">
+                {totalUnread > 9 ? '9+' : totalUnread}
+              </span>
+            )}
+          </div>
+
+          {/* Ambient Glow / Pulse Indicator */}
+          {totalUnread > 0 && (
+            <span className="absolute inset-0 rounded-r-2xl bg-white/20 animate-pulse pointer-events-none" />
+          )}
+        </motion.button>
+      </div>
+
+      {/* 2. MOBILE FULL SCREEN CHAT OVERLAY PORTAL */}
+      {mounted && createPortal(
+        <AnimatePresence>
+          {isMobileOpen && (
+            <motion.div
+              initial={{ opacity: 0, x: '-100%' }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: '-100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+              className="md:hidden fixed inset-0 z-[10000] bg-white dark:bg-gray-900 flex flex-col antialiased overflow-hidden"
+            >
+              {/* Mobile Fullscreen Header */}
+              <div className="px-4 py-3.5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center justify-between shrink-0 shadow-sm">
+                <div className="flex items-center gap-3">
+                  {view === 'chat' ? (
+                    <button 
+                      onClick={handleBackToList}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl transition-colors flex items-center gap-1"
+                    >
+                      <IconChevronLeft size={20} strokeWidth={2.5} />
+                      <span className="text-xs font-black uppercase tracking-wider">Inbox</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                        <IconMessage size={20} strokeWidth={2.5} />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-black text-gray-900 dark:text-white leading-none">
+                          Messaging Hub
+                        </h3>
+                        <p className="text-[9px] font-black text-primary uppercase tracking-widest mt-0.5">
+                          Landlord Inbox
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <button 
+                  onClick={() => setIsMobileOpen(false)}
+                  className="p-2.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-100 rounded-full transition-all active:scale-90"
+                  title="Close Messaging"
+                >
+                  <IconX size={20} strokeWidth={2.5} />
+                </button>
+              </div>
+
+              {/* Mobile Fullscreen Content Body */}
+              <div className="flex-1 overflow-hidden relative">
+                {view === 'list' ? (
+                  <ConversationsList 
+                    conversations={conversations}
+                    activeId={activeConversation?.id}
+                    onSelect={handleSelectConversation}
+                    isLoading={isLoadingConversations}
+                  />
+                ) : (
+                  <ChatView 
+                    activeConversation={activeConversation}
+                    messages={messages}
+                    isSending={isSending}
+                    onSendMessage={sendMessage}
+                    isLoading={isLoadingMessages}
+                    onToggleInfo={() => setShowInfo(!showInfo)}
+                    showInfo={showInfo}
+                    onArchive={archiveConversation}
+                    onUndoArchive={() => activeConversation && undoArchive(activeConversation.id, activeConversation.listingId, activeConversation.tenantId)}
+                    onUnarchive={unarchiveConversation}
+                    onUndoUnarchive={() => activeConversation && undoUnarchive(activeConversation.id, activeConversation.listingId, activeConversation.tenantId)}
+                    onDelete={deleteConversation}
+                    onMarkUnread={() => activeConversation && markAsUnread(activeConversation.listingId, activeConversation.tenantId)}
+                    onCloseChat={handleBackToList}
+                    hideInfo={true}
+                  />
                 )}
-                <div>
-                  <h3 className="text-lg font-black text-gray-900 dark:text-white leading-none">
-                    {view === 'list' ? 'Messages' : activeConversation?.tenantName}
-                  </h3>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-widest mt-1">
-                    {view === 'list' ? 'Inbox' : activeConversation?.listingTitle}
-                  </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* 3. DESKTOP FLOATING WIDGET (visible on md: and above) */}
+      <div className="hidden md:flex fixed bottom-8 right-8 z-[100] flex-col items-end">
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20, transformOrigin: 'bottom right' }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="mb-4 w-[380px] sm:w-[420px] h-[600px] max-h-[80vh] bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col"
+            >
+              {/* Desktop Widget Header */}
+              <div className="px-6 py-4 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-900 shrink-0">
+                <div className="flex items-center gap-3">
+                  {view === 'chat' && (
+                    <button 
+                      onClick={handleBackToList}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors text-gray-500"
+                    >
+                      <IconChevronLeft size={20} />
+                    </button>
+                  )}
+                  <div>
+                    <h3 className="text-lg font-black text-gray-900 dark:text-white leading-none">
+                      {view === 'list' ? 'Messages' : activeConversation?.tenantName}
+                    </h3>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest mt-1">
+                      {view === 'list' ? 'Inbox' : activeConversation?.listingTitle}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button 
+                    onClick={() => {
+                      setIsFullView(true);
+                      setIsOpen(false);
+                    }}
+                    title="Expand to full view"
+                    className="p-2 hover:bg-primary/10 text-gray-400 hover:text-primary rounded-xl transition-all"
+                  >
+                    <IconArrowsMaximize size={18} />
+                  </button>
+                  <button 
+                    onClick={() => setIsOpen(false)}
+                    className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-gray-400 hover:text-rose-500 rounded-xl transition-all"
+                  >
+                    <IconX size={20} />
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                <button 
-                  onClick={() => {
-                    setIsFullView(true);
-                    setIsOpen(false);
-                  }}
-                  title="Expand to full view"
-                  className="p-2 hover:bg-primary/10 text-gray-400 hover:text-primary rounded-xl transition-all"
-                >
-                  <IconArrowsMaximize size={18} />
-                </button>
-                <button 
-                  onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-gray-400 hover:text-rose-500 rounded-xl transition-all"
-                >
-                  <IconX size={20} />
-                </button>
+
+              {/* Desktop Widget Body */}
+              <div className="flex-1 overflow-hidden relative">
+                {view === 'list' ? (
+                  <ConversationsList 
+                    conversations={conversations}
+                    activeId={activeConversation?.id}
+                    onSelect={handleSelectConversation}
+                    isLoading={isLoadingConversations}
+                  />
+                ) : (
+                  <ChatView 
+                    activeConversation={activeConversation}
+                    messages={messages}
+                    isSending={isSending}
+                    onSendMessage={sendMessage}
+                    isLoading={isLoadingMessages}
+                    onToggleInfo={() => setShowInfo(!showInfo)}
+                    showInfo={showInfo}
+                    onArchive={archiveConversation}
+                    onUndoArchive={() => activeConversation && undoArchive(activeConversation.id, activeConversation.listingId, activeConversation.tenantId)}
+                    onUnarchive={unarchiveConversation}
+                    onUndoUnarchive={() => activeConversation && undoUnarchive(activeConversation.id, activeConversation.listingId, activeConversation.tenantId)}
+                    onDelete={deleteConversation}
+                    onMarkUnread={() => activeConversation && markAsUnread(activeConversation.listingId, activeConversation.tenantId)}
+                    onCloseChat={handleBackToList}
+                    hideInfo={true}
+                  />
+                )}
               </div>
-            </div>
-
-            {/* Widget Body */}
-            <div className="flex-1 overflow-hidden relative">
-              {view === 'list' ? (
-                <ConversationsList 
-                  conversations={conversations}
-                  activeId={activeConversation?.id}
-                  onSelect={handleSelectConversation}
-                  isLoading={isLoadingConversations}
-                />
-              ) : (
-                <ChatView 
-                  activeConversation={activeConversation}
-                  messages={messages}
-                  isSending={isSending}
-                  onSendMessage={sendMessage}
-                  isLoading={isLoadingMessages}
-                  onToggleInfo={() => setShowInfo(!showInfo)}
-                  showInfo={showInfo}
-                  onArchive={archiveConversation}
-                  onUndoArchive={() => activeConversation && undoArchive(activeConversation.id, activeConversation.listingId, activeConversation.tenantId)}
-                  onUnarchive={unarchiveConversation}
-                  onUndoUnarchive={() => activeConversation && undoUnarchive(activeConversation.id, activeConversation.listingId, activeConversation.tenantId)}
-                  onDelete={deleteConversation}
-                  onMarkUnread={() => activeConversation && markAsUnread(activeConversation.listingId, activeConversation.tenantId)}
-                  onCloseChat={handleBackToList}
-                  hideInfo={true}
-                />
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Floating Toggle Button */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "relative p-5 rounded-[2rem] shadow-2xl transition-all duration-500",
-          isOpen 
-            ? "bg-rose-500 text-white rotate-90" 
-            : "bg-primary text-white"
-        )}
-      >
-        <AnimatePresence mode="wait">
-          {isOpen ? (
-            <motion.div
-              key="close"
-              initial={{ rotate: -45, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: 45, opacity: 0 }}
-            >
-              <IconX size={28} strokeWidth={2.5} />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="message"
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.5, opacity: 0 }}
-            >
-              <IconMessage size={28} strokeWidth={2.5} />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Persistent Unread Badge with Original Rose Styling */}
-        {totalUnread > 0 && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 min-w-[24px] h-[24px] bg-rose-500 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white dark:border-gray-900 shadow-lg px-1 z-[101]"
-          >
-            {totalUnread > 9 ? '9+' : totalUnread}
-          </motion.div>
-        )}
+        {/* Floating Toggle Button (Desktop) */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            "relative p-5 rounded-[2rem] shadow-2xl transition-all duration-500",
+            isOpen 
+              ? "bg-rose-500 text-white rotate-90" 
+              : "bg-primary text-white"
+          )}
+        >
+          <AnimatePresence mode="wait">
+            {isOpen ? (
+              <motion.div
+                key="close"
+                initial={{ rotate: -45, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 45, opacity: 0 }}
+              >
+                <IconX size={28} strokeWidth={2.5} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="message"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.5, opacity: 0 }}
+              >
+                <IconMessage size={28} strokeWidth={2.5} />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Original Pulse effect when unread */}
-        {totalUnread > 0 && (
-          <span className="absolute inset-0 rounded-[2rem] bg-rose-500 animate-ping opacity-20 pointer-events-none" />
-        )}
-      </motion.button>
+          {totalUnread > 0 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-1 -right-1 min-w-[24px] h-[24px] bg-rose-500 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white dark:border-gray-900 shadow-lg px-1 z-[101]"
+            >
+              {totalUnread > 9 ? '9+' : totalUnread}
+            </motion.div>
+          )}
 
-      {/* Full Screen Overlay Portal */}
+          {totalUnread > 0 && (
+            <span className="absolute inset-0 rounded-[2rem] bg-rose-500 animate-ping opacity-20 pointer-events-none" />
+          )}
+        </motion.button>
+      </div>
+
+      {/* Full Screen Overlay Portal (Desktop expand) */}
       {mounted && createPortal(
         <AnimatePresence>
           {isFullView && (
@@ -329,8 +440,8 @@ const FloatingMessagingWidget = () => {
         </AnimatePresence>,
         document.body
       )}
-    </div>
+    </>
   );
-};
+}
 
 export default FloatingMessagingWidget;

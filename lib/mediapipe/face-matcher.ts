@@ -15,6 +15,15 @@ class FaceMatcherEngine {
         this.faceapi = await import('@vladmandic/face-api');
         const MODEL_URL = '/models/face-api';
         
+        if (this.faceapi.tf) {
+          try {
+            await this.faceapi.tf.ready();
+          } catch (tfErr) {
+            console.warn('[FaceMatcher] WebGL backend init failed, switching to CPU:', tfErr);
+            await this.faceapi.tf.setBackend('cpu');
+          }
+        }
+
         await Promise.all([
           this.faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
           this.faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
@@ -50,8 +59,30 @@ class FaceMatcherEngine {
 
       if (!detection) return null;
       return detection.descriptor;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Face descriptor extraction failed:', error);
+      
+      // If WebGL shader linking fails, attempt fallback to CPU backend
+      if (
+        error?.message?.includes('shader') ||
+        error?.message?.includes('WebGL') ||
+        error?.message?.includes('link')
+      ) {
+        try {
+          console.warn('[FaceMatcher] WebGL shader linking failed. Falling back to CPU backend...');
+          if (this.faceapi?.tf) {
+            await this.faceapi.tf.setBackend('cpu');
+            const options = new this.faceapi.SsdMobilenetv1Options({ minConfidence });
+            const detection = await this.faceapi.detectSingleFace(imageElement, options)
+              .withFaceLandmarks()
+              .withFaceDescriptor();
+            if (!detection) return null;
+            return detection.descriptor;
+          }
+        } catch (cpuError) {
+          console.error('[FaceMatcher] CPU fallback face descriptor extraction failed:', cpuError);
+        }
+      }
       return null;
     }
   }

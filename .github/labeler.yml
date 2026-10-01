@@ -1,4 +1,5 @@
 # Labeler configuration for BoardTAU repository
+# Uses standard glob pattern arrays supported by actions/labeler@v5
 
 'area: ai':
   - 'app/api/ai/**/*'

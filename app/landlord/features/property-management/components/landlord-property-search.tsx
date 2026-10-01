@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Building2 } from 'lucide-react';
+import { Search, X, Building2, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -25,6 +25,8 @@ export function LandlordPropertySearch({
   const [suggestions, setSuggestions] = useState<Property[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const isSearching = localQuery !== debouncedQuery;
+
   useEffect(() => {
     setLocalQuery(searchQuery);
   }, [searchQuery]);
@@ -34,12 +36,19 @@ export function LandlordPropertySearch({
   }, [debouncedQuery, setSearchQuery]);
 
   useEffect(() => {
-    if (debouncedQuery.length >= 2 && properties) {
+    if (debouncedQuery.trim().length >= 2 && properties) {
+      const query = debouncedQuery.toLowerCase().trim();
       const filtered = properties
-        .filter(p => 
-          p.title.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
-          p.region?.toLowerCase().includes(debouncedQuery.toLowerCase())
-        )
+        .filter(p => {
+          const titleMatch = p.title?.toLowerCase().includes(query);
+          const regionMatch = p.region?.toLowerCase().includes(query);
+          const categoryMatch = p.categories?.some((cat: any) => {
+            const name = cat?.category?.name || (typeof cat === 'string' ? cat : cat?.name);
+            return name?.toLowerCase().includes(query);
+          });
+          const typeMatch = (p as any).propertyType?.name?.toLowerCase().includes(query);
+          return titleMatch || regionMatch || categoryMatch || typeMatch;
+        })
         .slice(0, 5);
       setSuggestions(filtered);
     } else {
@@ -58,9 +67,13 @@ export function LandlordPropertySearch({
   }, []);
 
   return (
-    <div ref={containerRef} className="relative w-full lg:w-80 group">
+    <div ref={containerRef} className="relative w-full lg:w-80 group z-30">
       <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors z-20">
-        <Search size={18} strokeWidth={2.5} />
+        {isSearching ? (
+          <Loader2 size={18} className="animate-spin text-primary" />
+        ) : (
+          <Search size={18} strokeWidth={2.5} />
+        )}
       </div>
       <input
         type="text"

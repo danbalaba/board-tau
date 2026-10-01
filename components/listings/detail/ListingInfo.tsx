@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 
 import Avatar from "@/components/common/Avatar";
 import { AiOutlineCheck } from "react-icons/ai";
+import { ClipboardList } from "lucide-react";
 
 interface ListingInfoProps {
   user: {
@@ -59,7 +60,9 @@ const ListingInfo: React.FC<ListingInfoProps> = ({
       {category && (
         <div className="flex flex-col gap-6">
           <div className="flex flex-row items-center gap-4">
-            <div className="text-neutral-600">📋</div>
+            <div className="text-neutral-600 dark:text-gray-300">
+              <ClipboardList className="w-6 h-6" />
+            </div>
             <div className="flex flex-col">
               <span className="text-lg font-semibold text-gray-800 dark:text-gray-100">{category.label}</span>
               <p className="text-neutral-500 dark:text-gray-400 font-light">{category.description || ""}</p>

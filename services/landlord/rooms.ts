@@ -9,10 +9,11 @@ export async function getLandlordRooms(args?: {
   isArchived?: boolean;
   sortBy?: string;
   search?: string;
+  status?: string;
 }) {
   try {
     const landlord = await requireLandlord();
-    const { cursor, listingId, roomType, capacity, isArchived, sortBy, search } = args || {};
+    const { cursor, listingId, roomType, capacity, isArchived, sortBy, search, status } = args || {};
     const batchSize = 12;
 
     const where: any = {
@@ -20,7 +21,14 @@ export async function getLandlordRooms(args?: {
     };
 
     if (listingId && listingId !== 'all') where.listingId = listingId;
-    if (roomType && roomType !== 'all') where.roomType = roomType;
+    if (roomType && roomType !== 'all') {
+      where.OR = [
+        { roomTypeDefinitionId: roomType },
+        { roomTypeDefinition: { name: { equals: roomType, mode: 'insensitive' } } },
+        { roomTypeDefinition: { code: { equals: roomType, mode: 'insensitive' } } }
+      ];
+    }
+    if (status && status !== 'all') where.status = status;
     if (capacity && !isNaN(Number(capacity))) where.capacity = Number(capacity);
     if (isArchived !== undefined) where.isArchived = isArchived;
     if (search) {
@@ -34,7 +42,6 @@ export async function getLandlordRooms(args?: {
     if (sortBy === 'price_asc') orderBy = { price: 'asc' };
     else if (sortBy === 'price_desc') orderBy = { price: 'desc' };
     else if (sortBy === 'oldest') orderBy = { createdAt: 'asc' };
-    else if (sortBy === 'status') orderBy = { status: 'asc' };
 
     const rooms = await db.room.findMany({
       where,

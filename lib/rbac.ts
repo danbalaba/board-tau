@@ -17,6 +17,12 @@ export async function hasPermission(userId: string, permissionName: string): Pro
   if (!userId) return false;
 
   try {
+    // 0. Core account permissions that every authenticated user possesses for their own profile
+    const SELF_MANAGEMENT_PERMISSIONS = ['UPDATE_PROFILE', 'UPLOAD_AVATAR', 'UPDATE_PASSWORD', 'SEND_MESSAGES'];
+    if (SELF_MANAGEMENT_PERMISSIONS.includes(permissionName)) {
+      return true;
+    }
+
     // 1. Fetch user and their associated role
     const user = await db.user.findUnique({
       where: { id: userId },
@@ -49,11 +55,13 @@ export async function hasPermission(userId: string, permissionName: string): Pro
         'VIEW_DASHBOARD', 'VIEW_PROPERTIES', 'CREATE_PROPERTY', 
         'UPDATE_PROPERTY', 'VIEW_ROOMS', 'CREATE_ROOM', 
         'UPDATE_ROOM', 'MANAGE_INQUIRIES', 'MANAGE_RESERVATIONS', 
-        'RESPOND_REVIEW', 'VIEW_TENANT_PROFILE'
+        'RESPOND_REVIEW', 'VIEW_TENANT_PROFILE',
+        'UPDATE_PROFILE', 'UPLOAD_AVATAR', 'UPDATE_PASSWORD', 'SEND_MESSAGES'
       ],
       'ADMIN': [
         'VIEW_MODERATION_QUEUE', 'MODERATE_HOSTS', 'MODERATE_LISTINGS', 
-        'MODERATE_REVIEWS', 'MANAGE_USERS'
+        'MODERATE_REVIEWS', 'MANAGE_USERS',
+        'UPDATE_PROFILE', 'UPLOAD_AVATAR', 'UPDATE_PASSWORD', 'SEND_MESSAGES'
       ],
       'SUPER_ADMIN': [
         '*'
@@ -84,20 +92,11 @@ export async function hasAnyPermission(userId: string, permissionNames: string[]
   if (!userId) return false;
 
   try {
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      include: {
-        roleRelation: true
+    for (const name of permissionNames) {
+      if (await hasPermission(userId, name)) {
+        return true;
       }
-    });
-
-    if (!user) return false;
-    if (user.role === 'SUPER_ADMIN') return true;
-
-    if (user.roleRelation && user.roleRelation.permissions) {
-      return permissionNames.some(perm => user.roleRelation?.permissions.includes(perm));
     }
-
     return false;
   } catch (error) {
     return false;

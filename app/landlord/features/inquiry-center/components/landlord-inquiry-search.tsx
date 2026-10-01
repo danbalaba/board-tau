@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { IconSearch, IconX, IconMail, IconUser } from '@tabler/icons-react';
+import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -25,12 +26,12 @@ export function LandlordInquirySearch({
   const [suggestions, setSuggestions] = useState<Inquiry[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Sync local query with prop if changed from outside (e.g. clear button)
+  const isSearching = localQuery !== debouncedQuery;
+
   useEffect(() => {
     setLocalQuery(searchQuery);
   }, [searchQuery]);
 
-  // Update parent state with debounced value
   useEffect(() => {
     setSearchQuery(debouncedQuery);
   }, [debouncedQuery, setSearchQuery]);
@@ -61,9 +62,13 @@ export function LandlordInquirySearch({
   }, []);
 
   return (
-    <div ref={containerRef} className="relative w-full lg:w-80 group">
+    <div ref={containerRef} className="relative w-full lg:w-80 group z-30">
       <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors z-20">
-        <IconSearch size={16} strokeWidth={2.5} />
+        {isSearching ? (
+          <Loader2 size={16} className="animate-spin text-primary" />
+        ) : (
+          <IconSearch size={16} strokeWidth={2.5} />
+        )}
       </div>
       <input
         type="text"

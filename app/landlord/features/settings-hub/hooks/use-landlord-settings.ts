@@ -3,8 +3,11 @@ import { useRouter } from 'next/navigation';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { updateUserProfileClient } from '@/services/client/profile.client';
 import { useEdgeStore } from '@/lib/edgestore';
-import { validateName, validatePhoneNumber } from '@/lib/validators';
+import { sanitizeInput } from '@/lib/validators';
+import { editProfileSchema } from '@/components/modals/hooks/use-edit-profile-validation';
 import { useLandlordProfileStore } from './use-landlord-profile-store';
+import { geocodeAddress } from '@/services/geocoding';
+import { TAU_COORDINATES } from '@/utils/constants';
 
 /**
  * Validates and sanitizes image sources using a strict character whitelist.
@@ -26,23 +29,25 @@ export const getSafeImageSrc = (image: string): string => {
   return '';
 };
 
-export function useLandlordSettings(initialTab?: 'profile' | 'notifications' | 'payment' | 'security') {
+export function useLandlordSettings(initialTab?: 'profile' | 'security') {
   const router = useRouter();
   const { success, error: toastError } = useResponsiveToast();
   const { edgestore } = useEdgeStore();
   const closeSettings = useLandlordProfileStore((state) => state.closeSettings);
   const updateUser = useLandlordProfileStore((state) => state.updateUser);
-  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'payment' | 'security'>(initialTab || 'profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security'>(initialTab || 'profile');
 
-  // Sync activeTab with initialTab when it changes (e.g., when reopening the modal with a specific tab)
+  // Sync activeTab with initialTab when it changes
   useEffect(() => {
     if (initialTab) {
       setActiveTab(initialTab);
     }
   }, [initialTab]);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
+  const [initialFormData, setInitialFormData] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -53,6 +58,7 @@ export function useLandlordSettings(initialTab?: 'profile' | 'notifications' | '
     bio: '',
     profileImage: null as File | null,
     currentImageUrl: '',
+    latlng: null as [number, number] | null,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -67,7 +73,20 @@ export function useLandlordSettings(initialTab?: 'profile' | 'notifications' | '
         const data = await response.json();
         
         if (data) {
-          setFormData({
+          let initialLatLng: [number, number] = TAU_COORDINATES;
+          const addressQuery = data.address || (data.city ? `${data.city}, ${data.region || ''}` : '');
+          if (addressQuery && addressQuery.length > 3) {
+            try {
+              const addressInfo = await geocodeAddress(addressQuery);
+              if (addressInfo && addressInfo.coordinates) {
+                initialLatLng = addressInfo.coordinates;
+              }
+            } catch (e) {
+              console.warn('Initial address geocoding failed:', e);
+            }
+          }
+
+          const fetchedData = {
             name: data.name || '',
             email: data.email || '',
             phone: data.phoneNumber || '',
@@ -77,7 +96,10 @@ export function useLandlordSettings(initialTab?: 'profile' | 'notifications' | '
             bio: data.bio || '',
             profileImage: null,
             currentImageUrl: data.image || '',
-          });
+            latlng: initialLatLng,
+          };
+          setFormData(fetchedData);
+          setInitialFormData(fetchedData);
         }
       } catch (err) {
         console.error('Error fetching profile:', err);
@@ -89,9 +111,25 @@ export function useLandlordSettings(initialTab?: 'profile' | 'notifications' | '
     fetchProfile();
   }, []);
 
+  const isDirty = Boolean(
+    initialFormData && (
+      formData.name !== initialFormData.name ||
+      formData.phone !== initialFormData.phone ||
+      formData.address !== initialFormData.address ||
+      formData.city !== initialFormData.city ||
+      formData.region !== initialFormData.region ||
+      formData.bio !== initialFormData.bio ||
+      formData.currentImageUrl !== initialFormData.currentImageUrl ||
+      formData.profileImage !== null
+    )
+  );
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,7 +154,7 @@ export function useLandlordSettings(initialTab?: 'profile' | 'notifications' | '
         setFormData((prev) => ({ 
           ...prev, 
           currentImageUrl: res.url,
-          profileImage: null // We've already uploaded it
+          profileImage: null
         }));
         success('Profile picture uploaded!');
       } catch (err) {
@@ -131,60 +169,66 @@ export function useLandlordSettings(initialTab?: 'profile' | 'notifications' | '
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    const newErrors: Record<string, string> = {};
 
-    // 1. Validation
-    const nameError = validateName(formData.name);
-    if (nameError) {
-      newErrors.name = nameError;
-    }
+    // Comprehensive Zod validation matching EditProfileModal
+    const validationResult = editProfileSchema.safeParse({
+      name: formData.name,
+      phoneNumber: formData.phone,
+      city: formData.city,
+      region: formData.region,
+      address: formData.address,
+      bio: formData.bio || '',
+    });
 
-    if (formData.phone) {
-      const phoneError = validatePhoneNumber(formData.phone);
-      if (phoneError) {
-        newErrors.phone = phoneError;
+    if (!validationResult.success) {
+      const newErrors: Record<string, string> = {};
+      for (const issue of validationResult.error.issues) {
+        const fieldKey = issue.path[0] === 'phoneNumber' ? 'phone' : (issue.path[0] as string);
+        if (!newErrors[fieldKey]) {
+          newErrors[fieldKey] = issue.message;
+        }
       }
-    }
-
-    if (!formData.address || formData.address.length < 5) {
-      newErrors.address = 'Please enter a valid address';
-    }
-
-    if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toastError('Please fix the errors before saving');
+      const firstErrorMessage = Object.values(newErrors)[0] || 'Please fix the errors before saving';
+      toastError(firstErrorMessage);
       return;
     }
 
+    const validatedData = validationResult.data;
     setIsLoading(true);
 
     try {
-      // Update profile in database
-      await updateUserProfileClient({
-        name: formData.name,
-        phoneNumber: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        region: formData.region,
-        bio: formData.bio,
+      const sanitizedData = {
+        name: sanitizeInput(validatedData.name),
+        phoneNumber: sanitizeInput(validatedData.phoneNumber),
+        address: sanitizeInput(validatedData.address),
+        city: sanitizeInput(validatedData.city),
+        region: sanitizeInput(validatedData.region),
+        bio: sanitizeInput(validatedData.bio || ''),
         image: formData.currentImageUrl,
-      });
+      };
+
+      // Update profile in database
+      await updateUserProfileClient(sanitizedData);
+
+      // Update initial state baseline
+      setInitialFormData({ ...formData });
 
       // Update global store for instant UI feedback
       updateUser({
-        name: formData.name,
-        phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        province: formData.region,
-        bio: formData.bio,
+        name: sanitizedData.name,
+        phone: sanitizedData.phoneNumber,
+        address: sanitizedData.address,
+        city: sanitizedData.city,
+        province: sanitizedData.region,
+        bio: sanitizedData.bio,
         image: formData.currentImageUrl,
       });
 
       router.refresh();
       success('Settings updated successfully!');
       
-      // Auto-close modal on success as requested
+      // Auto-close modal on success
       setTimeout(() => {
         closeSettings();
       }, 500);
@@ -202,6 +246,7 @@ export function useLandlordSettings(initialTab?: 'profile' | 'notifications' | '
     isLoading: isLoading || isInitialLoad,
     isUploading,
     uploadProgress,
+    isDirty,
     formData,
     setFormData,
     errors,
@@ -211,3 +256,4 @@ export function useLandlordSettings(initialTab?: 'profile' | 'notifications' | '
     getSafeImageSrc
   };
 }
+

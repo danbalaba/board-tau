@@ -44,11 +44,20 @@ export async function POST(req: Request) {
               return NextResponse.json({ ok: true });
             }
 
-            updatedReservation = await db.reservation.update({
+            const paymongoPaymentId = payload.data?.attributes?.resource?.attributes?.payments?.[0]?.id 
+                                   || checkoutSessionId 
+                                   || resourceId 
+                                   || `PAYMONGO-${pendingReservation.id.slice(-8).toUpperCase()}`;
+
+            const methodStr = (metadata?.paymentMethod || pendingReservation.paymentMethod || "GCASH").toUpperCase();
+
+            updatedReservation = await (db.reservation as any).update({
               where: { id: pendingReservation.id },
               data: {
                 status: "RESERVED",
                 paymentStatus: "PAID",
+                paymentMethod: methodStr as any,
+                paymentReference: paymongoPaymentId,
               },
               include: {
                 listing: true,

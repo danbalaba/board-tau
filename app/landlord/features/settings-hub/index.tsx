@@ -1,29 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { 
-  IconUser, 
-  IconBell, 
-  IconShieldLock, 
-  IconCreditCard,
-  IconFingerprint,
-  IconShieldCheck,
-  IconChevronRight
-} from '@tabler/icons-react';
+  User, 
+  ShieldCheck, 
+  ChevronRight
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/utils/helper';
+import { cn } from '@/lib/utils';
 import { useLandlordSettings } from './hooks/use-landlord-settings';
-import { LandlordSettingsNotificationsTab } from './components/landlord-settings-notifications-tab';
-import { LandlordSettingsPaymentTab } from './components/landlord-settings-payment-tab';
 import { LandlordSettingsSecurityTab } from './components/landlord-settings-security-tab';
 import { LandlordSettingsProfileTab } from './components/landlord-settings-profile-tab';
 
 interface LandlordSettingsHubProps {
-  initialTab?: 'profile' | 'notifications' | 'payment' | 'security';
+  initialTab?: 'profile' | 'security';
   mode?: 'account' | 'security' | 'all';
 }
 
-type TabType = 'profile' | 'notifications' | 'payment' | 'security';
+type TabType = 'profile' | 'security';
 
 export default function LandlordSettingsHub({ mode = 'all' }: LandlordSettingsHubProps) {
   const {
@@ -41,24 +35,22 @@ export default function LandlordSettingsHub({ mode = 'all' }: LandlordSettingsHu
   } = useLandlordSettings();
 
   const tabs = [
-    { id: 'profile', label: 'My Profile', icon: IconUser, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-    { id: 'security', label: 'Security', icon: IconShieldCheck, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { id: 'notifications', label: 'Alerts', icon: IconBell, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { id: 'payment', label: 'Payouts', icon: IconCreditCard, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+    { id: 'profile', label: 'My Profile', icon: User, color: 'text-primary', bg: 'bg-primary/10' },
+    { id: 'security', label: 'Security', icon: ShieldCheck, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
   ] as const;
 
   const currentTab = tabs.find(t => t.id === activeTab) || tabs[0];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 min-h-[600px]">
+    <div className="flex flex-col lg:flex-row gap-6 min-h-[500px]">
       {/* Side Navigation Hub */}
-      <aside className="w-full lg:w-72 shrink-0 space-y-2">
-        <div className="mb-8 px-4">
-          <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">Settings Hub</h2>
-          <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest mt-1">Configure your environment</p>
+      <aside className="w-full lg:w-64 shrink-0 space-y-2">
+        <div className="mb-4 px-2">
+          <h3 className="text-xs font-black text-gray-400 uppercase tracking-wider">Account Settings</h3>
+          <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Manage your profile details & preferences</p>
         </div>
 
-        <nav className="space-y-1.5">
+        <nav className="flex lg:flex-col gap-2 overflow-x-auto pb-2 lg:pb-0">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -68,85 +60,64 @@ export default function LandlordSettingsHub({ mode = 'all' }: LandlordSettingsHu
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as TabType)}
                 className={cn(
-                  "w-full flex items-center justify-between p-4 rounded-2xl transition-all duration-300 group relative overflow-hidden",
+                  "flex-1 lg:w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl sm:rounded-2xl transition-all duration-200 group relative cursor-pointer select-none whitespace-nowrap",
                   isActive 
-                    ? "bg-white dark:bg-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700" 
-                    : "hover:bg-gray-100/50 dark:hover:bg-white/5"
+                    ? "bg-primary text-white shadow-md shadow-primary/20" 
+                    : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-800"
                 )}
               >
-                {isActive && (
-                  <motion.div 
-                    layoutId="active-pill"
-                    className="absolute left-0 w-1 h-6 bg-primary rounded-r-full"
-                  />
-                )}
-                
-                <div className="flex items-center gap-4 relative z-10">
+                <div className="flex items-center gap-3">
                   <div className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300",
-                    isActive ? tab.bg : "bg-gray-100 dark:bg-gray-800 group-hover:scale-110"
+                    "w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105 shrink-0",
+                    isActive ? "bg-white/20 text-white" : `${tab.bg} ${tab.color}`
                   )}>
-                    <Icon size={20} className={cn(isActive ? tab.color : "text-gray-400")} />
+                    <Icon size={16} />
                   </div>
-                  <span className={cn(
-                    "text-xs font-black uppercase tracking-widest transition-colors",
-                    isActive ? "text-gray-900 dark:text-white" : "text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white"
-                  )}>
+                  <span className="text-xs font-black uppercase tracking-wider">
                     {tab.label}
                   </span>
                 </div>
 
-                <IconChevronRight 
+                <ChevronRight 
                   size={14} 
                   className={cn(
-                    "transition-all duration-300",
-                    isActive ? "text-primary translate-x-0" : "text-gray-300 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0"
+                    "hidden lg:block transition-all",
+                    isActive ? "text-white translate-x-0" : "text-gray-300 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0"
                   )} 
                 />
               </button>
             );
           })}
         </nav>
-
-        {/* System Info Card */}
-        <div className="mt-12 p-6 rounded-3xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
-          <div className="flex items-center gap-2 mb-3">
-            <IconFingerprint size={16} className="text-primary" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Account ID</span>
-          </div>
-          <p className="text-[10px] font-mono text-gray-500 dark:text-gray-400 break-all bg-white dark:bg-gray-950 p-2 rounded-lg border border-gray-100 dark:border-gray-800 shadow-inner">
-            {formData.email.split('@')[0].toUpperCase()}
-          </p>
-        </div>
       </aside>
 
-      {/* Main Content Hub */}
+      {/* Main Content Area */}
       <main className="flex-1 min-w-0">
-        <div className="bg-white dark:bg-gray-950/50 backdrop-blur-xl rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-2xl shadow-gray-200/20 dark:shadow-none overflow-hidden h-full flex flex-col">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-gray-800 shadow-xs overflow-hidden h-full flex flex-col">
           {/* Section Header */}
-          <header className="p-8 border-b border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
-            <div className="flex items-center gap-6">
-              <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl", currentTab.bg)}>
-                <currentTab.icon size={28} className={currentTab.color} />
+          <header className="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-800/80 bg-slate-50/50 dark:bg-gray-950/40">
+            <div className="flex items-center gap-4">
+              <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shadow-xs shrink-0", currentTab.bg)}>
+                <currentTab.icon size={22} className={currentTab.color} />
               </div>
               <div>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{currentTab.label}</h2>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-1">
-                  Manage your {currentTab.label.toLowerCase()} preferences
+                <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white tracking-tight">{currentTab.label}</h3>
+                <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                  Update your {currentTab.label.toLowerCase()} details
                 </p>
               </div>
             </div>
           </header>
 
           {/* Tab Content */}
-          <div className="flex-1 p-8 md:p-12 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 p-4 sm:p-7 overflow-y-auto custom-scrollbar">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
                 className="h-full"
               >
                 {activeTab === 'profile' && (
@@ -162,8 +133,6 @@ export default function LandlordSettingsHub({ mode = 'all' }: LandlordSettingsHu
                     getSafeImageSrc={getSafeImageSrc}
                   />
                 )}
-                {activeTab === 'notifications' && <LandlordSettingsNotificationsTab />}
-                {activeTab === 'payment' && <LandlordSettingsPaymentTab />}
                 {activeTab === 'security' && <LandlordSettingsSecurityTab />}
               </motion.div>
             </AnimatePresence>
@@ -173,3 +142,5 @@ export default function LandlordSettingsHub({ mode = 'all' }: LandlordSettingsHu
     </div>
   );
 }
+
+

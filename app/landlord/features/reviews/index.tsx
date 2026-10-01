@@ -37,6 +37,8 @@ export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
     setSelectedStatus,
     selectedRating,
     setSelectedRating,
+    sortBy,
+    setSortBy,
     viewMode,
     setViewMode,
     searchQuery,
@@ -73,6 +75,8 @@ export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
   return (
     <div className="space-y-6">
       <LandlordReviewHeader 
+        sortBy={sortBy}
+        setSortBy={setSortBy}
         viewMode={viewMode}
         setViewMode={setViewMode}
         selectedStatus={selectedStatus}
@@ -85,26 +89,6 @@ export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
         rawReviews={rawReviews}
       />
 
-      {/* Mobile Filters UI (Simplified version for small screens) */}
-      <div className="xl:hidden flex flex-col gap-4 bg-white/50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 backdrop-blur-sm mb-4">
-        <div>
-          <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Status</span>
-          <div className="flex flex-wrap gap-2">
-            {['all', 'pending', 'approved', 'rejected'].map((status) => (
-              <button
-                key={status}
-                onClick={() => setSelectedStatus(status)}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                  selectedStatus === status ? "bg-primary text-white" : "bg-white dark:bg-gray-800 text-gray-500 border border-gray-100 dark:border-gray-700"
-                )}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
 
       <div className="min-h-[400px] relative">
         <AnimatePresence mode="wait">
@@ -125,7 +109,7 @@ export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.15 }}
             >
               {filteredReviews.length > 0 && (
                 <div className="flex items-center gap-2 mb-6">
@@ -147,7 +131,7 @@ export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
               ) : (
                 <div className={cn(
                   viewMode === 'grid' 
-                    ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                    ? "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-6"
                     : "space-y-4"
                 )}>
                   {filteredReviews.map((review, idx) => (

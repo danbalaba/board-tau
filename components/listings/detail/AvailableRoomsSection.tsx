@@ -514,7 +514,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
       />
 
       {/* Auth Modal for Guests */}
-      <Modal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} width="sm" noPadding>
+      <Modal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} width="sm" fullOnMobile={true} noPadding>
         <AuthModal name="Login" onCloseModal={() => setShowAuthModal(false)} />
       </Modal>
     </section>

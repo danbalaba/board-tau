@@ -172,11 +172,11 @@ const PrepareStep: React.FC<PrepareStepProps> = ({
                       {[
                         { name: "Student ID (COR)", icon: <User size={20} />, color: "bg-blue-600 shadow-blue-200", src: "/images/id-secondary-studentID.png" },
                         { name: "Staff ID", icon: <User size={20} />, color: "bg-indigo-600 shadow-indigo-200", src: "/images/id-secondary-staffID.png" },
-                        { name: "Faculty ID", icon: <User size={20} />, color: "bg-emerald-600 shadow-emerald-200", src: "/images/id-secondary-facultyID.png" },
+                        { name: "Faculty ID", icon: <User size={20} />, color: "bg-primary shadow-primary/20 text-white", src: "/images/id-secondary-facultyID.png" },
                         { name: "Pag-IBIG ID", icon: <Info size={20} />, color: "bg-gradient-to-br from-blue-500/10 to-blue-600/20 text-blue-600", src: "/images/id-secondary-pag-ibig.png" },
                         { name: "Police Clearance", icon: <ShieldCheck size={20} />, color: "bg-blue-50 text-blue-600", src: "/images/id-secondary-police-clearance.png" },
                         { name: "NBI Clearance", icon: <Info size={20} />, color: "bg-green-50 text-green-600", src: "/images/id-secondary-nbi-clearance.png" },
-                        { name: "PhilHealth ID", icon: <Info size={20} />, color: "bg-teal-50 text-teal-600", src: "/images/id-secondary-philhealth.png" },
+                        { name: "PhilHealth ID", icon: <Info size={20} />, color: "bg-primary/10 text-primary", src: "/images/id-secondary-philhealth.png" },
                         { name: "Postal ID", icon: <CreditCard size={20} />, color: "bg-rose-50 text-rose-600", src: "/images/id-secondary-postal-id.png" },
                         { name: "TIN ID", icon: <CreditCard size={20} />, color: "bg-orange-50 text-orange-600", src: "/images/id-secondary-tin-id.png" },
                       ].map((id) => (

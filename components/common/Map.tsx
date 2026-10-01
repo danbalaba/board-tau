@@ -177,23 +177,44 @@ const Map: React.FC<MapProps> = ({
       mapRef.current = map;
       isMapInitialized.current = true;
 
-      // Invalidate size and re-align map view after layout animation pass
-      const invalidateTimer = setTimeout(() => {
+      // Multi-pass size invalidation to handle modal transitions (Framer Motion spring animations)
+      const t1 = setTimeout(() => {
         if (mapRef.current) {
           mapRef.current.invalidateSize();
           mapRef.current.setView(initialCenter, 16);
         }
-      }, 120);
+      }, 80);
 
-      const resizeObserver = new ResizeObserver(() => {
+      const t2 = setTimeout(() => {
         if (mapRef.current) {
           mapRef.current.invalidateSize();
         }
+      }, 300);
+
+      const t3 = setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.invalidateSize();
+        }
+      }, 650);
+
+      const resizeObserver = new ResizeObserver(() => {
+        if (mapRef.current) {
+          requestAnimationFrame(() => {
+            if (mapRef.current) {
+              mapRef.current.invalidateSize();
+            }
+          });
+        }
       });
-      resizeObserver.observe(containerRef.current);
+
+      if (containerRef.current) {
+        resizeObserver.observe(containerRef.current);
+      }
 
       return () => {
-        clearTimeout(invalidateTimer);
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
         resizeObserver.disconnect();
       };
 
@@ -392,6 +413,14 @@ const Map: React.FC<MapProps> = ({
           border: 1px solid rgba(30, 41, 59, 0.9) !important;
           border-left: 3.5px solid #0D9488 !important;
           box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+        }
+        .leaflet-container {
+          background-color: #0f172a !important;
+          width: 100% !important;
+          height: 100% !important;
+        }
+        .light .leaflet-container {
+          background-color: #f1f5f9 !important;
         }
         .dark-map-tiles {
           filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7) !important;

@@ -69,15 +69,15 @@ describe('FloatingMessagingWidget', () => {
 
   it('renders floating button initially', () => {
     render(<FloatingMessagingWidget />);
-    // The button should be present
-    expect(screen.getByRole('button')).toBeInTheDocument();
+    // The buttons (mobile & desktop) should be present
+    expect(screen.getAllByRole('button').length).toBeGreaterThan(0);
     // Widget body shouldn't be visible yet
     expect(screen.queryByTestId('mock-conversations-list')).not.toBeInTheDocument();
   });
 
   it('opens widget when clicking floating button', () => {
     render(<FloatingMessagingWidget />);
-    const btn = screen.getByRole('button');
+    const btn = screen.getAllByRole('button')[1]; // Desktop toggle button
     fireEvent.click(btn);
     
     // Now the list should be visible
@@ -86,8 +86,8 @@ describe('FloatingMessagingWidget', () => {
 
   it('expands to full view when maximize button clicked', () => {
     render(<FloatingMessagingWidget />);
-    // Open widget
-    fireEvent.click(screen.getByRole('button'));
+    // Open desktop widget
+    fireEvent.click(screen.getAllByRole('button')[1]);
     
     // Click maximize
     const maximizeBtn = screen.getByTitle('Expand to full view');

@@ -142,45 +142,169 @@ const StayStep: React.FC<StayStepProps> = ({
             )}
           </div>
 
-          {showCalendar && (
-            <div className="absolute top-full left-0 z-50 mt-2 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-200 ring-1 ring-black/5 min-w-[350px] w-max">
-              <style>{`
-                .rdp-root {
-                  --rdp-accent-color: var(--primary-color);
-                  --rdp-accent-text-color: #fff;
-                  --rdp-range_start-color: var(--primary-color);
-                  --rdp-range_end-color: var(--primary-color);
-                  --rdp-range_middle-background-color: var(--primary-light-color);
-                  --rdp-cell-size: 38px;
-                  --rdp-caption-font-size: 16px;
-                  font-size: 14px;
-                  margin: 0;
-                }
-                .dark .rdp-root {
-                  --rdp-range_middle-background-color: var(--primary-dark-color);
-                  color: #e5e7eb;
-                }
-                .rdp-day_selected {
-                  background-color: var(--rdp-accent-color) !important;
-                }
-                .rdp-day_range_middle {
-                  background-color: var(--rdp-range_middle-background-color) !important;
-                  color: inherit !important;
-                }
-              `}</style>
-              <DayPicker
-                mode="range"
-                selected={dateRange}
-                onSelect={setDateRange}
-                min={1}
-                disabled={{ before: new Date() }}
-                className="m-0"
-              />
-              <div className="flex justify-end p-2 border-t border-gray-100 dark:border-gray-700 mt-2">
-                <Button size="small" onClick={() => setShowCalendar(false)}>Done</Button>
-              </div>
-            </div>
-          )}
+          {/* DESKTOP CALENDAR DROPDOWN (>= 640px) */}
+          <AnimatePresence>
+            {showCalendar && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                transition={{ duration: 0.2 }}
+                className="hidden sm:block absolute top-full left-0 z-50 mt-2 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl ring-1 ring-black/5 min-w-[350px] w-max"
+              >
+                <style>{`
+                  .rdp-root {
+                    --rdp-accent-color: var(--primary-color);
+                    --rdp-accent-text-color: #fff;
+                    --rdp-range_start-color: var(--primary-color);
+                    --rdp-range_end-color: var(--primary-color);
+                    --rdp-range_middle-background-color: var(--primary-light-color);
+                    --rdp-cell-size: 38px;
+                    --rdp-caption-font-size: 16px;
+                    font-size: 14px;
+                    margin: 0;
+                  }
+                  .dark .rdp-root {
+                    --rdp-range_middle-background-color: var(--primary-dark-color);
+                    color: #e5e7eb;
+                  }
+                  .rdp-day_selected {
+                    background-color: var(--rdp-accent-color) !important;
+                  }
+                  .rdp-day_range_middle {
+                    background-color: var(--rdp-range_middle-background-color) !important;
+                    color: inherit !important;
+                  }
+                `}</style>
+                <DayPicker
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  min={1}
+                  disabled={{ before: new Date() }}
+                  className="m-0"
+                />
+                <div className="flex justify-end p-2 border-t border-gray-100 dark:border-gray-700 mt-2">
+                  <Button size="small" onClick={() => setShowCalendar(false)}>Done</Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* MOBILE FULL-SCREEN / BOTTOM-SHEET MODAL CALENDAR (< 640px) */}
+          <AnimatePresence>
+            {showCalendar && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="sm:hidden fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex flex-col justify-end p-0"
+                onClick={() => setShowCalendar(false)}
+              >
+                <motion.div
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  transition={{ type: "spring", damping: 25, stiffness: 280 }}
+                  className="bg-white dark:bg-gray-900 w-full rounded-t-3xl border-t border-gray-200 dark:border-gray-800 p-5 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Header */}
+                  <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                        <FaCalendar size={16} />
+                      </div>
+                      <div>
+                        <h4 className="font-extrabold text-base text-gray-900 dark:text-white leading-tight">
+                          Select Stay Dates
+                        </h4>
+                        <p className="text-[10px] text-gray-400 font-medium">Check-in to Check-out range</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowCalendar(false)}
+                      className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    >
+                      <MdClose size={20} />
+                    </button>
+                  </div>
+
+                  {/* Body Calendar */}
+                  <div className="flex-1 overflow-y-auto py-3 flex justify-center items-center">
+                    <style>{`
+                      .rdp-root {
+                        --rdp-accent-color: var(--primary-color);
+                        --rdp-accent-text-color: #fff;
+                        --rdp-range_start-color: var(--primary-color);
+                        --rdp-range_end-color: var(--primary-color);
+                        --rdp-range_middle-background-color: var(--primary-light-color);
+                        --rdp-cell-size: 42px;
+                        --rdp-caption-font-size: 16px;
+                        font-size: 15px;
+                        margin: 0 auto;
+                      }
+                      .dark .rdp-root {
+                        --rdp-range_middle-background-color: var(--primary-dark-color);
+                        color: #e5e7eb;
+                      }
+                      .rdp-day_selected {
+                        background-color: var(--rdp-accent-color) !important;
+                      }
+                      .rdp-day_range_middle {
+                        background-color: var(--rdp-range_middle-background-color) !important;
+                        color: inherit !important;
+                      }
+                    `}</style>
+                    <DayPicker
+                      mode="range"
+                      selected={dateRange}
+                      onSelect={setDateRange}
+                      min={1}
+                      disabled={{ before: new Date() }}
+                      className="m-0"
+                    />
+                  </div>
+
+                  {/* Footer Actions */}
+                  <div className="pt-3 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-2.5">
+                    {dateRange?.from && (
+                      <div className="flex items-center justify-between text-xs font-bold bg-primary/10 text-primary p-2.5 rounded-xl border border-primary/20">
+                        <span>
+                          {format(dateRange.from, 'MMM dd, yyyy')} - {dateRange.to ? format(dateRange.to, 'MMM dd, yyyy') : '...'}
+                        </span>
+                        {dateRange?.to && (
+                          <span className="font-black bg-primary text-white px-2 py-0.5 rounded-md">
+                            {differenceInDays(dateRange.to, dateRange.from)} nights
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      {dateRange?.from && (
+                        <button
+                          type="button"
+                          onClick={(e) => { handleClearDates(e); }}
+                          className="px-4 py-3 rounded-xl border border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs font-extrabold transition-all"
+                        >
+                          Clear
+                        </button>
+                      )}
+                      <Button
+                        className="flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-primary/25"
+                        onClick={() => setShowCalendar(false)}
+                      >
+                        Apply Dates
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           
           {(errors.moveInDate || errors.checkOutDate) && (
             <p className="text-sm text-red-500 mt-1">Please select both check-in and check-out dates.</p>
@@ -207,7 +331,7 @@ const StayStep: React.FC<StayStepProps> = ({
           )}
         </div>
 
-        {/* Dynamic Spacer for Calendar */}
+        {/* Dynamic Spacer for Desktop Calendar */}
         <AnimatePresence>
           {showCalendar && (
             <motion.div 
@@ -215,7 +339,7 @@ const StayStep: React.FC<StayStepProps> = ({
               animate={{ height: 350, opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="w-full"
+              className="hidden sm:block w-full"
             />
           )}
         </AnimatePresence>

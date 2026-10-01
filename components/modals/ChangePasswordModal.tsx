@@ -87,6 +87,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       width="md" 
       title={hasPassword ? "Change Password" : "Set Account Password"}
       closeOnOutsideClick={false}
+      fullOnMobile={true}
     >
       <motion.div 
         variants={containerVariants}
@@ -95,16 +96,15 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
         className="p-1"
       >
         {/* Security Badge Header */}
-        <div className="flex flex-col items-center justify-center mb-8 pt-2">
-          <div className="w-20 h-20 bg-primary/10 dark:bg-primary/20 rounded-[2rem] flex items-center justify-center mb-4 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <Lock className="w-10 h-10 text-primary" />
+        <div className="flex flex-row items-center gap-3.5 mb-4 sm:mb-6 pt-1 shrink-0 px-1">
+          <div className="w-11 h-11 sm:w-16 sm:h-16 bg-primary/10 dark:bg-primary/20 rounded-2xl flex items-center justify-center shrink-0">
+            <Lock className="w-5 h-5 sm:w-8 sm:h-8 text-primary" />
           </div>
-          <div className="text-center">
-            <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.2em] mb-1">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               Security Protocol
             </p>
-            <h4 className="text-xs font-medium text-gray-400 dark:text-gray-500 px-6 leading-relaxed">
+            <h4 className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-gray-500 leading-snug line-clamp-2">
               {hasPassword 
                 ? "Maintain your account's integrity by updating your credentials regularly."
                 : "Create a unique password to enable multiple ways to access your BoardTAU account."}
@@ -112,20 +112,20 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
           </div>
         </div>
 
-        <div className="mb-6 p-4 bg-amber-50/50 dark:bg-amber-900/5 backdrop-blur-sm rounded-2xl border border-amber-100/50 dark:border-amber-800/30 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-[11px] text-amber-800/80 dark:text-amber-400/80 font-medium leading-relaxed italic">
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-amber-50/50 dark:bg-amber-900/5 backdrop-blur-sm rounded-2xl border border-amber-100/50 dark:border-amber-800/30 flex items-start gap-2.5 sm:gap-3">
+          <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-[10px] sm:text-[11px] text-amber-800/80 dark:text-amber-400/80 font-medium leading-relaxed italic">
             Note: {hasPassword 
               ? "All other active sessions will be terminated upon success."
               : "You will be able to log in with either your social account or email + password."}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          <div className="space-y-1 bg-gray-50/30 dark:bg-white/[0.02] backdrop-blur-md p-2 rounded-[2.5rem] border border-gray-100/50 dark:border-white/[0.05] shadow-inner">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
+          <div className="space-y-1 bg-gray-50/30 dark:bg-white/[0.02] backdrop-blur-md p-1.5 sm:p-2 rounded-2xl sm:rounded-[2.5rem] border border-gray-100/50 dark:border-white/[0.05] shadow-inner">
             {/* Current Password */}
             {hasPassword && (
-              <motion.div variants={itemVariants} className="relative group p-3">
+              <motion.div variants={itemVariants} className="relative group p-2 sm:p-3">
                 <ModalInput
                   id="oldPassword"
                   label="Current Password"
@@ -141,7 +141,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
             )}
 
             {/* New Password */}
-            <motion.div variants={itemVariants} className="relative group p-3">
+            <motion.div variants={itemVariants} className="relative group p-2 sm:p-3">
               <ModalInput
                 id="newPassword"
                 label={hasPassword ? "New Secure Password" : "Create New Password"}
@@ -156,7 +156,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
             </motion.div>
 
             {/* Confirm New Password */}
-            <motion.div variants={itemVariants} className="relative group p-3">
+            <motion.div variants={itemVariants} className="relative group p-2 sm:p-3">
               <ModalInput
                 id="confirmPassword"
                 label="Re-type New Password"
@@ -172,21 +172,21 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-4 pt-2">
+          <div className="flex gap-3 sm:gap-4 pt-2 pb-2 sm:pb-0">
             <Button
               type="button"
               variant="secondary"
               outline={true}
               onClick={handleClose}
               disabled={isLoading}
-              className="flex-1 h-14 rounded-2xl font-bold border-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all text-sm uppercase tracking-wider"
+              className="flex-1 h-12 sm:h-14 rounded-2xl font-bold border-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all text-xs sm:text-sm uppercase tracking-wider"
             >
               Back
             </Button>
             <Button
               type="submit"
               disabled={isLoading}
-              className="flex-[1.5] h-14 rounded-2xl font-bold shadow-2xl shadow-primary/25 bg-primary dark:bg-gradient-to-r dark:from-primary dark:to-primary/90 text-white hover:scale-[1.02] active:scale-[0.98] transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2"
+              className="flex-[1.5] h-12 sm:h-14 rounded-2xl font-bold shadow-xl shadow-primary/25 bg-primary dark:bg-gradient-to-r dark:from-primary dark:to-primary/90 text-white hover:scale-[1.01] active:scale-[0.98] transition-all text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2"
               isLoading={isLoading}
             >
               {hasPassword ? "Update Credentials" : "Secure Account"}

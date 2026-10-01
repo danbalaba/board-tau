@@ -31,6 +31,8 @@ jest.mock('../landlord-review-search', () => ({
 
 describe('LandlordReviewHeader', () => {
   const defaultProps = {
+    sortBy: 'newest',
+    setSortBy: jest.fn(),
     viewMode: 'grid' as const,
     setViewMode: jest.fn(),
     selectedStatus: 'all',

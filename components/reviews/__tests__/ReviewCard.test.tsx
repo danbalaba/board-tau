@@ -12,7 +12,8 @@ jest.mock('@/components/common/SafeImage', () => ({
 jest.mock('framer-motion', () => ({
   motion: {
     div: ({ children, whileHover, ...props }: any) => <div {...props}>{children}</div>
-  }
+  },
+  AnimatePresence: ({ children }: any) => <>{children}</>
 }));
 
 describe('ReviewCard', () => {
@@ -47,7 +48,7 @@ describe('ReviewCard', () => {
     const reviewWithResponse = { ...mockReview, response: 'Thank you!' };
     render(<ReviewCard review={reviewWithResponse as any} onViewDetails={jest.fn()} />);
     
-    expect(screen.getByText('Landlord Replied')).toBeInTheDocument();
+    expect(screen.getByText('Replied')).toBeInTheDocument();
   });
 
   it('displays NEW MESSAGE notification if hasNotification is true', () => {

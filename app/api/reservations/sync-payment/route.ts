@@ -43,7 +43,10 @@ export async function GET() {
     // 1. ATOMIC STATUS UPDATE: Guard against race conditions with webhooks
     let updatedReservation;
     try {
-      updatedReservation = await db.reservation.update({
+      const generatedRef = pendingReservation.paymentReference || `REF-${pendingReservation.id.slice(-8).toUpperCase()}`;
+      const methodStr = pendingReservation.paymentMethod || "GCASH";
+
+      updatedReservation = await (db.reservation as any).update({
         where: { 
           id: pendingReservation.id,
           status: "PENDING_PAYMENT" 
@@ -51,6 +54,8 @@ export async function GET() {
         data: {
           status: "RESERVED",
           paymentStatus: "PAID",
+          paymentMethod: methodStr as any,
+          paymentReference: generatedRef,
         },
         include: {
           listing: true,

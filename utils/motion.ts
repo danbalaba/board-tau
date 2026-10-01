@@ -1,3 +1,5 @@
+import type { Variants } from "framer-motion";
+
 /** iOS 26 / visionOS-style motion variants for Framer Motion */
 
 export const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
@@ -147,16 +149,16 @@ export const slideIn = (
 });
 
 /** Modal: float up from bottom with spring */
-export const modalSheet = {
+export const modalSheet: Variants = {
   hidden: { opacity: 0, y: "100%", transition: tweenMedium },
   show: {
     opacity: 1,
     y: 0,
-    transition: { ...springSoft },
+    transition: { type: "spring", stiffness: 300, damping: 28 },
   },
   exit: {
     opacity: 0,
-    y: "40%",
-    transition: { duration: 0.25 },
+    y: "100%",
+    transition: { duration: 0.25, ease: [0.4, 0, 1, 1] },
   },
 };

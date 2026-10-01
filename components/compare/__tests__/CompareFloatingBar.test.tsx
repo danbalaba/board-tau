@@ -53,7 +53,7 @@ describe('CompareFloatingBar', () => {
     
     expect(screen.getByText('2')).toBeInTheDocument();
     
-    const compareBtn = screen.getByText('Compare');
+    const compareBtn = screen.getByRole('button', { name: /compare/i });
     fireEvent.click(compareBtn);
     
     expect(screen.getByTestId('compare-modal')).toBeInTheDocument();
@@ -80,7 +80,7 @@ describe('CompareFloatingBar', () => {
     
     render(<CompareFloatingBar />);
     
-    const compareBtn = screen.getByText('Compare');
+    const compareBtn = screen.getByRole('button', { name: /compare/i });
     expect(compareBtn).toBeDisabled();
     expect(screen.getByText('Select up to 3 to compare')).toBeInTheDocument();
   });

@@ -5,6 +5,7 @@ import { User, RefreshCcw, Loader2, Eye, CheckCircle } from "lucide-react";
 import { FaCamera, FaTimes } from "react-icons/fa";
 import { sanitizeImgUrl } from "@/lib/security/sanitize";
 import SafeImage from "@/components/common/SafeImage";
+import { cn } from "@/utils/helper";
 interface SelfieStepProps {
   capturedSelfie: string | null;
   setCapturedSelfie: (val: string | null) => void;
@@ -115,7 +116,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                     <motion.ellipse
                        cx="50" cy="55" rx="30" ry="42"
                        fill="none"
-                       stroke={isFaceAligned ? "#10b981" : "rgba(255,255,255,0.3)"}
+                       stroke={isFaceAligned ? "#2f7d6d" : "rgba(255,255,255,0.3)"}
                        strokeWidth="1"
                        strokeDasharray="4 2"
                        animate={{ strokeDashoffset: [0, 10] }}
@@ -125,7 +126,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                     {!isProcessing && (
                       <motion.line
                         x1="20" y1="20" x2="80" y2="20"
-                        stroke="#10b981"
+                        stroke="#2f7d6d"
                         strokeWidth="0.5"
                         initial={{ y: 0, opacity: 0 }}
                         animate={{
@@ -151,11 +152,11 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                       initial={{ y: -60, opacity: 0 }}
                       animate={{ y: 12, opacity: 1 }}
                       exit={{ y: -60, opacity: 0 }}
-                      className="bg-emerald-600/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-emerald-400/30 flex items-center justify-center gap-3 shadow-[0_8px_32_rgba(0,0,0,0.3)] min-w-[200px]"
+                      className="bg-primary/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-primary/30 flex items-center justify-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-w-[200px]"
                     >
                        <div className="w-2 h-2 bg-white rounded-full animate-ping" />
                        <CheckCircle size={14} className="text-white" />
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em]">Liveness Confirmed</span>
+                       <span className="text-[10px] font-black uppercase tracking-[0.2em]">Liveness Confirmed ✓</span>
                     </motion.div>
                   ) : isFaceAligned && livenessStatus === 'idle' && !isProcessing ? (
                     <motion.div
@@ -163,7 +164,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                       initial={{ y: -60, opacity: 0 }}
                       animate={{ y: 12, opacity: 1 }}
                       exit={{ y: -60, opacity: 0 }}
-                      className="bg-amber-500/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-amber-400/30 flex items-center justify-center gap-3 shadow-[0_8px_32_rgba(0,0,0,0.3)] min-w-[200px]"
+                      className="bg-amber-500/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-amber-400/30 flex items-center justify-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-w-[200px]"
                     >
                       <motion.span
                         animate={{ opacity: [1, 0.3, 1] }}
@@ -188,7 +189,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
               <button
                 type="button"
                 onClick={handleToggleCamera}
-                className="absolute top-6 left-6 bg-white/10 backdrop-blur-xl text-white p-3 rounded-full hover:bg-white/20 transition-all border border-white/20"
+                className="absolute top-6 left-6 bg-white/10 backdrop-blur-xl text-white p-3 rounded-full hover:bg-white/20 transition-all border border-white/20 z-40 cursor-pointer"
                 title="Switch Camera"
               >
                 <RefreshCcw size={18} className={facingMode === 'environment' || Boolean(selectedDeviceId) ? 'rotate-180 transition-transform' : ''} />
@@ -239,20 +240,27 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                 </div>
               )}
 
-              <div className="absolute bottom-8 left-0 right-0 flex justify-center transition-all duration-300">
+              <div className="absolute bottom-8 left-0 right-0 flex justify-center transition-all duration-300 z-40">
                  <button
                   type="button"
                   onClick={handleCaptureSelfie}
                   disabled={isProcessing || !isEngineReady || !isFaceAligned || livenessStatus !== 'passed'}
-                  className={`px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl flex items-center gap-3 transition-all transform active:scale-95 border-4 border-white/10
-                    ${ isProcessing ? 'opacity-0 scale-50' :
-                       (isFaceAligned && livenessStatus === 'passed')
-                         ? 'bg-emerald-500 text-white hover:bg-emerald-400 hover:scale-110 cursor-pointer'
-                         : 'bg-white/30 text-white/50 cursor-not-allowed scale-95'
-                    }`}
+                  className={cn(
+                    "px-6 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl flex items-center gap-2 transition-all transform active:scale-95 border-2 border-white/20 select-none cursor-pointer",
+                    isProcessing ? "opacity-0 scale-50" :
+                    (isFaceAligned && livenessStatus === 'passed')
+                      ? "bg-primary text-white hover:bg-primary-hover hover:scale-105 shadow-primary/30"
+                      : "bg-black/50 backdrop-blur-md text-white/50 cursor-not-allowed scale-95 border-white/10"
+                  )}
                  >
-                   <FaCamera size={16} />
-                   {isFaceAligned && livenessStatus === 'idle' ? 'Follow Prompt' : 'Capture Selfie'}
+                   <FaCamera size={13} />
+                   <span>
+                     {isFaceAligned && livenessStatus === 'passed' 
+                       ? 'Capture Selfie Now' 
+                       : isFaceAligned && livenessStatus === 'idle'
+                       ? 'Follow Prompt'
+                       : 'Follow Prompt to Capture'}
+                   </span>
                  </button>
               </div>
             </>
@@ -270,15 +278,15 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                   setCapturedSelfie(null);
                   setIsFaceAligned(false);
                 }}
-                className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-red-500 transition-colors"
+                className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-red-500 transition-colors z-30 cursor-pointer"
               >
                 <FaTimes />
               </button>
-              <div className="absolute bottom-6 left-0 right-0 flex justify-center">
+              <div className="absolute bottom-6 left-0 right-0 flex justify-center z-30">
                  <motion.span
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  className="bg-emerald-500/90 backdrop-blur-md text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-2xl border border-white/20"
+                  className="bg-primary/90 backdrop-blur-md text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-2xl border border-white/20"
                  >
                    Verified Biometric
                  </motion.span>

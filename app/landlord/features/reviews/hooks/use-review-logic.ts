@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { generateTablePDF } from '@/utils/pdfGenerator';
 import { DateRange } from 'react-day-picker';
@@ -45,6 +45,7 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
   const [selectedRating, setSelectedRating] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<string>('newest');
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -52,10 +53,27 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
 
   const [isLoading, setIsLoading] = useState(true);
 
+  // Filter loader state
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const isFirstRender = useRef(true);
+
+  // Trigger loader animation when filters change
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setIsFilterLoading(true);
+    const timer = setTimeout(() => {
+      setIsFilterLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedStatus, selectedRating, sortBy]);
+
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedStatus, selectedRating]);
+  }, [searchQuery, selectedStatus, selectedRating, sortBy]);
 
   useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), 700);
@@ -68,8 +86,12 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
   }, [initialReviews, initialNextCursor]);
 
   const filteredReviews = useMemo(() => {
-    return listings.filter(review => {
-      const statusMatch = selectedStatus === 'all' || review.status === selectedStatus;
+    let result = listings.filter(review => {
+      const statusMatch = 
+        selectedStatus === 'all' ? true :
+        selectedStatus === 'needs_response' ? !review.response :
+        selectedStatus === 'responded' ? !!review.response :
+        true;
       const ratingMatch = selectedRating === 'all' || review.rating === Number(selectedRating);
       
       let searchMatch = true;
@@ -84,7 +106,17 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
 
       return statusMatch && ratingMatch && searchMatch;
     });
-  }, [selectedStatus, selectedRating, listings, searchQuery]);
+
+    result.sort((a, b) => {
+      if (sortBy === 'rating_desc') return b.rating - a.rating;
+      if (sortBy === 'rating_asc') return a.rating - b.rating;
+      const timeA = new Date(a.createdAt).getTime();
+      const timeB = new Date(b.createdAt).getTime();
+      return sortBy === 'oldest' ? timeA - timeB : timeB - timeA;
+    });
+
+    return result;
+  }, [selectedStatus, selectedRating, listings, searchQuery, sortBy]);
 
   const paginatedReviews = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -128,13 +160,21 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
       let subtitle = `Auditing feedback and response performance for ${totalReviews} guest reviews`;
       const responseCount = exportData.filter(r => r.response !== null).length;
 
-      if (selectedStatus === 'pending') {
+      if (selectedStatus === 'needs_response') {
         summaryData = [
-          { label: 'Pending Reviews', value: `${totalReviews}` },
+          { label: 'Unanswered Reviews', value: `${totalReviews}` },
           { label: 'Status', value: `Needs Response` },
           { label: 'Action Required', value: `Yes` }
         ];
-        subtitle = `Auditing pending reviews requiring response`;
+        subtitle = `Auditing guest reviews requiring landlord response`;
+      }
+      else if (selectedStatus === 'responded') {
+        summaryData = [
+          { label: 'Responded Reviews', value: `${totalReviews}` },
+          { label: 'Status', value: `Responded` },
+          { label: 'Action Required', value: `No` }
+        ];
+        subtitle = `Auditing guest reviews with active landlord responses`;
       } 
       else if (selectedRating !== 'all') {
         summaryData = [
@@ -185,7 +225,7 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
 
   const updateReviewResponse = (reviewId: string, responseText: string) => {
     setListings(prev => prev.map(review => 
-      review.id === reviewId ? { ...review, response: responseText, status: 'approved', respondedAt: new Date() } : review
+      review.id === reviewId ? { ...review, response: responseText, status: 'responded', respondedAt: new Date() } : review
     ));
     router.refresh();
   };
@@ -203,6 +243,8 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
     setSelectedStatus,
     selectedRating,
     setSelectedRating,
+    sortBy,
+    setSortBy,
     viewMode,
     setViewMode,
     searchQuery,
@@ -213,6 +255,6 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
     respondModal,
     setRespondModal,
     updateReviewResponse,
-    isLoading
+    isLoading: isLoading || isFilterLoading
   };
 }

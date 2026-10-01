@@ -154,7 +154,7 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.15 }}
             >
               {filteredBookings.length > 0 && (
                 <div className="flex items-center gap-2 mb-6">
@@ -173,7 +173,7 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
                     <p className="text-sm font-medium text-gray-500 max-w-sm mx-auto">You don't have any bookings matching the current criteria yet.</p>
                   </motion.div>
                 ) : (
-                  <motion.div layout className={cn(viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-4")}>
+                  <motion.div layout className={cn(viewMode === 'grid' ? "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-6" : "space-y-4")}>
                     {filteredBookings.map((booking, idx) => (
                       <LandlordBookingCard 
                         key={`${viewMode}-${booking.id}`}

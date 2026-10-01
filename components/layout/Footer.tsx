@@ -25,8 +25,15 @@ const useSafeSession = () => {
 const Footer: React.FC = () => {
   const { data: session } = useSafeSession();
   const currentUser = session?.user;
+  const [isMounted, setIsMounted] = React.useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [supportSubject, setSupportSubject] = useState('');
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const isAuthenticatedUser = isMounted && !!currentUser;
 
   const handleReportIssue = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -164,13 +171,29 @@ const Footer: React.FC = () => {
                 </h3>
                 <ul className="space-y-3">
                   <li>
-                    <Link
-                      href="/become-a-host"
-                      prefetch={false}
-                      className="text-sm hover:underline text-gray-600 dark:text-slate-400 hover:text-black dark:hover:text-white"
-                    >
-                      Become a Host
-                    </Link>
+                    {isAuthenticatedUser ? (
+                      <Link
+                        href="/become-a-host"
+                        prefetch={false}
+                        className="text-sm hover:underline text-gray-600 dark:text-slate-400 hover:text-black dark:hover:text-white"
+                      >
+                        Become a Host
+                      </Link>
+                    ) : (
+                      <Modal>
+                        <Modal.Trigger name="Login">
+                          <button
+                            type="button"
+                            className="text-sm hover:underline text-gray-600 dark:text-slate-400 hover:text-black dark:hover:text-white cursor-pointer text-left bg-transparent border-none p-0 font-normal"
+                          >
+                            Become a Host
+                          </button>
+                        </Modal.Trigger>
+                        <Modal.Window name="Login" size="sm" closeOnOutsideClick={false} fullOnMobile={true} noPadding={true}>
+                          <AuthModal name="Login" />
+                        </Modal.Window>
+                      </Modal>
+                    )}
                   </li>
                   <li>
                     <Link
@@ -216,14 +239,6 @@ const Footer: React.FC = () => {
                     >
                       Contact Us
                     </Link>
-                  </li>
-                  <li>
-                    <button
-                      onClick={handleReportIssue}
-                      className="text-sm hover:underline text-gray-600 dark:text-slate-400 hover:text-black dark:hover:text-white cursor-pointer text-left transition-colors duration-200"
-                    >
-                      Report an Issue
-                    </button>
                   </li>
                   <li>
                     <Link

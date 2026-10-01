@@ -7,6 +7,7 @@ import { User } from "next-auth";
 import Modal from "@/components/modals/Modal";
 import AuthModal from "@/components/modals/AuthModal";
 import { useNotification } from "@/context/NotificationContext";
+import { useScrollDirection } from "@/hooks/use-scroll-direction";
 
 interface MobileBottomBarProps {
   user?: (User & { id: string; role?: string });
@@ -14,8 +15,7 @@ interface MobileBottomBarProps {
 
 const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
   const router = useRouter();
-  const [scrollDirection, setScrollDirection] = useState<"up" | "down" | "">("");
-  const [lastY, setLastY] = useState(0);
+  const scrollDirection = useScrollDirection();
   const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
   const isMessages = pathname.startsWith('/messages');
   const isBecomeAHost = pathname.startsWith('/become-a-host');
@@ -34,27 +34,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
     return () => clearTimeout(timer);
   }, [pathname]);
 
-  // Implement scroll direction tracking
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentY = window.scrollY;
-
-      if (currentY === 0) {
-        setScrollDirection("");
-      } else if (currentY > lastY) {
-        setScrollDirection("down");
-      } else {
-        setScrollDirection("up");
-      }
-
-      setLastY(currentY);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastY]);
-
-  if (isErrorPage || isBecomeAHost) return null;
+  if (isErrorPage || isBecomeAHost || isMessages) return null;
 
   const isHidden = !isMessages && scrollDirection === "down";
 
@@ -74,15 +54,15 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
         isHidden ? "translate-y-28 opacity-0" : "translate-y-0 opacity-100"
       }`}
     >
-      <div className="max-w-md mx-auto pointer-events-auto bg-white/60 dark:bg-slate-900/65 backdrop-blur-3xl border border-white/50 dark:border-white/20 ring-1 ring-white/30 dark:ring-white/10 shadow-[0_16px_45px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_55px_rgba(0,0,0,0.65)] rounded-[32px] px-3.5 py-2.5 flex items-center justify-around font-sans">
+      <div className="max-w-md mx-auto pointer-events-auto bg-white/60 dark:bg-slate-900/65 backdrop-blur-3xl border border-white/50 dark:border-white/20 ring-1 ring-white/30 dark:ring-white/10 shadow-[0_16px_45px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_55px_rgba(0,0,0,0.65)] rounded-[32px] px-2 py-2 sm:px-3.5 sm:py-2.5 flex items-center justify-around font-sans overflow-hidden">
         {/* Not logged in */}
         {!user ? (
-          <div className="flex items-center justify-between w-full px-2 py-1 gap-3">
+          <div className="flex items-center justify-between w-full px-2 py-1 gap-2 sm:gap-3">
             <Modal>
               <Modal.Trigger name="Login">
                 <button
                   type="button"
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#2f7d6d] hover:bg-[#256659] text-white px-5 py-3 rounded-full font-extrabold text-xs sm:text-sm shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 transition-all uppercase tracking-wider backdrop-blur-xl"
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#2f7d6d] hover:bg-[#256659] text-white px-4 py-2.5 sm:px-5 sm:py-3 rounded-full font-extrabold text-xs sm:text-sm shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 transition-all uppercase tracking-wider backdrop-blur-xl"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>Login</span>
@@ -92,37 +72,37 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
               <Modal.Trigger name="Sign up">
                 <button
                   type="button"
-                  className="flex-1 flex items-center justify-center gap-2 bg-white/40 dark:bg-white/10 hover:bg-white/60 dark:hover:bg-white/20 border border-white/40 dark:border-white/20 text-slate-900 dark:text-white px-5 py-3 rounded-full font-extrabold text-xs sm:text-sm backdrop-blur-xl transition-all uppercase tracking-wider shadow-sm"
+                  className="flex-1 flex items-center justify-center gap-2 bg-white/40 dark:bg-white/10 hover:bg-white/60 dark:hover:bg-white/20 border border-white/40 dark:border-white/20 text-slate-900 dark:text-white px-4 py-2.5 sm:px-5 sm:py-3 rounded-full font-extrabold text-xs sm:text-sm backdrop-blur-xl transition-all uppercase tracking-wider shadow-sm"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span>Signup</span>
                 </button>
               </Modal.Trigger>
 
-              <Modal.Window name="Login" size="sm" closeOnOutsideClick={false}>
+              <Modal.Window name="Login" size="sm" closeOnOutsideClick={false} fullOnMobile={true}>
                 <AuthModal name="Login" />
               </Modal.Window>
 
-              <Modal.Window name="Sign up" size="sm" closeOnOutsideClick={false}>
+              <Modal.Window name="Sign up" size="sm" closeOnOutsideClick={false} fullOnMobile={true}>
                 <AuthModal name="Sign up" />
               </Modal.Window>
             </Modal>
           </div>
         ) : (
-          <div className="flex items-center justify-around w-full gap-1.5">
+          <div className="flex items-center justify-around w-full gap-0.5 sm:gap-1.5">
             {/* Home */}
             <button
               type="button"
               onClick={() => redirect("/")}
-              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full transition-all duration-300 ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded-full transition-all duration-300 ${
                 isHomeActive
-                  ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold scale-105 backdrop-blur-xl"
+                  ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold backdrop-blur-xl"
                   : "text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10"
               }`}
             >
               <Home className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
               {isHomeActive && (
-                <span className="text-xs sm:text-sm font-extrabold whitespace-nowrap">Home</span>
+                <span className="text-[11px] sm:text-xs font-extrabold whitespace-nowrap truncate max-w-[85px] sm:max-w-none">Home</span>
               )}
             </button>
 
@@ -130,15 +110,15 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
             <button
               type="button"
               onClick={() => redirect("/favorites")}
-              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full transition-all duration-300 ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded-full transition-all duration-300 ${
                 isFavoritesActive
-                  ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold scale-105 backdrop-blur-xl"
+                  ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold backdrop-blur-xl"
                   : "text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10"
               }`}
             >
               <Heart className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
               {isFavoritesActive && (
-                <span className="text-xs sm:text-sm font-extrabold whitespace-nowrap">Favorites</span>
+                <span className="text-[11px] sm:text-xs font-extrabold whitespace-nowrap truncate max-w-[85px] sm:max-w-none">Favorites</span>
               )}
             </button>
 
@@ -146,9 +126,9 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
             <button
               type="button"
               onClick={() => redirect("/inquiries")}
-              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full transition-all duration-300 ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded-full transition-all duration-300 ${
                 isInquiriesActive
-                  ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold scale-105 backdrop-blur-xl"
+                  ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold backdrop-blur-xl"
                   : "text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10"
               }`}
             >
@@ -159,7 +139,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
                 )}
               </div>
               {isInquiriesActive && (
-                <span className="text-xs sm:text-sm font-extrabold whitespace-nowrap">Inquiry</span>
+                <span className="text-[11px] sm:text-xs font-extrabold whitespace-nowrap truncate max-w-[85px] sm:max-w-none">Inquiry</span>
               )}
             </button>
 
@@ -167,9 +147,9 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
             <button
               type="button"
               onClick={() => redirect("/reservations")}
-              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full transition-all duration-300 ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded-full transition-all duration-300 ${
                 isReservationsActive
-                  ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold scale-105 backdrop-blur-xl"
+                  ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold backdrop-blur-xl"
                   : "text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10"
               }`}
             >
@@ -180,7 +160,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
                 )}
               </div>
               {isReservationsActive && (
-                <span className="text-xs sm:text-sm font-extrabold whitespace-nowrap">Reservations</span>
+                <span className="text-[11px] sm:text-xs font-extrabold whitespace-nowrap truncate max-w-[85px] sm:max-w-none">Reservations</span>
               )}
             </button>
 
@@ -188,22 +168,22 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ user }) => {
             <button
               type="button"
               onClick={() => redirect("/notifications")}
-              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full transition-all duration-300 ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded-full transition-all duration-300 ${
                 isNotificationsActive
-                  ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold scale-105 backdrop-blur-xl"
+                  ? "bg-[#2f7d6d] text-white shadow-lg shadow-[#2f7d6d]/40 border border-emerald-400/30 font-extrabold backdrop-blur-xl"
                   : "text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10"
               }`}
             >
               <div className="relative">
                 <Bell className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
                 {unreadStats && unreadStats.total > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-1 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                  <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-1 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-900">
                     {unreadStats.total > 9 ? "9+" : unreadStats.total}
                   </span>
                 )}
               </div>
               {isNotificationsActive && (
-                <span className="text-xs sm:text-sm font-extrabold whitespace-nowrap">Notifications</span>
+                <span className="text-[11px] sm:text-xs font-extrabold whitespace-nowrap truncate max-w-[85px] sm:max-w-none">Notifications</span>
               )}
             </button>
           </div>

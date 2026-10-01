@@ -66,6 +66,8 @@ describe('LandlordPropertyHeader', () => {
     onGenerateReport: mockOnGenerateReport,
     categoryFilter: 'all',
     setCategoryFilter: mockSetCategoryFilter,
+    statusFilter: 'all',
+    setStatusFilter: jest.fn(),
     uniqueCategories: ['Apartment', 'House'],
     onClear: mockOnClear,
     isArchived: false,
@@ -124,19 +126,19 @@ describe('LandlordPropertyHeader', () => {
   });
 
   it('shows clear button when filters are active and clears them', () => {
-    render(<LandlordPropertyHeader {...defaultProps} searchQuery="Test" />);
+    render(<LandlordPropertyHeader {...defaultProps} categoryFilter="Apartment" />);
     
-    const clearBtn = screen.getByText('Clear').closest('button');
+    const clearBtn = screen.getByText(/Clear Filter/i).closest('button');
     expect(clearBtn).toBeInTheDocument();
 
     fireEvent.click(clearBtn!);
-    expect(mockOnClear).toHaveBeenCalled();
+    expect(mockSetCategoryFilter).toHaveBeenCalledWith('all');
   });
 
   it('toggles archived view', () => {
     render(<LandlordPropertyHeader {...defaultProps} isArchived={true} />);
     
-    const toggleBtn = screen.getByText('Archived').closest('button');
+    const toggleBtn = screen.getByText(/Archived/i).closest('button');
     expect(toggleBtn).toBeInTheDocument();
 
     fireEvent.click(toggleBtn!);

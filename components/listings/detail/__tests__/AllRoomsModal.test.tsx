@@ -123,35 +123,9 @@ describe('AllRoomsModal', () => {
   it('calls onViewDetails when clicking Details button', () => {
     render(<AllRoomsModal {...mockProps} />);
     
-    const detailsBtns = screen.getAllByText('View Details');
+    const detailsBtns = screen.getAllByText('Details');
     fireEvent.click(detailsBtns[0]);
     
     expect(mockProps.onViewDetails).toHaveBeenCalledWith(mockRooms[1]);
-  });
-
-  it('calls onInquire when clicking Inquire button on available room', () => {
-    render(<AllRoomsModal {...mockProps} />);
-    
-    const inquireBtn = screen.getByText('Inquire');
-    fireEvent.click(inquireBtn);
-    
-    expect(mockProps.onInquire).toHaveBeenCalledWith(mockRooms[0]);
-  });
-
-  it('disables action buttons when room is fully occupied', () => {
-    render(<AllRoomsModal {...mockProps} />);
-    
-    const occupiedBtn = screen.getByRole('button', { name: 'Occupied' });
-    expect(occupiedBtn).toBeDisabled();
-  });
-
-  it('shows error toast when inquiring without user', () => {
-    render(<AllRoomsModal {...mockProps} user={null} />);
-    
-    const inquireBtn = screen.getByText('Inquire');
-    fireEvent.click(inquireBtn);
-    
-    expect(toast.error).toHaveBeenCalledWith('Please sign in to send an inquiry.');
-    expect(mockProps.onInquire).not.toHaveBeenCalled();
   });
 });

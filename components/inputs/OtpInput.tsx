@@ -75,7 +75,7 @@ const OtpInput: React.FC<OtpInputProps> = ({
         {label}
       </label>
       <div
-        className="flex gap-2 items-center justify-center"
+        className="flex gap-1.5 min-[380px]:gap-2 sm:gap-2.5 items-center justify-center max-w-full overflow-x-auto py-1"
         onPaste={handlePaste}
       >
         {Array.from({ length }).map((_, index) => (
@@ -92,7 +92,7 @@ const OtpInput: React.FC<OtpInputProps> = ({
             onKeyDown={(e) => handleKeyDown(index, e)}
             disabled={disabled}
             className={cn(
-              "w-12 h-14 text-center text-2xl font-black border-2 rounded-xl focus:outline-none focus:ring-4 transition-all duration-300 ease-out",
+              "w-9 h-11 min-[380px]:w-10 min-[380px]:h-12 sm:w-12 sm:h-14 text-center text-lg min-[380px]:text-xl sm:text-2xl font-black border-2 rounded-xl focus:outline-none focus:ring-4 transition-all duration-300 ease-out shrink-0",
               disabled
                 ? "bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50"
                 : errors[id]

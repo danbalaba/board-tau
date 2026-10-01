@@ -1,114 +1,104 @@
+'use client';
+
 import React from 'react';
-import { IconLock, IconDeviceFloppy, IconShieldCheck, IconLoader2, IconDeviceMobile, IconHistory } from '@tabler/icons-react';
+import { Lock, Save, Loader2 } from 'lucide-react';
 import Input from '@/components/inputs/Input';
 import { useLandlordSecurity } from '../hooks/use-landlord-security';
 
-export function LandlordSettingsSecurityTab() {
+interface LandlordSettingsSecurityTabProps {
+  hideSubmitButton?: boolean;
+  onDirtyChange?: (isDirty: boolean) => void;
+}
+
+export function LandlordSettingsSecurityTab({ hideSubmitButton, onDirtyChange }: LandlordSettingsSecurityTabProps = {}) {
   const { 
     passwordData, 
     handlePasswordChange, 
     submitPasswordChange, 
-    handleManageSecurity,
-    isLoading 
+    isLoading,
+    isDirty,
+    errors 
   } = useLandlordSecurity();
 
+  React.useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+
   return (
-    <div className="space-y-12">
+    <div className="space-y-6">
       {/* Password Management */}
-      <form onSubmit={submitPasswordChange} className="space-y-6">
-        <div className="flex items-center gap-3 px-1">
-          <div className="w-6 h-1 bg-primary rounded-full" />
-          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Update Access Credentials</h4>
+      <form id="landlord-security-form" onSubmit={submitPasswordChange} className="bg-white dark:bg-gray-900 p-5 sm:p-7 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-gray-800 shadow-xs space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-1 h-5 bg-primary rounded-full" />
+          <div>
+            <h4 className="text-xs sm:text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Change Password</h4>
+            <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500">Keep your account safe by updating your password regularly</p>
+          </div>
         </div>
         
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-5">
           <Input
             id="currentPassword"
             label="Current Password"
             type="password"
-            placeholder="Enter current password"
-            icon={IconLock}
+            placeholder="Enter your current password"
+            icon={Lock}
             useStaticLabel
             value={passwordData.currentPassword}
             onChange={handlePasswordChange}
+            errors={errors}
             required
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <Input
               id="newPassword"
               label="New Password"
               type="password"
               placeholder="At least 8 characters"
-              icon={IconLock}
+              icon={Lock}
               useStaticLabel
               value={passwordData.newPassword}
               onChange={handlePasswordChange}
+              errors={errors}
               required
             />
 
             <Input
               id="confirmPassword"
-              label="Confirm Password"
+              label="Confirm New Password"
               type="password"
-              placeholder="Repeat new password"
-              icon={IconLock}
+              placeholder="Re-enter your new password"
+              icon={Lock}
               useStaticLabel
               value={passwordData.confirmPassword}
               onChange={handlePasswordChange}
+              errors={errors}
               required
             />
           </div>
         </div>
+
         
-        <div className="flex justify-center mt-4">
-          <button 
-            type="submit"
-            disabled={isLoading}
-            className="group relative overflow-hidden flex items-center gap-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-8 py-3.5 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:shadow-xl transition-all active:scale-95 disabled:opacity-50"
-          >
-            <div className="absolute inset-0 bg-primary/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-            <div className="relative flex items-center gap-3">
-              {isLoading ? (
-                <IconLoader2 size={16} className="animate-spin text-primary" />
-              ) : (
-                <IconDeviceFloppy size={16} className="text-primary" />
-              )}
-              <span>{isLoading ? 'Updating...' : 'Save New Credentials'}</span>
-            </div>
-          </button>
-        </div>
-      </form>
-
-      <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-          <div className="flex items-center gap-3 mb-6 px-1">
-          <div className="w-6 h-1 bg-primary rounded-full" />
-          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Enhanced Protection</h4>
-        </div>
-
-        {[
-          { title: 'Two-Factor Authentication', desc: 'Add an extra layer of security with TOTP apps.', icon: IconDeviceMobile },
-          { title: 'Account Activity', desc: 'Monitor recent login activity and locations.', icon: IconHistory },
-        ].map((item) => (
-          <div key={item.title} className="flex items-center justify-between p-6 bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 hover:shadow-xl hover:shadow-primary/5 transition-all group">
-            <div className="flex items-center gap-5">
-              <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                <item.icon size={20} stroke={2} />
-              </div>
-              <div>
-                <h3 className="font-black text-gray-900 dark:text-white mb-0.5 text-sm uppercase tracking-wider">{item.title}</h3>
-                <p className="text-xs font-medium text-gray-500">{item.desc}</p>
-              </div>
-            </div>
+        {!hideSubmitButton && (
+          <div className="flex justify-end pt-2">
             <button 
-              onClick={() => handleManageSecurity(item.title)}
-              className="bg-primary/10 text-primary hover:bg-primary hover:text-white px-6 py-2.5 rounded-xl font-black transition-all text-[9px] uppercase tracking-[0.2em] border border-primary/10 active:scale-95"
+              type="submit"
+              disabled={isLoading}
+              className="w-full sm:w-auto h-11 px-6 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary/90 rounded-xl sm:rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer active:scale-95"
             >
-              Manage
+              {isLoading ? (
+                <Loader2 size={16} className="animate-spin text-white" />
+              ) : (
+                <Save size={16} className="text-white" />
+              )}
+              <span>{isLoading ? 'Saving Password...' : 'Save New Password'}</span>
             </button>
           </div>
-        ))}
-      </div>
+        )}
+      </form>
     </div>
   );
 }
+
+

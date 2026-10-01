@@ -213,6 +213,8 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
   if (!isOpen || !reservation) return null;
 
   const canPay = reservation.status === "PENDING_PAYMENT";
+  const canCancel = reservation.status === "PENDING_PAYMENT" || reservation.status === "RESERVED";
+  const canChat = reservation.status === "PENDING_PAYMENT" || reservation.status === "RESERVED" || reservation.status === "CHECKED_IN";
   const statusInfo = getStatusBadge(reservation.status);
   const paymentInfo = getPaymentBadge(reservation.paymentStatus);
 
@@ -487,27 +489,44 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
           </div>
 
           {/* Action Footer */}
-          <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 shrink-0 shadow-lg">
-            <button
-              className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors text-center"
-              onClick={onClose}
-            >
-              Close
-            </button>
+          <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 shadow-lg">
             
-            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-2.5 w-full sm:w-auto">
-              <button
-                className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl transition-all flex items-center justify-center gap-2"
-                onClick={() => router.push(`/messages?listingId=${reservation.listingId}&otherUserId=${landlordId}`)}
-              >
-                <Mail size={14} />
-                <span>Chat with Host</span>
-              </button>
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-2.5 w-full sm:w-auto order-1 sm:order-2">
+              
+              {/* Primary Actions: Pay Now & Chat with Host */}
+              {canPay && onPayNow && (
+                <button
+                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0"
+                  onClick={onPayNow}
+                >
+                  <CreditCard size={14} />
+                  <span>Pay Now</span>
+                </button>
+              )}
 
+              {canChat ? (
+                <button
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl transition-all flex items-center justify-center gap-2"
+                  onClick={() => router.push(`/messages?listingId=${reservation.listingId}&otherUserId=${landlordId}`)}
+                >
+                  <Mail size={14} />
+                  <span>Chat with Host</span>
+                </button>
+              ) : (
+                <div
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-gray-400 bg-gray-100 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed"
+                  title="Messaging is closed for completed or cancelled stays"
+                >
+                  <Mail size={14} className="opacity-50" />
+                  <span>Chat Closed</span>
+                </div>
+              )}
+
+              {/* Documents Group: Boarding Pass & Lease Contract (Side-by-side 2-column grid on mobile) */}
               {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
-                <>
+                <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:flex-row sm:gap-2.5">
                   <button
-                    className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl transition-all flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 truncate"
                     onClick={() => {
                       responsiveToast.loading("Preparing boarding pass...");
                       generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail)
@@ -515,12 +534,12 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                         .catch(() => responsiveToast.error("Could not generate boarding pass."));
                     }}
                   >
-                    <IconCircleCheck size={14} />
-                    <span>Boarding Pass</span>
+                    <IconCircleCheck size={14} className="shrink-0" />
+                    <span className="truncate">Boarding Pass</span>
                   </button>
 
                   <button
-                    className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl transition-all flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 truncate"
                     onClick={async () => {
                       const toastId = responsiveToast.loading("Preparing lease contract...");
                       try {
@@ -541,42 +560,49 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                       }
                     }}
                   >
-                    <FileText size={14} />
-                    <span>Lease Contract</span>
+                    <FileText size={14} className="shrink-0" />
+                    <span className="truncate">Lease Contract</span>
                   </button>
-                </>
+                </div>
               )}
 
-              {canPay && onPayNow && (
-                <button
-                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0"
-                  onClick={onPayNow}
-                >
-                  <CreditCard size={14} />
-                  <span>Pay Now</span>
-                </button>
+              {/* Secondary Actions Group: Cancel & View Listing */}
+              {((onCancel && canCancel) || (reservation.status === "COMPLETED")) && (
+                <div className={cn(
+                  "w-full sm:w-auto sm:flex sm:flex-row sm:gap-2.5",
+                  (onCancel && canCancel && reservation.status === "COMPLETED") ? "grid grid-cols-2 gap-2" : "flex flex-col sm:flex-row gap-2.5"
+                )}>
+                  {onCancel && canCancel && (
+                    <button
+                      className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 rounded-xl transition-all flex items-center justify-center gap-2 border border-rose-200 dark:border-rose-800"
+                      onClick={onCancel}
+                    >
+                      <X size={14} />
+                      <span>Cancel</span>
+                    </button>
+                  )}
+
+                  {reservation.status === "COMPLETED" && (
+                    <button
+                      className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                      onClick={() => router.push(`/listings/${reservation.listingId}`)}
+                    >
+                      <Home size={14} />
+                      <span>View Listing</span>
+                    </button>
+                  )}
+                </div>
               )}
 
-              {onCancel && (
-                <button
-                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 rounded-xl transition-all flex items-center justify-center gap-2 border border-rose-200 dark:border-rose-800"
-                  onClick={onCancel}
-                >
-                  <X size={14} />
-                  <span>Cancel</span>
-                </button>
-              )}
-
-              {reservation.status === "COMPLETED" && (
-                <button
-                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
-                  onClick={() => router.push(`/listings/${reservation.listingId}`)}
-                >
-                  <Home size={14} />
-                  <span>View Listing</span>
-                </button>
-              )}
             </div>
+
+            <button
+              className="hidden sm:block w-full sm:w-auto px-5 py-2 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors text-center order-2 sm:order-1"
+              onClick={onClose}
+            >
+              Close
+            </button>
+
           </div>
 
         </div>

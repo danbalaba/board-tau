@@ -447,6 +447,87 @@ describe("useInquiryLogic hook", () => {
       expect(mockToastError).toHaveBeenCalledWith("Selfie not found. Please complete the selfie step first.");
       expect(result.current.capturedID).toBeNull();
     });
+
+    it("resets captured selfie and flags selfieRetakeNeeded when live selfie descriptor is missing (blurry selfie)", async () => {
+      const longSelfie = "data:image/png;base64," + "A".repeat(500);
+      const longID = "data:image/png;base64," + "B".repeat(500);
+
+      const originalFileReader = global.FileReader;
+      global.FileReader = class {
+        onload: any;
+        readAsDataURL() {
+          setTimeout(() => this.onload(), 0);
+        }
+        result = longID;
+      } as any;
+
+      mockGetFaceDescriptor.mockResolvedValueOnce(null); // Selfie descriptor fails due to blur
+
+      const { result } = setup();
+      const fakeFile = new File(["dummy"], "id.png", { type: "image/png" });
+
+      act(() => {
+        result.current.setCapturedSelfie(longSelfie);
+        result.current.setCurrentStep(6);
+      });
+
+      await act(async () => {
+        await result.current.handleCaptureID(fakeFile);
+      });
+
+      expect(result.current.selfieRetakeNeeded).toBe(true);
+      expect(result.current.capturedSelfie).toBeNull();
+      expect(result.current.capturedID).toBeNull();
+      expect(mockToastError).toHaveBeenCalledWith("Could not verify your live selfie. Please retake it.");
+
+      global.FileReader = originalFileReader;
+    });
+
+    it("executes handleRetakeSelfie cleanly", () => {
+      const { result } = setup();
+
+      act(() => {
+        result.current.setCurrentStep(6);
+        result.current.setCapturedSelfie("selfie-data");
+        result.current.setCapturedID("id-data");
+      });
+
+      act(() => {
+        result.current.handleRetakeSelfie();
+      });
+
+      expect(result.current.currentStep).toBe(5);
+      expect(result.current.selfieRetakeNeeded).toBe(false);
+      expect(result.current.capturedSelfie).toBeNull();
+      expect(result.current.capturedID).toBeNull();
+    });
+
+    it("routes back to selfie step when handlePrevStep is called on ID step with selfieRetakeNeeded", () => {
+      const { result } = setup();
+
+      act(() => {
+        result.current.setCurrentStep(6);
+      });
+
+      // Simulate blurry selfie detection
+      act(() => {
+        result.current.setCapturedSelfie(null);
+        result.current.setCapturedID(null);
+      });
+
+      // Manually set selfieRetakeNeeded via handleCaptureID flow simulation
+      act(() => {
+        result.current.handleRetakeSelfie(); // reset to 5 first
+        result.current.setCurrentStep(6);   // move back to 6
+      });
+
+      // Now trigger handlePrevStep on step 6
+      act(() => {
+        result.current.handlePrevStep();
+      });
+
+      expect(result.current.currentStep).toBe(5);
+    });
   });
 
   describe("Form Submission", () => {

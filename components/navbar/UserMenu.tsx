@@ -28,7 +28,8 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
-  const hasCallbackUrl = !user && !!callbackUrl;
+  const loginParam = searchParams.get("login");
+  const hasCallbackUrl = !user && (!!callbackUrl || loginParam === "true");
   const [isPending, startTransition] = useTransition();
   const { startLoading } = useLoading();
   const { onOpen } = useMenuPanel();
@@ -188,7 +189,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
               )}
             </Menu.List>
           </Menu>
-          <Modal.Window name="Login" size="sm" closeOnOutsideClick={false}>
+          <Modal.Window name="Login" size="sm" closeOnOutsideClick={false} fullOnMobile={true} noPadding={true}>
             <AuthModal name="Login" />
           </Modal.Window>
           <Modal.Window name="host-application" size="xl" closeOnOutsideClick={false}>

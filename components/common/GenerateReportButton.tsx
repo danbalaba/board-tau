@@ -64,14 +64,22 @@ const GenerateReportButton: React.FC<GenerateReportButtonProps> = ({
         )}
         disabled={isGenerating}
       >
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-1.5 sm:gap-2">
           {isGenerating ? (
-            <IconLoader2 size={16} className="animate-spin" />
+            <IconLoader2 size={16} className="animate-spin shrink-0" />
           ) : (
-            <IconFileDownload size={16} className="group-hover:translate-y-0.5 transition-transform duration-300" />
+            <IconFileDownload size={16} className="group-hover:translate-y-0.5 transition-transform duration-300 shrink-0" />
           )}
-          <span className="text-[11px] uppercase tracking-widest font-black">
-            {isGenerating ? "Processing..." : label}
+          <span className="text-[10px] sm:text-[11px] uppercase tracking-widest font-black whitespace-nowrap">
+            {isGenerating ? (
+              "Processing..."
+            ) : label === "Generate Report" ? (
+              <>
+                <span className="hidden sm:inline">Generate </span>Report
+              </>
+            ) : (
+              label
+            )}
           </span>
         </span>
       </Button>

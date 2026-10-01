@@ -258,20 +258,12 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
     return result;
   }, [rooms, roomTypeFilter, priceRange, sortOption, roomTypesList]);
 
-  const handleInquireClick = (room: Room) => {
-    if (!user) {
-      toast.error('Please sign in to send an inquiry.');
-      return;
-    }
-    onInquire(room);
-  };
-
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true}>
+    <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} fullOnMobile={true}>
       {/* Main Content Container */}
-      <div className="flex flex-col max-h-[85vh] sm:max-h-[75vh] overflow-hidden">
+      <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[75vh] overflow-hidden">
         {/* Header */}
         <div className="p-6 border-b border-gray-100 dark:border-gray-800 shrink-0 relative z-30 bg-white dark:bg-gray-900">
           <div className="flex items-center justify-between mb-2">
@@ -403,91 +395,84 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
             </div>
           ) : (
             <div className={cn(
-              "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-6 transition-all duration-300",
+              "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 pb-6 transition-all duration-300",
               isFiltering ? "opacity-50 blur-sm grayscale-[0.3]" : "opacity-100 blur-0"
             )}>
               {filteredRooms.map((room) => (
                 <div
                   key={room.id}
-                  className="group bg-white dark:bg-gray-800 rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-gray-700/60 shadow-sm hover:shadow-2xl hover:border-primary/30 transition-all duration-500 flex flex-col"
+                  onClick={() => onViewDetails(room)}
+                  className="group bg-white dark:bg-gray-800 rounded-2xl sm:rounded-[2rem] overflow-hidden border border-gray-100 dark:border-gray-700/60 shadow-sm hover:shadow-xl hover:border-primary/30 transition-all duration-300 flex flex-col cursor-pointer"
                 >
                   {/* Room Image */}
-                  <div className="h-44 w-full relative overflow-hidden bg-gray-100 dark:bg-gray-900">
+                  <div className="h-28 sm:h-40 w-full relative overflow-hidden bg-gray-100 dark:bg-gray-900">
                     <SafeImage
                       src={(room.images && room.images.length > 0) ? room.images[0].url : (room.imageSrc || "/images/placeholder.jpg")}
                       alt={room.name}
                     />
                     
                     {/* Status Badge with Live Pulsing Dot */}
-                    <div className="absolute top-4 right-4 z-10">
+                    <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10">
                       <div className={cn(
-                        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] backdrop-blur-md shadow-md border",
+                        "flex items-center gap-1 px-2 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border",
                         room.status === "AVAILABLE"
                           ? "bg-[#2f7d6d] text-white border-white/30"
                           : room.status === "MAINTENANCE"
                           ? "bg-amber-600 text-white border-white/30"
                           : "bg-rose-600 text-white border-white/30"
                       )}>
-                        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                        {room.status === "AVAILABLE" ? "Available" : room.status === "MAINTENANCE" ? "Under Maintenance" : "Fully Occupied"}
+                        <div className="w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-white animate-pulse" />
+                        <span className="hidden sm:inline">{room.status === "AVAILABLE" ? "Available" : room.status === "MAINTENANCE" ? "Under Maintenance" : "Fully Occupied"}</span>
+                        <span className="inline sm:hidden">{room.status === "AVAILABLE" ? "Available" : room.status === "MAINTENANCE" ? "Maint." : "Full"}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Room Info */}
-                  <div className="p-6 flex flex-col flex-1">
-                    <h3 className="font-black text-lg text-gray-900 dark:text-gray-100 mb-1 truncate tracking-tight">
+                  <div className="p-2.5 sm:p-5 flex flex-col flex-1">
+                    <h3 className="font-black text-xs sm:text-base text-gray-900 dark:text-gray-100 mb-0.5 truncate tracking-tight">
                       {formatCleanTitle(room.name)}
                     </h3>
                     
-                    <div className="flex items-baseline gap-1.5 mb-5">
-                      <span className="text-2xl font-black text-gray-900 dark:text-white leading-none">
+                    <div className="flex items-baseline gap-1 mb-2 sm:mb-3">
+                      <span className="text-xs sm:text-xl font-black text-gray-900 dark:text-white leading-none">
                         ₱{room.price.toLocaleString()}
                       </span>
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ month</span>
+                      <span className="text-[7.5px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-widest">/ mo</span>
                     </div>
 
-                    {/* Stats Icons without technical jargon */}
-                    <div className="grid grid-cols-2 gap-2.5 mb-6 pt-4 border-t border-gray-100 dark:border-gray-700/50">
-                       <div className="flex items-center gap-2 bg-gray-50/70 dark:bg-gray-900/30 p-2.5 rounded-2xl border border-gray-100/80 dark:border-gray-700/40">
-                         <div className="p-1 rounded-lg bg-primary/10 text-primary">
-                           <Layers size={13} />
+                    {/* Stats Badges */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2 mb-2.5 sm:mb-4 pt-1.5 sm:pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                       <div className="flex items-center gap-1 sm:gap-1.5 bg-gray-50/80 dark:bg-gray-900/40 px-1.5 py-1 rounded-lg sm:rounded-xl border border-gray-100/80 dark:border-gray-700/40 overflow-hidden">
+                         <div className="p-0.5 sm:p-1 rounded-md bg-primary/10 text-primary shrink-0">
+                           <Layers className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                          </div>
-                         <span className="text-[10px] font-black uppercase tracking-wider text-gray-700 dark:text-gray-300 truncate">
+                         <span className="text-[8px] sm:text-[9.5px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 truncate">
                            {getRoomTypeLabel(room.roomType)}
                          </span>
                        </div>
 
-                       <div className="flex items-center gap-2 bg-gray-50/70 dark:bg-gray-900/30 p-2.5 rounded-2xl border border-gray-100/80 dark:border-gray-700/40">
-                         <div className="p-1 rounded-lg bg-primary/10 text-primary">
-                           <Users size={13} />
+                       <div className="flex items-center gap-1 sm:gap-1.5 bg-gray-50/80 dark:bg-gray-900/40 px-1.5 py-1 rounded-lg sm:rounded-xl border border-gray-100/80 dark:border-gray-700/40 overflow-hidden">
+                         <div className="p-0.5 sm:p-1 rounded-md bg-primary/10 text-primary shrink-0">
+                           <Users className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                          </div>
-                         <span className="text-[10px] font-black uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                         <span className="text-[8px] sm:text-[9.5px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 truncate">
                            {room.capacity} {room.capacity === 1 ? 'Guest' : 'Guests'}
                          </span>
                        </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="mt-auto flex gap-2.5">
+                    {/* Single Action Button: View Details */}
+                    <div className="mt-auto">
                       <button
-                        onClick={() => onViewDetails(room)}
-                        className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-2xl transition-all border border-gray-200 dark:border-gray-700 flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onViewDetails(room);
+                        }}
+                        className="w-full py-1.5 sm:py-2.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 group-hover:bg-primary group-hover:text-white transition-all duration-300 rounded-xl sm:rounded-2xl border border-primary/20 flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
                       >
-                        <Eye size={14} />
-                        View Details
-                      </button>
-
-                      <button
-                        onClick={() => handleInquireClick(room)}
-                        disabled={room.status !== "AVAILABLE"}
-                        className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                          room.status === "AVAILABLE"
-                            ? "bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]"
-                            : "bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed opacity-50"
-                        }`}
-                      >
-                        {room.status === "AVAILABLE" ? "Inquire" : room.status === "MAINTENANCE" ? "Under Maintenance" : "Occupied"}
+                        <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        Details
                       </button>
                     </div>
                   </div>
@@ -499,7 +484,7 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
       </div>
 
       {/* Footer - Sibling for 85vh Alignment */}
-      <div className="p-4 sm:p-6 border-t border-gray-100 dark:border-gray-800 flex justify-end shrink-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+      <div className="p-4 sm:p-6 border-t border-gray-100 dark:border-gray-800 hidden sm:flex justify-end shrink-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
         <button
           className="w-full sm:w-auto px-10 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all border border-gray-200 dark:border-gray-700 rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm cursor-pointer"
           onClick={onClose}

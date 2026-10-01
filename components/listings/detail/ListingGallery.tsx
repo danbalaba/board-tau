@@ -185,19 +185,62 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
       const caption = (img.caption || "").toLowerCase().trim();
       const combined = `${type} ${caption}`;
 
-      if (type === "exterior" || combined.includes("exterior") || combined.includes("facade") || combined.includes("building") || combined.includes("outside") || combined.includes("front") || combined.includes("cover")) {
-        categories["Exterior"].push(img);
-      } else if (type === "bedroom" || type === "unit" || type === "room" || type === "solo" || combined.includes("bedroom") || combined.includes("bed") || combined.includes("unit") || combined.includes("room")) {
-        categories["Bedroom"].push(img);
-      } else if (type === "kitchen" || combined.includes("kitchen") || combined.includes("cooking") || combined.includes("sink")) {
-        categories["Kitchen"].push(img);
-      } else if (type === "bathroom" || type === "cr" || combined.includes("bathroom") || combined.includes("cr") || combined.includes("toilet") || combined.includes("shower")) {
+      // 1. Bathroom (Check first to prevent "bathroom" or "comfort room" matching generic "room")
+      if (
+        type === "bathroom" || type === "cr" ||
+        combined.includes("bathroom") || combined.includes("comfort room") ||
+        combined.includes("toilet") || combined.includes("shower") ||
+        combined.includes("bathtub") || combined.includes("washroom") ||
+        combined.includes("restroom") || combined.includes("bidet") ||
+        type.includes("bathroom") || type.includes("cr")
+      ) {
         categories["Bathroom"].push(img);
-      } else if (type === "common area" || type === "living room" || combined.includes("common area") || combined.includes("living room") || combined.includes("lobby") || combined.includes("lounge") || combined.includes("hallway")) {
+      }
+      // 2. Kitchen
+      else if (
+        type === "kitchen" ||
+        combined.includes("kitchen") || combined.includes("cooking") ||
+        combined.includes("fridge") || combined.includes("refrigerator") ||
+        combined.includes("stove") || combined.includes("dining") ||
+        type.includes("kitchen")
+      ) {
+        categories["Kitchen"].push(img);
+      }
+      // 3. Exterior
+      else if (
+        type === "exterior" ||
+        combined.includes("exterior") || combined.includes("facade") ||
+        combined.includes("building") || combined.includes("outside") ||
+        combined.includes("front") || combined.includes("cover") ||
+        type.includes("exterior")
+      ) {
+        categories["Exterior"].push(img);
+      }
+      // 4. Common Area
+      else if (
+        type === "common area" || type === "living room" ||
+        combined.includes("common area") || combined.includes("living room") ||
+        combined.includes("lobby") || combined.includes("lounge") ||
+        combined.includes("hallway") || combined.includes("patio") ||
+        type.includes("common")
+      ) {
         categories["Common Area"].push(img);
-      } else if (type === "other" || combined.includes("other")) {
+      }
+      // 5. Bedroom (Rooms & sleeping quarters)
+      else if (
+        type === "bedroom" || type === "unit" || type === "room" || type === "solo" ||
+        combined.includes("bedroom") || combined.includes("bed") ||
+        combined.includes("sleeping") || combined.includes("mattress") ||
+        type.includes("bedroom") || type.includes("unit") || type.includes("room") || type.includes("solo")
+      ) {
+        categories["Bedroom"].push(img);
+      }
+      // 6. Other
+      else if (type === "other" || combined.includes("other")) {
         categories["Other"].push(img);
-      } else {
+      }
+      // 7. Uncategorized fallback
+      else {
         uncategorized.push(img);
       }
     });
@@ -287,6 +330,7 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
               src={sortedImages[0].url}
               alt={sortedImages[0].caption ? `${sortedImages[0].caption} - ${title} near TAU Camiling Tarlac` : `${title} - Boarding House near TAU Camiling Tarlac`}
               priority={true}
+              sizes="(max-width: 768px) 100vw, 50vw"
              />
           </div>
 
@@ -306,6 +350,7 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
                   <SafeImage
                     src={image.url}
                     alt={image.caption ? `${image.caption} - ${title} near TAU Camiling Tarlac` : `${title} - Boarding House near TAU Camiling Tarlac (Photo ${idx + 2})`}
+                    sizes="(max-width: 768px) 100vw, 25vw"
                   />
                 </div>
               );
@@ -414,6 +459,7 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
                              <SafeImage 
                                src={roomImages[0].url} 
                                alt={room} 
+                               sizes="44px"
                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                              />
                            </div>
@@ -479,8 +525,9 @@ const ListingGallery: React.FC<ListingGalleryProps> = ({
                                             src={img.url}
                                             alt={img.caption ? `${img.caption} - ${title} (${room}) near TAU Camiling Tarlac` : `${title} ${room} - Boarding House near TAU Camiling Tarlac`}
                                             containerClassName="w-full h-full"
-                                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                        />
+                                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 66vw, 33vw"
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                         />
 
                                         {/* Hover Overlay */}
                                         <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px] flex items-center justify-center">

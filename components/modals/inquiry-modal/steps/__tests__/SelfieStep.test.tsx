@@ -11,7 +11,7 @@ jest.mock("@/components/common/SafeImage", () => ({
 
 jest.mock("react-webcam", () => ({
   __esModule: true,
-  default: React.forwardRef(({ audio, screenshotFormat, videoConstraints, ...props }: any, ref) => (
+  default: React.forwardRef(({ audio, screenshotFormat, videoConstraints, mirrored, ...props }: any, ref) => (
     <div data-testid="webcam" {...props}>Webcam Mock</div>
   ))
 }));
@@ -48,7 +48,7 @@ describe("SelfieStep Component", () => {
 
     expect(screen.getByText("Step 1: Capture Your Selfie")).toBeInTheDocument();
     expect(screen.getByTestId("webcam")).toBeInTheDocument();
-    expect(screen.getByText("Capture Selfie")).toBeInTheDocument();
+    expect(screen.getByText("Follow Prompt to Capture")).toBeInTheDocument();
   });
 
   it("displays 'Please Blink to Continue' when face is aligned but not blinked", () => {
@@ -57,7 +57,7 @@ describe("SelfieStep Component", () => {
     expect(screen.getByText(/Please Blink to Continue/i)).toBeInTheDocument();
     
     // Capture button should show 'Follow Prompt' and be disabled
-    const captureBtn = screen.getByText("Follow Prompt");
+    const captureBtn = screen.getByRole("button", { name: /Follow Prompt/i });
     expect(captureBtn).toBeInTheDocument();
     expect(captureBtn).toBeDisabled();
   });
@@ -68,7 +68,7 @@ describe("SelfieStep Component", () => {
     expect(screen.getByText(/Liveness Confirmed/i)).toBeInTheDocument();
     
     // Capture button should be enabled
-    const captureBtn = screen.getByText("Capture Selfie");
+    const captureBtn = screen.getByText("Capture Selfie Now");
     expect(captureBtn).not.toBeDisabled();
     
     // Clicking capture triggers handleCaptureSelfie
@@ -123,7 +123,7 @@ describe("SelfieStep Component", () => {
     // Tests line 166 branch
     render(<SelfieStep {...defaultProps} isProcessing={true} />);
     
-    const captureBtn = screen.getByRole("button", { name: /Capture Selfie/i });
+    const captureBtn = screen.getByRole("button", { name: /Follow Prompt/i });
     expect(captureBtn).toHaveClass("opacity-0 scale-50");
     expect(captureBtn).toBeDisabled();
   });

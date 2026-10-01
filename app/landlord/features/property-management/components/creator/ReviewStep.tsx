@@ -155,7 +155,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
   const [activeTab, setActiveTab] = useState<string>('BASIC');
   const [amenitiesModalConfig, setAmenitiesModalConfig] = useState<{
     isOpen: boolean;
-    initialCategory: 'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY' | 'ROOMS';
+    initialCategory: 'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY';
   }>({
     isOpen: false,
     initialCategory: 'ALL'

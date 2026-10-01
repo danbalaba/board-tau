@@ -127,6 +127,58 @@ describe("AuthModal", () => {
       });
     });
 
+    it("redirects suspended user to /auth/suspended via /api/auth/error", async () => {
+      const originalLocation = window.location;
+      delete (window as any).location;
+      (window as any).location = { href: "" };
+
+      (signIn as jest.Mock).mockResolvedValue({ error: "AccountSuspended:test@example.com" });
+      const handleClose = jest.fn();
+
+      render(<AuthModal name="Login" onCloseModal={handleClose} />);
+
+      fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: "test@example.com" } });
+      fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "Str0ngP@ssw0rd!" } });
+
+      const form = screen.getByLabelText(/Email/i).closest('form')!;
+      await act(async () => {
+        fireEvent.submit(form);
+      });
+
+      await waitFor(() => {
+        expect(handleClose).toHaveBeenCalled();
+        expect(window.location.href).toContain("/api/auth/error?error=AccountSuspended");
+      });
+
+      (window as any).location = originalLocation;
+    });
+
+    it("redirects banned user to /auth/banned via /api/auth/error", async () => {
+      const originalLocation = window.location;
+      delete (window as any).location;
+      (window as any).location = { href: "" };
+
+      (signIn as jest.Mock).mockResolvedValue({ error: "AccountBanned:test@example.com" });
+      const handleClose = jest.fn();
+
+      render(<AuthModal name="Login" onCloseModal={handleClose} />);
+
+      fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: "test@example.com" } });
+      fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "Str0ngP@ssw0rd!" } });
+
+      const form = screen.getByLabelText(/Email/i).closest('form')!;
+      await act(async () => {
+        fireEvent.submit(form);
+      });
+
+      await waitFor(() => {
+        expect(handleClose).toHaveBeenCalled();
+        expect(window.location.href).toContain("/api/auth/error?error=AccountBanned");
+      });
+
+      (window as any).location = originalLocation;
+    });
+
     it("calls onCloseModal when forgot password is clicked", () => {
       const handleClose = jest.fn();
       render(<AuthModal name="Login" onCloseModal={handleClose} />);
@@ -285,6 +337,11 @@ describe("AuthModal", () => {
     it("handles resend cooldown tick", async () => {
       jest.useFakeTimers();
       await setupOTPState();
+
+      // Fast-forward initial 30s signup cooldown
+      act(() => {
+        jest.advanceTimersByTime(30000);
+      });
       
       // Mock sendOTP to simulate a rate-limit error that triggers the cooldown
       (sendOTP as jest.Mock).mockRejectedValue(new Error("Please wait 60 seconds before requesting a new OTP."));

@@ -14,6 +14,7 @@ interface ConfirmModalProps {
   cancelLabel?: string;
   isLoading?: boolean;
   variant?: "danger" | "primary" | "secondary";
+  children?: React.ReactNode;
 }
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -26,6 +27,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   cancelLabel = "Cancel",
   isLoading = false,
   variant = "danger",
+  children,
 }) => {
   return (
     <div className="flex flex-col items-start gap-5 p-2">
@@ -44,13 +46,14 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
       </div>
 
       {/* Content */}
-      <div className="space-y-2">
+      <div className="space-y-2 w-full">
         <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
           {title}
         </h3>
         <p className="text-[13px] font-medium text-gray-500 dark:text-gray-400 leading-relaxed">
           {message}
         </p>
+        {children}
       </div>
 
       {/* Actions */}

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import Link from 'next/link';
 import { 
   DoorOpen, 
   Pencil, 
@@ -11,8 +10,6 @@ import {
   Layers, 
   Building2,
   Sparkles,
-  ChevronRight,
-  ShieldCheck,
   Archive,
   RotateCcw
 } from 'lucide-react';
@@ -105,27 +102,28 @@ export function LandlordRoomCard({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-6 rounded-3xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col h-full"
+        className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-2.5 sm:p-6 rounded-2xl sm:rounded-3xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col h-full"
       >
-        <div className="relative h-48 w-full rounded-2xl overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800 z-10 flex-shrink-0">
-          <div className="absolute inset-0 bg-gray-900/5 animate-pulse" />
+        {/* Top Image Section */}
+        <div className="relative h-28 sm:h-48 w-full rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 sm:mb-6 bg-gray-100 dark:bg-gray-800 z-10 flex-shrink-0">
           {getRoomImage() ? (
             <SafeImage 
               src={getRoomImage()} 
               alt={room.name} 
               priority={idx < 6}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800">
-              <DoorOpen size={48} className="text-gray-300 dark:text-gray-700 mb-2" />
-              <p className="text-[8px] font-black uppercase tracking-widest text-gray-400">No Photos</p>
+            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-700">
+              <DoorOpen size={24} className="sm:w-9 sm:h-9 mb-1" />
+              <p className="text-[7px] sm:text-[8px] font-black uppercase tracking-widest text-gray-400">No Photos</p>
             </div>
           )}
           
           {/* Status badge — top left */}
-          <div className="absolute top-3 left-3 z-20">
+          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-20 scale-90 sm:scale-100 origin-top-left">
             <span className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] uppercase font-black tracking-wider shadow-lg backdrop-blur-md border", 
+              "flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl text-[8px] sm:text-[9px] uppercase font-black tracking-wider shadow-lg backdrop-blur-md border", 
               statusColors[room.status] || "bg-primary/90 text-white border-primary/40"
             )}>
               <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
@@ -140,10 +138,10 @@ export function LandlordRoomCard({
               onArchive(room);
             }}
             className={cn(
-              "absolute top-3 right-3 z-20 p-2 rounded-xl backdrop-blur-md transition-all duration-300 shadow-lg border",
+              "absolute top-2 right-2 sm:top-3 sm:right-3 z-20 p-1.5 sm:p-2 rounded-lg sm:rounded-xl backdrop-blur-md transition-all duration-300 shadow-lg border scale-90 sm:scale-100 origin-top-right",
               room.isArchived
                 ? "bg-primary/90 text-white border-primary/50 hover:bg-primary"
-                : "bg-white/80 dark:bg-gray-900/80 text-gray-500 hover:text-rose-500 border-gray-100 dark:border-gray-800 hover:border-rose-100"
+                : "bg-white/80 dark:bg-gray-900/80 text-gray-500 hover:text-amber-500 border-gray-100 dark:border-gray-800 hover:border-amber-100"
             )}
             title={room.isArchived ? "Restore Room" : "Archive Room"}
           >
@@ -157,211 +155,222 @@ export function LandlordRoomCard({
 
         {/* Content Section */}
         <div className="flex-1 flex flex-col z-10">
-          <div className="mb-4">
-             <div className="flex items-center gap-2 mb-2">
-               <span className="text-[8px] font-black text-primary bg-primary/5 px-2 py-0.5 rounded-lg border border-primary/10 uppercase tracking-widest flex items-center gap-1">
-                 <Building2 size={10} /> {room.propertyTitle}
+          <div className="mb-2 sm:mb-4">
+             <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2 flex-wrap">
+               <span className="text-[7px] sm:text-[8px] font-black text-primary bg-primary/10 dark:bg-primary/20 px-1.5 sm:px-2 py-0.5 rounded-md sm:rounded-lg border border-primary/20 uppercase tracking-widest flex items-center gap-1 truncate max-w-full">
+                 <Building2 size={10} className="shrink-0" /> <span className="truncate">{room.propertyTitle || 'Property Unit'}</span>
                </span>
              </div>
-             <h3 className="text-xl font-black text-gray-900 dark:text-white leading-tight group-hover:text-primary transition-colors line-clamp-1 tracking-tight mb-4">
+             <h3 className="text-xs sm:text-xl font-black text-gray-900 dark:text-white leading-tight group-hover:text-primary transition-colors line-clamp-1 tracking-tight mb-1.5 sm:mb-4">
                {room.name}
              </h3>
           </div>
 
           {/* Stats Box */}
-          <div className="flex items-center gap-3 mb-5 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-2xl border border-gray-100 dark:border-gray-800">
-            <div className="flex-1 flex items-center gap-2.5 border-r border-gray-200 dark:border-gray-700 pr-3 min-w-0">
-               <div className="p-1.5 bg-primary/10 rounded-lg text-primary shrink-0"><RoomTypeIcon size={14} /></div>
+          <div className="flex items-center gap-1.5 sm:gap-3 mb-2.5 sm:mb-5 bg-gray-50 dark:bg-gray-800/50 p-1.5 sm:p-3 rounded-lg sm:rounded-2xl border border-gray-100 dark:border-gray-800">
+            <div className="flex-1 flex items-center gap-1 sm:gap-3 border-r border-gray-200 dark:border-gray-700 pr-1 sm:pr-3 min-w-0">
+               <div className="p-1 sm:p-1.5 bg-blue-100/50 dark:bg-blue-500/20 rounded-md sm:rounded-lg text-blue-600 shrink-0"><RoomTypeIcon size={12} className="sm:w-3.5 sm:h-3.5" /></div>
                <div className="min-w-0">
-                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Type</p>
-                  <p className="text-xs font-black text-gray-900 dark:text-white leading-none truncate">{roomTypeLabel}</p>
+                  <p className="text-[7px] sm:text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5 sm:mb-1">Type</p>
+                  <p className="text-[10px] sm:text-xs font-black text-gray-900 dark:text-white leading-none truncate">{roomTypeLabel}</p>
                </div>
             </div>
-            <div className="flex-1 flex items-center gap-2.5 min-w-0">
-               <div className="p-1.5 bg-primary/10 rounded-lg text-primary shrink-0"><Users size={14} /></div>
+            <div className="flex-1 flex items-center gap-1 sm:gap-3 min-w-0">
+               <div className="p-1 sm:p-1.5 bg-primary/10 dark:bg-primary/20 rounded-md sm:rounded-lg text-primary shrink-0"><Users size={12} className="sm:w-3.5 sm:h-3.5" /></div>
                <div className="min-w-0">
-                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Slots</p>
-                  <p className="text-xs font-black text-gray-900 dark:text-white leading-none">{room.availableSlots}/{room.capacity}</p>
+                  <p className="text-[7px] sm:text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5 sm:mb-1">Slots</p>
+                  <p className="text-[10px] sm:text-xs font-black text-gray-900 dark:text-white leading-none">{room.availableSlots}/{room.capacity}</p>
                </div>
             </div>
           </div>
 
           {/* Price Row */}
-          <div className="flex items-center justify-between mb-6 px-1">
+          <div className="flex items-center justify-between mb-2.5 sm:mb-6 px-0.5">
              <div>
-               <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Rate</p>
-               <div className="flex items-baseline gap-1">
-                 <span className="text-lg font-black text-primary tracking-tighter leading-none">₱{room.price.toLocaleString()}</span>
-                 <span className="text-[9px] font-bold text-gray-500 uppercase">/ mo</span>
+               <p className="text-[7px] sm:text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Rate</p>
+               <div className="flex items-baseline gap-0.5 sm:gap-1">
+                 <span className="text-xs sm:text-lg font-black text-primary tracking-tighter leading-none">₱{room.price.toLocaleString()}</span>
+                 <span className="text-[7px] sm:text-[9px] font-bold text-gray-500 uppercase">/mo</span>
                </div>
              </div>
-             <div className="text-right">
-               <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Safety</p>
-               <div className="flex items-center gap-1 text-[10px] font-black text-primary uppercase">
-                 <ShieldCheck size={12} />
-                 <span>Verified</span>
-               </div>
+             <div className="text-right min-w-0">
+               <p className="text-[7px] sm:text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Capacity</p>
+               <p className="text-[8px] sm:text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-tight truncate max-w-[65px] sm:max-w-[110px]">
+                 {room.capacity} {room.capacity === 1 ? 'Guest' : 'Guests'}
+               </p>
              </div>
           </div>
 
           {/* Footer Actions */}
-          <div className="flex flex-wrap items-center gap-3 pt-6 border-t border-gray-100 dark:border-gray-800 mt-auto">
+          <div className="flex items-center gap-1.5 sm:gap-2 pt-2.5 sm:pt-4 border-t border-gray-100 dark:border-gray-800 mt-auto w-full">
             <Button
-              outline
               onClick={() => onView(room)}
-              className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-[0.2em] bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/10 hover:border-primary/30 border-gray-200 dark:border-gray-700 shadow-sm transition-all"
+              className="flex-1 h-10 rounded-xl px-2 text-[10px] sm:text-xs font-black uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200/60 dark:border-gray-700/60 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <span className="flex items-center justify-center gap-2">
-                <Eye size={14} />
-                Manage
-              </span>
+              <Eye size={14} />
+              <span>Details</span>
             </Button>
 
-            <div className="flex gap-2 basis-[100%] sm:basis-auto flex-1">
-                {!room.isArchived && (
-                  <Button
-                    onClick={() => onEdit && onEdit(room)}
-                    className="flex-1 rounded-2xl py-3 text-[10px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 group/btn"
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      <Pencil size={14} />
-                      Edit
-                    </span>
-                  </Button>
-                )}
-               {room.isArchived && (
-                 <Button
-                  outline
-                  onClick={() => onDelete(room)}
-                  className="flex-1 rounded-2xl py-3 border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white dark:border-rose-900/30 dark:hover:bg-rose-900 transition-all group/btn flex items-center justify-center gap-2"
-                 >
-                   <Trash2 size={14} className="group-hover:rotate-12 transition-transform" />
-                   <span className="text-[10px] font-black uppercase tracking-widest">Delete Permanent</span>
-                 </Button>
-               )}
-            </div>
+            {!room.isArchived && (
+              <Button
+                onClick={() => onEdit && onEdit(room)}
+                className="flex-1 h-10 rounded-xl px-2 text-[10px] sm:text-xs font-black uppercase tracking-wider bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 group/btn transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Pencil size={14} className="group-hover:scale-110 transition-transform" />
+                <span>Edit</span>
+              </Button>
+            )}
+            {room.isArchived && (
+              <Button
+                onClick={() => onDelete(room)}
+                className="flex-1 h-10 rounded-xl px-2 border border-rose-200 text-rose-500 hover:bg-rose-500 hover:text-white dark:border-rose-900/40 dark:hover:bg-rose-900 transition-all group/btn flex items-center justify-center gap-1.5 cursor-pointer text-[10px] sm:text-xs font-black uppercase tracking-wider"
+              >
+                <Trash2 size={14} className="group-hover:rotate-12 transition-transform" />
+                <span>Delete</span>
+              </Button>
+            )}
           </div>
         </div>
       </motion.div>
     );
   }
 
-  /* List View */
+  /* List UI Mode - Sleek Shrunk Horizontal Row on Mobile & Desktop */
   return (
     <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="group relative bg-white dark:bg-gray-900 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 p-8 hover:shadow-xl transition-all duration-300 shadow-sm"
+      className="group relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-800 p-3 sm:p-6 hover:shadow-xl transition-all duration-300 shadow-sm"
     >
-      <div className="flex flex-col lg:flex-row items-center gap-8">
-        {/* Left: Image */}
-        <div className="relative w-full lg:w-64 h-48 rounded-[2rem] overflow-hidden shadow-lg flex-shrink-0 bg-gray-100 dark:bg-gray-800">
-          {getRoomImage() ? (
-            <SafeImage
-              src={getRoomImage()}
-              alt={room.name}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-600">
-              <DoorOpen size={40} strokeWidth={1.5} />
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-6">
+        {/* Left Row on Mobile: Image + Main Details */}
+        <div className="flex items-center gap-3 sm:gap-6 flex-1 min-w-0">
+          {/* Thumbnail */}
+          <div className="relative w-20 h-20 sm:w-56 sm:h-36 rounded-xl sm:rounded-2xl overflow-hidden shadow-sm flex-shrink-0 bg-gray-100 dark:bg-gray-800">
+            {getRoomImage() ? (
+              <SafeImage
+                src={getRoomImage()}
+                alt={room.name}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-600">
+                <DoorOpen size={28} strokeWidth={1.5} />
+              </div>
+            )}
+            <div className="absolute top-1 left-1 sm:top-2.5 sm:left-2.5 z-20">
+              <span className={cn(
+                "flex items-center gap-1 px-1.5 py-0.5 sm:px-2 rounded-md sm:rounded-lg text-[7px] sm:text-[8px] uppercase font-black tracking-wider shadow-lg backdrop-blur-md border",
+                statusColors[room.status] || "bg-primary/90 text-white border-primary/40"
+              )}>
+                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-current animate-pulse" />
+                {formatStatus(room.status)}
+              </span>
             </div>
-          )}
-          <div className="absolute top-4 left-4 z-20">
-            <span className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] uppercase font-black tracking-wider shadow-lg backdrop-blur-md border",
-              statusColors[room.status] || "bg-primary/90 text-white border-primary/40"
-            )}>
-              <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-              {formatStatus(room.status)}
-            </span>
           </div>
-        </div>
 
-        {/* Middle: Content */}
-        <div className="flex-1 w-full min-w-0 py-2">
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
+          {/* Details */}
+          <div className="flex-1 min-w-0 space-y-0.5 sm:space-y-3">
             <div>
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-[10px] font-black text-primary bg-primary/5 px-3 py-1 rounded-xl border border-primary/10 uppercase tracking-[0.2em] flex items-center gap-2">
-                  <Building2 size={12} /> {room.propertyTitle}
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1 flex-wrap">
+                <span className="text-[8px] sm:text-[9px] font-black text-primary uppercase tracking-widest flex items-center gap-1 truncate max-w-[130px] sm:max-w-none">
+                  <Building2 size={10} className="shrink-0" /> {room.propertyTitle || 'Property Unit'}
+                </span>
+                <span className="hidden sm:inline-block w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full" />
+                <span className="hidden sm:inline-block text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                  {roomTypeLabel}
                 </span>
               </div>
-              <h3 className="text-3xl font-black text-gray-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1 tracking-tight">
+              <h3 className="text-sm sm:text-xl font-black text-gray-900 dark:text-white group-hover:text-primary transition-colors truncate tracking-tight">
                 {room.name}
               </h3>
             </div>
-            <div className="flex flex-col xl:items-end shrink-0">
-              <span className="text-4xl font-black text-primary tracking-tighter leading-none">₱{room.price.toLocaleString()}</span>
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">Monthly Rate</span>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-4 flex-wrap mb-2">
-            <div className="flex items-center gap-3 px-5 py-2.5 bg-primary/5 rounded-2xl border border-primary/10 shadow-sm">
-              <RoomTypeIcon size={18} className="text-primary" />
-              <span className="text-[11px] font-black uppercase tracking-widest text-gray-700 dark:text-gray-300">{roomTypeLabel}</span>
+            {/* Price & Slots Row */}
+            <div className="flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
+              <span className="text-sm sm:text-2xl font-black text-primary tracking-tighter">
+                ₱{room.price.toLocaleString()}
+                <span className="text-[8px] sm:text-xs font-bold text-gray-500 uppercase">/mo</span>
+              </span>
+              <span className="text-[8px] sm:text-[9px] font-black text-gray-400 uppercase tracking-wider">
+                • {room.availableSlots}/{room.capacity} Slots Available
+              </span>
             </div>
-            <div className="flex items-center gap-3 px-5 py-2.5 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/10 dark:border-primary/20 shadow-sm">
-              <Users size={18} className="text-primary" />
-              <span className="text-[11px] font-black uppercase tracking-widest text-gray-700 dark:text-gray-300">{room.availableSlots}/{room.capacity} Slots Available</span>
-            </div>
-            <div className="flex items-center gap-3 px-5 py-2.5 bg-purple-50/50 dark:bg-purple-500/10 rounded-2xl border border-purple-100/50 dark:border-purple-500/20 shadow-sm">
-              <ShieldCheck size={18} className="text-purple-500" />
-              <span className="text-[11px] font-black uppercase tracking-widest text-gray-700 dark:text-gray-300">Tenant Ready</span>
+
+            {/* Desktop Specs Pills */}
+            <div className="hidden sm:flex flex-wrap items-center gap-2 pt-1">
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50/60 dark:bg-blue-500/10 rounded-xl border border-blue-100/60 dark:border-blue-500/20 text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase">
+                <RoomTypeIcon size={12} />
+                <span>{roomTypeLabel}</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 dark:bg-primary/20 rounded-xl border border-primary/20 text-[9px] font-black text-primary dark:text-primary-400 uppercase">
+                <Users size={12} />
+                <span>{room.availableSlots}/{room.capacity} Slots Available</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-purple-50/60 dark:bg-purple-500/10 rounded-xl border border-purple-100/60 dark:border-purple-500/20 text-[9px] font-black text-purple-600 dark:text-purple-400 uppercase">
+                <Sparkles size={12} />
+                <span>{formatStatus(room.status)}</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Right: Actions */}
-        <div className="flex sm:flex-col gap-4 w-full lg:w-44 mt-6 lg:mt-0 pt-8 lg:pt-0 lg:border-l border-gray-100 dark:border-gray-800 lg:pl-8 shrink-0">
-          <Button
-            className="w-full rounded-2xl h-14 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/10 border-2 border-gray-100 dark:border-gray-800 hover:border-primary/30 font-black text-[11px] uppercase tracking-widest shadow-xl shadow-gray-200/50 dark:shadow-none group/btn transition-all"
-            onClick={() => onView(room)}
+        {/* Right / Actions Row */}
+        <div className="flex sm:flex-col items-center gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0 border-t sm:border-t-0 sm:border-l border-gray-100 dark:border-gray-800 pt-2.5 sm:pt-0 sm:pl-6">
+          <button 
+            onClick={() => onView(room)} 
+            className="flex-1 sm:w-full rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-primary transition-all flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-widest cursor-pointer"
           >
-            <span className="flex items-center justify-center gap-3">
-              <Eye size={16} className="group-hover/btn:scale-110 transition-transform" />
-              Manage Unit
-            </span>
-          </Button>
-          <div className="flex gap-2 w-full h-12">
-            {!room.isArchived && (
-              <button
-                onClick={() => onEdit && onEdit(room)}
-                className="flex-1 rounded-2xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all flex items-center justify-center group/btn shadow-sm border border-primary/20"
-                title="Edit Details"
-              >
-                <Pencil size={18} className="group-hover/btn:scale-110 transition-transform" />
-              </button>
-            )}
-            
-            <button 
-              onClick={() => onArchive(room)}
-              className={cn(
-                "flex-1 rounded-2xl transition-all flex items-center justify-center group/btn shadow-sm border",
-                (room as any).isArchived 
-                  ? "bg-primary/10 text-primary border-primary/20 hover:bg-primary hover:text-white" 
-                  : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white"
-              )}
-              title={room.isArchived ? "Restore Room" : "Archive Room"}
-            >
-              {room.isArchived ? (
-                <RotateCcw size={18} className="group-hover/btn:-rotate-45 transition-transform" />
-              ) : (
-                <Archive size={18} className="group-hover/btn:scale-110 transition-transform" />
-              )}
-            </button>
+            <Eye size={13} />
+            <span>Details</span>
+          </button>
 
-            {room.isArchived && (
-              <button
-                onClick={() => onDelete(room)}
-                className="flex-1 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center group/btn shadow-sm border border-rose-100 dark:border-rose-900/30"
-                title="Delete Permanently"
-              >
-                <Trash2 size={18} className="group-hover/btn:rotate-12 transition-transform" />
-              </button>
+          {!room.isArchived && (
+            <Button 
+              onClick={() => onEdit && onEdit(room)}
+              className="flex-1 sm:w-full rounded-xl px-3 sm:px-5 py-2 sm:py-2.5 bg-primary hover:bg-primary/90 text-white font-black text-[10px] uppercase tracking-widest shadow-md group/btn transition-all cursor-pointer"
+            >
+              <span className="flex items-center justify-center gap-1.5">
+                <Pencil size={13} />
+                Edit
+              </span>
+            </Button>
+          )}
+          
+          <button 
+            onClick={() => onArchive(room)}
+            className={cn(
+              "flex-1 sm:w-full rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 cursor-pointer border shadow-xs",
+              room.isArchived
+                ? "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+                : "bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20"
             )}
-          </div>
+            title={room.isArchived ? "Restore Room" : "Archive Room"}
+          >
+            {room.isArchived ? (
+              <>
+                <RotateCcw size={13} />
+                <span>Restore</span>
+              </>
+            ) : (
+              <>
+                <Archive size={13} />
+                <span>Archive</span>
+              </>
+            )}
+          </button>
+
+          {room.isArchived && (
+            <button
+              onClick={() => onDelete(room)}
+              className="flex-1 sm:w-full rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-widest cursor-pointer border border-rose-100 dark:border-rose-900/30"
+              title="Delete Permanently"
+            >
+              <Trash2 size={13} />
+              <span>Delete</span>
+            </button>
+          )}
         </div>
       </div>
     </motion.div>

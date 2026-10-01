@@ -86,10 +86,9 @@ describe('LandlordRoomEditModal', () => {
       />
     );
     expect(screen.getByText(/Save Unit Changes|Save Changes/i)).toBeInTheDocument();
-    expect(screen.getByText(/Cancel/i)).toBeInTheDocument();
   });
 
-  it('calls onClose when cancel is clicked', () => {
+  it('calls onClose when close icon button is clicked', () => {
     render(
       <LandlordRoomEditModal 
         isOpen={true} 
@@ -98,8 +97,8 @@ describe('LandlordRoomEditModal', () => {
         initialData={mockRoom}
       />
     );
-    const cancelBtn = screen.getByText(/Cancel/i);
-    fireEvent.click(cancelBtn);
+    const closeBtn = screen.getByTestId('icon-X').parentElement;
+    if (closeBtn) fireEvent.click(closeBtn);
     expect(mockOnClose).toHaveBeenCalled();
   });
 });

@@ -56,7 +56,7 @@ export function ModernInquirySelect({
         className={cn(
           "w-full flex items-center justify-between p-4 rounded-2xl transition-all duration-300 border",
           isOpen 
-            ? "border-emerald-500/50 ring-1 ring-emerald-500/30 bg-white dark:bg-gray-900" 
+            ? "border-primary ring-1 ring-primary/30 bg-white dark:bg-gray-900" 
             : error 
               ? "border-rose-500/50 bg-rose-500/5" 
               : "bg-white dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 shadow-sm"
@@ -71,7 +71,7 @@ export function ModernInquirySelect({
         <ChevronDown 
           className={cn(
             "w-4 h-4 text-gray-500 transition-transform duration-300",
-            isOpen && "rotate-180 text-emerald-500"
+            isOpen && "rotate-180 text-primary"
           )} 
         />
       </button>
@@ -96,7 +96,7 @@ export function ModernInquirySelect({
                   className={cn(
                     "w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 mb-1 last:mb-0",
                     value === option.value
-                      ? "bg-emerald-500/10 text-emerald-500"
+                      ? "bg-primary/10 text-primary font-black"
                       : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   )}
                 >

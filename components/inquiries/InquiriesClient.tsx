@@ -23,14 +23,18 @@ import {
   Building2,
   Truck,
   GraduationCap,
-  X
+  X,
+  Check
 } from "lucide-react";
+import { cn } from "@/utils/helper";
 import { motion, AnimatePresence } from "framer-motion";
 import ModernSelect from "@/components/common/ModernSelect";
 import ModernLoader from "@/components/common/ModernLoader";
 import Modal from "@/components/modals/Modal";
 import ConfirmModal from "@/components/common/ConfirmModal";
-import { useNotification } from "@/context/NotificationContext";
+import { UserMobileFilterSheet } from "@/components/common/UserMobileFilterSheet";
+import { useNotification, NotificationItem } from "@/context/NotificationContext";
+import { CancellationStrikeWarningCard } from "@/components/common/CancellationStrikeWarningCard";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -128,7 +132,9 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
   const [cancelReason, setCancelReason] = useState("");
   const [inquiryToCancel, setInquiryToCancel] = useState<Inquiry | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
-  const unreadNotifications = notifications.filter(n => !n.isRead && n.type === "inquiry");
+  const [strikeStatus, setStrikeStatus] = useState<any>(null);
+  const [isLoadingStrikeStatus, setIsLoadingStrikeStatus] = useState(false);
+  const unreadNotifications = notifications.filter((n: NotificationItem) => !n.isRead && n.type === "inquiry");
   const hasAutoOpened = useRef(false);
 
   // Auto-open modal if ID is in URL
@@ -172,8 +178,24 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
     return () => clearTimeout(timer);
   }, [searchQuery, statusFilter, sortBy, isMounted]);
 
-  const handleCancelClick = (inquiry: Inquiry) => {
+  const fetchStrikeStatus = async () => {
+    setIsLoadingStrikeStatus(true);
+    try {
+      const res = await fetch("/api/user/strike-status");
+      if (res.ok) {
+        const data = await res.json();
+        setStrikeStatus(data);
+      }
+    } catch (err) {
+      console.error("Error fetching strike status:", err);
+    } finally {
+      setIsLoadingStrikeStatus(false);
+    }
+  };
+
+  const handleCancelClick = async (inquiry: Inquiry) => {
     setInquiryToCancel(inquiry);
+    await fetchStrikeStatus();
     setShowCancelConfirm(true);
   };
 
@@ -265,43 +287,107 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
         backBtn
       />
 
-      {/* Search and Filter Bar - Always visible */}
+      {/* Search and Filter Bar - Responsive Layout */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="mt-8 mb-10 flex flex-col md:flex-row items-center gap-4 bg-white/50 dark:bg-gray-800/50 p-4 rounded-2xl backdrop-blur-md border border-gray-100 dark:border-gray-700/50 shadow-sm relative z-20"
       >
-        {/* Search */}
-        <div className="relative flex-[5]">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-          <input
-            type="text"
-            placeholder="Search by room name or listing..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 border border-transparent rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-sm transition-all"
-          />
+        {/* Search & Mobile Filter Trigger */}
+        <div className="flex items-center gap-2 w-full md:flex-[5]">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Search by room name or listing..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border border-transparent rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-sm transition-all text-sm"
+            />
+          </div>
+
+          {/* Mobile Filter Sheet Drawer */}
+          <UserMobileFilterSheet
+            activeFilterCount={(statusFilter !== "all" ? 1 : 0) + (sortBy !== "newest" ? 1 : 0)}
+            onClearAll={() => {
+              setStatusFilter("all");
+              setSortBy("newest");
+            }}
+          >
+            <div className="space-y-6">
+              {/* Status Section */}
+              <div className="space-y-2.5">
+                <span className="text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                  <Filter size={14} className="text-primary" /> Status Filter
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  {statusOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setStatusFilter(opt.value as StatusFilter)}
+                      className={cn(
+                        "px-3.5 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider border transition-all flex items-center justify-between cursor-pointer",
+                        statusFilter === opt.value
+                          ? "bg-primary/10 text-primary border-primary/30 font-black shadow-xs"
+                          : "bg-gray-50 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 border-gray-200/60 dark:border-gray-700/60 hover:bg-gray-100"
+                      )}
+                    >
+                      <span>{opt.label}</span>
+                      {statusFilter === opt.value && <Check size={14} strokeWidth={3} className="text-primary shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sort Section */}
+              <div className="space-y-2.5">
+                <span className="text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                  <ArrowUpDown size={14} className="text-primary" /> Sort Order
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  {sortOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setSortBy(opt.value)}
+                      className={cn(
+                        "px-3.5 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider border transition-all flex items-center justify-between cursor-pointer",
+                        sortBy === opt.value
+                          ? "bg-primary/10 text-primary border-primary/30 font-black shadow-xs"
+                          : "bg-gray-50 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 border-gray-200/60 dark:border-gray-700/60 hover:bg-gray-100"
+                      )}
+                    >
+                      <span>{opt.label}</span>
+                      {sortBy === opt.value && <Check size={14} strokeWidth={3} className="text-primary shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </UserMobileFilterSheet>
         </div>
 
-        {/* Status Filter */}
-        <ModernSelect
-          instanceId="status-filter"
-          options={statusOptions}
-          value={statusFilter}
-          onChange={(val) => setStatusFilter(val as StatusFilter)}
-          icon={<Filter size={18} />}
-          className="md:w-max min-w-[200px]"
-        />
+        {/* Desktop Inline Filters */}
+        <div className="hidden md:flex items-center gap-4">
+          <ModernSelect
+            instanceId="status-filter"
+            options={statusOptions}
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val as StatusFilter)}
+            icon={<Filter size={18} />}
+            className="w-max min-w-[200px]"
+          />
 
-        {/* Sort */}
-        <ModernSelect
-          instanceId="sort-filter"
-          options={sortOptions}
-          value={sortBy}
-          onChange={setSortBy}
-          icon={<ArrowUpDown size={18} />}
-          className="md:w-max min-w-[204px]"
-        />
+          <ModernSelect
+            instanceId="sort-filter"
+            options={sortOptions}
+            value={sortBy}
+            onChange={setSortBy}
+            icon={<ArrowUpDown size={18} />}
+            className="w-max min-w-[204px]"
+          />
+        </div>
       </motion.div>
 
       {isLoading ? (
@@ -408,7 +494,12 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
               cancelLabel="No, Keep It"
               isLoading={isCancelling}
               variant="danger"
-            />
+            >
+              <CancellationStrikeWarningCard 
+                strikeStatus={strikeStatus} 
+                isLoading={isLoadingStrikeStatus} 
+              />
+            </ConfirmModal>
           </Modal>
 
           {/* Inquiry Cancellation Reason Modal */}
@@ -418,8 +509,10 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
             width="md"
             title=""
             closeOnOutsideClick={false}
+            hasFixedFooter={true}
+            fullOnMobile={true}
           >
-            <div className="overflow-hidden rounded-3xl relative">
+            <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl relative">
               {/* X Close Button */}
               <button
                 onClick={() => setShowCancelReason(false)}
@@ -429,7 +522,7 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
                 <X size={18} />
               </button>
               {/* Header Banner - theme-aware */}
-              <div className="bg-amber-500/10 dark:bg-amber-500/5 p-5 border-b border-amber-500/20 dark:border-amber-500/10 flex items-center gap-4">
+              <div className="bg-amber-500/10 dark:bg-amber-500/5 p-5 pr-12 border-b border-amber-500/20 dark:border-amber-500/10 flex items-center gap-4 shrink-0">
                 <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20 flex-shrink-0">
                   <Info size={20} strokeWidth={2.5} />
                 </div>
@@ -441,63 +534,71 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
                 </div>
               </div>
 
-              <div className="p-6">
-                <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-5 leading-relaxed">
-                  Select why you are withdrawing this inquiry. This helps with record keeping and keeps the platform fair.
-                </p>
-                
-                <div className="grid grid-cols-1 gap-2 mb-5">
-                  {[
-                    { label: "Found another room already", icon: <Home size={16} /> },
-                    { label: "Changed my mind about the location", icon: <MapPin size={16} /> },
-                    { label: "Inquired by mistake", icon: <AlertCircle size={16} /> },
-                    { label: "Room details don't fit my needs", icon: <FileText size={16} /> },
-                    { label: "Stay dates no longer fit my schedule", icon: <Calendar size={16} /> },
-                    { label: "Other", icon: <MoreHorizontal size={16} /> }
-                  ].map((item, index) => (
-                    <motion.button
-                      key={item.label}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.04 }}
-                      onClick={() => setCancelReason(item.label)}
-                      className={`group flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left ${
-                        cancelReason === item.label 
-                          ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary shadow-sm ring-2 ring-primary/10" 
-                          : "border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 bg-gray-50/80 dark:bg-gray-900/50 text-gray-600 dark:text-gray-300"
-                      }`}
-                    >
-                      <div className={`p-2 rounded-xl flex-shrink-0 transition-colors ${
-                        cancelReason === item.label 
-                          ? "bg-primary text-white" 
-                          : "bg-white dark:bg-gray-800 text-gray-400 group-hover:text-primary dark:group-hover:text-primary"
-                      }`}>
-                        {item.icon}
-                      </div>
-                      <span className="text-sm font-bold tracking-tight">{item.label}</span>
-                    </motion.button>
-                  ))}
+              {/* Body Content */}
+              <div className="p-6 overflow-y-auto flex-1 sm:flex-initial flex flex-col justify-between sm:block overscroll-contain">
+                <div>
+                  <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-5 leading-relaxed">
+                    Select why you are withdrawing this inquiry. This helps with record keeping and keeps the platform fair.
+                  </p>
+                  
+                  <CancellationStrikeWarningCard 
+                    strikeStatus={strikeStatus} 
+                    isLoading={isLoadingStrikeStatus} 
+                  />
+                  
+                  <div className="grid grid-cols-1 gap-2 mb-5">
+                    {[
+                      { label: "Found another room already", icon: <Home size={16} /> },
+                      { label: "Changed my mind about the location", icon: <MapPin size={16} /> },
+                      { label: "Inquired by mistake", icon: <AlertCircle size={16} /> },
+                      { label: "Room details don't fit my needs", icon: <FileText size={16} /> },
+                      { label: "Stay dates no longer fit my schedule", icon: <Calendar size={16} /> },
+                      { label: "Other", icon: <MoreHorizontal size={16} /> }
+                    ].map((item, index) => (
+                      <motion.button
+                        key={item.label}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.04 }}
+                        onClick={() => setCancelReason(item.label)}
+                        className={`group flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left ${
+                          cancelReason === item.label 
+                            ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary shadow-sm ring-2 ring-primary/10" 
+                            : "border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 bg-gray-50/80 dark:bg-gray-900/50 text-gray-600 dark:text-gray-300"
+                        }`}
+                      >
+                        <div className={`p-2 rounded-xl flex-shrink-0 transition-colors ${
+                          cancelReason === item.label 
+                            ? "bg-primary text-white" 
+                            : "bg-white dark:bg-gray-800 text-gray-400 group-hover:text-primary dark:group-hover:text-primary"
+                        }`}>
+                          {item.icon}
+                        </div>
+                        <span className="text-sm font-bold tracking-tight">{item.label}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+
+                  <AnimatePresence>
+                    {cancelReason === "Other" && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden mb-5"
+                      >
+                        <textarea
+                          autoFocus
+                          placeholder="Please specify your reason here..."
+                          className="w-full p-4 border border-gray-100 dark:border-gray-800 dark:bg-gray-900 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none text-sm font-medium transition-all min-h-[100px] dark:text-white resize-none"
+                          onChange={(e) => setCancelReason(e.target.value)}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
-                <AnimatePresence>
-                  {cancelReason === "Other" && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="overflow-hidden mb-5"
-                    >
-                      <textarea
-                        autoFocus
-                        placeholder="Please specify your reason here..."
-                        className="w-full p-4 border border-gray-100 dark:border-gray-800 dark:bg-gray-900 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none text-sm font-medium transition-all min-h-[100px] dark:text-white resize-none"
-                        onChange={(e) => setCancelReason(e.target.value)}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 pt-3 sm:pt-0">
                   <Button
                     outline
                     onClick={() => setShowCancelReason(false)}

@@ -130,14 +130,14 @@ describe('LandlordInquiryCard', () => {
 
   it('calls onReject when Reject is clicked', () => {
     render(<LandlordInquiryCard {...defaultProps} />);
-    fireEvent.click(screen.getByText('Reject'));
+    fireEvent.click(screen.getByTitle('Reject Inquiry'));
     expect(mockOnReject).toHaveBeenCalledWith('inq-1');
   });
 
   it('renders correctly in list mode', () => {
     render(<LandlordInquiryCard {...defaultProps} viewMode="list" />);
     expect(screen.getByText('Test Listing')).toBeInTheDocument();
-    expect(screen.getByText(/Manage/i)).toBeInTheDocument();
+    expect(screen.getByText(/Details/i)).toBeInTheDocument();
   });
 
   it('calls onArchive when archive button is clicked in list mode', () => {
@@ -150,7 +150,7 @@ describe('LandlordInquiryCard', () => {
   it('calls onDelete when delete button is clicked in list mode (for archived)', () => {
     const archivedInquiry = { ...mockInquiry, isArchived: true };
     render(<LandlordInquiryCard {...defaultProps} inquiry={archivedInquiry} viewMode="list" />);
-    const deleteBtn = screen.getByTitle('Permanently Delete (Purge Files)');
+    const deleteBtn = screen.getByTitle('Delete Permanently');
     fireEvent.click(deleteBtn);
     expect(mockOnDelete).toHaveBeenCalledWith(archivedInquiry);
   });

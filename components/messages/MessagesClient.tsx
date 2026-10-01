@@ -128,7 +128,7 @@ const MessagesClient: React.FC<MessagesClientProps> = ({
 
   return (
     <section className="w-full px-0 md:px-8 lg:px-12 py-0 md:py-4 flex flex-col h-full overflow-hidden">
-      <div className="w-full flex h-[calc(100dvh-80px)] fixed inset-0 bottom-[80px] md:relative md:inset-auto md:h-[calc(100vh-120px)] max-h-[900px] md:mt-0 bg-white dark:bg-gray-900 overflow-hidden md:rounded-[2.5rem] md:border border-gray-100 dark:border-gray-800 shadow-glass z-0 md:z-auto">
+      <div className="w-full flex h-dvh fixed inset-0 bottom-0 md:relative md:inset-auto md:h-[calc(100vh-120px)] md:max-h-[900px] md:mt-0 bg-white dark:bg-gray-900 overflow-hidden md:rounded-[2.5rem] md:border border-gray-100 dark:border-gray-800 shadow-glass z-0 md:z-auto">
       {/* Sidebar - Conversations List */}
       <motion.div 
         className={cn(

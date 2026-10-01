@@ -7,6 +7,7 @@ export type Notification = {
   body: string;
   status: NotificationStatus;
   createdAt: string;
+  type?: string;
   actions?: NotificationAction[];
 };
 

@@ -45,6 +45,7 @@ const OTPVerifyStep: React.FC<OTPVerifyStepProps> = ({
     setIsProcessing(true);
     try {
       await axios.post("/api/inquiries/otp/send", { email: userEmail });
+      setResendCooldown(30);
       responsiveToast.success("Inquiry confirmation code sent to your registered email!", { duration: 4500 });
       setOtpAttemptLimitReached(false);
     } catch (error: any) {
@@ -120,7 +121,7 @@ const OTPVerifyStep: React.FC<OTPVerifyStepProps> = ({
         <p className="text-sm font-black text-blue-600 dark:text-blue-400 tracking-wide select-all">{userEmail}</p>
       </div>
 
-      <div className="px-2">
+      <div className="w-full px-0 sm:px-2">
         <OtpInput
           id="otp"
           label="6-Digit Verification Code"

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Maximize2, ShieldCheck, Lock, Eye } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ShieldCheck, Lock, Eye, ExternalLink, FileText } from 'lucide-react';
 import { cn } from '@/utils/helper';
 import SafeImage from '@/components/common/SafeImage';
 
@@ -15,7 +15,14 @@ interface MediaPreviewOverlayProps {
   onNavigate?: (index: number) => void;
   title?: string;
   isDocument?: boolean;
+  showExternalLink?: boolean;
 }
+
+const checkIsPdf = (url: string): boolean => {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return lower.endsWith('.pdf') || lower.includes('.pdf?') || lower.includes('/pdf') || lower.startsWith('data:application/pdf');
+};
 
 const MediaPreviewOverlay: React.FC<MediaPreviewOverlayProps> = ({
   isOpen,
@@ -24,7 +31,8 @@ const MediaPreviewOverlay: React.FC<MediaPreviewOverlayProps> = ({
   currentIndex = 0,
   onNavigate,
   title,
-  isDocument = false
+  isDocument = false,
+  showExternalLink = false
 }) => {
   const [mounted, setMounted] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
@@ -36,6 +44,7 @@ const MediaPreviewOverlay: React.FC<MediaPreviewOverlayProps> = ({
   const safeImages = Array.isArray(images) ? images : [];
   const safeIndex = Math.max(0, Math.min(currentIndex, safeImages.length - 1));
   const currentSrc = safeImages[safeIndex] || '';
+  const isPdf = checkIsPdf(currentSrc);
 
   useEffect(() => {
     if (isOpen) {
@@ -92,17 +101,17 @@ const MediaPreviewOverlay: React.FC<MediaPreviewOverlayProps> = ({
           onClick={onClose}
         >
           {/* Header */}
-          <div className="relative z-20 flex items-center justify-between w-full max-w-7xl mx-auto pt-2">
+          <div className="relative z-20 flex items-center justify-between w-full max-w-7xl mx-auto pt-2 gap-4">
             <div className="flex items-center gap-3.5">
               <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center text-white backdrop-blur-xl border border-white/15 shadow-xl shrink-0">
-                {isDocument ? <ShieldCheck size={20} className="text-primary" /> : <Eye size={20} />}
+                {isDocument || isPdf ? <ShieldCheck size={20} className="text-primary" /> : <Eye size={20} />}
               </div>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h4 className="text-xs sm:text-sm font-black text-white uppercase tracking-[0.2em]">
                     {title || 'Media Preview'}
                   </h4>
-                  {isDocument && (
+                  {(isDocument || isPdf) && (
                     <span className="hidden sm:flex items-center gap-1 text-[9px] font-black px-2.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 uppercase tracking-widest">
                       <Lock size={9} /> Encrypted Document
                     </span>
@@ -114,27 +123,45 @@ const MediaPreviewOverlay: React.FC<MediaPreviewOverlayProps> = ({
               </div>
             </div>
 
-            {/* Close Button (1st button in DOM) */}
-            <button
-              onClick={onClose}
-              className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-rose-500 text-white flex items-center justify-center transition-all border border-white/15 hover:border-rose-500 shadow-2xl group cursor-pointer"
-              title="Close preview (Esc)"
-            >
-              <X size={24} className="group-hover:scale-110 transition-transform stroke-[2.5]" />
-            </button>
+            {/* Header Right Actions */}
+            <div className="flex items-center gap-3">
+              {showExternalLink && currentSrc && (
+                <a
+                  href={currentSrc}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-black uppercase tracking-wider border border-white/15 transition-all flex items-center gap-2 shadow-lg cursor-pointer hover:scale-105"
+                  title="Open in new tab"
+                >
+                  <ExternalLink size={14} />
+                  <span className="hidden sm:inline">{isPdf ? "Open PDF" : "Open Full Media"}</span>
+                </a>
+              )}
+
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/10 hover:bg-rose-500 text-white flex items-center justify-center transition-all border border-white/15 hover:border-rose-500 shadow-2xl group cursor-pointer shrink-0"
+                title="Close preview (Esc)"
+              >
+                <X size={24} className="group-hover:scale-110 transition-transform stroke-[2.5]" />
+              </button>
+            </div>
           </div>
 
           {/* Main Stage */}
           <div className="relative w-full max-w-6xl h-full flex-1 flex items-center justify-center my-4 mx-auto overflow-hidden">
             <AnimatePresence mode="wait">
-              {safeImages[safeIndex] && (
+              {currentSrc && (
                 <motion.div
                   key={safeIndex}
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="relative flex items-center justify-center max-w-[90vw] max-h-[75vh] min-h-[220px] min-w-[280px]"
+                  className="relative flex items-center justify-center w-full max-w-[90vw] max-h-[78vh] min-h-[300px]"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {isImageLoading && (
@@ -142,28 +169,42 @@ const MediaPreviewOverlay: React.FC<MediaPreviewOverlayProps> = ({
                       <div className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin shrink-0" />
                       <div className="space-y-1 select-none">
                         <p className="text-xs font-black uppercase tracking-[0.18em] text-white">
-                          {isDocument ? "Decrypting Document..." : "Loading High-Res Image..."}
+                          {isPdf ? "Rendering PDF Document..." : isDocument ? "Decrypting Document..." : "Loading High-Res Image..."}
                         </p>
                         <p className="text-[10px] font-bold text-white/50 tracking-wider">Fetching secure asset from storage</p>
                       </div>
                     </div>
                   )}
 
-                  <img
-                    src={safeImages[safeIndex]}
-                    alt={title || "Preview"}
-                    onLoad={() => setIsImageLoading(false)}
-                    onError={() => setIsImageLoading(false)}
-                    className={cn(
-                      "max-w-[85vw] max-h-[75vh] object-contain rounded-2xl shadow-[0_0_90px_rgba(0,0,0,0.9)] border border-white/10 transition-opacity duration-300",
-                      isImageLoading ? "opacity-0" : "opacity-100"
-                    )}
-                  />
+                  {isPdf ? (
+                    <div className="relative w-full h-[75vh] max-w-5xl rounded-2xl overflow-hidden border border-white/20 bg-slate-900 shadow-[0_0_90px_rgba(0,0,0,0.9)] flex flex-col">
+                      <iframe
+                        src={currentSrc}
+                        title={title || "PDF Document Viewer"}
+                        onLoad={() => setIsImageLoading(false)}
+                        className={cn(
+                          "w-full h-full border-none transition-opacity duration-300 bg-white",
+                          isImageLoading ? "opacity-0" : "opacity-100"
+                        )}
+                      />
+                    </div>
+                  ) : (
+                    <img
+                      src={currentSrc}
+                      alt={title || "Preview"}
+                      onLoad={() => setIsImageLoading(false)}
+                      onError={() => setIsImageLoading(false)}
+                      className={cn(
+                        "max-w-[85vw] max-h-[75vh] object-contain rounded-2xl shadow-[0_0_90px_rgba(0,0,0,0.9)] border border-white/10 transition-opacity duration-300",
+                        isImageLoading ? "opacity-0" : "opacity-100"
+                      )}
+                    />
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Navigation Arrows (Buttons 2 & 3 in DOM for multi-media) */}
+            {/* Navigation Arrows */}
             {safeImages.length > 1 && onNavigate && (
               <>
                 <button
@@ -195,24 +236,32 @@ const MediaPreviewOverlay: React.FC<MediaPreviewOverlayProps> = ({
               >
                 {safeImages.map((img, idx) => {
                   const isActive = safeIndex === idx;
+                  const itemIsPdf = checkIsPdf(img);
                   return (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => onNavigate?.(idx)}
                       className={cn(
-                        "relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border-2 transition-all cursor-pointer shrink-0",
+                        "relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border-2 transition-all cursor-pointer shrink-0 flex items-center justify-center bg-slate-900",
                         isActive
                           ? "border-primary ring-2 ring-primary/50 scale-105 opacity-100 shadow-lg"
                           : "border-white/10 opacity-40 hover:opacity-100 hover:border-white/40"
                       )}
                     >
-                      <SafeImage src={img} alt="" className="w-full h-full object-cover" />
+                      {itemIsPdf ? (
+                        <div className="flex flex-col items-center justify-center text-red-400 p-1">
+                          <FileText size={20} />
+                          <span className="text-[7px] font-black uppercase tracking-tighter text-white/80">PDF</span>
+                        </div>
+                      ) : (
+                        <SafeImage src={img} alt="" sizes="56px" className="w-full h-full object-cover" />
+                      )}
                     </button>
                   );
                 })}
               </div>
-            ) : isDocument ? (
+            ) : isDocument || isPdf ? (
               <div className="px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/15 text-white/70 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-2xl">
                 <Lock size={12} className="text-primary" />
                 <span>Verified Legal Document • 256-Bit Encrypted Preview</span>

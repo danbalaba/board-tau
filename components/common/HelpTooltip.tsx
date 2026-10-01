@@ -168,15 +168,15 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ text, children, forceVisible 
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: coords.isTop ? 5 : -5 }}
                 transition={{ duration: 0.15 }}
-                className="w-full max-w-[320px] p-2.5 text-[11px] leading-relaxed font-normal text-white bg-gray-800 dark:bg-gray-700 shadow-xl rounded-lg"
+                className="w-full max-w-[320px] p-3 text-[11px] leading-relaxed font-medium text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 border border-gray-200/90 dark:border-gray-800 shadow-2xl rounded-xl"
               >
                 <div className="relative z-10 whitespace-normal text-center">{text}</div>
                 <div 
                   style={{ left: coords.pointerLeft }}
                   className={`absolute -translate-x-1/2 border-4 border-transparent ${
                     coords.isTop 
-                      ? 'top-full -mt-[1px] border-t-gray-800 dark:border-t-gray-700' 
-                      : 'bottom-full -mb-[1px] border-b-gray-800 dark:border-b-gray-700'
+                      ? 'top-full -mt-[1px] border-t-white dark:border-t-gray-900' 
+                      : 'bottom-full -mb-[1px] border-b-white dark:border-b-gray-900'
                   }`}
                 ></div>
               </motion.div>

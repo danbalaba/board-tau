@@ -134,11 +134,15 @@ export const handleStripeWebhook = async (session: any) => {
       return { success: true };
     }
 
-    updatedReservation = await db.reservation.update({
+    const stripePaymentRef = session.payment_intent || session.id || `STRIPE-${pendingReservation.id.slice(-8).toUpperCase()}`;
+
+    updatedReservation = await (db.reservation as any).update({
       where: { id: pendingReservation.id },
       data: {
         status: "RESERVED",
         paymentStatus: "PAID",
+        paymentMethod: "STRIPE" as any,
+        paymentReference: stripePaymentRef,
       },
       include: {
         listing: true,

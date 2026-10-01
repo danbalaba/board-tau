@@ -36,6 +36,7 @@ const SafeImage = ({
   fallbackSrc = '/images/dark_placeholder.png', // Default local fallback
   fill = true, // We default to fill for modern responsive layouts
   priority = false,
+  sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
   ...props
 }: SafeImageProps) => {
   // Extract string URL if src happens to be passed as an object { url: string } or { src: string }
@@ -149,7 +150,7 @@ const SafeImage = ({
           if (!hasError) setHasError(true);
           setIsLoading(false);
         }}
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        sizes={fill ? sizes : undefined}
       />
     </div>
   );

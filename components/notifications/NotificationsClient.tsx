@@ -15,12 +15,15 @@ import {
   Search, 
   Filter, 
   X,
-  RotateCcw
+  RotateCcw,
+  Check
 } from "lucide-react";
 import { useNotification, NotificationItem as NotificationType } from "@/context/NotificationContext";
 import NotificationItem from "@/components/navbar/NotificationItem";
-import Container from "@/components/common/Container";
+import Heading from "@/components/common/Heading";
 import ModernSelect from "@/components/common/ModernSelect";
+import { UserMobileFilterSheet } from "@/components/common/UserMobileFilterSheet";
+import { cn } from "@/utils/helper";
 import { isToday } from "date-fns";
 
 interface NotificationsClientProps {
@@ -35,6 +38,15 @@ const statusOptions = [
   { value: "PENDING", label: "Pending / Under Review", color: "bg-amber-500" },
   { value: "REJECTED", label: "Rejected / Cancelled", color: "bg-rose-500" },
   { value: "REPLIED", label: "Messages / Responses", color: "bg-purple-500" },
+];
+
+const categoryOptions: { value: CategoryFilter; label: string; icon?: React.ReactNode }[] = [
+  { value: "ALL", label: "ALL" },
+  { value: "UNREAD", label: "UNREAD" },
+  { value: "INQUIRY", label: "Inquiries", icon: <Home className="w-3.5 h-3.5" /> },
+  { value: "RESERVATION", label: "Reservations", icon: <CalendarCheck className="w-3.5 h-3.5" /> },
+  { value: "REVIEW", label: "Reviews", icon: <Star className="w-3.5 h-3.5" /> },
+  { value: "MESSAGE", label: "Messages", icon: <MessageCircle className="w-3.5 h-3.5" /> },
 ];
 
 export default function NotificationsClient({ user }: NotificationsClientProps) {
@@ -135,182 +147,165 @@ export default function NotificationsClient({ user }: NotificationsClientProps) 
   };
 
   return (
-    <Container className="py-6 sm:py-10 max-w-4xl mx-auto">
-      {/* Page Header with Kerby Headshot Avatar & Action Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 pb-6 border-b border-slate-200/80 dark:border-slate-800">
-        <div className="flex items-center gap-3.5">
-          <div className="relative w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 p-1 border border-[#2f7d6d]/30 shrink-0 shadow-sm overflow-hidden flex items-center justify-center">
-            <img
-              src="/assets/mascot/kerby-headshot.png"
-              alt="Kerby Mascot Avatar"
-              className="w-full h-full object-contain scale-110"
+    <div className="main-container min-h-[70vh] flex flex-col">
+      {/* Standardized Header matching all tenant pages */}
+      <Heading
+        title="Notifications"
+        subtitle="Stay updated on your housing inquiries, reservations, and updates"
+        backBtn
+        rightAction={
+          totalUnread > 0 ? (
+            <button
+              type="button"
+              onClick={markAllAsRead}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 hover:bg-primary/20 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-primary dark:text-emerald-400 font-extrabold text-xs sm:text-sm border border-primary/30 transition-all active:scale-95 shadow-xs"
+            >
+              <CheckCheck className="w-4 h-4" />
+              <span>Mark all as read</span>
+            </button>
+          ) : undefined
+        }
+      />
+
+      {/* Search and Responsive Filter Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mt-8 mb-6 flex flex-col md:flex-row items-center gap-4 bg-white/50 dark:bg-gray-800/50 p-4 rounded-2xl backdrop-blur-md border border-gray-100 dark:border-gray-700/50 shadow-sm relative z-20"
+      >
+        {/* Search & Mobile Filter Sheet */}
+        <div className="flex items-center gap-2 w-full md:flex-[5]">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Search notifications by keyword or title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-10 py-3 border border-transparent rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-sm transition-all text-sm"
             />
+            {searchQuery && (
+              <button 
+                type="button"
+                onClick={() => setSearchQuery("")} 
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white font-outfit tracking-tight flex items-center gap-2.5">
-              <span>Notifications</span>
-              {totalUnread > 0 && (
-                <span className="px-2.5 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold shadow-sm animate-pulse">
-                  {totalUnread} new
+
+          {/* Mobile Filter Sheet Drawer */}
+          <UserMobileFilterSheet
+            activeFilterCount={(statusFilter !== "all" ? 1 : 0) + (categoryFilter !== "ALL" ? 1 : 0)}
+            onClearAll={handleResetFilters}
+          >
+            <div className="space-y-6">
+              {/* Category Filter Section */}
+              <div className="space-y-2.5">
+                <span className="text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                  <Filter size={14} className="text-primary" /> Category Filter
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  {categoryOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setCategoryFilter(opt.value)}
+                      className={cn(
+                        "px-3.5 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider border transition-all flex items-center justify-between cursor-pointer",
+                        categoryFilter === opt.value
+                          ? "bg-primary/10 text-primary border-primary/30 font-black shadow-xs"
+                          : "bg-gray-50 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 border-gray-200/60 dark:border-gray-700/60 hover:bg-gray-100"
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {opt.icon}
+                        <span className="truncate">{opt.label}</span>
+                      </div>
+                      {categoryFilter === opt.value && <Check size={14} strokeWidth={3} className="text-primary shrink-0 ml-1" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status Filter Section */}
+              <div className="space-y-2.5">
+                <span className="text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                  <Filter size={14} className="text-primary" /> Status Filter
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  {statusOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setStatusFilter(opt.value)}
+                      className={cn(
+                        "px-3.5 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider border transition-all flex items-center justify-between cursor-pointer",
+                        statusFilter === opt.value
+                          ? "bg-primary/10 text-primary border-primary/30 font-black shadow-xs"
+                          : "bg-gray-50 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 border-gray-200/60 dark:border-gray-700/60 hover:bg-gray-100"
+                      )}
+                    >
+                      <span className="truncate">{opt.label}</span>
+                      {statusFilter === opt.value && <Check size={14} strokeWidth={3} className="text-primary shrink-0 ml-1" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </UserMobileFilterSheet>
+        </div>
+
+        {/* Desktop Inline Filters */}
+        <div className="hidden md:flex items-center gap-4">
+          <ModernSelect
+            instanceId="notification-status-select"
+            options={statusOptions}
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val)}
+            icon={<Filter size={18} />}
+            className="w-max min-w-[210px]"
+          />
+        </div>
+      </motion.div>
+
+      {/* Category Pills Bar (Horizontal scroll with primary badge styling) */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 no-scrollbar hide-scrollbar select-none">
+        {categoryOptions.map((opt) => {
+          const isSelected = categoryFilter === opt.value;
+          const count = categoryCounts[opt.value];
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setCategoryFilter(opt.value)}
+              className={cn(
+                "px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center gap-2 whitespace-nowrap border cursor-pointer",
+                isSelected
+                  ? "bg-primary text-white border-primary shadow-md shadow-primary/20"
+                  : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border-gray-200/80 dark:border-gray-700/80"
+              )}
+            >
+              {opt.icon}
+              <span>{opt.label}</span>
+              {count !== undefined && (
+                <span
+                  className={cn(
+                    "px-2 py-0.5 rounded-md text-[10px] font-bold",
+                    isSelected
+                      ? "bg-white/20 text-white"
+                      : opt.value === "UNREAD" && count > 0
+                      ? "bg-red-500 text-white"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                  )}
+                >
+                  {count}
                 </span>
               )}
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
-              Stay updated on your housing inquiries, reservations, and updates
-            </p>
-          </div>
-        </div>
-
-        {totalUnread > 0 && (
-          <button
-            type="button"
-            onClick={markAllAsRead}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#2f7d6d]/10 hover:bg-[#2f7d6d]/20 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-[#2f7d6d] dark:text-emerald-400 font-extrabold text-xs sm:text-sm border border-[#2f7d6d]/30 transition-all active:scale-95 shadow-sm self-start sm:self-auto"
-          >
-            <CheckCheck className="w-4 h-4" />
-            <span>Mark all as read</span>
-          </button>
-        )}
-      </div>
-
-      {/* Search and Status Filter Bar */}
-      <div className="mb-6 flex flex-col md:flex-row items-center gap-3 bg-white/60 dark:bg-slate-900/60 p-3 rounded-2xl backdrop-blur-md border border-slate-200/80 dark:border-slate-800 shadow-sm">
-        {/* Search Input */}
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search notifications by keyword or title..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm border border-transparent rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2f7d6d]/50 shadow-sm transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
-          />
-          {searchQuery && (
-            <button 
-              type="button"
-              onClick={() => setSearchQuery("")} 
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-            >
-              <X className="w-4 h-4" />
             </button>
-          )}
-        </div>
-
-        {/* Status Dropdown Filter */}
-        <ModernSelect
-          instanceId="notification-status-select"
-          options={statusOptions}
-          value={statusFilter}
-          onChange={(val) => setStatusFilter(val)}
-          icon={<Filter size={16} />}
-          className="w-full md:w-max min-w-[210px]"
-          size="sm"
-        />
-      </div>
-
-      {/* Category Pills Bar (NO SCROLLBAR: no-scrollbar & hide-scrollbar applied) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 no-scrollbar hide-scrollbar select-none">
-        {/* ALL */}
-        <button
-          type="button"
-          onClick={() => setCategoryFilter("ALL")}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center gap-2 whitespace-nowrap ${
-            categoryFilter === "ALL"
-              ? "bg-[#2f7d6d] text-white shadow-md shadow-[#2f7d6d]/30"
-              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-slate-800"
-          }`}
-        >
-          <span>ALL</span>
-          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${categoryFilter === "ALL" ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"}`}>
-            {categoryCounts.ALL}
-          </span>
-        </button>
-
-        {/* UNREAD */}
-        <button
-          type="button"
-          onClick={() => setCategoryFilter("UNREAD")}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center gap-2 whitespace-nowrap ${
-            categoryFilter === "UNREAD"
-              ? "bg-[#2f7d6d] text-white shadow-md shadow-[#2f7d6d]/30"
-              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-slate-800"
-          }`}
-        >
-          <span>UNREAD</span>
-          {categoryCounts.UNREAD > 0 && (
-            <span className="px-2 py-0.5 rounded-md bg-red-500 text-white text-[10px] font-bold">
-              {categoryCounts.UNREAD}
-            </span>
-          )}
-        </button>
-
-        {/* INQUIRY */}
-        <button
-          type="button"
-          onClick={() => setCategoryFilter("INQUIRY")}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center gap-2 whitespace-nowrap ${
-            categoryFilter === "INQUIRY"
-              ? "bg-[#2f7d6d] text-white shadow-md shadow-[#2f7d6d]/30"
-              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-slate-800"
-          }`}
-        >
-          <Home className="w-3.5 h-3.5" />
-          <span>Inquiries</span>
-          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${categoryFilter === "INQUIRY" ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"}`}>
-            {categoryCounts.INQUIRY}
-          </span>
-        </button>
-
-        {/* RESERVATION */}
-        <button
-          type="button"
-          onClick={() => setCategoryFilter("RESERVATION")}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center gap-2 whitespace-nowrap ${
-            categoryFilter === "RESERVATION"
-              ? "bg-[#2f7d6d] text-white shadow-md shadow-[#2f7d6d]/30"
-              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-slate-800"
-          }`}
-        >
-          <CalendarCheck className="w-3.5 h-3.5" />
-          <span>Reservations</span>
-          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${categoryFilter === "RESERVATION" ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"}`}>
-            {categoryCounts.RESERVATION}
-          </span>
-        </button>
-
-        {/* REVIEWS */}
-        <button
-          type="button"
-          onClick={() => setCategoryFilter("REVIEW")}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center gap-2 whitespace-nowrap ${
-            categoryFilter === "REVIEW"
-              ? "bg-[#2f7d6d] text-white shadow-md shadow-[#2f7d6d]/30"
-              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-slate-800"
-          }`}
-        >
-          <Star className="w-3.5 h-3.5" />
-          <span>Reviews</span>
-          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${categoryFilter === "REVIEW" ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"}`}>
-            {categoryCounts.REVIEW}
-          </span>
-        </button>
-
-        {/* MESSAGES */}
-        <button
-          type="button"
-          onClick={() => setCategoryFilter("MESSAGE")}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center gap-2 whitespace-nowrap ${
-            categoryFilter === "MESSAGE"
-              ? "bg-[#2f7d6d] text-white shadow-md shadow-[#2f7d6d]/30"
-              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-slate-800"
-          }`}
-        >
-          <MessageCircle className="w-3.5 h-3.5" />
-          <span>Messages</span>
-          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${categoryFilter === "MESSAGE" ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"}`}>
-            {categoryCounts.MESSAGE}
-          </span>
-        </button>
+          );
+        })}
       </div>
 
       {/* Notifications List Body Container */}
@@ -415,6 +410,6 @@ export default function NotificationsClient({ user }: NotificationsClientProps) 
           </div>
         )}
       </div>
-    </Container>
+    </div>
   );
 }

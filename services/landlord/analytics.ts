@@ -21,10 +21,11 @@ export const getLandlordDashboardStats = async () => {
     revenueStats,
     occupancyData,
   ] = await Promise.all([
-    // Total properties (active + pending)
+    // Total properties (excluding archived)
     db.listing.count({
       where: {
         userId: landlord.id,
+        isArchived: false,
       },
     }),
     // Active listings
@@ -32,6 +33,7 @@ export const getLandlordDashboardStats = async () => {
       where: {
         userId: landlord.id,
         status: "ACTIVE",
+        isArchived: false,
       },
     }),
     // Pending inquiries
@@ -39,17 +41,21 @@ export const getLandlordDashboardStats = async () => {
       where: {
         listing: {
           userId: landlord.id,
+          isArchived: false,
         },
         status: "PENDING",
+        isArchived: false,
       },
     }),
-    // Confirmed bookings
+    // Active / Confirmed bookings (RESERVED or CHECKED_IN)
     db.reservation.count({
       where: {
         listing: {
           userId: landlord.id,
+          isArchived: false,
         },
-        status: "RESERVED",
+        status: { in: ["RESERVED", "CHECKED_IN"] },
+        isArchived: false,
       },
     }),
     // Review statistics
@@ -57,19 +63,21 @@ export const getLandlordDashboardStats = async () => {
       where: {
         listing: {
           userId: landlord.id,
+          isArchived: false,
         },
         status: "approved",
       },
       _avg: { rating: true },
       _count: { id: true },
     }),
-    // Revenue statistics (this month)
+    // Revenue statistics (this month - PAID reservations)
     db.reservation.aggregate({
       where: {
         listing: {
           userId: landlord.id,
+          isArchived: false,
         },
-        status: "RESERVED",
+        status: { in: ["RESERVED", "CHECKED_IN", "COMPLETED"] },
         paymentStatus: "PAID",
         createdAt: {
           gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -79,15 +87,15 @@ export const getLandlordDashboardStats = async () => {
     }),
     // Occupancy statistics
     (async () => {
-      // 1. Get all rooms for landlord's properties in one go
+      // 1. Get all active, non-archived rooms for landlord's properties
       const activeListings = await db.listing.findMany({
-        where: { userId: landlord.id, status: 'ACTIVE' },
+        where: { userId: landlord.id, status: 'ACTIVE', isArchived: false },
         select: { id: true }
       });
       const listingIds = activeListings.map((l: any) => l.id);
 
       const allRooms = await db.room.findMany({
-        where: { listingId: { in: listingIds } },
+        where: { listingId: { in: listingIds }, isArchived: false },
         select: { id: true, capacity: true }
       });
       
@@ -99,7 +107,8 @@ export const getLandlordDashboardStats = async () => {
       const activeReservations = await db.reservation.findMany({
         where: {
           roomId: { in: roomIds },
-          status: "RESERVED",
+          status: { in: ["RESERVED", "CHECKED_IN"] },
+          isArchived: false,
           startDate: { lte: now },
           endDate: { gte: now },
         },
@@ -123,8 +132,9 @@ export const getLandlordDashboardStats = async () => {
 
       const expiringLeases = await db.reservation.count({
         where: {
-          listing: { userId: landlord.id },
-          status: "RESERVED",
+          listing: { userId: landlord.id, isArchived: false },
+          status: { in: ["RESERVED", "CHECKED_IN"] },
+          isArchived: false,
           endDate: { gte: now, lte: thirtyDaysFromNow },
         },
       });
@@ -148,7 +158,7 @@ export const getLandlordDashboardStats = async () => {
     activeListings: activeListingsCount,
     pendingInquiries: pendingInquiriesCount,
     confirmedBookings: confirmedBookingsCount,
-    averageRating: reviewStats._avg.rating || 0,
+    averageRating: Number(reviewStats._avg.rating?.toFixed(1)) || 0,
     totalReviews: reviewStats._count.id,
     monthlyRevenue: revenueStats._sum.totalPrice || 0,
     occupancyRate,
@@ -399,8 +409,9 @@ export const getDailyRevenueHistory = async (days: number = 30) => {
     where: {
       listing: {
         userId: landlord.id,
+        isArchived: false,
       },
-      status: "RESERVED",
+      status: { in: ["RESERVED", "CHECKED_IN", "COMPLETED"] },
       paymentStatus: "PAID",
       createdAt: {
         gte: startDate,
@@ -546,9 +557,19 @@ export const getPropertyTypeBreakdown = async () => {
   const landlord = await requireLandlord();
 
   // Fetch all landlord properties with propertyType relation, propertyTypeId, and businessInfo
-  const [properties, dbPropertyTypes, roomTypes] = await Promise.all([
+  // Fetch landlord's active properties for count distribution, and all properties for revenue category lookup
+  const [properties, allLandlordProperties, dbPropertyTypes, roomTypes] = await Promise.all([
     db.listing.findMany({
-      where: { userId: landlord.id },
+      where: { userId: landlord.id, status: "ACTIVE", isArchived: false },
+      select: {
+        id: true,
+        propertyTypeId: true,
+        propertyType: { select: { id: true, name: true } },
+        businessInfo: true,
+      },
+    }),
+    db.listing.findMany({
+      where: { userId: landlord.id, isArchived: false },
       select: {
         id: true,
         propertyTypeId: true,
@@ -584,18 +605,11 @@ export const getPropertyTypeBreakdown = async () => {
 
   const isObjectId = (str: string) => typeof str === 'string' && /^[0-9a-fA-F]{24}$/.test(str);
 
-  const typeCounts: Record<string, number> = {};
-  const listingCategoryMap = new Map<string, string>();
-
-  properties.forEach((p: any) => {
+  const resolveType = (p: any) => {
     let resolvedType: string | undefined = p.propertyType?.name;
-
-    // 1. If not resolved by relation, check propertyTypeId lookup
     if (!resolvedType && p.propertyTypeId) {
       resolvedType = propertyTypeMap.get(p.propertyTypeId) || staticIdMap[p.propertyTypeId];
     }
-
-    // 2. Check businessInfo
     if (!resolvedType && p.businessInfo && typeof p.businessInfo === 'object') {
       const info = p.businessInfo as any;
       const raw = info.businessType || info.category || info.propertyType;
@@ -603,36 +617,41 @@ export const getPropertyTypeBreakdown = async () => {
         resolvedType = isObjectId(raw) ? (propertyTypeMap.get(raw) || staticIdMap[raw]) : raw;
       }
     }
-
-    // 3. If resolvedType is still a raw 24-hex ObjectId, attempt map lookup or clean fallback
     if (resolvedType && isObjectId(resolvedType)) {
       resolvedType = propertyTypeMap.get(resolvedType) || staticIdMap[resolvedType];
     }
-
-    // Final fallback: never leak raw ObjectId to UI
     if (!resolvedType || isObjectId(resolvedType)) {
       resolvedType = 'Boarding House';
     }
+    return resolvedType;
+  };
 
+  const listingCategoryMap = new Map<string, string>();
+  allLandlordProperties.forEach((p: any) => {
+    listingCategoryMap.set(p.id, resolveType(p));
+  });
+
+  const typeCounts: Record<string, number> = {};
+  properties.forEach((p: any) => {
+    const resolvedType = resolveType(p);
     typeCounts[resolvedType] = (typeCounts[resolvedType] || 0) + 1;
-    listingCategoryMap.set(p.id, resolvedType);
   });
 
   // Use groupBy to compute revenue per listing in MongoDB (not JS)
   const revenueByListing = await db.reservation.groupBy({
     by: ['listingId'],
     where: {
-      listing: { userId: landlord.id },
-      status: "RESERVED",
+      listing: { userId: landlord.id, isArchived: false },
+      status: { in: ["RESERVED", "CHECKED_IN", "COMPLETED"] },
       paymentStatus: "PAID",
     },
     _sum: { totalPrice: true },
   });
 
-  // Map listing revenue to category type in memory (O(N), not O(N) queries)
+  // Map listing revenue to category type in memory
   const revenueByType: Record<string, number> = {};
   revenueByListing.forEach((r: any) => {
-    const type = listingCategoryMap.get(r.listingId) || 'Other';
+    const type = listingCategoryMap.get(r.listingId) || 'Boarding House';
     revenueByType[type] = (revenueByType[type] || 0) + (r._sum.totalPrice || 0);
   });
 

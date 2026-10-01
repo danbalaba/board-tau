@@ -865,7 +865,14 @@ export default function SearchModal({
   };
 
   return (
-    <div className={`w-full h-full flex items-end md:items-center justify-center ${isMapOverlay ? 'p-0 md:p-4' : 'p-0 md:p-6 lg:p-12'}`}>
+    <div 
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onCloseModal?.();
+        }
+      }}
+      className={`w-full h-full flex items-end md:items-center justify-center ${isMapOverlay ? 'p-0 md:p-4' : 'p-0 md:p-6 lg:p-12'}`}
+    >
       <motion.div
         drag={isMobile ? "y" : false}
         dragControls={dragControls}
@@ -877,10 +884,10 @@ export default function SearchModal({
             onCloseModal?.();
           }
         }}
-        className={`w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-t md:border border-slate-200 dark:border-white/10 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden font-sans rounded-t-[32px] rounded-b-none md:rounded-3xl transition-colors duration-150 mt-auto mb-0 ${
+        className={`w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-t md:border border-slate-200 dark:border-white/10 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden font-sans rounded-t-[32px] rounded-b-none md:rounded-3xl transition-all duration-200 mt-auto mb-0 ${
           showWizard
-            ? "w-full h-full mx-auto my-auto"
-            : "h-auto max-h-[88vh] max-w-2xl mx-auto md:my-auto"
+            ? "h-[85vh] md:h-[85vh] max-h-[85vh] md:max-h-[820px] max-w-5xl mx-auto md:my-auto"
+            : "h-auto max-h-[80vh] md:max-h-[650px] max-w-2xl mx-auto md:my-auto"
         }`}
       >
         {/* Mobile Draggable Pull Handle Line */}
@@ -921,11 +928,12 @@ export default function SearchModal({
               <span>{showWizard ? "Spotlight Search" : "Guided Wizard"}</span>
             </button>
 
-            {/* Close Modal Button (Desktop Only) */}
+            {/* Close Modal Button */}
             <button
               type="button"
               onClick={onCloseModal}
-              className="hidden md:flex p-1.5 md:p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+              className="flex p-1.5 md:p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+              aria-label="Close search modal"
             >
               <X className="w-5 h-5" />
             </button>

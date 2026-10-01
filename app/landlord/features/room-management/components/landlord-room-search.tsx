@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, DoorOpen } from 'lucide-react';
+import { Search, X, DoorOpen, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDebounce } from '@/hooks/use-debounce';
 import SafeImage from '@/components/common/SafeImage';
@@ -30,6 +30,8 @@ export function LandlordRoomSearch({
   const [isFocused, setIsFocused] = useState(false);
   const [suggestions, setSuggestions] = useState<Room[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const isSearching = localQuery !== debouncedQuery;
 
   useEffect(() => {
     setLocalQuery(searchQuery);
@@ -64,9 +66,13 @@ export function LandlordRoomSearch({
   }, []);
 
   return (
-    <div ref={containerRef} className="relative w-full lg:w-80 group">
+    <div ref={containerRef} className="relative w-full lg:w-80 group z-30">
       <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors z-20">
-        <Search size={18} strokeWidth={2.5} />
+        {isSearching ? (
+          <Loader2 size={18} className="animate-spin text-primary" />
+        ) : (
+          <Search size={18} strokeWidth={2.5} />
+        )}
       </div>
       <input
         type="text"

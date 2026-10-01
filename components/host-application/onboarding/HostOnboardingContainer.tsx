@@ -409,6 +409,8 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
   }, [logic.step]);
 
   const handleMobileNext = async () => {
+    if (logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing || logic.isSubmitting || logic.isLoadingStep) return;
+
     let isValid = true;
     if (mobileStep === 1) isValid = await logic.trigger('contactInfo.fullName');
     if (mobileStep === 2) isValid = true; // Dedicated Welcome Interstitial Step
@@ -514,6 +516,7 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
   };
 
   const handleMobileBack = () => {
+    if (logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing || logic.isSubmitting || logic.isLoadingStep) return;
     setMobileStep((prev) => Math.max(1, prev - 1));
   };
 
@@ -1239,8 +1242,9 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                 <Button
                   type="button"
                   onClick={handleMobileBack}
+                  disabled={logic.isSubmitting || logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing || logic.isLoadingStep}
                   outline
-                  className="!w-auto min-w-[100px] px-5 py-4 rounded-2xl border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 font-extrabold text-xs shrink-0 hover:bg-gray-50 dark:hover:bg-slate-800"
+                  className="!w-auto min-w-[100px] px-5 py-4 rounded-2xl border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 font-extrabold text-xs shrink-0 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center justify-center gap-1.5">
                     <ChevronLeft size={18} />
@@ -1252,8 +1256,8 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
               {mobileStep === 17 ? (
                 <ConfettiButton
                   onClick={logic.handleSubmit}
-                  disabled={logic.isSubmitting}
-                  className="flex-1 rounded-2xl py-4 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-primary/30"
+                  disabled={logic.isSubmitting || logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing || logic.isLoadingStep}
+                  className="flex-1 rounded-2xl py-4 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-primary/30 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center justify-center gap-2">
                     <span>{logic.isSubmitting ? "Submitting..." : "Submit Application"}</span>
@@ -1263,7 +1267,8 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                 <Button
                   type="button"
                   onClick={handleMobileNext}
-                  className="flex-1 rounded-2xl py-4 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-primary/30"
+                  disabled={logic.isSubmitting || logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing || logic.isLoadingStep}
+                  className="flex-1 rounded-2xl py-4 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-primary/30 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center justify-center gap-2">
                     <span>Review Application</span>
@@ -1274,10 +1279,10 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                 <Button
                   type="button"
                   onClick={logic.handleCaptureSelfie}
-                  disabled={logic.isProcessing || !logic.isEngineReady || !logic.isFaceAligned || logic.livenessStatus !== 'passed'}
+                  disabled={logic.isProcessing || logic.isSelfieProcessing || !logic.isEngineReady || !logic.isFaceAligned || logic.livenessStatus !== 'passed'}
                   className={cn(
                     "flex-1 rounded-2xl py-4 font-black text-xs uppercase tracking-wider shadow-lg transition-all",
-                    logic.isFaceAligned && logic.livenessStatus === 'passed'
+                    logic.isFaceAligned && logic.livenessStatus === 'passed' && !logic.isSelfieProcessing
                       ? "bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] text-white shadow-primary/30 cursor-pointer"
                       : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-transparent shadow-none cursor-not-allowed"
                   )}
@@ -1285,7 +1290,9 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                   <div className="flex items-center justify-center gap-2">
                     <Camera size={18} />
                     <span>
-                      {logic.isFaceAligned && logic.livenessStatus === 'passed'
+                      {logic.isSelfieProcessing
+                        ? "Verifying Selfie..."
+                        : logic.isFaceAligned && logic.livenessStatus === 'passed'
                         ? "Capture Selfie Now"
                         : "Follow Prompt to Capture"}
                     </span>
@@ -1295,7 +1302,8 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                 <Button
                   type="button"
                   onClick={handleMobileNext}
-                  className="flex-1 rounded-2xl py-4 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-primary/30"
+                  disabled={logic.isSubmitting || logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing || logic.isLoadingStep}
+                  className="flex-1 rounded-2xl py-4 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-primary/30 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center justify-center gap-2">
                     <span>Continue</span>
@@ -1362,9 +1370,9 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                 {logic.step > 1 && (
                   <Button
                     onClick={logic.prevStep}
-                    disabled={logic.isSubmitting}
+                    disabled={logic.isSubmitting || logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing || logic.isLoadingStep}
                     outline
-                    className="!w-auto px-6 py-3.5 rounded-2xl border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-extrabold text-xs uppercase tracking-wider transition-all"
+                    className="!w-auto px-6 py-3.5 rounded-2xl border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-extrabold text-xs uppercase tracking-wider transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-center justify-center gap-2">
                       <ChevronLeft size={16} />
@@ -1376,8 +1384,8 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                 {logic.step === FORM_STEPS.length ? (
                   <ConfettiButton
                     onClick={logic.handleSubmit}
-                    disabled={logic.isSubmitting}
-                    className="!w-auto rounded-2xl px-8 py-3.5 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] shadow-xl shadow-primary/30 font-black text-xs text-white uppercase tracking-wider"
+                    disabled={logic.isSubmitting || logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing || logic.isLoadingStep}
+                    className="!w-auto rounded-2xl px-8 py-3.5 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] shadow-xl shadow-primary/30 font-black text-xs text-white uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-center justify-center gap-2">
                       <span>{logic.isSubmitting ? "Submitting..." : "Submit Application"}</span>
@@ -1386,8 +1394,8 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                 ) : (
                   <Button
                     onClick={logic.nextStep}
-                    disabled={logic.isSubmitting}
-                    className="!w-auto rounded-2xl px-8 py-3.5 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] shadow-xl shadow-primary/30 font-black text-xs text-white uppercase tracking-wider"
+                    disabled={logic.isSubmitting || logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing || logic.isLoadingStep}
+                    className="!w-auto rounded-2xl px-8 py-3.5 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] shadow-xl shadow-primary/30 font-black text-xs text-white uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-center justify-center gap-2">
                       <span>Continue</span>

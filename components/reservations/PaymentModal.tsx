@@ -492,8 +492,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               className="w-full sm:w-[290px]"
             />
             {!isContractAgreed && (
-              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 mt-1.5 animate-pulse text-center sm:text-right">
-                ⚠️ Check contract agreement box to unlock payment
+              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 mt-1.5 animate-pulse text-center sm:text-right flex items-center justify-center sm:justify-end gap-1">
+                <AlertCircle className="w-3 h-3 text-amber-500 shrink-0" />
+                <span>Check contract agreement box to unlock payment</span>
               </span>
             )}
           </div>

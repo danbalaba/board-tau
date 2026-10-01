@@ -75,6 +75,17 @@ export const getLandlordInquiries = async (args?: {
           }
         },
       },
+      reservations: {
+        select: {
+          id: true,
+          status: true,
+          paymentStatus: true
+        },
+        orderBy: {
+          createdAt: "desc"
+        },
+        take: 1
+      },
     },
   });
 
@@ -140,6 +151,17 @@ export const getInquiryDetails = async (inquiryId: string) => {
             }
           }
         },
+      },
+      reservations: {
+        select: {
+          id: true,
+          status: true,
+          paymentStatus: true
+        },
+        orderBy: {
+          createdAt: "desc"
+        },
+        take: 1
       },
     },
   });

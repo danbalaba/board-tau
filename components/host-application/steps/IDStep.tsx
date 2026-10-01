@@ -1,9 +1,8 @@
-"use client";
-
 import React, { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaIdCard, FaCamera, FaImage, FaTimes, FaCheckCircle, FaShieldAlt } from "react-icons/fa";
-import { Loader2, AlertCircle, Info, ChevronLeft, X, Check, User, ShieldCheck, CreditCard } from "lucide-react";
+import { Loader2, AlertCircle, Info, ChevronLeft, X, Check, User, ShieldCheck, CreditCard, RotateCcw, ScanLine, Video } from "lucide-react";
+import Webcam from "react-webcam";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import SafeImage from "@/components/common/SafeImage";
 import { cn } from "@/utils/helper";
@@ -27,7 +26,22 @@ interface IDStepProps {
   toggleCamera?: any;
 }
 
-
+const base64ToFile = (base64: string, filename: string): File => {
+  const arr = base64.split(",");
+  const mimeMatch = arr[0].match(/:(.*?);/);
+  if (!mimeMatch) throw new Error("Invalid base64 string");
+  
+  const mime = mimeMatch[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  
+  return new File([u8arr], filename, { type: mime });
+};
 
 /** Animated corner bracket */
 const CornerBracket = ({ position }: { position: "tl" | "tr" | "bl" | "br" }) => {
@@ -52,11 +66,14 @@ const IDStep: React.FC<IDStepProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const idWebcamRef = useRef<Webcam>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isShowingIDList, setIsShowingIDList] = useState(false);
   const [selectedIDTab, setSelectedIDTab] = useState<"primary" | "secondary">("primary");
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraFacingMode, setCameraFacingMode] = useState<"user" | "environment">("user");
   const responsiveToast = useResponsiveToast();
 
   useEffect(() => {
@@ -104,6 +121,31 @@ const IDStep: React.FC<IDStepProps> = ({
     if (file) processFile(file);
   };
 
+  const handleTakePhotoClick = () => {
+    const isMobileSmartphone = typeof window !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && window.innerWidth < 768;
+    if (isMobileSmartphone && fileInputRef.current) {
+      fileInputRef.current.click();
+    } else {
+      setIsCameraActive(true);
+    }
+  };
+
+  const handleSnapWebcamID = () => {
+    const imageSrc = idWebcamRef.current?.getScreenshot();
+    if (!imageSrc) {
+      responsiveToast.error("Failed to capture image from webcam. Please try again.");
+      return;
+    }
+    try {
+      const file = base64ToFile(imageSrc, "webcam_id_capture.jpg");
+      setIsCameraActive(false);
+      processFile(file);
+    } catch (err) {
+      console.error("Webcam capture error:", err);
+      responsiveToast.error("Failed to process captured webcam image.");
+    }
+  };
+
   const confirmUpload = () => {
     if (selectedFile) handleCaptureID(selectedFile);
   };
@@ -111,6 +153,7 @@ const IDStep: React.FC<IDStepProps> = ({
   const cancelUpload = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
+    setIsCameraActive(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (galleryInputRef.current) galleryInputRef.current.value = '';
   };
@@ -156,6 +199,26 @@ const IDStep: React.FC<IDStepProps> = ({
                   <span className="hidden sm:inline">Accepted IDs</span>
                 </button>
               </div>
+            )}
+
+            {/* Top-Level Selfie Retake Banner */}
+            {selfieRetakeNeeded && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between p-3.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-sm shadow-sm"
+              >
+                <div className="flex items-center gap-2.5 text-red-600 dark:text-red-400 font-semibold text-xs sm:text-sm">
+                  <AlertCircle size={18} className="shrink-0 text-red-500" />
+                  <span>Your live selfie was too blurry to verify.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRetakeSelfie}
+                  className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+                >
+                  Retake Selfie
+                </button>
+              </motion.div>
             )}
 
         {/* ─── STATE 1: Captured & Verified ─── */}
@@ -308,10 +371,16 @@ const IDStep: React.FC<IDStepProps> = ({
               <button
                 type="button"
                 disabled={isProcessing}
-                onClick={cancelUpload}
-                className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-40 transition-all cursor-pointer"
+                onClick={() => {
+                  if (selfieRetakeNeeded && handleRetakeSelfie) {
+                    handleRetakeSelfie();
+                  } else {
+                    cancelUpload();
+                  }
+                }}
+                className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
-                ↩ Retake
+                <RotateCcw size={14} /> {selfieRetakeNeeded ? "Retake Selfie" : "Retake"}
               </button>
               <button
                 type="button"
@@ -322,6 +391,79 @@ const IDStep: React.FC<IDStepProps> = ({
                 {isProcessing
                   ? <><Loader2 className="w-4 h-4 animate-spin" /> Verifying...</>
                   : <><FaShieldAlt size={14} /> Use This Photo</>}
+              </button>
+            </div>
+          </motion.div>
+
+        ) : isCameraActive ? (
+          /* ─── STATE 2.5: Live Webcam Scanner Viewport (Desktop/Laptop) ─── */
+          <motion.div
+            key="webcamScanner"
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.97 }}
+            className={cn(
+              "relative w-full rounded-2xl overflow-hidden bg-black shadow-2xl border border-blue-500/40 flex flex-col items-center justify-center group",
+              hideHeader ? "h-[270px]" : "h-[300px] md:h-[360px]"
+            )}
+          >
+            <Webcam
+              audio={false}
+              ref={idWebcamRef}
+              screenshotFormat="image/jpeg"
+              videoConstraints={{
+                facingMode: cameraFacingMode,
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+              }}
+              className="w-full h-full object-cover"
+            />
+
+            {/* ID Card Framing Overlay */}
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-4">
+              <div className="relative w-full max-w-[340px] aspect-[1.586/1] border-2 border-dashed border-blue-400/90 rounded-2xl bg-blue-500/5 shadow-[0_0_30px_rgba(59,130,246,0.3)]">
+                {(["tl", "tr", "bl", "br"] as const).map((pos) => (
+                  <CornerBracket key={pos} position={pos} />
+                ))}
+              </div>
+            </div>
+
+            {/* Top Scanning Header Badge */}
+            <div className="absolute top-3 inset-x-0 flex justify-center pointer-events-none z-10">
+              <span className="bg-black/75 backdrop-blur-md text-white text-xs font-bold px-3.5 py-1.5 rounded-full border border-white/10 flex items-center gap-2 shadow-lg">
+                <ScanLine size={14} className="text-blue-400 animate-pulse" />
+                Align your ID card inside the frame
+              </span>
+            </div>
+
+            {/* Top-Right Close Button */}
+            <button
+              type="button"
+              onClick={() => setIsCameraActive(false)}
+              className="absolute top-3 right-3 bg-black/70 backdrop-blur-md text-white p-2 rounded-full hover:bg-red-500/80 transition-all z-20 border border-white/15 cursor-pointer"
+              title="Close Camera"
+            >
+              <FaTimes size={12} />
+            </button>
+
+            {/* Bottom Controls */}
+            <div className="absolute bottom-4 inset-x-0 flex items-center justify-center gap-3 z-20 px-4">
+              <button
+                type="button"
+                onClick={() => setCameraFacingMode((prev) => (prev === "user" ? "environment" : "user"))}
+                className="p-3 bg-black/70 backdrop-blur-md text-white rounded-full hover:bg-white/20 transition-all border border-white/15 cursor-pointer shadow-lg"
+                title="Switch Camera"
+              >
+                <RotateCcw size={16} />
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSnapWebcamID}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-extrabold text-xs uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-blue-500/30 transition-all active:scale-95 cursor-pointer"
+              >
+                <FaCamera size={16} />
+                <span>Snap ID Photo</span>
               </button>
             </div>
           </motion.div>
@@ -379,7 +521,7 @@ const IDStep: React.FC<IDStepProps> = ({
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={handleTakePhotoClick}
                 className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold flex flex-col items-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95 cursor-pointer"
               >
                 <FaCamera size={22} />

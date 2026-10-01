@@ -17,7 +17,7 @@ export interface LeaseContractData {
   moveOutNoticeDays: number;
   customClauses: string[];
   landlordSignatureBase64: string;
-  tenantSignatureBase64: string;
+  tenantSignatureBase64?: string;
 }
 
 const getLogoBase64 = (): Promise<string> => {
@@ -187,7 +187,7 @@ export const generateLeaseContractPDF = async (
     currentY = 20;
   }
 
-  // 5. Signatures
+  // 5. Signatures & Digital Acceptance
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
@@ -197,30 +197,55 @@ export const generateLeaseContractPDF = async (
   doc.setFontSize(9);
   doc.setFont('helvetica', 'italic');
   doc.setTextColor(100);
-  doc.text('By signing below, both parties agree to the terms and conditions set forth in this agreement.', 14, currentY);
+  doc.text('By signing below (Landlord) and digitally accepting terms upon checkout (Tenant), both parties agree to all terms set forth.', 14, currentY);
   currentY += 15;
 
-  // Signature Boxes
+  // Landlord Signature Box (Left Side)
   doc.setDrawColor(200);
   doc.rect(14, currentY, 80, 40);
-  doc.rect(106, currentY, 80, 40);
 
-  // Add signature images
   if (data.landlordSignatureBase64) {
     try {
       doc.addImage(data.landlordSignatureBase64, 'PNG', 16, currentY + 2, 76, 36);
     } catch (e) {
       console.error("Failed to add landlord signature to PDF", e);
     }
+  } else {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(160);
+    doc.text('Landlord Official Signature', 54, currentY + 22, { align: 'center' });
   }
   
-  if (data.tenantSignatureBase64) {
-    try {
-      doc.addImage(data.tenantSignatureBase64, 'PNG', 108, currentY + 2, 76, 36);
-    } catch (e) {
-      console.error("Failed to add tenant signature to PDF", e);
-    }
-  }
+  // Tenant Digital Terms Acceptance Box (Right Side)
+  doc.setFillColor(242, 248, 246);
+  doc.setDrawColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(106, currentY, 80, 40, 3, 3, 'FD');
+
+  // Checkmark Badge Circle
+  doc.setFillColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
+  doc.circle(115, currentY + 12, 4, 'F');
+  // Checkmark icon (white lines)
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(0.8);
+  doc.line(113.2, currentY + 12, 114.5, currentY + 13.5);
+  doc.line(114.5, currentY + 13.5, 116.8, currentY + 10.5);
+
+  // Text inside Tenant Acceptance Box
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
+  doc.text('DIGITAL TERMS ACCEPTED', 123, currentY + 13);
+
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80);
+  doc.text('Confirmed online via checkbox consent', 112, currentY + 23);
+  doc.setFontSize(7.5);
+  doc.setTextColor(120);
+  doc.text('Verified during reservation checkout', 112, currentY + 29);
+  doc.text(`Tenant: ${data.tenantName}`, 112, currentY + 34);
 
   currentY += 45;
   doc.setFontSize(10);
@@ -231,11 +256,11 @@ export const generateLeaseContractPDF = async (
   doc.text(data.tenantName, 146, currentY, { align: 'center' });
   
   currentY += 5;
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100);
-  doc.text('Landlord', 54, currentY, { align: 'center' });
-  doc.text('Tenant', 146, currentY, { align: 'center' });
+  doc.text('Landlord (Authorized Signature)', 54, currentY, { align: 'center' });
+  doc.text('Tenant (Digital Acceptance)', 146, currentY, { align: 'center' });
 
   // Add page numbers
   const pageCount = (doc as any).internal.getNumberOfPages();

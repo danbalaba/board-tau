@@ -225,7 +225,7 @@ describe('ReservationsClient', () => {
   });
 
   it('handles cancellation flow', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({})
     });
@@ -236,8 +236,10 @@ describe('ReservationsClient', () => {
     // 1. Click Cancel on card
     fireEvent.click(screen.getByText('Cancel'));
     
-    // 2. Should show Confirm Modal
-    expect(screen.getByTestId('confirm-modal')).toBeInTheDocument();
+    // 2. Should show Confirm Modal (async after strike status fetch)
+    await waitFor(() => {
+      expect(screen.getByTestId('confirm-modal')).toBeInTheDocument();
+    });
     
     // 3. Click Confirm in Confirm Modal
     fireEvent.click(screen.getByText('Confirm'));

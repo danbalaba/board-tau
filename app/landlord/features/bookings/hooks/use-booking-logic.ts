@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
@@ -60,6 +60,23 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
 
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Filter loader state
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const isFirstRender = useRef(true);
+
+  // Trigger loader animation when filters change
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setIsFilterLoading(true);
+    const timer = setTimeout(() => {
+      setIsFilterLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedStatus, selectedPaymentStatus, sortBy, isArchived]);
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -316,6 +333,6 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     handleLoadMore,
     handleGenerateReport,
     updatingId,
-    isLoading
+    isLoading: isLoading || isFilterLoading
   };
 }

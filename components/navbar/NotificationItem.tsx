@@ -17,25 +17,25 @@ const getIconConfig = (type: string) => {
     case "inquiry":
       return {
         icon: Home,
-        bgClass: "bg-blue-100 dark:bg-blue-900/30",
-        iconClass: "text-blue-600 dark:text-blue-400",
+        bgClass: "bg-[#2f7d6d]/10 dark:bg-emerald-950/40",
+        iconClass: "text-[#2f7d6d] dark:text-emerald-400",
       };
     case "reservation":
       return {
         icon: CalendarCheck,
-        bgClass: "bg-green-100 dark:bg-green-900/30",
-        iconClass: "text-green-600 dark:text-green-400",
+        bgClass: "bg-[#2f7d6d]/10 dark:bg-emerald-950/40",
+        iconClass: "text-[#2f7d6d] dark:text-emerald-400",
       };
     case "review":
       return {
         icon: Star,
-        bgClass: "bg-yellow-100 dark:bg-yellow-900/30",
-        iconClass: "text-yellow-600 dark:text-yellow-400",
+        bgClass: "bg-amber-100 dark:bg-amber-950/40",
+        iconClass: "text-amber-600 dark:text-amber-400",
       };
     case "message":
       return {
         icon: MessageCircle,
-        bgClass: "bg-purple-100 dark:bg-purple-900/30",
+        bgClass: "bg-purple-100 dark:bg-purple-950/40",
         iconClass: "text-purple-600 dark:text-purple-400",
       };
     default:
@@ -89,7 +89,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onCli
 
       {!notification.isRead && (
         <div className="flex-shrink-0 flex items-center justify-center h-full pt-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-600 dark:bg-blue-500"></span>
+          <span className="w-2.5 h-2.5 rounded-full bg-[#2f7d6d] dark:bg-emerald-400 animate-pulse"></span>
         </div>
       )}
     </div>

@@ -7,6 +7,7 @@ import {
   standardLimiter, 
   adminLimiter 
 } from "@/lib/rate-limit";
+import { createRestrictionToken, verifyRestrictionToken } from "@/lib/security-tokens";
 
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
@@ -41,25 +42,33 @@ export async function middleware(request: NextRequest) {
     if (errorParam?.startsWith("AccountSuspended")) {
       const parts = errorParam.split(":");
       const email = parts.length > 1 ? parts[1] : "";
+      const token = createRestrictionToken(email, "suspended");
       const url = new URL("/auth/suspended", request.url);
-      url.searchParams.set("secure", "1");
-      if (email) url.searchParams.set("email", email);
+      url.searchParams.set("token", token);
       return NextResponse.redirect(url);
     }
     if (errorParam?.startsWith("AccountBanned")) {
       const parts = errorParam.split(":");
       const email = parts.length > 1 ? parts[1] : "";
+      const token = createRestrictionToken(email, "banned");
       const url = new URL("/auth/banned", request.url);
-      url.searchParams.set("secure", "1");
-      if (email) url.searchParams.set("email", email);
+      url.searchParams.set("token", token);
       return NextResponse.redirect(url);
     }
   }
 
   // Protect auth error pages from direct unauthorized access
-  const authErrorPages = ["/auth/locked", "/auth/suspended", "/auth/banned"];
-  if (authErrorPages.includes(pathname)) {
+  if (pathname === "/auth/locked") {
     if (searchParams.get("secure") !== "1") {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+  }
+
+  const authRestrictionPages = ["/auth/suspended", "/auth/banned"];
+  if (authRestrictionPages.includes(pathname)) {
+    const token = searchParams.get("token");
+    const payload = verifyRestrictionToken(token);
+    if (!payload) {
       return NextResponse.redirect(new URL("/", request.url));
     }
   }

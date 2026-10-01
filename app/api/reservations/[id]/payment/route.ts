@@ -70,6 +70,14 @@ export async function POST(
       return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
     }
 
+    // Save selected payment method onto reservation record
+    await db.reservation.update({
+      where: { id: reservationId },
+      data: {
+        paymentMethod: (paymentMethod || "STRIPE").toUpperCase() as any,
+      },
+    });
+
     // Handle different payment methods
     if (paymentMethod === "STRIPE" || !paymentMethod) {
       if (!reservation.inquiryId) {

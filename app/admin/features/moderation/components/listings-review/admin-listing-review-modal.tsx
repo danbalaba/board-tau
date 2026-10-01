@@ -235,7 +235,7 @@ export function AdminListingReviewModal({
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [amenitiesModalConfig, setAmenitiesModalConfig] = useState<{
     isOpen: boolean;
-    initialCategory: 'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY' | 'ROOMS';
+    initialCategory: 'ALL' | 'AMENITIES' | 'RULES' | 'SECURITY';
   }>({
     isOpen: false,
     initialCategory: 'ALL'

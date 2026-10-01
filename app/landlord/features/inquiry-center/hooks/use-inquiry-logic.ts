@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
@@ -88,6 +88,22 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     // though the best way would be to refetch from server.
   }, [isArchived]);
 
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const isFirstRender = useRef(true);
+
+  // Trigger loader animation when filters change
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setIsFilterLoading(true);
+    const timer = setTimeout(() => {
+      setIsFilterLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedStatus, sortBy, isArchived]);
+
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -128,6 +144,16 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
       );
     }
     result.sort((a, b) => {
+      if (sortBy === 'price_desc') {
+        const priceA = a.room?.price || 0;
+        const priceB = b.room?.price || 0;
+        return priceB - priceA;
+      }
+      if (sortBy === 'price_asc') {
+        const priceA = a.room?.price || 0;
+        const priceB = b.room?.price || 0;
+        return priceA - priceB;
+      }
       const timeA = new Date(a.createdAt).getTime();
       const timeB = new Date(b.createdAt).getTime();
       return sortBy === 'oldest' ? timeA - timeB : timeB - timeA;
@@ -360,7 +386,7 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     handleGenerateReport,
     isArchived,
     handleToggleArchived,
-    isLoading,
+    isLoading: isLoading || isFilterLoading,
     rawInquiries: listings
   };
 }

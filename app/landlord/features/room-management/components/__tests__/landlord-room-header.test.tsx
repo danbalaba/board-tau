@@ -50,6 +50,8 @@ describe('LandlordRoomHeader', () => {
     setTypeFilter: jest.fn(),
     capacityFilter: 'all',
     setCapacityFilter: jest.fn(),
+    statusFilter: 'all',
+    setStatusFilter: jest.fn(),
     uniqueProperties: [],
     uniqueCapacities: [],
     onClear: jest.fn(),
@@ -64,8 +66,8 @@ describe('LandlordRoomHeader', () => {
 
   it('renders correctly', () => {
     render(<LandlordRoomHeader {...mockProps} />);
-    expect(screen.getByText(/Rooms/i)).toBeInTheDocument();
-    expect(screen.getByText(/Manage Inventory & Occupancy/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Rooms/i })).toBeInTheDocument();
+    expect(screen.getByText(/Add rooms, set rates/i)).toBeInTheDocument();
   });
 
   it('calls onAdd when Add Room is clicked', () => {

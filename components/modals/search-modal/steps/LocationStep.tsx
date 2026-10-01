@@ -273,7 +273,7 @@ export default function LocationStep({
             </div>
 
             {/* Map Container */}
-            <div className="h-[220px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800">
+            <div className="w-full h-[220px] min-h-[220px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
               {(() => {
                 const activeLandmarkObj = mapLandmarks.find((l) => l.id === college);
                 const effectiveCenter = activeLandmarkObj ? activeLandmarkObj.coords : mapCenter;

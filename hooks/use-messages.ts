@@ -128,7 +128,10 @@ export const useMessages = (initialConversations: TenantConversation[], currentU
         queryClient.invalidateQueries({ queryKey: ["conversations"] });
       }
     },
-    onError: () => toast.error("Failed to send message"),
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message || "Failed to send message";
+      toast.error(msg);
+    },
   });
 
   const markReadMutation = useMutation({

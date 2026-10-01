@@ -12,8 +12,19 @@ import {
 import { useNotifications } from '../hooks/use-notifications';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
-import { IconBell as IconBellTabler, IconMail, IconCalendarEvent, IconStar, IconMessage, IconArrowRight, IconChecks } from '@tabler/icons-react';
+import { cn } from '@/utils/helper';
+import { 
+  Bell, 
+  Mail, 
+  Calendar, 
+  MessageSquare, 
+  Star, 
+  ArrowRight, 
+  CheckCheck, 
+  Trash2, 
+  Loader2, 
+  Inbox 
+} from 'lucide-react';
 
 export function NotificationsDropdown() {
   const { 
@@ -32,35 +43,37 @@ export function NotificationsDropdown() {
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    
-    // If we are within 50px of the bottom, load more
     const isAtBottom = scrollHeight - scrollTop <= clientHeight + 50;
     
     if (isAtBottom && hasNextPage && !isFetchingNextPage) {
-      // Artificial delay to make the "Loading" animation visible for a moment
       setTimeout(() => {
         fetchNextPage();
       }, 800);
     }
   };
 
+  const removeEmoji = (text?: string) => {
+    if (!text) return '';
+    return text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+  };
+
   const getIcon = (type: string) => {
     switch (type) {
-      case 'inquiry': return <IconMail size={18} className="text-blue-500" />;
-      case 'reservation': return <IconCalendarEvent size={18} className="text-emerald-500" />;
-      case 'message': return <IconMessage size={18} className="text-amber-500" />;
-      case 'review': return <IconStar size={18} className="text-purple-500" />;
-      default: return <IconBellTabler size={18} className="text-gray-500" />;
+      case 'inquiry': return <Mail size={18} className="text-primary" />;
+      case 'reservation': return <Calendar size={18} className="text-emerald-500" />;
+      case 'message': return <MessageSquare size={18} className="text-blue-500" />;
+      case 'review': return <Star size={18} className="text-amber-500" />;
+      default: return <Bell size={18} className="text-primary" />;
     }
   };
 
   const getBgColor = (type: string) => {
     switch (type) {
-      case 'inquiry': return 'bg-blue-50 dark:bg-blue-900/20';
-      case 'reservation': return 'bg-emerald-50 dark:bg-emerald-900/20';
-      case 'message': return 'bg-amber-50 dark:bg-amber-900/20';
-      case 'review': return 'bg-purple-50 dark:bg-purple-900/20';
-      default: return 'bg-gray-50 dark:bg-gray-800/20';
+      case 'inquiry': return 'bg-primary/10 border-primary/20';
+      case 'reservation': return 'bg-emerald-500/10 border-emerald-500/20';
+      case 'message': return 'bg-blue-500/10 border-blue-500/20';
+      case 'review': return 'bg-amber-500/10 border-amber-500/20';
+      default: return 'bg-primary/10 border-primary/20';
     }
   };
 
@@ -77,13 +90,13 @@ export function NotificationsDropdown() {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <button className="relative p-2.5 text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all group active:scale-95 outline-none">
-          <IconBellTabler size={22} className="group-hover:rotate-12 transition-transform" />
+        <button className="relative p-2.5 text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-primary/10 rounded-2xl transition-all group active:scale-95 outline-none cursor-pointer">
+          <Bell size={22} className="group-hover:rotate-12 transition-transform" />
           {unreadCount > 0 && (
             <motion.span 
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1.5 bg-primary text-[9px] font-black text-white rounded-full flex items-center justify-center ring-2 ring-white dark:ring-gray-900 shadow-xl shadow-primary/20 z-10"
+              className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1.5 bg-primary text-[10px] font-black text-white rounded-full flex items-center justify-center ring-2 ring-white dark:ring-gray-900 shadow-md shadow-primary/30 z-10 leading-none"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
             </motion.span>
@@ -91,37 +104,39 @@ export function NotificationsDropdown() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        className='w-96 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-gray-800 p-2 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 overflow-hidden z-[100]'
-        align='end'
+        className="w-96 rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800/80 p-2 backdrop-blur-xl bg-white/95 dark:bg-[#111827]/95 overflow-hidden z-[100]"
+        align="end"
         sideOffset={12}
       >
-        <div className="px-6 py-5 flex items-center justify-between bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 rounded-t-[1.8rem] mb-2 border-b border-gray-100/50 dark:border-gray-800/50">
+        {/* Header */}
+        <div className="px-6 py-5 flex items-center justify-between bg-gray-50/80 dark:bg-gray-800/40 rounded-t-[2rem] mb-2 border-b border-gray-100 dark:border-gray-800/60">
           <div>
-            <h3 className="font-black text-lg tracking-tight text-gray-900 dark:text-white">Notifications</h3>
-            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-none mt-1">
-              {unreadCount} Actions Required
+            <h3 className="font-black text-lg tracking-tight text-gray-900 dark:text-white uppercase">Notifications</h3>
+            <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-0.5">
+              {unreadCount > 0 ? `${unreadCount} Unread Update${unreadCount === 1 ? '' : 's'}` : 'All caught up'}
             </p>
           </div>
-          <div className="p-2.5 bg-primary/10 text-primary rounded-2xl shadow-inner">
-             <IconBellTabler size={20} />
+          <div className="p-2.5 bg-primary/10 text-primary rounded-2xl border border-primary/20 shadow-sm">
+             <Bell size={18} />
           </div>
         </div>
         
+        {/* Scrollable Notification List */}
         <div 
           onScroll={handleScroll}
-          className="max-h-[380px] overflow-y-auto px-2 space-y-1 scrollbar-hide py-1"
+          className="max-h-[380px] overflow-y-auto px-2 space-y-1.5 scrollbar-hide py-1"
         >
-          <AnimatePresence mode='wait'>
+          <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div 
                 key="loading"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="py-16 flex flex-col items-center justify-center gap-4 opacity-50"
+                className="py-16 flex flex-col items-center justify-center gap-3 opacity-60"
               >
-                 <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent shadow-xl"></div>
-                 <p className="text-sm font-black text-primary uppercase tracking-widest">Fetching updates...</p>
+                 <Loader2 size={32} className="animate-spin text-primary" />
+                 <p className="text-[10px] font-black text-primary uppercase tracking-widest">Fetching Updates...</p>
               </motion.div>
             ) : notifications.length === 0 ? (
               <motion.div 
@@ -129,67 +144,68 @@ export function NotificationsDropdown() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="py-16 flex flex-col items-center justify-center text-center px-12"
+                className="py-14 flex flex-col items-center justify-center text-center px-8"
               >
-                <div className="w-20 h-20 bg-gray-50 dark:bg-gray-800/50 rounded-[2rem] flex items-center justify-center mb-5 text-gray-300 dark:text-gray-700 shadow-inner group transition-transform hover:scale-105">
-                  <IconBellTabler size={40} className="group-hover:rotate-12 transition-transform" />
+                <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-4 border border-primary/20 shadow-inner group transition-transform hover:scale-105">
+                  <Inbox size={30} />
                 </div>
-                <h4 className="font-black text-gray-900 dark:text-white text-lg mb-2">All Caught Up!</h4>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
-                  You have no pending inquiries or reservations at the moment. We'll alert you as soon as something new arrives.
+                <h4 className="font-black text-gray-900 dark:text-white text-base mb-1 uppercase tracking-tight">You're All Caught Up!</h4>
+                <p className="text-xs font-bold text-gray-400 dark:text-gray-500 leading-relaxed max-w-[240px]">
+                  You have no unread notifications or pending updates right now.
                 </p>
               </motion.div>
             ) : (
-              <motion.div key="list" className="space-y-1">
-                <AnimatePresence mode='popLayout'>
+              <motion.div key="list" className="space-y-1.5">
+                <AnimatePresence mode="popLayout">
                   {notifications.map((notif, idx) => (
                     <motion.div
                       layout
                       key={notif.id}
-                      initial={{ opacity: 0, y: 15 }}
+                      initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: 50, filter: 'blur(8px)' }}
+                      exit={{ opacity: 0, x: 40, filter: 'blur(4px)' }}
                       transition={{ 
-                        delay: (idx % 5) * 0.005, 
+                        delay: (idx % 5) * 0.04, 
                         type: "spring", 
-                        stiffness: 150, 
-                        damping: 25,
-                        opacity: { duration: 0.15 }
+                        stiffness: 220, 
+                        damping: 22 
                       }}
                     >
                       <DropdownMenuItem 
                         asChild 
-                        className="focus:bg-gray-50 dark:focus:bg-gray-800/50"
+                        className="focus:bg-gray-50 dark:focus:bg-gray-800/50 outline-none"
                       >
                         <Link 
                           href={getNotificationLink(notif)}
                           onClick={() => markAsRead(notif.id)}
                           className={cn(
-                            "flex items-start gap-4 p-4 rounded-2xl cursor-pointer transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-700/50 group relative my-0.5",
-                            !notif.isRead && "bg-primary/[0.03]"
+                            "flex items-start gap-3.5 p-3.5 rounded-2xl cursor-pointer transition-all border group relative my-0.5 select-none",
+                            !notif.isRead 
+                              ? "bg-primary/[0.04] dark:bg-primary/[0.08] border-primary/20 hover:border-primary/40 hover:bg-primary/[0.07]" 
+                              : "bg-white dark:bg-gray-800/40 border-gray-100 dark:border-gray-800/80 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-700"
                           )}
                         >
-                          <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-white dark:border-gray-800 group-hover:scale-110 transition-transform", getBgColor(notif.type))}>
+                          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border shadow-xs group-hover:scale-105 transition-transform", getBgColor(notif.type))}>
                             {getIcon(notif.type)}
                           </div>
-                          <div className="flex-1 min-w-0 pr-4">
-                            <div className="flex items-center justify-between mb-1">
-                              <p className="text-[13px] font-black text-gray-900 dark:text-white leading-none">
-                                {notif.title}
+                          <div className="flex-1 min-w-0 pr-3">
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <p className="text-xs font-black text-gray-900 dark:text-white leading-snug truncate">
+                                {removeEmoji(notif.title)}
                               </p>
-                              <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full shrink-0">
+                              <span className="text-[9px] font-extrabold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md shrink-0">
                                 {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
                               </span>
                             </div>
-                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
-                              {notif.description}
+                            <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                              {removeEmoji(notif.description)}
                             </p>
                           </div>
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1">
-                            <IconArrowRight size={16} className="text-primary" />
+                          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5">
+                            <ArrowRight size={15} className="text-primary" />
                           </div>
                           {!notif.isRead && (
-                            <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-primary rounded-full shadow-lg shadow-primary/50" />
+                            <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-2 h-2 bg-primary rounded-full shadow-md shadow-primary/50 animate-pulse" />
                           )}
                         </Link>
                       </DropdownMenuItem>
@@ -198,22 +214,15 @@ export function NotificationsDropdown() {
                 </AnimatePresence>
                 
                 {hasNextPage && (
-                  <div className="py-10 flex flex-col items-center justify-center min-h-[120px] w-full">
+                  <div className="py-8 flex flex-col items-center justify-center min-h-[100px] w-full">
                     {isFetchingNextPage ? (
                       <div className="flex flex-col items-center gap-2">
-                        <motion.div 
-                          animate={{ 
-                            height: [20, 60, 20],
-                            opacity: [0.3, 1, 0.3],
-                          }}
-                          transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
-                          className="w-1.5 bg-primary rounded-full shadow-lg shadow-primary/20"
-                        />
-                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary animate-pulse">Syncing Center...</span>
+                        <Loader2 size={18} className="animate-spin text-primary" />
+                        <span className="text-[9px] font-black uppercase tracking-widest text-primary">Loading More...</span>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-1 opacity-40">
-                        <div className="w-1 h-8 bg-gradient-to-b from-gray-300 to-transparent rounded-full animate-bounce"></div>
+                        <div className="w-1 h-6 bg-gradient-to-b from-primary to-transparent rounded-full animate-bounce"></div>
                         <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Scroll to Load More</span>
                       </div>
                     )}
@@ -224,44 +233,38 @@ export function NotificationsDropdown() {
           </AnimatePresence>
         </div>
 
-        <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800 my-2 mx-6" />
-        
-        <div className="p-3 space-y-2">
-           {unreadCount > 0 && (
-             <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                markAllAsRead();
-              }}
-              disabled={isMarkingRead}
-              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-primary/5 hover:bg-primary/10 transition-all text-[11px] font-black uppercase tracking-wider text-primary disabled:opacity-50 active:scale-95 border border-primary/10"
-             >
-               <IconChecks size={16} />
-               Mark as Read
-             </button>
-           )}
-           
-           {notifications.length > 0 && (
-             <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                clearAll();
-              }}
-              disabled={isClearing}
-              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-[11px] font-black uppercase tracking-wider text-gray-600 dark:text-gray-400 disabled:opacity-50 active:scale-95 border border-gray-100 dark:border-gray-700"
-             >
-               <IconBellTabler size={16} />
-               Clear Notifications
-             </button>
-           )}
-
-           <Link 
-            href="/landlord/settings?tab=notifications"
-            className="w-full h-12 flex items-center justify-center gap-2 rounded-[1.2rem] bg-gray-900 dark:bg-gray-100 hover:bg-primary dark:hover:bg-primary transition-all text-[11px] font-black uppercase tracking-[0.15em] text-white dark:text-gray-950 hover:text-white dark:hover:text-white shadow-xl shadow-gray-200 dark:shadow-none active:scale-[0.98]"
-           >
-             Manage Center
-           </Link>
-        </div>
+        {/* Footer Actions */}
+        {(unreadCount > 0 || notifications.length > 0) && (
+          <div className="p-3 space-y-2 border-t border-gray-100 dark:border-gray-800/80">
+            {unreadCount > 0 && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  markAllAsRead();
+                }}
+                disabled={isMarkingRead}
+                className="w-full h-10 flex items-center justify-center gap-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-black uppercase tracking-wider transition-all border border-primary/20 disabled:opacity-50 active:scale-95 cursor-pointer"
+              >
+                {isMarkingRead ? <Loader2 size={14} className="animate-spin" /> : <CheckCheck size={14} />}
+                <span>Mark All as Read</span>
+              </button>
+            )}
+            
+            {notifications.length > 0 && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearAll();
+                }}
+                disabled={isClearing}
+                className="w-full h-10 flex items-center justify-center gap-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-black uppercase tracking-wider transition-all border border-gray-200 dark:border-gray-700 disabled:opacity-50 active:scale-95 cursor-pointer"
+              >
+                {isClearing ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                <span>Clear All Notifications</span>
+              </button>
+            )}
+          </div>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
