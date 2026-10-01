@@ -189,7 +189,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
               )}
             </Menu.List>
           </Menu>
-          <Modal.Window name="Login" size="sm" closeOnOutsideClick={false}>
+          <Modal.Window name="Login" size="sm" closeOnOutsideClick={false} fullOnMobile={true} noPadding={true}>
             <AuthModal name="Login" />
           </Modal.Window>
           <Modal.Window name="host-application" size="xl" closeOnOutsideClick={false}>

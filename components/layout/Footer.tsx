@@ -189,7 +189,7 @@ const Footer: React.FC = () => {
                             Become a Host
                           </button>
                         </Modal.Trigger>
-                        <Modal.Window name="Login" size="sm" closeOnOutsideClick={false}>
+                        <Modal.Window name="Login" size="sm" closeOnOutsideClick={false} fullOnMobile={true} noPadding={true}>
                           <AuthModal name="Login" />
                         </Modal.Window>
                       </Modal>

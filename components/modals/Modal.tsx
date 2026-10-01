@@ -79,7 +79,7 @@ const Modal: FC<ModalProps> & {
   Trigger: typeof Trigger;
   Window: typeof Window;
   WindowHeader: typeof WindowHeader;
-} = ({ children, isOpen, initialOpen = "", onClose, title, width = 'md', hasFixedFooter, closeOnOutsideClick = true, noPadding = false, fullOnMobile = false }) => {
+} = ({ children, isOpen, initialOpen = "", onClose, title, width = 'md', hasFixedFooter, closeOnOutsideClick = true, noPadding = false, fullOnMobile = true }) => {
   // Simplified API for direct control (no context)
   if (isOpen !== undefined) {
     const isClient = useIsClient();
@@ -113,12 +113,12 @@ const Modal: FC<ModalProps> & {
     const isFullMobile = width === 'full' || fullOnMobile;
 
     const widthClasses = {
-      xs: isFullMobile ? 'w-full sm:w-[90vw] max-w-[320px] md:w-[320px]' : 'w-[90vw] max-w-[320px] md:w-[320px]',
-      sm: isFullMobile ? 'w-full sm:w-[92vw] max-w-[400px] md:w-[400px]' : 'w-[92vw] max-w-[400px] md:w-[400px]',
-      md: isFullMobile ? 'w-full sm:w-[92vw] max-w-[500px] md:w-[500px]' : 'w-[92vw] max-w-[500px] md:w-[500px]',
-      lg: isFullMobile ? 'w-full sm:w-[95vw] max-w-[800px] md:w-[800px]' : 'w-[95vw] max-w-[800px] md:w-[800px]',
-      xl: isFullMobile ? 'w-full sm:w-[95vw] max-w-[1180px] md:w-[1180px]' : 'w-[95vw] max-w-[1180px] md:w-[1180px]',
-      '2xl': isFullMobile ? 'w-full sm:w-[96vw] max-w-[1300px] md:w-[1300px]' : 'w-[96vw] max-w-[1300px] md:w-[1300px]',
+      xs: isFullMobile ? 'w-full max-w-full sm:w-[90vw] sm:max-w-[320px] md:w-[320px]' : 'w-[90vw] max-w-[320px] md:w-[320px]',
+      sm: isFullMobile ? 'w-full max-w-full sm:w-[92vw] sm:max-w-[440px] md:w-[440px]' : 'w-[92vw] max-w-[440px] md:w-[440px]',
+      md: isFullMobile ? 'w-full max-w-full sm:w-[92vw] sm:max-w-[500px] md:w-[500px]' : 'w-[92vw] max-w-[500px] md:w-[500px]',
+      lg: isFullMobile ? 'w-full max-w-full sm:w-[95vw] sm:max-w-[800px] md:w-[800px]' : 'w-[95vw] max-w-[800px] md:w-[800px]',
+      xl: isFullMobile ? 'w-full max-w-full sm:w-[95vw] sm:max-w-[1180px] md:w-[1180px]' : 'w-[95vw] max-w-[1180px] md:w-[1180px]',
+      '2xl': isFullMobile ? 'w-full max-w-full sm:w-[96vw] sm:max-w-[1300px] md:w-[1300px]' : 'w-[96vw] max-w-[1300px] md:w-[1300px]',
       full: 'w-full h-full'
     };
 
@@ -134,8 +134,8 @@ const Modal: FC<ModalProps> & {
             exit="hidden"
             transition={{ duration: 0.2 }}
             className={cn(
-              "fixed inset-0 z-[10000] flex justify-center items-center overflow-hidden outline-none focus:outline-none bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-300",
-              isFullMobile ? "p-0 sm:p-6" : "p-4 sm:p-6"
+              "fixed inset-0 z-[10000] flex justify-center overflow-hidden outline-none focus:outline-none bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-300 overscroll-contain",
+              isFullMobile ? "p-0 items-end sm:items-center sm:p-6" : "p-4 items-center sm:p-6"
             )}
             onWheel={(e) => e.preventDefault()}
             onTouchMove={(e) => e.preventDefault()}
@@ -157,13 +157,13 @@ const Modal: FC<ModalProps> & {
                 if (node && isOpen) node.focus();
               }}
               className={cn(
-                "outline-none focus:outline-none overscroll-contain w-full",
+                "outline-none focus:outline-none overscroll-contain w-full flex flex-col min-h-0",
                 widthClasses[width],
                 isFullMobile 
-                  ? (width === 'full' ? "h-full rounded-none sm:rounded-card" : "h-full sm:h-auto max-h-none sm:max-h-[90vh] rounded-none sm:rounded-card")
+                  ? (width === 'full' ? "h-full rounded-none sm:rounded-card" : "h-auto max-h-[92vh] sm:max-h-[90vh] rounded-t-[32px] rounded-b-none sm:rounded-card")
                   : "max-h-[90vh] rounded-2xl sm:rounded-card",
                 hasFixedFooter ? "overflow-hidden" : "overflow-y-auto",
-                noPadding ? "bg-transparent border-0 shadow-none" : (isFullMobile ? "shadow-none sm:shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border-0 sm:border sm:border-white/20 dark:sm:border-white/10" : "shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border border-white/20 dark:border-white/10")
+                noPadding ? "bg-transparent border-0 shadow-none" : (isFullMobile ? "shadow-2xl sm:shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border-t border-x border-gray-100 dark:border-gray-800 sm:border sm:border-white/20 dark:sm:border-white/10" : "shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border border-white/20 dark:border-white/10")
               )}
               onClick={(e) => e.stopPropagation()}
             >
@@ -233,16 +233,16 @@ const Trigger: FC<TriggerProps> = ({ children, name, onClick }) => {
   return cloneElement(children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>, { onClick: handleClick });
 };
 
-const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, closeOnOutsideClick = true, noPadding, fullOnMobile = false }) => {
+const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, closeOnOutsideClick = true, noPadding, fullOnMobile = true }) => {
   const isFullMobile = size === 'full' || fullOnMobile;
 
   const sizeClasses = {
-    xs: isFullMobile ? 'w-full sm:w-[90vw] max-w-[320px] md:w-[320px]' : 'w-[90vw] max-w-[320px] md:w-[320px]',
-    sm: isFullMobile ? 'w-full sm:w-[92vw] max-w-[400px] md:w-[400px]' : 'w-[92vw] max-w-[400px] md:w-[400px]',
-    md: isFullMobile ? 'w-full sm:w-[92vw] max-w-[500px] md:w-[500px]' : 'w-[92vw] max-w-[500px] md:w-[500px]',
-    lg: isFullMobile ? 'w-full sm:w-[95vw] max-w-[800px] md:w-[800px]' : 'w-[95vw] max-w-[800px] md:w-[800px]',
-    xl: isFullMobile ? 'w-full sm:w-[95vw] max-w-[1100px] md:w-[1100px]' : 'w-[95vw] max-w-[1100px] md:w-[1100px]',
-    '2xl': isFullMobile ? 'w-full sm:w-[96vw] max-w-[1300px] md:w-[1300px]' : 'w-[96vw] max-w-[1300px] md:w-[1300px]',
+    xs: isFullMobile ? 'w-full max-w-full sm:w-[90vw] sm:max-w-[320px] md:w-[320px]' : 'w-[90vw] max-w-[320px] md:w-[320px]',
+    sm: isFullMobile ? 'w-full max-w-full sm:w-[92vw] sm:max-w-[440px] md:w-[440px]' : 'w-[92vw] max-w-[440px] md:w-[440px]',
+    md: isFullMobile ? 'w-full max-w-full sm:w-[92vw] sm:max-w-[500px] md:w-[500px]' : 'w-[92vw] max-w-[500px] md:w-[500px]',
+    lg: isFullMobile ? 'w-full max-w-full sm:w-[95vw] sm:max-w-[800px] md:w-[800px]' : 'w-[95vw] max-w-[800px] md:w-[800px]',
+    xl: isFullMobile ? 'w-full max-w-full sm:w-[95vw] sm:max-w-[1100px] md:w-[1100px]' : 'w-[95vw] max-w-[1100px] md:w-[1100px]',
+    '2xl': isFullMobile ? 'w-full max-w-full sm:w-[96vw] sm:max-w-[1300px] md:w-[1300px]' : 'w-[96vw] max-w-[1300px] md:w-[1300px]',
     full: 'w-full h-full'
   };
   const { openName, close } = useContext(ModalContext);
@@ -298,8 +298,8 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, 
           exit="hidden"
           transition={{ duration: 0.2 }}
           className={cn(
-            "fixed inset-0 z-[10000] flex justify-center items-center overflow-hidden outline-none focus:outline-none bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-300 overscroll-contain",
-            isFullMobile ? "p-0 sm:p-6" : "p-4 sm:p-6"
+            "fixed inset-0 z-[10000] flex justify-center overflow-hidden outline-none focus:outline-none bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-300 overscroll-contain",
+            isFullMobile ? "p-0 items-end sm:items-center sm:p-6" : "p-4 items-center sm:p-6"
           )}
           onClick={(e) => {
             e.stopPropagation();
@@ -319,13 +319,13 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, 
                 if (node && isWindowOpen) node.focus();
               }}
               className={cn(
-                "outline-none focus:outline-none overscroll-contain w-full",
+                "outline-none focus:outline-none overscroll-contain w-full flex flex-col min-h-0",
                 sizeClasses[size],
                 isFullMobile 
-                  ? (size === 'full' ? "h-full rounded-none sm:rounded-card" : "h-full sm:h-auto max-h-none sm:max-h-[90vh] rounded-none sm:rounded-card")
+                  ? (size === 'full' ? "h-full rounded-none sm:rounded-card" : "h-auto max-h-[92vh] sm:max-h-[90vh] rounded-t-[32px] rounded-b-none sm:rounded-card")
                   : "max-h-[90vh] rounded-2xl sm:rounded-card",
                 hasFixedFooter ? "overflow-hidden" : "overflow-y-auto",
-                noPadding ? "bg-transparent border-0 shadow-none" : (isFullMobile ? "shadow-none sm:shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border-0 sm:border sm:border-white/20 dark:sm:border-white/10" : "shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border border-white/20 dark:border-white/10")
+                noPadding ? "bg-transparent border-0 shadow-none" : (isFullMobile ? "shadow-2xl sm:shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border-t border-x border-gray-100 dark:border-gray-800 sm:border sm:border-white/20 dark:sm:border-white/10" : "shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border border-white/20 dark:border-white/10")
               )}
             >
             {React.isValidElement(children) && (typeof children.type === 'function' || typeof children.type === 'object')

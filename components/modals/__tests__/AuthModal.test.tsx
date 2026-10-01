@@ -337,6 +337,11 @@ describe("AuthModal", () => {
     it("handles resend cooldown tick", async () => {
       jest.useFakeTimers();
       await setupOTPState();
+
+      // Fast-forward initial 30s signup cooldown
+      act(() => {
+        jest.advanceTimersByTime(30000);
+      });
       
       // Mock sendOTP to simulate a rate-limit error that triggers the cooldown
       (sendOTP as jest.Mock).mockRejectedValue(new Error("Please wait 60 seconds before requesting a new OTP."));

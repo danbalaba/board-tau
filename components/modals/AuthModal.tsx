@@ -6,9 +6,10 @@ import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FaEnvelope, FaCheckCircle } from "react-icons/fa";
+import { LogIn, UserPlus, ShieldCheck, X } from "lucide-react";
+import { motion, useDragControls } from "framer-motion";
 import { useResponsiveToast } from "../common/ResponsiveToast";
 import Link from "next/link";
-
 import Heading from "../common/Heading";
 import AuthInput from "../inputs/AuthInput";
 import OtpInput from "../inputs/OtpInput";
@@ -44,6 +45,16 @@ const AuthModal = ({
   const [resendCooldown, setResendCooldown] = useState(0);
   const [otpAttemptLimitReached, setOtpAttemptLimitReached] = useState(false);
   const [lockoutCountdown, setLockoutCountdown] = useState(0);
+
+  const dragControls = useDragControls();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const isLoginModal = title === "Login";
   const {
@@ -188,6 +199,7 @@ const AuthModal = ({
             if (callback.error.includes("Email not verified")) {
               setUserEmail(email);
               setIsOTPModal(true);
+              setResendCooldown(30);
               responsiveToast.error("Please verify your email first");
             } else {
               throw new Error(callback.error);
@@ -236,6 +248,7 @@ const AuthModal = ({
 
           setUserEmail(email);
           setIsOTPModal(true);
+          setResendCooldown(30);
           responsiveToast.success("OTP sent to your email!");
         }
       } catch (error: any) {
@@ -276,15 +289,13 @@ const AuthModal = ({
   };
 
   const resendOTP = async () => {
-    // Let the backend enforce the actual limits, we'll catch the error and set the timer
-    // setResendCooldown(30);
-
     startTransition(async () => {
       try {
         const result = await sendOTP(userEmail);
         if (result?.error) {
           throw new Error(result.error);
         }
+        setResendCooldown(30);
         responsiveToast.success("New OTP sent to your email!", {
           duration: 4000,
         });
@@ -335,202 +346,248 @@ const AuthModal = ({
   }, [lockoutCountdown]);
 
   return (
-    <div className="h-full w-full bg-white dark:bg-gray-900 rounded-card overflow-hidden border border-gray-100 dark:border-gray-800 shadow-2xl">
-      <Modal.WindowHeader title={isOTPModal ? "Verify Email" : title} onClose={onCloseModal} />
-
-      <form
-        className="flex flex-col gap-5 p-4 pb-0 md:gap-5 md:p-6 w-full"
-        onSubmit={handleSubmit(onSubmit)}
+    <motion.div
+      drag={isMobile ? "y" : false}
+      dragControls={dragControls}
+      dragListener={false}
+      dragConstraints={{ top: 0, bottom: 0 }}
+      dragElastic={{ top: 0.05, bottom: 0.8 }}
+      onDragEnd={(e, { offset, velocity }) => {
+        if (isMobile && (offset.y > 70 || velocity.y > 250)) {
+          onCloseModal?.();
+        }
+      }}
+      className="h-full w-full bg-white dark:bg-gray-900 rounded-t-[32px] sm:rounded-card overflow-hidden border-t sm:border border-gray-100 dark:border-gray-800 shadow-2xl flex flex-col min-h-0"
+    >
+      {/* Sleek Top Drag Handle Bar on Mobile (matching SearchModal & UserMobileFilterSheet) */}
+      <div 
+        onPointerDown={(e) => isMobile && dragControls.start(e)}
+        className="w-full pt-3.5 pb-1 flex items-center justify-center shrink-0 touch-none sm:hidden cursor-grab active:cursor-grabbing"
       >
-        {isOTPModal ? (
-          <>
-            <div className="flex items-center justify-center mb-4">
-              <FaEnvelope className="w-12 h-12 text-blue-500" />
-            </div>
-            <Heading
-              title="Check your email"
-              subtitle="We've sent a verification code to your email"
-            />
-            <div className="text-center mb-4 bg-blue-500/5 py-2 rounded-xl border border-blue-500/10 backdrop-blur-sm">
-              <p className="text-sm font-bold text-blue-500 dark:text-blue-400 tracking-wide">{userEmail}</p>
-            </div>
-              <OtpInput
-                id="otp"
-                label="Verification Code"
-                disabled={isLoading || otpAttemptLimitReached}
-                register={register}
-                errors={errors}
-                watch={watch}
-                required
-                length={6}
-              />
-              <div className="flex justify-center mt-4">
-                  <button
-                    type="button"
-                    onClick={resendOTP}
-                    className="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 font-black uppercase tracking-widest disabled:text-gray-500 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
-                    disabled={isLoading || resendCooldown > 0 || otpAttemptLimitReached}
-                  >
-                    {resendCooldown > 0
-                      ? `New code in ${resendCooldown}s`
-                      : otpAttemptLimitReached
-                      ? `Locked for ${lockoutCountdown}s`
-                      : "Didn't get it? Resend"}
-                  </button>
-              </div>
-              {lockoutCountdown > 0 && (
-                <div className="text-center text-rose-500 font-black text-[10px] uppercase tracking-widest my-4 bg-rose-500/5 py-2 rounded-lg border border-rose-500/10">
-                  Security Lockout: {lockoutCountdown} seconds remaining
-                </div>
-              )}
-              <div className="mt-6">
-                <Button
-                  type="submit"
-                  className="flex items-center justify-center h-[48px] w-full rounded-2xl shadow-lg shadow-blue-500/20"
-                  disabled={isLoading || !watch("otp") || watch("otp").length !== 6 || otpAttemptLimitReached}
-                >
-                  {isLoading ? <SpinnerMini className="w-5 h-5" /> : "Verify Identity"}
-                </Button>
-              </div>
-          </>
-        ) : (
-          <>
-            <Heading
-              title={!isLoginModal ? "Welcome to BoardTAU" : "Welcome back"}
-              subtitle={
-                title === "Sign up"
-                  ? "Create an account!"
-                  : "Login to your account!"
-              }
-            />
+        <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors" />
+      </div>
 
-            {!isLoginModal && (
+      {/* Top Header Bar matching SearchModal & UserMobileFilterSheet */}
+      <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-md shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="p-2 sm:p-2.5 rounded-xl bg-primary/10 text-primary dark:text-emerald-400 border border-primary/20 shrink-0">
+            {isOTPModal ? (
+              <ShieldCheck className="w-5 h-5" />
+            ) : isLoginModal ? (
+              <LogIn className="w-5 h-5" />
+            ) : (
+              <UserPlus className="w-5 h-5" />
+            )}
+          </div>
+          <div>
+            <h2 className="text-base sm:text-lg font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-2">
+              {isOTPModal ? "Verify Email" : isLoginModal ? "BoardTAU Login" : "Create Account"}
+            </h2>
+            <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+              {isOTPModal
+                ? "Security verification"
+                : isLoginModal
+                ? "Welcome back! Login to your account"
+                : "Join the BoardTAU community"}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onCloseModal}
+          className="p-2 rounded-full hover:bg-gray-200/60 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
+          aria-label="Close modal"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Scrollable Modal Content Body */}
+      <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 pb-8 custom-scrollbar">
+        <form
+          className="flex flex-col gap-4 sm:gap-5 w-full"
+          onSubmit={handleSubmit(onSubmit)}
+        >
+          {isOTPModal ? (
+            <>
+              <div className="flex items-center justify-center mb-2 sm:mb-4">
+                <FaEnvelope className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
+              </div>
+              <Heading
+                title="Check your email"
+                subtitle="We've sent a verification code to your email"
+              />
+              <div className="text-center mb-3 sm:mb-4 bg-primary/5 py-2 px-3 rounded-xl border border-primary/10 backdrop-blur-sm">
+                <p className="text-xs sm:text-sm font-bold text-primary dark:text-emerald-400 tracking-wide truncate">{userEmail}</p>
+              </div>
+                <OtpInput
+                  id="otp"
+                  label="Verification Code"
+                  disabled={isLoading || otpAttemptLimitReached}
+                  register={register}
+                  errors={errors}
+                  watch={watch}
+                  required
+                  length={6}
+                />
+                <div className="flex justify-center mt-3 sm:mt-4">
+                    <button
+                      type="button"
+                      onClick={resendOTP}
+                      className="text-sm sm:text-xs text-primary hover:text-primary/90 dark:text-emerald-400 dark:hover:text-emerald-300 font-black uppercase tracking-widest disabled:text-gray-500 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 cursor-pointer py-1.5"
+                      disabled={isLoading || resendCooldown > 0 || otpAttemptLimitReached}
+                    >
+                      {resendCooldown > 0
+                        ? `New code in ${resendCooldown}s`
+                        : otpAttemptLimitReached
+                        ? `Locked for ${lockoutCountdown}s`
+                        : "Didn't get it? Resend"}
+                    </button>
+                </div>
+                {lockoutCountdown > 0 && (
+                  <div className="text-center text-rose-500 font-black text-xs sm:text-[10px] uppercase tracking-widest my-3 bg-rose-500/5 py-2.5 sm:py-2 rounded-lg border border-rose-500/10">
+                    Security Lockout: {lockoutCountdown} seconds remaining
+                  </div>
+                )}
+                <div className="mt-4 sm:mt-6">
+                  <Button
+                    type="submit"
+                    className="flex items-center justify-center h-[52px] sm:h-[46px] w-full rounded-2xl shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-white font-extrabold uppercase tracking-wider text-sm sm:text-sm cursor-pointer transition-all active:scale-[0.99]"
+                    disabled={isLoading || !watch("otp") || watch("otp").length !== 6 || otpAttemptLimitReached}
+                  >
+                    {isLoading ? <SpinnerMini className="w-5 h-5" /> : "Verify Identity"}
+                  </Button>
+                </div>
+            </>
+          ) : (
+            <>
+              <Heading
+                title={!isLoginModal ? "Welcome to BoardTAU" : "Welcome back"}
+                subtitle={
+                  title === "Sign up"
+                    ? "Create an account!"
+                    : "Login to your account!"
+                }
+              />
+
+              {!isLoginModal && (
+                <AuthInput
+                  id="name"
+                  label="Full Name"
+                  disabled={isLoading}
+                  register={register}
+                  errors={errors}
+                  required
+                  watch={watch}
+                  placeholder="John Doe"
+                />
+              )}
+
               <AuthInput
-                id="name"
-                label="Full Name"
+                id="email"
+                label="Email"
                 disabled={isLoading}
                 register={register}
                 errors={errors}
                 required
                 watch={watch}
-                placeholder="John Doe"
+                placeholder="email@boardtau.com"
               />
-            )}
 
-            <AuthInput
-              id="email"
-              label="Email"
-              disabled={isLoading}
-              register={register}
-              errors={errors}
-              required
-              watch={watch}
-              placeholder="email@boardtau.com"
-            />
+              <AuthInput
+                id="password"
+                label="Password"
+                type="password"
+                disabled={isLoading}
+                register={register}
+                errors={errors}
+                required
+                watch={watch}
+                placeholder="••••••••"
+              />
 
-            <AuthInput
-              id="password"
-              label="Password"
-              type="password"
-              disabled={isLoading}
-              register={register}
-              errors={errors}
-              required
-              watch={watch}
-              placeholder="••••••••"
-            />
+              {isLoginModal && (
+                <div className="flex justify-end -mt-1 sm:-mt-2">
+                  <Link
+                    href="/forgot-password"
+                    onClick={() => onCloseModal?.()}
+                    className="text-sm sm:text-xs text-primary hover:underline font-extrabold sm:font-bold transition-colors py-1 inline-block"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+              )}
 
-            {isLoginModal && (
-              <div className="flex justify-end -mt-3">
-                <Link
-                  href="/forgot-password"
-                  onClick={() => onCloseModal?.()}
-                  className="text-xs text-blue-500 hover:underline font-medium transition-colors"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              className="flex items-center justify-center h-[42px]"
-            >
-              {isLoading ? <SpinnerMini className="w-5 h-5" /> : "Continue"}
-            </Button>
-          </>
-        )}
-      </form>
-
-      {!isOTPModal && (
-        <div className="flex flex-col gap-4 mt-4 p-4 pt-0 md:gap-4 md:mt-0 md:p-6">
-          <hr />
-          <Button
-            outline
-            onClick={async () => {
-              setIsOAuthLoading(true);
-              const returnUrl = `${window.location.pathname}${window.location.search}`;
-              signIn("google", { callbackUrl: returnUrl });
-            }}
-            disabled={isOAuthLoading}
-            className="flex flex-row justify-center gap-2 items-center px-3 py-2"
-          >
-            <FcGoogle className="w-6 h-6" />
-            <span className="text-[14px]">
-              {isOAuthLoading ? "Signing in..." : "Continue with Google"}
-            </span>
-            {isOAuthLoading && <SpinnerMini className="w-4 h-4" />}
-          </Button>
-          <Button
-            outline
-            onClick={async () => {
-              setIsOAuthLoading(true);
-              const returnUrl = `${window.location.pathname}${window.location.search}`;
-              signIn("facebook", { callbackUrl: returnUrl });
-            }}
-            disabled={isOAuthLoading}
-            className="flex flex-row justify-center gap-2 items-center px-3 py-2"
-          >
-            <FaFacebook className="w-6 h-6 text-blue-600" />
-            <span className="text-[14px]">
-              {isOAuthLoading ? "Signing in..." : "Continue with Facebook"}
-            </span>
-            {isOAuthLoading && <SpinnerMini className="w-4 h-4" />}
-          </Button>
-          <div
-            className="
-              text-neutral-500
-              dark:text-gray-400
-            text-center
-            mt-2
-            font-light
-          "
-          >
-            <div className="text-[15px]">
-              <small className="text-[15px]">
-                {!isLoginModal
-                  ? "Already have an account?"
-                  : "First time using BoardTAU?"}
-              </small>
-              <button
-                type="button"
-                onClick={onToggle}
-                className="
-                text-neutral-800
-                dark:text-white
-                cursor-pointer
-                hover:underline
-                ml-1
-                font-medium
-                "
+              <Button
+                type="submit"
+                className="flex items-center justify-center h-[52px] sm:h-[46px] w-full rounded-2xl shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-white font-extrabold uppercase tracking-wider text-sm sm:text-sm cursor-pointer transition-all active:scale-[0.99]"
               >
-                {!isLoginModal ? "Log in" : "Create an account"}
-              </button>
+                {isLoading ? <SpinnerMini className="w-5 h-5" /> : "Continue"}
+              </Button>
+            </>
+          )}
+        </form>
+
+        {!isOTPModal && (
+          <div className="flex flex-col gap-3.5 sm:gap-4 mt-4 pt-1">
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-gray-100 dark:border-gray-800"></div>
+              <span className="flex-shrink mx-3 text-xs sm:text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">or</span>
+              <div className="flex-grow border-t border-gray-100 dark:border-gray-800"></div>
+            </div>
+            <Button
+              outline
+              onClick={async () => {
+                setIsOAuthLoading(true);
+                const returnUrl = `${window.location.pathname}${window.location.search}`;
+                signIn("google", { callbackUrl: returnUrl });
+              }}
+              disabled={isOAuthLoading}
+              className="flex flex-row justify-center gap-3 sm:gap-2.5 items-center px-4 py-4 sm:py-3.5 rounded-2xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all text-sm sm:text-sm font-bold shadow-xs active:scale-[0.99] cursor-pointer"
+            >
+              <FcGoogle className="w-6 h-6 sm:w-5 sm:h-5 shrink-0" />
+              <span className="text-sm sm:text-sm font-bold">
+                {isOAuthLoading ? "Signing in..." : "Continue with Google"}
+              </span>
+              {isOAuthLoading && <SpinnerMini className="w-4 h-4" />}
+            </Button>
+            <Button
+              outline
+              onClick={async () => {
+                setIsOAuthLoading(true);
+                const returnUrl = `${window.location.pathname}${window.location.search}`;
+                signIn("facebook", { callbackUrl: returnUrl });
+              }}
+              disabled={isOAuthLoading}
+              className="flex flex-row justify-center gap-3 sm:gap-2.5 items-center px-4 py-4 sm:py-3.5 rounded-2xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all text-sm sm:text-sm font-bold shadow-xs active:scale-[0.99] cursor-pointer"
+            >
+              <FaFacebook className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 shrink-0" />
+              <span className="text-sm sm:text-sm font-bold">
+                {isOAuthLoading ? "Signing in..." : "Continue with Facebook"}
+              </span>
+              {isOAuthLoading && <SpinnerMini className="w-4 h-4" />}
+            </Button>
+            <div className="text-neutral-500 dark:text-gray-400 text-center mt-3 sm:mt-2 pb-2">
+              <div className="flex items-center justify-center flex-wrap gap-1 text-sm sm:text-xs">
+                <span>
+                  {!isLoginModal
+                    ? "Already have an account?"
+                    : "First time using BoardTAU?"}
+                </span>
+                <button
+                  type="button"
+                  onClick={onToggle}
+                  className="text-primary dark:text-emerald-400 cursor-pointer hover:underline font-extrabold sm:font-bold text-sm sm:text-xs py-1 px-0.5"
+                >
+                  {!isLoginModal ? "Log in" : "Create an account"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </motion.div>
   );
 };
 

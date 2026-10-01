@@ -700,10 +700,10 @@ export default function ChatBot() {
         </motion.button>
       </div>
 
-      <Modal.Window name="Login" size="sm" closeOnOutsideClick={false}>
+      <Modal.Window name="Login" size="sm" closeOnOutsideClick={false} fullOnMobile={true}>
         <AuthModal name="Login" />
       </Modal.Window>
-      <Modal.Window name="Sign up" size="sm" closeOnOutsideClick={false}>
+      <Modal.Window name="Sign up" size="sm" closeOnOutsideClick={false} fullOnMobile={true}>
         <AuthModal name="Sign up" />
       </Modal.Window>
     </Modal>

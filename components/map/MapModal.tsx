@@ -430,7 +430,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
         )}
       </AnimatePresence>
       
-      <Modal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} width="sm" noPadding>
+      <Modal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} width="sm" fullOnMobile={true} noPadding>
         <AuthModal name="Login" onCloseModal={() => setShowAuthModal(false)} />
       </Modal>
     </>
