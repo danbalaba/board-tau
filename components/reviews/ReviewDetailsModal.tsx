@@ -70,11 +70,11 @@ interface ReviewDetailsModalProps {
 const cleanText = (text: string | null | undefined): string => {
   if (!text) return "";
   return text
-    .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&#x27;/g, "'")
-    .replace(/&quot;/g, '"');
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&");
 };
 
 const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
