@@ -120,7 +120,19 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
             </h2>
             {!logic.submitted && <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">{listingName}</p>}
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors active:scale-95">
+          <button 
+            onClick={() => {
+              if (!logic.isIDProcessing && !logic.isSelfieProcessing && !logic.isProcessing) {
+                onClose?.();
+              }
+            }} 
+            disabled={logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing}
+            className={`p-2 rounded-full transition-colors ${
+              logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing
+                ? 'opacity-30 cursor-not-allowed text-gray-400'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 text-gray-500'
+            }`}
+          >
             <FaTimes className="text-xl text-gray-500" />
           </button>
         </div>
@@ -311,9 +323,9 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
             <button
               type="button"
               onClick={logic.handlePrevStep}
-              disabled={logic.currentStep === 1}
+              disabled={logic.currentStep === 1 || logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing}
               className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border font-bold text-sm transition-all active:scale-95 flex-1 ${
-                logic.currentStep === 1
+                logic.currentStep === 1 || logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing
                   ? 'opacity-40 cursor-not-allowed bg-gray-50 dark:bg-gray-800 text-gray-400 border-gray-200 dark:border-gray-700'
                   : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-100 shadow-sm'
               }`}
@@ -325,14 +337,14 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
               <button
                 type="button"
                 onClick={logic.handleNextStep}
-                disabled={!logic.isStepCompleted(logic.currentStep) || logic.isProcessing || (logic.currentStep === 7 && logic.otpAttemptLimitReached)}
+                disabled={!logic.isStepCompleted(logic.currentStep) || logic.isProcessing || logic.isIDProcessing || logic.isSelfieProcessing || (logic.currentStep === 7 && logic.otpAttemptLimitReached)}
                 className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black text-sm transition-all active:scale-95 flex-1 ${
-                  logic.isStepCompleted(logic.currentStep) && !logic.isProcessing && !(logic.currentStep === 7 && logic.otpAttemptLimitReached)
+                  logic.isStepCompleted(logic.currentStep) && !logic.isProcessing && !logic.isIDProcessing && !logic.isSelfieProcessing && !(logic.currentStep === 7 && logic.otpAttemptLimitReached)
                     ? 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/25'
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                {logic.isProcessing && logic.currentStep === 7 ? (
+                {(logic.isProcessing && logic.currentStep === 7) || logic.isIDProcessing || logic.isSelfieProcessing ? (
                   <><Loader2 className="w-4 h-4 animate-spin mr-1" /> VERIFYING...</>
                 ) : (
                   <>CONTINUE <FaChevronRight size={12} /></>

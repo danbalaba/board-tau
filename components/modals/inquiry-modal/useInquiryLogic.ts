@@ -45,6 +45,11 @@ export const useInquiryLogic = (
   const [submitted, setSubmitted] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  const currentStepRef = useRef(currentStep);
+  useEffect(() => {
+    currentStepRef.current = currentStep;
+  }, [currentStep]);
+
   useEffect(() => {
     setMaxUnlockedStep((prev) => Math.max(prev, currentStep));
   }, [currentStep]);
@@ -82,6 +87,7 @@ export const useInquiryLogic = (
   
   // OTP State
   const [isOTPVerified, setIsOTPVerified] = useState(false);
+  const [hasSentInitialOTP, setHasSentInitialOTP] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
   const [otpAttemptLimitReached, setOtpAttemptLimitReached] = useState(false);
@@ -274,9 +280,15 @@ export const useInquiryLogic = (
     setTimeout(() => setIsFlashActive(false), 100);
 
     setIsSelfieProcessing(true);
+    const startStep = currentStepRef.current;
 
     try {
       const result = await faceEngine.validateFace(video);
+      if (currentStepRef.current !== 5 || currentStepRef.current !== startStep) {
+        console.warn("Selfie scan aborted: User navigated away from selfie step.");
+        return;
+      }
+
       if (!result.isValid) {
         responsiveToast.error(result.reason || "Selfie verification failed.");
         return;
@@ -299,6 +311,7 @@ export const useInquiryLogic = (
     }
 
     setIsIDProcessing(true);
+    const startStep = currentStepRef.current;
 
     try {
       const reader = new FileReader();
@@ -330,6 +343,11 @@ export const useInquiryLogic = (
         faceMatcher.getFaceDescriptorCached(selfieCacheKey, selfieImg),
         faceMatcher.getFaceDescriptorCached(idCacheKey, idImg, 0.2) // Explicitly lower threshold for ID
       ]);
+
+      if (currentStepRef.current !== startStep) {
+        console.warn("ID scan aborted: User navigated away from ID step.");
+        return;
+      }
 
       if (!selfieDescriptor) {
         setSelfieRetakeNeeded(true);
@@ -395,6 +413,8 @@ export const useInquiryLogic = (
   const [direction, setDirection] = useState(0);
 
   const handleNextStep = async () => {
+    if (isIDProcessing || isSelfieProcessing || isProcessing) return;
+
     let fieldsToValidate: (keyof FormData)[] = [];
     if (currentStep === 1) fieldsToValidate = ['paymentMethod'];
     if (currentStep === 2) fieldsToValidate = ['moveInDate', 'checkOutDate', 'role', 'contactMethod', 'contactInfo'];
@@ -412,13 +432,21 @@ export const useInquiryLogic = (
       return;
     }
 
-    // Entering Step 7: Send initial OTP automatically
+    // Entering Step 7: Send initial OTP automatically ONCE
     if (currentStep === 6 && isValid && hasData) {
-      if (!isOTPVerified) {
+      if (!isOTPVerified && !hasSentInitialOTP) {
+        setHasSentInitialOTP(true);
+        setResendCooldown(30);
         // Send in background so we don't block the UI transition
         axios.post('/api/inquiries/otp/send', { email: userEmail })
           .then(() => responsiveToast.success("Inquiry verification code sent to your email!"))
-          .catch(() => {}); // Suppress error, step 7 allows manual resend
+          .catch((err) => {
+            const msg = err.response?.data?.error || err.message;
+            const cooldownMatch = msg?.match(/wait (\d+) seconds/);
+            if (cooldownMatch) {
+              setResendCooldown(parseInt(cooldownMatch[1], 10));
+            }
+          }); // Suppress error, step 7 allows manual resend
       }
     }
 
@@ -469,6 +497,7 @@ export const useInquiryLogic = (
   };
 
   const handlePrevStep = () => {
+    if (isIDProcessing || isSelfieProcessing || isProcessing) return;
     if (currentStep === 6 && selfieRetakeNeeded) {
       handleRetakeSelfie();
       return;
@@ -478,6 +507,7 @@ export const useInquiryLogic = (
   };
 
   const handleStepClick = (targetStep: number) => {
+    if (isIDProcessing || isSelfieProcessing || isProcessing) return;
     if (targetStep <= maxUnlockedStep && targetStep !== currentStep) {
       setDirection(targetStep > currentStep ? 1 : -1);
       setCurrentStep(targetStep);

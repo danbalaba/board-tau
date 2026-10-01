@@ -192,16 +192,16 @@ const IDStep: React.FC<IDStepProps> = ({
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.97 }}
-            className="relative w-full h-[280px] rounded-2xl overflow-hidden shadow-2xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-black flex items-center justify-center"
+            className="relative w-full h-[280px] rounded-2xl overflow-hidden shadow-2xl border border-primary/30 bg-primary/5 dark:bg-black flex items-center justify-center"
           >
             <SafeImage src={sanitizeImgUrl(capturedID)} alt="Captured ID" fill containerClassName="absolute inset-0" className="object-contain p-4" />
 
-            {/* Green success overlay at bottom */}
+            {/* Success overlay at bottom */}
             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
 
-            {/* Corner brackets — verified green */}
+            {/* Corner brackets — verified primary */}
             {(["tl","tr","bl","br"] as const).map(pos => (
-              <div key={pos} className={`absolute w-7 h-7 border-emerald-400/80 ${
+              <div key={pos} className={`absolute w-7 h-7 border-primary ${
                 pos === "tl" ? "top-2 left-2 border-t-2 border-l-2 rounded-tl-md" :
                 pos === "tr" ? "top-2 right-2 border-t-2 border-r-2 rounded-tr-md" :
                 pos === "bl" ? "bottom-2 left-2 border-b-2 border-l-2 rounded-bl-md" :
@@ -225,7 +225,7 @@ const IDStep: React.FC<IDStepProps> = ({
               transition={{ delay: 0.15 }}
               className="absolute bottom-4 left-0 right-0 flex justify-center z-10"
             >
-              <span className="flex items-center gap-2 bg-emerald-600/90 backdrop-blur-sm text-white px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-xl border border-emerald-400/30">
+              <span className="flex items-center gap-2 bg-primary/95 backdrop-blur-sm text-white px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-xl border border-primary/30">
                 <FaCheckCircle size={12} />
                 Verified ID Document
               </span>

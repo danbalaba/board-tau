@@ -225,7 +225,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="text-teal-600 dark:text-teal-400" size={18} />
+                <ShieldCheck className="text-primary font-bold" size={18} />
                 <h4 className="font-bold text-gray-900 dark:text-gray-100">Lease Terms & Contract Preview</h4>
               </div>
 
@@ -234,7 +234,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                   type="button"
                   onClick={handlePreviewContract}
                   disabled={isPreviewingPdf}
-                  className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+                  className="px-3 py-1.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
                 >
                   <Eye size={13} />
                   <span>{isPreviewingPdf ? "Generating PDF..." : isCustomPdf ? "Preview Custom PDF" : "Preview Smart Lease PDF"}</span>
@@ -245,16 +245,16 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
             <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
               {isCustomPdf ? (
                 <>
-                  <div className="p-3 bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 rounded-xl flex items-center justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2 text-xs font-bold text-teal-800 dark:text-teal-200 min-w-0">
-                      <FileText size={16} className="text-teal-600 dark:text-teal-400 shrink-0" />
+                  <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-primary dark:text-gray-100 min-w-0">
+                      <FileText size={16} className="text-primary shrink-0" />
                       <span className="truncate">Custom Landlord Lease Contract PDF</span>
                     </div>
                     {customPdfUrl && (
                       <button
                         type="button"
                         onClick={handlePreviewContract}
-                        className="px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 shrink-0 shadow-sm cursor-pointer"
+                        className="px-2.5 py-1 bg-primary hover:bg-primary/90 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 shrink-0 shadow-sm cursor-pointer"
                       >
                         <Eye size={12} />
                         <span>View PDF</span>
@@ -292,9 +292,9 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
               )}
             </div>
             
-            <div className="p-4 bg-teal-50/80 dark:bg-teal-900/20 rounded-2xl border border-teal-100 dark:border-teal-800/50 flex items-start gap-2.5">
-              <Info className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
-              <p className="text-[11px] font-bold text-teal-800 dark:text-teal-300 leading-relaxed">
+            <div className="p-4 bg-primary/10 dark:bg-primary/15 rounded-2xl border border-primary/20 flex items-start gap-2.5">
+              <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <p className="text-[11px] font-bold text-gray-800 dark:text-gray-200 leading-relaxed">
                 <strong>Legal Booking Lifecycle Notice</strong>: Submitting this inquiry sends your application to the landlord for approval. You will review and digitally accept the official lease contract terms via checkbox during reservation checkout after the landlord approves your application!
               </p>
             </div>

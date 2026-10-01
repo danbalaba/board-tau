@@ -39,22 +39,42 @@ export default function InquiryProgressBar({
   const mobileScrollRef = useRef<HTMLDivElement | null>(null);
   const activePillRef = useRef<HTMLButtonElement | null>(null);
 
-  // Auto-scroll active carousel pill to center on step change
+  // Auto-scroll active carousel pill to center on step change or layout mount
   useEffect(() => {
-    if (activePillRef.current && mobileScrollRef.current) {
+    const scrollPillIntoCenter = () => {
       const container = mobileScrollRef.current;
-      const pill = activePillRef.current;
-      const containerWidth = container.offsetWidth;
-      const pillLeft = pill.offsetLeft;
-      const pillWidth = pill.offsetWidth;
-      
-      const scrollGoal = pillLeft - (containerWidth / 2) + (pillWidth / 2);
-      container.scrollTo({
-        left: scrollGoal,
-        behavior: "smooth",
-      });
-    }
-  }, [currentStepId]);
+      if (!container) return;
+
+      const children = Array.from(container.children) as HTMLElement[];
+      const targetPill = children[activeIndex];
+
+      if (targetPill) {
+        const containerWidth = container.clientWidth;
+        const pillLeft = targetPill.offsetLeft;
+        const pillWidth = targetPill.offsetWidth;
+
+        // Guard: Ensure flexbox layout has positioned the target pill before scrolling
+        if (containerWidth > 0 && pillWidth > 0 && (activeIndex === 0 || pillLeft > 0)) {
+          const targetScrollLeft = Math.max(0, pillLeft - containerWidth / 2 + pillWidth / 2);
+
+          container.scrollTo({
+            left: targetScrollLeft,
+            behavior: "smooth",
+          });
+        }
+      }
+    };
+
+    // Immediate + multi-stage timers to handle dynamic imports & modal animations
+    requestAnimationFrame(scrollPillIntoCenter);
+    const timers = [20, 100, 250, 450, 700].map((delay) =>
+      setTimeout(scrollPillIntoCenter, delay)
+    );
+
+    return () => {
+      timers.forEach(clearTimeout);
+    };
+  }, [currentStepId, activeIndex]);
 
   return (
     <div className="w-full flex flex-col gap-2.5 py-1 px-1 md:px-2 mb-4 md:mb-6 bg-white dark:bg-gray-800/40 p-3 md:p-4 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-xs">
@@ -65,7 +85,7 @@ export default function InquiryProgressBar({
           <button
             type="button"
             onClick={() => setIsExpandedMobile(!isExpandedMobile)}
-            className="px-2.5 py-1 rounded-full bg-primary/15 text-primary dark:text-emerald-400 font-extrabold border border-primary/30 text-[11px] uppercase tracking-wider flex items-center gap-1.5 transition-all hover:bg-primary/25 active:scale-95 shrink-0 cursor-pointer"
+            className="px-2.5 py-1 rounded-full bg-primary/15 text-primary font-extrabold border border-primary/30 text-[11px] uppercase tracking-wider flex items-center gap-1.5 transition-all hover:bg-primary/25 active:scale-95 shrink-0 cursor-pointer"
           >
             <span>Step {displayStep} of {totalSteps}</span>
             <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", isExpandedMobile && "rotate-180")} />
@@ -78,7 +98,7 @@ export default function InquiryProgressBar({
 
         {/* Percentage & Progress Bar */}
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-primary dark:text-emerald-400 font-black font-mono text-xs">
+          <span className="text-primary font-black font-mono text-xs">
             {progressPercent}%
           </span>
           <div className="w-14 md:w-24 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -97,7 +117,7 @@ export default function InquiryProgressBar({
         {/* Carousel Pill Strip */}
         <div 
           ref={mobileScrollRef}
-          className="flex items-center gap-2 overflow-x-auto py-1.5 px-0.5 no-scrollbar hide-scrollbar scroll-smooth"
+          className="relative flex items-center gap-2 overflow-x-auto py-1.5 px-0.5 no-scrollbar hide-scrollbar scroll-smooth"
         >
           {INQUIRY_STEPS.map((stepObj, index) => {
             const stepNum = index + 1;
@@ -109,6 +129,7 @@ export default function InquiryProgressBar({
               <motion.button
                 key={stepObj.id}
                 ref={isCurrent ? activePillRef : null}
+                data-active={isCurrent ? "true" : "false"}
                 type="button"
                 layout
                 onClick={() => {
@@ -122,7 +143,7 @@ export default function InquiryProgressBar({
                   isCurrent
                     ? "bg-primary text-white border-primary shadow-md shadow-primary/30 scale-105"
                     : isPast
-                    ? "bg-primary/10 text-primary dark:text-emerald-400 border-primary/25 hover:bg-primary/20"
+                    ? "bg-primary/10 text-primary border-primary/25 hover:bg-primary/20"
                     : isLocked
                     ? "bg-gray-100/50 dark:bg-gray-800/50 text-gray-400 dark:text-gray-600 border-gray-200/50 dark:border-gray-700/50 opacity-60 cursor-not-allowed"
                     : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
@@ -133,9 +154,9 @@ export default function InquiryProgressBar({
                   className={cn(
                     "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0 transition-colors",
                     isCurrent
-                      ? "bg-white text-primary dark:bg-gray-900 dark:text-emerald-400 font-black shadow-xs"
+                      ? "bg-white text-primary dark:bg-gray-900 font-black shadow-xs"
                       : isPast
-                      ? "bg-primary text-white dark:bg-emerald-500 dark:text-gray-950 font-black"
+                      ? "bg-primary text-white font-black"
                       : isLocked
                       ? "bg-gray-200 dark:bg-gray-700/80 text-gray-400 dark:text-gray-500"
                       : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
@@ -192,7 +213,7 @@ export default function InquiryProgressBar({
                         isCurrent
                           ? "bg-primary text-white border-primary shadow-sm"
                           : isPast
-                          ? "bg-emerald-50 dark:bg-emerald-950/40 text-primary dark:text-emerald-400 border-primary/30"
+                          ? "bg-primary/10 text-primary border-primary/30"
                           : isLocked
                           ? "bg-gray-100/40 dark:bg-gray-900/40 text-gray-400/60 dark:text-gray-600/60 border-gray-200/40 dark:border-gray-800/40 opacity-50 cursor-not-allowed"
                           : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
@@ -202,9 +223,9 @@ export default function InquiryProgressBar({
                         className={cn(
                           "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0",
                           isCurrent
-                            ? "bg-white text-primary dark:bg-gray-900 dark:text-emerald-400 font-black shadow-xs"
+                            ? "bg-white text-primary dark:bg-gray-900 font-black shadow-xs"
                             : isPast
-                            ? "bg-primary text-white dark:bg-emerald-500 dark:text-gray-950 font-black"
+                            ? "bg-primary text-white font-black"
                             : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                         )}
                       >
@@ -287,9 +308,9 @@ export default function InquiryProgressBar({
                 className={cn(
                   "absolute -bottom-5 text-[9px] font-extrabold tracking-widest uppercase whitespace-nowrap transition-all duration-300 pointer-events-none",
                   isCurrent
-                    ? "text-primary dark:text-emerald-400 opacity-100"
+                    ? "text-primary opacity-100"
                     : isPast
-                    ? "text-primary/70 dark:text-emerald-500/80 opacity-80"
+                    ? "text-primary/70 opacity-80"
                     : "text-gray-400 dark:text-gray-500 opacity-60"
                 )}
               >
