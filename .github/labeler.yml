@@ -1,29 +1,41 @@
-# Labeler configuration for BoardTAU repository
+# Labeler configuration for BoardTAU repository (actions/labeler@v5 format)
 
 'area: ai':
-  - 'app/api/ai/**/*'
-  - 'lib/ai/**/*'
-  - 'components/ai/**/*'
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'app/api/ai/**/*'
+          - 'lib/ai/**/*'
+          - 'components/ai/**/*'
 
 'area: auth':
-  - 'app/api/auth/**/*'
-  - 'lib/auth/**/*'
-  - 'middleware.ts'
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'app/api/auth/**/*'
+          - 'lib/auth/**/*'
+          - 'middleware.ts'
 
 'area: database':
-  - 'prisma/**/*'
-  - 'lib/prisma.ts'
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'prisma/**/*'
+          - 'lib/prisma.ts'
 
 'area: ui':
-  - 'components/**/*'
-  - 'app/**/*.tsx'
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'components/**/*'
+          - 'app/**/*.tsx'
 
 'area: security':
-  - 'lib/security/**/*'
-  - '.github/workflows/codeql.yml'
-  - '.github/workflows/dependency-review.yml'
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'lib/security/**/*'
+          - '.github/workflows/codeql.yml'
+          - '.github/workflows/dependency-review.yml'
 
 'area: devops':
-  - '.github/**/*'
-  - 'package.json'
-  - 'next.config.mjs'
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**/*'
+          - 'package.json'
+          - 'next.config.mjs'
