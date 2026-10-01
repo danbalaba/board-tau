@@ -56,6 +56,8 @@ const KERBY_MASCOT_ASSETS = [
   '/assets/mascot/kerby-401-security.png',
   '/assets/mascot/kerby-404-map.png',
   '/assets/mascot/kerby-500-mechanic.png',
+  '/assets/mascot/kerby-banned.png',
+  '/assets/mascot/kerby-suspended-warning.png',
 
   // Global Navigation & Page Loader Poses
   '/assets/mascot/kerby-global-search.png',

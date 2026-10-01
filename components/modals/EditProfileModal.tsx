@@ -310,8 +310,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   </div>
                 )}
               </div>
-              <p className="text-[10px] text-gray-400 text-center">
-                📍 Map updates when you search an address. Your exact pin is never stored.
+              <p className="text-[10px] text-gray-400 text-center flex items-center justify-center gap-1">
+                <MapPin size={12} className="text-primary inline-block shrink-0" />
+                <span>Map updates when you search an address. Your exact pin is never stored.</span>
               </p>
             </motion.div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { AlertTriangle, ShieldAlert, Info, Flame } from "lucide-react";
+import { AlertTriangle, ShieldAlert, Info, Flame, Loader2, Siren } from "lucide-react";
 
 interface StrikeStatus {
   activeStrikes: number;
@@ -22,9 +22,14 @@ export const CancellationStrikeWarningCard: React.FC<CancellationStrikeWarningCa
 }) => {
   if (isLoading) {
     return (
-      <div className="w-full p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 animate-pulse flex items-center gap-3 my-3">
-        <div className="w-5 h-5 rounded-full bg-slate-300 dark:bg-slate-600" />
-        <div className="h-4 w-3/4 bg-slate-300 dark:bg-slate-600 rounded" />
+      <div className="w-full p-4 rounded-2xl bg-blue-50/60 dark:bg-slate-800/60 border border-blue-200/60 dark:border-slate-700/60 flex items-center gap-3 my-3 transition-all">
+        <div className="p-2 bg-primary/10 dark:bg-primary/20 text-primary dark:text-emerald-400 rounded-xl shrink-0">
+          <Loader2 className="w-4 h-4 animate-spin" />
+        </div>
+        <div className="flex-1 space-y-1.5 min-w-0">
+          <div className="h-3 w-1/3 bg-blue-200/70 dark:bg-slate-700 rounded-md animate-pulse" />
+          <div className="h-3.5 w-5/6 bg-blue-200/70 dark:bg-slate-700 rounded-md animate-pulse" />
+        </div>
       </div>
     );
   }
@@ -50,7 +55,8 @@ export const CancellationStrikeWarningCard: React.FC<CancellationStrikeWarningCa
             </span>
           </div>
           <p className="text-xs sm:text-sm font-bold leading-relaxed text-rose-950 dark:text-rose-200">
-            🚨 <span className="font-extrabold underline">FINAL WARNING</span>: You have <span className="font-black text-rose-700 dark:text-rose-300">{activeStrikes} active strikes</span> and a previous suspension. Confirming this cancellation will trigger an <span className="font-black text-rose-700 dark:text-rose-300 uppercase">IMMEDIATE PERMANENT LIFETIME BAN</span>!
+            <Siren className="w-4 h-4 text-rose-600 dark:text-rose-400 inline-block align-text-bottom mr-1" />
+            <span className="font-extrabold underline">FINAL WARNING</span>: You have <span className="font-black text-rose-700 dark:text-rose-300">{activeStrikes} active strikes</span> and a previous suspension. Confirming this cancellation will trigger an <span className="font-black text-rose-700 dark:text-rose-300 uppercase">IMMEDIATE PERMANENT LIFETIME BAN</span>!
           </p>
         </div>
       </div>
@@ -74,7 +80,8 @@ export const CancellationStrikeWarningCard: React.FC<CancellationStrikeWarningCa
             </span>
           </div>
           <p className="text-xs sm:text-sm font-bold leading-relaxed text-amber-950 dark:text-amber-200">
-            ⚠️ <span className="font-extrabold underline">CRITICAL WARNING</span>: You currently have <span className="font-black text-amber-700 dark:text-amber-300">{activeStrikes} active strikes</span> in the last 7 days. Confirming this cancellation will reach 3 strikes and trigger an <span className="font-black text-amber-700 dark:text-amber-300 uppercase">IMMEDIATE ACCOUNT SUSPENSION</span> (1st Offense Notice)!
+            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 inline-block align-text-bottom mr-1" />
+            <span className="font-extrabold underline">CRITICAL WARNING</span>: You currently have <span className="font-black text-amber-700 dark:text-amber-300">{activeStrikes} active strikes</span> in the last 7 days. Confirming this cancellation will reach 3 strikes and trigger an <span className="font-black text-amber-700 dark:text-amber-300 uppercase">IMMEDIATE ACCOUNT SUSPENSION</span> (1st Offense Notice)!
           </p>
         </div>
       </div>

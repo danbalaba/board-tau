@@ -294,8 +294,9 @@ export default function MobileFloatingNotification({ user }: MobileFloatingNotif
                         <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         <span>All caught up!</span>
                       </span>
-                      <p className="text-xs text-emerald-900/80 dark:text-emerald-200/80 font-medium leading-relaxed">
-                        No new notifications right now. Enjoy your day! 🔔✨
+                      <p className="text-xs text-emerald-900/80 dark:text-emerald-200/80 font-medium leading-relaxed flex items-center justify-center gap-1">
+                        <span>No new notifications right now. Enjoy your day!</span>
+                        <Bell className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                       </p>
                     </div>
                   </div>
