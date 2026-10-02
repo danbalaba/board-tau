@@ -1,7 +1,15 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const PRIMARY_COLOR = [47, 125, 109]; // #2f7d6d
+const PRIMARY_TEAL: [number, number, number] = [47, 125, 109]; // #2F7D6D
+const SECONDARY_NAVY: [number, number, number] = [15, 23, 42]; // #0F172A
+const ACCENT_EMERALD: [number, number, number] = [16, 185, 129]; // #10B981
+const ACCENT_BLUE: [number, number, number] = [30, 58, 138]; // #1E3A8A
+const TEXT_MUTED: [number, number, number] = [100, 116, 139]; // #64748B
+const TEXT_DARK: [number, number, number] = [30, 41, 59]; // #1E293B
+const BG_SLATE: [number, number, number] = [248, 250, 252]; // #F8FAFC
+const BORDER_COLOR: [number, number, number] = [226, 232, 240]; // #E2E8F0
+const MINT_BG: [number, number, number] = [236, 253, 245]; // #ECFDF5
 
 export interface LeaseContractData {
   contractHash: string;
@@ -16,29 +24,31 @@ export interface LeaseContractData {
   rentAmount: number;
   moveOutNoticeDays: number;
   customClauses: string[];
+  houseRules?: string[];
   landlordSignatureBase64: string;
   tenantSignatureBase64?: string;
+  isAccepted?: boolean;
+  isDraft?: boolean;
 }
 
-const getLogoBase64 = (): Promise<string> => {
-  return new Promise((resolve, reject) => {
+const loadLogoImage = (): Promise<HTMLImageElement | null> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve(null);
     const img = new Image();
     img.crossOrigin = 'Anonymous';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(img, 0, 0);
-        resolve(canvas.toDataURL('image/png'));
-      } else {
-        reject(new Error('Failed to get canvas context'));
-      }
-    };
-    img.onerror = () => reject(new Error('Failed to load logo'));
-    img.src = '/logo.png';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = `${window.location.origin}/logo.png`;
   });
+};
+
+const drawSectionTitle = (doc: jsPDF, title: string, y: number) => {
+  doc.setFillColor(...PRIMARY_TEAL);
+  doc.roundedRect(14, y - 4, 3, 5, 0.8, 0.8, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(...PRIMARY_TEAL);
+  doc.text(title, 19, y);
 };
 
 export const generateLeaseContractPDF = async (
@@ -46,326 +56,457 @@ export const generateLeaseContractPDF = async (
   data: LeaseContractData,
   returnBlob: boolean = false
 ): Promise<Blob | void> => {
-  const doc = new jsPDF();
-  
-  let hasLogo = false;
-  try {
-    const logoData = await getLogoBase64();
-    doc.addImage(logoData, 'PNG', 14, 10, 12, 12);
-    hasLogo = true;
-  } catch (error) {
-    console.error('Logo not found, skipping...', error);
-  }
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const isAccepted = Boolean(data.isAccepted);
+  const rawTenant = (data.tenantName || '').trim();
+  const displayTenantName = (!rawTenant || rawTenant === '[APPLICANT TENANT]')
+    ? (data.isDraft ? '[Prospective Tenant Applicant]' : 'Applicant Tenant')
+    : rawTenant;
 
-  // Contract Verification Hash
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(150);
-  doc.text(`VERIFICATION HASH: ${data.contractHash}`, 196, 15, { align: 'right' });
-
-  // Branding
-  const brandX = hasLogo ? 29 : 14;
-  doc.setFontSize(22);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
-  doc.text('BoardTAU', brandX, 19);
-
-  // Document Title
-  doc.setFontSize(18);
-  doc.setTextColor(40);
-  doc.text('DIGITAL LEASE AGREEMENT', 14, 35);
-  
-  const date = new Date().toLocaleDateString('en-US', {
+  const hashLabel = data.contractHash ? data.contractHash.toUpperCase() : 'AUDIT-DRAFT';
+  const effectiveDate = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
   });
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100);
-  doc.text(`Effective Date: ${date}`, 14, 42);
+
+  const houseRules = data.houseRules || [];
+  const customClauses = data.customClauses || [];
+  const allRulesList: string[] = Array.from(new Set([...houseRules, ...customClauses])).filter(Boolean);
+
+  let logoElement: HTMLImageElement | null = null;
+  try {
+    logoElement = await loadLogoImage();
+  } catch (e) {
+    logoElement = null;
+  }
+
+  const applyHeaderAndFooter = (pageNum: number, total: number) => {
+    doc.setPage(pageNum);
+
+    // --- EXECUTIVE TOP HEADER BANNER ---
+    doc.setFillColor(...SECONDARY_NAVY);
+    doc.rect(0, 0, 210, 26, 'F');
+
+    // Accent Line at bottom of header banner
+    doc.setFillColor(...PRIMARY_TEAL);
+    doc.rect(0, 26, 210, 1.2, 'F');
+
+    // Circular White Logo Container Badge
+    doc.setFillColor(255, 255, 255);
+    doc.circle(21, 13, 8.5, 'F');
+
+    if (logoElement) {
+      try {
+        doc.addImage(logoElement, 'PNG', 15, 7, 12, 12);
+      } catch (e) {
+        doc.setFillColor(...PRIMARY_TEAL);
+        doc.circle(21, 13, 6, 'F');
+      }
+    } else {
+      doc.setFillColor(...PRIMARY_TEAL);
+      doc.circle(21, 13, 6, 'F');
+    }
+
+    // Brand Name & Metadata
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(17);
+    doc.setTextColor(255, 255, 255);
+    doc.text('BoardTAU', 33, 13.5);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text('HOUSING & ACCOMMODATION SYSTEM', 33, 18);
+
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...ACCENT_EMERALD);
+    doc.text(`DIGITAL LEASE AGREEMENT  •  EFFECTIVE: ${effectiveDate.toUpperCase()}`, 33, 22.5);
+
+    // Header Right: Status Badge & Verification Hash
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(226, 232, 240);
+    doc.text(`HASH: ${hashLabel}`, 196, 11, { align: 'right' });
+
+    if (isAccepted) {
+      doc.setFillColor(...MINT_BG);
+      doc.setDrawColor(...ACCENT_EMERALD);
+      doc.roundedRect(130, 14, 66, 7.5, 1.5, 1.5, 'FD');
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...PRIMARY_TEAL);
+      doc.text('OFFICIAL EXECUTED LEASE AGREEMENT', 163, 18.8, { align: 'center' });
+    } else {
+      doc.setFillColor(30, 41, 59);
+      doc.setDrawColor(71, 85, 105);
+      doc.roundedRect(128, 14, 68, 7.5, 1.5, 1.5, 'FD');
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(203, 213, 225);
+      doc.text('DRAFT LEASE AGREEMENT — PREVIEW ONLY', 162, 18.8, { align: 'center' });
+    }
+
+    // --- EXECUTIVE FOOTER ---
+    doc.setDrawColor(...BORDER_COLOR);
+    doc.setLineWidth(0.4);
+    doc.line(14, 282, 196, 282);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...SECONDARY_NAVY);
+    doc.text('BoardTAU Housing Management System', 14, 287);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...TEXT_MUTED);
+    doc.text(`|  Verification Hash: ${hashLabel}  |  Authentic Digital Record`, 70, 287);
+    doc.text(`Page ${pageNum} of ${total}`, 196, 287, { align: 'right' });
+  };
+
+  // --- PAGE 1 CONTENT ---
+  let currentY = 34;
+
+  // --- SECTION 1: CONTRACT PARTIES ---
+  drawSectionTitle(doc, '1. THE CONTRACT PARTIES', currentY);
+  currentY += 5;
+
+  // Landlord Card
+  doc.setFillColor(...BG_SLATE);
+  doc.setDrawColor(...BORDER_COLOR);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(14, currentY, 88, 18, 2, 2, 'FD');
   
-  doc.setDrawColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
-  doc.setLineWidth(0.8);
-  doc.line(14, 46, 196, 46);
+  // Primary Teal Left Indicator Stripe
+  doc.setFillColor(...PRIMARY_TEAL);
+  doc.roundedRect(14, currentY, 3, 18, 1, 1, 'F');
 
-  let currentY = 55;
-
-  // 1. Parties
-  doc.setFontSize(12);
+  doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
-  doc.text('1. THE PARTIES', 14, currentY);
-  currentY += 8;
+  doc.setTextColor(...TEXT_MUTED);
+  doc.text('LANDLORD / PROPERTY OWNER', 20, currentY + 5.5);
 
   doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(50);
-  doc.text(`This Lease Agreement is made and entered into by and between:`, 14, currentY);
-  currentY += 6;
-  doc.text(`Landlord: ${data.landlordName}`, 20, currentY);
-  currentY += 5;
-  doc.text(`Tenant: ${data.tenantName}`, 20, currentY);
-  currentY += 10;
-
-  // 2. Premises
-  doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
-  doc.text('2. THE PREMISES', 14, currentY);
-  currentY += 8;
+  doc.setTextColor(...SECONDARY_NAVY);
+  doc.text(data.landlordName || 'Property Owner', 20, currentY + 11.5);
+
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...PRIMARY_TEAL);
+  doc.text('Authorized Lessor & Representative', 20, currentY + 15.5);
+
+  // Tenant Card
+  doc.setFillColor(...BG_SLATE);
+  doc.setDrawColor(...BORDER_COLOR);
+  doc.roundedRect(108, currentY, 88, 18, 2, 2, 'FD');
+
+  // Accent Blue Left Indicator Stripe
+  doc.setFillColor(...ACCENT_BLUE);
+  doc.roundedRect(108, currentY, 3, 18, 1, 1, 'F');
+
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...TEXT_MUTED);
+  doc.text('TENANT / APPLICANT', 114, currentY + 5.5);
 
   doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(50);
-  doc.text(`The Landlord agrees to lease the following property to the Tenant:`, 14, currentY);
-  currentY += 6;
-  doc.text(`Property Name: ${data.propertyName}`, 20, currentY);
-  currentY += 5;
-  doc.text(`Room: ${data.roomName}`, 20, currentY);
-  currentY += 5;
-  const addressLines = doc.splitTextToSize(`Address: ${data.propertyAddress}`, 170);
-  doc.text(addressLines, 20, currentY);
-  currentY += (addressLines.length * 5) + 5;
-
-  // 3. Lease Term
-  doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
-  doc.text('3. LEASE TERM & RENT', 14, currentY);
-  currentY += 8;
+  doc.setTextColor(...SECONDARY_NAVY);
+  doc.text(displayTenantName, 114, currentY + 11.5);
+
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...ACCENT_BLUE);
+  doc.text('Verified Prospective Lessee', 114, currentY + 15.5);
+
+  currentY += 24;
+
+  // --- SECTION 2: LEASED PREMISES ---
+  drawSectionTitle(doc, '2. THE LEASED PREMISES & UNIT DETAILS', currentY);
+  currentY += 5;
+
+  const rawAddress = data.propertyAddress || 'Camiling, Tarlac';
+  // Wrap address cleanly to width of 120mm
+  const addressLines = doc.splitTextToSize(rawAddress, 120);
+  const addressBlockHeight = Math.max(10, addressLines.length * 4.5);
+  const totalCardHeight = 20 + addressBlockHeight;
+
+  doc.setFillColor(...BG_SLATE);
+  doc.setDrawColor(...BORDER_COLOR);
+  doc.roundedRect(14, currentY, 182, totalCardHeight, 2, 2, 'FD');
+
+  // Top Grid Row
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...TEXT_MUTED);
+  doc.text('PROPERTY TITLE', 19, currentY + 5.5);
+  doc.text('ROOM / UNIT NAME', 112, currentY + 5.5);
+
+  doc.setFontSize(9.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...SECONDARY_NAVY);
+  doc.text(data.propertyName || 'Boarding House Property', 19, currentY + 10.5);
+  doc.text(data.roomName || 'Selected Unit', 112, currentY + 10.5);
+
+  // Horizontal Divider Line inside Premises Card
+  doc.setDrawColor(...BORDER_COLOR);
+  doc.setLineWidth(0.2);
+  doc.line(18, currentY + 13.5, 192, currentY + 13.5);
+
+  // Bottom Address Row
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...TEXT_MUTED);
+  doc.text('ADMINISTRATIVE ADDRESS', 19, currentY + 18.5);
+
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...TEXT_DARK);
+  doc.text(addressLines, 62, currentY + 18.5);
+
+  currentY += totalCardHeight + 7;
+
+  // --- SECTION 3: FINANCIAL SCHEDULE ---
+  drawSectionTitle(doc, '3. LEASE TERM & FINANCIAL SCHEDULE', currentY);
+  currentY += 5;
 
   autoTable(doc, {
     startY: currentY,
-    head: [['Term', 'Details']],
+    head: [['Lease Term & Financial Parameter', 'Details & Official Terms']],
     body: [
-      ['Move-In Date', data.moveInDate],
-      ['Expected Check-Out Date', data.checkOutDate],
-      ['Monthly Rent', `PHP ${data.rentAmount.toLocaleString()}`],
-      ['Security Deposit', `PHP ${data.depositAmount.toLocaleString()}`],
-      ['Move-Out Notice', `${data.moveOutNoticeDays} Days`]
+      ['Move-In Date', data.moveInDate || 'Effective Upon Signing'],
+      ['Expected Check-Out Date', data.checkOutDate || 'Per Lease Duration'],
+      ['Monthly Base Rent', `PHP ${Number(data.rentAmount || 0).toLocaleString()} / month`],
+      ['Security Deposit Requirement', `PHP ${Number(data.depositAmount || 0).toLocaleString()}`],
+      ['Move-Out Notice Requirement', `${data.moveOutNoticeDays || 30} Days Advance Notice`],
     ],
     theme: 'grid',
-    headStyles: { fillColor: PRIMARY_COLOR as [number, number, number] },
-    margin: { left: 14, right: 14 }
+    headStyles: {
+      fillColor: PRIMARY_TEAL,
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      fontSize: 8.5,
+      cellPadding: 3.5,
+    },
+    bodyStyles: {
+      textColor: TEXT_DARK,
+      fontSize: 8.5,
+      cellPadding: 3,
+    },
+    alternateRowStyles: {
+      fillColor: BG_SLATE,
+    },
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 78 },
+      1: { cellWidth: 104 },
+    },
+    tableLineWidth: 0.2,
+    tableLineColor: BORDER_COLOR,
+    margin: { left: 14, right: 14 },
   });
 
-  currentY = (doc as any).lastAutoTable.finalY + 15;
+  currentY = (doc as any).lastAutoTable.finalY + 8;
 
-  // 4. Custom Clauses
-  if (data.customClauses.length > 0) {
-    if (currentY > 230) {
-      doc.addPage();
-      currentY = 20;
-    }
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
-    doc.text('4. ADDITIONAL HOUSE RULES & POLICIES', 14, currentY);
-    currentY += 8;
+  // --- ALWAYS ADD PAGE BREAK FOR CLEAN 2-PAGE EXECUTIVE LAYOUT ---
+  doc.addPage();
+  currentY = 34;
 
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(50);
-    
-    data.customClauses.forEach((clause, i) => {
-      const clauseLines = doc.splitTextToSize(`${i + 1}. ${clause}`, 170);
-      if (currentY + (clauseLines.length * 5) > 280) {
+  // --- PAGE 2: HOUSE RULES & SIGNATURES ---
+
+  // --- SECTION 4: HOUSE RULES ---
+  drawSectionTitle(doc, '4. HOUSE RULES, COMPOUND POLICIES & CLAUSES', currentY);
+  currentY += 6;
+
+  if (allRulesList.length > 0) {
+    allRulesList.forEach((rule, idx) => {
+      const ruleNum = String(idx + 1).padStart(2, '0');
+      const splitText = doc.splitTextToSize(rule, 160);
+      const ruleCardHeight = Math.max(9, splitText.length * 4.5 + 3);
+
+      if (currentY + ruleCardHeight > 265) {
         doc.addPage();
-        currentY = 20;
+        currentY = 34;
       }
-      doc.text(clauseLines, 14, currentY);
-      currentY += (clauseLines.length * 5) + 2;
+
+      doc.setFillColor(...BG_SLATE);
+      doc.setDrawColor(...BORDER_COLOR);
+      doc.roundedRect(14, currentY - 2, 182, ruleCardHeight, 1.5, 1.5, 'FD');
+
+      // Rule Number Pill
+      doc.setFillColor(...PRIMARY_TEAL);
+      doc.roundedRect(17, currentY, 8, 4.5, 1, 1, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(255, 255, 255);
+      doc.text(ruleNum, 21, currentY + 3.2, { align: 'center' });
+
+      // Rule Content
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...TEXT_DARK);
+      doc.text(splitText, 28, currentY + 3.2);
+
+      currentY += ruleCardHeight + 3;
     });
+  } else {
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...TEXT_MUTED);
+    doc.text('Standard Boarding House Regulations & Local Municipal Ordinances Apply.', 18, currentY);
     currentY += 10;
   }
 
-  // Check page overflow for signatures
+  currentY += 6;
+
+  // --- SECTION 5: SIGNATURES & ACKNOWLEDGEMENT ---
   if (currentY > 200) {
     doc.addPage();
-    currentY = 20;
+    currentY = 34;
   }
 
-  // 5. Signatures & Digital Acceptance
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
-  doc.text('SIGNATURES & ACKNOWLEDGEMENT', 14, currentY);
-  currentY += 8;
+  drawSectionTitle(doc, '5. SIGNATURES & DIGITAL ACKNOWLEDGEMENT', currentY);
+  currentY += 5;
 
-  doc.setFontSize(9);
   doc.setFont('helvetica', 'italic');
-  doc.setTextColor(100);
-  doc.text('By signing below (Landlord) and digitally accepting terms upon checkout (Tenant), both parties agree to all terms set forth.', 14, currentY);
-  currentY += 15;
+  doc.setFontSize(7.5);
+  doc.setTextColor(...TEXT_MUTED);
+  doc.text('By signing below (Landlord) and digitally accepting terms upon checkout (Tenant), both parties agree to all terms set forth.', 18, currentY);
+  currentY += 7;
 
-  // Landlord Signature Box (Left Side)
-  doc.setDrawColor(200);
-  doc.rect(14, currentY, 80, 40);
+  // Signature Boxes Container
+  const sigBoxY = currentY;
+  const sigBoxWidth = 88;
+  const sigBoxHeight = 30;
 
-  if (data.landlordSignatureBase64) {
+  // --- Landlord Signature Card ---
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(...BORDER_COLOR);
+  doc.roundedRect(14, sigBoxY, sigBoxWidth, sigBoxHeight, 2, 2, 'FD');
+
+  const isValidSig = typeof data.landlordSignatureBase64 === 'string' &&
+    data.landlordSignatureBase64.trim().length > 20 &&
+    (data.landlordSignatureBase64.startsWith('data:image/') ||
+     data.landlordSignatureBase64.startsWith('http://') ||
+     data.landlordSignatureBase64.startsWith('https://'));
+
+  if (isValidSig) {
     try {
-      doc.addImage(data.landlordSignatureBase64, 'PNG', 16, currentY + 2, 76, 36);
+      doc.addImage(data.landlordSignatureBase64, 'PNG', 16, sigBoxY + 3, sigBoxWidth - 4, sigBoxHeight - 6);
     } catch (e) {
-      console.error("Failed to add landlord signature to PDF", e);
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184);
+      doc.text('[ Official Landlord Signature On File ]', 14 + sigBoxWidth / 2, sigBoxY + 16, { align: 'center' });
     }
   } else {
-    doc.setFontSize(9);
     doc.setFont('helvetica', 'italic');
-    doc.setTextColor(160);
-    doc.text('Landlord Official Signature', 54, currentY + 22, { align: 'center' });
-  }
-  
-  // Tenant Digital Terms Acceptance Box (Right Side)
-  doc.setFillColor(242, 248, 246);
-  doc.setDrawColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
-  doc.setLineWidth(0.5);
-  doc.roundedRect(106, currentY, 80, 40, 3, 3, 'FD');
-
-  // Checkmark Badge Circle
-  doc.setFillColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
-  doc.circle(115, currentY + 12, 4, 'F');
-  // Checkmark icon (white lines)
-  doc.setDrawColor(255, 255, 255);
-  doc.setLineWidth(0.8);
-  doc.line(113.2, currentY + 12, 114.5, currentY + 13.5);
-  doc.line(114.5, currentY + 13.5, 116.8, currentY + 10.5);
-
-  // Text inside Tenant Acceptance Box
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
-  doc.text('DIGITAL TERMS ACCEPTED', 123, currentY + 13);
-
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(80);
-  doc.text('Confirmed online via checkbox consent', 112, currentY + 23);
-  doc.setFontSize(7.5);
-  doc.setTextColor(120);
-  doc.text('Verified during reservation checkout', 112, currentY + 29);
-  doc.text(`Tenant: ${data.tenantName}`, 112, currentY + 34);
-
-  currentY += 45;
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(40);
-  
-  doc.text(data.landlordName, 54, currentY, { align: 'center' });
-  doc.text(data.tenantName, 146, currentY, { align: 'center' });
-  
-  currentY += 5;
-  doc.setFontSize(8.5);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100);
-  doc.text('Landlord (Authorized Signature)', 54, currentY, { align: 'center' });
-  doc.text('Tenant (Digital Acceptance)', 146, currentY, { align: 'center' });
-
-  // Add page numbers
-  const pageCount = (doc as any).internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    const pageSize = doc.internal.pageSize;
-    const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
-    doc.setTextColor(150);
-    doc.text(`Page ${i} of ${pageCount}`, 196, pageHeight - 10, { align: 'right' });
-    doc.text(`Contract Hash: ${data.contractHash}`, 14, pageHeight - 10);
+    doc.setTextColor(148, 163, 184);
+    doc.text('[ Official Landlord Signature On File ]', 14 + sigBoxWidth / 2, sigBoxY + 16, { align: 'center' });
+  }
+
+  // --- Tenant Digital Audit Stamp Box ---
+  if (isAccepted) {
+    doc.setFillColor(...MINT_BG);
+    doc.setDrawColor(...PRIMARY_TEAL);
+    doc.roundedRect(108, sigBoxY, sigBoxWidth, sigBoxHeight, 2, 2, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...PRIMARY_TEAL);
+    doc.text('DIGITAL CONSENT STAMP RECORDED', 113, sigBoxY + 8);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...TEXT_MUTED);
+    doc.text('Verified online via reservation checkout', 113, sigBoxY + 14);
+    doc.text(`Tenant: ${displayTenantName}`, 113, sigBoxY + 19);
+    doc.text(`Audit Timestamp: ${effectiveDate}`, 113, sigBoxY + 24);
+  } else {
+    doc.setFillColor(...BG_SLATE);
+    doc.setDrawColor(203, 213, 225);
+    doc.roundedRect(108, sigBoxY, sigBoxWidth, sigBoxHeight, 2, 2, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(51, 65, 85);
+    doc.text('DIGITAL CONSENT PENDING', 113, sigBoxY + 8);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...TEXT_MUTED);
+    doc.text('Online checkbox consent required at checkout', 113, sigBoxY + 14);
+    doc.text(`Tenant: ${displayTenantName}`, 113, sigBoxY + 19);
+    doc.text('Status: Awaiting Landlord Approval & Checkout', 113, sigBoxY + 24);
+  }
+
+  // Under-Signature Name Labels
+  currentY = sigBoxY + sigBoxHeight + 6;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...SECONDARY_NAVY);
+  doc.text(data.landlordName || 'Landlord', 14 + sigBoxWidth / 2, currentY, { align: 'center' });
+  doc.text(displayTenantName, 108 + sigBoxWidth / 2, currentY, { align: 'center' });
+
+  currentY += 4.5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...TEXT_MUTED);
+  doc.text('Landlord (Authorized Representative)', 14 + sigBoxWidth / 2, currentY, { align: 'center' });
+  doc.text(isAccepted ? 'Tenant (Digital Consent Recorded)' : 'Tenant (Digital Consent Pending)', 108 + sigBoxWidth / 2, currentY, { align: 'center' });
+
+  // Apply Page Decorations & Footer across all pages
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    applyHeaderAndFooter(i, totalPages);
   }
 
   if (returnBlob) {
     return doc.output('blob');
-  } else {
-    doc.save(`${filename}.pdf`);
   }
+
+  doc.save(filename.endsWith('.pdf') ? filename : `${filename}.pdf`);
 };
 
-const blobToDataURL = (blob: Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-};
-
-/**
- * Safely opens a generated PDF Blob or PDF URL (blob:, data:, or http(s):) in a new browser tab using native PDF embed stream.
- * Converts Blobs & blob: URLs to Data URLs to bypass Chromium about:blank cross-origin blob restrictions.
- */
 export const previewPdfBlob = async (
   blobOrUrl: Blob | string,
-  title: string = "Smart Lease Contract Preview"
+  _title: string = "Smart Lease Contract Preview",
+  targetWindow?: Window | null
 ): Promise<boolean> => {
-  let dataUrl: string | null = null;
-  let rawBlob: Blob | null = null;
-
-  if (blobOrUrl instanceof Blob) {
-    rawBlob = blobOrUrl;
-  } else if (typeof blobOrUrl === "string") {
-    if (blobOrUrl.startsWith("data:")) {
-      dataUrl = blobOrUrl;
-    } else if (blobOrUrl.startsWith("blob:")) {
-      try {
-        const res = await fetch(blobOrUrl);
-        if (res.ok) {
-          rawBlob = await res.blob();
-        }
-      } catch (e) {
-        console.warn("Blob URL unreachable or expired:", e);
-      }
-    } else if (blobOrUrl.trim()) {
-      dataUrl = blobOrUrl;
-    }
-  }
-
-  if (rawBlob && !dataUrl) {
-    try {
-      dataUrl = await blobToDataURL(rawBlob);
-    } catch (e) {
-      console.error("Failed converting Blob to Data URL:", e);
-    }
-  }
-
-  if (!dataUrl) {
+  if (!blobOrUrl) {
+    if (targetWindow && !targetWindow.closed) targetWindow.close();
     return false;
   }
 
-  const win = window.open("", "_blank");
-  if (win) {
-    win.document.open();
-    win.document.write(`<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>${title}</title>
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background-color: #525659;
+  let pdfUrl = "";
+
+  try {
+    if (typeof blobOrUrl === "string") {
+      pdfUrl = blobOrUrl;
+    } else if (blobOrUrl instanceof Blob) {
+      const pdfBlob = blobOrUrl.type === "application/pdf" ? blobOrUrl : new Blob([blobOrUrl], { type: "application/pdf" });
+      pdfUrl = URL.createObjectURL(pdfBlob);
+    }
+
+    if (!pdfUrl) {
+      if (targetWindow && !targetWindow.closed) targetWindow.close();
+      return false;
+    }
+
+    if (targetWindow && !targetWindow.closed) {
+      targetWindow.location.href = pdfUrl;
+    } else {
+      const win = window.open(pdfUrl, "_blank");
+      if (!win) {
+        window.location.href = pdfUrl;
       }
-      embed, object, iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-      }
-    </style>
-  </head>
-  <body>
-    <embed src="${dataUrl}" type="application/pdf" width="100%" height="100%" />
-  </body>
-</html>`);
-    win.document.close();
+    }
     return true;
-  } else {
-    window.open(dataUrl, "_blank");
-    return true;
+  } catch (e) {
+    console.error("Failed to preview PDF Blob:", e);
+    if (targetWindow && !targetWindow.closed) targetWindow.close();
+    return false;
   }
 };

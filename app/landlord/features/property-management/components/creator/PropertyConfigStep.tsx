@@ -18,6 +18,7 @@ import { getCachedAttributes, getSyncAttributes, getCachedSubGroups, getSyncSubG
 import { getDynamicIcon } from '@/lib/iconResolver';
 import { cn } from '@/utils/helper';
 import { generateLeaseContractPDF, previewPdfBlob } from '@/utils/contractPdfGenerator';
+import HelpTooltip from '@/components/common/HelpTooltip';
 
 interface PropertyConfigStepProps {
   register: any;
@@ -1771,9 +1772,12 @@ export default function PropertyConfigStep({
                         {contractMode === 'CUSTOM_PDF' ? <UploadCloud className="w-4 h-4 sm:w-5 sm:h-5" /> : <Info className="w-4 h-4 sm:w-5 sm:h-5" />}
                       </div>
                       <div className="min-w-0">
-                        <h4 className={`text-xs font-black uppercase tracking-wider sm:tracking-[0.2em] truncate ${detailsError ? "text-rose-500" : "text-gray-900 dark:text-white"}`}>
-                          2. {contractMode === 'CUSTOM_PDF' ? 'Upload Custom Contract PDF' : 'Contract Financial & Notice Terms'} <span className="text-rose-500">*</span>
-                        </h4>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className={`text-xs font-black uppercase tracking-wider sm:tracking-[0.2em] truncate ${detailsError ? "text-rose-500" : "text-gray-900 dark:text-white"}`}>
+                            2. {contractMode === 'CUSTOM_PDF' ? 'Upload Custom Contract PDF' : 'Contract Financial & Notice Terms'} <span className="text-rose-500">*</span>
+                          </h4>
+                          <HelpTooltip text="Define refundable deposit amount and notice period required when tenants move out. (Pondong piyansa at ilang araw na abiso bago lumipat ang tenant.)" />
+                        </div>
                         <p className="text-[10px] font-bold text-gray-400 mt-0.5 truncate">
                           {contractMode === 'CUSTOM_PDF' ? 'Upload standard PDF lease document' : 'Define security deposit and move-out notice period'}
                         </p>
@@ -1956,9 +1960,12 @@ export default function PropertyConfigStep({
                         <PenTool className="w-4 h-4 sm:w-5 sm:h-5" />
                       </div>
                       <div className="min-w-0">
-                        <h4 className={`text-xs font-black uppercase tracking-wider sm:tracking-[0.2em] truncate ${signatureError ? "text-rose-500" : "text-gray-900 dark:text-white"}`}>
-                          3. Landlord Digital Signature <span className="text-rose-500">*</span>
-                        </h4>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className={`text-xs font-black uppercase tracking-wider sm:tracking-[0.2em] truncate ${signatureError ? "text-rose-500" : "text-gray-900 dark:text-white"}`}>
+                            3. Landlord Digital Signature <span className="text-rose-500">*</span>
+                          </h4>
+                          <HelpTooltip text="Your official authorized signature that will be placed at the bottom of generated PDF lease contracts. (Ang iyong opisyal na pirma na ilalagay sa ibaba ng PDF lease contract.)" />
+                        </div>
                         <p className="text-[10px] font-bold text-gray-400 mt-0.5 truncate">Draw signature or tap expand canvas</p>
                       </div>
                     </div>
@@ -2000,17 +2007,23 @@ export default function PropertyConfigStep({
                           <span className="truncate">BoardTAU Smart Lease Contract Ready</span>
                         </div>
                         <button
-                          type="button"
-                          onClick={async () => {
+                            onClick={async () => {
                             const propName = watch('basicInfo.name') || 'Boarding House Property';
                             const propAddress = watch('location.address') || 'Property Address';
                             const deposit = Number(watch('propertyConfig.depositAmount')) || 0;
                             const noticeDays = Number(watch('propertyConfig.moveOutNoticeDays')) || 30;
                             const clauses = watch('propertyConfig.customContractClauses') || [];
+                            const rawRules = watch('propertyConfig.rules') || watch('rules') || [];
+                            const attributes = getSyncAttributes() || [];
+                            const resolvedRules = rawRules.map((rId: string) => {
+                              const attr = attributes.find((a: any) => a.id === rId || a.name === rId || a._id === rId || a.code === rId);
+                              return attr?.name || rId;
+                            });
+
                             const pdfBlob = await generateLeaseContractPDF('Sample_Smart_Lease_Contract.pdf', {
                               contractHash: `DRAFT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-                              landlordName: 'Property Owner / Landlord',
-                              tenantName: '[TENANT NAME APPLICANT]',
+                              landlordName: watch('businessInfo.businessName') || 'Property Owner / Landlord',
+                              tenantName: '[Prospective Tenant Applicant]',
                               propertyName: propName,
                               roomName: 'Standard Unit / Room',
                               propertyAddress: propAddress,
@@ -2020,11 +2033,14 @@ export default function PropertyConfigStep({
                               rentAmount: 0,
                               moveOutNoticeDays: noticeDays,
                               customClauses: clauses,
+                              houseRules: resolvedRules,
                               landlordSignatureBase64: currentSignature,
-                              tenantSignatureBase64: ''
+                              tenantSignatureBase64: '',
+                              isAccepted: false,
+                              isDraft: true
                             }, true);
                              if (pdfBlob) {
-                               previewPdfBlob(pdfBlob as Blob, 'Sample Smart Lease Contract Preview');
+                                previewPdfBlob(pdfBlob as Blob, 'Sample Smart Lease Contract Preview');
                              }
                           }}
                           className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 shadow-sm cursor-pointer"

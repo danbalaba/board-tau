@@ -57,23 +57,28 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
       const clauses = room?.listing?.customClauses || leaseContract?.terms || [];
       const landlordSig = leaseContract?.signatures?.find((s: any) => s.signerType === "LANDLORD")?.signatureUrl || "";
 
+      const houseRules = room?.listing?.rules || room?.listing?.propertyConfig?.rules || [];
+
       const pdfBlob = await generateLeaseContractPDF(
         "Smart_Lease_Contract_Preview.pdf",
         {
           contractHash: `PREVIEW-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
           landlordName,
-          tenantName: "[APPLICANT TENANT]",
+          tenantName: watchedValues[3] || "Prospective Tenant",
           propertyName: propName,
           roomName,
           propertyAddress: propAddress,
-          moveInDate: watchedValues[1] ? format(new Date(watchedValues[1]), "MMMM dd, yyyy") : "Per Check-In Date",
-          checkOutDate: "Per Lease Duration",
+          moveInDate: watchedValues[1] ? format(new Date(watchedValues[1]), "MMMM dd, yyyy") : "Effective Upon Signing",
+          checkOutDate: watchedValues[2] ? format(new Date(watchedValues[2]), "MMMM dd, yyyy") : "Per Lease Duration",
           depositAmount: deposit,
           rentAmount: room?.price || 0,
           moveOutNoticeDays: noticeDays,
           customClauses: clauses,
+          houseRules,
           landlordSignatureBase64: landlordSig,
           tenantSignatureBase64: "",
+          isAccepted: false,
+          isDraft: true,
         },
         true
       );
