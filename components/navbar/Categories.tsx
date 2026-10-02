@@ -16,8 +16,8 @@ export default async function Categories() {
         <h2 className="text-center text-xl md:text-2xl font-semibold text-text-primary dark:text-gray-100 mb-4 px-4">
           Seamless stay & experiences
         </h2>
-        <div className="flex flex-nowrap justify-start items-center gap-3 overflow-x-auto pb-2 -mx-4 md:mx-0 md:justify-center hide-scrollbar">
-          <div className="flex gap-3 px-4 md:px-0">
+        <div className="flex flex-nowrap justify-start items-center gap-3 overflow-x-auto pb-2 -mx-4 md:mx-0 md:justify-center hide-scrollbar scroll-smooth">
+          <div className="flex gap-3 px-6 md:px-0 snap-x">
             {propertyTypes.map((item: PropertyType) => (
               <CategoryBox
                 key={item.id}

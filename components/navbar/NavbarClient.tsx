@@ -153,7 +153,7 @@ const NavbarClient: React.FC<NavbarClientProps> = ({ user }) => {
                 transition={{ duration: 0.3 }}
                 className="md:hidden w-full flex flex-row items-center justify-center"
               >
-                <MobileSearch />
+                <MobileSearch layoutId="mobile-search-bar" />
               </motion.div>
             </div>
           )}
