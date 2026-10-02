@@ -196,6 +196,10 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
                       <span className="text-[9px] font-black uppercase tracking-widest text-amber-500 shrink-0 px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
                         {conv.isPendingArchive ? "Archiving..." : "Restoring..."}
                       </span>
+                    ) : conv.isClosed ? (
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 shrink-0 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200/50 dark:border-gray-700/50">
+                        Closed
+                      </span>
                     ) : (
                       <span className="text-[10px] font-bold text-gray-400 shrink-0">
                         {formatDistanceToNow(new Date(conv.lastMessageTime), { addSuffix: false })}

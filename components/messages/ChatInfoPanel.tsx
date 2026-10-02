@@ -22,9 +22,10 @@ import {
 } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { cn } from "@/utils/helper";
-import Skeleton from "react-loading-skeleton";
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import SafeImage from "@/components/common/SafeImage";
 import "react-loading-skeleton/dist/skeleton.css";
+import { useTheme } from "next-themes";
 
 interface LandlordProfile {
   id: string;
@@ -40,7 +41,8 @@ interface LandlordProfile {
     title: string;
     imageSrc: string;
     images?: any;
-    category: string;
+    propertyType?: { name: string } | null;
+    category?: any;
     _count: { reviews: number };
   }[];
 }
@@ -54,6 +56,31 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
   const [landlord, setLandlord] = useState<LandlordProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const { resolvedTheme, theme } = useTheme();
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const checkDark = () => {
+      return (
+        resolvedTheme === "dark" ||
+        theme === "dark" ||
+        document.documentElement.classList.contains("dark")
+      );
+    };
+    setIsDark(checkDark());
+
+    const observer = new MutationObserver(() => {
+      setIsDark(checkDark());
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, [resolvedTheme, theme]);
 
   useEffect(() => {
     if (!activeConversation) {
@@ -85,15 +112,19 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
   const memberSince = landlord ? format(new Date(landlord.createdAt), "MMMM yyyy") : null;
   const isEmailVerified = !!landlord?.emailVerified;
 
-  return (
-    <div className="h-full flex flex-col bg-gray-50/50 dark:bg-gray-900/50 border-l border-gray-100 dark:border-gray-800 p-6 overflow-y-auto scrollbar-hide gap-6">
+  const baseColor = isDark ? "#1e293b" : "#e2e8f0";
+  const highlightColor = isDark ? "#334155" : "#f1f5f9";
 
-      {/* Header — Landlord Avatar & Name */}
-      <div className="flex flex-col items-center text-center pt-2">
-        <div className="relative mb-4">
-          {isLoading ? (
-            <Skeleton width={80} height={80} borderRadius={28} enableAnimation={false} />
-          ) : (
+  return (
+    <SkeletonTheme baseColor={baseColor} highlightColor={highlightColor}>
+      <div className="h-full flex flex-col bg-gray-50/50 dark:bg-gray-900/50 border-l border-gray-100 dark:border-gray-800 p-6 overflow-y-auto scrollbar-hide gap-6">
+
+        {/* Header — Landlord Avatar & Name */}
+        <div className="flex flex-col items-center text-center pt-2">
+          <div className="relative mb-4">
+            {isLoading ? (
+              <Skeleton width={80} height={80} borderRadius={28} />
+            ) : (
             <>
               <button 
                 onClick={() => setIsPreviewOpen(true)}
@@ -124,7 +155,13 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
           {isLoading ? <Skeleton width="60%" enableAnimation={false} /> : (isEmailVerified ? "Verified Account" : "Unverified Account")}
         </p>
         
-        {(activeConversation.isArchived || activeConversation.isPendingArchive) && (
+        {activeConversation.isClosed ? (
+          <div className="mt-3 px-3 py-1 bg-gray-200/80 dark:bg-gray-800 border border-gray-300/50 dark:border-gray-700/50 rounded-full flex items-center gap-1.5 animate-in fade-in zoom-in duration-300">
+            <span className="text-[9px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-300">
+              Chat Closed
+            </span>
+          </div>
+        ) : (activeConversation.isArchived || activeConversation.isPendingArchive) && (
           <div className="mt-3 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center gap-1.5 animate-in fade-in zoom-in duration-300">
             <IconArchive size={10} className="text-amber-500" />
             <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
@@ -260,8 +297,8 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
            {isLoading ? (
              [1, 2].map(i => (
                <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl p-2 pr-4 border border-gray-100 dark:border-gray-800 flex items-center gap-3">
-                 <Skeleton width={48} height={48} borderRadius={12} enableAnimation={false} />
-                 <div className="flex-1"><Skeleton width="60%" enableAnimation={false} /><Skeleton width="40%" enableAnimation={false} /></div>
+                 <Skeleton width={48} height={48} borderRadius={12} />
+                 <div className="flex-1"><Skeleton width="60%" /><Skeleton width="40%" /></div>
                </div>
              ))
            ) : landlord?.listings?.slice(0, 3).map((listing) => (
@@ -287,7 +324,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
                   {listing.title || "Untitled"}
                 </h4>
                 <p className="text-[9px] font-bold text-gray-400 truncate">
-                  {listing.category ? (Array.isArray(listing.category) ? listing.category.join(", ") : listing.category) : "Uncategorized"}
+                  {listing.propertyType?.name || (typeof listing.category === "string" ? listing.category : Array.isArray(listing.category) ? (listing.category as any[]).join(", ") : "Property")}
                 </p>
               </div>
               <IconExternalLink size={12} className="text-gray-300 group-hover:text-primary transition-colors shrink-0" />
@@ -346,5 +383,6 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
         )}
       </AnimatePresence>
     </div>
+    </SkeletonTheme>
   );
 };

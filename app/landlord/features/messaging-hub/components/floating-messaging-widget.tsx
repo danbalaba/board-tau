@@ -226,10 +226,10 @@ export function FloatingMessagingWidget() {
                       </div>
                       <div>
                         <h3 className="text-base font-black text-gray-900 dark:text-white leading-none">
-                          Messaging Hub
+                          Messages
                         </h3>
                         <p className="text-[9px] font-black text-primary uppercase tracking-widest mt-0.5">
-                          Landlord Inbox
+                          Inbox
                         </p>
                       </div>
                     </div>

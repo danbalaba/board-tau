@@ -118,8 +118,8 @@ export default function MessagingHub({
                 <IconMessage size={22} strokeWidth={2.5} />
               </div>
               <div>
-                <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Messaging Hub</h2>
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mt-0.5">Enterprise Communication</p>
+                <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Messages</h2>
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mt-0.5">Direct Messages</p>
               </div>
             </div>
             
@@ -127,7 +127,7 @@ export default function MessagingHub({
               onClick={onClose}
               className="p-3 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-gray-400 hover:text-rose-500 rounded-2xl transition-all active:scale-90 flex items-center gap-2 group"
             >
-              <span className="text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all mr-2">Close Hub</span>
+              <span className="text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all mr-2">Close</span>
               <IconX size={20} strokeWidth={3} />
             </button>
           </div>

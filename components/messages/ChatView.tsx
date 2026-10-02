@@ -14,7 +14,8 @@ import {
   IconDotsVertical,
   IconRefresh,
   IconTrash,
-  IconMail
+  IconMail,
+  IconLock
 } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -393,7 +394,26 @@ const ChatView: React.FC<ChatViewProps> = ({
       <div 
         className="px-6 pb-8 pt-2 w-full"
       >
-        {activeConversation.isArchived || activeConversation.isPendingArchive ? (
+        {activeConversation.isClosed ? (
+          <div className="bg-gray-100/90 dark:bg-gray-800/60 border border-gray-200/80 dark:border-gray-700/60 rounded-[2rem] p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-gray-200/70 dark:bg-gray-700/70 text-gray-500 dark:text-gray-400 flex items-center justify-center shrink-0">
+                <IconLock size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-widest leading-tight">
+                  Chat Closed
+                </p>
+                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 leading-tight mt-0.5">
+                  {activeConversation.closedReason || "Messaging is closed for completed or inactive stays."}
+                </p>
+              </div>
+            </div>
+            <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0">
+              Read Only
+            </span>
+          </div>
+        ) : activeConversation.isArchived || activeConversation.isPendingArchive ? (
           <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/20 rounded-[2rem] p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">

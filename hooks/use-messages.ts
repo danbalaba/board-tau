@@ -18,6 +18,8 @@ export interface TenantConversation {
   lastMessageTime: string;
   unreadCount: number;
   isArchived: boolean;
+  isClosed?: boolean;
+  closedReason?: string;
   isPendingArchive?: boolean;
   isPendingUnarchive?: boolean;
   isPlaceholder?: boolean;

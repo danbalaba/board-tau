@@ -35,7 +35,7 @@ const MessagesPage = async ({ searchParams }: PageProps) => {
 
     // Check if we need to inject a placeholder for a new conversation
     if (listingId && otherUserId) {
-        const existing = conversations.find(c => c.listingId === listingId && c.landlordId === otherUserId);
+        const existing = conversations.find(c => c && c.listingId === listingId && c.landlordId === otherUserId);
         
         if (!existing) {
             // Fetch listing & landlord info for the placeholder
@@ -57,6 +57,8 @@ const MessagesPage = async ({ searchParams }: PageProps) => {
                     lastMessageTime: new Date().toISOString(),
                     unreadCount: 0,
                     isArchived: false,
+                    isClosed: false,
+                    closedReason: "",
                     isPlaceholder: true
                 };
                 // Prepend to conversations

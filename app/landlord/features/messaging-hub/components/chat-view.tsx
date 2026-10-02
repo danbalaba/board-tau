@@ -14,12 +14,14 @@ import {
   IconArchive,
   IconRefresh,
   IconTrash,
-  IconMail
+  IconMail,
+  IconLock
 } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
-import Skeleton from "react-loading-skeleton";
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { useTheme } from "next-themes";
 import Modal from "@/components/modals/Modal";
 import ConfirmModal from "@/components/common/ConfirmModal";
 
@@ -151,10 +153,38 @@ export const ChatView: React.FC<ChatViewProps> = ({
     );
   }
 
+  const { resolvedTheme, theme } = useTheme();
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const checkDark = () => {
+      return (
+        resolvedTheme === "dark" ||
+        theme === "dark" ||
+        document.documentElement.classList.contains("dark")
+      );
+    };
+    setIsDark(checkDark());
+
+    const observer = new MutationObserver(() => {
+      setIsDark(checkDark());
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, [resolvedTheme, theme]);
+
   const isArchived = activeConversation.isArchived;
+  const baseColor = isDark ? "#1e293b" : "#e2e8f0";
+  const highlightColor = isDark ? "#334155" : "#f1f5f9";
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#020817] overflow-hidden relative">
+    <SkeletonTheme baseColor={baseColor} highlightColor={highlightColor}>
+      <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#020817] overflow-hidden relative">
       {/* Chat Header */}
       <div className="px-8 py-5 border-b border-gray-100 dark:border-gray-800 flex flex-col backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 sticky top-0 z-20">
         <div className="flex items-center justify-between w-full">
@@ -171,7 +201,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                 <p className="text-[10px] font-black text-primary uppercase tracking-[0.15em]">
-                  Active Inquiry: {activeConversation.listingTitle}
+                  Inquiry for: {activeConversation.listingTitle}
                 </p>
               </div>
             </div>
@@ -376,7 +406,26 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
       {/* Input Area */}
       <div className="p-8 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-[#020817] z-20">
-        {activeConversation.isArchived || activeConversation.isPendingArchive ? (
+        {activeConversation.isClosed ? (
+          <div className="bg-gray-100/90 dark:bg-gray-800/60 border border-gray-200/80 dark:border-gray-700/60 rounded-[2rem] p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-gray-200/70 dark:bg-gray-700/70 text-gray-500 dark:text-gray-400 flex items-center justify-center shrink-0">
+                <IconLock size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-widest leading-tight">
+                  Chat Closed
+                </p>
+                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 leading-tight mt-0.5">
+                  {activeConversation.closedReason || "Messaging is closed for completed or inactive stays."}
+                </p>
+              </div>
+            </div>
+            <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0">
+              Read Only
+            </span>
+          </div>
+        ) : activeConversation.isArchived || activeConversation.isPendingArchive ? (
           <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/20 rounded-[2rem] p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
@@ -441,5 +490,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
         />
       </Modal>
     </div>
+    </SkeletonTheme>
   );
 };

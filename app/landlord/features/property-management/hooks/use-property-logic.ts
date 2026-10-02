@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -110,6 +110,22 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
     }, 300);
     return () => clearTimeout(handler);
   }, [searchInput]);
+
+  // Deep Linking from Messaging / Widget ("View Listing")
+  const searchParams = useSearchParams();
+  const deepListingId = searchParams ? (searchParams.get('listingId') || searchParams.get('propertyId')) : null;
+  const processedDeepLink = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!deepListingId || processedDeepLink.current === deepListingId) return;
+
+    const match = listings.find((p: Property) => p.id === deepListingId);
+    if (match) {
+      setSelectedProperty(match);
+      setViewModalOpen(true);
+      processedDeepLink.current = deepListingId;
+    }
+  }, [deepListingId, listings]);
 
   // 2. Mutations
   const archiveMutation = useMutation({

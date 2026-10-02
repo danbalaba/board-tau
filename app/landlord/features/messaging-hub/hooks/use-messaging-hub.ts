@@ -19,6 +19,8 @@ export interface Conversation {
   lastMessageTime: string;
   unreadCount: number;
   isArchived: boolean;
+  isClosed?: boolean;
+  closedReason?: string;
   isPendingArchive?: boolean;   // DB archived, UI still in "All" during undo window
   isPendingUnarchive?: boolean; // DB unarchived, UI still in "Archived" during undo window
   inquiryId?: string;

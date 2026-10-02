@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Avatar from "@/components/common/Avatar";
 import { Conversation } from "../hooks/use-messaging-hub";
 import { cn } from "@/utils/helper";
@@ -8,8 +8,9 @@ import SafeImage from "@/components/common/SafeImage";
 import { IconSearch, IconFilter, IconCircleFilled, IconCheck, IconX } from "@tabler/icons-react";
 import { formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
-import Skeleton from "react-loading-skeleton";
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { useTheme } from "next-themes";
 
 interface ConversationsListProps {
   conversations: Conversation[];
@@ -28,6 +29,31 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedListing, setSelectedListing] = useState<string | null>(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+
+  const { resolvedTheme, theme } = useTheme();
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const checkDark = () => {
+      return (
+        resolvedTheme === "dark" ||
+        theme === "dark" ||
+        document.documentElement.classList.contains("dark")
+      );
+    };
+    setIsDark(checkDark());
+
+    const observer = new MutationObserver(() => {
+      setIsDark(checkDark());
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, [resolvedTheme, theme]);
 
   // Get unique listings for the filter dropdown
   const uniqueListings = Array.from(new Set(conversations.map(c => c.listingTitle))).sort();
@@ -48,8 +74,12 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
       return !conv.isArchived; // "all" only shows non-archived
     });
 
+  const baseColor = isDark ? "#1e293b" : "#e2e8f0";
+  const highlightColor = isDark ? "#334155" : "#f1f5f9";
+
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800">
+    <SkeletonTheme baseColor={baseColor} highlightColor={highlightColor}>
+      <div className="flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800">
       {/* Header & Search */}
       <div className="p-6 space-y-4">
         <div className="flex items-center justify-between">
@@ -215,10 +245,10 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
           <div className="space-y-4 px-3 mt-4">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} className="flex items-center gap-4">
-                <Skeleton width={48} height={48} borderRadius={16} enableAnimation={false} />
+                <Skeleton width={48} height={48} borderRadius={16} />
                 <div className="flex-1 space-y-2">
-                  <Skeleton width="60%" height={12} enableAnimation={false} />
-                  <Skeleton width="40%" height={8} enableAnimation={false} />
+                  <Skeleton width="60%" height={12} />
+                  <Skeleton width="40%" height={8} />
                 </div>
               </div>
             ))}
@@ -285,6 +315,10 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
                       <span className="text-[9px] font-black uppercase tracking-widest text-amber-500 shrink-0 px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
                         {conv.isPendingArchive ? "Archiving..." : "Restoring..."}
                       </span>
+                    ) : conv.isClosed ? (
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 shrink-0 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200/50 dark:border-gray-700/50">
+                        Closed
+                      </span>
                     ) : (
                       <span className="text-[10px] font-bold text-gray-400 shrink-0">
                         {formatDistanceToNow(new Date(conv.lastMessageTime), { addSuffix: false })}
@@ -316,5 +350,6 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
         )}
       </div>
     </div>
+    </SkeletonTheme>
   );
 };
