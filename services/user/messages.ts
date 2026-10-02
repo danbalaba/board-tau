@@ -15,13 +15,15 @@ export interface TenantConversation {
   lastMessageTime: string;
   unreadCount: number;
   isArchived: boolean;
+  isClosed?: boolean;
+  closedReason?: string;
 }
 
 /**
  * Fetches all active conversations for the logged-in tenant.
  * A conversation is defined as a unique pair of (Listing + Landlord).
  */
-export async function getTenantConversations() {
+export async function getTenantConversations(): Promise<TenantConversation[]> {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -143,16 +145,61 @@ export async function getTenantConversations() {
     }
   }
 
+  // BULK QUERY 4: Get ALL reservation contexts at once
+  const allReservations = await db.reservation.findMany({
+    where: {
+      userId: tenantId,
+      listingId: { in: pairsArray.map(p => p.listingId) },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const reservationMap = new Map<string, typeof allReservations[0]>();
+  for (const res of allReservations) {
+    if (!reservationMap.has(res.listingId)) {
+      reservationMap.set(res.listingId, res);
+    }
+  }
+
   // ============================================================
   // ASSEMBLY: Build results from in-memory maps (zero queries!)
   // ============================================================
-  const results = pairsArray.map(({ listingId, landlordId }) => {
+  const now = new Date();
+  const results: (TenantConversation | null)[] = pairsArray.map(({ listingId, landlordId }) => {
     const key = `${listingId}_${landlordId}`;
     const lastMessage = lastMessageMap.get(key);
     if (!lastMessage || !lastMessage.listing.user) return null;
 
     const inquiry = inquiryMap.get(listingId);
+    const reservation = reservationMap.get(listingId);
     const unreadCount = unreadMap.get(key) || 0;
+
+    // Evaluate if conversation is closed
+    let isClosed = false;
+    let closedReason = "";
+
+    if (reservation) {
+      if (reservation.status === "COMPLETED") {
+        isClosed = true;
+        closedReason = "Messaging is closed because your stay has been completed.";
+      } else if (reservation.status === "CANCELLED") {
+        isClosed = true;
+        closedReason = "Messaging is closed for cancelled reservations.";
+      } else if (new Date(reservation.endDate) < now) {
+        isClosed = true;
+        closedReason = "Messaging is closed because the stay period has ended.";
+      }
+    }
+
+    if (!isClosed && inquiry) {
+      if (["REJECTED", "CANCELLED", "EXPIRED"].includes(inquiry.status)) {
+        isClosed = true;
+        closedReason = `Messaging is closed for ${inquiry.status.toLowerCase()} inquiries.`;
+      } else if (new Date(inquiry.checkOutDate) < now) {
+        isClosed = true;
+        closedReason = "Messaging is closed because the stay period has ended.";
+      }
+    }
 
     // Determine the best display image (Priority: Room -> Listing Gallery -> Listing imageSrc)
     let displayImage = "/images/placeholder.jpg";
@@ -179,10 +226,11 @@ export async function getTenantConversations() {
       lastMessageTime: lastMessage.createdAt.toISOString(),
       unreadCount,
       isArchived: lastMessage.isArchived,
+      isClosed,
+      closedReason,
     };
   });
 
-  return results
-    .filter((c): c is TenantConversation => c !== null)
-    .sort((a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime());
+  const filtered = results.filter((c): c is TenantConversation => c !== null);
+  return filtered.sort((a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime());
 }

@@ -43,7 +43,33 @@ async function assertCanMessageForListing(params: {
 
   if (isWrite) {
     const now = new Date();
-    // When sending a new message, require an active inquiry or active reservation that has not expired
+
+    // 1. Check if there is any COMPLETED or CANCELLED reservation for this tenant and listing
+    const closedReservation = await db.reservation.findFirst({
+      where: {
+        listingId,
+        userId: tenantId,
+        OR: [
+          { status: { in: ["COMPLETED", "CANCELLED"] as any } },
+          { endDate: { lt: now } }
+        ]
+      },
+      select: { id: true, status: true },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (closedReservation) {
+      const reason = (closedReservation.status as string) === "CANCELLED"
+        ? "Messaging is closed for cancelled reservations."
+        : "Messaging is closed because the stay period has completed or ended.";
+      return {
+        ok: false as const,
+        status: 403,
+        message: reason,
+      };
+    }
+
+    // 2. When sending a new message, require an active inquiry or active reservation that has not expired
     const [activeInquiry, activeReservation] = await Promise.all([
       db.inquiry.findFirst({
         where: {

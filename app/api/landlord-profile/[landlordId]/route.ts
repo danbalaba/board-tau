@@ -32,7 +32,11 @@ export async function GET(
             title: true,
             imageSrc: true,
             images: true,
-            category: true,
+            propertyType: {
+              select: {
+                name: true,
+              },
+            },
             location: true,
             _count: {
               select: {

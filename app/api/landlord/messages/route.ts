@@ -57,6 +57,53 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
     }
 
+    // Verify messaging is open for this listing & tenant
+    const now = new Date();
+
+    // 1. Check for closed or completed reservation
+    const closedReservation = await db.reservation.findFirst({
+      where: {
+        listingId,
+        userId: receiverId,
+        OR: [
+          { status: { in: ["COMPLETED", "CANCELLED"] as any } },
+          { endDate: { lt: now } }
+        ]
+      },
+      select: { id: true, status: true },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (closedReservation) {
+      const reason = (closedReservation.status as string) === "CANCELLED"
+        ? "Messaging is closed for cancelled reservations."
+        : "Messaging is closed because the stay period has completed or ended.";
+      return NextResponse.json({ success: false, error: reason }, { status: 403 });
+    }
+
+    // 2. Check for closed or rejected inquiry
+    const closedInquiry = await db.inquiry.findFirst({
+      where: {
+        listingId,
+        userId: receiverId,
+        OR: [
+          { status: { in: ["REJECTED", "CANCELLED", "EXPIRED"] as any } },
+          { checkOutDate: { lt: now } }
+        ]
+      },
+      select: { id: true, status: true },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (closedInquiry) {
+      const reason = (closedInquiry.status as string) === "REJECTED"
+        ? "Messaging is closed for rejected inquiries."
+        : (closedInquiry.status as string) === "CANCELLED"
+        ? "Messaging is closed for cancelled inquiries."
+        : "Messaging is closed because the inquiry period has ended or expired.";
+      return NextResponse.json({ success: false, error: reason }, { status: 403 });
+    }
+
     // 1. Create the message (Encrypting the content before DB insert)
     const message = await db.message.create({
       data: {
