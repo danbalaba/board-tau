@@ -203,7 +203,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const roomFee = reservation.room?.reservationFee || (reservation.totalPrice / occupants);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} width="2xl" hasFixedFooter={true} fullOnMobile={true}>
+    <Modal isOpen={isOpen} onClose={onClose} width="2xl" hasFixedFooter={true} fullOnMobile={true} closeOnOutsideClick={false}>
       <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[85vh] overflow-hidden">
         
         {/* Header */}
@@ -354,11 +354,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 </p>
 
                 <label className={cn(
-                  "flex items-start gap-3.5 p-4 rounded-2xl border-2 transition-all cursor-pointer",
+                  "relative flex items-start gap-4 p-4.5 rounded-2xl border-2 transition-all duration-300 cursor-pointer select-none group",
                   isContractAgreed 
-                    ? "border-primary bg-primary/10 dark:bg-primary/15 ring-2 ring-primary/20" 
-                    : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 bg-gray-50/50 dark:bg-gray-800/40"
+                    ? "border-primary bg-primary/10 dark:bg-primary/15 ring-2 ring-primary/20 shadow-md shadow-primary/5" 
+                    : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40"
                 )}>
+                  {/* Hidden native checkbox for accessibility */}
                   <input
                     type="checkbox"
                     checked={isContractAgreed}
@@ -366,14 +367,35 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                       setIsContractAgreed(e.target.checked);
                       if (e.target.checked) setError(null);
                     }}
-                    className="mt-0.5 w-4 h-4 rounded text-primary border-gray-300 focus:ring-primary cursor-pointer shrink-0"
+                    className="sr-only"
                   />
-                  <div className="space-y-0.5">
-                    <span className="text-xs font-bold text-gray-900 dark:text-white leading-snug block">
-                      I have read and agree to the <strong>Boarding House Lease Agreement</strong> and house rules.
-                    </span>
-                    <span className="text-[10px] font-semibold text-gray-400 block">
-                      Checking this box confirms your legal consent prior to payment.
+
+                  {/* Custom Animated Checkbox Control */}
+                  <div className={cn(
+                    "mt-0.5 w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all duration-300",
+                    isContractAgreed
+                      ? "border-primary bg-primary text-white shadow-md shadow-primary/30 scale-105"
+                      : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 group-hover:border-primary/60"
+                  )}>
+                    <CheckCircle2 className={cn(
+                      "w-3.5 h-3.5 transition-transform duration-200 stroke-[3]",
+                      isContractAgreed ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                    )} />
+                  </div>
+
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-gray-900 dark:text-white leading-snug">
+                        I have read and agree to the <strong>Boarding House Lease Agreement</strong> & house rules.
+                      </span>
+                      {isContractAgreed && (
+                        <span className="px-2 py-0.5 bg-primary text-white rounded-md text-[9px] font-black uppercase tracking-wider shrink-0 animate-fadeIn">
+                          Agreed
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 block leading-normal">
+                      Checking this box confirms your digital legal consent prior to payment processing.
                     </span>
                   </div>
                 </label>
@@ -473,23 +495,23 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           
           <button
             onClick={onClose}
-            className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors text-center"
+            className="hidden sm:block w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors text-center"
             disabled={isProcessing}
           >
             Cancel & Go Back
           </button>
 
           {/* Slide to Confirm Action */}
-          <div className="w-full sm:w-auto flex flex-col items-center sm:items-end">
+          <div className="w-full sm:w-[310px] flex flex-col items-center sm:items-end">
             <SlideToConfirm
-              text={`PAY ₱${Number(reservation.totalPrice || 0).toLocaleString()}`}
+              text={`SLIDE TO PAY ₱${Number(reservation.totalPrice || 0).toLocaleString()}`}
               successText="REDIRECTING..."
               onConfirm={handlePayment}
-              width={290}
+              width={310}
               disabled={isProcessing || !selectedMethod || !isContractAgreed}
               icon={<Lock size={14} strokeWidth={2.5} />}
-              fullWidth={false}
-              className="w-full sm:w-[290px]"
+              fullWidth={true}
+              className="w-full sm:w-[310px]"
             />
             {!isContractAgreed && (
               <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 mt-1.5 animate-pulse text-center sm:text-right flex items-center justify-center sm:justify-end gap-1">

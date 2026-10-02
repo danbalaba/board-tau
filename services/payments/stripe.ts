@@ -7,7 +7,7 @@ import {
 } from "@/services/email/notifications";
 import { createNotification } from "@/services/notification";
 
-export const createStripeCheckoutSession = async (inquiryId: string) => {
+export const createStripeCheckoutSession = async (inquiryId: string, customAmount?: number) => {
   // Check if Stripe is configured
   if (!stripe) {
     throw new Error("Stripe not configured");
@@ -32,18 +32,19 @@ export const createStripeCheckoutSession = async (inquiryId: string) => {
     throw new Error("Reservation request not found");
   }
 
-  // Check if the inquiry is approved and unpaid
-  if (inquiry.status !== "APPROVED" || (inquiry as any).paymentStatus === "PAID") {
-    throw new Error("Reservation request is not approved or already paid");
-  }
-
   // Check if the current user is the one who made the reservation
   if (inquiry.userId !== user.id) {
     throw new Error("Unauthorized");
   }
 
-  // Use the fixed reservation fee stored in the inquiry
-  const totalPrice = (inquiry as any).reservationFee || 0;
+  // Determine total price from customAmount, inquiry reservationFee, room reservationFee, or listing price
+  const totalPrice = (customAmount && customAmount > 0)
+    ? customAmount
+    : ((inquiry as any).reservationFee || inquiry.room?.reservationFee || inquiry.listing.price || 0);
+
+  if (totalPrice <= 0) {
+    throw new Error("Invalid payment amount");
+  }
 
   // Create Stripe product
   const product = await stripe.products.create({
