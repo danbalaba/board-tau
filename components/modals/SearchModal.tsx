@@ -871,7 +871,7 @@ export default function SearchModal({
           onCloseModal?.();
         }
       }}
-      className={`w-full h-full flex items-end md:items-center justify-center ${isMapOverlay ? 'p-0 md:p-4' : 'p-0 md:p-6 lg:p-12'}`}
+      className={`w-full h-full flex items-end md:items-center justify-center ${isMapOverlay ? 'p-0' : 'p-0 md:p-2 lg:p-3'}`}
     >
       <motion.div
         drag={isMobile ? "y" : false}
@@ -886,8 +886,8 @@ export default function SearchModal({
         }}
         className={`w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-t md:border border-slate-200 dark:border-white/10 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden font-sans rounded-t-[32px] rounded-b-none md:rounded-3xl transition-all duration-200 mt-auto mb-0 ${
           showWizard
-            ? "h-[85vh] md:h-[85vh] max-h-[85vh] md:max-h-[820px] max-w-5xl mx-auto md:my-auto"
-            : "h-auto max-h-[80vh] md:max-h-[650px] max-w-2xl mx-auto md:my-auto"
+            ? "w-full h-[85vh] max-h-[85vh] md:w-[98vw] md:h-[96vh] md:max-h-full mx-auto md:my-auto"
+            : "w-full h-auto max-h-[85vh] md:max-h-[650px] max-w-2xl mx-auto md:my-auto"
         }`}
       >
         {/* Mobile Draggable Pull Handle Line */}
@@ -1105,7 +1105,7 @@ export default function SearchModal({
             /* VIEW 2: Full-Size Guided Wizard with Adaptive Kerby Mascot Panel */
             <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
               {/* DESKTOP LEFT COLUMN: Full Kerby Mascot Panel */}
-              <div className={`hidden md:flex flex-col justify-between w-full ${isMapOverlay ? 'md:w-[300px] lg:w-[320px] p-3.5' : 'md:w-[380px] lg:w-[420px] p-6'} border-r border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-slate-900/40 flex-shrink-0 overflow-y-auto`}>
+              <div className={`hidden md:flex flex-col justify-between w-full ${isMapOverlay ? 'md:w-[320px] lg:w-[360px] p-3' : 'md:w-[360px] lg:w-[400px] p-4'} border-r border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-slate-900/40 flex-shrink-0 overflow-y-auto`}>
                 <KerbyMascot
                   pose={dynamicPoseOverride || kerbyState.pose}
                   outfitMode={outfitMode}
@@ -1163,7 +1163,7 @@ export default function SearchModal({
                 </div>
 
                 {/* Scrollable Step Content Body */}
-                <div ref={contentBodyRef} className="flex-1 p-4 md:p-6 overflow-y-auto custom-scrollbar min-h-0">
+                <div ref={contentBodyRef} className="flex-1 p-4 md:p-6 overflow-y-auto custom-scrollbar min-h-0 flex flex-col">
                   {renderStepContent()}
                 </div>
 

@@ -17,7 +17,7 @@ import { createPortal } from "react-dom";
 
 import { useOutsideClick } from "@/hooks/useOutsideClick";
 import { useIsClient } from "@/hooks/useIsClient";
-import { fadeIn, modalSheet } from "@/utils/motion";
+import { fadeIn, modalSheet, glassFadeIn } from "@/utils/motion";
 import { cn } from "@/utils/helper";
 
 // Simple implementation of useKeyPress
@@ -135,7 +135,7 @@ const Modal: FC<ModalProps> & {
             transition={{ duration: 0.2 }}
             className={cn(
               "fixed inset-0 z-[10000] flex justify-center overflow-hidden outline-none focus:outline-none bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-300 overscroll-contain",
-              isFullMobile ? "p-0 items-end sm:items-center sm:p-6" : "p-4 items-center sm:p-6"
+              width === 'full' ? "p-0 sm:p-2 md:p-3" : (isFullMobile ? "p-0 items-end sm:items-center sm:p-6" : "p-4 items-center sm:p-6")
             )}
             onWheel={(e) => e.preventDefault()}
             onTouchMove={(e) => e.preventDefault()}
@@ -148,7 +148,7 @@ const Modal: FC<ModalProps> & {
             }}
           >
             <motion.div
-              variants={modalSheet}
+              variants={width === 'full' ? glassFadeIn : modalSheet}
               initial="hidden"
               animate="show"
               exit="exit"
@@ -299,7 +299,7 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, 
           transition={{ duration: 0.2 }}
           className={cn(
             "fixed inset-0 z-[10000] flex justify-center overflow-hidden outline-none focus:outline-none bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-300 overscroll-contain",
-            isFullMobile ? "p-0 items-end sm:items-center sm:p-6" : "p-4 items-center sm:p-6"
+            size === 'full' ? "p-0 sm:p-2 md:p-3" : (isFullMobile ? "p-0 items-end sm:items-center sm:p-6" : "p-4 items-center sm:p-6")
           )}
           onClick={(e) => {
             e.stopPropagation();
@@ -309,7 +309,7 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, 
           }}
         >
             <motion.div
-              variants={modalSheet}
+              variants={size === 'full' ? glassFadeIn : modalSheet}
               initial="hidden"
               animate="show"
               exit="exit"
