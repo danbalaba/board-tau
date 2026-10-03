@@ -200,8 +200,8 @@ export function LandlordInquiryHeader({
             </div>
           </div>
 
-          <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full md:w-auto">
-            {/* View Toggles */}
+          <div className="flex items-center justify-between gap-2.5 w-full md:w-auto">
+            {/* View Mode Toggles */}
             <div className="flex items-center gap-1 bg-gray-100/50 dark:bg-gray-800/50 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shrink-0">
               <button
                 onClick={() => setViewMode('grid')}
@@ -229,7 +229,7 @@ export function LandlordInquiryHeader({
               onGenerateExcel={handleGenerateExcel}
               label="Generate Report"
               outline={false}
-              className="h-9 sm:h-12 px-3 sm:px-6 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] sm:text-[11px] tracking-widest shadow-lg shadow-primary/25 border-b-4 border-primary/30 active:border-b-0 active:translate-y-0.5 transition-all flex items-center gap-1.5 sm:gap-2 shrink-0"
+              className="w-auto h-9 sm:h-11 px-3 sm:px-5 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] sm:text-[11px] tracking-wider sm:tracking-widest shadow-md shadow-primary/20 border-b-2 sm:border-b-4 border-primary/30 active:border-b-0 transition-all flex items-center justify-center gap-1.5 shrink-0"
             />
           </div>
         </div>

@@ -236,7 +236,7 @@ const PrepareStep: React.FC<PrepareStepProps> = ({
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                 )}
               >
-                Primary IDs
+                Primary IDs (6)
               </button>
               <button 
                 type="button"
@@ -248,12 +248,12 @@ const PrepareStep: React.FC<PrepareStepProps> = ({
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                 )}
               >
-                Secondary IDs
+                Secondary IDs (9)
               </button>
             </div>
 
             {/* Grid of IDs */}
-            <div>
+            <div className="max-h-[360px] overflow-y-auto pr-1.5 custom-scrollbar">
               <AnimatePresence mode="wait">
                 <motion.div 
                   key={selectedIDTab}
@@ -273,11 +273,11 @@ const PrepareStep: React.FC<PrepareStepProps> = ({
                         { name: "PRC ID", src: "/images/id-prc.png" },
                         { name: "Voter's ID", src: "/images/id-voters.png" },
                       ].map((id) => (
-                        <div key={id.name} className="group p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 hover:border-primary transition-all shadow-xs flex flex-col items-center gap-2.5 text-center">
-                          <div className="w-full aspect-[1.586/1] rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 shadow-inner flex items-center justify-center">
-                             <SafeImage src={id.src} alt={id.name} />
+                        <div key={id.name} className="group p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 hover:border-primary transition-all shadow-xs flex flex-col items-center justify-between text-center">
+                          <div className="w-full aspect-[1.586/1] rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-700/50 shadow-inner flex items-center justify-center p-0.5">
+                             <SafeImage src={id.src} alt={id.name} className="w-full h-full object-contain rounded-lg group-hover:scale-105 transition-transform duration-300" />
                           </div>
-                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 leading-tight">{id.name}</p>
+                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 leading-tight mt-2">{id.name}</p>
                         </div>
                       ))}
                     </>
@@ -294,18 +294,18 @@ const PrepareStep: React.FC<PrepareStepProps> = ({
                         { name: "Postal ID", icon: <CreditCard size={20} />, color: "bg-rose-50 text-rose-600", src: "/images/id-secondary-postal-id.png" },
                         { name: "TIN ID", icon: <CreditCard size={20} />, color: "bg-orange-50 text-orange-600", src: "/images/id-secondary-tin-id.png" },
                       ].map((id) => (
-                        <div key={id.name} className="group p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 hover:border-primary transition-all shadow-xs flex flex-col items-center gap-2.5 text-center">
-                          <div className="w-full aspect-[1.586/1] rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 shadow-inner flex items-center justify-center">
+                        <div key={id.name} className="group p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 hover:border-primary transition-all shadow-xs flex flex-col items-center justify-between text-center">
+                          <div className="w-full aspect-[1.586/1] rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-700/50 shadow-inner flex items-center justify-center p-0.5">
                              {id.src ? (
-                               <SafeImage src={id.src} alt={id.name} />
+                               <SafeImage src={id.src} alt={id.name} className="w-full h-full object-contain rounded-lg group-hover:scale-105 transition-transform duration-300" />
                              ) : (
-                               <div className={`w-full h-full ${id.color} flex flex-col items-center justify-center text-white p-3 gap-1 group-hover:scale-105 transition-transform duration-300`}>
+                               <div className={`w-full h-full ${id.color} rounded-lg flex flex-col items-center justify-center text-white p-3 gap-1 group-hover:scale-105 transition-transform duration-300`}>
                                  {id.icon}
                                  <span className="text-[8px] font-black uppercase tracking-wider opacity-80">Official Doc</span>
                                </div>
                              )}
                           </div>
-                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 leading-tight">{id.name}</p>
+                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 leading-tight mt-2">{id.name}</p>
                         </div>
                       ))}
                     </>

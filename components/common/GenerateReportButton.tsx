@@ -71,15 +71,7 @@ const GenerateReportButton: React.FC<GenerateReportButtonProps> = ({
             <IconFileDownload size={16} className="group-hover:translate-y-0.5 transition-transform duration-300 shrink-0" />
           )}
           <span className="text-[10px] sm:text-[11px] uppercase tracking-widest font-black whitespace-nowrap">
-            {isGenerating ? (
-              "Processing..."
-            ) : label === "Generate Report" ? (
-              <>
-                <span className="hidden sm:inline">Generate </span>Report
-              </>
-            ) : (
-              label
-            )}
+            {isGenerating ? "Processing..." : label}
           </span>
         </span>
       </Button>
