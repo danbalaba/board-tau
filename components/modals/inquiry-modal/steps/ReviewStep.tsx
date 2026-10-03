@@ -176,13 +176,13 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
         {/* Key Details Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="bg-gray-50 dark:bg-gray-800/60 p-3 rounded-2xl border border-gray-100 dark:border-gray-700/50">
-             <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-black tracking-widest mb-0.5">Move-In</p>
+             <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-black tracking-widest mb-0.5">Check-In Date</p>
              <p className="font-extrabold text-xs text-gray-900 dark:text-white truncate">
                {watchedValues[1] ? format(new Date(watchedValues[1]), 'MMM dd, yyyy') : '-'}
              </p>
           </div>
           <div className="bg-gray-50 dark:bg-gray-800/60 p-3 rounded-2xl border border-gray-100 dark:border-gray-700/50">
-             <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-black tracking-widest mb-0.5">Move-Out</p>
+             <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-black tracking-widest mb-0.5">Check-Out Date</p>
              <p className="font-extrabold text-xs text-gray-900 dark:text-white truncate">
                {watchedValues[2] ? format(new Date(watchedValues[2]), 'MMM dd, yyyy') : '-'}
              </p>

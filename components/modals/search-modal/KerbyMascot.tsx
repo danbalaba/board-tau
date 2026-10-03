@@ -27,7 +27,7 @@ interface KerbyMascotProps {
   isTyping?: boolean;
   transparentBg?: boolean;
   bubblePosition?: 'top' | 'top-right' | 'right';
-  guideType?: 'host' | 'search' | 'student';
+  guideType?: 'host' | 'search' | 'student' | 'inquiry';
   showCloseButton?: boolean;
   disableTyping?: boolean;
   customAssetSrc?: string;
@@ -175,7 +175,7 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
                   <span className="font-bold text-[#2f7d6d]">{badgeLabel}</span>
                   <div className="flex items-center gap-1 text-[9px] text-[#2f7d6d]/80 font-mono uppercase">
                     <Sparkles className="w-3 h-3 text-[#2f7d6d] shrink-0" />
-                    <span>{guideType === "host" ? "Host Guide" : "Search Guide"}</span>
+                    <span>{guideType === "host" ? "Host Guide" : guideType === "inquiry" ? "Inquiry Guide" : guideType === "student" ? "Student Guide" : "Search Guide"}</span>
                   </div>
                 </div>
               )}

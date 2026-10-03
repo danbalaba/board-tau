@@ -43,7 +43,7 @@ const base64ToFile = (base64: string, filename: string): File => {
 
 /** Animated corner bracket */
 const CornerBracket = ({ position }: { position: "tl" | "tr" | "bl" | "br" }) => {
-  const base = "absolute w-6 h-6 border-blue-400/80";
+  const base = "absolute w-6 h-6 border-primary/80";
   const corners: Record<string, string> = {
     tl: "top-0 left-0 border-t-2 border-l-2 rounded-tl-md",
     tr: "top-0 right-0 border-t-2 border-r-2 rounded-tr-md",
@@ -149,19 +149,21 @@ const IDStep: React.FC<IDStepProps> = ({
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-start gap-3">
-        <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 shrink-0">
-          <FaIdCard className="text-blue-400" size={20} />
-        </div>
+      <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-            Step 2: Upload Your ID Card
+          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+              <FaIdCard size={18} />
+            </div>
+            Step 6: Upload Government or School ID Card
           </h3>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Take a clear photo of your <span className="text-blue-400 font-medium">physical government-issued ID</span> — both portrait and landscape are accepted. <br/>
-            <span className="text-amber-500 dark:text-amber-400 font-medium italic">* Please ensure the face photo on the ID is clearly visible for verification.</span>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Capture or upload a clear photo of your <span className="text-blue-500 dark:text-blue-400 font-semibold">physical valid ID document</span>.
           </p>
         </div>
+        <span className="hidden sm:inline-flex text-[11px] font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 px-3 py-1 rounded-full shrink-0">
+          ID Verification
+        </span>
       </div>
 
       {/* Top-Level Selfie Retake Banner */}
