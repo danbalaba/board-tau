@@ -6,7 +6,8 @@ import {
   IconMessage, 
   IconX, 
   IconChevronLeft,
-  IconArrowsMaximize
+  IconArrowsMaximize,
+  IconGripVertical
 } from '@tabler/icons-react';
 import { useMessagingHub } from '../hooks/use-messaging-hub';
 import { ConversationsList } from './conversations-list';
@@ -27,9 +28,24 @@ export function FloatingMessagingWidget() {
   const [view, setView] = useState<'list' | 'chat'>('list');
   const [showInfo, setShowInfo] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [dragConstraints, setDragConstraints] = useState({ top: -200, bottom: 200 });
 
   useEffect(() => {
     setMounted(true);
+
+    const updateConstraints = () => {
+      if (typeof window !== 'undefined') {
+        const halfHeight = window.innerHeight / 2;
+        setDragConstraints({
+          top: -halfHeight + 80,
+          bottom: halfHeight - 120
+        });
+      }
+    };
+
+    updateConstraints();
+    window.addEventListener('resize', updateConstraints);
+    return () => window.removeEventListener('resize', updateConstraints);
   }, []);
 
   const {
@@ -167,20 +183,29 @@ export function FloatingMessagingWidget() {
 
   return (
     <>
-      {/* 1. MOBILE PEEKING TAB (left edge anchored, visible on < md) */}
-      <div className="md:hidden fixed left-0 top-1/2 -translate-y-1/2 z-[100]">
+      {/* 1. MOBILE PEEKING TAB (left edge anchored, draggable vertically on mobile) */}
+      <motion.div
+        drag="y"
+        dragMomentum={false}
+        dragElastic={0.05}
+        dragConstraints={dragConstraints}
+        className="md:hidden fixed left-0 top-1/2 -translate-y-1/2 z-[100] touch-none cursor-grab active:cursor-grabbing"
+      >
         <motion.button
           whileHover={{ x: 4 }}
           whileTap={{ scale: 0.92 }}
           onClick={() => setIsMobileOpen(true)}
           className={cn(
-            "relative flex items-center gap-2 py-3 pl-3 pr-3.5 rounded-r-2xl shadow-2xl border-y border-r transition-all duration-300 backdrop-blur-xl group cursor-pointer",
+            "relative flex items-center gap-1.5 py-3 pl-2 pr-3 rounded-r-2xl shadow-2xl border-y border-r transition-colors duration-300 backdrop-blur-xl group cursor-grab active:cursor-grabbing",
             totalUnread > 0 
               ? "bg-rose-500 text-white border-rose-400/50 shadow-rose-500/30" 
               : "bg-primary text-white border-white/20 shadow-primary/30"
           )}
-          title="Open Landlord Messages Inbox"
+          title="Drag vertically to reposition. Tap to open Landlord Messages Inbox"
         >
+          {/* Vertical Grip Handle Indicator */}
+          <IconGripVertical size={14} className="text-white/60 shrink-0 -mr-0.5" />
+
           <div className="relative">
             <IconMessage size={22} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
             {totalUnread > 0 && (
@@ -195,7 +220,7 @@ export function FloatingMessagingWidget() {
             <span className="absolute inset-0 rounded-r-2xl bg-white/20 animate-pulse pointer-events-none" />
           )}
         </motion.button>
-      </div>
+      </motion.div>
 
       {/* 2. MOBILE FULL SCREEN CHAT OVERLAY PORTAL */}
       {mounted && createPortal(
