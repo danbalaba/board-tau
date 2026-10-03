@@ -6,6 +6,7 @@ import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
 import { useQueryClient } from '@tanstack/react-query';
 import { DateRange } from 'react-day-picker';
+import { formatDate } from '@/lib/utils';
 
 export interface ReservationRequest {
   id: string;
@@ -260,12 +261,12 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
         ];
       }
 
-      const columns = ['Listing', 'Tenant', 'Status', 'Move In Date', 'Duration'];
+      const columns = ['Listing', 'Tenant', 'Status', 'Check-In Date', 'Duration'];
       const data = exportData.map((r) => [
         r.listing.title,
         (r.user?.name || r.guestName) || (r.user?.email || r.guestContact),
         r.status.toUpperCase(),
-        new Date(r.moveInDate).toLocaleDateString(),
+        formatDate(r.moveInDate),
         `${r.stayDuration} days`
       ]);
 

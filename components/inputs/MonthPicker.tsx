@@ -23,7 +23,7 @@ const MonthPicker: React.FC<MonthPickerProps> = ({
   label,
   value,
   onChange,
-  placeholder = "Select move-in month...",
+  placeholder = "Select check-in month...",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);

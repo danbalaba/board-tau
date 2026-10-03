@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { formatDate } from '@/lib/utils';
 
 const PRIMARY_TEAL: [number, number, number] = [47, 125, 109]; // #2F7D6D
 const SECONDARY_NAVY: [number, number, number] = [15, 23, 42]; // #0F172A
@@ -276,8 +277,8 @@ export const generateLeaseContractPDF = async (
     startY: currentY,
     head: [['Lease Term & Financial Parameter', 'Details & Official Terms']],
     body: [
-      ['Move-In Date', data.moveInDate || 'Effective Upon Signing'],
-      ['Expected Check-Out Date', data.checkOutDate || 'Per Lease Duration'],
+      ['Check-In Date', data.moveInDate ? (formatDate(data.moveInDate, { month: 'long', day: 'numeric', year: 'numeric' }) || data.moveInDate) : 'Effective Upon Signing'],
+      ['Expected Check-Out Date', data.checkOutDate ? (formatDate(data.checkOutDate, { month: 'long', day: 'numeric', year: 'numeric' }) || data.checkOutDate) : 'Per Lease Duration'],
       ['Monthly Base Rent', `PHP ${Number(data.rentAmount || 0).toLocaleString()} / month`],
       ['Security Deposit Requirement', `PHP ${Number(data.depositAmount || 0).toLocaleString()}`],
       ['Move-Out Notice Requirement', `${data.moveOutNoticeDays || 30} Days Advance Notice`],

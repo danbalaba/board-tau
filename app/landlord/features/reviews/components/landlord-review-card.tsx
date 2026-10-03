@@ -14,6 +14,7 @@ import {
 } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
+import { formatDate } from '@/lib/utils';
 import Button from "@/components/common/Button";
 import Avatar from '@/components/common/Avatar';
 import { Review } from '../hooks/use-review-logic';
@@ -160,7 +161,7 @@ export function LandlordReviewCard({
             </p>
             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1.5 flex items-center gap-1">
               <IconCalendar size={11} className="text-primary shrink-0" />
-              <span>{new Date(review.createdAt).toLocaleDateString()}</span>
+              <span>{formatDate(review.createdAt)}</span>
             </p>
           </div>
 
@@ -328,7 +329,7 @@ export function LandlordReviewCard({
                   </span>
                 </div>
                 <span className="text-[10px] text-gray-400 font-medium">
-                  {new Date(review.createdAt).toLocaleDateString()}
+                  {formatDate(review.createdAt)}
                 </span>
               </div>
 

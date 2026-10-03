@@ -14,7 +14,9 @@ import {
   FileText,
   Mail,
   User,
-  Tag
+  Tag,
+  ShieldCheck,
+  Eye as IconEye
 } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
 import { cn } from "@/utils/helper";
@@ -101,6 +103,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
   const router = useRouter();
   const responsiveToast = useResponsiveToast();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [activeNotification, setActiveNotification] = useState(notification);
 
   React.useEffect(() => {
@@ -218,10 +221,13 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
   const statusInfo = getStatusBadge(reservation.status);
   const paymentInfo = getPaymentBadge(reservation.paymentStatus);
 
+  const selfieUrl = (reservation as any).profilePhotoUrl || (reservation as any).guestPhotoUrl || (reservation as any).inquiry?.profilePhotoUrl;
+  const idUrl = (reservation as any).idAttachmentUrl || (reservation as any).guestIdUrl || (reservation as any).inquiry?.idAttachmentUrl;
+
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} fullOnMobile={true}>
-        <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[82vh] overflow-hidden">
+      <Modal isOpen={isOpen} onClose={onClose} width="full" noPadding={true} hasFixedFooter={true} closeOnOutsideClick={false} fullOnMobile={true}>
+        <div className="w-full h-full sm:h-auto sm:max-h-[90vh] max-w-full sm:max-w-5xl mx-auto overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl border-0 sm:border sm:border-gray-200 dark:sm:border-gray-800 shadow-2xl">
           
           {/* Header Bar */}
           <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 bg-white dark:bg-gray-900">
@@ -467,14 +473,75 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                     </div>
 
                     <div className="flex items-center justify-between pt-3">
-                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Booking Reference ID</span>
-                      <span className="text-xs font-mono font-bold text-gray-900 dark:text-white truncate max-w-[160px]">
-                        {reservation.id}
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Reservation Reference</span>
+                      <span className="text-xs sm:text-sm font-mono font-black text-primary dark:text-primary-light tracking-wider" title={reservation.id}>
+                        #RES-{reservation.id.slice(-8).toUpperCase()}
                       </span>
                     </div>
                   </div>
                 </div>
 
+                {/* Identity Verification Documents (if uploaded) */}
+                {(selfieUrl || idUrl) && (
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                      <ShieldCheck size={14} className="text-primary" />
+                      <span>Identity Verification Documents</span>
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Selfie Verification Card */}
+                      {selfieUrl && (
+                        <div 
+                          onClick={() => setPreviewImage(selfieUrl)}
+                          className="p-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 hover:border-primary/50 transition-all flex items-center gap-3.5 group cursor-pointer select-none"
+                        >
+                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-900 border border-gray-200 dark:border-gray-700 shrink-0 relative shadow-inner flex items-center justify-center">
+                            <SafeImage src={selfieUrl} alt="Selfie Photo" unoptimized={true} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                              <IconEye size={14} />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-extrabold text-gray-900 dark:text-white truncate">Live Biometric Selfie</span>
+                              <IconCircleCheck size={13} className="text-primary shrink-0" />
+                            </div>
+                            <p className="text-[10px] text-gray-400 font-medium truncate mt-0.5">Liveness Facial Scan</p>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary mt-1 group-hover:underline">
+                              <IconEye size={11} /> View Full Photo
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ID Verification Card */}
+                      {idUrl && (
+                        <div 
+                          onClick={() => setPreviewImage(idUrl)}
+                          className="p-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 hover:border-primary/50 transition-all flex items-center gap-3.5 group cursor-pointer select-none"
+                        >
+                          <div className="w-16 h-12 rounded-xl overflow-hidden bg-gray-900 border border-gray-200 dark:border-gray-700 shrink-0 relative shadow-inner flex items-center justify-center">
+                            <SafeImage src={idUrl} alt="ID Document" unoptimized={true} className="w-full h-full object-contain p-0.5" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                              <IconEye size={14} />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-extrabold text-gray-900 dark:text-white truncate">Valid Physical ID</span>
+                              <IconCircleCheck size={13} className="text-primary shrink-0" />
+                            </div>
+                            <p className="text-[10px] text-gray-400 font-medium truncate mt-0.5">Government / Student ID</p>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary mt-1 group-hover:underline">
+                              <IconEye size={11} /> View Document
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -607,6 +674,42 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
 
         </div>
       </Modal>
+
+      {/* Enlarged Photo Overlay */}
+      <AnimatePresence>
+        {previewImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[20000] bg-black/95 flex items-center justify-center p-4"
+            onClick={() => setPreviewImage(null)}
+          >
+            <motion.button
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+              onClick={() => setPreviewImage(null)}
+            >
+              <X size={20} />
+            </motion.button>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-[90vw] h-[80vh] flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SafeImage
+                src={previewImage as string}
+                alt="Enlarged Document"
+                unoptimized={true}
+                className="object-contain"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

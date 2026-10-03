@@ -180,7 +180,7 @@ export const InquiryReceipt = ({
               </Row>
               <Row>
                 <Column>
-                  <Text style={styles.label}>Move-In Date</Text>
+                  <Text style={styles.label}>Check-In Date</Text>
                   <Text style={styles.value}>{moveInDate}</Text>
                 </Column>
                 <Column>

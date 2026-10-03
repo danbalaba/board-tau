@@ -6,6 +6,7 @@ import { FaUsers, FaEye, FaFile, FaHistory } from 'react-icons/fa';
 import { Tenant } from '../hooks/use-tenant-logic';
 
 import SafeImage from '@/components/common/SafeImage';
+import { formatDate } from '@/lib/utils';
 
 interface LandlordTenantCardProps {
   tenant: Tenant;
@@ -51,9 +52,9 @@ export function LandlordTenantCard({ tenant }: LandlordTenantCardProps) {
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{tenant.user.email}</p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Property: {tenant.listing.title}</p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-              {new Date(tenant.startDate).toLocaleDateString()} - {new Date(tenant.endDate).toLocaleDateString()}
+              Check-in & Check-out: {formatDate(tenant.startDate)} - {formatDate(tenant.endDate)}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Joined on {new Date(tenant.createdAt).toLocaleDateString()}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Joined on {formatDate(tenant.createdAt)}</p>
           </div>
         </div>
       </div>

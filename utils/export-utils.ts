@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { formatDate } from '@/lib/utils';
 
 /**
  * Utility to export data to CSV and Excel formats with Enterprise Metadata
@@ -93,7 +94,7 @@ export const prepareDataForExport = (data: any[], type: 'property' | 'room' | 'b
         'Price': item.price,
         'Status': item.isArchived ? 'Archived' : 'Active',
         'Rooms': item.rooms?.length || 0,
-        'Created At': new Date(item.createdAt).toLocaleDateString()
+        'Created At': formatDate(item.createdAt)
       }));
     
     case 'room':
@@ -104,7 +105,7 @@ export const prepareDataForExport = (data: any[], type: 'property' | 'room' | 'b
         'Capacity': `${item.capacity} Pax`,
         'Price': item.price,
         'Status': item.isArchived ? 'Archived' : 'Active',
-        'Created At': new Date(item.createdAt).toLocaleDateString()
+        'Created At': formatDate(item.createdAt)
       }));
 
     case 'booking':
@@ -112,8 +113,8 @@ export const prepareDataForExport = (data: any[], type: 'property' | 'room' | 'b
         'Guest': item.user?.name || 'N/A',
         'Property': item.room?.property?.title || 'N/A',
         'Room': item.room?.title || 'N/A',
-        'Check-In': new Date(item.startDate).toLocaleDateString(),
-        'Check-Out': new Date(item.endDate).toLocaleDateString(),
+        'Check-In': formatDate(item.startDate),
+        'Check-Out': formatDate(item.endDate),
         'Amount': item.totalPrice,
         'Status': item.status,
         'Payment': item.paymentStatus
@@ -125,7 +126,7 @@ export const prepareDataForExport = (data: any[], type: 'property' | 'room' | 'b
         'Property': item.listing?.title || 'N/A',
         'Message': item.message,
         'Status': item.status,
-        'Received At': new Date(item.createdAt).toLocaleDateString()
+        'Received At': formatDate(item.createdAt)
       }));
 
     case 'review':
@@ -135,17 +136,17 @@ export const prepareDataForExport = (data: any[], type: 'property' | 'room' | 'b
         'Rating': `${item.rating} Stars`,
         'Comment': item.comment,
         'Status': item.status,
-        'Date': new Date(item.createdAt).toLocaleDateString()
+        'Date': formatDate(item.createdAt)
       }));
 
     case 'reservation':
       return data.map(item => ({
         'Guest': item.user?.name || item.guestName || 'N/A',
         'Room': item.room?.name || 'N/A',
-        'Dates': `${new Date(item.startDate).toLocaleDateString()} - ${new Date(item.endDate).toLocaleDateString()}`,
+        'Dates': `${formatDate(item.startDate || item.moveInDate)} - ${formatDate(item.endDate)}`,
         'Amount': item.totalPrice,
         'Status': item.status,
-        'Reserved At': new Date(item.createdAt).toLocaleDateString()
+        'Reserved At': formatDate(item.createdAt)
       }));
 
     default:

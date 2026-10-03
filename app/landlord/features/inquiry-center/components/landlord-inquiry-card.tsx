@@ -18,6 +18,7 @@ import {
   IconEye
 } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
+import { formatDate } from '@/lib/utils';
 import Button from '@/components/common/Button';
 import { Inquiry } from '../hooks/use-inquiry-logic';
 import Avatar from '@/components/common/Avatar';
@@ -165,7 +166,7 @@ export function LandlordInquiryCard({
           <div className="flex items-center justify-between text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2.5 sm:mb-4 px-0.5">
             <div className="flex items-center gap-1 sm:gap-1.5">
               <IconCalendarEvent size={10} className="text-gray-300 dark:text-gray-600 sm:w-3 sm:h-3" />
-              <span>{new Date(inquiry.createdAt).toLocaleDateString()}</span>
+              <span>{formatDate(inquiry.createdAt)}</span>
             </div>
           </div>
 
@@ -245,7 +246,7 @@ export function LandlordInquiryCard({
                 </span>
                 <span className="hidden sm:inline-block w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full" />
                 <span className="hidden sm:inline-block text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                  Received: {new Date(inquiry.createdAt).toLocaleDateString()}
+                  Received: {formatDate(inquiry.createdAt)}
                 </span>
               </div>
               <h3 className="text-sm sm:text-xl font-black text-gray-900 dark:text-white group-hover:text-primary transition-colors truncate tracking-tight">

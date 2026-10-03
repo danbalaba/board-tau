@@ -131,8 +131,8 @@ const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} fullOnMobile={true}>
-        <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[82vh] overflow-hidden">
+      <Modal isOpen={isOpen} onClose={onClose} width="full" noPadding={true} hasFixedFooter={true} closeOnOutsideClick={false} fullOnMobile={true}>
+        <div className="w-full h-full sm:h-auto sm:max-h-[90vh] max-w-full sm:max-w-5xl mx-auto overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl border-0 sm:border sm:border-gray-200 dark:sm:border-gray-800 shadow-2xl">
           
           {/* Header Bar */}
           <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 bg-white dark:bg-gray-900">
@@ -280,7 +280,7 @@ const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
                   <div className="space-y-3.5 divide-y divide-gray-100 dark:divide-gray-800">
                     <div className="flex items-center justify-between pt-1">
                       <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Verified Stay</span>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-primary/10 text-primary-dark dark:bg-primary/20 dark:text-primary-light border border-primary/20">
                         Confirmed
                       </span>
                     </div>
@@ -296,7 +296,7 @@ const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
                       <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Landlord Response</span>
                       <span className={cn(
                         "text-xs font-black",
-                        isReplied ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+                        isReplied ? "text-primary dark:text-primary-light" : "text-amber-600 dark:text-amber-400"
                       )}>
                         {isReplied ? "Replied" : "Awaiting Reply"}
                       </span>
@@ -461,7 +461,7 @@ const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
             </div>
 
             <button
-              className="w-full sm:w-auto px-5 py-2 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors text-center order-2 sm:order-1"
+              className="hidden sm:block w-full sm:w-auto px-5 py-2 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors text-center order-2 sm:order-1"
               onClick={onClose}
             >
               Close

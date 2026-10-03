@@ -12,6 +12,7 @@ import {
   IconRestore
 } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
+import { formatDate } from '@/lib/utils';
 import Button from "@/components/common/Button";
 import { motion } from 'framer-motion';
 import Avatar from '@/components/common/Avatar';
@@ -149,10 +150,10 @@ export function LandlordReservationCard({
 
           <div className="grid grid-cols-2 gap-1.5 sm:gap-3 bg-gray-50 dark:bg-gray-800/50 p-1.5 sm:p-3 rounded-lg sm:rounded-2xl border border-gray-100 dark:border-gray-800 mb-2.5 sm:mb-4">
             <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0">
-              <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-gray-400">Move In</span>
+              <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-gray-400">Check-In</span>
               <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-black text-gray-900 dark:text-gray-100 truncate">
                 <IconCalendar size={10} className="text-primary shrink-0 sm:w-3 sm:h-3" />
-                <span>{new Date(reservation.moveInDate).toLocaleDateString()}</span>
+                <span>{formatDate(reservation.moveInDate)}</span>
               </div>
             </div>
             <div className="flex flex-col gap-0.5 sm:gap-1 text-right min-w-0">
@@ -246,7 +247,7 @@ export function LandlordReservationCard({
             <div>
               <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1 flex-wrap">
                 <span className="text-[8px] sm:text-[9px] font-black text-primary uppercase tracking-widest flex items-center gap-1 truncate max-w-[130px] sm:max-w-none">
-                  <IconCalendar size={10} className="shrink-0" /> Move in: {new Date(reservation.moveInDate).toLocaleDateString()}
+                  <IconCalendar size={10} className="shrink-0" /> Check-in: {formatDate(reservation.moveInDate)}
                 </span>
                 <span className="hidden sm:inline-block w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full" />
                 <span className="hidden sm:inline-block text-[9px] font-black text-gray-400 uppercase tracking-widest">
@@ -274,7 +275,7 @@ export function LandlordReservationCard({
             <div className="hidden sm:flex flex-wrap items-center gap-2 pt-1">
               <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50/60 dark:bg-blue-500/10 rounded-xl border border-blue-100/60 dark:border-blue-500/20 text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase">
                 <IconCalendar size={12} /> 
-                <span>Move in: {new Date(reservation.moveInDate).toLocaleDateString()}</span>
+                <span>Check-in: {formatDate(reservation.moveInDate)}</span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 dark:bg-primary/20 rounded-xl border border-primary/20 text-[9px] font-black text-primary dark:text-primary-400 uppercase">
                 <IconClock size={12} /> 
