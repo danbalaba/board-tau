@@ -675,6 +675,20 @@ export function AdminListingReviewModal({
       const roomPrices = rooms.map((r: any) => Number(r.price || 0)).filter((p: number) => p > 0);
       const rentPrice = roomPrices.length > 0 ? Math.min(...roomPrices) : Number(listing?.price || 0);
 
+      const ruleAttributeNames = (listing?.listingLinks || [])
+        .filter((link: any) => link?.attribute?.type === "RULE")
+        .map((link: any) => link?.attribute?.name)
+        .filter(Boolean);
+
+      const rawRules = [
+        ...ruleAttributeNames,
+        ...(Array.isArray(listing?.rules) ? listing.rules : []),
+        ...(Array.isArray(listing?.propertyConfig?.rules) ? listing.propertyConfig.rules : []),
+        ...(Array.isArray(listing?.businessInfo?.rules) ? listing.businessInfo.rules : [])
+      ];
+
+      const houseRules = Array.from(new Set(rawRules)).filter(Boolean);
+
       const pdfBlob = await generateLeaseContractPDF(`${cleanPropTitle}_BoardTAU_Smart_Lease_Contract.pdf`, {
         contractHash: `AUDIT-${listing?.id ? String(listing.id).substring(0, 8).toUpperCase() : Math.random().toString(36).substring(2, 8).toUpperCase()}`,
         landlordName: listing?.landlord?.fullName || listing?.landlordName || listing?.hostName || 'Property Owner / Landlord',
@@ -688,6 +702,7 @@ export function AdminListingReviewModal({
         rentAmount: rentPrice,
         moveOutNoticeDays: noticeDays,
         customClauses: clauses,
+        houseRules,
         landlordSignatureBase64: signature,
         tenantSignatureBase64: ''
       }, true);

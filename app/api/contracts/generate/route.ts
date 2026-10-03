@@ -22,7 +22,14 @@ export async function GET(request: Request) {
     // Security Check: Only allow if the requester is the tenant, landlord, or admin
     const listing = await db.listing.findUnique({
       where: { id: listingId },
-      include: { user: true }
+      include: { 
+        user: true,
+        listingLinks: {
+          include: {
+            attribute: true
+          }
+        }
+      }
     });
 
     if (!listing) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
@@ -111,6 +118,21 @@ export async function GET(request: Request) {
       ? listing.customClauses
       : businessInfo?.customContractClauses || businessInfo?.propertyConfig?.customContractClauses || [];
 
+    // Extract house rules from database taxonomy links and businessInfo/propertyConfig
+    const ruleAttributeNames = (listing.listingLinks || [])
+      .filter((link: any) => link?.attribute?.type === "RULE")
+      .map((link: any) => link?.attribute?.name)
+      .filter(Boolean);
+
+    const rawRules = [
+      ...ruleAttributeNames,
+      ...(Array.isArray(businessInfo?.rules) ? businessInfo.rules : []),
+      ...(Array.isArray(businessInfo?.propertyConfig?.rules) ? businessInfo.propertyConfig.rules : []),
+      ...(Array.isArray(businessInfo?.houseRules) ? businessInfo.houseRules : [])
+    ];
+
+    const houseRules = Array.from(new Set(rawRules)).filter(Boolean);
+
     const contractData = {
       contractHash,
       contractMode,
@@ -126,6 +148,7 @@ export async function GET(request: Request) {
       rentAmount: room.price,
       moveOutNoticeDays,
       customClauses,
+      houseRules,
       landlordSignatureBase64: landlordSig,
       tenantSignatureBase64: tenantSig,
     };

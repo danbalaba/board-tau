@@ -441,6 +441,12 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
       const signature = propertyConfig.landlordSignatureBase64 || watch('propertyConfig.landlordSignatureBase64') || '';
       const clauses = propertyConfig.customContractClauses || watch('propertyConfig.customContractClauses') || [];
 
+      const rawRules = groupedSubStepItems?.allRulesItems || [];
+      const propertyRules = Array.isArray(propertyConfig.rules) 
+        ? propertyConfig.rules.map((r: string) => resolveAmenityName(r) || r) 
+        : [];
+      const houseRules = Array.from(new Set([...rawRules, ...propertyRules])).filter(Boolean);
+
       const pdfBlob = await generateLeaseContractPDF(`${cleanPropName}_BoardTAU_Smart_Lease_Contract.pdf`, {
         contractHash: `DRAFT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
         landlordName: 'Property Owner / Landlord',
@@ -454,6 +460,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
         rentAmount: calculatedStartingPrice,
         moveOutNoticeDays: noticeDays,
         customClauses: clauses,
+        houseRules,
         landlordSignatureBase64: signature,
         tenantSignatureBase64: ''
       }, true);

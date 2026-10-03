@@ -483,6 +483,7 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
             isOpen={showCancelConfirm} 
             onClose={() => setShowCancelConfirm(false)} 
             width="sm"
+            fullOnMobile={false}
           >
             <ConfirmModal
               isOpen={showCancelConfirm}
@@ -509,10 +510,10 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
             width="md"
             title=""
             closeOnOutsideClick={false}
-            hasFixedFooter={true}
-            fullOnMobile={true}
+            hasFixedFooter={false}
+            fullOnMobile={false}
           >
-            <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl relative">
+            <div className="flex flex-col h-auto max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-3xl relative">
               {/* X Close Button */}
               <button
                 onClick={() => setShowCancelReason(false)}
