@@ -514,6 +514,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   const [showBedroomPreview, setShowBedroomPreview] = useState(false);
+  const [showAllRoomsModal, setShowAllRoomsModal] = useState(false);
 
   const scrollToAvailableRooms = useCallback(() => {
     const el = document.getElementById('available-rooms');
@@ -523,6 +524,11 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
   }, []);
+
+  const handleExploreAvailableRooms = useCallback(() => {
+    scrollToAvailableRooms();
+    setShowAllRoomsModal(true);
+  }, [scrollToAvailableRooms]);
 
   const galleryItems = useMemo(() => {
     if (!rooms || rooms.length === 0) return [];
@@ -774,6 +780,9 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
               user={user}
               activeStay={activeStay}
               leaseContract={leaseContract}
+              showAllRoomsModal={showAllRoomsModal}
+              onCloseAllRoomsModal={() => setShowAllRoomsModal(false)}
+              onOpenAllRoomsModal={() => setShowAllRoomsModal(true)}
             />
           </motion.section>
 
@@ -824,7 +833,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
 
               {/* Card 4: Available Units */}
               <button
-                onClick={scrollToAvailableRooms}
+                onClick={handleExploreAvailableRooms}
                 className="p-5 rounded-3xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100/80 dark:border-emerald-900/30 flex flex-col justify-between min-h-[140px] transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 group text-left cursor-pointer"
               >
                 <div className="flex items-center justify-between w-full">
@@ -1231,14 +1240,14 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-6 mb-6 border border-gray-100 dark:border-gray-700 relative z-10">
               <p className="text-sm text-gray-700 dark:text-gray-300 font-medium leading-relaxed mb-4">
                 Explore the <button
-                  onClick={scrollToAvailableRooms}
+                  onClick={handleExploreAvailableRooms}
                   className="font-bold text-gray-900 dark:text-white hover:text-primary underline decoration-primary/30 underline-offset-4 transition-colors"
                 >
                   Available Rooms
                 </button> section on the left to select a specific unit, view its capacity, and send a reservation inquiry to the landlord.
               </p>
               <button
-                onClick={scrollToAvailableRooms}
+                onClick={handleExploreAvailableRooms}
                 className="w-full py-3.5 px-6 bg-primary hover:bg-primary/90 text-white rounded-xl font-extrabold text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all flex items-center justify-center gap-2 group cursor-pointer"
               >
                 <span>Explore Available Rooms</span>
@@ -1354,8 +1363,8 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
         </div>
 
         <button
-          onClick={scrollToAvailableRooms}
-          className="px-8 h-12 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-95 transition-all"
+          onClick={handleExploreAvailableRooms}
+          className="px-8 h-12 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-95 transition-all cursor-pointer"
         >
           Choose Room
         </button>

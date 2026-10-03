@@ -48,6 +48,9 @@ interface AvailableRoomsSectionProps {
   user?: any; // User object or null if not logged in (optional)
   activeStay?: { endDate: string; status: string; listing: { title: string } } | null;
   leaseContract?: any;
+  showAllRoomsModal?: boolean;
+  onCloseAllRoomsModal?: () => void;
+  onOpenAllRoomsModal?: () => void;
 }
 
 const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
@@ -60,6 +63,9 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
   user,
   activeStay,
   leaseContract,
+  showAllRoomsModal: showAllRoomsModalProp,
+  onCloseAllRoomsModal,
+  onOpenAllRoomsModal,
 }) => {
   const roomTypeGroups = React.useMemo(() => {
     const map = new Map<string, Room[]>();
@@ -91,7 +97,18 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
   
   const handledAutoInquire = useRef<string | null>(null);
   const router = useRouter();
-  const [showAllRoomsModal, setShowAllRoomsModal] = useState(false);
+  const [internalShowAllRoomsModal, setInternalShowAllRoomsModal] = useState(false);
+  const isAllRoomsOpen = showAllRoomsModalProp !== undefined ? showAllRoomsModalProp : internalShowAllRoomsModal;
+
+  const handleOpenAllRooms = () => {
+    if (onOpenAllRoomsModal) onOpenAllRoomsModal();
+    else setInternalShowAllRoomsModal(true);
+  };
+
+  const handleCloseAllRooms = () => {
+    if (onCloseAllRoomsModal) onCloseAllRoomsModal();
+    else setInternalShowAllRoomsModal(false);
+  };
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [showRoomDetails, setShowRoomDetails] = useState(false);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
@@ -494,7 +511,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
             {showViewAllButton && (
               <div className="flex-shrink-0 w-80 flex items-center justify-center">
                 <button
-                  onClick={() => setShowAllRoomsModal(true)}
+                  onClick={handleOpenAllRooms}
                   className="w-full h-full min-h-[400px] flex flex-col items-center justify-center gap-4 bg-gray-50 dark:bg-gray-800/50 rounded-card border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-300"
                 >
                   <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
@@ -515,8 +532,8 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
 
       {/* All Rooms Modal */}
       <AllRoomsModal
-        isOpen={showAllRoomsModal}
-        onClose={() => setShowAllRoomsModal(false)}
+        isOpen={isAllRoomsOpen}
+        onClose={handleCloseAllRooms}
         rooms={activeRooms}
         listingName={listingName}
         listingId={listingId}
@@ -525,7 +542,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
         user={user}
         onViewDetails={handleViewDetails}
         onInquire={(room) => {
-          setShowAllRoomsModal(false);
+          handleCloseAllRooms();
           handleInquireClick({} as any, room);
         }}
       />
