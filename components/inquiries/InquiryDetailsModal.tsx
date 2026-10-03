@@ -24,7 +24,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import SafeImage from "@/components/common/SafeImage";
 import { useRouter } from "next/navigation";
-import { cn } from "@/utils/helper";
+import { cn, getListingUrl } from "@/utils/helper";
 import { getSafeImageSrcString } from "@/components/modals/inquiry-modal/InquiryModalUtils";
 import { generateLeaseContractPDF, previewPdfBlob } from "@/utils/contractPdfGenerator";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
@@ -576,7 +576,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
               {inquiry.status === "REJECTED" && (
                 <button
                   className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0"
-                  onClick={() => router.push(`/listings/${inquiry.listingId}?room=${inquiry.roomId}&autoInquire=true`)}
+                  onClick={() => router.push(`${getListingUrl(inquiry.listingId, (inquiry as any).listingTitle)}?room=${inquiry.roomId}&autoInquire=true`)}
                 >
                   <Home size={14} />
                   <span>Apply Again</span>

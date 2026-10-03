@@ -21,7 +21,7 @@ import {
   IconX
 } from "@tabler/icons-react";
 import { format } from "date-fns";
-import { cn } from "@/utils/helper";
+import { cn, getListingUrl } from "@/utils/helper";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import SafeImage from "@/components/common/SafeImage";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -304,7 +304,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
            ) : landlord?.listings?.slice(0, 3).map((listing) => (
             <a 
               key={listing.id}
-              href={`/listings/${listing.id}`}
+              href={getListingUrl(listing.id, listing.title)}
               target="_blank"
               rel="noopener noreferrer"
               className="group bg-white dark:bg-gray-900 rounded-2xl p-2 pr-4 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-3 hover:border-primary/20 transition-all cursor-pointer"

@@ -98,10 +98,13 @@ export const getListings = async (query?: {
   }
 };
 
+import { extractListingId } from "@/utils/helper";
+
 /**
- * Fetch a single listing by ID with full relations for detail view
+ * Fetch a single listing by ID or hybrid slug with full relations for detail view
  */
-export const getListingById = async (id: string) => {
+export const getListingById = async (queryId: string) => {
+  const id = extractListingId(queryId);
   const cacheKey = `listing:id:${id}`;
 
   const cachedData = await cache.get(cacheKey);

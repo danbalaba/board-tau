@@ -11,7 +11,7 @@ import { getListingById } from "@/services/user/listings";
 import { getFavorites } from "@/services/user/favorites/favorite";
 
 import { db } from "@/lib/db";
-import { calculateAverageRating } from "@/utils/helper";
+import { calculateAverageRating, getListingUrl } from "@/utils/helper";
 
 interface IParams {
   listingId: string;
@@ -143,7 +143,7 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
     "name": title,
     "image": [imageSrc, ...(images?.map((img: any) => img.url) || [])].filter(Boolean),
     "description": description,
-    "url": `${baseUrl}/listings/${id}`,
+    "url": `${baseUrl}${getListingUrl(id, title)}`,
     "address": {
       "@type": "PostalAddress",
       "streetAddress": region,
@@ -180,7 +180,7 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
         "unitText": "MON"
       },
       "availability": "https://schema.org/InStock",
-      "url": `${baseUrl}/listings/${id}`
+      "url": `${baseUrl}${getListingUrl(id, title)}`
     },
     "amenityFeature": amenities.map((a) => ({
       "@type": "LocationFeatureSpecification",

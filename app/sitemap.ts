@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { db } from "@/lib/db";
+import { getListingUrl } from "@/utils/helper";
 
 export const dynamic = 'force-dynamic';
 
@@ -14,12 +15,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     select: {
       id: true,
+      title: true,
       updatedAt: true,
     },
   });
 
   const listingRoutes = listings.map((listing) => ({
-    url: `${baseUrl}/listings/${listing.id}`,
+    url: `${baseUrl}${getListingUrl(listing.id, listing.title)}`,
     lastModified: listing.updatedAt.toISOString(),
     changeFrequency: "weekly" as const,
     priority: 0.9,

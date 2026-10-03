@@ -9,7 +9,7 @@ import { Star, MapPin, DoorOpen, Sparkles, CheckCircle, Flame, AlertTriangle } f
 
 import HeartButton from "../favorites/HeartButton";
 import SafeImage from "../common/SafeImage";
-import { formatPrice, calculateAverageRating } from "@/utils/helper";
+import { formatPrice, calculateAverageRating, getListingUrl } from "@/utils/helper";
 import ListingMenu from "./ListingMenu";
 import { usePathname } from "next/navigation";
 import { useCompareStore } from "@/hooks/use-compare-store";
@@ -208,7 +208,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
   const CardWrapper = onClickOverride ? 'div' : Link;
   const wrapperProps = onClickOverride 
     ? { onClick: onClickOverride, className: "block h-full cursor-pointer" }
-    : { href: `/listings/${data.id}`, className: "block h-full cursor-pointer", prefetch: false };
+    : { href: getListingUrl(data.id, data.title), className: "block h-full cursor-pointer", prefetch: false };
 
   return (
     <div className="relative group/card h-full z-10 hover:z-30">

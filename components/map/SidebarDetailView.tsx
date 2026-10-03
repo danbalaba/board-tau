@@ -56,7 +56,7 @@ import 'swiper/css/navigation';
 // @ts-ignore
 import 'swiper/css/pagination';
 import Link from "next/link";
-import { formatPrice, calculateAverageRating } from "@/utils/helper";
+import { formatPrice, calculateAverageRating, getListingUrl } from "@/utils/helper";
 import Avatar from "@/components/common/Avatar";
 import { SharedAmenitiesModal } from "@/components/common/SharedAmenitiesModal";
 import {
@@ -576,7 +576,7 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
       {/* Sticky Action Button */}
       <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
         <Link 
-          href={`/listings/${listing.id}`} 
+          href={getListingUrl(listing.id, listing.title)} 
           className="w-full flex items-center justify-center gap-2 bg-primary dark:bg-primary text-white py-3.5 rounded-xl font-bold text-sm hover:scale-[1.02] transition shadow-lg hover:bg-primary/90 no-underline cursor-pointer"
         >
           View Details & Reserve

@@ -20,7 +20,7 @@ import { NotificationItem } from "@/context/NotificationContext";
 import Avatar from "@/components/common/Avatar";
 import SafeImage from "@/components/common/SafeImage";
 import MediaPreviewOverlay from "@/components/common/MediaPreviewOverlay";
-import { cn } from "@/utils/helper";
+import { cn, getListingUrl } from "@/utils/helper";
 import { useRouter } from "next/navigation";
 
 interface ReviewListing {
@@ -453,7 +453,7 @@ const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2.5 w-full sm:w-auto order-1 sm:order-2">
               <button
                 className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0"
-                onClick={() => router.push(`/listings/${review.listing.id}`)}
+                onClick={() => router.push(getListingUrl(review.listing.id, review.listing.title))}
               >
                 <Home size={14} />
                 <span>View Property</span>

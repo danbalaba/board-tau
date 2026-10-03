@@ -19,7 +19,7 @@ import {
   Eye as IconEye
 } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
-import { cn } from "@/utils/helper";
+import { cn, getListingUrl } from "@/utils/helper";
 import { generateConfirmationSlipPDF } from "@/utils/slipGenerator";
 import { generateLeaseContractPDF, previewPdfBlob } from "@/utils/contractPdfGenerator";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
@@ -652,7 +652,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                   {reservation.status === "COMPLETED" && (
                     <button
                       className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
-                      onClick={() => router.push(`/listings/${reservation.listingId}`)}
+                      onClick={() => router.push(getListingUrl(reservation.listingId, (reservation as any).listingTitle))}
                     >
                       <Home size={14} />
                       <span>View Listing</span>

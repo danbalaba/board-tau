@@ -17,7 +17,7 @@ import {
 import { getDynamicIcon } from "@/lib/iconResolver";
 import SafeImage from "../common/SafeImage";
 import Link from "next/link";
-import { formatPrice, calculateAverageRating } from "@/utils/helper";
+import { formatPrice, calculateAverageRating, getListingUrl } from "@/utils/helper";
 import Avatar from "@/components/common/Avatar";
 import { computeStudentBadges } from "./compare-utils";
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -485,7 +485,7 @@ export const CompareListingCard: React.FC<CompareListingCardProps> = ({
       {/* Sticky Action Button */}
       <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
         <Link 
-          href={`/listings/${listing.id}`} 
+          href={getListingUrl(listing.id, listing.title)} 
           onClick={() => {
             onClose();
             clearListings();
