@@ -366,6 +366,7 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
         isOpen={showLogoutConfirm}
         onClose={() => setShowLogoutConfirm(false)}
         width="xs"
+        fullOnMobile={false}
       >
         <ConfirmModal
           isOpen={showLogoutConfirm}

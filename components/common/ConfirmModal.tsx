@@ -59,24 +59,26 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
       {/* Actions */}
       <div className="flex items-center gap-3 w-full pt-2">
         <button
+          type="button"
           onClick={onClose}
           disabled={isLoading}
-          className="flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all uppercase tracking-widest"
+          className="flex-1 py-3 px-4 rounded-xl text-xs font-black text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all uppercase tracking-widest cursor-pointer active:scale-95 disabled:opacity-50"
         >
           {cancelLabel}
         </button>
         <button
+          type="button"
           onClick={onConfirm}
           disabled={isLoading}
           className={cn(
-            "flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-white transition-all uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg",
+            "flex-1 py-3 px-4 rounded-xl text-xs font-black text-white transition-all uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg cursor-pointer active:scale-95 disabled:opacity-50",
             variant === "danger" 
               ? "bg-red-500 hover:bg-red-600 shadow-red-500/20" 
               : "bg-primary hover:bg-primary/90 shadow-primary/20"
           )}
         >
           {isLoading ? (
-             <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+             <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : null}
           {confirmLabel}
         </button>

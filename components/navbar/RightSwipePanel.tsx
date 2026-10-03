@@ -279,7 +279,7 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
         <HostApplicationModal />
       </Modal.Window>
 
-      <Modal isOpen={showLogoutConfirm && !isLoggingOut} onClose={() => setShowLogoutConfirm(false)} width="xs">
+      <Modal isOpen={showLogoutConfirm && !isLoggingOut} onClose={() => setShowLogoutConfirm(false)} width="xs" fullOnMobile={false}>
         <ConfirmModal
           isOpen={showLogoutConfirm}
           onClose={() => setShowLogoutConfirm(false)}

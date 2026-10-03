@@ -178,6 +178,7 @@ export function LandlordTopbarUserMenu({ user, onOpenSettings, isLoading }: Land
         isOpen={showLogoutConfirm} 
         onClose={() => setShowLogoutConfirm(false)}
         width="xs"
+        fullOnMobile={false}
       >
         <ConfirmModal
           isOpen={showLogoutConfirm}
