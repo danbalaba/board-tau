@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
 import { 
   IconMessage, 
   IconX, 
@@ -30,8 +30,22 @@ export function FloatingMessagingWidget() {
   const [mounted, setMounted] = useState(false);
   const [dragConstraints, setDragConstraints] = useState({ top: -200, bottom: 200 });
 
+  const yPos = useMotionValue(0);
+
   useEffect(() => {
     setMounted(true);
+
+    try {
+      const saved = localStorage.getItem('landlord_mobile_widget_y');
+      if (saved !== null) {
+        const parsed = parseFloat(saved);
+        if (!isNaN(parsed)) {
+          yPos.set(parsed);
+        }
+      }
+    } catch (e) {
+      // Ignore storage errors
+    }
 
     const updateConstraints = () => {
       if (typeof window !== 'undefined') {
@@ -46,7 +60,15 @@ export function FloatingMessagingWidget() {
     updateConstraints();
     window.addEventListener('resize', updateConstraints);
     return () => window.removeEventListener('resize', updateConstraints);
-  }, []);
+  }, [yPos]);
+
+  const handleDragEnd = () => {
+    try {
+      localStorage.setItem('landlord_mobile_widget_y', yPos.get().toString());
+    } catch (e) {
+      // Ignore storage errors
+    }
+  };
 
   const {
     conversations,
@@ -189,6 +211,8 @@ export function FloatingMessagingWidget() {
         dragMomentum={false}
         dragElastic={0.05}
         dragConstraints={dragConstraints}
+        style={{ y: yPos }}
+        onDragEnd={handleDragEnd}
         className="md:hidden fixed left-0 top-1/2 -translate-y-1/2 z-[100] touch-none cursor-grab active:cursor-grabbing"
       >
         <motion.button
