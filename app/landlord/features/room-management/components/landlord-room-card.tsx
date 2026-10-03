@@ -71,12 +71,9 @@ export function LandlordRoomCard({
     if ((room as any).roomTypeDefinition?.name) return (room as any).roomTypeDefinition.name;
     if ((room as any).roomTypeName) return (room as any).roomTypeName;
     if (matchedRoomType?.name) return matchedRoomType.name;
-    if (room.roomType === 'SOLO') return 'Private Solo Room';
-    if (room.roomType === 'BEDSPACE') return 'Shared Bedspace';
-    if (room.roomType === 'STUDIO') return 'Studio Unit';
     if (room.roomType && !/^[a-f0-9]{24}$/i.test(room.roomType)) return room.roomType;
     return 'Standard Room';
-  }, [matchedRoomType, room.roomType]);
+  }, [matchedRoomType, room]);
 
   const RoomTypeIcon = matchedRoomType?.icon ? getDynamicIcon(matchedRoomType.icon, Layers) : Layers;
 

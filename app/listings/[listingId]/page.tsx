@@ -253,7 +253,7 @@ const ListingPage = async ({ params }: { params: Promise<IParams> }) => {
                 .filter(Boolean) || [];
               return {
                 ...r,
-                roomType: r.roomTypeDefinition ? (r.roomTypeDefinition.isFlatRate ? 'SOLO' : 'BEDSPACE') : (r.capacity === 1 ? 'SOLO' : 'BEDSPACE'),
+                roomType: r.roomTypeDefinition?.name || r.roomTypeDefinitionId || r.roomType || 'Standard Room',
                 amenities: [...(r.amenityNames || []), ...roomAmenities],
                 kitchenSetup: r.kitchenSetup || r.kitchenType || (listing as any).kitchenSetup || (listing.businessInfo as any)?.kitchenSetup || (listing.businessInfo as any)?.kitchenFacility || null,
                 bathroomArrangement: r.bathroomArrangement || r.bathroomSetup || (listing as any).bathroomSetup || (listing.businessInfo as any)?.bathroomSetup || null,

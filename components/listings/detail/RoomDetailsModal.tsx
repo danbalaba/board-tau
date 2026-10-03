@@ -205,11 +205,10 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
   }, [room.roomType, roomTypesList]);
 
   const roomTypeLabel = useMemo(() => {
+    if ((room as any).roomTypeDefinition?.name) return (room as any).roomTypeDefinition.name;
     if (matchedRoomType?.name) return matchedRoomType.name;
-    if (room.roomType === 'SOLO') return 'Private Solo Room';
-    if (room.roomType === 'BEDSPACE') return 'Shared Bedspace';
-    return room.roomType;
-  }, [matchedRoomType, room.roomType]);
+    return room.roomType || 'Standard Room';
+  }, [matchedRoomType, room]);
 
   const RoomTypeIcon = matchedRoomType?.icon ? getDynamicIcon(matchedRoomType.icon, Layers) : Layers;
 

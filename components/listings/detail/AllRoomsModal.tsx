@@ -159,10 +159,14 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
     getCachedRoomTypes().then(rts => { if (rts) setRoomTypesList(rts); });
   }, []);
 
-  // Helper to map raw roomType strings to clean student-friendly taxonomy labels
-  const getRoomTypeLabel = (rawType: string) => {
-    if (!rawType) return "Standard Room";
-    const target = String(rawType).trim();
+  // Helper to map raw roomType strings or room objects to clean taxonomy labels
+  const getRoomTypeLabel = (roomOrType: any) => {
+    if (!roomOrType) return "Standard Room";
+    if (typeof roomOrType === 'object') {
+      if (roomOrType.roomTypeDefinition?.name) return roomOrType.roomTypeDefinition.name;
+      roomOrType = roomOrType.roomType;
+    }
+    const target = String(roomOrType).trim();
     const matched = roomTypesList.find((rt: any) =>
       rt.id === target ||
       rt.code === target ||
@@ -172,9 +176,7 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
       rt.id?.toLowerCase() === target.toLowerCase()
     );
     if (matched?.name) return matched.name;
-    if (target.toUpperCase() === 'SOLO') return 'Private Solo Room';
-    if (target.toUpperCase() === 'BEDSPACE') return 'Shared Bedspace';
-    return rawType;
+    return target || "Standard Room";
   };
 
   // Dynamically generate filter dropdown options from actual room data & taxonomy cache
@@ -448,7 +450,7 @@ const AllRoomsModal: React.FC<AllRoomsModalProps> = ({
                            <Layers className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                          </div>
                          <span className="text-[8px] sm:text-[9.5px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 truncate">
-                           {getRoomTypeLabel(room.roomType)}
+                           {getRoomTypeLabel(room)}
                          </span>
                        </div>
 

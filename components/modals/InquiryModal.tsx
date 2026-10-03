@@ -185,7 +185,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                         <div className="grid grid-cols-3 gap-2 text-center">
                           <div className="bg-white dark:bg-gray-800 p-2 rounded-xl border border-gray-200 dark:border-gray-700">
                             <p className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Type</p>
-                            <p className="text-xs font-black">{room.roomType}</p>
+                            <p className="text-xs font-black">{(room as any).roomTypeDefinition?.name || room.roomType}</p>
                           </div>
                           <div className="bg-white dark:bg-gray-800 p-2 rounded-xl border border-gray-200 dark:border-gray-700">
                             <p className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Capacity</p>
@@ -276,7 +276,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="bg-gray-50 dark:bg-gray-700/30 p-2.5 rounded-xl border border-gray-100 dark:border-gray-700 text-center">
                                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mb-0.5">Type</p>
-                                    <p className="text-xs font-black truncate">{room.roomType}</p>
+                                    <p className="text-xs font-black truncate">{(room as any).roomTypeDefinition?.name || room.roomType}</p>
                                 </div>
                                 <div className="bg-gray-50 dark:bg-gray-700/30 p-2.5 rounded-xl border border-gray-100 dark:border-gray-700 text-center">
                                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mb-0.5">Capacity</p>

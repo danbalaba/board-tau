@@ -61,20 +61,33 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
   activeStay,
   leaseContract,
 }) => {
-  const soloRooms = React.useMemo(() => [...rooms].filter(r => r.roomType === 'SOLO').sort((a, b) => 
-    a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
-  ), [rooms]);
-  
-  const bedspaceRooms = React.useMemo(() => [...rooms].filter(r => r.roomType === 'BEDSPACE').sort((a, b) => 
-    a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
-  ), [rooms]);
+  const roomTypeGroups = React.useMemo(() => {
+    const map = new Map<string, Room[]>();
+    rooms.forEach((r) => {
+      const label = (r as any).roomTypeDefinition?.name || r.roomType || 'Standard Room';
+      if (!map.has(label)) map.set(label, []);
+      map.get(label)!.push(r);
+    });
+    return map;
+  }, [rooms]);
 
-  const [activeTab, setActiveTab] = useState<'SOLO' | 'BEDSPACE'>(
-    soloRooms.length > 0 ? 'SOLO' : 'BEDSPACE'
-  );
+  const roomTypeNames = React.useMemo(() => Array.from(roomTypeGroups.keys()), [roomTypeGroups]);
 
-  // The active rooms being displayed in the carousel
-  const activeRooms = React.useMemo(() => activeTab === 'SOLO' ? soloRooms : bedspaceRooms, [activeTab, soloRooms, bedspaceRooms]);
+  const [activeTab, setActiveTab] = useState<string>('ALL');
+
+  useEffect(() => {
+    if (activeTab !== 'ALL' && !roomTypeNames.includes(activeTab)) {
+      setActiveTab('ALL');
+    }
+  }, [roomTypeNames, activeTab]);
+
+  const activeRooms = React.useMemo(() => {
+    if (activeTab === 'ALL' || roomTypeNames.length <= 1) {
+      return [...rooms].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+    }
+    const group = roomTypeGroups.get(activeTab) || [];
+    return [...group].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+  }, [activeTab, rooms, roomTypeGroups, roomTypeNames]);
   
   const handledAutoInquire = useRef<string | null>(null);
   const router = useRouter();
@@ -141,16 +154,17 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
       handledAutoInquire.current = null;
     }
 
-    if (user && autoInquire === 'true' && roomId && activeRooms.length > 0) {
+    if (user && autoInquire === 'true' && roomId && rooms.length > 0) {
       if (handledAutoInquire.current === roomId) return; // Prevent infinite loop on re-renders
 
-      const room = [...soloRooms, ...bedspaceRooms].find(r => r.id === roomId);
+      const room = rooms.find(r => r.id === roomId);
       if (room && room.status === "AVAILABLE") {
         handledAutoInquire.current = roomId; // Mark as handled so it won't force reopen
 
-        // Switch tab to the correct one before opening modal
-        if (room.roomType === 'SOLO') setActiveTab('SOLO');
-        if (room.roomType === 'BEDSPACE') setActiveTab('BEDSPACE');
+        const typeName = (room as any).roomTypeDefinition?.name || room.roomType;
+        if (typeName && roomTypeNames.includes(typeName)) {
+          setActiveTab(typeName);
+        }
         
         // Scroll to section
         sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -164,7 +178,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
         router.replace(newUrl, { scroll: false });
       }
     }
-  }, [searchParams, soloRooms, bedspaceRooms, activeRooms, user, router]);
+  }, [searchParams, rooms, roomTypeNames, activeRooms, user, router]);
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -208,41 +222,75 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
     setShowRoomDetails(true);
   };
 
+  const roomTypeCounts = React.useMemo(() => {
+    const counts = new Map<string, number>();
+    roomTypeGroups.forEach((groupRooms, typeName) => {
+      counts.set(typeName, groupRooms.length);
+    });
+    return counts;
+  }, [roomTypeGroups]);
+
   // Show View All button only when there are more than 5 rooms
   const showViewAllButton = activeRooms.length > 5;
 
   return (
     <section ref={sectionRef} className="scroll-mt-24">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-        <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-          Available Rentals
-        </h2>
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+            Available Rentals
+          </h2>
+          <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
+            {rooms.length} {rooms.length === 1 ? 'unit' : 'units'} available
+          </span>
+        </div>
 
-        {/* Tabs UI */}
-        {(soloRooms.length > 0 && bedspaceRooms.length > 0) && (
-          <div className="flex items-center gap-2 p-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-2xl w-max">
+        {/* Dynamic Full-Width Filter Tabs */}
+        {roomTypeNames.length > 1 && (
+          <div className="flex items-center gap-2 p-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-2xl overflow-x-auto max-w-full scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border border-gray-200/50 dark:border-gray-700/50">
             <button
-              onClick={() => setActiveTab('SOLO')}
-              className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 ${
-                activeTab === 'SOLO'
+              onClick={() => setActiveTab('ALL')}
+              className={`px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap transition-all duration-300 flex items-center gap-2 shrink-0 ${
+                activeTab === 'ALL'
                   ? 'bg-white dark:bg-gray-700 text-primary shadow-sm ring-1 ring-black/5'
                   : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
-              <DoorOpen size={16} />
-              Private Solo Rooms
+              <Layers size={16} />
+              All Units
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                activeTab === 'ALL' 
+                  ? 'bg-primary/10 text-primary dark:bg-primary/20' 
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+              }`}>
+                {rooms.length}
+              </span>
             </button>
-            <button
-              onClick={() => setActiveTab('BEDSPACE')}
-              className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 ${
-                activeTab === 'BEDSPACE'
-                  ? 'bg-white dark:bg-gray-700 text-primary shadow-sm ring-1 ring-black/5'
-                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              <Users size={16} />
-              Shared Bedspaces
-            </button>
+            {roomTypeNames.map((typeName) => {
+              const count = roomTypeCounts.get(typeName) || 0;
+              const isActive = activeTab === typeName;
+              return (
+                <button
+                  key={typeName}
+                  onClick={() => setActiveTab(typeName)}
+                  className={`px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap transition-all duration-300 flex items-center gap-2 shrink-0 ${
+                    isActive
+                      ? 'bg-white dark:bg-gray-700 text-primary shadow-sm ring-1 ring-black/5'
+                      : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <DoorOpen size={16} />
+                  {typeName}
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                    isActive 
+                      ? 'bg-primary/10 text-primary dark:bg-primary/20' 
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -256,7 +304,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
       ) : activeRooms.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/20 rounded-3xl border border-gray-100 dark:border-gray-800">
           <p className="text-gray-500 dark:text-gray-400">
-            There are no {activeTab === 'SOLO' ? 'Solo Rooms' : 'Bedspaces'} available in this property.
+            There are no {activeTab === 'ALL' ? 'rooms' : activeTab} available in this property.
           </p>
         </div>
       ) : (
@@ -391,7 +439,9 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
                        </div>
                        <div>
                          <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold leading-none">Type</p>
-                         <p className="text-xs font-bold text-gray-700 dark:text-gray-300 mt-0.5">{room.roomType}</p>
+                         <p className="text-xs font-bold text-gray-700 dark:text-gray-300 mt-0.5" title={(room as any).roomTypeDefinition?.name || room.roomType}>
+                           {(room as any).roomTypeDefinition?.name || room.roomType}
+                         </p>
                        </div>
                     </div>
 
@@ -405,7 +455,7 @@ const AvailableRoomsSection: React.FC<AvailableRoomsSectionProps> = ({
                        </div>
                     </div>
 
-                    {room.roomType === "BEDSPACE" && (
+                    {room.availableSlots !== undefined && room.availableSlots !== null && (
                       <div className="flex items-center gap-2">
                          <div className="p-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/80">
                            <DoorOpen size={14} className="text-primary" />

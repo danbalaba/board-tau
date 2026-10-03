@@ -524,7 +524,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
         id: room.id,
         urls: room.images.map((img: any) => img.url),
         title: room.name,
-        subtitle: `${room.capacity} Bed${room.capacity > 1 ? 's' : ''} • ${room.roomType === 'SOLO' ? 'Private Room' : 'Shared Space'}`
+        subtitle: `${room.capacity} Bed${room.capacity > 1 ? 's' : ''} • ${(room as any).roomTypeDefinition?.name || room.roomType || 'Standard Room'}`
       }));
   }, [rooms]);
 
@@ -537,7 +537,7 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
         id: room.id,
         urls: room.images.map((img: any) => img.url),
         title: room.name,
-        subtitle: `${room.capacity} Bed${room.capacity > 1 ? 's' : ''} • ${room.roomType === 'SOLO' ? 'Private Room' : 'Shared Space'}`
+        subtitle: `${room.capacity} Bed${room.capacity > 1 ? 's' : ''} • ${(room as any).roomTypeDefinition?.name || room.roomType || 'Standard Room'}`
       }));
   }, [rooms]);
 
