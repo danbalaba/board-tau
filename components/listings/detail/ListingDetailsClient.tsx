@@ -526,8 +526,32 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
   }, []);
 
   const handleExploreAvailableRooms = useCallback(() => {
-    scrollToAvailableRooms();
-    setShowAllRoomsModal(true);
+    const el = document.getElementById('available-rooms');
+    let delay = 350;
+
+    if (el) {
+      const yOffset = -110;
+      const targetY = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      const distance = Math.abs(window.pageYOffset - targetY);
+
+      if (distance < 50) {
+        delay = 0;
+      } else {
+        delay = Math.min(450, Math.max(250, Math.round(distance / 3.5)));
+      }
+
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    } else {
+      scrollToAvailableRooms();
+    }
+
+    if (delay === 0) {
+      setShowAllRoomsModal(true);
+    } else {
+      setTimeout(() => {
+        setShowAllRoomsModal(true);
+      }, delay);
+    }
   }, [scrollToAvailableRooms]);
 
   const galleryItems = useMemo(() => {
