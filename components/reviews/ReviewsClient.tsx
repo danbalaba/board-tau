@@ -297,7 +297,7 @@ const ReviewsClient: React.FC<ReviewsClientProps> = ({ initialReviews }) => {
 
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center min-h-[400px]">
-          <ModernLoader text="Capturing your feedback history..." />
+          <ModernLoader text="Loading reviews..." mascotSrc="/assets/mascot/kerby-global-studying.png" />
         </div>
       ) : (
         <>

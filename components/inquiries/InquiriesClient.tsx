@@ -446,7 +446,7 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
 
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center min-h-[400px]">
-          <ModernLoader text="Securely loading your inquiries..." />
+          <ModernLoader text="Loading inquiries..." mascotSrc="/assets/mascot/kerby-global-search.png" />
         </div>
       ) : (
         <>

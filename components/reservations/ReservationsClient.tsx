@@ -531,7 +531,7 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
 
             {isLoading ? (
                 <div className="flex-1 flex items-center justify-center min-h-[400px]">
-                    <ModernLoader text="Syncing your reservations..." />
+                    <ModernLoader text="Loading reservations..." mascotSrc="/assets/mascot/kerby-global-scooter.png" />
                 </div>
             ) : (
                 <>
