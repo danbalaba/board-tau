@@ -314,7 +314,7 @@ export function LandlordRoomHeader({
                 Rooms
               </h1>
               <div className="flex items-center gap-2 mt-0.5 sm:mt-1">
-                <p className="text-[10px] sm:text-[11px] text-gray-500 font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] line-clamp-1">
+                <p className="text-[10px] sm:text-[11px] text-gray-500 font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] sm:line-clamp-1">
                   Add rooms, set rates, and check room availability
                 </p>
               </div>
