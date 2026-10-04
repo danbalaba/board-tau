@@ -366,12 +366,15 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
 
                     {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
                         <button
-                            onClick={(e) => {
+                            onClick={async (e) => {
                                 e.stopPropagation();
-                                responsiveToast.loading("Generating Boarding Pass...");
-                                generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail)
-                                    .then(() => responsiveToast.success("Downloaded successfully!"))
-                                    .catch(() => responsiveToast.error("Failed to generate."));
+                                const toastId = responsiveToast.loading("Generating Boarding Pass...");
+                                try {
+                                    await generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail);
+                                    responsiveToast.success("Downloaded successfully!", { id: toastId });
+                                } catch (err) {
+                                    responsiveToast.error("Failed to generate.", { id: toastId });
+                                }
                             }}
                             title="Download Confirmation Slip"
                             className="w-10 h-10 shrink-0 font-bold text-xs text-primary bg-primary/10 rounded-xl hover:bg-primary/20 border border-primary/20 transition-all flex justify-center items-center"

@@ -9,12 +9,13 @@ import { useTheme } from "next-themes";
 
 // Responsive toast context
 interface ResponsiveToastContextType {
-  success: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => void;
-  error: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => void;
-  warning: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => void;
-  info: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => void;
-  loading: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => void;
-  toast: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => void;
+  success: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => string | void;
+  error: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => string | void;
+  warning: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => string | void;
+  info: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => string | void;
+  loading: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => string | void;
+  dismiss: (toastId?: string) => void;
+  toast: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) => string | void;
 }
 
 const ResponsiveToastContext = createContext<ResponsiveToastContextType | undefined>(undefined);
@@ -48,7 +49,8 @@ export const useResponsiveToast = (): ResponsiveToastContextType => {
       error: () => {},
       warning: () => {},
       info: () => {},
-      loading: () => {},
+      loading: () => "",
+      dismiss: () => {},
       toast: () => {},
     };
   }
@@ -63,7 +65,7 @@ export const ResponsiveToastProvider: React.FC<{ children: React.ReactNode }> = 
     type: "success" | "error" | "warning" | "info" | "loading",
     message: string | { title: string; description?: string | React.ReactNode; [key: string]: any },
     options?: any
-  ) => {
+  ): string | void => {
     // Direct detection for logic to avoid state race conditions
     const isMobileNow = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
 
@@ -83,9 +85,9 @@ export const ResponsiveToastProvider: React.FC<{ children: React.ReactNode }> = 
       const method = (type === "loading" || !sileoInstance[type]) ? "info" : type;
       
       if (typeof message === "string") {
-        sileoInstance[method]({ title: "Notification", description: message, ...defaultOptions });
+        return sileoInstance[method]({ title: "Notification", description: message, ...defaultOptions });
       } else {
-        sileoInstance[method]({ ...message, ...defaultOptions });
+        return sileoInstance[method]({ ...message, ...defaultOptions });
       }
     } else {
       // Use existing toast library for desktop
@@ -102,10 +104,10 @@ export const ResponsiveToastProvider: React.FC<{ children: React.ReactNode }> = 
           ? message
           : message.description ? `${message.title}: ${message.description}` : message.title;
         
-        const toastId = (options && options.id) ? options.id : (typeof message === "string" ? message : (message.id || message.title));
-        const toastOptions = { id: toastId, ...options };
+        const toastId = (options && options.id) ? options.id : undefined;
+        const toastOptions = toastId ? { id: toastId, ...options } : options;
 
-        toastFunction(displayMessage, toastOptions);
+        return toastFunction(displayMessage, toastOptions);
       }
     }
   };
@@ -121,6 +123,9 @@ export const ResponsiveToastProvider: React.FC<{ children: React.ReactNode }> = 
       showToast("info", message, options),
     loading: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) =>
       showToast("loading", message, options),
+    dismiss: (toastId?: string) => {
+      toast.dismiss(toastId);
+    },
     toast: (message: string | { title: string; description?: string | React.ReactNode; [key: string]: any }, options?: any) =>
       showToast("info", message, options),
   }), [isMobile]);

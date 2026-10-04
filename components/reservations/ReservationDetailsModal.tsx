@@ -619,11 +619,14 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                 <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:flex-row sm:gap-2.5">
                   <button
                     className="w-full sm:w-auto px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 truncate"
-                    onClick={() => {
-                      responsiveToast.loading("Preparing boarding pass...");
-                      generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail)
-                        .then(() => responsiveToast.success("Boarding pass downloaded!"))
-                        .catch(() => responsiveToast.error("Could not generate boarding pass."));
+                    onClick={async () => {
+                      const toastId = responsiveToast.loading("Preparing boarding pass...");
+                      try {
+                        await generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail);
+                        responsiveToast.success("Boarding pass downloaded!", { id: toastId });
+                      } catch (err) {
+                        responsiveToast.error("Could not generate boarding pass.", { id: toastId });
+                      }
                     }}
                   >
                     <IconCircleCheck size={14} className="shrink-0" />
