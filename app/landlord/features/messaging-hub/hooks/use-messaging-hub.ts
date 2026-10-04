@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import { pusherClient } from "@/lib/pusher-client";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { decryptChatToken } from "@/lib/encryption";
 
 export interface Conversation {
   id: string;
@@ -45,8 +46,17 @@ export interface Message {
 export function useMessagingHub(initialConversations: Conversation[] = [], isWindowActive: boolean = true) {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
-  const deepListingId = searchParams.get("listingId");
-  const deepTenantId = searchParams.get("tenantId");
+  const tokenParam = searchParams.get("token");
+  let deepListingId = searchParams.get("listingId");
+  let deepTenantId = searchParams.get("tenantId");
+
+  if (tokenParam) {
+    const decrypted = decryptChatToken(tokenParam);
+    if (decrypted) {
+      deepListingId = decrypted.listingId;
+      deepTenantId = decrypted.otherUserId;
+    }
+  }
 
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
   const [activeConversation, setActiveConversationState] = useState<Conversation | null>(null);
@@ -160,8 +170,9 @@ export function useMessagingHub(initialConversations: Conversation[] = [], isWin
           await fetchConversations();
         }
       }
-    } catch (error) {
-      toast.error("Failed to send message");
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || "Failed to send message";
+      toast.error(errorMessage);
     } finally {
       setIsSending(false);
     }

@@ -12,7 +12,7 @@ import { motion } from "framer-motion";
 import Heading from "@/components/common/Heading";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { useNotification } from "@/context/NotificationContext";
-import { IconChevronLeft } from "@tabler/icons-react";
+import { decryptChatToken, encryptChatToken } from "@/lib/encryption";
 
 interface MessagesClientProps {
   initialConversations: TenantConversation[];
@@ -86,19 +86,39 @@ const MessagesClient: React.FC<MessagesClientProps> = ({
     hasAutoSelected.current = true;
   }, [commitArchive, commitUnarchive, setActiveConversation, toast]);
 
-  // Handle URL Deep Linking
+  // Handle URL Deep Linking & Encryption Masking
   useEffect(() => {
     if (hasAutoSelected.current || conversations.length === 0) return;
 
     const listingId = searchParams.get("listingId");
     const otherUserId = searchParams.get("otherUserId");
+    const token = searchParams.get("token");
 
-    if (listingId && otherUserId) {
-      const match = conversations.find(c => c.listingId === listingId && c.landlordId === otherUserId);
+    let targetListingId = listingId;
+    let targetOtherUserId = otherUserId;
+
+    if (token) {
+      const decrypted = decryptChatToken(token);
+      if (decrypted) {
+        targetListingId = decrypted.listingId;
+        targetOtherUserId = decrypted.otherUserId;
+      }
+    }
+
+    if (targetListingId && targetOtherUserId) {
+      const match = conversations.find(c => c.listingId === targetListingId && c.landlordId === targetOtherUserId);
       if (match) {
         setActiveConversation(match);
         hasAutoSelected.current = true;
         setMobileView("chat");
+
+        // Mask legacy raw parameters in URL bar with encrypted token
+        if (listingId && otherUserId && !token && typeof window !== "undefined") {
+          const encToken = encryptChatToken(listingId, otherUserId);
+          if (encToken) {
+            window.history.replaceState(null, "", `/messages?token=${encToken}`);
+          }
+        }
       }
     }
   }, [searchParams, conversations, setActiveConversation]);

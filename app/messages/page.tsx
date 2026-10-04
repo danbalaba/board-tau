@@ -5,6 +5,8 @@ import { getTenantConversations } from "@/services/user/messages";
 import MessagesClient from "@/components/messages/MessagesClient";
 import { db } from "@/lib/db";
 
+import { decryptChatToken } from "@/lib/encryption";
+
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
@@ -28,8 +30,17 @@ const MessagesPage = async ({ searchParams }: PageProps) => {
         redirect("/admin");
     }
 
-    const listingId = params.listingId as string | undefined;
-    const otherUserId = params.otherUserId as string | undefined;
+    let listingId = params.listingId as string | undefined;
+    let otherUserId = params.otherUserId as string | undefined;
+    const token = params.token as string | undefined;
+
+    if (token) {
+        const decrypted = decryptChatToken(token);
+        if (decrypted) {
+            listingId = decrypted.listingId;
+            otherUserId = decrypted.otherUserId;
+        }
+    }
 
     let conversations = await getTenantConversations();
 

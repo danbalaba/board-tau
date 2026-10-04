@@ -68,7 +68,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
 
     try {
       const url = new URL("/api/notifications", window.location.origin);
-      url.searchParams.set("limit", "5");
+      url.searchParams.set("limit", "20");
       if (cursor) url.searchParams.set("cursor", cursor);
 
       const res = await fetch(url.toString());

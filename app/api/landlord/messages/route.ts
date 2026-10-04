@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import validator from "validator";
 import { pusherServer } from "@/lib/pusher";
 import { sendNewMessageEmail } from "@/services/email/notifications";
-import { encryptMessage } from "@/lib/encryption";
+import { encryptMessage, encryptChatToken } from "@/lib/encryption";
 import { getCurrentUser } from "@/services/user";
 import { createNotification } from "@/services/notification";
 
@@ -59,50 +59,42 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify messaging is open for this listing & tenant
-    const now = new Date();
+    const [activeInquiry, activeReservation, existingMessage] = await Promise.all([
+      db.inquiry.findFirst({
+        where: {
+          listingId,
+          userId: receiverId,
+          status: { in: ["PENDING", "APPROVED"] as any },
+        },
+        select: { id: true }
+      }),
+      db.reservation.findFirst({
+        where: {
+          listingId,
+          userId: receiverId,
+          status: { in: ["PENDING_PAYMENT", "RESERVED", "CHECKED_IN", "COMPLETED"] as any },
+        },
+        select: { id: true }
+      }),
+      db.message.findFirst({
+        where: {
+          listingId,
+          OR: [
+            { senderId: user.id, receiverId },
+            { senderId: receiverId, receiverId: user.id }
+          ]
+        },
+        select: { id: true }
+      })
+    ]);
 
-    // 1. Check for closed or completed reservation
-    const closedReservation = await db.reservation.findFirst({
-      where: {
-        listingId,
-        userId: receiverId,
-        OR: [
-          { status: { in: ["COMPLETED", "CANCELLED"] as any } },
-          { endDate: { lt: now } }
-        ]
-      },
-      select: { id: true, status: true },
-      orderBy: { createdAt: 'desc' }
-    });
+    const canMessage = Boolean(activeInquiry || activeReservation || existingMessage);
 
-    if (closedReservation) {
-      const reason = (closedReservation.status as string) === "CANCELLED"
-        ? "Messaging is closed for cancelled reservations."
-        : "Messaging is closed because the stay period has completed or ended.";
-      return NextResponse.json({ success: false, error: reason }, { status: 403 });
-    }
-
-    // 2. Check for closed or rejected inquiry
-    const closedInquiry = await db.inquiry.findFirst({
-      where: {
-        listingId,
-        userId: receiverId,
-        OR: [
-          { status: { in: ["REJECTED", "CANCELLED", "EXPIRED"] as any } },
-          { checkOutDate: { lt: now } }
-        ]
-      },
-      select: { id: true, status: true },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    if (closedInquiry) {
-      const reason = (closedInquiry.status as string) === "REJECTED"
-        ? "Messaging is closed for rejected inquiries."
-        : (closedInquiry.status as string) === "CANCELLED"
-        ? "Messaging is closed for cancelled inquiries."
-        : "Messaging is closed because the inquiry period has ended or expired.";
-      return NextResponse.json({ success: false, error: reason }, { status: 403 });
+    if (!canMessage) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Messaging is closed because there is no active inquiry or reservation for this listing." 
+      }, { status: 403 });
     }
 
     // 1. Create the message (Encrypting the content before DB insert)
@@ -130,7 +122,7 @@ export async function POST(request: NextRequest) {
       select: { title: true }
     });
 
-    const deepLink = `/messages?listingId=${listingId}&otherUserId=${user.id}`;
+    const deepLink = `/messages?token=${encryptChatToken(listingId, user.id)}`;
 
     await createNotification({
       userId: receiverId,

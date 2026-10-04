@@ -135,7 +135,7 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
   const [isCancelling, setIsCancelling] = useState(false);
   const [strikeStatus, setStrikeStatus] = useState<any>(null);
   const [isLoadingStrikeStatus, setIsLoadingStrikeStatus] = useState(false);
-  const unreadNotifications = notifications.filter((n: NotificationItem) => !n.isRead && n.type === "inquiry");
+  const unreadNotifications = notifications.filter((n: NotificationItem) => !n.isRead && n.type?.toLowerCase() === "inquiry");
   const hasAutoOpened = useRef(false);
 
   // Real-time Pusher listener for status updates
@@ -485,7 +485,7 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
             >
               {filteredInquiries.map((inquiry) => {
                 const hasNotification = unreadNotifications.some(n => 
-                  n.link.includes(inquiry.id) && !n.isRead
+                  Boolean(n.link?.includes(inquiry.id)) && !n.isRead
                 );
                 
                 return (
@@ -514,14 +514,14 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
             inquiry={selectedInquiry || inquiries[0] || ({} as any)}
             isOpen={showDetailsModal}
             currentUserId={currentUserId}
-            notification={selectedInquiry ? unreadNotifications.find(n => n.link.includes(selectedInquiry.id)) : undefined}
+            notification={selectedInquiry ? unreadNotifications.find(n => n.link?.includes(selectedInquiry.id)) : undefined}
             onClose={() => {
               setShowDetailsModal(false);
               setTimeout(() => setSelectedInquiry(null), 300);
             }}
             onMarkAsRead={() => {
               if (selectedInquiry) {
-                const notif = unreadNotifications.find(n => n.link.includes(selectedInquiry.id));
+                const notif = unreadNotifications.find(n => n.link?.includes(selectedInquiry.id));
                 if (notif) markAsRead(notif.id, "inquiry");
               }
             }}

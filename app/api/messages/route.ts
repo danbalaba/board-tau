@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
 import { pusherServer } from "@/lib/pusher";
 import { sendNewMessageEmail } from "@/services/email/notifications";
-import { encryptMessage, decryptMessage } from "@/lib/encryption";
+import { encryptMessage, decryptMessage, encryptChatToken } from "@/lib/encryption";
 import { createNotification } from "@/services/notification";
 import { hasPermission } from "@/lib/rbac";
 
@@ -42,41 +42,12 @@ async function assertCanMessageForListing(params: {
   const tenantId = isCurrentLandlord ? otherUserId : currentUserId;
 
   if (isWrite) {
-    const now = new Date();
-
-    // 1. Check if there is any COMPLETED or CANCELLED reservation for this tenant and listing
-    const closedReservation = await db.reservation.findFirst({
-      where: {
-        listingId,
-        userId: tenantId,
-        OR: [
-          { status: { in: ["COMPLETED", "CANCELLED"] as any } },
-          { endDate: { lt: now } }
-        ]
-      },
-      select: { id: true, status: true },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    if (closedReservation) {
-      const reason = (closedReservation.status as string) === "CANCELLED"
-        ? "Messaging is closed for cancelled reservations."
-        : "Messaging is closed because the stay period has completed or ended.";
-      return {
-        ok: false as const,
-        status: 403,
-        message: reason,
-      };
-    }
-
-    // 2. When sending a new message, require an active inquiry or active reservation that has not expired
-    const [activeInquiry, activeReservation] = await Promise.all([
+    const [activeInquiry, activeReservation, existingMessage] = await Promise.all([
       db.inquiry.findFirst({
         where: {
           listingId,
           userId: tenantId,
-          status: { in: ["PENDING", "APPROVED"] },
-          checkOutDate: { gte: now },
+          status: { in: ["PENDING", "APPROVED"] as any },
         },
         select: { id: true },
       }),
@@ -84,18 +55,27 @@ async function assertCanMessageForListing(params: {
         where: {
           listingId,
           userId: tenantId,
-          status: { in: ["PENDING_PAYMENT", "RESERVED", "CHECKED_IN"] },
-          endDate: { gte: now },
+          status: { in: ["PENDING_PAYMENT", "RESERVED", "CHECKED_IN", "COMPLETED"] as any },
         },
         select: { id: true },
       }),
+      db.message.findFirst({
+        where: {
+          listingId,
+          OR: [
+            { senderId: currentUserId, receiverId: otherUserId },
+            { senderId: otherUserId, receiverId: currentUserId }
+          ]
+        },
+        select: { id: true }
+      })
     ]);
 
-    if (!activeInquiry && !activeReservation) {
+    if (!activeInquiry && !activeReservation && !existingMessage) {
       return {
         ok: false as const,
         status: 403,
-        message: "Messaging is closed for this listing because the stay period has ended or status is inactive.",
+        message: "Messaging is closed for this listing because there is no active inquiry or reservation.",
       };
     }
   } else {
@@ -214,8 +194,8 @@ export async function POST(request: NextRequest) {
   const preview = content.length > 120 ? `${content.slice(0, 120)}…` : content;
   const isReceiverLandlord = String(receiverId) === String(can.landlordId);
   const deepLink = isReceiverLandlord 
-    ? `/landlord/messages?listingId=${listingId}&tenantId=${user.id}`
-    : `/messages?listingId=${listingId}&otherUserId=${user.id}`;
+    ? `/landlord/messages?token=${encryptChatToken(listingId, user.id)}`
+    : `/messages?token=${encryptChatToken(listingId, user.id)}`;
 
   await createNotification({
     userId: receiverId,
