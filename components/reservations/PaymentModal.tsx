@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Modal from "../modals/Modal";
 import { 
   CreditCard, 
@@ -19,7 +20,9 @@ import {
   ShieldCheck,
   Building2,
   Clock,
-  ArrowRight
+  ArrowRight,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { SlideToConfirm } from "../ui/slide-to-confirm";
 import { cn } from "@/utils/helper";
@@ -85,6 +88,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isContractAgreed, setIsContractAgreed] = useState(false);
   const [isPreviewingContract, setIsPreviewingContract] = useState(false);
+  const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
 
   const paymentMethods: PaymentMethod[] = [
     {
@@ -264,73 +268,110 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <div className="lg:col-span-7 space-y-6">
               
               {/* Reservation Summary Card */}
-              <div className="bg-white dark:bg-gray-900 rounded-3xl p-5 sm:p-6 border border-gray-200 dark:border-gray-800 shadow-sm space-y-5">
-                <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3.5">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                    <Building2 size={15} className="text-primary" />
-                    <span>Reservation Summary</span>
-                  </h3>
-                  <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 bg-primary/10 text-primary rounded-lg">
-                    Approved
-                  </span>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  {reservation.listing?.imageSrc && (
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden relative shrink-0 border border-gray-200 dark:border-gray-700 shadow-inner">
-                      <SafeImage 
-                        src={reservation.listing.imageSrc} 
-                        alt={reservation.listing.title} 
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex-1 min-w-0 space-y-1.5">
-                    <h4 className="text-sm sm:text-base font-black text-gray-900 dark:text-white truncate">
-                      {reservation.listing.title}
-                    </h4>
-                    
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-bold">
-                        {reservation.room.name}
-                      </span>
-                      {reservation.durationInDays > 0 && (
-                        <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-lg text-xs font-bold flex items-center gap-1">
-                          <Clock size={12} />
-                          <span>{reservation.durationInDays} Nights</span>
-                        </span>
-                      )}
-                    </div>
-
-                    <p className="text-[11px] font-semibold text-gray-400 pt-1">
-                      Holding deposit guarantees your spot until check-in.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Total Fee Highlight */}
-                <div className="pt-2">
-                  <div className="p-4 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/20 flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-primary flex items-center gap-1.5">
-                        <Tag size={12} />
-                        <span>Holding Fee Total</span>
-                      </span>
-                      <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400">
-                        {occupants} {occupants === 1 ? 'Guest' : 'Guests'} × ₱{Number(roomFee).toLocaleString()}
-                      </p>
-                    </div>
-                    <span className="text-2xl sm:text-3xl font-black text-primary tracking-tight">
-                      ₱{Number(reservation.totalPrice || 0).toLocaleString()}
+              <div className="bg-white dark:bg-gray-900 rounded-3xl p-4 sm:p-6 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+                <div 
+                  className="flex items-center justify-between pb-1 cursor-pointer select-none"
+                  onClick={() => setIsSummaryExpanded(!isSummaryExpanded)}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Building2 size={15} className="text-primary shrink-0" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-gray-400 truncate">
+                      Reservation Summary
+                    </h3>
+                    <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 bg-primary/10 text-primary rounded-md shrink-0">
+                      Approved
                     </span>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsSummaryExpanded(!isSummaryExpanded);
+                    }}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold text-gray-500 hover:text-primary dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
+                    aria-label={isSummaryExpanded ? "Hide reservation summary" : "Show reservation summary"}
+                  >
+                    <span className="text-[11px] font-extrabold">{isSummaryExpanded ? "Hide" : "Show"}</span>
+                    {isSummaryExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                  </button>
                 </div>
+
+                {!isSummaryExpanded && (
+                  <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs font-bold text-gray-600 dark:text-gray-300 animate-fadeIn">
+                    <span className="truncate max-w-[60%]">{reservation.listing.title} • {reservation.room.name}</span>
+                    <span className="font-black text-primary">₱{Number(reservation.totalPrice || 0).toLocaleString()}</span>
+                  </div>
+                )}
+
+                <AnimatePresence initial={false}>
+                  {isSummaryExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: "easeInOut" }}
+                      className="overflow-hidden space-y-4 pt-2 border-t border-gray-100 dark:border-gray-800"
+                    >
+                      <div className="flex items-start gap-3 sm:gap-4 pt-1">
+                        {reservation.listing?.imageSrc && (
+                          <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden relative shrink-0 border border-gray-200 dark:border-gray-700 shadow-inner">
+                            <SafeImage 
+                              src={reservation.listing.imageSrc} 
+                              alt={reservation.listing.title} 
+                              className="object-cover"
+                            />
+                          </div>
+                        )}
+
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <h4 className="text-sm sm:text-base font-black text-gray-900 dark:text-white truncate">
+                            {reservation.listing.title}
+                          </h4>
+                          
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                            <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-[11px] sm:text-xs font-bold">
+                              {reservation.room.name}
+                            </span>
+                            {reservation.durationInDays > 0 && (
+                              <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-lg text-[11px] sm:text-xs font-bold flex items-center gap-1">
+                                <Clock size={12} />
+                                <span>{reservation.durationInDays} Nights</span>
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-[11px] font-semibold text-gray-400 pt-0.5 leading-snug">
+                            Holding deposit guarantees your spot until check-in.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Total Fee Highlight */}
+                      <div>
+                        <div className="p-3.5 sm:p-4 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/20 flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-primary flex items-center gap-1.5">
+                              <Tag size={12} />
+                              <span>Holding Fee Total</span>
+                            </span>
+                            <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400">
+                              {occupants} {occupants === 1 ? 'Guest' : 'Guests'} × ₱{Number(roomFee).toLocaleString()}
+                            </p>
+                          </div>
+                          <span className="text-xl sm:text-3xl font-black text-primary tracking-tight">
+                            ₱{Number(reservation.totalPrice || 0).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* 📜 Lease Agreement & House Rules Box */}
-              <div className="bg-white dark:bg-gray-900 rounded-3xl p-5 sm:p-6 border border-primary/20 dark:border-primary/30 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="bg-white dark:bg-gray-900 rounded-3xl p-4 sm:p-6 border border-primary/20 dark:border-primary/30 shadow-sm space-y-4">
+                <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
                   <div className="flex items-center gap-2">
                     <FileText size={16} className="text-primary shrink-0" />
                     <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
@@ -342,7 +383,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                     type="button"
                     onClick={handlePreviewContract}
                     disabled={isPreviewingContract}
-                    className="px-3.5 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0 shadow-sm"
+                    className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0 shadow-sm"
                   >
                     <Eye size={13} />
                     <span>{isPreviewingContract ? "Loading..." : "Read PDF"}</span>
@@ -354,7 +395,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 </p>
 
                 <label className={cn(
-                  "relative flex items-start gap-4 p-4.5 rounded-2xl border-2 transition-all duration-300 cursor-pointer select-none group",
+                  "relative flex items-start gap-3 sm:gap-4 p-3.5 sm:p-4.5 rounded-2xl border-2 transition-all duration-300 cursor-pointer select-none group",
                   isContractAgreed 
                     ? "border-primary bg-primary/10 dark:bg-primary/15 ring-2 ring-primary/20 shadow-md shadow-primary/5" 
                     : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40"
@@ -384,7 +425,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   </div>
 
                   <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
                       <span className="text-xs font-bold text-gray-900 dark:text-white leading-snug">
                         I have read and agree to the <strong>Boarding House Lease Agreement</strong> & house rules.
                       </span>
@@ -394,7 +435,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 block leading-normal">
+                    <span className="text-[10px] sm:text-[11px] font-medium text-gray-500 dark:text-gray-400 block leading-relaxed">
                       Checking this box confirms your digital legal consent prior to payment processing.
                     </span>
                   </div>
@@ -406,13 +447,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             {/* 👉 RIGHT COLUMN: Payment Method Selection & Slide Checkout (lg:col-span-5) */}
             <div className="lg:col-span-5 space-y-6">
               
-              <div className="bg-white dark:bg-gray-900 rounded-3xl p-5 sm:p-6 border border-gray-200 dark:border-gray-800 shadow-sm space-y-5">
+              <div className="bg-white dark:bg-gray-900 rounded-3xl p-4 sm:p-6 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4 sm:space-y-5">
                 <h3 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
                   <CreditCard size={15} className="text-primary" />
                   <span>Select Payment Method</span>
                 </h3>
 
-                <div className="space-y-3">
+                <div className="space-y-2.5 sm:space-y-3">
                   {paymentMethods.map((method) => {
                     const Icon = method.icon;
                     const isSelected = selectedMethod === method.id;
@@ -421,7 +462,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                       <label
                         key={method.id}
                         className={cn(
-                          "flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200",
+                          "flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200",
                           isSelected
                             ? "border-primary bg-primary/5 dark:bg-primary/10 ring-2 ring-primary/20 shadow-sm"
                             : "border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 bg-gray-50/50 dark:bg-gray-800/40"
