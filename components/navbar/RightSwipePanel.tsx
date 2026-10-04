@@ -2,8 +2,23 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, CalendarCheck, Home, User as UserIcon, LogOut, MessageCircle, Star, UserPlus, ClipboardList, LogIn, Bell } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  Home,
+  Mail,
+  CalendarCheck,
+  Heart,
+  MessageCircle,
+  Bell,
+  Star,
+  Settings,
+  LogOut,
+  ExternalLink,
+  X,
+  ChevronRight,
+  LogIn,
+  UserPlus,
+} from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { User } from "next-auth";
 
@@ -17,7 +32,7 @@ import { useLoadingStore } from "@/hooks/use-loading-store";
 import { useNotification } from "@/context/NotificationContext";
 import { useRecentStore } from "@/hooks/use-recent-store";
 import { useAISearchStore } from "@/hooks/use-ai-search-store";
-
+import Avatar from "@/components/common/Avatar";
 
 interface RightSwipePanelProps {
   user?: (User & { id: string; role?: string });
@@ -25,6 +40,7 @@ interface RightSwipePanelProps {
 
 const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
   const router = useRouter();
+  const pathname = (typeof usePathname === 'function' ? usePathname() : "") || "";
   const { isOpen, onOpen, onClose } = useMenuPanel();
   const { unreadStats } = useNotification();
   const { isLoggingOut, setIsLoggingOut } = useLoadingStore();
@@ -48,12 +64,9 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
     };
 
     if (isOpen) {
-      // Save current scroll position
       const scrollTop = window.pageYOffset || rootNode.scrollTop || body.scrollTop;
-      
-      // Lock body scroll
       body.style.overflow = 'hidden';
-      body.style.paddingRight = '17px'; // Compensate for scrollbar on some devices
+      body.style.paddingRight = '17px';
       body.style.top = `-${scrollTop}px`;
       body.classList.add("fixed", "w-full");
 
@@ -81,21 +94,19 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
   const handleLogoutConfirm = () => {
     setIsLoggingOut(true);
     setShowLogoutConfirm(false);
-    
-    // Strict clear-on-logout to prevent data leakage
+
     if (typeof window !== 'undefined') {
       localStorage.removeItem('recent-listings-storage');
       localStorage.removeItem('ai-search-history');
       useRecentStore.getState().clearRecents();
       useAISearchStore.getState().clearQueries();
     }
-    
+
     setTimeout(() => {
       signOut({ callbackUrl: "/" });
     }, 2500);
   };
 
-  // Close panel when user navigates
   useEffect(() => {
     const handleRouteChange = () => {
       onClose();
@@ -103,6 +114,21 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
     window.addEventListener("popstate", handleRouteChange);
     return () => window.removeEventListener("popstate", handleRouteChange);
   }, []);
+
+  const navItems = [
+    { href: '/', label: 'Home', icon: Home },
+    { href: '/inquiries', label: 'Inquiries', icon: Mail, badge: unreadStats?.byType["inquiry"] || 0 },
+    { href: '/reservations', label: 'Reservations', icon: CalendarCheck, badge: unreadStats?.byType["reservation"] || 0 },
+    { href: '/favorites', label: 'Favorites', icon: Heart },
+    { 
+      href: user?.role === 'LANDLORD' ? '/landlord/messages' : '/messages', 
+      label: 'Messages', 
+      icon: MessageCircle, 
+      badge: unreadStats?.byType["message"] || 0 
+    },
+    { href: '/notifications', label: 'Notifications', icon: Bell, badge: unreadStats?.total || 0 },
+    { href: '/my-reviews', label: 'Reviews', icon: Star, badge: unreadStats?.byType["review"] || 0 },
+  ];
 
   return (
     <Modal>
@@ -128,7 +154,7 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed top-0 right-0 h-full w-[85%] bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl z-50 md:hidden shadow-[-10px_0_30px_rgba(0,0,0,0.1)] dark:shadow-[-10px_0_30px_rgba(0,0,0,0.5)] border-l border-white/20 dark:border-white/5 overflow-hidden"
+            className="fixed top-0 right-0 h-full w-[85%] max-w-[360px] bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl z-50 md:hidden shadow-[-10px_0_30px_rgba(0,0,0,0.1)] dark:shadow-[-10px_0_30px_rgba(0,0,0,0.5)] border-l border-white/20 dark:border-white/5 overflow-hidden flex flex-col"
           >
             <motion.div
               initial={{ opacity: 0, x: 20 }}
@@ -140,128 +166,176 @@ const RightSwipePanel: React.FC<RightSwipePanelProps> = ({ user }) => {
               <div className="flex items-center justify-between p-4 border-b border-gray-200/50 dark:border-gray-700/50">
                 <div className="w-12" />
                 <h2 className="text-sm font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white opacity-80">
-                  Navigation
+                  Student Navigation
                 </h2>
                 <button
                   type="button"
                   onClick={onClose}
                   className="p-2 rounded-2xl bg-gray-100/50 dark:bg-gray-800/50 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-all border border-transparent hover:border-gray-200 dark:hover:border-gray-600 shadow-sm"
                 >
-                  <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 </button>
               </div>
 
-              {/* Panel Content */}
-              <div className="flex flex-col h-[calc(100%-64px)]">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                  <ThemeToggle />
-                </div>
+              {/* Theme Toggle Container */}
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                <ThemeToggle />
+              </div>
 
-                <div className="flex-1 overflow-y-auto">
-                  <div className="p-4 pb-0">
-                    <button
-                      type="button"
-                      onClick={() => redirect("/")}
-                      className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white"
-                    >
-                      <Home className="text-sm" />
-                      <span className="font-semibold">Home</span>
-                    </button>
-                    <hr className="mt-2 border-gray-100 dark:border-gray-800" />
+              {/* User Profile Card */}
+              {user && (
+                <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/30">
+                  <div className="flex items-center gap-3">
+                    <div className="relative shrink-0">
+                      <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-primary/30">
+                        <Avatar
+                          src={user.image}
+                          alt={user.name || 'User'}
+                          name={user.name || user.email || 'User'}
+                          className="w-full h-full"
+                        />
+                      </div>
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-gray-900 rounded-full" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-black text-gray-900 dark:text-white truncate">
+                        {user.name || 'Student User'}
+                      </h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {user.email}
+                      </p>
+                      <span className="inline-block mt-0.5 px-2 py-0.5 bg-[#2f7d6d]/10 text-[#2f7d6d] dark:text-emerald-400 text-[9px] font-extrabold uppercase tracking-widest rounded-md">
+                        {user.role === 'LANDLORD' ? 'Host Account' : 'Student Account'}
+                      </span>
+                    </div>
                   </div>
 
-                  {!user ? (
-                    <div className="flex flex-col gap-3 p-4">
-                      <Modal.Trigger name="Login" onClick={onClose}>
-                        <button className="flex items-center gap-3 w-full bg-primary hover:bg-primary-hover text-white px-4 py-3 rounded-xl font-semibold transition-colors">
-                          <LogIn className="text-sm" />
-                          <span>Login</span>
-                        </button>
-                      </Modal.Trigger>
-
-                      <Modal.Trigger name="Sign up" onClick={onClose}>
-                        <button className="flex items-center gap-3 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-4 py-3 rounded-xl font-semibold transition-colors">
-                          <UserPlus className="text-sm" />
-                          <span>Signup</span>
-                        </button>
-                      </Modal.Trigger>
+                  {/* Settings Button */}
+                  <button
+                    type="button"
+                    onClick={() => redirect("/profile")}
+                    className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Settings className="w-4 h-4 text-violet-500" />
+                      <span>Settings</span>
                     </div>
-                  ) : (
-                    <div className="flex flex-col gap-1 p-4">
-                      <button onClick={() => redirect("/favorites")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
-                        <Heart className="text-sm" />
-                        <span>My favorites</span>
-                      </button>
-                      <button onClick={() => redirect("/reservations")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
-                        <div className="relative">
-                          <CalendarCheck className="text-sm" />
-                          {unreadStats && (unreadStats.byType["reservation"] || 0) > 0 && (
-                            <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-                          )}
-                        </div>
-                        <span>My reservations</span>
-                      </button>
-                      <button onClick={() => redirect("/inquiries")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
-                        <div className="relative">
-                          <ClipboardList className="text-sm" />
-                          {unreadStats && (unreadStats.byType["inquiry"] || 0) > 0 && (
-                            <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-                          )}
-                        </div>
-                        <span>My inquiries</span>
-                      </button>
-                      <button onClick={() => redirect("/notifications")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
-                        <div className="relative">
-                          <Bell className="text-sm" />
-                          {unreadStats && unreadStats.total > 0 && (
-                            <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between w-full">
-                          <span>Notifications</span>
-                          {unreadStats && unreadStats.total > 0 && (
-                            <span className="px-2 py-0.5 text-[10px] font-black bg-red-500 text-white rounded-full">
-                              {unreadStats.total > 9 ? "9+" : unreadStats.total}
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                      <button onClick={() => redirect("/my-reviews")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
-                        <div className="relative">
-                          <Star className="text-sm" />
-                          {unreadStats && (unreadStats.byType["review"] || 0) > 0 && (
-                            <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-                          )}
-                        </div>
-                        <span>My reviews</span>
-                      </button>
-                      <button onClick={() => redirect(user?.role === 'LANDLORD' ? '/landlord/messages' : '/messages')} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
-                        <div className="relative">
-                          <MessageCircle className="text-sm" />
-                          {unreadStats && (unreadStats.byType["message"] || 0) > 0 && (
-                            <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-                          )}
-                        </div>
-                        <span>My messages</span>
-                      </button>
-                      <button onClick={() => redirect("/become-a-host")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
-                        <Home className="text-sm" />
-                        <span>Become a host</span>
-                      </button>
-                      <button onClick={() => redirect("/profile")} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
-                        <UserIcon className="text-sm" />
-                        <span>My profile</span>
-                      </button>
-                      <hr className="my-2" />
-                      <button onClick={handleLogoutClick} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white">
-                        <LogOut className="text-sm" />
-                        <span>Logout</span>
-                      </button>
-                    </div>
-                  )}
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                  </button>
                 </div>
+              )}
+
+              {/* Navigation Items Scroll Area */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {!user ? (
+                  <div className="flex flex-col gap-3 p-1">
+                    <Modal.Trigger name="Login" onClick={onClose}>
+                      <button className="flex items-center gap-3 w-full bg-primary hover:bg-primary/90 text-white px-4 py-3 rounded-xl font-semibold transition-colors cursor-pointer">
+                        <LogIn className="w-5 h-5" />
+                        <span>Login</span>
+                      </button>
+                    </Modal.Trigger>
+
+                    <Modal.Trigger name="Sign up" onClick={onClose}>
+                      <button className="flex items-center gap-3 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-4 py-3 rounded-xl font-semibold transition-colors cursor-pointer">
+                        <UserPlus className="w-5 h-5" />
+                        <span>Signup</span>
+                      </button>
+                    </Modal.Trigger>
+                  </div>
+                ) : (
+                  <>
+                    {navItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+
+                      return (
+                        <button
+                          key={item.href}
+                          type="button"
+                          onClick={() => redirect(item.href)}
+                          className={`flex items-center justify-between w-full px-4 py-3 rounded-xl transition-colors cursor-pointer ${
+                            isActive
+                              ? 'bg-[#2f7d6d] text-white font-bold shadow-md shadow-[#2f7d6d]/30'
+                              : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-white'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Icon className="w-5 h-5 shrink-0" />
+                            <span className="font-semibold text-sm">{item.label}</span>
+                          </div>
+
+                          {item.badge && item.badge > 0 ? (
+                            <span className={`px-2.5 py-0.5 min-w-[22px] text-[10px] font-black rounded-full flex items-center justify-center shadow-md leading-none ${
+                              isActive
+                                ? 'bg-white text-[#2f7d6d] shadow-black/10 font-black'
+                                : 'bg-rose-500 text-white shadow-rose-500/30 border border-rose-400/30'
+                            }`}>
+                              {item.badge > 9 ? '9+' : item.badge}
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+
+                    <hr className="my-3 border-gray-100 dark:border-gray-800" />
+
+                    {/* Switch to Landlord Dashboard / Become Host */}
+                    {user?.role === 'LANDLORD' || user?.role === 'ADMIN' ? (
+                      <button
+                        type="button"
+                        onClick={() => redirect('/landlord')}
+                        className="w-full p-3 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-700 dark:text-emerald-300 transition-all flex items-center justify-between group shadow-sm my-2 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <ExternalLink className="w-4 h-4 stroke-[2.5]" />
+                          </div>
+                          <div className="text-left">
+                            <span className="block font-black text-xs uppercase tracking-wider text-emerald-800 dark:text-emerald-200 leading-tight">
+                              Landlord Dashboard
+                            </span>
+                            <span className="block text-[10px] font-bold text-emerald-600/80 dark:text-emerald-400/80 uppercase tracking-widest leading-tight mt-0.5">
+                              Property Management
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-emerald-500 group-hover:translate-x-0.5 transition-transform" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => redirect('/become-a-host')}
+                        className="w-full p-3 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-700 dark:text-emerald-300 transition-all flex items-center justify-between group shadow-sm my-2 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <ExternalLink className="w-4 h-4 stroke-[2.5]" />
+                          </div>
+                          <div className="text-left">
+                            <span className="block font-black text-xs uppercase tracking-wider text-emerald-800 dark:text-emerald-200 leading-tight">
+                              Become a Host
+                            </span>
+                            <span className="block text-[10px] font-bold text-emerald-600/80 dark:text-emerald-400/80 uppercase tracking-widest leading-tight mt-0.5">
+                              Host Housing Portal
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-emerald-500 group-hover:translate-x-0.5 transition-transform" />
+                      </button>
+                    )}
+
+                    {/* Log Out */}
+                    <button
+                      type="button"
+                      onClick={handleLogoutClick}
+                      className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-white font-semibold cursor-pointer"
+                    >
+                      <LogOut className="w-5 h-5 text-red-500" />
+                      <span>Logout</span>
+                    </button>
+                  </>
+                )}
               </div>
             </motion.div>
           </motion.div>

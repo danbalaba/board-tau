@@ -11,6 +11,7 @@ import Modal from '@/components/modals/Modal';
 import AuthModal from '@/components/modals/AuthModal';
 import { useScrollDirection } from '@/hooks/use-scroll-direction';
 import { useCompareStore } from '@/hooks/use-compare-store';
+import { useMenuPanel } from '@/hooks/use-menu-panel';
 
 const TypingIndicator = () => (
   <div className="flex gap-1.5 items-center px-1">
@@ -122,7 +123,8 @@ export default function ChatBot() {
   const hasCompareBar = pathname === '/favorites' && selectedListingIds.length > 0;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollDirection = useScrollDirection();
-  const isHiddenOnMobile = scrollDirection === "down";
+  const { isOpen: isMenuOpen } = useMenuPanel();
+  const isHiddenOnMobile = scrollDirection === "down" || isMenuOpen;
 
   // Pre-warm Web Speech API voices
   useEffect(() => {

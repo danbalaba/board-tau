@@ -119,7 +119,7 @@ const Modal: FC<ModalProps> & {
       lg: isFullMobile ? 'w-full max-w-full sm:w-[95vw] sm:max-w-[800px] md:w-[800px]' : 'w-[95vw] max-w-[800px] md:w-[800px]',
       xl: isFullMobile ? 'w-full max-w-full sm:w-[95vw] sm:max-w-[1180px] md:w-[1180px]' : 'w-[95vw] max-w-[1180px] md:w-[1180px]',
       '2xl': isFullMobile ? 'w-full max-w-full sm:w-[96vw] sm:max-w-[1300px] md:w-[1300px]' : 'w-[96vw] max-w-[1300px] md:w-[1300px]',
-      full: 'w-full h-full'
+      full: isFullMobile ? 'w-full h-full sm:h-auto sm:max-w-5xl' : 'w-full h-full sm:h-auto sm:max-w-5xl'
     };
 
     if (!isClient) return null;
@@ -135,7 +135,7 @@ const Modal: FC<ModalProps> & {
             transition={{ duration: 0.2 }}
             className={cn(
               "fixed inset-0 z-[10000] flex justify-center overflow-hidden outline-none focus:outline-none bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-300 overscroll-contain",
-              width === 'full' ? "p-0 sm:p-2 md:p-3" : (isFullMobile ? "p-0 items-end sm:items-center sm:p-6" : "p-4 items-center sm:p-6")
+              width === 'full' ? "p-0 items-end sm:items-center sm:p-6" : (isFullMobile ? "p-0 items-end sm:items-center sm:p-6" : "p-4 items-center sm:p-6")
             )}
             onWheel={(e) => e.preventDefault()}
             onTouchMove={(e) => e.preventDefault()}
@@ -157,10 +157,10 @@ const Modal: FC<ModalProps> & {
                 if (node && isOpen) node.focus();
               }}
               className={cn(
-                "outline-none focus:outline-none overscroll-contain w-full flex flex-col min-h-0",
+                "outline-none focus:outline-none overscroll-contain w-full flex flex-col min-h-0 sm:my-auto",
                 widthClasses[width],
                 isFullMobile 
-                  ? (width === 'full' ? "h-full rounded-none sm:rounded-card" : "h-auto max-h-[92vh] sm:max-h-[90vh] rounded-t-[32px] rounded-b-none sm:rounded-card")
+                  ? (width === 'full' ? "h-full sm:h-auto max-h-none sm:max-h-[90vh] rounded-none sm:rounded-card" : "h-auto max-h-[92vh] sm:max-h-[90vh] rounded-t-[32px] rounded-b-none sm:rounded-card")
                   : "max-h-[90vh] rounded-2xl sm:rounded-card",
                 hasFixedFooter ? "overflow-hidden" : "overflow-y-auto",
                 noPadding ? "bg-transparent border-0 shadow-none" : (isFullMobile ? "shadow-2xl sm:shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border-t border-x border-gray-100 dark:border-gray-800 sm:border sm:border-white/20 dark:sm:border-white/10" : "shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border border-white/20 dark:border-white/10")
@@ -243,7 +243,7 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, 
     lg: isFullMobile ? 'w-full max-w-full sm:w-[95vw] sm:max-w-[800px] md:w-[800px]' : 'w-[95vw] max-w-[800px] md:w-[800px]',
     xl: isFullMobile ? 'w-full max-w-full sm:w-[95vw] sm:max-w-[1100px] md:w-[1100px]' : 'w-[95vw] max-w-[1100px] md:w-[1100px]',
     '2xl': isFullMobile ? 'w-full max-w-full sm:w-[96vw] sm:max-w-[1300px] md:w-[1300px]' : 'w-[96vw] max-w-[1300px] md:w-[1300px]',
-    full: 'w-full h-full'
+    full: isFullMobile ? 'w-full h-full sm:h-auto sm:max-w-5xl' : 'w-full h-full sm:h-auto sm:max-w-5xl'
   };
   const { openName, close } = useContext(ModalContext);
   const isWindowOpen = openName === name;
@@ -299,7 +299,7 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, 
           transition={{ duration: 0.2 }}
           className={cn(
             "fixed inset-0 z-[10000] flex justify-center overflow-hidden outline-none focus:outline-none bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-300 overscroll-contain",
-            size === 'full' ? "p-0 sm:p-2 md:p-3" : (isFullMobile ? "p-0 items-end sm:items-center sm:p-6" : "p-4 items-center sm:p-6")
+            size === 'full' ? "p-0 items-end sm:items-center sm:p-6" : (isFullMobile ? "p-0 items-end sm:items-center sm:p-6" : "p-4 items-center sm:p-6")
           )}
           onClick={(e) => {
             e.stopPropagation();
@@ -319,10 +319,10 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, 
                 if (node && isWindowOpen) node.focus();
               }}
               className={cn(
-                "outline-none focus:outline-none overscroll-contain w-full flex flex-col min-h-0",
+                "outline-none focus:outline-none overscroll-contain w-full flex flex-col min-h-0 sm:my-auto",
                 sizeClasses[size],
                 isFullMobile 
-                  ? (size === 'full' ? "h-full rounded-none sm:rounded-card" : "h-auto max-h-[92vh] sm:max-h-[90vh] rounded-t-[32px] rounded-b-none sm:rounded-card")
+                  ? (size === 'full' ? "h-full sm:h-auto max-h-none sm:max-h-[90vh] rounded-none sm:rounded-card" : "h-auto max-h-[92vh] sm:max-h-[90vh] rounded-t-[32px] rounded-b-none sm:rounded-card")
                   : "max-h-[90vh] rounded-2xl sm:rounded-card",
                 hasFixedFooter ? "overflow-hidden" : "overflow-y-auto",
                 noPadding ? "bg-transparent border-0 shadow-none" : (isFullMobile ? "shadow-2xl sm:shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border-t border-x border-gray-100 dark:border-gray-800 sm:border sm:border-white/20 dark:sm:border-white/10" : "shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border border-white/20 dark:border-white/10")
