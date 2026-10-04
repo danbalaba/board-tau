@@ -77,6 +77,8 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
   const [isArchiving, setIsArchiving] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [approvalLoaderInquiry, setApprovalLoaderInquiry] = useState<Inquiry | null>(null);
+  const [rejectionLoaderInquiry, setRejectionLoaderInquiry] = useState<Inquiry | null>(null);
 
   const { data: session } = useSession();
   const userId = (session?.user as any)?.id;
@@ -280,8 +282,14 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
   }, [selectedInquiry, success, toastError]);
 
   const handleRespond = useCallback(async (inquiryId: string, status: "APPROVED" | "REJECTED", message?: string) => {
+    const targetInquiry = listings.find(i => i.id === inquiryId) || selectedInquiry;
+    if (status === "APPROVED" && targetInquiry) {
+      setApprovalLoaderInquiry(targetInquiry);
+    } else if (status === "REJECTED" && targetInquiry) {
+      setRejectionLoaderInquiry(targetInquiry);
+    }
+
     setRespondingId(inquiryId);
-    const loadingToast = toast.loading(`${status === "APPROVED" ? "Approving" : "Rejecting"} inquiry...`);
     try {
       const response = await fetch(`/api/landlord/inquiries?id=${inquiryId}`, {
         method: "PUT",
@@ -292,17 +300,19 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
         setListings(prev => prev.map(i => i.id === inquiryId ? { ...i, status } : i));
         queryClient.invalidateQueries({ queryKey: ["landlord-notifications"] });
         router.refresh();
-        success(`Inquiry ${status.toLowerCase()} successfully.`);
       } else {
         toastError(`Failed to update status.`);
+        setApprovalLoaderInquiry(null);
+        setRejectionLoaderInquiry(null);
       }
     } catch (error) {
       toastError("An error occurred.");
+      setApprovalLoaderInquiry(null);
+      setRejectionLoaderInquiry(null);
     } finally {
       setRespondingId(null);
-      toast.dismiss(loadingToast);
     }
-  }, [router]);
+  }, [listings, selectedInquiry, queryClient, router, toastError]);
 
   const handleConfirmReject = useCallback(async (inquiryId: string, reason: string) => {
     await handleRespond(inquiryId, "REJECTED", reason);
@@ -443,6 +453,10 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     handleGenerateReport,
     isArchived,
     handleToggleArchived,
+    approvalLoaderInquiry,
+    setApprovalLoaderInquiry,
+    rejectionLoaderInquiry,
+    setRejectionLoaderInquiry,
     isLoading: isLoading || isFilterLoading,
     rawInquiries: listings
   };

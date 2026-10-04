@@ -24,6 +24,8 @@ import { createPortal } from 'react-dom';
 import { useIsClient } from '@/hooks/useIsClient';
 import { LandlordInquiryDetailsModal } from './landlord-inquiry-details-modal';
 import LandlordArchiveModal from './landlord-inquiry-archive-modal';
+import InquiryApprovalLoaderModal from './InquiryApprovalLoaderModal';
+import InquiryRejectionLoaderModal from './InquiryRejectionLoaderModal';
 
 interface LandlordInquiryModalsProps {
   deleteModalOpen: boolean;
@@ -42,6 +44,10 @@ interface LandlordInquiryModalsProps {
   handleConfirmArchive: () => void;
   handleConfirmReject: (id: string, reason: string) => void;
   handleRespond?: (id: string, status: "APPROVED" | "REJECTED", message?: string) => Promise<void>;
+  approvalLoaderInquiry?: Inquiry | null;
+  rejectionLoaderInquiry?: Inquiry | null;
+  onApprovalComplete?: () => void;
+  onRejectionComplete?: () => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -74,7 +80,11 @@ export function LandlordInquiryModals({
   handleConfirmDelete,
   handleConfirmArchive,
   handleConfirmReject,
-  handleRespond
+  handleRespond,
+  approvalLoaderInquiry,
+  rejectionLoaderInquiry,
+  onApprovalComplete,
+  onRejectionComplete
 }: LandlordInquiryModalsProps) {
   const router = useRouter();
   const isClient = useIsClient();
@@ -90,9 +100,10 @@ export function LandlordInquiryModals({
     setShowCustom(false);
   };
 
-  if (!selectedInquiry || !isClient) return null;
+  if (!isClient) return null;
 
   const onConfirmReject = async () => {
+    if (!selectedInquiry) return;
     const reason = showCustom ? customReason.trim() : selectedReason;
     if (!reason) return;
     setSubmittingReject(true);
@@ -110,11 +121,11 @@ export function LandlordInquiryModals({
         onClose={() => setArchiveModalOpen(false)}
         onConfirm={handleConfirmArchive}
         isArchiving={isArchiving}
-        isRestore={selectedInquiry.isArchived}
-        title={selectedInquiry.isArchived ? 'Restore Inquiry' : 'Archive Inquiry'}
-        description={selectedInquiry.isArchived 
-          ? `This will restore the inquiry from ${selectedInquiry.user.name || selectedInquiry.user.email} to your active inbox.`
-          : `This will move the inquiry from ${selectedInquiry.user.name || selectedInquiry.user.email} to your archive. You can restore it anytime.`
+        isRestore={selectedInquiry?.isArchived || false}
+        title={selectedInquiry?.isArchived ? 'Restore Inquiry' : 'Archive Inquiry'}
+        description={selectedInquiry?.isArchived 
+          ? `This will restore the inquiry from ${selectedInquiry?.user?.name || selectedInquiry?.user?.email || 'this user'} to your active inbox.`
+          : `This will move the inquiry from ${selectedInquiry?.user?.name || selectedInquiry?.user?.email || 'this user'} to your archive. You can restore it anytime.`
         }
       />
 
@@ -146,7 +157,7 @@ export function LandlordInquiryModals({
                 </h3>
                 
                 <p className="text-sm text-gray-400 mb-8 leading-relaxed font-medium px-4">
-                  You are about to permanently delete all sensitive documents for "{selectedInquiry.user.name || selectedInquiry.user.email}". This action cannot be undone.
+                  You are about to permanently delete all sensitive documents for "{selectedInquiry?.user?.name || selectedInquiry?.user?.email || 'this user'}". This action cannot be undone.
                 </p>
 
                 <div className="flex flex-col w-full gap-3">
@@ -318,6 +329,26 @@ export function LandlordInquiryModals({
           }
         }}
         isUpdatingStatus={isResponding}
+      />
+
+      {/* Inquiry Approval Fullscreen Mascot Loader Modal */}
+      <InquiryApprovalLoaderModal
+        isOpen={!!approvalLoaderInquiry}
+        tenantName={approvalLoaderInquiry?.user.name || approvalLoaderInquiry?.user.email}
+        listingTitle={approvalLoaderInquiry?.listing.title}
+        onComplete={() => {
+          if (onApprovalComplete) onApprovalComplete();
+        }}
+      />
+
+      {/* Inquiry Rejection Fullscreen Mascot Loader Modal */}
+      <InquiryRejectionLoaderModal
+        isOpen={!!rejectionLoaderInquiry}
+        tenantName={rejectionLoaderInquiry?.user.name || rejectionLoaderInquiry?.user.email}
+        listingTitle={rejectionLoaderInquiry?.listing.title}
+        onComplete={() => {
+          if (onRejectionComplete) onRejectionComplete();
+        }}
       />
     </>,
     document.body

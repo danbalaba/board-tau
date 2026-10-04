@@ -8,13 +8,15 @@ const WalkInSchema = z.object({
   roomId: z.string().min(1, "Room ID is required"),
   guestName: z.string().min(1, "Guest name is required"),
   guestContact: z.string().optional().nullable(),
+  guestEmail: z.string().optional().nullable(),
   startDate: z.string().min(1, "Check-in date is required"),
   endDate: z.string().min(1, "Check-out date is required"),
   occupantsCount: z.number().min(1, "At least 1 occupant is required"),
+  paymentType: z.enum(["DIRECT_RENT", "RESERVATION_FEE"]).optional().default("DIRECT_RENT"),
+  securityDeposit: z.number().optional().default(0),
   totalPrice: z.number().min(0, "Total price must be valid"),
-  guestPhotoUrl: z.string().optional().nullable(),
-  guestIdUrl: z.string().optional().nullable(),
   isSoloBuyout: z.boolean().optional().default(false),
+  notes: z.string().optional().nullable(),
 });
 
 export async function POST(request: Request) {
@@ -33,6 +35,9 @@ export async function POST(request: Request) {
       include: {
         rooms: {
           where: { id: validatedData.roomId },
+          include: {
+            roomTypeDefinition: true,
+          }
         },
       },
     });
@@ -46,39 +51,69 @@ export async function POST(request: Request) {
     }
 
     const room = listing.rooms[0];
+    const isFlatRate = Boolean(room.roomTypeDefinition?.isFlatRate);
 
-    if (room.availableSlots < validatedData.occupantsCount) {
+    if (validatedData.isSoloBuyout && !isFlatRate) {
+      if (room.availableSlots < room.capacity) {
+        return new NextResponse("Solo buyout requires all room beds to be currently available", { status: 400 });
+      }
+    } else if (room.availableSlots < validatedData.occupantsCount) {
       return new NextResponse("Not enough available slots in this room", { status: 400 });
     }
 
     const moveIn = new Date(validatedData.startDate);
     const checkOut = new Date(validatedData.endDate);
 
-    const durationInDays = Math.ceil(
-      (checkOut.getTime() - moveIn.getTime()) / (1000 * 60 * 60 * 24)
+    const durationInDays = Math.max(
+      1,
+      Math.ceil((checkOut.getTime() - moveIn.getTime()) / (1000 * 60 * 60 * 24))
     );
 
-    // Create the Reservation as PENDING_PAYMENT
-    // The slots will be subtracted when the landlord clicks "Confirm Payment" 
-    // which transitions this to RESERVED via updateBookingStatus.
-    const reservation = await db.reservation.create({
-      data: {
-        isWalkIn: true,
-        guestName: validatedData.guestName,
-        guestContact: validatedData.guestContact || null,
-        guestPhotoUrl: validatedData.guestPhotoUrl || null,
-        guestIdUrl: validatedData.guestIdUrl || null,
-        listingId: validatedData.listingId,
-        roomId: validatedData.roomId,
-        startDate: moveIn,
-        endDate: checkOut,
-        durationInDays,
-        totalPrice: validatedData.totalPrice,
-        occupantsCount: validatedData.occupantsCount,
-        isSoloBuyout: validatedData.isSoloBuyout,
-        status: "PENDING_PAYMENT",
-        paymentStatus: "PENDING",
-      },
+    // Format guest contact text if email or notes are also provided
+    let fullContact = validatedData.guestContact || "";
+    if (validatedData.guestEmail) {
+      fullContact = fullContact ? `${fullContact} | ${validatedData.guestEmail}` : validatedData.guestEmail;
+    }
+    if (validatedData.notes) {
+      fullContact = fullContact ? `${fullContact} (Notes: ${validatedData.notes})` : `Notes: ${validatedData.notes}`;
+    }
+
+    const isDirectRent = validatedData.paymentType === "DIRECT_RENT";
+
+    // Create the Reservation
+    // Walk-ins created by landlords in-person immediately reserve the room slots
+    const reservation = await db.$transaction(async (tx) => {
+      const createdReservation = await tx.reservation.create({
+        data: {
+          isWalkIn: true,
+          guestName: validatedData.guestName,
+          guestContact: fullContact || null,
+          listingId: validatedData.listingId,
+          roomId: validatedData.roomId,
+          startDate: moveIn,
+          endDate: checkOut,
+          durationInDays,
+          totalPrice: validatedData.totalPrice,
+          occupantsCount: validatedData.occupantsCount,
+          isSoloBuyout: validatedData.isSoloBuyout,
+          status: "RESERVED",
+          paymentStatus: "PAID",
+          paymentMethod: "CASH",
+        },
+      });
+
+      // Update room available slots immediately for walk-ins
+      const slotsToDeduct = validatedData.isSoloBuyout ? room.availableSlots : Math.min(room.availableSlots, validatedData.occupantsCount);
+      const newAvailableSlots = Math.max(0, room.availableSlots - slotsToDeduct);
+      await tx.room.update({
+        where: { id: room.id },
+        data: {
+          availableSlots: newAvailableSlots,
+          status: newAvailableSlots === 0 ? "FULL" : "AVAILABLE",
+        },
+      });
+
+      return createdReservation;
     });
 
     return NextResponse.json(reservation);

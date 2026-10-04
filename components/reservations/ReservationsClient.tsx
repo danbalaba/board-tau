@@ -241,10 +241,12 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
             };
 
             syncPayment();
+            window.history.replaceState({}, '', '/reservations');
         }
 
         if (statusParam === "cancelled" && isMounted) {
             toast.error("Payment was cancelled or failed. Please try again.");
+            window.history.replaceState({}, '', '/reservations');
         }
     }, [statusParam, isMounted, router]);
 

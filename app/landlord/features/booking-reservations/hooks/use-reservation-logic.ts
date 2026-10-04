@@ -63,6 +63,8 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
   const [reservations, setReservations] = useState(initialReservations);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [checkInLoaderReservation, setCheckInLoaderReservation] = useState<ReservationRequest | null>(null);
+  const [cancelLoaderReservation, setCancelLoaderReservation] = useState<ReservationRequest | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), 700);
@@ -214,6 +216,13 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
   }, [router, success, toastError]);
 
   const handleUpdateStatus = useCallback(async (bookingId: string, status: string, reason?: string) => {
+    const targetReservation = reservations.find(r => r.id === bookingId);
+    if (status === 'CHECKED_IN' && targetReservation) {
+      setCheckInLoaderReservation(targetReservation);
+    } else if (status === 'CANCELLED' && targetReservation) {
+      setCancelLoaderReservation(targetReservation);
+    }
+
     setUpdatingId(bookingId);
     try {
       const response = await fetch(`/api/landlord/bookings?id=${bookingId}`, {
@@ -224,7 +233,6 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
 
       if (response.ok) {
         setReservations(prev => prev.map(r => r.id === bookingId ? { ...r, status } : r));
-        success(`Reservation status updated to ${status.replace('_', ' ')}.`);
         
         // Force immediate notification sync
         queryClient.invalidateQueries({ queryKey: ["landlord-notifications"] });
@@ -232,14 +240,18 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
       } else {
         const data = await response.json();
         toastError(data.error || `Failed to update status.`);
+        setCheckInLoaderReservation(null);
+        setCancelLoaderReservation(null);
       }
     } catch (error) {
       console.error('Error updating status:', error);
       toastError('An unexpected error occurred.');
+      setCheckInLoaderReservation(null);
+      setCancelLoaderReservation(null);
     } finally {
       setUpdatingId(null);
     }
-  }, [router, success, toastError]);
+  }, [reservations, router, queryClient, toastError]);
 
   const handleGenerateReport = async (dateRange?: DateRange) => {
     try {
@@ -351,6 +363,10 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
     handleUpdateStatus,
     handleGenerateReport,
     updatingId,
+    checkInLoaderReservation,
+    setCheckInLoaderReservation,
+    cancelLoaderReservation,
+    setCancelLoaderReservation,
     isLoading: isLoading || isFilterLoading
   };
 }

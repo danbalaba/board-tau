@@ -13,6 +13,7 @@ import Heading from "@/components/common/Heading";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { useNotification } from "@/context/NotificationContext";
 import { decryptChatToken, encryptChatToken } from "@/lib/encryption";
+import { ChevronLeft } from "lucide-react";
 
 interface MessagesClientProps {
   initialConversations: TenantConversation[];
@@ -185,7 +186,7 @@ const MessagesClient: React.FC<MessagesClientProps> = ({
           >
             <div className="flex flex-col items-center gap-1 opacity-60">
               <div className="w-1 h-6 bg-gray-400 dark:bg-gray-500 rounded-full" />
-              <IconChevronLeft className="w-4 h-4 text-gray-500 dark:text-gray-400 rotate-180 -ml-0.5" />
+              <ChevronLeft className="w-4 h-4 text-gray-500 dark:text-gray-400 rotate-180 -ml-0.5" />
             </div>
           </div>
         )}

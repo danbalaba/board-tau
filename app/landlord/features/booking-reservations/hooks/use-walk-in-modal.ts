@@ -1,23 +1,25 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useEdgeStore } from "@/lib/edgestore";
-import { format, differenceInDays, addDays } from "date-fns";
-import { useKYC } from "@/hooks/useKYC";
+import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
-import Webcam from "react-webcam";
-import { base64ToFile } from "@/components/modals/inquiry-modal/InquiryModalUtils";
+
+export type WalkInPaymentType = 'DIRECT_RENT' | 'RESERVATION_FEE';
 
 export interface WalkInFormData {
   listingId: string;
   roomId: string;
   guestName: string;
   guestContact: string;
+  guestEmail?: string;
   occupantsCount: number;
   moveInDate: string;
   checkOutDate: string;
+  paymentType: WalkInPaymentType;
+  securityDeposit: number;
   totalPrice: number;
   isSoloBuyout: boolean;
+  notes?: string;
 }
 
 export const useWalkInModal = (
@@ -26,31 +28,16 @@ export const useWalkInModal = (
   onClose: () => void
 ) => {
   const responsiveToast = useResponsiveToast();
-  const { edgestore } = useEdgeStore();
-  const { isProcessing, faceEngine, idEngine } = useKYC();
 
   // Step & Modal State
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 6; // 1: Location, 2: Guest, 3: Selfie, 4: ID, 5: Stay & Payment, 6: Review
+  const [maxUnlockedStep, setMaxUnlockedStep] = useState(1);
+  const totalSteps = 4; // 1: Room, 2: Guest, 3: Stay & Payment, 4: Review
   const [submitted, setSubmitted] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [direction, setDirection] = useState(0);
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  // KYC States
-  const webcamRef = useRef<Webcam>(null);
-  const [livenessStatus, setLivenessStatus] = useState<'idle' | 'passed'>('idle');
-  const [activeChallenges, setActiveChallenges] = useState<('blink' | 'smile' | 'turnLeft' | 'turnRight' | 'openMouth' | 'raiseEyebrows')[]>([]);
-  const [isFaceAligned, setIsFaceAligned] = useState(false);
-  const [isIDAligned, setIsIDAligned] = useState(false);
-  const [isPhoneDetected, setIsPhoneDetected] = useState(false);
-  const consecutiveFaceFailures = useRef(0);
-  const consecutiveIDFailures = useRef(0);
-  const [capturedSelfie, setCapturedSelfie] = useState<string | null>(null);
-  const [capturedID, setCapturedID] = useState<string | null>(null);
-  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
-  const [isFlashActive, setIsFlashActive] = useState(false);
 
   // Calendar State
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -76,11 +63,15 @@ export const useWalkInModal = (
       roomId: '',
       guestName: '',
       guestContact: '',
+      guestEmail: '',
       occupantsCount: 1,
       moveInDate: '',
       checkOutDate: '',
+      paymentType: 'DIRECT_RENT',
+      securityDeposit: 0,
       totalPrice: 0,
       isSoloBuyout: false,
+      notes: '',
     },
   });
 
@@ -89,117 +80,14 @@ export const useWalkInModal = (
   const resetState = () => {
     reset();
     setCurrentStep(1);
+    setMaxUnlockedStep(1);
     setSubmitted(false);
     setIsUploading(false);
     setDirection(0);
     setShowCalendar(false);
     setCurrentImageIndex(0);
-    setIsFaceAligned(false);
-    setIsIDAligned(false);
-    setIsPhoneDetected(false);
-    setLivenessStatus('idle');
-    setCapturedSelfie(null);
-    setCapturedID(null);
     setDateRange({ from: undefined, to: undefined });
   };
-
-  type ChallengeType = 'blink' | 'smile' | 'turnLeft' | 'turnRight' | 'openMouth' | 'raiseEyebrows';
-  const previousChallengesRef = useRef<ChallengeType[]>([]);
-
-  const generateUniqueRandomChallenges = (): ChallengeType[] => {
-    const ALL: ChallengeType[] = ['blink', 'smile', 'turnLeft', 'turnRight', 'openMouth', 'raiseEyebrows'];
-    let pool = ALL.filter(c => !previousChallengesRef.current.includes(c));
-    if (pool.length < 2) pool = ALL;
-    const shuffled = [...pool].sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, 2);
-    previousChallengesRef.current = selected;
-    return selected;
-  };
-
-  // Reset Liveness State on Step 3
-  useEffect(() => {
-    if (currentStep === 3 && !capturedSelfie) {
-      setLivenessStatus('idle');
-      setActiveChallenges(generateUniqueRandomChallenges());
-      consecutiveFaceFailures.current = 0;
-    }
-  }, [currentStep, capturedSelfie]);
-
-  // Real-time Selfie scanning loop
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (currentStep === 3 && !capturedSelfie && !isProcessing) {
-      interval = setInterval(async () => {
-        const video = webcamRef.current?.video;
-        if (video && video.readyState === 4) {
-          const result = await faceEngine.validateFace(video);
-          setIsFaceAligned(result.isValid);
-
-          if (livenessStatus === 'passed') {
-            if (!result.isValid) {
-              consecutiveFaceFailures.current += 1;
-              if (consecutiveFaceFailures.current >= 3) {
-                setLivenessStatus('idle');
-                setActiveChallenges(generateUniqueRandomChallenges());
-                consecutiveFaceFailures.current = 0;
-              }
-            } else {
-              consecutiveFaceFailures.current = 0;
-            }
-            return;
-          }
-
-          const state = await faceEngine.getLivenessState(video);
-          if (state && livenessStatus === 'idle' && activeChallenges.length > 0) {
-            const currentChallenge = activeChallenges[0];
-            if (
-              (currentChallenge === 'blink' && state.blink) ||
-              (currentChallenge === 'smile' && state.smile) ||
-              (currentChallenge === 'turnLeft' && state.turnLeft) ||
-              (currentChallenge === 'turnRight' && state.turnRight) ||
-              (currentChallenge === 'openMouth' && state.openMouth) ||
-              (currentChallenge === 'raiseEyebrows' && state.raiseEyebrows)
-            ) {
-              if (activeChallenges.length > 1) {
-                setActiveChallenges(prev => prev.slice(1));
-              } else {
-                setLivenessStatus('passed');
-              }
-              consecutiveFaceFailures.current = 0;
-            }
-          }
-        }
-      }, 200);
-    }
-    return () => clearInterval(interval);
-  }, [currentStep, capturedSelfie, isProcessing, faceEngine, activeChallenges, livenessStatus]);
-
-  // Real-time ID scanning loop
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (currentStep === 4 && !capturedID && !isProcessing) {
-      interval = setInterval(async () => {
-        const video = webcamRef.current?.video;
-        if (video && video.readyState === 4) {
-          const result = await idEngine.validateIDCard(video);
-          
-          if (result.isValid) {
-            consecutiveIDFailures.current = 0;
-            setIsIDAligned(true);
-          } else {
-            consecutiveIDFailures.current += 1;
-            if (consecutiveIDFailures.current >= 3) {
-              setIsIDAligned(false);
-            }
-          }
-
-          const phoneCheck = result.reason?.toLowerCase().includes("phone") || false;
-          setIsPhoneDetected(phoneCheck);
-        }
-      }, 300);
-    }
-    return () => clearInterval(interval);
-  }, [currentStep, capturedID, isProcessing, idEngine]);
 
   useEffect(() => {
     if (dateRange?.from) {
@@ -214,83 +102,21 @@ export const useWalkInModal = (
     }
   }, [dateRange, setValue]);
 
-  const handleCaptureSelfie = async () => {
-    const video = webcamRef.current?.video;
-    if (!video) return;
-
-    if (livenessStatus !== 'passed') {
-      responsiveToast.error({ title: "Verification Failed", description: "Please perform the requested action to prove you are real." });
-      return;
-    }
-
-    // 1. Capture photo INSTANTLY at click time (0ms shutter lag)
-    let imageSrc = webcamRef.current?.getScreenshot();
-    if (!imageSrc || imageSrc === 'data:,' || imageSrc.length < 500) {
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        imageSrc = canvas.toDataURL('image/jpeg', 0.92);
-      }
-    }
-
-    if (!imageSrc || imageSrc.length < 500) {
-      responsiveToast.error({ title: "Capture Error", description: "Failed to capture photo. Please try again." });
-      return;
-    }
-
-    // 2. Trigger quick 100ms flash feedback
-    setIsFlashActive(true);
-    setTimeout(() => setIsFlashActive(false), 100);
-
-    // 3. Validate ML face
-    const result = await faceEngine.validateFace(video);
-    if (!result.isValid) {
-      responsiveToast.error({ title: "Verification Failed", description: result.reason || "Selfie verification failed." });
-      return;
-    }
-
-    setCapturedSelfie(imageSrc);
-    responsiveToast.success({ title: "Success", description: "Face verified successfully!" });
-  };
-
-  const handleCaptureID = async () => {
-    const video = webcamRef.current?.video;
-    if (!video) return;
-
-    setIsFlashActive(true);
-    setTimeout(() => setIsFlashActive(false), 150);
-
-    const result = await idEngine.validateIDCard(video);
-    if (!result.isValid) {
-      responsiveToast.error({ title: "Verification Failed", description: result.reason || "ID verification failed." });
-      return;
-    }
-
-    const imageSrc = webcamRef.current?.getScreenshot();
-    if (imageSrc) {
-      setCapturedID(imageSrc);
-      responsiveToast.success({ title: "Success", description: "ID card detected!" });
-    }
-  };
-
-  const toggleCamera = () => {
-    setFacingMode(prev => prev === "user" ? "environment" : "user");
-    responsiveToast.success({ title: "Camera Switched", description: "Using secondary camera." });
-  };
-
   const isStepCompleted = (step: number) => {
     const values = getValues();
     switch (step) {
       case 1: return !!values.listingId && !!values.roomId;
       case 2: return !!values.guestName && values.occupantsCount >= 1 && !errors.guestName && !errors.occupantsCount;
-      case 3: return capturedSelfie !== null;
-      case 4: return capturedID !== null;
-      case 5: return !!values.moveInDate && !!values.checkOutDate && values.totalPrice > 0;
-      case 6: return true;
+      case 3: return !!values.moveInDate && !!values.checkOutDate && values.totalPrice >= 0;
+      case 4: return true;
       default: return false;
+    }
+  };
+
+  const handleStepClick = (stepId: number) => {
+    if (stepId <= maxUnlockedStep) {
+      setDirection(stepId > currentStep ? 1 : -1);
+      setCurrentStep(stepId);
     }
   };
 
@@ -298,7 +124,7 @@ export const useWalkInModal = (
     let fieldsToValidate: (keyof WalkInFormData)[] = [];
     if (currentStep === 1) fieldsToValidate = ['listingId', 'roomId'];
     if (currentStep === 2) fieldsToValidate = ['guestName', 'guestContact', 'occupantsCount'];
-    if (currentStep === 5) fieldsToValidate = ['moveInDate', 'checkOutDate'];
+    if (currentStep === 3) fieldsToValidate = ['moveInDate', 'checkOutDate'];
 
     const hasData = isStepCompleted(currentStep);
     
@@ -311,8 +137,10 @@ export const useWalkInModal = (
     }
 
     if (isValid && hasData) {
+      const nextStep = Math.min(currentStep + 1, totalSteps);
       setDirection(1);
-      setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
+      setCurrentStep(nextStep);
+      setMaxUnlockedStep((prev) => Math.max(prev, nextStep));
     }
   };
 
@@ -324,43 +152,21 @@ export const useWalkInModal = (
   const onSubmitForm = async (data: WalkInFormData) => {
     try {
       setIsUploading(true);
-      const uploadTasks = [];
-      let profilePhotoUrl = null;
-      let idAttachmentUrl = null;
-
-      if (capturedSelfie) {
-        const file = base64ToFile(capturedSelfie, "walkin_selfie.jpg");
-        uploadTasks.push(
-          edgestore.identityDocs.upload({
-            file,
-            input: { listingId: data.listingId, landlordId }
-          }).then((res) => { profilePhotoUrl = res.url; })
-        );
-      }
-
-      if (capturedID) {
-        const file = base64ToFile(capturedID, "walkin_id_card.jpg");
-        uploadTasks.push(
-          edgestore.identityDocs.upload({
-            file,
-            input: { listingId: data.listingId, landlordId }
-          }).then((res) => { idAttachmentUrl = res.url; })
-        );
-      }
-
-      await Promise.all(uploadTasks);
 
       const requestData = {
         listingId: data.listingId,
         roomId: data.roomId,
         guestName: data.guestName,
         guestContact: data.guestContact,
+        guestEmail: data.guestEmail || null,
         startDate: data.moveInDate,
         endDate: data.checkOutDate,
         occupantsCount: data.occupantsCount,
+        paymentType: data.paymentType,
+        securityDeposit: Number(data.securityDeposit) || 0,
         totalPrice: data.totalPrice,
-        guestPhotoUrl: profilePhotoUrl,
-        guestIdUrl: idAttachmentUrl,
+        isSoloBuyout: data.isSoloBuyout,
+        notes: data.notes || null,
       };
 
       const res = await fetch("/api/landlord/reservations/walk-in", {
@@ -371,11 +177,14 @@ export const useWalkInModal = (
 
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(text || "Failed to create walk-in");
+        throw new Error(text || "Failed to create walk-in reservation");
       }
 
       setSubmitted(true);
-      responsiveToast.success({ title: "Success", description: "Walk-in reservation created!" });
+      responsiveToast.success({ 
+        title: data.paymentType === 'DIRECT_RENT' ? "Walk-In Check-In Recorded!" : "Walk-In Reservation Recorded!", 
+        description: "The walk-in record has been saved into your property portal." 
+      });
       setTimeout(() => {
         onSuccess();
         onClose();
@@ -391,16 +200,9 @@ export const useWalkInModal = (
 
   return {
     currentStep, setCurrentStep,
-    submitted, isUploading, isProcessing,
-    webcamRef,
-    isFaceAligned, isIDAligned, isPhoneDetected,
-    capturedSelfie, setCapturedSelfie,
-    setIsFaceAligned,
-    capturedID, setCapturedID,
-    livenessStatus,
-    activeChallenge: activeChallenges[0] || 'blink',
-    setIsIDAligned, setIsPhoneDetected,
-    facingMode, isFlashActive, direction,
+    maxUnlockedStep, handleStepClick,
+    submitted, isUploading,
+    direction,
     showCalendar, setShowCalendar,
     currentImageIndex, setCurrentImageIndex,
     dateRange, setDateRange,
@@ -409,7 +211,6 @@ export const useWalkInModal = (
     errors, setValue, getValues, trigger, watch, control, clearErrors,
     watchedValues,
     isStepCompleted, handleNextStep, handlePrevStep,
-    handleCaptureSelfie, handleCaptureID, toggleCamera,
     resetState
   };
 };

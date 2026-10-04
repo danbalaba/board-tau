@@ -219,95 +219,136 @@ const StayStep: React.FC<StayStepProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="sm:hidden fixed inset-0 z-[999999] bg-black/70 backdrop-blur-md flex flex-col justify-end p-0"
+                transition={{ duration: 0.25 }}
+                className="sm:hidden fixed inset-0 z-[999999] bg-slate-900/40 dark:bg-black/80 backdrop-blur-xl flex flex-col justify-end p-0"
                 onClick={() => setShowCalendar(false)}
               >
                 <motion.div
                   initial={{ y: "100%" }}
                   animate={{ y: 0 }}
                   exit={{ y: "100%" }}
-                  transition={{ type: "spring", damping: 25, stiffness: 280 }}
-                  className="bg-white dark:bg-gray-900 w-full rounded-t-3xl border-t border-gray-200 dark:border-gray-800 p-5 shadow-2xl flex flex-col justify-between h-[520px] max-h-[85vh] overflow-hidden"
+                  transition={{ type: "spring", damping: 28, stiffness: 300 }}
+                  className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-2xl w-full rounded-t-3xl border-t border-gray-200/80 dark:border-gray-800 p-5 shadow-2xl flex flex-col justify-between h-[560px] max-h-[90vh] overflow-hidden relative"
                   onClick={(e) => e.stopPropagation()}
                 >
+                  <div className="absolute -top-16 -right-16 w-36 h-36 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+
                   {/* Header */}
-                  <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800 shrink-0">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                  <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800 shrink-0 relative z-10">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2.5 rounded-2xl bg-primary/10 text-primary shadow-xs">
                         <FaCalendar size={16} />
                       </div>
                       <div>
-                        <h4 className="font-extrabold text-base text-gray-900 dark:text-white leading-tight">
+                        <h4 className="font-black text-base text-gray-900 dark:text-white leading-tight">
                           Select Stay Dates
                         </h4>
-                        <p className="text-[10px] text-gray-400 font-medium">Check-in to Check-out range</p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">Interactive check-in & check-out range</p>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setShowCalendar(false)}
-                      className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                      className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
                     >
                       <MdClose size={20} />
                     </button>
                   </div>
 
+                  {/* Preset Shortcuts */}
+                  <div className="py-2 flex items-center gap-1.5 overflow-x-auto custom-scrollbar shrink-0 relative z-10">
+                    <span className="text-[9px] font-black uppercase text-gray-400 shrink-0 mr-1">Presets:</span>
+                    {[
+                      { label: "1 Month", months: 1 },
+                      { label: "3 Months", months: 3 },
+                      { label: "6 Months", months: 6 },
+                      { label: "1 Year", months: 12 },
+                    ].map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => {
+                          const from = dateRange?.from || new Date();
+                          const to = new Date(from);
+                          to.setMonth(to.getMonth() + preset.months);
+                          setDateRange({ from, to });
+                        }}
+                        className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800/80 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 text-gray-700 dark:text-gray-300 rounded-lg text-[10px] font-black transition-all border border-gray-200/60 dark:border-gray-700 shrink-0 active:scale-95 cursor-pointer"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+
                   {/* Body Calendar */}
-                  <div className="flex-1 py-2 flex justify-center items-center overflow-hidden">
-                    <style>{`
+                  <div className="flex-1 py-1 flex justify-center items-center overflow-hidden relative z-10">
+                    <style dangerouslySetInnerHTML={{ __html: `
                       .rdp-root {
-                        --rdp-accent-color: var(--primary-color);
+                        --rdp-accent-color: var(--primary-color, #2f7d6d);
                         --rdp-accent-text-color: #fff;
-                        --rdp-range_start-color: var(--primary-color);
-                        --rdp-range_end-color: var(--primary-color);
-                        --rdp-range_middle-background-color: var(--primary-light-color);
-                        --rdp-cell-size: 42px;
-                        --rdp-caption-font-size: 16px;
-                        font-size: 15px;
+                        --rdp-range_start-color: var(--primary-color, #2f7d6d);
+                        --rdp-range_end-color: var(--primary-color, #2f7d6d);
+                        --rdp-range_middle-background-color: rgba(47, 125, 109, 0.14);
+                        --rdp-cell-size: 40px;
+                        --rdp-caption-font-size: 15px;
+                        font-size: 14px;
                         margin: 0 auto;
                       }
                       .dark .rdp-root {
-                        --rdp-range_middle-background-color: var(--primary-dark-color);
-                        color: #e5e7eb;
+                        --rdp-range_middle-background-color: rgba(47, 125, 109, 0.28);
+                        color: #f3f4f6;
                       }
                       .rdp-day_selected {
                         background-color: var(--rdp-accent-color) !important;
+                        color: #fff !important;
+                        font-weight: 800 !important;
+                        border-radius: 12px !important;
+                        box-shadow: 0 4px 12px rgba(47, 125, 109, 0.35) !important;
                       }
                       .rdp-day_range_middle {
                         background-color: var(--rdp-range_middle-background-color) !important;
-                        color: inherit !important;
+                        color: var(--primary-color, #2f7d6d) !important;
+                        font-weight: 700 !important;
+                        border-radius: 6px !important;
                       }
-                    `}</style>
+                      .dark .rdp-day_range_middle {
+                        color: #5eead4 !important;
+                      }
+                      .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+                        background-color: rgba(47, 125, 109, 0.12) !important;
+                        border-radius: 10px !important;
+                      }
+                    ` }} />
                     <DayPicker
                       mode="range"
                       selected={dateRange}
                       onSelect={setDateRange}
                       min={1}
                       disabled={{ before: new Date() }}
+                      fixedWeeks={true}
                       className="m-0"
                     />
                   </div>
 
                   {/* Fixed Structural Footer Actions */}
-                  <div className="pt-3 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-2.5 shrink-0">
-                    <div className="h-10 flex items-center justify-between text-xs font-bold p-2.5 rounded-xl border transition-all border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+                  <div className="pt-3 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-2 shrink-0 relative z-10">
+                    <div className="flex items-center justify-between text-xs font-bold p-2.5 rounded-xl border border-gray-200/80 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-800/50">
                       {dateRange?.from ? (
                         <>
-                          <span className="text-primary font-mono">
+                          <span className="text-primary font-mono text-[11px] font-black">
                             {format(dateRange.from, 'MMM dd, yyyy')} — {dateRange.to ? format(dateRange.to, 'MMM dd, yyyy') : '...'}
                           </span>
                           {dateRange?.to ? (
-                            <span className="font-black bg-primary text-white px-2 py-0.5 rounded-md text-[10px]">
+                            <span className="font-black bg-primary text-white px-2 py-0.5 rounded-md text-[10px] shadow-xs">
                               {differenceInDays(dateRange.to, dateRange.from)} nights
                             </span>
                           ) : (
-                            <span className="text-[10px] text-amber-500 font-normal italic">Select check-out date</span>
+                            <span className="text-[10px] text-amber-500 font-medium italic">Select check-out</span>
                           )}
                         </>
                       ) : (
-                        <span className="text-gray-400 text-[11px] font-normal italic">
-                          Select check-in & check-out dates on calendar
+                        <span className="text-gray-400 text-[10px] font-medium italic">
+                          Pick check-in and check-out dates
                         </span>
                       )}
                     </div>
@@ -315,14 +356,14 @@ const StayStep: React.FC<StayStepProps> = ({
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={(e) => { handleClearDates(e); }}
+                        onClick={(e) => handleClearDates(e)}
                         disabled={!dateRange?.from}
-                        className="px-4 py-3 rounded-xl border border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs font-extrabold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                        className="px-4 py-3 rounded-xl border border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs font-extrabold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         Clear
                       </button>
                       <Button
-                        className="flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-primary/25"
+                        className="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-primary/25 cursor-pointer"
                         onClick={() => setShowCalendar(false)}
                       >
                         Apply Dates
@@ -344,29 +385,31 @@ const StayStep: React.FC<StayStepProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="hidden sm:flex fixed inset-0 z-[999999] bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md items-center justify-center p-4 overflow-y-auto"
+                transition={{ duration: 0.25 }}
+                className="hidden sm:flex fixed inset-0 z-[999999] bg-slate-900/35 dark:bg-black/75 backdrop-blur-xl items-center justify-center p-4 overflow-y-auto transition-colors"
                 onClick={() => setShowCalendar(false)}
               >
                 <motion.div
-                  initial={{ scale: 0.92, y: 15 }}
-                  animate={{ scale: 1, y: 0 }}
-                  exit={{ scale: 0.92, y: 15 }}
-                  transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                  className="bg-white dark:bg-gray-900 w-[420px] h-[540px] min-h-[540px] rounded-3xl border border-gray-200 dark:border-gray-800 p-5 shadow-2xl flex flex-col justify-between overflow-hidden"
+                  initial={{ scale: 0.9, y: 20, opacity: 0 }}
+                  animate={{ scale: 1, y: 0, opacity: 1 }}
+                  exit={{ scale: 0.9, y: 20, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                  className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-2xl w-[480px] h-[610px] min-h-[610px] sm:max-h-[92vh] rounded-3xl border border-gray-200/80 dark:border-gray-800 p-6 shadow-2xl flex flex-col justify-between overflow-hidden relative"
                   onClick={(e) => e.stopPropagation()}
                 >
+                  <div className="absolute -top-20 -right-20 w-44 h-44 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+
                   {/* Modal Header */}
-                  <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800 shrink-0">
+                  <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800 shrink-0 relative z-10">
                     <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                      <div className="p-2.5 rounded-2xl bg-primary/10 text-primary shadow-xs">
                         <FaCalendar size={18} />
                       </div>
                       <div>
-                        <h4 className="font-extrabold text-base text-gray-900 dark:text-white leading-tight">
+                        <h4 className="font-black text-base text-gray-900 dark:text-white leading-tight">
                           Select Stay Dates
                         </h4>
-                        <p className="text-[11px] text-gray-400 font-medium">Check-in to Check-out range</p>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Interactive check-in & check-out range</p>
                       </div>
                     </div>
                     <button
@@ -378,60 +421,99 @@ const StayStep: React.FC<StayStepProps> = ({
                     </button>
                   </div>
 
-                  {/* Body Calendar Container - Fixed Height */}
-                  <div className="flex-1 py-2 flex justify-center items-center overflow-hidden">
-                    <style>{`
+                  {/* Preset Shortcuts */}
+                  <div className="py-2.5 flex items-center gap-2 overflow-x-auto custom-scrollbar shrink-0 relative z-10">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 shrink-0">Presets:</span>
+                    {[
+                      { label: "1 Month", months: 1 },
+                      { label: "3 Months", months: 3 },
+                      { label: "6 Months", months: 6 },
+                      { label: "1 Year", months: 12 },
+                    ].map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => {
+                          const from = dateRange?.from || new Date();
+                          const to = new Date(from);
+                          to.setMonth(to.getMonth() + preset.months);
+                          setDateRange({ from, to });
+                        }}
+                        className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800/80 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-extrabold transition-all border border-gray-200/60 dark:border-gray-700 shrink-0 active:scale-95 cursor-pointer"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Body Calendar Container */}
+                  <div className="flex-1 py-1 flex justify-center items-center overflow-hidden relative z-10">
+                    <style dangerouslySetInnerHTML={{ __html: `
                       .rdp-root {
-                        --rdp-accent-color: var(--primary-color);
+                        --rdp-accent-color: var(--primary-color, #2f7d6d);
                         --rdp-accent-text-color: #fff;
-                        --rdp-range_start-color: var(--primary-color);
-                        --rdp-range_end-color: var(--primary-color);
-                        --rdp-range_middle-background-color: var(--primary-light-color);
-                        --rdp-cell-size: 40px;
+                        --rdp-range_start-color: var(--primary-color, #2f7d6d);
+                        --rdp-range_end-color: var(--primary-color, #2f7d6d);
+                        --rdp-range_middle-background-color: rgba(47, 125, 109, 0.14);
+                        --rdp-cell-size: 42px;
                         --rdp-caption-font-size: 16px;
                         font-size: 14px;
                         margin: 0 auto;
                       }
                       .dark .rdp-root {
-                        --rdp-range_middle-background-color: var(--primary-dark-color);
-                        color: #e5e7eb;
+                        --rdp-range_middle-background-color: rgba(47, 125, 109, 0.28);
+                        color: #f3f4f6;
                       }
                       .rdp-day_selected {
                         background-color: var(--rdp-accent-color) !important;
+                        color: #fff !important;
+                        font-weight: 800 !important;
+                        border-radius: 12px !important;
+                        box-shadow: 0 4px 12px rgba(47, 125, 109, 0.35) !important;
                       }
                       .rdp-day_range_middle {
                         background-color: var(--rdp-range_middle-background-color) !important;
-                        color: inherit !important;
+                        color: var(--primary-color, #2f7d6d) !important;
+                        font-weight: 700 !important;
+                        border-radius: 6px !important;
                       }
-                    `}</style>
+                      .dark .rdp-day_range_middle {
+                        color: #5eead4 !important;
+                      }
+                      .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+                        background-color: rgba(47, 125, 109, 0.12) !important;
+                        border-radius: 10px !important;
+                      }
+                    ` }} />
                     <DayPicker
                       mode="range"
                       selected={dateRange}
                       onSelect={setDateRange}
                       min={1}
                       disabled={{ before: new Date() }}
+                      fixedWeeks={true}
                       className="m-0"
                     />
                   </div>
 
                   {/* Fixed Structural Footer Actions */}
-                  <div className="pt-3 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-2.5 shrink-0">
-                    <div className="h-10 flex items-center justify-between text-xs font-bold p-2.5 rounded-xl border transition-all border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+                  <div className="pt-3 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-2.5 shrink-0 relative z-10">
+                    <div className="h-10 flex items-center justify-between text-xs font-bold p-2.5 rounded-xl border border-gray-200/80 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-800/50">
                       {dateRange?.from ? (
                         <>
-                          <span className="text-primary font-mono">
+                          <span className="text-primary font-mono font-black text-xs">
                             {format(dateRange.from, 'MMM dd, yyyy')} — {dateRange.to ? format(dateRange.to, 'MMM dd, yyyy') : '...'}
                           </span>
                           {dateRange?.to ? (
-                            <span className="font-black bg-primary text-white px-2 py-0.5 rounded-md text-[10px]">
+                            <span className="font-black bg-primary text-white px-2.5 py-0.5 rounded-md text-[10px] shadow-xs">
                               {differenceInDays(dateRange.to, dateRange.from)} nights
                             </span>
                           ) : (
-                            <span className="text-[10px] text-amber-500 font-normal italic">Pick check-out date</span>
+                            <span className="text-[10px] text-amber-500 font-medium italic">Pick check-out date</span>
                           )}
                         </>
                       ) : (
-                        <span className="text-gray-400 text-[11px] font-normal italic">
+                        <span className="text-gray-400 text-[11px] font-medium italic">
                           Select check-in & check-out dates on calendar
                         </span>
                       )}
@@ -442,7 +524,7 @@ const StayStep: React.FC<StayStepProps> = ({
                         type="button"
                         onClick={(e) => { handleClearDates(e); }}
                         disabled={!dateRange?.from}
-                        className="px-4 py-3 rounded-xl border border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs font-extrabold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                        className="px-4 py-3 rounded-xl border border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs font-extrabold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         Clear
                       </button>

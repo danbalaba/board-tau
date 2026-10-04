@@ -59,6 +59,7 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
   onCancel,
   hasNotification,
 }) => {
+  const router = useRouter();
   const [imgIdx, setImgIdx] = React.useState(0);
 
   const cardImages = React.useMemo(() => {

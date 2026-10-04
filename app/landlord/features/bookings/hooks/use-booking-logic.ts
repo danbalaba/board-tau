@@ -61,6 +61,7 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [completeLoaderBooking, setCompleteLoaderBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Filter loader state
@@ -180,6 +181,11 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
   }, [filteredBookings, currentPage, itemsPerPage]);
 
   const handleUpdateStatus = useCallback(async (bookingId: string, status: string) => {
+    const targetBooking = listings.find(b => b.id === bookingId);
+    if (status === 'COMPLETED' && targetBooking) {
+      setCompleteLoaderBooking(targetBooking);
+    }
+
     setUpdatingId(bookingId);
     if (process.env.NODE_ENV !== 'test') {
       console.log(`🔄 Updating booking ${bookingId} to status: ${status}`);
@@ -210,7 +216,7 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     } finally {
       setUpdatingId(null);
     }
-  }, [router]);
+  }, [listings, router, success, toastError]);
 
   const handleLoadMore = useCallback(async () => {
     if (!nextCursor || isLoadingMore) return;
@@ -375,6 +381,8 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     handleLoadMore,
     handleGenerateReport,
     updatingId,
+    completeLoaderBooking,
+    setCompleteLoaderBooking,
     isLoading: isLoading || isFilterLoading
   };
 }

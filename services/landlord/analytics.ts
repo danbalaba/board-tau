@@ -926,7 +926,7 @@ export const getLandlordRecentActivities = async (limit: number = 10) => {
       timestamp: new Date(inq.createdAt).getTime(),
       status: inq.status || 'Pending',
       color: 'amber',
-      href: '/landlord/inquiries',
+      href: `/landlord/inquiries?id=${inq.id}`,
     });
   });
 
@@ -944,7 +944,7 @@ export const getLandlordRecentActivities = async (limit: number = 10) => {
         timestamp: new Date(res.createdAt).getTime(),
         status: 'Success',
         color: 'purple',
-        href: '/landlord/payments',
+        href: `/landlord/reservations?id=${res.id}`,
       });
     }
 
@@ -957,7 +957,7 @@ export const getLandlordRecentActivities = async (limit: number = 10) => {
       timestamp: new Date(res.createdAt).getTime(),
       status: res.status || 'Confirmed',
       color: 'emerald',
-      href: '/landlord/bookings',
+      href: `/landlord/bookings?id=${res.id}`,
     });
   });
 
@@ -971,7 +971,7 @@ export const getLandlordRecentActivities = async (limit: number = 10) => {
       timestamp: new Date(rev.createdAt).getTime(),
       status: 'Published',
       color: 'blue',
-      href: '/landlord/reviews',
+      href: `/landlord/reviews?id=${rev.id}`,
     });
   });
 

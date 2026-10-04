@@ -22,18 +22,18 @@ export function LandlordAnalyticsHeader({
 }: LandlordAnalyticsHeaderProps) {
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-gray-950 p-8 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <Skeleton className="w-16 h-16 rounded-[24px]" />
-            <div>
-              <Skeleton className="h-8 w-48 mb-2" variant="text" />
-              <Skeleton className="h-3 w-64 opacity-60" variant="text" />
+      <div className="relative p-4 sm:p-8 rounded-[22px] sm:rounded-[3rem] border border-primary/10 shadow-xl bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl z-20">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+          <div className="flex items-center gap-3.5 sm:gap-5">
+            <Skeleton className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl shrink-0" />
+            <div className="space-y-2">
+              <Skeleton className="h-7 sm:h-8 w-44 sm:w-56 rounded-xl" />
+              <Skeleton className="h-3 sm:h-3.5 w-60 sm:w-80 rounded-lg opacity-70" />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-40 rounded-xl" />
-            <Skeleton className="h-10 w-32 rounded-xl" />
+          <div className="flex items-center gap-2.5">
+            <Skeleton className="h-9 sm:h-11 w-32 sm:w-40 rounded-xl sm:rounded-2xl shrink-0" />
+            <Skeleton className="h-9 sm:h-11 w-28 sm:w-36 rounded-xl sm:rounded-2xl shrink-0" />
           </div>
         </div>
       </div>

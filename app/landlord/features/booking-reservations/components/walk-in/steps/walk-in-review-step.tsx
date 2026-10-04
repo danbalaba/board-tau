@@ -1,173 +1,159 @@
-import React, { useState } from "react";
+import React from "react";
 import { UseFormGetValues } from "react-hook-form";
-import { WalkInFormData } from "../../../hooks/use-walk-in-modal";
-import { FaCheck, FaUser, FaIdCard, FaTimes } from "react-icons/fa";
-import { ShieldCheck, Search } from "lucide-react";
+import { WalkInFormData, WalkInPaymentType } from "@/app/landlord/features/booking-reservations/hooks/use-walk-in-modal";
+import { FaCheck } from "react-icons/fa";
+import { ShieldCheck, Calendar, Users, FileText, Info, Building2, DoorOpen, DollarSign, Lock } from "lucide-react";
 import { format } from "date-fns";
-import { motion, AnimatePresence } from "framer-motion";
-import SafeImage from "@/components/common/SafeImage";
-import { createPortal } from "react-dom";
 
 interface WalkInReviewStepProps {
   getValues: UseFormGetValues<WalkInFormData>;
-  capturedSelfie: string | null;
-  capturedID: string | null;
   listings: any[];
 }
 
 const WalkInReviewStep: React.FC<WalkInReviewStepProps> = ({
   getValues,
-  capturedSelfie,
-  capturedID,
   listings
 }) => {
-  const [selectedPreview, setSelectedPreview] = useState<string | null>(null);
-
   const selectedListingId = getValues("listingId");
   const selectedRoomId = getValues("roomId");
   
   const listing = listings.find(l => l.id === selectedListingId);
   const room = listing?.rooms?.find((r: any) => r.id === selectedRoomId);
+  const leaseContract = listing?.leaseContracts?.[0];
   
+  const roomPrice = room?.price || 0;
   const reservationFee = room?.reservationFee || 0;
   const occupants = getValues("occupantsCount") || 1;
   const moveInDate = getValues("moveInDate");
+  const checkOutDate = getValues("checkOutDate");
+  const isSoloBuyout = getValues("isSoloBuyout");
+  const paymentType: WalkInPaymentType = getValues("paymentType") || 'DIRECT_RENT';
+  const securityDeposit = Number(getValues("securityDeposit")) || 0;
+  const totalPrice = getValues("totalPrice") || 0;
 
-  const renderPreviewPortal = () => {
-    if (typeof document === "undefined") return null;
-    
-    return createPortal(
-      <AnimatePresence>
-        {selectedPreview && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSelectedPreview(null)}
-            className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 md:p-8 cursor-zoom-out"
-          >
-              <motion.div 
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="relative w-[90vw] h-[80vh] flex items-center justify-center"
-                onClick={(e) => e.stopPropagation()}
-              >
-                 <SafeImage 
-                    src={selectedPreview} 
-                    alt="Full Preview" 
-                    priority={true} 
-                    className="object-contain"
-                 />
-               
-               <div className="absolute -top-14 left-0 right-0 flex justify-between items-center text-white/70">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 px-3 py-1 rounded-full backdrop-blur-md">
-                     Verification Quality Check
-                  </span>
-                  <button 
-                      onClick={() => setSelectedPreview(null)}
-                      className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full transition-all group"
-                  >
-                      <FaTimes size={18} className="group-hover:rotate-90 transition-transform duration-300" />
-                  </button>
-               </div>
-            </motion.div>
-            
-            <motion.div 
-               initial={{ y: 20, opacity: 0 }}
-               animate={{ y: 0, opacity: 1 }}
-               className="mt-8 text-white/40 text-[10px] uppercase font-black tracking-widest"
-            >
-               Click anywhere to close preview
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>,
-      document.body
-    );
-  };
+  const isFlatRate = Boolean(room?.roomTypeDefinition?.isFlatRate);
+
+  const customClauses = listing?.customClauses || leaseContract?.terms || [];
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-        <FaCheck className="text-primary" />
-        Step 6: Final Summary & Review
-      </h3>
-      
-      <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 space-y-5">
-        <div className="grid grid-cols-2 gap-6 text-xs">
-          <div>
-             <p className="text-gray-400 uppercase font-black tracking-widest mb-1">Check In</p>
-             <p className="font-bold">{moveInDate ? format(new Date(moveInDate), 'MMM dd, yyyy') : '-'}</p>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary shrink-0">
+              <ShieldCheck size={18} />
+            </div>
+            <span>Step 4: Final Summary & Review</span>
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Review the complete walk-in registration details before saving the record.
+          </p>
+        </div>
+        <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-bold text-primary bg-primary/10 border border-primary/20 px-3 py-1 rounded-full shrink-0">
+          <FaCheck size={10} className="shrink-0" /> Ready to Submit
+        </span>
+      </div>
+
+      <div className="bg-white dark:bg-gray-900/60 p-5 rounded-3xl border border-gray-200 dark:border-gray-800 space-y-5 shadow-sm">
+        {/* Selected Property & Room Summary Header */}
+        <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+              <Building2 size={20} />
+            </div>
+            <div>
+              <h4 className="font-extrabold text-sm text-gray-900 dark:text-white leading-tight">
+                {listing?.title || "Selected Property"}
+              </h4>
+              <p className="text-xs text-primary font-bold mt-0.5 flex items-center gap-1">
+                <DoorOpen size={13} /> {room?.name || "Selected Room"} — ({room?.roomTypeDefinition?.name || room?.roomType})
+              </p>
+            </div>
           </div>
-          <div>
-             <p className="text-gray-400 uppercase font-black tracking-widest mb-1">Payment</p>
-             <p className="font-bold capitalize">Cash / Physical (Walk-In)</p>
+          <span className="text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary px-2.5 py-1 rounded-lg border border-primary/20 shrink-0">
+            {paymentType === 'DIRECT_RENT' ? 'Immediate Move-In' : 'Future Reservation'}
+          </span>
+        </div>
+
+        {/* Key Stay Details Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="bg-gray-50 dark:bg-gray-800/60 p-3 rounded-2xl border border-gray-100 dark:border-gray-700/50">
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-black tracking-widest mb-0.5">Check-In Date</p>
+            <p className="font-extrabold text-xs text-gray-900 dark:text-white truncate">
+              {moveInDate ? format(new Date(moveInDate), 'MMM dd, yyyy') : '-'}
+            </p>
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-800/60 p-3 rounded-2xl border border-gray-100 dark:border-gray-700/50">
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-black tracking-widest mb-0.5">Check-Out Date</p>
+            <p className="font-extrabold text-xs text-gray-900 dark:text-white truncate">
+              {checkOutDate ? format(new Date(checkOutDate), 'MMM dd, yyyy') : '-'}
+            </p>
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-800/60 p-3 rounded-2xl border border-gray-100 dark:border-gray-700/50">
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-black tracking-widest mb-0.5">Registration Mode</p>
+            <p className="font-extrabold text-xs text-primary capitalize truncate">
+              {paymentType === 'DIRECT_RENT' ? '1st Month Rent' : 'Holding Fee'}
+            </p>
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-800/60 p-3 rounded-2xl border border-gray-100 dark:border-gray-700/50">
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-black tracking-widest mb-0.5">Primary Guest</p>
+            <p className="font-extrabold text-xs text-gray-900 dark:text-white truncate">
+              {getValues("guestName") || '-'}
+            </p>
           </div>
         </div>
 
-        <div className="flex gap-4">
-           {/* Selfie Preview */}
-           <div className="flex-1 space-y-1">
-              <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Guest Selfie</p>
-              <div 
-                onClick={() => capturedSelfie && setSelectedPreview(capturedSelfie)}
-                className={`aspect-square rounded-2xl border-2 border-primary/20 overflow-hidden bg-gray-200 shadow-inner relative group ${capturedSelfie ? 'cursor-zoom-in' : ''}`}
-              >
-                 {capturedSelfie ? (
-                    <>
-                      <SafeImage src={capturedSelfie} alt="Review Selfie" />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                         <Search className="text-white w-6 h-6" />
-                      </div>
-                    </>
-                 ) : (
-                    <div className="w-full h-full flex items-center justify-center"><FaUser className="text-gray-300 text-2xl" /></div>
-                 )}
-              </div>
-           </div>
-
-           {/* ID Preview */}
-           <div className="flex-1 space-y-1">
-              <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Guest ID</p>
-              <div 
-                onClick={() => capturedID && setSelectedPreview(capturedID)}
-                className={`aspect-square rounded-2xl border-2 border-primary/20 overflow-hidden bg-gray-200 shadow-inner relative group ${capturedID ? 'cursor-zoom-in' : ''}`}
-              >
-                 {capturedID ? (
-                    <>
-                      <SafeImage src={capturedID} alt="Review ID" />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                         <Search className="text-white w-6 h-6" />
-                      </div>
-                    </>
-                 ) : (
-                    <div className="w-full h-full flex items-center justify-center"><FaIdCard className="text-gray-300 text-2xl" /></div>
-                 )}
-              </div>
-           </div>
-        </div>
-
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-2xl border border-primary/10">
+        {/* Total Fee Calculation Container */}
+        <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+          <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-2xl border border-primary/20">
             <div className="flex justify-between items-center mb-1">
-              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Total Reservation Fee</span>
-              <span className="text-xl font-black text-primary">
-                ₱ {(reservationFee * occupants).toLocaleString()}
+              <span className="text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">
+                {paymentType === 'DIRECT_RENT' ? "Total Onsite Payment Collected" : "Total Holding Reservation Fee"}
+              </span>
+              <span className="text-2xl font-black text-primary">
+                ₱ {totalPrice.toLocaleString()}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <ShieldCheck size={12} className="text-primary/60" />
-              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider italic">
-                Calculated as ₱ {reservationFee.toLocaleString()} × {occupants} occupants
+              <ShieldCheck size={14} className="text-primary/70 shrink-0" />
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 font-extrabold uppercase tracking-wider italic">
+                {paymentType === 'DIRECT_RENT'
+                  ? `Includes 1st Month Rent (${isFlatRate ? 'Flat Rate' : `${occupants} occupant`})` + (securityDeposit > 0 ? ` + ₱${securityDeposit.toLocaleString()} Deposit` : '')
+                  : `Includes Holding Reservation Fee (${isFlatRate ? 'Flat Rate' : `${occupants} occupant`})`}
               </p>
             </div>
           </div>
         </div>
-      </div>
 
-      {renderPreviewPortal()}
+        {/* Property Lease Terms & Rules Section */}
+        <div className="pt-2 border-t border-gray-100 dark:border-gray-800 space-y-3">
+          <div className="flex items-center gap-2">
+            <FileText className="text-primary font-bold" size={18} />
+            <h4 className="font-extrabold text-sm text-gray-900 dark:text-gray-100">Property Lease Terms Summary</h4>
+          </div>
+
+          <div className="bg-gray-50 dark:bg-gray-900/80 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 text-xs text-gray-600 dark:text-gray-400 space-y-1.5">
+            <p><strong>Move-Out Notice Period:</strong> {leaseContract?.moveOutNoticeDays || 30} days notice</p>
+            <p>
+              <strong>Default Security Deposit Term:</strong>{" "}
+              {leaseContract?.depositAmount && leaseContract.depositAmount > 0
+                ? `₱ ${leaseContract.depositAmount.toLocaleString()}`
+                : "None Required (₱ 0)"}
+            </p>
+            {customClauses.length > 0 && (
+              <>
+                <p className="font-bold mt-2 text-gray-800 dark:text-gray-200">Custom House Rules & Clauses:</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  {customClauses.map((clause: string, idx: number) => (
+                    <li key={idx}>{clause}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
