@@ -764,7 +764,7 @@ export default function ReviewModal({ reservation, isOpen, onClose }: ReviewModa
   return (
     <>
       <Modal isOpen={isOpen} onClose={handleClose} width="lg" hasFixedFooter={true} fullOnMobile={true} closeOnOutsideClick={false}>
-        <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[85vh] overflow-hidden">
+        <div className="flex flex-col h-full max-h-full sm:h-auto sm:max-h-[85vh] overflow-hidden">
           {/* Header */}
           <div className="px-5 sm:px-8 py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 bg-white dark:bg-gray-900">
             <div className="flex items-center gap-3.5">

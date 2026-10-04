@@ -160,7 +160,7 @@ const Modal: FC<ModalProps> & {
                 "outline-none focus:outline-none overscroll-contain w-full flex flex-col min-h-0 sm:my-auto",
                 widthClasses[width],
                 isFullMobile 
-                  ? (width === 'full' ? "h-full sm:h-full max-h-none sm:max-h-full rounded-none sm:rounded-card" : "h-auto max-h-[92vh] sm:max-h-[90vh] rounded-t-[32px] rounded-b-none sm:rounded-card")
+                  ? (width === 'full' ? "h-full sm:h-full max-h-none sm:max-h-full rounded-none sm:rounded-card" : "h-full sm:h-auto max-h-full sm:max-h-[90vh] rounded-none sm:rounded-card")
                   : "max-h-[90vh] rounded-2xl sm:rounded-card",
                 hasFixedFooter ? "overflow-hidden" : "overflow-y-auto",
                 noPadding ? "bg-transparent border-0 shadow-none" : (isFullMobile ? "shadow-2xl sm:shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border-t border-x border-gray-100 dark:border-gray-800 sm:border sm:border-white/20 dark:sm:border-white/10" : "shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border border-white/20 dark:border-white/10")
@@ -322,7 +322,7 @@ const Window: FC<WindowProps> = ({ children, name, size = 'md', hasFixedFooter, 
                 "outline-none focus:outline-none overscroll-contain w-full flex flex-col min-h-0 sm:my-auto",
                 sizeClasses[size],
                 isFullMobile 
-                  ? (size === 'full' ? "h-full sm:h-full max-h-none sm:max-h-full rounded-none sm:rounded-card" : "h-auto max-h-[92vh] sm:max-h-[90vh] rounded-t-[32px] rounded-b-none sm:rounded-card")
+                  ? (size === 'full' ? "h-full sm:h-full max-h-none sm:max-h-full rounded-none sm:rounded-card" : "h-full sm:h-auto max-h-full sm:max-h-[90vh] rounded-none sm:rounded-card")
                   : "max-h-[90vh] rounded-2xl sm:rounded-card",
                 hasFixedFooter ? "overflow-hidden" : "overflow-y-auto",
                 noPadding ? "bg-transparent border-0 shadow-none" : (isFullMobile ? "shadow-2xl sm:shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border-t border-x border-gray-100 dark:border-gray-800 sm:border sm:border-white/20 dark:sm:border-white/10" : "shadow-glass bg-white dark:bg-gray-900 backdrop-blur-xl border border-white/20 dark:border-white/10")
