@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, CreditCard, Check, ArrowRight, Eye, X, MapPin, Star } from "lucide-react";
+import { Home, CreditCard, Check, ArrowRight, Eye, X, MapPin, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
 import { generateConfirmationSlipPDF } from "@/utils/slipGenerator";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
@@ -65,6 +65,33 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
     currentUserEmail = "tenant@example.com",
 }) => {
     const responsiveToast = useResponsiveToast();
+    const [imgIdx, setImgIdx] = React.useState(0);
+
+    const cardImages = React.useMemo(() => {
+        const roomImgs: string[] = [];
+        if (Array.isArray(reservation.room?.images)) {
+            reservation.room.images.forEach((img: any) => {
+                const url = typeof img === 'string' ? img : img?.url;
+                if (url) roomImgs.push(url);
+            });
+        }
+        if (roomImgs.length > 0) {
+            return Array.from(new Set(roomImgs));
+        }
+
+        const listingImgs: string[] = [];
+        if (Array.isArray(reservation.listing?.images)) {
+            reservation.listing.images.forEach((img: any) => {
+                const url = typeof img === 'string' ? img : img?.url;
+                if (url) listingImgs.push(url);
+            });
+        }
+        if (reservation.listing?.imageSrc) {
+            listingImgs.push(reservation.listing.imageSrc);
+        }
+        const uniqueListing = Array.from(new Set(listingImgs.filter(Boolean)));
+        return uniqueListing.length > 0 ? uniqueListing : ["/images/placeholder.jpg"];
+    }, [reservation]);
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString("en-US", {
@@ -169,17 +196,45 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
         >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
 
-            <div className="relative h-44 overflow-hidden shrink-0 z-10">
+            <div className="relative h-44 overflow-hidden shrink-0 z-10 group/cardgallery">
                 <SafeImage
-                    src={(reservation.room?.images && reservation.room.images.length > 0)
-                        ? reservation.room.images[0].url
-                        : (reservation.listing?.images && reservation.listing.images.length > 0)
-                            ? reservation.listing.images[0].url
-                            : reservation.listing?.imageSrc || "/images/placeholder.jpg"
-                    }
+                    src={cardImages[imgIdx] || cardImages[0]}
                     alt={reservation.room.name}
                     unoptimized={true}
                 />
+
+                {cardImages.length > 1 && (
+                    <>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setImgIdx((prev) => (prev === 0 ? cardImages.length - 1 : prev - 1));
+                            }}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/cardgallery:opacity-100 transition-opacity hover:bg-black/80 z-30 cursor-pointer shadow-md"
+                            aria-label="Previous image"
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setImgIdx((prev) => (prev === cardImages.length - 1 ? 0 : prev + 1));
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/cardgallery:opacity-100 transition-opacity hover:bg-black/80 z-30 cursor-pointer shadow-md"
+                            aria-label="Next image"
+                        >
+                            <ChevronRight size={16} />
+                        </button>
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-20">
+                            {cardImages.map((_, idx) => (
+                                <div
+                                    key={idx}
+                                    className={`h-1 rounded-full transition-all ${idx === imgIdx ? "w-4 bg-white" : "w-1 bg-white/50"}`}
+                                />
+                            ))}
+                        </div>
+                    </>
+                )}
                 <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
                     <AnimatePresence>
                         {hasNotification && (

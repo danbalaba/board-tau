@@ -251,12 +251,12 @@ export const CompareListingCard: React.FC<CompareListingCardProps> = ({
              
              {/* Custom Nav Buttons */}
              <div 
-               className={`swiper-prev-compare-${listing.id} absolute left-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
+               className={`swiper-prev-compare-${listing.id} absolute left-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
              >
                <ChevronLeft size={18} className="text-slate-800 dark:text-slate-100 -ml-0.5" />
              </div>
              <div 
-               className={`swiper-next-compare-${listing.id} absolute right-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
+               className={`swiper-next-compare-${listing.id} absolute right-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
              >
                <ChevronRight size={18} className="text-slate-800 dark:text-slate-100 -mr-0.5" />
              </div>

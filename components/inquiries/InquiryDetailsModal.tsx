@@ -139,7 +139,30 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
     }
   }, [isOpen, activeNotification, onMarkAsRead]);
 
-  const images = useMemo(() => inquiry?.room?.images || [], [inquiry?.room?.images]);
+  const images = useMemo(() => {
+    const roomImgs: string[] = [];
+    if (Array.isArray(inquiry?.room?.images)) {
+      inquiry.room.images.forEach((img: any) => {
+        const url = typeof img === 'string' ? img : img?.url;
+        if (url) roomImgs.push(url);
+      });
+    }
+    if (roomImgs.length > 0) {
+      return Array.from(new Set(roomImgs));
+    }
+
+    const listingImgs: string[] = [];
+    if (Array.isArray(inquiry?.listing?.images)) {
+      inquiry.listing.images.forEach((img: any) => {
+        const url = typeof img === 'string' ? img : img?.url;
+        if (url) listingImgs.push(url);
+      });
+    }
+    if (inquiry?.listing?.imageSrc) {
+      listingImgs.push(inquiry.listing.imageSrc);
+    }
+    return Array.from(new Set(listingImgs.filter(Boolean)));
+  }, [inquiry?.room?.images, inquiry?.listing?.images, inquiry?.listing?.imageSrc]);
 
   const formatDate = useCallback((dateString: string) => {
     if (!dateString) return "";
@@ -221,7 +244,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} width="full" noPadding={true} hasFixedFooter={true} closeOnOutsideClick={false} fullOnMobile={true}>
-        <div className="w-full h-full sm:h-auto sm:max-h-[90vh] max-w-full sm:max-w-5xl mx-auto overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl border-0 sm:border sm:border-gray-200 dark:sm:border-gray-800 shadow-2xl">
+        <div className="w-full h-full sm:h-auto sm:max-h-[90vh] max-w-full sm:max-w-5xl mx-auto sm:my-auto overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl border-0 sm:border sm:border-gray-200 dark:sm:border-gray-800 shadow-2xl">
           
           {/* Clean Modern Header */}
           <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 bg-white dark:bg-gray-900">
@@ -310,10 +333,8 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                     <SafeImage
                       src={getSafeImageSrcString(
                         images.length > 0 
-                          ? images[currentImageIndex]?.url 
-                          : (inquiry.listing?.images && inquiry.listing.images.length > 0)
-                            ? inquiry.listing.images[0].url
-                            : inquiry.listing?.imageSrc || "/images/placeholder.jpg"
+                          ? images[currentImageIndex] 
+                          : inquiry.listing?.imageSrc || "/images/placeholder.jpg"
                       )}
                       alt={inquiry.room.name}
                       unoptimized={true}
@@ -326,7 +347,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                             e.stopPropagation();
                             setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
                           }}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80 z-10"
                         >
                           <ChevronLeft size={18} />
                         </button>
@@ -335,7 +356,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                             e.stopPropagation();
                             setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
                           }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80 z-10"
                         >
                           <ChevronRight size={18} />
                         </button>

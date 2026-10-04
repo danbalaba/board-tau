@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Calendar, MapPin, Eye, Home, Check } from "lucide-react";
+import { Star, Calendar, MapPin, Eye, Home, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
 
 interface ReviewListing {
@@ -51,6 +51,18 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   onViewDetails,
   hasNotification,
 }) => {
+  const [imgIdx, setImgIdx] = React.useState(0);
+
+  const cardImages = React.useMemo(() => {
+    if (review.reservation?.room?.images && review.reservation.room.images.length > 0) {
+      return review.reservation.room.images.map((img: any) => (typeof img === 'string' ? img : img.url));
+    }
+    if (review.listing?.images && review.listing.images.length > 0) {
+      return review.listing.images.map((img: any) => (typeof img === 'string' ? img : img.url));
+    }
+    return [review.listing?.imageSrc || "/images/placeholder.jpg"];
+  }, [review]);
+
   const formatDate = (date: any) => {
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
@@ -101,17 +113,45 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
 
       {/* Card Image Header */}
-      <div className="relative h-44 overflow-hidden shrink-0 z-10">
+      <div className="relative h-44 overflow-hidden shrink-0 z-10 group/cardgallery">
         <SafeImage
-          src={(review.reservation?.room?.images && review.reservation.room.images.length > 0)
-            ? review.reservation.room.images[0].url
-            : (review.listing?.images && review.listing.images.length > 0)
-              ? (typeof review.listing.images[0] === 'string' ? review.listing.images[0] : (review.listing.images[0] as any).url)
-              : review.listing?.imageSrc || "/images/placeholder.jpg"
-          }
+          src={cardImages[imgIdx] || cardImages[0]}
           alt={review.listing.title}
           unoptimized={true}
         />
+
+        {cardImages.length > 1 && (
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setImgIdx((prev) => (prev === 0 ? cardImages.length - 1 : prev - 1));
+              }}
+              className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/cardgallery:opacity-100 transition-opacity hover:bg-black/80 z-30 cursor-pointer shadow-md"
+              aria-label="Previous image"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setImgIdx((prev) => (prev === cardImages.length - 1 ? 0 : prev + 1));
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/cardgallery:opacity-100 transition-opacity hover:bg-black/80 z-30 cursor-pointer shadow-md"
+              aria-label="Next image"
+            >
+              <ChevronRight size={16} />
+            </button>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-20">
+              {cardImages.map((_, idx) => (
+                <div
+                  key={idx}
+                  className={`h-1 rounded-full transition-all ${idx === imgIdx ? "w-4 bg-white" : "w-1 bg-white/50"}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
         
         {/* Status Badges on Top Left */}
         <div className="absolute top-3 left-3 z-20 flex flex-col items-start gap-1.5">

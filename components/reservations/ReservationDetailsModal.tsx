@@ -135,7 +135,30 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
     }
   }, [isOpen, activeNotification, onMarkAsRead]);
 
-  const images = useMemo(() => reservation?.room?.images || [], [reservation?.room?.images]);
+  const images = useMemo(() => {
+    const roomImgs: string[] = [];
+    if (Array.isArray(reservation?.room?.images)) {
+      reservation.room.images.forEach((img: any) => {
+        const url = typeof img === 'string' ? img : img?.url;
+        if (url) roomImgs.push(url);
+      });
+    }
+    if (roomImgs.length > 0) {
+      return Array.from(new Set(roomImgs));
+    }
+
+    const listingImgs: string[] = [];
+    if (Array.isArray(reservation?.listing?.images)) {
+      reservation.listing.images.forEach((img: any) => {
+        const url = typeof img === 'string' ? img : img?.url;
+        if (url) listingImgs.push(url);
+      });
+    }
+    if (reservation?.listing?.imageSrc) {
+      listingImgs.push(reservation.listing.imageSrc);
+    }
+    return Array.from(new Set(listingImgs.filter(Boolean)));
+  }, [reservation?.room?.images, reservation?.listing?.images, reservation?.listing?.imageSrc]);
 
   const formatDate = useCallback((dateString: string) => {
     if (!dateString) return "";
@@ -227,7 +250,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} width="full" noPadding={true} hasFixedFooter={true} closeOnOutsideClick={false} fullOnMobile={true}>
-        <div className="w-full h-full sm:h-auto sm:max-h-[90vh] max-w-full sm:max-w-5xl mx-auto overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl border-0 sm:border sm:border-gray-200 dark:sm:border-gray-800 shadow-2xl">
+        <div className="w-full h-full sm:h-auto sm:max-h-[90vh] max-w-full sm:max-w-5xl mx-auto sm:my-auto overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl border-0 sm:border sm:border-gray-200 dark:sm:border-gray-800 shadow-2xl">
           
           {/* Header Bar */}
           <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 bg-white dark:bg-gray-900">
@@ -298,10 +321,8 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                   <div className="aspect-video w-full relative group/gallery bg-gray-100 dark:bg-gray-800">
                     <SafeImage
                       src={images.length > 0 
-                        ? images[currentImageIndex]?.url 
-                        : (reservation.listing?.images && reservation.listing.images.length > 0)
-                          ? reservation.listing.images[0].url
-                          : reservation.listing.imageSrc || "/images/placeholder.jpg"
+                        ? images[currentImageIndex] 
+                        : reservation.listing?.imageSrc || "/images/placeholder.jpg"
                       }
                       alt={reservation.room.name}
                       unoptimized={true}
@@ -314,7 +335,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                             e.stopPropagation();
                             setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
                           }}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80 z-10"
                         >
                           <ChevronLeft size={18} />
                         </button>
@@ -323,7 +344,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                             e.stopPropagation();
                             setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
                           }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80 z-10"
                         >
                           <ChevronRight size={18} />
                         </button>

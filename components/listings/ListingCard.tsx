@@ -297,13 +297,13 @@ const ListingCard: React.FC<ListingCardProps> = ({
                 
                 {/* Custom Nav Buttons */}
                 <div 
-                  className={`swiper-prev-${data.id} absolute left-2 top-1/2 -translate-y-1/2 z-[60] w-7 h-7 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
+                  className={`swiper-prev-${data.id} absolute left-2 top-1/2 -translate-y-1/2 z-[60] w-7 h-7 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
                   onClick={(e: any) => { e.preventDefault(); e.stopPropagation(); }}
                 >
                   <ChevronLeft size={16} className="text-slate-800 dark:text-slate-100 -ml-0.5" />
                 </div>
                 <div 
-                  className={`swiper-next-${data.id} absolute right-2 top-1/2 -translate-y-1/2 z-[60] w-7 h-7 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
+                  className={`swiper-next-${data.id} absolute right-2 top-1/2 -translate-y-1/2 z-[60] w-7 h-7 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
                   onClick={(e: any) => { e.preventDefault(); e.stopPropagation(); }}
                 >
                   <ChevronRight size={16} className="text-slate-800 dark:text-slate-100 -mr-0.5" />

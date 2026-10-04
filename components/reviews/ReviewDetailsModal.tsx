@@ -95,15 +95,18 @@ const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
 
   // Featured property/room images for showcase
   const featuredMedia = useMemo(() => {
-    let imgs: string[] = [];
     if (review?.reservation?.room?.images && review.reservation.room.images.length > 0) {
-      imgs = review.reservation.room.images.map(i => i.url);
-    } else if (review?.listing?.images && review.listing.images.length > 0) {
-      imgs = review.listing.images.map(i => typeof i === 'string' ? i : (i as any).url);
-    } else if (review?.listing?.imageSrc) {
-      imgs = [review.listing.imageSrc];
+      return Array.from(new Set(review.reservation.room.images.map(i => i.url).filter(Boolean)));
     }
-    return imgs.length > 0 ? imgs : ["/images/placeholder.jpg"];
+    const listingImgs: string[] = [];
+    if (review?.listing?.images && review.listing.images.length > 0) {
+      listingImgs.push(...review.listing.images.map(i => typeof i === 'string' ? i : (i as any).url));
+    }
+    if (review?.listing?.imageSrc) {
+      listingImgs.push(review.listing.imageSrc);
+    }
+    const uniqueListing = Array.from(new Set(listingImgs.filter(Boolean)));
+    return uniqueListing.length > 0 ? uniqueListing : ["/images/placeholder.jpg"];
   }, [review]);
 
   const formatDate = useCallback((dateString: any) => {
@@ -132,7 +135,7 @@ const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} width="full" noPadding={true} hasFixedFooter={true} closeOnOutsideClick={false} fullOnMobile={true}>
-        <div className="w-full h-full sm:h-auto sm:max-h-[90vh] max-w-full sm:max-w-5xl mx-auto overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl border-0 sm:border sm:border-gray-200 dark:sm:border-gray-800 shadow-2xl">
+        <div className="w-full h-full sm:h-auto sm:max-h-[90vh] max-w-full sm:max-w-5xl mx-auto sm:my-auto overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl border-0 sm:border sm:border-gray-200 dark:sm:border-gray-800 shadow-2xl">
           
           {/* Header Bar */}
           <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 bg-white dark:bg-gray-900">
@@ -211,7 +214,7 @@ const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
                             e.stopPropagation();
                             setCurrentImgIdx((prev) => (prev === 0 ? featuredMedia.length - 1 : prev - 1));
                           }}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80 z-10"
                         >
                           <ChevronLeft size={18} />
                         </button>
@@ -220,7 +223,7 @@ const ReviewDetailsModal: React.FC<ReviewDetailsModalProps> = ({
                             e.stopPropagation();
                             setCurrentImgIdx((prev) => (prev === featuredMedia.length - 1 ? 0 : prev + 1));
                           }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80 z-10"
                         >
                           <ChevronRight size={18} />
                         </button>

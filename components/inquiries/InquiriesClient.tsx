@@ -35,6 +35,7 @@ import ConfirmModal from "@/components/common/ConfirmModal";
 import { UserMobileFilterSheet } from "@/components/common/UserMobileFilterSheet";
 import { useNotification, NotificationItem } from "@/context/NotificationContext";
 import { CancellationStrikeWarningCard } from "@/components/common/CancellationStrikeWarningCard";
+import { pusherClient } from "@/lib/pusher-client";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -136,6 +137,59 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
   const [isLoadingStrikeStatus, setIsLoadingStrikeStatus] = useState(false);
   const unreadNotifications = notifications.filter((n: NotificationItem) => !n.isRead && n.type === "inquiry");
   const hasAutoOpened = useRef(false);
+
+  // Real-time Pusher listener for status updates
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const channelName = `private-user-${currentUserId}`;
+    const channel = pusherClient.subscribe(channelName);
+
+    const handleInquiryUpdated = (data: any) => {
+      if (!data || !data.entityId) return;
+
+      setInquiries((prev) => {
+        const index = prev.findIndex((i) => i.id === data.entityId);
+        if (index === -1) {
+          if (data.payload && data.payload.id) {
+            return [data.payload, ...prev];
+          }
+          return prev;
+        }
+
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          status: data.status || updated[index].status,
+          rejectionReason: data.payload?.rejectionReason || updated[index].rejectionReason,
+          isApproved: data.status === "APPROVED" ? true : updated[index].isApproved,
+          updatedAt: data.updatedAt || new Date().toISOString(),
+          ...(data.payload || {}),
+        };
+        return updated;
+      });
+
+      setSelectedInquiry((prevSelected) => {
+        if (prevSelected && prevSelected.id === data.entityId) {
+          return {
+            ...prevSelected,
+            status: data.status || prevSelected.status,
+            rejectionReason: data.payload?.rejectionReason || prevSelected.rejectionReason,
+            isApproved: data.status === "APPROVED" ? true : prevSelected.isApproved,
+            updatedAt: data.updatedAt || new Date().toISOString(),
+            ...(data.payload || {}),
+          };
+        }
+        return prevSelected;
+      });
+    };
+
+    channel.bind("inquiry-updated", handleInquiryUpdated);
+
+    return () => {
+      channel.unbind("inquiry-updated", handleInquiryUpdated);
+    };
+  }, [currentUserId]);
 
   // Auto-open modal if ID is in URL
   useEffect(() => {

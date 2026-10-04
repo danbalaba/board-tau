@@ -11,6 +11,8 @@ import ReviewCard from "./ReviewCard";
 import ReviewDetailsModal from "./ReviewDetailsModal";
 import { useNotification } from "@/context/NotificationContext";
 import { UserMobileFilterSheet } from "@/components/common/UserMobileFilterSheet";
+import { useSession } from "next-auth/react";
+import { pusherClient } from "@/lib/pusher-client";
 
 interface ReviewListing {
   id: string;
@@ -71,6 +73,10 @@ const sortOptions = [
 
 const ReviewsClient: React.FC<ReviewsClientProps> = ({ initialReviews }) => {
   const router = useRouter();
+  const { data: session } = useSession();
+  const userId = (session?.user as any)?.id;
+
+  const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [searchQuery, setSearchQuery] = useState("");
   const [starFilter, setStarFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
@@ -82,6 +88,59 @@ const ReviewsClient: React.FC<ReviewsClientProps> = ({ initialReviews }) => {
   const hasAutoOpened = React.useRef(false);
 
   useEffect(() => {
+    setReviews(initialReviews);
+  }, [initialReviews]);
+
+  // Real-time Pusher listener for review updates / responses
+  useEffect(() => {
+    if (!userId) return;
+
+    const channelName = `private-user-${userId}`;
+    const channel = pusherClient.subscribe(channelName);
+
+    const handleReviewUpdated = (data: any) => {
+      if (!data || !data.entityId) return;
+
+      setReviews((prev) => {
+        const index = prev.findIndex((r) => r.id === data.entityId);
+        if (index === -1) {
+          if (data.payload && data.payload.id) {
+            return [data.payload, ...prev];
+          }
+          return prev;
+        }
+
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          response: data.payload?.response || updated[index].response,
+          respondedAt: data.payload?.respondedAt || updated[index].respondedAt,
+          ...(data.payload || {}),
+        };
+        return updated;
+      });
+
+      setSelectedReview((prevSelected) => {
+        if (prevSelected && prevSelected.id === data.entityId) {
+          return {
+            ...prevSelected,
+            response: data.payload?.response || prevSelected.response,
+            respondedAt: data.payload?.respondedAt || prevSelected.respondedAt,
+            ...(data.payload || {}),
+          };
+        }
+        return prevSelected;
+      });
+    };
+
+    channel.bind("review-updated", handleReviewUpdated);
+
+    return () => {
+      channel.unbind("review-updated", handleReviewUpdated);
+    };
+  }, [userId]);
+
+  useEffect(() => {
     // Artificial delay for that "Premium" feel
     const timer = setTimeout(() => setIsLoading(false), 800);
     return () => clearTimeout(timer);
@@ -90,17 +149,17 @@ const ReviewsClient: React.FC<ReviewsClientProps> = ({ initialReviews }) => {
   // Auto-open modal if ID is in URL
   useEffect(() => {
     const id = searchParams.get("id");
-    if (id && !hasAutoOpened.current && initialReviews.length > 0) {
-      const review = initialReviews.find(r => r.id === id);
+    if (id && !hasAutoOpened.current && reviews.length > 0) {
+      const review = reviews.find(r => r.id === id);
       if (review) {
         setSelectedReview(review);
         hasAutoOpened.current = true;
       }
     }
-  }, [searchParams, initialReviews]);
+  }, [searchParams, reviews]);
 
   const filteredReviews = useMemo(() => {
-    let filtered = [...initialReviews];
+    let filtered = [...reviews];
 
     if (starFilter !== "all") {
       filtered = filtered.filter(r => r.rating === parseInt(starFilter));

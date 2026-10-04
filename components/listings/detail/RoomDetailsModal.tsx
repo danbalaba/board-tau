@@ -407,10 +407,10 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
               {/* Nav arrows */}
               {images.length > 1 && (
                 <>
-                  <button onClick={handlePrev} className="absolute left-5 top-1/2 -translate-y-1/2 p-3 bg-white/50 dark:bg-black/30 hover:bg-white dark:hover:bg-black/60 backdrop-blur-md text-gray-900 dark:text-white rounded-2xl opacity-0 group-hover:opacity-100 transition-all hover:scale-110 duration-300 shadow-xl">
+                  <button onClick={handlePrev} className="absolute left-5 top-1/2 -translate-y-1/2 p-3 bg-white/50 dark:bg-black/30 hover:bg-white dark:hover:bg-black/60 backdrop-blur-md text-gray-900 dark:text-white rounded-2xl opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:scale-110 duration-300 shadow-xl z-10">
                     <ChevronLeft size={18} />
                   </button>
-                  <button onClick={handleNext} className="absolute right-5 top-1/2 -translate-y-1/2 p-3 bg-white/50 dark:bg-black/30 hover:bg-white dark:hover:bg-black/60 backdrop-blur-md text-gray-900 dark:text-white rounded-2xl opacity-0 group-hover:opacity-100 transition-all hover:scale-110 duration-300 shadow-xl">
+                  <button onClick={handleNext} className="absolute right-5 top-1/2 -translate-y-1/2 p-3 bg-white/50 dark:bg-black/30 hover:bg-white dark:hover:bg-black/60 backdrop-blur-md text-gray-900 dark:text-white rounded-2xl opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:scale-110 duration-300 shadow-xl z-10">
                     <ChevronRight size={18} />
                   </button>
                   {/* Navigation dots + Counter merged at bottom center */}

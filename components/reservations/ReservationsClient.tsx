@@ -34,6 +34,7 @@ import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { UserMobileFilterSheet } from "@/components/common/UserMobileFilterSheet";
 import { CancellationStrikeWarningCard } from "@/components/common/CancellationStrikeWarningCard";
+import { pusherClient } from "@/lib/pusher-client";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -111,6 +112,55 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
     useEffect(() => {
         setReservations(initialReservations);
     }, [initialReservations]);
+
+    // Real-time Pusher listener for reservation updates
+    useEffect(() => {
+        if (!userId) return;
+
+        const channelName = `private-user-${userId}`;
+        const channel = pusherClient.subscribe(channelName);
+
+        const handleReservationUpdated = (data: any) => {
+            if (!data || !data.entityId) return;
+
+            setReservations((prev) => {
+                const index = prev.findIndex((r) => r.id === data.entityId);
+                if (index === -1) {
+                    if (data.payload && data.payload.id) {
+                        return [data.payload, ...prev];
+                    }
+                    return prev;
+                }
+
+                const updated = [...prev];
+                updated[index] = {
+                    ...updated[index],
+                    status: data.status || updated[index].status,
+                    paymentStatus: data.payload?.paymentStatus || updated[index].paymentStatus,
+                    ...(data.payload || {}),
+                };
+                return updated;
+            });
+
+            setSelectedReservation((prevSelected) => {
+                if (prevSelected && prevSelected.id === data.entityId) {
+                    return {
+                        ...prevSelected,
+                        status: data.status || prevSelected.status,
+                        paymentStatus: data.payload?.paymentStatus || prevSelected.paymentStatus,
+                        ...(data.payload || {}),
+                    };
+                }
+                return prevSelected;
+            });
+        };
+
+        channel.bind("reservation-updated", handleReservationUpdated);
+
+        return () => {
+            channel.unbind("reservation-updated", handleReservationUpdated);
+        };
+    }, [userId]);
 
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
