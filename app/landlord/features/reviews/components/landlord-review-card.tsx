@@ -30,7 +30,7 @@ interface LandlordReviewCardProps {
 
 const statusColors: Record<string, string> = {
   pending: 'bg-amber-500/90 text-white border-amber-400/40',
-  approved: 'bg-emerald-500/90 text-white border-emerald-400/40',
+  approved: 'bg-primary/90 text-white border-primary/40',
   rejected: 'bg-rose-500/90 text-white border-rose-400/40',
 };
 
@@ -93,7 +93,7 @@ export function LandlordReviewCard({
     const isResponded = Boolean(review.response);
     const label = isResponded ? 'RESPONDED' : 'NEEDS RESPONSE';
     const badgeColorClass = isResponded
-      ? 'bg-emerald-500/90 text-white border-emerald-400/40'
+      ? 'bg-primary/90 text-white border-primary/40'
       : 'bg-amber-500/90 text-white border-amber-400/40';
 
     return (
@@ -193,27 +193,33 @@ export function LandlordReviewCard({
           )}
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2 pt-2.5 sm:pt-4 border-t border-gray-100 dark:border-gray-800 mt-auto w-full">
+          <div className="flex items-center gap-1.5 sm:gap-2 pt-2.5 sm:pt-4 border-t border-gray-100 dark:border-gray-800 mt-auto w-full min-w-0">
             <Button
-              onClick={() => onViewDetails(review.id)}
-              className="flex-1 h-10 rounded-xl px-2 text-[10px] sm:text-xs font-black uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer transition-all flex items-center justify-center gap-1.5"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails(review.id);
+              }}
+              className="flex-1 h-10 rounded-xl px-1.5 sm:px-3 text-[10px] sm:text-xs font-black uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer transition-all flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 overflow-hidden"
             >
-              <IconEye size={14} />
-              <span>Details</span>
+              <IconEye size={14} className="shrink-0" />
+              <span className="truncate">Details</span>
             </Button>
             
             {!review.response ? (
               <Button
-                onClick={() => setRespondModal({ isOpen: true, reviewId: review.id, reviewTitle: review.listing.title })}
-                className="flex-1 h-10 rounded-xl px-2 text-[10px] sm:text-xs font-black uppercase tracking-wider bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 group/btn cursor-pointer flex items-center justify-center gap-1.5"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setRespondModal({ isOpen: true, reviewId: review.id, reviewTitle: review.listing.title });
+                }}
+                className="flex-1 h-10 rounded-xl px-1.5 sm:px-3 text-[10px] sm:text-xs font-black uppercase tracking-wider bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 group/btn cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 overflow-hidden"
               >
-                <IconMessage size={14} className="group-hover/btn:scale-110 transition-transform" />
-                <span>Respond</span>
+                <IconMessage size={14} className="group-hover/btn:scale-110 transition-transform shrink-0" />
+                <span className="truncate">Respond</span>
               </Button>
             ) : (
-              <div className="flex-1 flex items-center justify-center gap-1.5 h-10 px-2 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30">
+              <div className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 h-10 px-1.5 sm:px-3 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30 min-w-0 overflow-hidden">
                 <IconMessage size={14} className="text-blue-500 shrink-0" />
-                <span className="text-[10px] sm:text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider text-center leading-none">Responded</span>
+                <span className="text-[10px] sm:text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider text-center leading-none truncate">Responded</span>
               </div>
             )}
           </div>
@@ -363,31 +369,37 @@ export function LandlordReviewCard({
         </div>
 
         {/* Action Column */}
-        <div className="flex sm:flex-col items-center gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0 border-t sm:border-t-0 sm:border-l border-gray-100 dark:border-gray-800 pt-2.5 sm:pt-0 sm:pl-6">
+        <div className="flex sm:flex-col items-center gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0 border-t sm:border-t-0 sm:border-l border-gray-100 dark:border-gray-800 pt-2.5 sm:pt-0 sm:pl-6 min-w-0">
           <Button
-            onClick={() => onViewDetails(review.id)}
-            className="flex-1 sm:w-36 rounded-xl sm:rounded-2xl py-2.5 sm:py-3 px-3 text-[10px] font-black uppercase tracking-widest bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200/60 dark:border-gray-700/60 transition-all cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails(review.id);
+            }}
+            className="flex-1 sm:w-36 rounded-xl sm:rounded-2xl py-2.5 sm:py-3 px-2 sm:px-3 text-[10px] font-black uppercase tracking-widest bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200/60 dark:border-gray-700/60 transition-all cursor-pointer min-w-0 overflow-hidden"
           >
-            <span className="flex items-center justify-center gap-1.5">
-              <IconEye size={14} />
-              <span>Details</span>
+            <span className="flex items-center justify-center gap-1 sm:gap-1.5 min-w-0">
+              <IconEye size={14} className="shrink-0" />
+              <span className="truncate">Details</span>
             </span>
           </Button>
 
           {!review.response ? (
             <Button
-              onClick={() => setRespondModal({ isOpen: true, reviewId: review.id, reviewTitle: review.listing.title })}
-              className="flex-1 sm:w-36 rounded-xl sm:rounded-2xl py-2.5 sm:py-3 px-3 text-[10px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setRespondModal({ isOpen: true, reviewId: review.id, reviewTitle: review.listing.title });
+              }}
+              className="flex-1 sm:w-36 rounded-xl sm:rounded-2xl py-2.5 sm:py-3 px-2 sm:px-3 text-[10px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all cursor-pointer min-w-0 overflow-hidden"
             >
-              <span className="flex items-center justify-center gap-1.5">
-                <IconMessage size={14} />
-                <span>Respond</span>
+              <span className="flex items-center justify-center gap-1 sm:gap-1.5 min-w-0">
+                <IconMessage size={14} className="shrink-0" />
+                <span className="truncate">Respond</span>
               </span>
             </Button>
           ) : (
-            <div className="flex-1 sm:w-36 flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-3 bg-blue-50 dark:bg-blue-900/10 rounded-xl sm:rounded-2xl border border-blue-100 dark:border-blue-900/30">
+            <div className="flex-1 sm:w-36 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2.5 sm:py-3 bg-blue-50 dark:bg-blue-900/10 rounded-xl sm:rounded-2xl border border-blue-100 dark:border-blue-900/30 min-w-0 overflow-hidden">
               <IconMessage size={14} className="text-blue-500 shrink-0" />
-              <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center leading-none">Responded</span>
+              <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center leading-none truncate">Responded</span>
             </div>
           )}
         </div>
