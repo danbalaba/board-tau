@@ -192,7 +192,8 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
                     repeatDelay: 1
                 }
             }}
-            className="bg-white dark:bg-gray-800/90 rounded-2xl shadow-md hover:shadow-xl border border-gray-200/80 dark:border-gray-700/60 relative group flex flex-col h-full overflow-hidden transition-all duration-300"
+            onClick={onViewDetails}
+            className="bg-white dark:bg-gray-800/90 rounded-2xl shadow-md hover:shadow-xl border border-gray-200/80 dark:border-gray-700/60 relative group flex flex-col h-full overflow-hidden transition-all duration-300 cursor-pointer"
         >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
 
@@ -306,7 +307,10 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
 
                 <div className="flex items-center gap-2 mt-auto w-full">
                     <button
-                        onClick={onViewDetails}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onViewDetails();
+                        }}
                         className="flex-1 py-2.5 px-2.5 sm:px-3 font-bold text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all shadow-sm min-w-0"
                     >
                         <Eye size={14} className="text-primary shrink-0" />
@@ -315,7 +319,10 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
 
                     {canPay && onPayNow && (
                         <button
-                            onClick={onPayNow}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onPayNow();
+                            }}
                             className="flex-1 py-2.5 px-2.5 sm:px-3 font-black text-xs uppercase tracking-wider text-white bg-primary rounded-xl hover:bg-primary-dark shadow-md transition-all flex justify-center items-center gap-1.5 min-w-0"
                         >
                             <Check size={14} className="shrink-0" /> <span className="truncate">Pay Now</span>
@@ -331,7 +338,10 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
                         ) : (
                             onReview && (
                                 <button
-                                    onClick={onReview}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onReview();
+                                    }}
                                     className="flex-1 py-2.5 px-2.5 sm:px-3 font-bold text-xs text-white bg-purple-600 rounded-xl hover:bg-purple-700 shadow-md transition-all flex justify-center items-center gap-1.5 min-w-0"
                                 >
                                     <Star size={14} className="fill-white shrink-0" />
@@ -343,7 +353,10 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
 
                     {!canPay && reservation.status !== "COMPLETED" && canCancel && onCancel && (
                         <button
-                            onClick={onCancel}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onCancel();
+                            }}
                             className="flex-1 py-2.5 px-2.5 sm:px-3 font-bold text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 dark:text-rose-400 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors flex justify-center items-center gap-1.5 border border-rose-200 dark:border-rose-900/30 min-w-0"
                         >
                             <X size={14} className="shrink-0" />
@@ -353,7 +366,8 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
 
                     {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
                         <button
-                            onClick={() => {
+                            onClick={(e) => {
+                                e.stopPropagation();
                                 responsiveToast.loading("Generating Boarding Pass...");
                                 generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail)
                                     .then(() => responsiveToast.success("Downloaded successfully!"))

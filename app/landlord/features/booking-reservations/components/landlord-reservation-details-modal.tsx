@@ -105,7 +105,7 @@ export function LandlordReservationDetailsModal({
       case 'CONFIRMED':
         return {
           label: 'Reservation Confirmed',
-          className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+          className: 'bg-primary/10 text-primary dark:text-primary-light border-primary/30',
         };
       case 'CHECKED_IN':
         return {

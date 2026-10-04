@@ -110,7 +110,7 @@ export function LandlordInquiryDetailsModal({
     if (reservationStatus === "CHECKED_IN") {
       return {
         label: "Checked In",
-        className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+        className: "bg-primary/10 text-primary dark:text-primary-light border-primary/30",
       };
     }
     if (reservationStatus === "CANCELLED") {
@@ -129,7 +129,7 @@ export function LandlordInquiryDetailsModal({
       case 'APPROVED':
         return {
           label: 'Inquiry Approved',
-          className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+          className: 'bg-primary/10 text-primary dark:text-primary-light border-primary/30',
         };
       case 'REJECTED':
         return {

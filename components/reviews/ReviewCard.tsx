@@ -107,7 +107,8 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
           repeatDelay: 1
         }
       }}
-      className="bg-white dark:bg-gray-800/90 rounded-2xl shadow-md hover:shadow-xl border border-gray-200/80 dark:border-gray-700/60 relative group flex flex-col h-full overflow-hidden transition-all duration-300"
+      onClick={onViewDetails}
+      className="bg-white dark:bg-gray-800/90 rounded-2xl shadow-md hover:shadow-xl border border-gray-200/80 dark:border-gray-700/60 relative group flex flex-col h-full overflow-hidden transition-all duration-300 cursor-pointer"
     >
       {/* Hover Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
@@ -233,7 +234,10 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
         {/* Single-Row Action Button */}
         <div className="flex items-center gap-2 mt-auto w-full">
           <button
-            onClick={onViewDetails}
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails();
+            }}
             className="w-full py-2.5 px-3 font-bold text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all shadow-sm min-w-0"
           >
             <Eye size={14} className="text-primary shrink-0" />

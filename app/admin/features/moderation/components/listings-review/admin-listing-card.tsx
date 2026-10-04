@@ -78,7 +78,8 @@ export function AdminListingCard({
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: idx * 0.04 }}
-        className="group relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-800 p-3 sm:p-5 hover:shadow-xl transition-all duration-300 shadow-sm"
+        onClick={onViewDetails}
+        className="group relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-800 p-3 sm:p-5 hover:shadow-xl transition-all duration-300 shadow-sm cursor-pointer"
       >
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6">
           {/* Left: Thumbnail & Details */}
@@ -194,7 +195,10 @@ export function AdminListingCard({
             {isItemArchived ? (
               <>
                 <Button
-                  onClick={onViewDetails}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onViewDetails();
+                  }}
                   className="flex-1 sm:w-36 rounded-xl py-2.5 h-auto bg-primary hover:bg-primary/90 text-white text-[10px] font-black uppercase tracking-widest shadow-md transition-all active:scale-[0.98] cursor-pointer"
                 >
                   <span className="flex items-center justify-center gap-1.5">
@@ -205,7 +209,10 @@ export function AdminListingCard({
 
                 {onArchive && (
                   <Button
-                    onClick={() => onArchive(listing)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onArchive(listing);
+                    }}
                     disabled={isDeciding}
                     className="flex-1 sm:w-36 rounded-xl py-2.5 h-auto text-[10px] font-black uppercase tracking-widest bg-amber-500/10 hover:bg-amber-500 text-amber-600 hover:text-white border border-amber-200 dark:border-amber-900/30 transition-all active:scale-[0.98] cursor-pointer"
                   >
@@ -218,7 +225,10 @@ export function AdminListingCard({
 
                 {isSuperAdmin && onDelete && (
                   <Button
-                    onClick={() => onDelete(listing)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(listing);
+                    }}
                     disabled={isDeleting}
                     className="flex-1 sm:w-36 rounded-xl py-2.5 h-auto text-[10px] font-black uppercase tracking-widest bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-200 dark:border-rose-900/30 transition-all active:scale-[0.98] cursor-pointer"
                   >
@@ -231,7 +241,10 @@ export function AdminListingCard({
               </>
             ) : rawStatus === 'pending' ? (
               <Button
-                onClick={onViewDetails}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewDetails();
+                }}
                 className="w-full sm:w-44 rounded-xl py-3 h-auto text-[10px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 transition-all active:scale-[0.98] cursor-pointer"
               >
                 <span className="flex items-center justify-center gap-2">
@@ -242,7 +255,10 @@ export function AdminListingCard({
             ) : (
               <>
                 <Button
-                  onClick={onViewDetails}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onViewDetails();
+                  }}
                   className="flex-1 sm:w-36 rounded-xl py-2.5 h-auto bg-primary hover:bg-primary/90 text-white text-[10px] font-black uppercase tracking-widest shadow-md transition-all active:scale-[0.98] cursor-pointer"
                 >
                   <span className="flex items-center justify-center gap-1.5">
@@ -253,7 +269,10 @@ export function AdminListingCard({
 
                 {onArchive && (
                   <Button
-                    onClick={() => onArchive(listing)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onArchive(listing);
+                    }}
                     disabled={isDeciding}
                     className="flex-1 sm:w-36 rounded-xl py-2.5 h-auto text-[10px] font-black uppercase tracking-widest bg-amber-500/10 hover:bg-amber-500 text-amber-600 hover:text-white border border-amber-200 dark:border-amber-900/30 transition-all active:scale-[0.98] cursor-pointer"
                   >
@@ -266,7 +285,10 @@ export function AdminListingCard({
 
                 {isSuperAdmin && onDelete && (
                   <Button
-                    onClick={() => onDelete(listing)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(listing);
+                    }}
                     disabled={isDeleting}
                     className="flex-1 sm:w-36 rounded-xl py-2.5 h-auto text-[10px] font-black uppercase tracking-widest bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-200 dark:border-rose-900/30 transition-all active:scale-[0.98] cursor-pointer"
                   >
@@ -290,7 +312,8 @@ export function AdminListingCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: idx * 0.05 }}
-      className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 transition-all duration-300 shadow-sm overflow-hidden flex flex-col p-6 rounded-[2rem] hover:shadow-2xl hover:shadow-primary/20 dark:hover:shadow-primary/10 hover:border-primary/20 hover:-translate-y-1"
+      onClick={onViewDetails}
+      className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 transition-all duration-300 shadow-sm overflow-hidden flex flex-col p-6 rounded-[2rem] hover:shadow-2xl hover:shadow-primary/20 dark:hover:shadow-primary/10 hover:border-primary/20 hover:-translate-y-1 cursor-pointer"
     >
       {/* Top Image Section */}
       <div className="relative h-44 mb-6 w-full rounded-[1.5rem] overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 z-10">
@@ -412,7 +435,10 @@ export function AdminListingCard({
             <div className="flex flex-col gap-2">
               <div className="flex gap-2">
                 <Button
-                  onClick={onViewDetails}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onViewDetails();
+                  }}
                   className="flex-1 py-2.5 h-auto rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-[0.98] cursor-pointer"
                 >
                   <span className="flex items-center justify-center gap-1.5">
@@ -422,7 +448,10 @@ export function AdminListingCard({
                 </Button>
                 {onArchive && (
                   <Button
-                    onClick={() => onArchive(listing)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onArchive(listing);
+                    }}
                     disabled={isDeciding}
                     className="flex-1 py-2.5 h-auto rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-amber-500/10 hover:bg-amber-500 text-amber-600 hover:text-white border border-amber-200 dark:border-amber-900/30 active:scale-[0.98] cursor-pointer"
                   >
@@ -435,7 +464,10 @@ export function AdminListingCard({
               </div>
               {isSuperAdmin && onDelete && (
                 <Button
-                  onClick={() => onDelete(listing)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(listing);
+                  }}
                   disabled={isDeleting}
                   className="group/btn w-full py-2.5 h-auto rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-200 dark:border-rose-900/30 active:scale-[0.98] cursor-pointer"
                 >
@@ -448,7 +480,10 @@ export function AdminListingCard({
             </div>
           ) : rawStatus === "pending" ? (
             <Button
-              onClick={onViewDetails}
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails();
+              }}
               className="w-full py-3 h-auto rounded-xl text-[10px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 transition-all active:scale-[0.98] cursor-pointer"
             >
               <span className="flex items-center justify-center gap-2">
@@ -459,7 +494,10 @@ export function AdminListingCard({
           ) : (
             <div className="flex gap-2">
               <Button
-                onClick={onViewDetails}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewDetails();
+                }}
                 className="flex-1 py-3 h-auto rounded-xl bg-primary hover:bg-primary/90 text-white text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-primary/20 active:scale-[0.98] cursor-pointer"
               >
                 <span className="flex items-center justify-center gap-2">

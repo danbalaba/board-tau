@@ -28,7 +28,7 @@ export function LandlordBookingStatusBadge({ status, className }: StatusBadgePro
       case 'reserved':
         return {
           label: 'Securely Reserved',
-          classes: 'bg-emerald-500/90 text-white border-emerald-400/40',
+          classes: 'bg-primary/90 text-white border-primary/40',
         };
       case 'checked_in':
         return {
