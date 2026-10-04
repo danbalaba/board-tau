@@ -11,7 +11,9 @@ import { useBookingLogic, Booking } from './hooks/use-booking-logic';
 import { LandlordBookingHeader } from './components/landlord-booking-header';
 import { LandlordBookingCard } from './components/landlord-booking-card';
 import { LandlordBookingDetailsModal } from './components/landlord-booking-details-modal';
+import BookingCompleteLoaderModal from './components/BookingCompleteLoaderModal';
 import { useSearchParams } from 'next/navigation';
+import { decryptEntityId } from '@/lib/encryption';
 import { LandlordPagination } from '../shared/landlord-pagination';
 import LandlordArchiveModal from '../inquiry-center/components/landlord-inquiry-archive-modal';
 
@@ -64,6 +66,8 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
     handleLoadMore,
     handleGenerateReport,
     updatingId,
+    completeLoaderBooking,
+    setCompleteLoaderBooking,
     isLoading
   } = useBookingLogic(bookings.bookings, bookings.nextCursor);
 
@@ -79,7 +83,8 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
     setMounted(true);
     const id = searchParams?.get('id');
     if (id && rawBookings.length > 0) {
-      const target = rawBookings.find(b => b.id === id);
+      const realId = decryptEntityId(id);
+      const target = rawBookings.find(b => b.id === realId || b.id === id);
       if (target && !isModalOpen) {
         setSelectedBooking(target);
         setIsModalOpen(true);
@@ -133,6 +138,7 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
         rawBookings={rawBookings}
         isArchived={isArchived}
         onToggleArchived={handleToggleArchivedView}
+        isLoading={isLoading}
       />
 
       <div className="min-h-[400px] relative">
@@ -143,10 +149,25 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="py-24 flex flex-col items-center justify-center gap-6"
+              className={cn(viewMode === 'grid' ? "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-6" : "space-y-4")}
             >
-              <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin shadow-xl shadow-primary/10" />
-              <p className="text-[11px] font-black uppercase tracking-[0.4em] text-gray-500 animate-pulse">Syncing Bookings</p>
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 sm:p-5 space-y-4 animate-pulse shadow-sm">
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 w-24 bg-gray-200 dark:bg-gray-800 rounded-lg" />
+                    <div className="h-6 w-20 bg-gray-200 dark:bg-gray-800 rounded-full" />
+                  </div>
+                  <div className="h-28 sm:h-36 bg-gray-200 dark:bg-gray-800 rounded-xl w-full" />
+                  <div className="space-y-2">
+                    <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-800 rounded-lg" />
+                    <div className="h-3 w-1/2 bg-gray-200 dark:bg-gray-800 rounded-lg" />
+                  </div>
+                  <div className="pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                    <div className="h-4 w-16 bg-gray-200 dark:bg-gray-800 rounded-lg" />
+                    <div className="h-8 w-24 bg-gray-200 dark:bg-gray-800 rounded-xl" />
+                  </div>
+                </div>
+              ))}
             </motion.div>
           ) : (
             <motion.div
@@ -235,6 +256,13 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
               }
             />
           )}
+
+          <BookingCompleteLoaderModal
+            isOpen={!!completeLoaderBooking}
+            guestName={(completeLoaderBooking?.user?.name || completeLoaderBooking?.guestName) || 'Tenant'}
+            listingTitle={completeLoaderBooking?.listing?.title}
+            onComplete={() => setCompleteLoaderBooking(null)}
+          />
         </>,
         document.body
       )}

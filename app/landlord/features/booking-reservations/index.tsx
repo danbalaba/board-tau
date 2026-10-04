@@ -12,9 +12,12 @@ import { LandlordReservationHeader } from './components/landlord-reservation-hea
 import { LandlordReservationCard } from './components/landlord-reservation-card';
 import { LandlordReservationDetailsModal } from './components/landlord-reservation-details-modal';
 import { useSearchParams } from 'next/navigation';
+import { decryptEntityId } from '@/lib/encryption';
 import { LandlordPagination } from '../shared/landlord-pagination';
 import LandlordArchiveModal from '../inquiry-center/components/landlord-inquiry-archive-modal';
 import LandlordWalkInModal from './components/walk-in/landlord-walk-in-modal';
+import ReservationCheckInLoaderModal from './components/ReservationCheckInLoaderModal';
+import ReservationCancelLoaderModal from './components/ReservationCancelLoaderModal';
 
 
 interface LandlordBookingReservationsProps {
@@ -46,6 +49,10 @@ export default function LandlordBookingReservations({ reservations, landlordId, 
     handleUpdateStatus,
     handleGenerateReport,
     updatingId,
+    checkInLoaderReservation,
+    setCheckInLoaderReservation,
+    cancelLoaderReservation,
+    setCancelLoaderReservation,
     isLoading
   } = useReservationLogic(reservations);
 
@@ -63,7 +70,8 @@ export default function LandlordBookingReservations({ reservations, landlordId, 
     setMounted(true);
     const id = searchParams?.get('id');
     if (id && rawReservations.length > 0) {
-      const target = rawReservations.find(r => r.id === id);
+      const realId = decryptEntityId(id);
+      const target = rawReservations.find(r => r.id === realId || r.id === id);
       if (target && !isModalOpen) {
         setSelectedReservation(target);
         setIsModalOpen(true);
@@ -116,6 +124,7 @@ export default function LandlordBookingReservations({ reservations, landlordId, 
         isArchived={isArchived}
         onToggleArchived={handleToggleArchivedView}
         onCreateWalkIn={() => setIsWalkInModalOpen(true)}
+        isLoading={isLoading}
       />
 
       <div className="min-h-[400px] relative">
@@ -126,10 +135,25 @@ export default function LandlordBookingReservations({ reservations, landlordId, 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="py-24 flex flex-col items-center justify-center gap-6"
+              className={cn(viewMode === 'grid' ? "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-6" : "space-y-4")}
             >
-              <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin shadow-xl shadow-primary/10" />
-              <p className="text-[11px] font-black uppercase tracking-[0.4em] text-gray-500 animate-pulse">Syncing Reservations</p>
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 sm:p-5 space-y-4 animate-pulse shadow-sm">
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 w-24 bg-gray-200 dark:bg-gray-800 rounded-lg" />
+                    <div className="h-6 w-20 bg-gray-200 dark:bg-gray-800 rounded-full" />
+                  </div>
+                  <div className="h-28 sm:h-36 bg-gray-200 dark:bg-gray-800 rounded-xl w-full" />
+                  <div className="space-y-2">
+                    <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-800 rounded-lg" />
+                    <div className="h-3 w-1/2 bg-gray-200 dark:bg-gray-800 rounded-lg" />
+                  </div>
+                  <div className="pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                    <div className="h-4 w-16 bg-gray-200 dark:bg-gray-800 rounded-lg" />
+                    <div className="h-8 w-24 bg-gray-200 dark:bg-gray-800 rounded-xl" />
+                  </div>
+                </div>
+              ))}
             </motion.div>
           ) : (
             <motion.div
@@ -235,6 +259,26 @@ export default function LandlordBookingReservations({ reservations, landlordId, 
             listings={listings}
             onSuccess={() => {
               window.location.reload();
+            }}
+          />
+
+          {/* Fullscreen Mascot Check-In Loader Modal */}
+          <ReservationCheckInLoaderModal
+            isOpen={!!checkInLoaderReservation}
+            guestName={checkInLoaderReservation?.user?.name || checkInLoaderReservation?.guestName || 'Guest'}
+            listingTitle={checkInLoaderReservation?.listing?.title}
+            onComplete={() => {
+              setCheckInLoaderReservation(null);
+            }}
+          />
+
+          {/* Fullscreen Mascot Cancellation Loader Modal */}
+          <ReservationCancelLoaderModal
+            isOpen={!!cancelLoaderReservation}
+            guestName={cancelLoaderReservation?.user?.name || cancelLoaderReservation?.guestName || 'Guest'}
+            listingTitle={cancelLoaderReservation?.listing?.title}
+            onComplete={() => {
+              setCancelLoaderReservation(null);
             }}
           />
         </>,

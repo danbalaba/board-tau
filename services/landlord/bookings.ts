@@ -2,8 +2,9 @@
 
 import { db } from "@/lib/db";
 import { requireLandlord } from "@/lib/landlord";
-import { createNotification } from "@/services/notification";
+import { createNotification, broadcastStatusChange } from "@/services/notification";
 import { sendReservationNotificationEmail } from "@/services/email/notifications";
+import { encryptEntityId } from "@/lib/encryption";
 import { baseUrl } from "@/services/email/constants";
 import { revalidatePath } from "next/cache";
 import { cache } from "@/lib/redis";
@@ -258,23 +259,25 @@ export const updateBookingStatus = async (
     description = `We hope you enjoyed your stay at ${updatedBooking.listing.title}. Don't forget to leave a review!`;
   }
 
-  const notifications = [];
+  const targetUserId = updatedBooking.userId || booking.userId;
 
-  if (booking.userId) {
-    notifications.push(
-      createNotification({
-        userId: booking.userId,
-        type: "reservation",
-        title,
-        description,
-        link: `/reservations?id=${updatedBooking.id}`,
-      })
-    );
-  }
+  if (targetUserId) {
+    await createNotification({
+      userId: targetUserId,
+      type: "reservation",
+      title,
+      description,
+      link: `/reservations?id=${encryptEntityId(updatedBooking.id)}`,
+    });
 
-
-  if (notifications.length > 0) {
-    await Promise.all(notifications);
+    await broadcastStatusChange({
+      tenantId: targetUserId,
+      landlordId: landlord.id,
+      entityType: "reservation",
+      entityId: updatedBooking.id,
+      status,
+      payload: updatedBooking,
+    });
   }
 
   // 3. Send Email Notification to Tenant (ONLY if they have an email)
@@ -320,6 +323,7 @@ export const updateBookingStatus = async (
   // Critical fix: ensure the front-facing listing page and available rooms section reload actual db capacity instead of stale cache
   revalidatePath(`/listings/${booking.listingId}`);
   revalidatePath(`/landlord/bookings`);
+  revalidatePath(`/reservations`);
 
   try {
     // Invalidate manual Redis cache for the listing

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { requireLandlord } from "@/lib/landlord";
 import { createNotification, broadcastStatusChange } from "@/services/notification";
 import { sendInquiryStatusEmail } from "@/services/email/notifications";
+import { encryptEntityId } from "@/lib/encryption";
 
 export const getLandlordInquiries = async (args?: {
   cursor?: string;
@@ -249,7 +250,7 @@ export const respondToInquiry = async (
     type: "inquiry",
     title: `Inquiry ${statusLabel}`,
     description: `Your inquiry for ${updatedInquiry.listing.title} has been ${statusLabel}.${reasonText}`,
-    link: `/inquiries?id=${updatedInquiry.id}`, // Matching the student dashboard path with ID
+    link: `/inquiries?id=${encryptEntityId(updatedInquiry.id)}`, // Matching the student dashboard path with ID
   });
 
   await broadcastStatusChange({

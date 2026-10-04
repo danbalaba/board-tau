@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sendNewReviewEmail, sendReviewReceiptEmail } from "@/services/email/notifications";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { createNotification, broadcastStatusChange } from "@/services/notification";
+import { encryptEntityId } from "@/lib/encryption";
 
 export async function POST(request: Request) {
   try {
@@ -108,7 +110,7 @@ export async function POST(request: Request) {
       console.error("Failed to sync listing rating:", updateErr);
     }
 
-    // 6. Create Persistent Notification for Landlord
+    // 6. Create Persistent Notification for Landlord & Broadcast Event via Pusher
     try {
       const listing = await db.listing.findUnique({
         where: { id: listingId },
@@ -116,18 +118,44 @@ export async function POST(request: Request) {
       });
 
       if (listing) {
-        await (db as any).notification.create({
-          data: {
-            userId: listing.userId,
-            type: "review",
-            title: "New Review Recieved",
-            description: `${currentUser.name || 'A guest'} left a ${rating}-star review for ${listing.title}`,
-            link: `/landlord/reviews`,
-            isRead: false
+        // Create in-app notification for Landlord & trigger Pusher "new-notification" event
+        await createNotification({
+          userId: listing.userId,
+          type: "review",
+          title: "New Review Received",
+          description: `${currentUser.name || 'A guest'} left a ${rating}-star review for ${listing.title}`,
+          link: `/landlord/reviews?id=${encryptEntityId(review.id)}`
+        });
+
+        // Broadcast real-time status change to Landlord dashboard review hub
+        await broadcastStatusChange({
+          tenantId: currentUser.id,
+          landlordId: listing.userId,
+          entityType: "review",
+          entityId: review.id,
+          status: "created",
+          payload: {
+            id: review.id,
+            rating: review.rating,
+            comment: review.comment,
+            images: review.images,
+            videos: review.videos,
+            status: review.status,
+            createdAt: review.createdAt,
+            listing: {
+              id: listingId,
+              title: listing.title,
+            },
+            user: {
+              id: currentUser.id,
+              name: currentUser.name || null,
+              email: currentUser.email || "",
+              image: currentUser.image || null,
+            }
           }
         });
 
-        // 6. Send Email Notification to Landlord
+        // Send Email Notification to Landlord
         const landlord = await db.user.findUnique({
           where: { id: listing.userId },
           select: { email: true, name: true }
@@ -143,7 +171,7 @@ export async function POST(request: Request) {
           );
         }
 
-        // 7. Send Receipt Email to Guest (using DB user data for reliability)
+        // Send Receipt Email to Guest
         if (reservation.user && reservation.user.email) {
            await sendReviewReceiptEmail(
               { email: reservation.user.email, name: reservation.user.name },
@@ -152,16 +180,13 @@ export async function POST(request: Request) {
            );
         }
 
-        // 8. Create In-App Notification for Guest (The "Red Dot" flow)
-        await (db as any).notification.create({
-          data: {
-            userId: currentUser.id,
-            type: "reservation",
-            title: "Review Submitted",
-            description: `You have successfully rated your stay at ${listing.title}.`,
-            link: `/reservations?id=${reservationId}`,
-            isRead: false
-          }
+        // Create In-App Notification for Guest
+        await createNotification({
+          userId: currentUser.id,
+          type: "reservation",
+          title: "Review Submitted",
+          description: `You have successfully rated your stay at ${listing.title}.`,
+          link: `/reservations?id=${encryptEntityId(reservationId)}`
         });
       }
     } catch (notifError) {

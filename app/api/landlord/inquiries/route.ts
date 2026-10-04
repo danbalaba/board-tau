@@ -11,6 +11,7 @@ import {
 } from "@/services/landlord/inquiries";
 import { hasPermission } from "@/lib/rbac";
 import { getCurrentUser } from "@/services/user";
+import { decryptEntityId } from "@/lib/encryption";
 
 export async function GET(request: NextRequest) {
   try {
@@ -82,7 +83,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const result = await respondToInquiry(inquiryId, status, sanitizedMessage);
+    const result = await respondToInquiry(decryptEntityId(inquiryId), status, sanitizedMessage);
 
     return NextResponse.json({
       success: true,

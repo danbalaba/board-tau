@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
-import { createNotification } from "@/services/notification";
+import { createNotification, broadcastStatusChange } from "@/services/notification";
+import { encryptEntityId } from "@/lib/encryption";
 import { hasPermission } from "@/lib/rbac";
 
 export async function POST(request: Request) {
@@ -58,7 +59,32 @@ export async function POST(request: Request) {
         paymentStatus: "UNPAID" as any,
       },
       include: {
-        listing: { select: { userId: true, title: true } }
+        listing: { 
+          select: { 
+            id: true, 
+            userId: true, 
+            title: true, 
+            imageSrc: true,
+            images: { select: { url: true } }
+          } 
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          }
+        },
+        room: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            reservationFee: true,
+            images: { select: { url: true } }
+          }
+        }
       }
     }) as any;
 
@@ -68,7 +94,17 @@ export async function POST(request: Request) {
       type: "inquiry",
       title: "New Inquiry Received",
       description: `${user.name || 'A student'} sent a new inquiry for ${reservationRequest.listing.title}.`,
-      link: `/landlord/inquiries`
+      link: `/landlord/inquiries?id=${encryptEntityId(reservationRequest.id)}`
+    });
+
+    // Real-time broadcast for Landlord inquiry center
+    await broadcastStatusChange({
+      tenantId: user.id,
+      landlordId: reservationRequest.listing.userId,
+      entityType: "inquiry",
+      entityId: reservationRequest.id,
+      status: "PENDING",
+      payload: reservationRequest,
     });
 
     return NextResponse.json(reservationRequest);

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { requireLandlord } from "@/lib/landlord";
 import { createNotification, broadcastStatusChange } from "@/services/notification";
 import { sendReviewResponseEmail } from "@/services/email/notifications";
+import { encryptEntityId } from "@/lib/encryption";
 
 export const getLandlordReviews = async (args?: {
   cursor?: string;
@@ -165,7 +166,7 @@ export const respondToReview = async (reviewId: string, response: string) => {
     type: "review",
     title: "New review response",
     description: `The landlord of ${updatedReview.listing.title} has responded to your review.`,
-    link: `/my-reviews?id=${updatedReview.id}`, // Matching the student dashboard path with ID
+    link: `/my-reviews?id=${encryptEntityId(updatedReview.id)}`, // Matching the student dashboard path with ID
   });
 
   await broadcastStatusChange({

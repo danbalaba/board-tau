@@ -145,3 +145,54 @@ export function decryptChatToken(token: string): { listingId: string; otherUserI
     return null;
   }
 }
+
+export function encryptEntityId(id: string): string {
+  if (!id) return '';
+  try {
+    const iv = crypto.randomBytes(IV_LENGTH);
+    const cipher = crypto.createCipheriv(ALGORITHM, getChatTokenKey(), iv);
+    
+    let encrypted = cipher.update(id, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    const tag = cipher.getAuthTag();
+
+    const raw = `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted}`;
+    const base64 = Buffer.from(raw, 'utf8').toString('base64');
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  } catch (error) {
+    console.error("Failed to encrypt entity ID:", error);
+    return id;
+  }
+}
+
+export function decryptEntityId(token: string): string {
+  if (!token) return '';
+  // Fallback: If it's already a 24-character hex MongoDB ObjectId, return it directly
+  if (/^[0-9a-fA-F]{24}$/.test(token)) {
+    return token;
+  }
+  try {
+    let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    const raw = Buffer.from(base64, 'base64').toString('utf8');
+    const parts = raw.split(':');
+    if (parts.length !== 3) return token;
+
+    const iv = Buffer.from(parts[0], 'hex');
+    const tag = Buffer.from(parts[1], 'hex');
+    const encrypted = parts[2];
+
+    const decipher = crypto.createDecipheriv(ALGORITHM, getChatTokenKey(), iv);
+    decipher.setAuthTag(tag);
+
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    return decrypted || token;
+  } catch (error) {
+    return token;
+  }
+}
+
