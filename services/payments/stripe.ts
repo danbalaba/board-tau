@@ -5,7 +5,8 @@ import {
   sendReservationNotificationEmail,
   sendReservationFeeEmail
 } from "@/services/email/notifications";
-import { createNotification } from "@/services/notification";
+import { createNotification, broadcastStatusChange } from "@/services/notification";
+import { encryptEntityId } from "@/lib/encryption";
 
 export const createStripeCheckoutSession = async (inquiryId: string, customAmount?: number) => {
   // Check if Stripe is configured
@@ -61,7 +62,7 @@ export const createStripeCheckoutSession = async (inquiryId: string, customAmoun
 
   // Create Stripe checkout session
   const stripeSession = await stripe.checkout.sessions.create({
-    success_url: `${baseUrl}/reservations`,
+    success_url: `${baseUrl}/reservations?status=success&method=STRIPE`,
     cancel_url: `${baseUrl}/listings/${inquiry.listingId}`,
     payment_method_types: ['card'],
     mode: 'payment',
@@ -224,7 +225,7 @@ export const handleStripeWebhook = async (session: any) => {
         type: 'reservation',
         title: 'Booking Confirmed!',
         description: `Your reservation for ${updatedReservation.listing.title} is now secured and confirmed.`,
-        link: `/reservations?id=${updatedReservation.id}`
+        link: `/reservations?id=${encryptEntityId(updatedReservation.id)}`
       });
     }
 
@@ -243,7 +244,17 @@ export const handleStripeWebhook = async (session: any) => {
         type: 'reservation',
         title: 'New Confirmed Reservation',
         description: `${updatedReservation.user?.name} has secured their reservation for ${updatedReservation.listing.title} via Stripe.`,
-        link: `/landlord/reservations`
+        link: `/landlord/reservations?id=${encryptEntityId(updatedReservation.id)}`
+      });
+
+      // Real-time broadcast for Landlord & Tenant UI
+      await broadcastStatusChange({
+        tenantId: updatedReservation.userId!,
+        landlordId: updatedReservation.listing.userId,
+        entityType: "reservation",
+        entityId: updatedReservation.id,
+        status: "RESERVED",
+        payload: updatedReservation,
       });
     }
   } catch (emailError) {
