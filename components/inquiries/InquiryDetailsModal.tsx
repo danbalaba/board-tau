@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import SafeImage from "@/components/common/SafeImage";
+import { encryptChatToken } from "@/lib/encryption";
 import { useRouter } from "next/navigation";
 import { cn, getListingUrl } from "@/utils/helper";
 import { getSafeImageSrcString } from "@/components/modals/inquiry-modal/InquiryModalUtils";
@@ -429,6 +430,11 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                   )}
                 </div>
 
+              </div>
+
+              {/* Right Column: Schedule, Guest Details & Verification */}
+              <div className="space-y-6">
+
                 {/* Stay Dates Card */}
                 <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
                   <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
@@ -456,11 +462,6 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                     </div>
                   </div>
                 </div>
-
-              </div>
-
-              {/* Right Column: Guest Information & Note */}
-              <div className="space-y-6">
                 
                 {/* Guest Details Card */}
                 <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
@@ -565,6 +566,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                   </div>
                 )}
 
+
               </div>
             </div>
 
@@ -609,7 +611,10 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                 {canChat ? (
                   <button
                     className="w-full sm:w-auto px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 truncate"
-                    onClick={() => router.push(`/messages?listingId=${inquiry.listingId}&otherUserId=${landlordId}`)}
+                    onClick={() => {
+                      const encToken = encryptChatToken(inquiry.listingId, landlordId);
+                      router.push(encToken ? `/messages?token=${encToken}` : `/messages?listingId=${inquiry.listingId}&otherUserId=${landlordId}`);
+                    }}
                   >
                     <Mail size={14} className="shrink-0" />
                     <span className="truncate">Chat with Host</span>

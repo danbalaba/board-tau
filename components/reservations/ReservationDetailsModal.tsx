@@ -19,6 +19,7 @@ import {
   Eye as IconEye
 } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
+import { encryptChatToken } from "@/lib/encryption";
 import { cn, getListingUrl } from "@/utils/helper";
 import { generateConfirmationSlipPDF } from "@/utils/slipGenerator";
 import { generateLeaseContractPDF, previewPdfBlob } from "@/utils/contractPdfGenerator";
@@ -313,7 +314,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
             {/* 2-Column Responsive Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               
-              {/* Left Column: Room Showcase & Financial Summary */}
+              {/* Left Column: Room Showcase & Booking Details */}
               <div className="space-y-6">
                 
                 {/* Room Showcase Card */}
@@ -383,6 +384,77 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                   </div>
                 </div>
 
+                {/* Booking Details Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                    <User size={14} className="text-primary" />
+                    <span>Booking Details</span>
+                  </h4>
+
+                  <div className="space-y-3.5 divide-y divide-gray-100 dark:divide-gray-800">
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Room Type</span>
+                      <span className="text-xs font-black text-gray-900 dark:text-white uppercase">
+                        {(reservation.room as any)?.roomTypeDefinition?.name || (reservation.room as any)?.roomType || (typeof (reservation.listing as any)?.propertyType === 'object' ? (reservation.listing as any)?.propertyType?.name : (reservation.listing as any)?.propertyType) || (Array.isArray((reservation.listing as any)?.category) ? (reservation.listing as any)?.category[0] : (reservation.listing as any)?.category) || "Solo Room"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Number of Guests</span>
+                      <span className="text-xs font-black text-gray-900 dark:text-white">
+                        {reservation.occupantsCount === 1 ? "1 Guest" : `${reservation.occupantsCount || 1} Guests`}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Reservation Reference</span>
+                      <span className="text-xs sm:text-sm font-mono font-black text-primary dark:text-primary-light tracking-wider" title={reservation.id}>
+                        #RES-{reservation.id.slice(-8).toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Column: Schedule, Payment & Verification */}
+              <div className="space-y-6">
+                
+                {/* Stay Schedule Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                    <Calendar size={14} className="text-primary" />
+                    <span>Stay Schedule</span>
+                  </h4>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3.5 bg-primary/10 dark:bg-primary/20 border border-primary/20 rounded-xl text-center">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-primary-dark dark:text-primary-light block mb-1">
+                        Check-in Date
+                      </span>
+                      <span className="text-xs font-black text-primary-dark dark:text-white">
+                        {formatDate(reservation.startDate)}
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 rounded-xl text-center">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 block mb-1">
+                        Check-out Date
+                      </span>
+                      <span className="text-xs font-black text-amber-950 dark:text-amber-100">
+                        {formatDate(reservation.endDate)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {Boolean(reservation.durationInDays) && (
+                    <div className="p-2.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-300">
+                      <Clock size={14} className="text-primary" />
+                      <span>Total Stay Duration: {reservation.durationInDays} Nights</span>
+                    </div>
+                  )}
+                </div>
+
                 {/* Financial Details Card */}
                 <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
                   <div className="flex items-center justify-between">
@@ -428,77 +500,6 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                         </div>
                       </div>
                     )}
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Right Column: Schedule & Booking Details */}
-              <div className="space-y-6">
-                
-                {/* Stay Schedule Card */}
-                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                    <Calendar size={14} className="text-primary" />
-                    <span>Stay Schedule</span>
-                  </h4>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3.5 bg-primary/10 dark:bg-primary/20 border border-primary/20 rounded-xl text-center">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-primary-dark dark:text-primary-light block mb-1">
-                        Check-in Date
-                      </span>
-                      <span className="text-xs font-black text-primary-dark dark:text-white">
-                        {formatDate(reservation.startDate)}
-                      </span>
-                    </div>
-
-                    <div className="p-3.5 bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 rounded-xl text-center">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 block mb-1">
-                        Check-out Date
-                      </span>
-                      <span className="text-xs font-black text-amber-950 dark:text-amber-100">
-                        {formatDate(reservation.endDate)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {Boolean(reservation.durationInDays) && (
-                    <div className="p-2.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-300">
-                      <Clock size={14} className="text-primary" />
-                      <span>Total Stay Duration: {reservation.durationInDays} Nights</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Booking Details Card */}
-                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                    <User size={14} className="text-primary" />
-                    <span>Booking Details</span>
-                  </h4>
-
-                  <div className="space-y-3.5 divide-y divide-gray-100 dark:divide-gray-800">
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Room Type</span>
-                      <span className="text-xs font-black text-gray-900 dark:text-white uppercase">
-                        {(reservation.room as any)?.roomTypeDefinition?.name || (reservation.room as any)?.roomType || (typeof (reservation.listing as any)?.propertyType === 'object' ? (reservation.listing as any)?.propertyType?.name : (reservation.listing as any)?.propertyType) || (Array.isArray((reservation.listing as any)?.category) ? (reservation.listing as any)?.category[0] : (reservation.listing as any)?.category) || "Solo Room"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3">
-                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Number of Guests</span>
-                      <span className="text-xs font-black text-gray-900 dark:text-white">
-                        {reservation.occupantsCount === 1 ? "1 Guest" : `${reservation.occupantsCount || 1} Guests`}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3">
-                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Reservation Reference</span>
-                      <span className="text-xs sm:text-sm font-mono font-black text-primary dark:text-primary-light tracking-wider" title={reservation.id}>
-                        #RES-{reservation.id.slice(-8).toUpperCase()}
-                      </span>
-                    </div>
                   </div>
                 </div>
 
@@ -595,7 +596,10 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
               {canChat ? (
                 <button
                   className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl transition-all flex items-center justify-center gap-2"
-                  onClick={() => router.push(`/messages?listingId=${reservation.listingId}&otherUserId=${landlordId}`)}
+                  onClick={() => {
+                    const encToken = encryptChatToken(reservation.listingId, landlordId);
+                    router.push(encToken ? `/messages?token=${encToken}` : `/messages?listingId=${reservation.listingId}&otherUserId=${landlordId}`);
+                  }}
                 >
                   <Mail size={14} />
                   <span>Chat with Host</span>
