@@ -884,9 +884,9 @@ export default function SearchModal({
             onCloseModal?.();
           }
         }}
-        className={`w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-t md:border border-slate-200 dark:border-white/10 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden font-sans rounded-t-[32px] rounded-b-none md:rounded-3xl transition-all duration-200 mt-auto mb-0 ${
+        className={`w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-t md:border border-slate-200 dark:border-white/10 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden font-sans rounded-t-[32px] rounded-b-none md:rounded-3xl mt-auto mb-0 ${
           showWizard
-            ? "w-full h-[85vh] max-h-[85vh] md:w-[98vw] md:h-[96vh] md:max-h-full mx-auto md:my-auto"
+            ? "w-full h-full md:w-full md:h-full max-h-full mx-auto md:my-auto"
             : "w-full h-auto max-h-[85vh] md:max-h-[650px] max-w-2xl mx-auto md:my-auto"
         }`}
       >
