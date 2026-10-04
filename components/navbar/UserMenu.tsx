@@ -151,31 +151,25 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
                     <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Account</p>
                     <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{user.name || user.email}</p>
                   </div>
-                  {menuItems
-                    .filter((item) => {
-                      const role = (user as { role?: string })?.role?.toLowerCase();
-                      if (role === 'landlord' || role === 'admin') {
-                        // Hide student-centric items for internal roles
-                        const label = item.label.toLowerCase();
-                        return !['my favorites', 'my inquiries', 'my reservations', 'my reviews'].includes(label);
-                      }
-                      return true;
-                    })
-                    .map((item) => {
-                      const unreadCount = getUnreadCountForPath(item.path);
-                      return (
-                        <MenuItem
-                          label={item.label}
-                          hasNotification={unreadCount > 0}
-                          onClick={() => redirect(item.path, item.label)}
-                          key={item.label}
-                        />
-                      );
-                    })}
+                  {menuItems.map((item) => {
+                    const unreadCount = getUnreadCountForPath(item.path);
+                    return (
+                      <MenuItem
+                        label={item.label}
+                        hasNotification={unreadCount > 0}
+                        onClick={() => redirect(item.path, item.label)}
+                        key={item.label}
+                      />
+                    );
+                  })}
 
-                  <MenuItem label="Become a Host" onClick={() => redirect("/become-a-host", "Become a Host")} />
+                  {(user as { role?: string })?.role === "LANDLORD" || (user as { role?: string })?.role === "admin" ? (
+                    <MenuItem label="Landlord Dashboard" onClick={() => redirect("/landlord", "Landlord Dashboard")} />
+                  ) : (
+                    <MenuItem label="Become a Host" onClick={() => redirect("/become-a-host", "Become a Host")} />
+                  )}
                   {(user as { role?: string })?.role === "admin" && (
-                    <MenuItem label="Admin" onClick={() => redirect("/admin", "Admin")} />
+                    <MenuItem label="Admin Portal" onClick={() => redirect("/admin", "Admin")} />
                   )}
                   <hr className="border-gray-100 dark:border-gray-700" />
                   <MenuItem label="Log out" onClick={() => setShowLogoutConfirm(true)} />
