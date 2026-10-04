@@ -7,6 +7,8 @@ import { generateTablePDF } from '@/utils/pdfGenerator';
 import { DateRange } from 'react-day-picker';
 import { toast } from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
+import { pusherClient } from '@/lib/pusher-client';
 
 export interface Inquiry {
   id: string;
@@ -75,6 +77,61 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
   const [isArchiving, setIsArchiving] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  const { data: session } = useSession();
+  const userId = (session?.user as any)?.id;
+
+  // Real-time Pusher listener for landlord inquiry center
+  useEffect(() => {
+    if (!userId) return;
+
+    const channelName = `private-user-${userId}`;
+    const channel = pusherClient.subscribe(channelName);
+
+    const handleInquiryUpdated = (data: any) => {
+      if (!data || !data.entityId) return;
+
+      setListings((prev) => {
+        const index = prev.findIndex((i) => i.id === data.entityId);
+        if (index === -1) {
+          if (data.payload && data.payload.id) {
+            return [data.payload, ...prev];
+          }
+          return prev;
+        }
+
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          status: data.status || updated[index].status,
+          rejectionReason: data.payload?.rejectionReason || updated[index].rejectionReason,
+          ...(data.payload || {}),
+        };
+        return updated;
+      });
+
+      setSelectedInquiry((prevSelected) => {
+        if (prevSelected && prevSelected.id === data.entityId) {
+          return {
+            ...prevSelected,
+            status: data.status || prevSelected.status,
+            rejectionReason: data.payload?.rejectionReason || prevSelected.rejectionReason,
+            ...(data.payload || {}),
+          };
+        }
+        return prevSelected;
+      });
+    };
+
+    channel.bind("inquiry-updated", handleInquiryUpdated);
+    channel.bind("new-notification", () => {
+      queryClient.invalidateQueries({ queryKey: ["landlord-notifications"] });
+    });
+
+    return () => {
+      channel.unbind("inquiry-updated", handleInquiryUpdated);
+    };
+  }, [userId, queryClient]);
 
   useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), 700);

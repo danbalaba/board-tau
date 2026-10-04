@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { requireLandlord } from "@/lib/landlord";
-import { createNotification } from "@/services/notification";
+import { createNotification, broadcastStatusChange } from "@/services/notification";
 import { sendReviewResponseEmail } from "@/services/email/notifications";
 
 export const getLandlordReviews = async (args?: {
@@ -166,6 +166,15 @@ export const respondToReview = async (reviewId: string, response: string) => {
     title: "New review response",
     description: `The landlord of ${updatedReview.listing.title} has responded to your review.`,
     link: `/my-reviews?id=${updatedReview.id}`, // Matching the student dashboard path with ID
+  });
+
+  await broadcastStatusChange({
+    tenantId: review.userId,
+    landlordId: landlord.id,
+    entityType: "review",
+    entityId: review.id,
+    status: "RESPONDED",
+    payload: updatedReview,
   });
 
   // Invalidate Cache & Revalidate Path

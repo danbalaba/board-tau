@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
 import { DateRange } from 'react-day-picker';
+import { useSession } from 'next-auth/react';
+import { pusherClient } from '@/lib/pusher-client';
 
 export interface Booking {
   id: string;
@@ -82,6 +84,46 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedStatus, selectedPaymentStatus, sortBy, isArchived]);
+
+  const { data: session } = useSession();
+  const userId = (session?.user as any)?.id;
+
+  // Real-time Pusher listener for landlord active stay bookings
+  useEffect(() => {
+    if (!userId) return;
+
+    const channelName = `private-user-${userId}`;
+    const channel = pusherClient.subscribe(channelName);
+
+    const handleReservationUpdated = (data: any) => {
+      if (!data || !data.entityId) return;
+
+      setListings((prev) => {
+        const index = prev.findIndex((b) => b.id === data.entityId);
+        if (index === -1) {
+          if (data.payload && data.payload.id) {
+            return [data.payload, ...prev];
+          }
+          return prev;
+        }
+
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          status: data.status || updated[index].status,
+          paymentStatus: data.payload?.paymentStatus || updated[index].paymentStatus,
+          ...(data.payload || {}),
+        };
+        return updated;
+      });
+    };
+
+    channel.bind("reservation-updated", handleReservationUpdated);
+
+    return () => {
+      channel.unbind("reservation-updated", handleReservationUpdated);
+    };
+  }, [userId]);
 
   useEffect(() => {
     setListings(initialBookings);

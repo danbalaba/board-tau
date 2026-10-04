@@ -353,7 +353,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-hide"
       >
-        {isLoading ? (
+        {isLoading && messages.length === 0 ? (
           <div className="space-y-6">
             <div className="flex flex-col items-start max-w-[70%]">
               <Skeleton width={200} height={40} borderRadius={20} />

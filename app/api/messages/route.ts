@@ -156,7 +156,14 @@ export async function GET(request: NextRequest) {
 
   const nextCursor = messages.length === limit ? messages[messages.length - 1]?.createdAt?.toISOString() : null;
 
-  return NextResponse.json({ ok: true, messages: decryptedMessages, nextCursor });
+  return NextResponse.json(
+    { ok: true, messages: decryptedMessages, nextCursor },
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      },
+    }
+  );
 }
 
 export async function POST(request: NextRequest) {

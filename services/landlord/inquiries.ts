@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { requireLandlord } from "@/lib/landlord";
-import { createNotification } from "@/services/notification";
+import { createNotification, broadcastStatusChange } from "@/services/notification";
 import { sendInquiryStatusEmail } from "@/services/email/notifications";
 
 export const getLandlordInquiries = async (args?: {
@@ -250,6 +250,15 @@ export const respondToInquiry = async (
     title: `Inquiry ${statusLabel}`,
     description: `Your inquiry for ${updatedInquiry.listing.title} has been ${statusLabel}.${reasonText}`,
     link: `/inquiries?id=${updatedInquiry.id}`, // Matching the student dashboard path with ID
+  });
+
+  await broadcastStatusChange({
+    tenantId: inquiry.userId,
+    landlordId: landlord.id,
+    entityType: "inquiry",
+    entityId: inquiry.id,
+    status,
+    payload: updatedInquiry,
   });
 
   // 3. Send Email Notification to Tenant

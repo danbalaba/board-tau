@@ -4,6 +4,8 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { generateTablePDF } from '@/utils/pdfGenerator';
 import { DateRange } from 'react-day-picker';
+import { useSession } from 'next-auth/react';
+import { pusherClient } from '@/lib/pusher-client';
 
 export interface Review {
   id: string;
@@ -79,6 +81,46 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
     const t = setTimeout(() => setIsLoading(false), 700);
     return () => clearTimeout(t);
   }, []);
+
+  const { data: session } = useSession();
+  const userId = (session?.user as any)?.id;
+
+  // Real-time Pusher listener for landlord review hub
+  useEffect(() => {
+    if (!userId) return;
+
+    const channelName = `private-user-${userId}`;
+    const channel = pusherClient.subscribe(channelName);
+
+    const handleReviewUpdated = (data: any) => {
+      if (!data || !data.entityId) return;
+
+      setListings((prev) => {
+        const index = prev.findIndex((r) => r.id === data.entityId);
+        if (index === -1) {
+          if (data.payload && data.payload.id) {
+            return [data.payload, ...prev];
+          }
+          return prev;
+        }
+
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          ...(data.payload || {}),
+        };
+        return updated;
+      });
+    };
+
+    channel.bind("review-updated", handleReviewUpdated);
+    channel.bind("review-created", handleReviewUpdated);
+
+    return () => {
+      channel.unbind("review-updated", handleReviewUpdated);
+      channel.unbind("review-created", handleReviewUpdated);
+    };
+  }, [userId]);
 
   useEffect(() => {
     setListings(initialReviews);

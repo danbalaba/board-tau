@@ -7,6 +7,8 @@ import { generateTablePDF } from '@/utils/pdfGenerator';
 import { useQueryClient } from '@tanstack/react-query';
 import { DateRange } from 'react-day-picker';
 import { formatDate } from '@/lib/utils';
+import { useSession } from 'next-auth/react';
+import { pusherClient } from '@/lib/pusher-client';
 
 export interface ReservationRequest {
   id: string;
@@ -66,6 +68,49 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
     const t = setTimeout(() => setIsLoading(false), 700);
     return () => clearTimeout(t);
   }, []);
+
+  const { data: session } = useSession();
+  const userId = (session?.user as any)?.id;
+
+  // Real-time Pusher listener for landlord reservations
+  useEffect(() => {
+    if (!userId) return;
+
+    const channelName = `private-user-${userId}`;
+    const channel = pusherClient.subscribe(channelName);
+
+    const handleReservationUpdated = (data: any) => {
+      if (!data || !data.entityId) return;
+
+      setReservations((prev) => {
+        const index = prev.findIndex((r) => r.id === data.entityId);
+        if (index === -1) {
+          if (data.payload && data.payload.id) {
+            return [data.payload, ...prev];
+          }
+          return prev;
+        }
+
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          status: data.status || updated[index].status,
+          paymentStatus: data.payload?.paymentStatus || updated[index].paymentStatus,
+          ...(data.payload || {}),
+        };
+        return updated;
+      });
+    };
+
+    channel.bind("reservation-updated", handleReservationUpdated);
+    channel.bind("new-notification", () => {
+      queryClient.invalidateQueries({ queryKey: ["landlord-notifications"] });
+    });
+
+    return () => {
+      channel.unbind("reservation-updated", handleReservationUpdated);
+    };
+  }, [userId, queryClient]);
 
   // Sync with incoming server data changes (e.g., after router.refresh())
   useEffect(() => {

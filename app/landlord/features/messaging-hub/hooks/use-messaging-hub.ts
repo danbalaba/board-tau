@@ -62,6 +62,11 @@ export function useMessagingHub(initialConversations: Conversation[] = [], isWin
     isWindowActiveRef.current = isWindowActive;
   }, [isWindowActive]);
 
+  const activeConversationRef = useRef(activeConversation);
+  useEffect(() => {
+    activeConversationRef.current = activeConversation;
+  }, [activeConversation]);
+
   // Custom setter to seamlessly purge ghost placeholders when navigating away
   const setActiveConversation = useCallback((conv: Conversation | null) => {
     if (conv) {
@@ -117,8 +122,8 @@ export function useMessagingHub(initialConversations: Conversation[] = [], isWin
   }, []);
 
   // 2. Fetch message history for the selected conversation
-  const fetchMessages = useCallback(async (listingId: string, tenantId: string) => {
-    setIsLoadingMessages(true);
+  const fetchMessages = useCallback(async (listingId: string, tenantId: string, isSilent: boolean = false) => {
+    if (!isSilent) setIsLoadingMessages(true);
     try {
       const response = await axios.get(`/api/messages?listingId=${listingId}&otherUserId=${tenantId}`);
       if (response.data.ok) {
@@ -127,7 +132,7 @@ export function useMessagingHub(initialConversations: Conversation[] = [], isWin
     } catch (error) {
       console.error("Failed to fetch messages", error);
     } finally {
-      setIsLoadingMessages(false);
+      if (!isSilent) setIsLoadingMessages(false);
     }
   }, []);
 
@@ -367,17 +372,24 @@ export function useMessagingHub(initialConversations: Conversation[] = [], isWin
       // Something happened in the messaging world, refresh the inbox
       fetchConversations();
 
+      const activeConv = activeConversationRef.current;
       // If we have an active chat and this notification is for that chat, refresh the messages too
-      // (This handles syncing messages sent from other instances/modals)
-      if (activeConversation && 
-          data.listingId === activeConversation.listingId && 
-          (data.senderId === activeConversation.tenantId || data.senderId === session.user.id)) {
-        fetchMessages(activeConversation.listingId, activeConversation.tenantId);
+      if (activeConv && 
+          data.listingId === activeConv.listingId && 
+          (data.senderId === activeConv.tenantId || data.senderId === session.user.id)) {
+        fetchMessages(activeConv.listingId, activeConv.tenantId, true);
       }
     });
 
+    userChannel.bind("inquiry-updated", () => {
+      fetchConversations();
+    });
+
+    userChannel.bind("reservation-updated", () => {
+      fetchConversations();
+    });
+
     return () => {
-      pusherClient.unsubscribe(userChannelName);
       userChannel.unbind_all();
     };
   }, [session?.user?.id, fetchConversations]);

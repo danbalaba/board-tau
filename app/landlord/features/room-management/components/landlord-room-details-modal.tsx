@@ -453,7 +453,7 @@ export function LandlordRoomDetailsModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 40 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="relative w-full max-w-5xl h-full sm:h-[88vh] bg-white dark:bg-[#111827] rounded-none sm:rounded-[2.5rem] border-0 sm:border border-gray-100 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col"
+        className="relative w-full max-w-5xl h-full sm:h-[88vh] sm:my-auto bg-white dark:bg-[#111827] rounded-none sm:rounded-[2.5rem] border-0 sm:border border-gray-100 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Scrollable Container */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
@@ -49,6 +49,12 @@ export const useMessages = (initialConversations: TenantConversation[], currentU
   const [activeConversation, setActiveConversationState] = useState<TenantConversation | null>(null);
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
 
+  // Ref to always access the active conversation without stale closure issues inside callbacks
+  const activeConversationRef = useRef(activeConversation);
+  useEffect(() => {
+    activeConversationRef.current = activeConversation;
+  }, [activeConversation]);
+
   // 1. Fetch Conversations Query
   const { data: serverConversations, refetch: refetchConversations } = useQuery({
     queryKey: ["conversations"],
@@ -82,7 +88,7 @@ export const useMessages = (initialConversations: TenantConversation[], currentU
   }, [serverConversations]);
 
   // 2. Fetch Messages Query
-  const { data: serverMessages, isLoading: isMessagesLoading } = useQuery({
+  const { data: serverMessages, isLoading: isMessagesLoading, refetch: refetchMessages } = useQuery({
     queryKey: ["messages", activeConversation?.listingId, activeConversation?.landlordId],
     queryFn: async () => {
       if (!activeConversation) return [];
@@ -92,14 +98,20 @@ export const useMessages = (initialConversations: TenantConversation[], currentU
       return response.data.messages.reverse() as Message[];
     },
     enabled: !!activeConversation,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   // Sync server messages to local state for optimistic UI and Pusher
   useEffect(() => {
-    if (serverMessages) {
-      setLocalMessages(serverMessages);
+    if (activeConversation) {
+      if (serverMessages) {
+        setLocalMessages(serverMessages);
+      }
+    } else {
+      setLocalMessages([]);
     }
-  }, [serverMessages]);
+  }, [activeConversation?.listingId, activeConversation?.landlordId, serverMessages]);
 
   const setActiveConversation = useCallback((conv: TenantConversation | null) => {
     if (conv) {
@@ -329,6 +341,31 @@ export const useMessages = (initialConversations: TenantConversation[], currentU
       pusherClient.unsubscribe(channelName);
     };
   }, [activeConversation, currentUserId, queryClient]);
+
+  // Global Real-time Listener for user channel (updates inbox list even when viewing a different conversation)
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const userChannelName = `private-user-${currentUserId}`;
+    const userChannel = pusherClient.subscribe(userChannelName);
+
+    const handleMessageNotif = (data: any) => {
+      refetchConversations();
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
+
+      const currentActive = activeConversationRef.current;
+      if (currentActive && data?.listingId === currentActive.listingId) {
+        refetchMessages();
+      }
+    };
+
+    userChannel.bind("message-notification", handleMessageNotif);
+
+    return () => {
+      userChannel.unbind("message-notification", handleMessageNotif);
+    };
+  }, [currentUserId, refetchConversations, queryClient, refetchMessages]);
 
   return {
     conversations,

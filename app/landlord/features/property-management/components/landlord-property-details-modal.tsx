@@ -687,7 +687,7 @@ export function LandlordPropertyDetailsModal({
         onClick={onClose} 
         className="absolute inset-0 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm" 
       />
-      <motion.div initial={{ opacity: 0, scale: 0.95, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 40 }} className="relative bg-white dark:bg-[#111827] rounded-none sm:rounded-[2.5rem] border-0 sm:border border-gray-100 dark:border-white/10 max-w-6xl w-full h-full sm:h-auto max-h-full sm:max-h-[92vh] shadow-2xl overflow-hidden flex flex-col antialiased">
+      <motion.div initial={{ opacity: 0, scale: 0.95, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 40 }} className="relative bg-white dark:bg-[#111827] rounded-none sm:rounded-[2.5rem] border-0 sm:border border-gray-100 dark:border-white/10 max-w-6xl w-full h-full sm:h-auto max-h-full sm:max-h-[92vh] sm:my-auto shadow-2xl overflow-hidden flex flex-col antialiased">
         
         {/* Scrollable Container */}
         <div ref={setContainer} className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar scroll-smooth">

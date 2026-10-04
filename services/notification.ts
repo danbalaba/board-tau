@@ -56,6 +56,55 @@ export async function createNotification({
 }
 
 /**
+ * Broadcasts entity status change events (inquiry, reservation, review) via Pusher
+ * to both tenant and landlord private channels for instant real-time UI updates.
+ */
+export async function broadcastStatusChange({
+  tenantId,
+  landlordId,
+  entityType,
+  entityId,
+  status,
+  payload = {},
+}: {
+  tenantId: string;
+  landlordId?: string;
+  entityType: "inquiry" | "reservation" | "review";
+  entityId: string;
+  status: string;
+  payload?: any;
+}) {
+  try {
+    const eventName = `${entityType}-updated`;
+    const eventData = {
+      entityId,
+      entityType,
+      status,
+      tenantId,
+      landlordId,
+      updatedAt: new Date().toISOString(),
+      ...payload,
+    };
+
+    const triggers: Promise<any>[] = [];
+
+    if (tenantId) {
+      triggers.push(pusherServer.trigger(`private-user-${tenantId}`, eventName, eventData));
+    }
+
+    if (landlordId && landlordId !== tenantId) {
+      triggers.push(pusherServer.trigger(`private-user-${landlordId}`, eventName, eventData));
+    }
+
+    await Promise.all(triggers);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to broadcast status change:", error);
+    return { success: false, error: "Failed to broadcast status change" };
+  }
+}
+
+/**
  * Gets the count of unread notifications for the current user, grouped by type.
  * Useful for showing dots on specific menu items.
  */

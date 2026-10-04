@@ -6,6 +6,7 @@ import { pusherServer } from "@/lib/pusher";
 import { sendNewMessageEmail } from "@/services/email/notifications";
 import { encryptMessage } from "@/lib/encryption";
 import { getCurrentUser } from "@/services/user";
+import { createNotification } from "@/services/notification";
 
 /**
  * GET: Fetches the list of conversations for the Landlord Inbox Hub
@@ -131,14 +132,12 @@ export async function POST(request: NextRequest) {
 
     const deepLink = `/messages?listingId=${listingId}&otherUserId=${user.id}`;
 
-    await db.notification.create({
-      data: {
-        userId: receiverId,
-        type: "message",
-        title: "New Message from host",
-        description: `${user.name || "Host"}: ${displayContent.substring(0, 50)}...`,
-        link: deepLink,
-      }
+    await createNotification({
+      userId: receiverId,
+      type: "message",
+      title: "New Message from host",
+      description: `${user.name || "Host"}: ${displayContent.substring(0, 50)}...`,
+      link: deepLink,
     });
 
     // 3. Trigger Email Notification (Await to ensure delivery)
@@ -164,6 +163,13 @@ export async function POST(request: NextRequest) {
     // 4. Trigger Pusher for real-time update
     const channel = `private-chat-${listingId}-${[user.id, receiverId].sort().join("-")}`;
     await pusherServer.trigger(channel, "new-message", decryptedMessageForBroadcast);
+
+    // Global notification for both parties (to update Inbox/Badge in real-time)
+    const syncPayload = { listingId, senderId: user.id, message: displayContent.substring(0, 120) };
+    await Promise.all([
+      pusherServer.trigger(`private-user-${receiverId}`, "message-notification", syncPayload),
+      pusherServer.trigger(`private-user-${user.id}`, "message-notification", syncPayload)
+    ]);
 
     return NextResponse.json({
       success: true,

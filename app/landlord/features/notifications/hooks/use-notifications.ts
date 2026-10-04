@@ -44,7 +44,6 @@ export function useNotifications() {
 
     return () => {
       channel.unbind("new-notification", handleNewNotification);
-      pusherClient.unsubscribe(channelName);
     };
   }, [userId, queryClient, toast]);
 

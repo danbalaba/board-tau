@@ -322,7 +322,7 @@ const ChatView: React.FC<ChatViewProps> = ({
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-6 space-y-4 scroll-smooth w-full"
       >
-        {isLoading ? (
+        {isLoading && messages.length === 0 ? (
           <div className="space-y-6">
             {[1, 2, 3].map(i => (
               <div key={i} className={cn("flex", i % 2 === 0 ? "justify-end" : "justify-start")}>
