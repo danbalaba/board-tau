@@ -24,6 +24,7 @@ export interface RoomType {
 
 import { saveDraftToStorage, loadDraftFromStorage, clearDraftFromStorage } from '@/utils/draftStorage';
 import { formatCleanTitle } from '@/lib/utils';
+import { clearLandlordTaxonomyCache } from '@/lib/landlordTaxonomyCache';
 
 export function usePropertyCreatorLogic(initialData: any) {
   const router = useRouter();
