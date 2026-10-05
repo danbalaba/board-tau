@@ -6,6 +6,7 @@ import Webcam from "react-webcam";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { sanitizeImgUrl } from "@/lib/security/sanitize";
 import SafeImage from "@/components/common/SafeImage";
+import KYCLockoutBadge, { useKYCLockout } from "@/components/common/KYCLockoutBadge";
 
 interface IDStepProps {
   capturedID: string | null;
@@ -67,12 +68,17 @@ const IDStep: React.FC<IDStepProps> = ({
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraFacingMode, setCameraFacingMode] = useState<"user" | "environment">("user");
   const responsiveToast = useResponsiveToast();
+  const { isLockedOut, timerText } = useKYCLockout();
 
   useEffect(() => {
     return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
   }, [previewUrl]);
 
   const processFile = (file: File) => {
+    if (isLockedOut) {
+      responsiveToast.error(`Verification is locked. Please wait until timer expires (${timerText}).`);
+      return;
+    }
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
     if (!validTypes.includes(file.type)) {
       responsiveToast.error("Please upload a valid image file (JPEG, PNG, or WEBP)");
@@ -112,6 +118,10 @@ const IDStep: React.FC<IDStepProps> = ({
   };
 
   const handleTakePhotoClick = () => {
+    if (isLockedOut) {
+      responsiveToast.error(`Verification is locked. Please wait until timer expires (${timerText}).`);
+      return;
+    }
     const isMobileSmartphone = typeof window !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && window.innerWidth < 768;
     if (isMobileSmartphone && fileInputRef.current) {
       fileInputRef.current.click();
@@ -165,6 +175,8 @@ const IDStep: React.FC<IDStepProps> = ({
           ID Verification
         </span>
       </div>
+
+      <KYCLockoutBadge />
 
       {/* Top-Level Selfie Retake Banner */}
       {selfieRetakeNeeded && (

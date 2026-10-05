@@ -178,7 +178,7 @@ export function ModernInquirySelect({
               menuList: () => "max-h-[260px] overflow-y-auto custom-scrollbar p-1.5",
               noOptionsMessage: () => "text-[10px] font-black uppercase tracking-widest text-gray-400 py-4 text-center",
             }}
-            menuPlacement="bottom"
+            menuPlacement="auto"
           />
         </div>
       </div>
