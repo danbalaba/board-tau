@@ -97,8 +97,6 @@ export const createReservation = async ({
   userId: string
 }) => {
   try {
-    console.log('Creating reservation with data:', { listingId, roomId, startDate, endDate, totalPrice, userId })
-
     if (!listingId || !startDate || !endDate || !totalPrice)
       throw new Error("Invalid data");
 
@@ -115,8 +113,6 @@ export const createReservation = async ({
         totalPrice,
       },
     });
-
-    console.log('Reservation created successfully:', reservation)
 
     revalidatePath(`/listings/${listingId}`);
 
