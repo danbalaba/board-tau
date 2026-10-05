@@ -68,12 +68,15 @@ import {
   getSyncSubGroups
 } from "@/lib/landlordTaxonomyCache";
 
+import HeartButton from "@/components/favorites/HeartButton";
+
 interface SidebarDetailViewProps {
   listing: any;
   onBack: () => void;
+  hasFavorited?: boolean;
 }
 
-export default function SidebarDetailView({ listing, onBack }: SidebarDetailViewProps) {
+export default function SidebarDetailView({ listing, onBack, hasFavorited = false }: SidebarDetailViewProps) {
   const price = listing.price || 0;
 
   // Taxonomy Cache State
@@ -336,14 +339,18 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
         )}
          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none z-10"></div>
          
-         {/* Top Nav Back Button */}
-         <div className="absolute top-4 left-4 z-20">
+         {/* Top Nav Back & Heart Buttons */}
+         <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
            <button 
              onClick={onBack}
              className="p-2.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-slate-200 rounded-full shadow-lg hover:bg-white dark:hover:bg-slate-700 transition-colors border border-white/20 cursor-pointer"
+             title="Back to list"
            >
              <ArrowLeft size={18} />
            </button>
+           <div className="p-2 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full shadow-lg border border-white/20 flex items-center justify-center">
+             <HeartButton listingId={listing.id} hasFavorited={hasFavorited} />
+           </div>
          </div>
 
          {/* Price Badge */}

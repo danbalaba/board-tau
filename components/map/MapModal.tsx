@@ -25,6 +25,8 @@ import RecentsListView from "./RecentsListView";
 import AuthModal from "../modals/AuthModal";
 import Modal from "../modals/Modal";
 import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
+import { getFavorites } from "@/services/user/favorites/favorite";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { useRecentStore } from "@/hooks/use-recent-store";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
@@ -61,6 +63,16 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
   const { data: session, status } = useSession();
   const { error } = useResponsiveToast();
   const { addRecentListing } = useRecentStore();
+
+  const { data: favoriteIds = [] } = useQuery({
+    queryKey: ['favorites'],
+    queryFn: async () => {
+      if (status !== "authenticated") return [];
+      return await getFavorites();
+    },
+    enabled: status === "authenticated",
+    staleTime: 1000 * 60 * 5,
+  });
 
   // Compute number of listings within ~1km of the selected landmark
   const nearbyCount = selectedLandmark
@@ -283,6 +295,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
                       <SidebarDetailView 
                         listing={selectedListing} 
                         onBack={() => setSelectedListing(null)} 
+                        hasFavorited={favoriteIds.includes(selectedListing.id)}
                       />
                     ) : activeView === "list" ? (
                       <SidebarListView 
@@ -292,6 +305,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
                           addRecentListing(listing);
                         }}
                         listings={listings}
+                        favoriteIds={favoriteIds}
                       />
                     ) : activeView === "saved" ? (
                       <SavedListView
@@ -335,6 +349,7 @@ export default function MapModal({ isOpen, onClose, listings, onSearchArea }: Ma
                   setRouteDestination(end);
                   setDirectionsPhase(null); // Done — show all markers again
                 }}
+                onSearchSubmitted={() => setShowSearchAreaBtn(false)}
               />
 
               {/* "Search this area" Button */}

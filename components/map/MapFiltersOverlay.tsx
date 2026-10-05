@@ -10,6 +10,7 @@ import { AnimatePresence } from "framer-motion";
 import Modal from "@/components/modals/Modal";
 import { Listing } from "@prisma/client";
 import { sanitizeSearchQuery } from "@/lib/security/sanitize";
+import ModernLoader from "@/components/common/ModernLoader";
 
 const SearchModal = dynamic(() => import("@/components/modals/SearchModal"), { ssr: false });
 
@@ -20,6 +21,7 @@ interface MapFiltersOverlayProps {
   setShowDirections?: (show: boolean) => void;
   directionsPhase?: "start" | "destination" | null;
   onGetDirections?: (startLngLat: [number, number], endLngLat: [number, number]) => void;
+  onSearchSubmitted?: () => void;
 }
 
 export default function MapFiltersOverlay({ 
@@ -28,7 +30,8 @@ export default function MapFiltersOverlay({
   showDirections = false, 
   setShowDirections = () => {},
   directionsPhase = null,
-  onGetDirections = () => {}
+  onGetDirections = () => {},
+  onSearchSubmitted
 }: MapFiltersOverlayProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -70,6 +73,7 @@ export default function MapFiltersOverlay({
       // Still bump the query to the top of the history list
       addQuery(queryToUse, cachedParams);
       setIsSearchFocused(false);
+      onSearchSubmitted?.();
       
       // Keep loading overlay active briefly for UX consistency
       setTimeout(() => {
@@ -92,6 +96,7 @@ export default function MapFiltersOverlay({
       
       addQuery(queryToUse, { q: queryToUse.trim() });
       setIsSearchFocused(false);
+      onSearchSubmitted?.();
       return;
     }
 
@@ -133,6 +138,7 @@ export default function MapFiltersOverlay({
       params.set("_bust", Date.now().toString());
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
       setIsSearchFocused(false);
+      onSearchSubmitted?.();
     } catch (error) {
       console.error("AI Search Error:", error);
       // Fallback
@@ -140,6 +146,7 @@ export default function MapFiltersOverlay({
       const params = new URLSearchParams(searchParams.toString());
       params.set("q", queryToUse.trim());
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      onSearchSubmitted?.();
     } finally {
       setIsAILoading(false);
     }
@@ -390,7 +397,7 @@ export default function MapFiltersOverlay({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/60 dark:bg-[#020817]/70 backdrop-blur-xl pointer-events-auto"
+            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/60 dark:bg-[#020817]/70 backdrop-blur-xl pointer-events-auto p-4"
           >
             {/* Top Progress Bar */}
             <div className="absolute top-0 left-0 right-0 h-1 z-[10000]">
@@ -402,40 +409,11 @@ export default function MapFiltersOverlay({
               />
             </div>
 
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="flex flex-col items-center gap-6"
-            >
-              <div className="relative flex items-center justify-center">
-                <motion.div 
-                    className="absolute -inset-6 rounded-full border border-primary/30"
-                    animate={{ scale: [1, 1.5, 1], opacity: [0.8, 0, 0.8] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                />
-                <motion.div 
-                    className="absolute -inset-10 rounded-full border border-emerald-400/20"
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                />
-                <div className="relative bg-white dark:bg-gray-800 p-4 rounded-full shadow-lg z-10 border border-gray-100 dark:border-gray-700">
-                  <Sparkles size={32} className="text-primary animate-pulse" />
-                </div>
-              </div>
-
-              <div className="flex flex-col items-center gap-2 text-center px-4">
-                  <motion.span 
-                      className="text-sm font-black uppercase tracking-[0.2em] text-primary dark:text-emerald-400"
-                      animate={{ opacity: [1, 0.6, 1] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                  >
-                      BoardTAU AI Scanning
-                  </motion.span>
-                  <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
-                      Finding the best matching properties based on your request...
-                  </span>
-              </div>
-            </motion.div>
+            <ModernLoader
+              text="BoardTAU AI Scanning"
+              subtitle="Finding the best matching properties based on your request..."
+              mascotSrc="/assets/mascot/kerby-global-search.png"
+            />
           </motion.div>
         )}
       </AnimatePresence>

@@ -6,12 +6,14 @@ import SafeImage from "@/components/common/SafeImage";
 
 interface ModernLoaderProps {
   text?: string;
+  subtitle?: string;
   fullPage?: boolean;
   mascotSrc?: string;
 }
 
 const ModernLoader: React.FC<ModernLoaderProps> = ({ 
   text = "Loading...", 
+  subtitle,
   fullPage = false,
   mascotSrc = "/assets/mascot/kerby-global-search.png"
 }) => {
@@ -57,12 +59,18 @@ const ModernLoader: React.FC<ModernLoaderProps> = ({
       {/* Clear Brand Text & Progress Bar (No technical jargon) */}
       <div className="flex flex-col items-center gap-2.5 z-10 w-full text-center">
         <motion.p
-          className="text-xs font-black tracking-widest uppercase text-[#2f7d6d] max-w-[240px] truncate"
+          className="text-xs font-black tracking-widest uppercase text-[#2f7d6d] max-w-[260px]"
           animate={{ opacity: [0.7, 1, 0.7] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
         >
           {text}
         </motion.p>
+
+        {subtitle && (
+          <p className="text-xs text-gray-600 dark:text-gray-400 font-medium max-w-[260px] leading-relaxed">
+            {subtitle}
+          </p>
+        )}
 
         {/* Brand Progress Track */}
         <div className="w-32 h-1.5 bg-gray-200/80 dark:bg-slate-800/80 rounded-full overflow-hidden p-0.5 border border-gray-300/40 dark:border-slate-700/60 shadow-inner">
