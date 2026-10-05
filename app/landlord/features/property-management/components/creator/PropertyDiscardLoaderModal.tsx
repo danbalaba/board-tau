@@ -256,12 +256,12 @@ export function PropertyDiscardLoaderModal({
 
       {/* Bottom Landlord Tip Footer Bar */}
       <div className="w-full max-w-2xl z-10">
-        <div className="p-4 sm:p-5 rounded-3xl bg-slate-900/80 border border-slate-800/80 text-left flex items-start gap-4 shadow-xl backdrop-blur-md">
-          <div className="p-2.5 rounded-2xl bg-amber-500/15 text-amber-400 shrink-0 mt-0.5 border border-amber-500/20">
+        <div className="p-4 sm:p-5 rounded-3xl bg-white/95 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 text-left flex items-start gap-4 shadow-xl shadow-slate-200/60 dark:shadow-none backdrop-blur-md">
+          <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 border border-amber-500/20">
             <Sparkles size={18} />
           </div>
           <div className="flex-1 min-w-0">
-            <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block mb-0.5">Landlord Tip</span>
+            <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest block mb-0.5">Landlord Tip</span>
             <AnimatePresence mode="wait">
               <motion.p
                 key={tipIdx}
@@ -269,7 +269,7 @@ export function PropertyDiscardLoaderModal({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
                 transition={{ duration: 0.3 }}
-                className="text-xs font-medium text-slate-300 leading-snug"
+                className="text-xs font-semibold text-slate-700 dark:text-slate-300 leading-snug"
               >
                 "{SIMPLE_TIPS[tipIdx]}"
               </motion.p>
