@@ -12,8 +12,6 @@ import { createHostApplication } from '@/services/landlord/applications';
 import { base64ToFile, formatTitleCase, sanitizeHostFormData, getMobileStepForDesktopStep, getDesktopStepForMobileStep } from './HostApplicationUtils';
 import { TAU_COORDINATES } from '@/utils/constants';
 
-import { faceMatcher } from '@/lib/mediapipe/face-matcher';
-
 import { saveDraftToStorage, loadDraftFromStorage, clearDraftFromStorage } from '@/utils/draftStorage';
 
 export interface HostApplicationFormData {
@@ -66,7 +64,7 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
   }
 
   const toast = useResponsiveToast();
-  const { isProcessing, faceEngine, idEngine } = useKYC();
+  const { isProcessing, faceEngine } = useKYC();
   
   const [step, setStepState] = useState(0);
   const [mobileStep, setMobileStepState] = useState(1);
@@ -556,7 +554,6 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
     }
 
     setIsIDProcessing(true);
-    const startStep = stepRef.current;
 
     try {
       const reader = new FileReader();
@@ -575,61 +572,48 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
         });
       };
 
-      const [selfieImg, idImg] = await Promise.all([
-        loadImage(capturedSelfie),
-        loadImage(imageSrc)
-      ]);
-
-      // 1. Anti-spoofing & Selfie-as-ID structural validation
-      const idValidation = await idEngine.validateIDCard(idImg);
-      if (!idValidation.isValid) {
-        toast.error(idValidation.reason || "Invalid ID document photo. Please upload your physical ID card.");
-        return;
+      // AWS Rekognition Cloud Verification (Biometrics, OCR, and Document AI)
+      let kycResult: any = null;
+      try {
+        const kycRes = await fetch('/api/kyc/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ selfieUrl: capturedSelfie, idCardUrl: imageSrc }),
+        });
+        kycResult = await kycRes.json();
+      } catch (err) {
+        console.warn('[AWS Rekognition Fetch Error]:', err);
       }
 
-      const selfieCacheKey = `selfie_${capturedSelfie.length}_${capturedSelfie.slice(0, 50)}`;
-      const idCacheKey = `file_${imageFile.name}_${imageFile.size}_${imageFile.lastModified}`;
+      // Enforce strict AWS Rekognition verification result!
+      if (kycResult && (!kycResult.success || kycResult.status !== 'VERIFIED')) {
+        if (kycResult.lockoutRemainingSeconds) {
+          try {
+            const until = Date.now() + kycResult.lockoutRemainingSeconds * 1000;
+            localStorage.setItem('kycLockoutUntil', until.toString());
+            window.dispatchEvent(new Event('kycLockoutTriggered'));
+          } catch (e) {}
+        }
 
-      const [selfieDescriptor, idDescriptor] = await Promise.all([
-        faceMatcher.getFaceDescriptorCached(selfieCacheKey, selfieImg),
-        faceMatcher.getFaceDescriptorCached(idCacheKey, idImg, 0.2)
-      ]);
+        let failureReason = kycResult.reason || kycResult.error || 'Verification failed.';
+        if (failureReason.includes('temporarily locked for')) {
+          const minsMatch = failureReason.match(/\d+/);
+          const mins = minsMatch ? minsMatch[0] : '5';
+          failureReason = `Verification locked for ${mins} minutes.`;
+        }
 
-      if (stepRef.current !== 7 || stepRef.current !== startStep) {
-        console.warn("ID scan aborted: User navigated away from ID step.");
-        return;
-      }
-
-      if (!selfieDescriptor) {
-        setSelfieRetakeNeeded(true);
-        setCapturedSelfie(null);
+        toast.error(failureReason);
         setCapturedID(null);
-        toast.error("Could not verify your live selfie. Please retake it.");
-        return;
-      }
-
-      setSelfieRetakeNeeded(false);
-
-      if (!idDescriptor) {
-        toast.error("Could not detect a face on your ID card. Please ensure the ID photo is clearly visible.");
-        return;
-      }
-
-      const distance = faceMatcher.getFaceDistance(selfieDescriptor, idDescriptor);
-      if (distance < 0.08) {
-        toast.error("Selfie photo detected as ID. Please upload a clear photo of your physical ID card, not your live selfie.");
-        return;
-      }
-      if (distance > 0.6) {
-        toast.error("Verification failed: The face on the ID does not match your live selfie. Please try again.");
-        return;
+        return; // BLOCK USER FROM PROCEEDING!
       }
 
       setCapturedID(imageSrc);
-      toast.success("ID card matched successfully!");
+      const similarityText = kycResult?.similarity ? ` (${kycResult.similarity}% face match)` : '';
+      toast.success(`Identity Verified Successfully!${similarityText}`);
     } catch (error) {
-      console.error("Face matching error:", error);
-      toast.error("Failed to perform face matching.");
+      console.error("ID processing error:", error);
+      toast.error("Failed to process ID card image.");
+      setCapturedID(null);
     } finally {
       setIsIDProcessing(false);
     }
@@ -768,6 +752,23 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
         file: base64ToFile(capturedID!, "id_card.jpg"), 
         input: { listingId: "PENDING", landlordId: "PENDING" } 
       })).url;
+
+      if (selfieUrl && idUrl) {
+        try {
+          toast.loading("Verifying identity documents with AWS Rekognition...", { id: 'host-sub' });
+          const kycRes = await fetch('/api/kyc/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ selfieUrl, idCardUrl: idUrl }),
+          });
+          const kycResult = await kycRes.json();
+          if (kycResult.status === 'NEEDS_MANUAL_REVIEW') {
+            toast.warning('Identity verification flagged for admin review: ' + (kycResult.reason || 'Verification unconfirmed.'), { id: 'host-sub' });
+          }
+        } catch (err) {
+          console.warn('[KYC Verify Error]:', err);
+        }
+      }
       
       let permitUrl = "";
       if (permitFile) {

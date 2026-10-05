@@ -36,6 +36,7 @@ import KerbyMascotStage from "./KerbyMascotStage";
 import KerbyDesktopIntroModal from "./KerbyDesktopIntroModal";
 import { HostApplicationSubmissionLoaderModal } from "@/components/host-application/HostApplicationSubmissionLoaderModal";
 import { cn } from "@/utils/helper";
+import { useKYCLockout } from "@/components/common/KYCLockoutBadge";
 
 function AutoSaveBadge({ 
   saveStatus, 
@@ -187,6 +188,7 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [showDesktopIntro, setShowDesktopIntro] = useState(true);
   const [mobileDocChoice, setMobileDocChoice] = useState<'permit' | 'utility'>('permit');
+  const { isLockedOut, timerText } = useKYCLockout();
 
   useEffect(() => {
     if (!logic.isCheckingDraft && logic.hasSavedDraft) {
@@ -1279,10 +1281,12 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                 <Button
                   type="button"
                   onClick={logic.handleCaptureSelfie}
-                  disabled={logic.isProcessing || logic.isSelfieProcessing || !logic.isEngineReady || !logic.isFaceAligned || logic.livenessStatus !== 'passed'}
+                  disabled={isLockedOut || logic.isProcessing || logic.isSelfieProcessing || !logic.isEngineReady || !logic.isFaceAligned || logic.livenessStatus !== 'passed'}
                   className={cn(
                     "flex-1 rounded-2xl py-4 font-black text-xs uppercase tracking-wider shadow-lg transition-all",
-                    logic.isFaceAligned && logic.livenessStatus === 'passed' && !logic.isSelfieProcessing
+                    isLockedOut
+                      ? "bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 cursor-not-allowed opacity-90 shadow-none"
+                      : logic.isFaceAligned && logic.livenessStatus === 'passed' && !logic.isSelfieProcessing
                       ? "bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] text-white shadow-primary/30 cursor-pointer"
                       : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-transparent shadow-none cursor-not-allowed"
                   )}
@@ -1290,7 +1294,9 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                   <div className="flex items-center justify-center gap-2">
                     <Camera size={18} />
                     <span>
-                      {logic.isSelfieProcessing
+                      {isLockedOut
+                        ? `Locked (${timerText})`
+                        : logic.isSelfieProcessing
                         ? "Verifying Selfie..."
                         : logic.isFaceAligned && logic.livenessStatus === 'passed'
                         ? "Capture Selfie Now"

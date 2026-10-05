@@ -3,11 +3,12 @@
 import React from "react";
 import Webcam from "react-webcam";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, RefreshCcw, Loader2, Eye } from "lucide-react";
+import { User, RefreshCcw, Loader2, Eye, SunMedium } from "lucide-react";
 import { FaCamera, FaTimes } from "react-icons/fa";
 import { cn } from "@/utils/helper";
 import { sanitizeImgUrl } from "@/lib/security/sanitize";
 import SafeImage from "@/components/common/SafeImage";
+import KYCLockoutBadge, { KYCLockoutCard, useKYCLockout } from "@/components/common/KYCLockoutBadge";
 
 interface SelfieStepProps {
   capturedSelfie: string | null;
@@ -45,6 +46,26 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
   const selfieImgRef = React.useRef<HTMLImageElement>(null);
   const [videoDevices, setVideoDevices] = React.useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = React.useState<string | null>(null);
+  const [isRingLightActive, setIsRingLightActive] = React.useState<boolean>(false);
+  const { isLockedOut, timerText } = useKYCLockout();
+
+  // Screen WakeLock to prevent dimming during live selfie scan
+  React.useEffect(() => {
+    let wakeLock: any = null;
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator && isRingLightActive) {
+          wakeLock = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch (e) {
+        console.warn('[WakeLock Warning]:', e);
+      }
+    };
+    requestWakeLock();
+    return () => {
+      if (wakeLock) wakeLock.release().catch(() => {});
+    };
+  }, [isRingLightActive]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -98,191 +119,219 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
         </div>
       )}
 
+      <KYCLockoutBadge />
+
       <div className={cn(
-        "relative aspect-[3/4] mx-auto rounded-[2.5rem] overflow-hidden shadow-2xl bg-black group transition-all duration-300 ring-4 ring-white/5 border-4 border-slate-100 dark:border-slate-800",
+        "relative aspect-[3/4] mx-auto rounded-[2.5rem] overflow-hidden shadow-2xl transition-all duration-500 border-4 border-slate-100 dark:border-slate-800 z-10",
+        isRingLightActive 
+          ? "ring-[14px] ring-amber-100 dark:ring-amber-200 shadow-[0_0_120px_40px_rgba(255,255,255,0.95)] bg-white" 
+          : "ring-4 ring-white/5 bg-black",
         "w-full max-w-[350px] sm:max-w-[380px] max-h-[430px] sm:max-h-[460px]"
       )}>
         {!capturedSelfie ? (
-          <>
-            <Webcam
-              key={selectedDeviceId || facingMode}
-              audio={false}
-              ref={webcamRef as any}
-              screenshotFormat="image/jpeg"
-              mirrored={facingMode === "user"}
-              videoConstraints={
-                selectedDeviceId
-                  ? { deviceId: { exact: selectedDeviceId }, width: { ideal: 640 }, height: { ideal: 480 } }
-                  : { facingMode: facingMode, width: { ideal: 640 }, height: { ideal: 480 } }
-              }
-              className="w-full h-full object-cover grayscale-[0.2]"
-            />
+          isLockedOut ? (
+            <KYCLockoutCard timerText={timerText} />
+          ) : (
+            <>
+              <Webcam
+                key={selectedDeviceId || facingMode}
+                audio={false}
+                ref={webcamRef as any}
+                screenshotFormat="image/jpeg"
+                mirrored={facingMode === "user"}
+                videoConstraints={
+                  selectedDeviceId
+                    ? { deviceId: { exact: selectedDeviceId }, width: { ideal: 640 }, height: { ideal: 480 } }
+                    : { facingMode: facingMode, width: { ideal: 640 }, height: { ideal: 480 } }
+                }
+                className="w-full h-full object-cover grayscale-[0.2]"
+              />
 
-            {/* Professional Biometric Mask */}
-            <div className="absolute inset-0 pointer-events-none">
-              <svg viewBox="0 0 100 133" className={`w-full h-full transition-colors duration-500 ${isFaceAligned ? 'text-primary/10' : 'text-black/60'} fill-current`}>
-                <defs>
-                  <mask id="faceMask">
-                    <rect width="100" height="133" fill="white" />
-                    <ellipse cx="50" cy="55" rx="30" ry="42" fill="black" />
-                  </mask>
-                </defs>
-                <rect width="100" height="133" mask="url(#faceMask)" />
+              {/* Professional Biometric Mask */}
+              <div className="absolute inset-0 pointer-events-none">
+                <svg viewBox="0 0 100 133" className={`w-full h-full transition-colors duration-500 ${isFaceAligned ? 'text-primary/10' : 'text-black/60'} fill-current`}>
+                  <defs>
+                    <mask id="faceMask">
+                      <rect width="100" height="133" fill="white" />
+                      <ellipse cx="50" cy="55" rx="30" ry="42" fill="black" />
+                    </mask>
+                  </defs>
+                  <rect width="100" height="133" mask="url(#faceMask)" />
 
-                <motion.ellipse
-                  cx="50" cy="55" rx="30" ry="42"
-                  fill="none"
-                  stroke={isFaceAligned ? "#2f7d6d" : "rgba(255,255,255,0.3)"}
-                  strokeWidth="1"
-                  strokeDasharray="4 2"
-                  animate={{ strokeDashoffset: [0, 10] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                />
-
-                {!isProcessing && (
-                  <motion.line
-                    x1="20" y1="20" x2="80" y2="20"
-                    stroke="#2f7d6d"
-                    strokeWidth="0.5"
-                    initial={{ y: 0, opacity: 0 }}
-                    animate={{
-                      y: [30, 90, 30],
-                      opacity: [0, 0.6, 0]
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
+                  <motion.ellipse
+                    cx="50" cy="55" rx="30" ry="42"
+                    fill="none"
+                    stroke={isFaceAligned ? "#2f7d6d" : "rgba(255,255,255,0.3)"}
+                    strokeWidth="1"
+                    strokeDasharray="4 2"
+                    animate={{ strokeDashoffset: [0, 10] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                   />
-                )}
-              </svg>
-            </div>
 
-            {/* Top-Middle Notification System */}
-            <div className="absolute top-0 left-0 right-0 z-50 pointer-events-none flex justify-center">
-              <AnimatePresence mode="wait">
-                {isFaceAligned && livenessStatus === 'passed' && !isProcessing ? (
-                  <motion.div
-                    key="face-centered"
-                    initial={{ y: -60, opacity: 0 }}
-                    animate={{ y: 12, opacity: 1 }}
-                    exit={{ y: -60, opacity: 0 }}
-                    className="bg-primary/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-primary/30 flex items-center justify-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-w-[200px]"
-                  >
-                    <div className="w-2 h-2 bg-white rounded-full animate-ping" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Liveness Confirmed ✓</span>
-                  </motion.div>
-                ) : isFaceAligned && livenessStatus === 'idle' && !isProcessing ? (
-                  <motion.div
-                    key="blink-prompt"
-                    initial={{ y: -60, opacity: 0 }}
-                    animate={{ y: 12, opacity: 1 }}
-                    exit={{ y: -60, opacity: 0 }}
-                    className="bg-amber-500/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-amber-400/30 flex items-center justify-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-w-[200px]"
-                  >
-                    <motion.span
-                      animate={{ opacity: [1, 0.3, 1] }}
-                      transition={{ duration: 1.2, repeat: Infinity }}
-                      className="flex items-center justify-center"
+                  {!isProcessing && (
+                    <motion.line
+                      x1="20" y1="20" x2="80" y2="20"
+                      stroke="#2f7d6d"
+                      strokeWidth="0.5"
+                      initial={{ y: 0, opacity: 0 }}
+                      animate={{
+                        y: [30, 90, 30],
+                        opacity: [0, 0.6, 0]
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    />
+                  )}
+                </svg>
+              </div>
+
+              {/* Top-Middle Notification System */}
+              <div className="absolute top-0 left-0 right-0 z-50 pointer-events-none flex justify-center">
+                <AnimatePresence mode="wait">
+                  {isFaceAligned && livenessStatus === 'passed' && !isProcessing ? (
+                    <motion.div
+                      key="face-centered"
+                      initial={{ y: -60, opacity: 0 }}
+                      animate={{ y: 12, opacity: 1 }}
+                      exit={{ y: -60, opacity: 0 }}
+                      className="bg-primary/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-primary/30 flex items-center justify-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-w-[200px]"
                     >
-                      <Eye size={20} className="text-white" />
-                    </motion.span>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">
-                      {activeChallenge === 'blink' && 'Please Blink to Continue'}
-                      {activeChallenge === 'smile' && 'Please Smile to Continue'}
-                      {activeChallenge === 'turnLeft' && 'Turn Head Left to Continue'}
-                      {activeChallenge === 'turnRight' && 'Turn Head Right to Continue'}
-                      {activeChallenge === 'openMouth' && 'Open Mouth Slightly to Continue'}
-                      {activeChallenge === 'raiseEyebrows' && 'Raise Eyebrows to Continue'}
-                    </span>
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
-            </div>
-
-            {/* Switch Camera Button */}
-            <button
-              type="button"
-              onClick={handleToggleCamera}
-              className="absolute top-6 left-6 bg-white/10 backdrop-blur-xl text-white p-3 rounded-full hover:bg-white/20 transition-all border border-white/20 z-40 cursor-pointer"
-              title="Switch Camera"
-            >
-              <RefreshCcw size={18} className={facingMode === 'environment' || Boolean(selectedDeviceId) ? 'rotate-180 transition-transform' : ''} />
-            </button>
-
-            {/* Flash Overlay */}
-            <AnimatePresence>
-              {isFlashActive && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute inset-0 bg-white z-50"
-                />
-              )}
-            </AnimatePresence>
-
-            {/* Engine Initializing Overlay */}
-            {!isEngineReady && !isProcessing && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center z-[60] bg-black/70 backdrop-blur-md gap-3">
-                <div className="relative">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                    className="w-14 h-14 rounded-full border-4 border-white/10 border-t-primary"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                  </div>
-                </div>
-                <span className="text-white text-[10px] font-black uppercase tracking-widest animate-pulse">Initializing AI...</span>
-                <span className="text-white/50 text-[9px] tracking-wide">Preparing biometric scanner</span>
+                      <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Liveness Confirmed ✓</span>
+                    </motion.div>
+                  ) : isFaceAligned && livenessStatus === 'idle' && !isProcessing ? (
+                    <motion.div
+                      key="blink-prompt"
+                      initial={{ y: -60, opacity: 0 }}
+                      animate={{ y: 12, opacity: 1 }}
+                      exit={{ y: -60, opacity: 0 }}
+                      className="bg-amber-500/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-amber-400/30 flex items-center justify-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-w-[200px]"
+                    >
+                      <motion.span
+                        animate={{ opacity: [1, 0.3, 1] }}
+                        transition={{ duration: 1.2, repeat: Infinity }}
+                        className="flex items-center justify-center"
+                      >
+                        <Eye size={20} className="text-white" />
+                      </motion.span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+                        {activeChallenge === 'blink' && 'Please Blink to Continue'}
+                        {activeChallenge === 'smile' && 'Please Smile to Continue'}
+                        {activeChallenge === 'turnLeft' && 'Turn Head Left to Continue'}
+                        {activeChallenge === 'turnRight' && 'Turn Head Right to Continue'}
+                        {activeChallenge === 'openMouth' && 'Open Mouth Slightly to Continue'}
+                        {activeChallenge === 'raiseEyebrows' && 'Raise Eyebrows to Continue'}
+                      </span>
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
               </div>
-            )}
 
-            {/* Processing Spinner */}
-            {isProcessing && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center z-[60] bg-black/60 backdrop-blur-md gap-4">
-                <div className="relative">
-                  <motion.div
-                    animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute inset-0 bg-primary/30 rounded-full"
-                  />
-                  <div className="bg-primary p-4 rounded-full shadow-2xl relative z-10">
-                    <Loader2 className="w-8 h-8 text-white animate-spin" />
-                  </div>
-                </div>
-                <span className="text-white text-[10px] font-black uppercase tracking-widest animate-pulse">Verifying...</span>
-              </div>
-            )}
-
-            {/* Camera Overlay Shutter Capture Button (Matches InquiryModal SelfieStep) */}
-            <div className="absolute bottom-6 left-0 right-0 flex justify-center transition-all duration-300 z-40">
+              {/* Switch Camera Button */}
               <button
                 type="button"
-                onClick={handleCaptureSelfie}
-                disabled={isProcessing || !isEngineReady || !isFaceAligned || livenessStatus !== 'passed'}
-                className={cn(
-                  "px-6 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl flex items-center gap-2 transition-all transform active:scale-95 border-2 border-white/20 select-none cursor-pointer",
-                  isProcessing ? "opacity-0 scale-50" :
-                  (isFaceAligned && livenessStatus === 'passed')
-                    ? "bg-primary text-white hover:bg-primary-hover hover:scale-105 shadow-primary/30"
-                    : "bg-black/50 backdrop-blur-md text-white/50 cursor-not-allowed scale-95 border-white/10"
-                )}
+                onClick={handleToggleCamera}
+                className="absolute top-6 left-6 bg-white/10 backdrop-blur-xl text-white p-3 rounded-full hover:bg-white/20 transition-all border border-white/20 z-40 cursor-pointer"
+                title="Switch Camera"
               >
-                <FaCamera size={13} />
-                <span>
-                  {isFaceAligned && livenessStatus === 'passed' 
-                    ? 'Capture Selfie Now' 
-                    : isFaceAligned && livenessStatus === 'idle'
-                    ? 'Follow Prompt'
-                    : 'Follow Prompt to Capture'}
-                </span>
+                <RefreshCcw size={18} className={facingMode === 'environment' || Boolean(selectedDeviceId) ? 'rotate-180 transition-transform' : ''} />
               </button>
-            </div>
-          </>
+
+              {/* Ring Light Studio Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setIsRingLightActive(!isRingLightActive)}
+                className={cn(
+                  "absolute top-6 right-6 backdrop-blur-xl p-3 rounded-full transition-all border z-40 cursor-pointer shadow-lg flex items-center gap-1.5 text-xs font-bold",
+                  isRingLightActive 
+                    ? "bg-amber-300 text-slate-950 border-amber-200 shadow-amber-300/60 scale-105" 
+                    : "bg-black/60 text-white border-white/20 hover:bg-black/80"
+                )}
+                title="Toggle Studio Ring Light for dark rooms"
+              >
+                <SunMedium size={18} className={isRingLightActive ? "animate-spin text-amber-950" : ""} />
+              </button>
+
+              {/* Flash Overlay */}
+              <AnimatePresence>
+                {isFlashActive && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-white z-50"
+                  />
+                )}
+              </AnimatePresence>
+
+              {/* Engine Initializing Overlay */}
+              {!isEngineReady && !isProcessing && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-[60] bg-black/70 backdrop-blur-md gap-3">
+                  <div className="relative">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                      className="w-14 h-14 rounded-full border-4 border-white/10 border-t-primary"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                    </div>
+                  </div>
+                  <span className="text-white text-[10px] font-black uppercase tracking-widest animate-pulse">Initializing AI...</span>
+                  <span className="text-white/50 text-[9px] tracking-wide">Preparing biometric scanner</span>
+                </div>
+              )}
+
+              {/* Processing Spinner */}
+              {isProcessing && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-[60] bg-black/60 backdrop-blur-md gap-4">
+                  <div className="relative">
+                    <motion.div
+                      animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="absolute inset-0 bg-primary/30 rounded-full"
+                    />
+                    <div className="bg-primary p-4 rounded-full shadow-2xl relative z-10">
+                      <Loader2 className="w-8 h-8 text-white animate-spin" />
+                    </div>
+                  </div>
+                  <span className="text-white text-[10px] font-black uppercase tracking-widest animate-pulse">Verifying...</span>
+                </div>
+              )}
+
+              {/* Camera Overlay Shutter Capture Button (Matches InquiryModal SelfieStep) */}
+              <div className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center transition-all duration-300 z-40">
+                <button
+                  type="button"
+                  onClick={handleCaptureSelfie}
+                  disabled={isLockedOut || isProcessing || !isEngineReady || !isFaceAligned || livenessStatus !== 'passed'}
+                  className={cn(
+                    "px-6 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl flex items-center gap-2 transition-all transform active:scale-95 border-2 border-white/20 select-none cursor-pointer",
+                    isLockedOut
+                      ? "bg-amber-500/80 text-white cursor-not-allowed scale-95 border-amber-400/30 opacity-90"
+                      : isProcessing ? "opacity-0 scale-50" :
+                    (isFaceAligned && livenessStatus === 'passed')
+                      ? "bg-primary text-white hover:bg-primary-hover hover:scale-105 shadow-primary/30"
+                      : "bg-black/50 backdrop-blur-md text-white/50 cursor-not-allowed scale-95 border-white/10"
+                  )}
+                >
+                  <FaCamera size={13} />
+                  <span>
+                    {isLockedOut
+                      ? `Locked (${timerText})`
+                      : isFaceAligned && livenessStatus === 'passed' 
+                      ? 'Capture Selfie Now' 
+                      : isFaceAligned && livenessStatus === 'idle'
+                      ? 'Follow Prompt'
+                      : 'Follow Prompt to Capture'}
+                  </span>
+                </button>
+              </div>
+            </>
+          )
         ) : (
           <div className="relative w-full h-full">
             <SafeImage 
