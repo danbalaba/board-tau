@@ -1,4 +1,4 @@
-import { FilesetResolver, ObjectDetector, FaceLandmarker } from "@mediapipe/tasks-vision";
+import { FilesetResolver, FaceLandmarker } from "@mediapipe/tasks-vision";
 
 /**
  * Global Manager for MediaPipe Vision Tasks
@@ -8,7 +8,6 @@ class VisionManager {
   private static instance: VisionManager;
   private wasmResolver: any = null;
   private faceLandmarkerInstance: FaceLandmarker | null = null;
-  private objectDetectorInstance: ObjectDetector | null = null;
 
   private constructor() {}
 
@@ -56,39 +55,10 @@ class VisionManager {
     }
     return this.faceLandmarkerInstance;
   }
-
-  public async createObjectDetector(): Promise<ObjectDetector> {
-    if (!this.objectDetectorInstance) {
-      const resolver = await this.getResolver();
-      try {
-        this.objectDetectorInstance = await ObjectDetector.createFromOptions(resolver, {
-          baseOptions: {
-            modelAssetPath: `/models/id_detector.tflite`,
-            delegate: "GPU",
-          },
-          scoreThreshold: 0.5,
-          runningMode: "IMAGE",
-        });
-      } catch (gpuErr) {
-        console.warn("[VisionManager] GPU delegate failed for ObjectDetector, falling back to CPU:", gpuErr);
-        this.objectDetectorInstance = await ObjectDetector.createFromOptions(resolver, {
-          baseOptions: {
-            modelAssetPath: `/models/id_detector.tflite`,
-            delegate: "CPU",
-          },
-          scoreThreshold: 0.5,
-          runningMode: "IMAGE",
-        });
-      }
-    }
-    return this.objectDetectorInstance;
-  }
   
   public disposeAll() {
     this.faceLandmarkerInstance?.close();
-    this.objectDetectorInstance?.close();
     this.faceLandmarkerInstance = null;
-    this.objectDetectorInstance = null;
   }
 }
 
