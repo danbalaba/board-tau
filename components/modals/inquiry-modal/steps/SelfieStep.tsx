@@ -1,10 +1,11 @@
 import React from "react";
 import Webcam from "react-webcam";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, RefreshCcw, Loader2, Eye, CheckCircle } from "lucide-react";
+import { User, RefreshCcw, Loader2, Eye, CheckCircle, SunMedium } from "lucide-react";
 import { FaCamera, FaTimes } from "react-icons/fa";
 import { sanitizeImgUrl } from "@/lib/security/sanitize";
 import SafeImage from "@/components/common/SafeImage";
+import KYCLockoutBadge, { KYCLockoutCard, useKYCLockout } from "@/components/common/KYCLockoutBadge";
 import { cn } from "@/utils/helper";
 interface SelfieStepProps {
   capturedSelfie: string | null;
@@ -34,6 +35,26 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
   const selfieImgRef = React.useRef<HTMLImageElement>(null);
   const [videoDevices, setVideoDevices] = React.useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = React.useState<string | null>(null);
+  const [isRingLightActive, setIsRingLightActive] = React.useState<boolean>(false);
+  const { isLockedOut, timerText } = useKYCLockout();
+
+  // Screen WakeLock to prevent dimming during live selfie scan
+  React.useEffect(() => {
+    let wakeLock: any = null;
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator && isRingLightActive) {
+          wakeLock = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch (e) {
+        console.warn('[WakeLock Warning]:', e);
+      }
+    };
+    requestWakeLock();
+    return () => {
+      if (wakeLock) wakeLock.release().catch(() => {});
+    };
+  }, [isRingLightActive]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -94,8 +115,18 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
           </span>
        </div>
 
-       <div className="relative aspect-[3/4] max-w-[320px] mx-auto rounded-[2.5rem] overflow-hidden shadow-2xl bg-black group transition-all duration-300 ring-4 ring-gray-200 dark:ring-gray-800">
+       <KYCLockoutBadge />
+
+       <div className={cn(
+         "relative aspect-[3/4] max-w-[320px] mx-auto rounded-[2.5rem] overflow-hidden shadow-2xl transition-all duration-500 z-10",
+         isRingLightActive 
+           ? "ring-[14px] ring-amber-100 dark:ring-amber-200 shadow-[0_0_120px_40px_rgba(255,255,255,0.95)] bg-white" 
+           : "ring-4 ring-gray-200 dark:ring-gray-800 bg-black"
+       )}>
           {!capturedSelfie ? (
+            isLockedOut ? (
+              <KYCLockoutCard timerText={timerText} />
+            ) : (
             <>
               <Webcam
                 key={selectedDeviceId || facingMode}
@@ -204,6 +235,21 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                 <RefreshCcw size={16} className={facingMode === 'environment' || Boolean(selectedDeviceId) ? 'rotate-180 transition-transform' : ''} />
               </button>
 
+              {/* Ring Light Studio Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setIsRingLightActive(!isRingLightActive)}
+                className={cn(
+                  "absolute top-4 right-4 backdrop-blur-xl p-2.5 rounded-full transition-all border z-40 cursor-pointer shadow-lg flex items-center gap-1.5 text-xs font-bold",
+                  isRingLightActive 
+                    ? "bg-amber-300 text-slate-950 border-amber-200 shadow-amber-300/60 scale-105" 
+                    : "bg-black/60 text-white border-white/20 hover:bg-black/80"
+                )}
+                title="Toggle Studio Ring Light for dark rooms"
+              >
+                <SunMedium size={16} className={isRingLightActive ? "animate-spin text-amber-950" : ""} />
+              </button>
+
               <AnimatePresence>
                 {isFlashActive && (
                   <motion.div
@@ -249,14 +295,16 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                 </div>
               )}
 
-              <div className="absolute bottom-6 left-0 right-0 flex justify-center transition-all duration-300 z-40">
+              <div className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center transition-all duration-300 z-40">
                  <button
                   type="button"
                   onClick={handleCaptureSelfie}
-                  disabled={isProcessing || !isEngineReady || !isFaceAligned || livenessStatus !== 'passed'}
+                  disabled={isLockedOut || isProcessing || !isEngineReady || !isFaceAligned || livenessStatus !== 'passed'}
                   className={cn(
                     "px-5 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl flex items-center gap-2 transition-all transform active:scale-95 border border-white/20 select-none cursor-pointer",
-                    isProcessing ? "opacity-0 scale-50" :
+                    isLockedOut
+                      ? "bg-amber-500/80 text-white cursor-not-allowed scale-95 border-amber-400/30 opacity-90"
+                      : isProcessing ? "opacity-0 scale-50" :
                     (isFaceAligned && livenessStatus === 'passed')
                       ? "bg-primary text-white hover:bg-primary-hover hover:scale-105 shadow-primary/30"
                       : "bg-black/60 backdrop-blur-md text-white/50 cursor-not-allowed scale-95 border-white/10"
@@ -264,7 +312,9 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                  >
                    <FaCamera size={13} />
                    <span>
-                     {isFaceAligned && livenessStatus === 'passed' 
+                     {isLockedOut 
+                       ? `Locked (${timerText})` 
+                       : isFaceAligned && livenessStatus === 'passed' 
                        ? 'Capture Selfie Now' 
                        : isFaceAligned && livenessStatus === 'idle'
                        ? 'Follow Prompt'
@@ -273,6 +323,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                  </button>
               </div>
             </>
+            )
           ) : (
             <div className="relative w-full h-full">
             <SafeImage 

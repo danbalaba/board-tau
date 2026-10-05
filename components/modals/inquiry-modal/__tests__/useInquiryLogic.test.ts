@@ -59,16 +59,6 @@ jest.mock("@/hooks/useKYC", () => ({
   }),
 }));
 
-const mockGetFaceDescriptor = jest.fn().mockResolvedValue(new Float32Array(128));
-const mockGetFaceDistance = jest.fn().mockReturnValue(0.3);
-
-jest.mock("@/lib/mediapipe/face-matcher", () => ({
-  faceMatcher: {
-    getFaceDescriptor: (...args: any[]) => mockGetFaceDescriptor(...args),
-    getFaceDescriptorCached: (...args: any[]) => mockGetFaceDescriptor(...args),
-    getFaceDistance: (...args: any[]) => mockGetFaceDistance(...args),
-  },
-}));
 
 // Mock react-hook-form
 let mockValues: any = {};
@@ -113,8 +103,15 @@ describe("useInquiryLogic hook", () => {
       }
     } as any;
 
-    global.fetch = jest.fn().mockResolvedValue({
-      json: jest.fn().mockResolvedValue({ user: { email: "test@example.com" } })
+    global.fetch = jest.fn().mockImplementation((url: string) => {
+      if (typeof url === 'string' && url.includes('/api/kyc/verify')) {
+        return Promise.resolve({
+          json: () => Promise.resolve({ success: true, status: 'VERIFIED', similarity: 96 }),
+        });
+      }
+      return Promise.resolve({
+        json: () => Promise.resolve({ user: { email: "test@example.com" } }),
+      });
     }) as any;
     mockValues = {
       paymentMethod: "",
@@ -380,6 +377,10 @@ describe("useInquiryLogic hook", () => {
         result = longID;
       } as any;
 
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        json: jest.fn().mockResolvedValue({ success: true, status: 'VERIFIED', similarity: 96 }),
+      });
+
       const { result } = setup();
       const fakeFile = new File(["dummy"], "id.png", { type: "image/png" });
 
@@ -389,7 +390,7 @@ describe("useInquiryLogic hook", () => {
         await result.current.handleCaptureID(fakeFile);
       });
 
-      expect(mockToastSuccess).toHaveBeenCalledWith("ID card matched successfully!");
+      expect(mockToastSuccess).toHaveBeenCalledWith(expect.stringContaining("Identity Verified Successfully!"));
       
       global.FileReader = originalFileReader;
     });
@@ -448,7 +449,7 @@ describe("useInquiryLogic hook", () => {
       expect(result.current.capturedID).toBeNull();
     });
 
-    it("resets captured selfie and flags selfieRetakeNeeded when live selfie descriptor is missing (blurry selfie)", async () => {
+    it("resets capturedID and flags toast error when AWS Rekognition verification fails", async () => {
       const longSelfie = "data:image/png;base64," + "A".repeat(500);
       const longID = "data:image/png;base64," + "B".repeat(500);
 
@@ -461,7 +462,20 @@ describe("useInquiryLogic hook", () => {
         result = longID;
       } as any;
 
-      mockGetFaceDescriptor.mockResolvedValueOnce(null); // Selfie descriptor fails due to blur
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (typeof url === 'string' && url.includes('/api/kyc/verify')) {
+          return Promise.resolve({
+            json: () => Promise.resolve({
+              success: false,
+              status: 'NEEDS_MANUAL_REVIEW',
+              reason: 'Face on ID card does not match live selfie.',
+            }),
+          });
+        }
+        return Promise.resolve({
+          json: () => Promise.resolve({ user: { email: "test@example.com" } }),
+        });
+      });
 
       const { result } = setup();
       const fakeFile = new File(["dummy"], "id.png", { type: "image/png" });
@@ -475,10 +489,8 @@ describe("useInquiryLogic hook", () => {
         await result.current.handleCaptureID(fakeFile);
       });
 
-      expect(result.current.selfieRetakeNeeded).toBe(true);
-      expect(result.current.capturedSelfie).toBeNull();
       expect(result.current.capturedID).toBeNull();
-      expect(mockToastError).toHaveBeenCalledWith("Could not verify your live selfie. Please retake it.");
+      expect(mockToastError).toHaveBeenCalledWith("Face on ID card does not match live selfie.");
 
       global.FileReader = originalFileReader;
     });

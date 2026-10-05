@@ -1,10 +1,11 @@
 import React from "react";
 import Modal from "./Modal";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaChevronLeft, FaChevronRight, FaCheck, FaTimes } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaCheck, FaTimes, FaCamera } from "react-icons/fa";
 import { Loader2, ShieldCheck, Lock, CheckCircle2 } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
 import { format } from "date-fns";
+import { useKYCLockout } from "@/components/common/KYCLockoutBadge";
 
 // Dedicated Mascot Component
 import InquiryKerbyMascot from "./inquiry-modal/InquiryKerbyMascot";
@@ -79,6 +80,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
   const logic = useInquiryLogic(listingId, landlordId, room, onSubmit, activeStay);
   const [isDetailsExpanded, setIsDetailsExpanded] = React.useState(false);
   const [showMobileKerbyModal, setShowMobileKerbyModal] = React.useState(false);
+  const { isLockedOut, timerText } = useKYCLockout();
 
   const renderStepContent = () => {
     switch (logic.currentStep) {
@@ -224,12 +226,109 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                             </div>
                           </div>
 
+                          {/* Application Live Details for Mobile */}
+                          <div className="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700 space-y-2.5">
+                            <h5 className="text-[10px] font-black uppercase tracking-wider text-gray-800 dark:text-gray-200 pb-1.5 border-b border-gray-100 dark:border-gray-700">
+                              Application Live Details
+                            </h5>
+
+                            {/* Payment Method */}
+                            <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-700/30 p-2 rounded-lg border border-gray-100 dark:border-gray-700 text-xs">
+                              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Payment Method</span>
+                              <span className="font-bold text-gray-800 dark:text-gray-200 text-xs">
+                                {logic.watch('paymentMethod') ? (
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-black">
+                                    {logic.watch('paymentMethod') === 'gcash' ? 'GCash' : logic.watch('paymentMethod') === 'maya' ? 'Maya' : logic.watch('paymentMethod') === 'stripe' ? 'Credit/Debit Card (Stripe)' : logic.watch('paymentMethod')}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 italic text-[10px]">Step 1 Pending</span>
+                                )}
+                              </span>
+                            </div>
+
+                            {/* Stay Dates */}
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="bg-gray-50 dark:bg-gray-700/30 p-2 rounded-lg border border-gray-100 dark:border-gray-700">
+                                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Check-In Date</span>
+                                <span className="font-black text-gray-900 dark:text-white text-[10px]">
+                                  {logic.watch('moveInDate') ? (
+                                    (() => {
+                                      const val = logic.watch('moveInDate');
+                                      try {
+                                        const parts = val.split('-');
+                                        if (parts.length === 3) {
+                                          const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                                          return !isNaN(d.getTime()) ? format(d, 'MMM dd, yyyy') : val;
+                                        }
+                                        const d = new Date(val);
+                                        return !isNaN(d.getTime()) ? format(d, 'MMM dd, yyyy') : val;
+                                      } catch {
+                                        return val;
+                                      }
+                                    })()
+                                  ) : (
+                                    <span className="text-gray-400 italic font-normal text-[10px]">Step 2 Pending</span>
+                                  )}
+                                </span>
+                              </div>
+
+                              <div className="bg-gray-50 dark:bg-gray-700/30 p-2 rounded-lg border border-gray-100 dark:border-gray-700">
+                                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Check-Out Date</span>
+                                <span className="font-black text-gray-900 dark:text-white text-[10px]">
+                                  {logic.watch('checkOutDate') ? (
+                                    (() => {
+                                      const val = logic.watch('checkOutDate');
+                                      try {
+                                        const parts = val.split('-');
+                                        if (parts.length === 3) {
+                                          const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                                          return !isNaN(d.getTime()) ? format(d, 'MMM dd, yyyy') : val;
+                                        }
+                                        const d = new Date(val);
+                                        return !isNaN(d.getTime()) ? format(d, 'MMM dd, yyyy') : val;
+                                      } catch {
+                                        return val;
+                                      }
+                                    })()
+                                  ) : (
+                                    <span className="text-gray-400 italic font-normal text-[10px]">Step 2 Pending</span>
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Verification Badges */}
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/30 p-1.5 rounded-lg border border-gray-100 dark:border-gray-700">
+                                <span className="text-[8px] font-bold text-gray-400 uppercase">Selfie</span>
+                                {logic.capturedSelfie ? (
+                                  <span className="text-[8px] font-black uppercase text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded flex items-center gap-0.5">
+                                    Verified <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" />
+                                  </span>
+                                ) : (
+                                  <span className="text-[8px] font-bold text-gray-400">Step 5</span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/30 p-1.5 rounded-lg border border-gray-100 dark:border-gray-700">
+                                <span className="text-[8px] font-bold text-gray-400 uppercase">ID Card</span>
+                                {logic.capturedID ? (
+                                  <span className="text-[8px] font-black uppercase text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded flex items-center gap-0.5">
+                                    Matched <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" />
+                                  </span>
+                                ) : (
+                                  <span className="text-[8px] font-bold text-gray-400">Step 6</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
                           <div className="bg-primary/5 dark:bg-primary/10 p-3 rounded-xl border border-primary/10">
                             <div className="flex justify-between items-center mb-1">
                               <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Total Reservation Fee</span>
-                              <span className="text-sm font-black text-primary">₱ {(room.reservationFee * (logic.watchedValues?.[8] ? room.capacity : (Number(logic.watchedValues?.[7]) || 1))).toLocaleString()}</span>
+                              <span className="text-sm font-black text-primary">₱ {(room.reservationFee * (logic.watch('isSoloBuyout') ? room.capacity : (Number(logic.watch('occupantsCount')) || 1))).toLocaleString()}</span>
                             </div>
-                            <p className="text-[9px] text-gray-400 font-medium italic">Calculated as ₱ {room.reservationFee.toLocaleString()} x {logic.watchedValues?.[8] ? `${room.capacity} (Full Room Buyout)` : `${logic.watchedValues?.[7] || 1} occupants`}</p>
+                            <p className="text-[9px] text-gray-400 font-medium italic">Calculated as ₱ {room.reservationFee.toLocaleString()} x {logic.watch('isSoloBuyout') ? `${room.capacity} (Full Room Buyout)` : `${logic.watch('occupantsCount') || 1} occupant(s)`}</p>
                           </div>
                         </div>
                       </motion.div>
@@ -273,12 +372,39 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                   <FaChevronLeft size={12} /> BACK
                 </button>
 
+                {/* On Mobile: Step 5 Selfie Capture Button in Footer */}
+                {logic.currentStep === 5 && !logic.capturedSelfie && (
+                  <button
+                    type="button"
+                    onClick={logic.handleCaptureSelfie}
+                    disabled={isLockedOut || logic.isProcessing || logic.isSelfieProcessing || !logic.isEngineReady || !logic.isFaceAligned || logic.livenessStatus !== 'passed'}
+                    className={`md:hidden flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black text-sm transition-all flex-1 ${
+                      isLockedOut
+                        ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 cursor-not-allowed opacity-90'
+                        : logic.isFaceAligned && logic.livenessStatus === 'passed' && !logic.isSelfieProcessing
+                        ? 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/25 active:scale-95 cursor-pointer'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    <FaCamera size={14} />
+                    <span>
+                      {isLockedOut
+                        ? `LOCKED (${timerText})`
+                        : logic.isSelfieProcessing
+                        ? 'VERIFYING SELFIE...'
+                        : logic.isFaceAligned && logic.livenessStatus === 'passed'
+                        ? 'CAPTURE SELFIE NOW'
+                        : 'FOLLOW PROMPT TO CAPTURE'}
+                    </span>
+                  </button>
+                )}
+
                 {logic.currentStep < logic.totalSteps ? (
                   <button
                     type="button"
                     onClick={logic.handleNextStep}
                     disabled={!logic.isStepCompleted(logic.currentStep) || logic.isProcessing || logic.isIDProcessing || logic.isSelfieProcessing || (logic.currentStep === 7 && logic.otpAttemptLimitReached)}
-                    className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black text-sm transition-all active:scale-95 flex-1 ${
+                    className={`${logic.currentStep === 5 && !logic.capturedSelfie ? 'hidden md:flex' : 'flex'} items-center justify-center gap-2 px-4 py-3 rounded-xl font-black text-sm transition-all active:scale-95 flex-1 ${
                       logic.isStepCompleted(logic.currentStep) && !logic.isProcessing && !logic.isIDProcessing && !logic.isSelfieProcessing && !(logic.currentStep === 7 && logic.otpAttemptLimitReached)
                         ? 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/25'
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
