@@ -114,6 +114,16 @@ const KERBY_MASCOT_ASSETS = [
   '/assets/mascot/kerby-facade-fullbody.png',
   '/assets/mascot/kerby-permit-fullbody.png',
   '/assets/mascot/kerby-utility-bill-fullbody.png',
+
+  // Inquiry Modal Dedicated Step Poses
+  '/assets/mascot/kerby-inquiry-payment.png',
+  '/assets/mascot/kerby-inquiry-stay.png',
+  '/assets/mascot/kerby-inquiry-note.png',
+  '/assets/mascot/kerby-inquiry-prepare.png',
+  '/assets/mascot/kerby-inquiry-selfie.png',
+  '/assets/mascot/kerby-inquiry-idscan.png',
+  '/assets/mascot/kerby-inquiry-otp.png',
+  '/assets/mascot/kerby-inquiry-review.png',
 ];
 
 let isPreloaded = false;

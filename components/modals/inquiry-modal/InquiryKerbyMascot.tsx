@@ -18,6 +18,7 @@ export interface InquiryKerbyState {
   pose: KerbyPose;
   speech: string;
   badge: string;
+  customAssetSrc?: string;
 }
 
 export const getInquiryKerbyState = (step: number): InquiryKerbyState => {
@@ -27,48 +28,56 @@ export const getInquiryKerbyState = (step: number): InquiryKerbyState => {
         pose: "pointing",
         speech: "Choose your preferred payment method! Payment is only charged after your inquiry is approved by the host.",
         badge: "STEP 1 • PAYMENT METHOD",
+        customAssetSrc: "/assets/mascot/kerby-inquiry-payment.png",
       };
     case 2:
       return {
         pose: "thinking",
         speech: "Specify your target check-in date and stay duration so the landlord can prepare your room.",
         badge: "STEP 2 • STAY DETAILS",
+        customAssetSrc: "/assets/mascot/kerby-inquiry-stay.png",
       };
     case 3:
       return {
         pose: "waving",
         speech: "Add a polite personal note to the landlord! Hosts prioritize respectful and clear messages.",
         badge: "STEP 3 • NOTE TO HOST",
+        customAssetSrc: "/assets/mascot/kerby-inquiry-note.png",
       };
     case 4:
       return {
         pose: "studying",
         speech: "Prepare your valid government or student ID before we proceed to biometric verification.",
         badge: "STEP 4 • PREPARE ID",
+        customAssetSrc: "/assets/mascot/kerby-inquiry-prepare.png",
       };
     case 5:
       return {
         pose: "excited",
         speech: "Time for a quick selfie! Ensure your face is clearly lit and centered inside the camera frame.",
         badge: "STEP 5 • BIOMETRIC SELFIE",
+        customAssetSrc: "/assets/mascot/kerby-inquiry-selfie.png",
       };
     case 6:
       return {
         pose: "pointing",
         speech: "Snap a clear, un-blurred photo of your ID. Your identity details are encrypted and securely protected.",
         badge: "STEP 6 • ID VERIFICATION",
+        customAssetSrc: "/assets/mascot/kerby-inquiry-idscan.png",
       };
     case 7:
       return {
         pose: "studying",
         speech: "Check your email inbox for a 6-digit verification code to confirm your identity and prevent spam.",
         badge: "STEP 7 • EMAIL VERIFICATION",
+        customAssetSrc: "/assets/mascot/kerby-inquiry-otp.png",
       };
     case 8:
       return {
         pose: "loving",
         speech: "Almost done! Review your inquiry details and sign below to officially send your reservation request.",
         badge: "STEP 8 • FINAL REVIEW",
+        customAssetSrc: "/assets/mascot/kerby-inquiry-review.png",
       };
     default:
       return {
@@ -97,7 +106,7 @@ export const InquiryKerbyMascot: React.FC<InquiryKerbyMascotProps> = ({
       >
         <div className="relative shrink-0 w-10 h-10 rounded-full bg-primary/15 p-1 flex items-center justify-center overflow-hidden border border-primary/30 group-hover:scale-105 transition-transform">
           <img
-            src={`/assets/mascot/kerby-casual-${kerbyState.pose}.png`}
+            src={kerbyState.customAssetSrc || `/assets/mascot/kerby-casual-${kerbyState.pose}.png`}
             alt="Kerby mascot mobile avatar"
             className="w-full h-full object-contain"
           />
@@ -163,6 +172,7 @@ export const InquiryKerbyMascot: React.FC<InquiryKerbyMascotProps> = ({
                 speechText={kerbyState.speech}
                 badgeLabel={kerbyState.badge}
                 guideType="inquiry"
+                customAssetSrc={kerbyState.customAssetSrc}
               />
 
               <button
@@ -188,6 +198,7 @@ export const InquiryKerbyMascot: React.FC<InquiryKerbyMascotProps> = ({
       speechText={kerbyState.speech}
       badgeLabel={kerbyState.badge}
       guideType="inquiry"
+      customAssetSrc={kerbyState.customAssetSrc}
       showCloseButton={false}
     />
   );
