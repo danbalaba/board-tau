@@ -84,34 +84,18 @@ export async function POST(request: Request) {
     let finalIsUniversal = Boolean(isUniversal);
 
     if (!finalIsUniversal && Array.isArray(propertyTypeNames) && propertyTypeNames.length > 0) {
-      const hexObjectIdRegex = /^[0-9a-fA-F]{24}$/;
-      const validIds = propertyTypeNames.filter((item: string) => typeof item === "string" && hexObjectIdRegex.test(item));
-      const nameStrings = propertyTypeNames.filter((item: string) => typeof item === "string" && !hexObjectIdRegex.test(item));
+      const allDbPropTypes = await db.propertyType.findMany({ select: { id: true, name: true } });
+      const normTargets = propertyTypeNames.map((n: string) => String(n).toLowerCase().trim());
 
-      const orConditions: any[] = [];
-      if (nameStrings.length > 0) {
-        orConditions.push({ name: { in: nameStrings } });
-      }
-      if (validIds.length > 0) {
-        orConditions.push({ id: { in: validIds } });
-      }
+      const matched = allDbPropTypes.filter((pt) =>
+        normTargets.some((t: string) => t === pt.id.toLowerCase() || t === pt.name.toLowerCase().trim())
+      );
 
-      if (orConditions.length > 0) {
-        const [matchingPropTypes, totalDbTypesCount] = await Promise.all([
-          db.propertyType.findMany({
-            where: { OR: orConditions },
-            select: { id: true },
-          }),
-          db.propertyType.count(),
-        ]);
+      propertyTypeIds = matched.map((pt) => pt.id);
 
-        propertyTypeIds = matchingPropTypes.map((pt) => pt.id);
-
-        // If targeted selection includes ALL database property types, logically convert to Universal (All)
-        if (totalDbTypesCount > 0 && propertyTypeIds.length >= totalDbTypesCount) {
-          finalIsUniversal = true;
-          propertyTypeIds = [];
-        }
+      if (allDbPropTypes.length > 0 && propertyTypeIds.length >= allDbPropTypes.length) {
+        finalIsUniversal = true;
+        propertyTypeIds = [];
       }
     }
 

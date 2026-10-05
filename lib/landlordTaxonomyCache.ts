@@ -65,6 +65,7 @@ if (typeof window !== 'undefined') {
       taxonomyCache.colleges = safeGetStorage<any[]>(STORAGE_KEYS.COLLEGES);
       taxonomyCache.roomTypesByPropertyTypeId = safeGetStorage<Record<string, any[]>>(STORAGE_KEYS.ROOM_TYPES) || {};
       taxonomyCache.timestamp = safeGetStorage<number>(STORAGE_KEYS.TIMESTAMP) || 0;
+      notifyTaxonomyUpdated({ storageEvent: true, key: event.key });
     }
   });
 }
@@ -154,82 +155,96 @@ export async function getCachedPropertyTypes() {
   return current || null;
 }
 
+export function notifyTaxonomyUpdated(detail?: any) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('landlord_taxonomy_updated', { detail }));
+  }
+}
+
 /**
  * ⚡ Fetches or retrieves cached dynamic attributes.
- * Instant return from cache + background revalidation if stale.
+ * Instant return from cache + background revalidation against live DB API.
  */
-export async function getCachedAttributes() {
+export async function getCachedAttributes(forceFresh = false) {
   const current = getSyncAttributes();
-  const isFresh = (Date.now() - taxonomyCache.timestamp) < CACHE_TTL_MS;
 
-  if (current && current.length > 0 && isFresh) {
-    return current;
+  const revalidate = async () => {
+    try {
+      const res = await axios.get(`/api/admin/attributes?t=${Date.now()}`);
+      const attrs = res.data?.data;
+      if (Array.isArray(attrs) && attrs.length > 0) {
+        const hasChanged = JSON.stringify(attrs) !== JSON.stringify(taxonomyCache.attributes);
+        taxonomyCache.attributes = attrs;
+        taxonomyCache.timestamp = Date.now();
+        safeSetStorage(STORAGE_KEYS.ATTRIBUTES, attrs);
+        safeSetStorage(STORAGE_KEYS.TIMESTAMP, taxonomyCache.timestamp);
+        if (hasChanged) {
+          notifyTaxonomyUpdated({ attributes: attrs });
+        }
+        return attrs;
+      }
+    } catch (err) {
+      console.warn("[LandlordTaxonomyCache] Background revalidation failed for attributes", err);
+    }
+    return null;
+  };
+
+  if (forceFresh) {
+    const fresh = await revalidate();
+    if (fresh) return fresh;
+  } else {
+    revalidate();
   }
 
   if (current && current.length > 0) {
-    // Revalidate in background
-    getActiveAttributes().then(attrs => {
-      if (attrs && attrs.length > 0) {
-        taxonomyCache.attributes = attrs;
-        safeSetStorage(STORAGE_KEYS.ATTRIBUTES, attrs);
-      }
-    }).catch(err => console.warn("[LandlordTaxonomyCache] Background revalidation failed for attributes", err));
-
     return current;
   }
 
-  try {
-    const attrs = await getActiveAttributes();
-    if (attrs && attrs.length > 0) {
-      taxonomyCache.attributes = attrs;
-      taxonomyCache.timestamp = Date.now();
-      safeSetStorage(STORAGE_KEYS.ATTRIBUTES, attrs);
-      safeSetStorage(STORAGE_KEYS.TIMESTAMP, taxonomyCache.timestamp);
-      return attrs;
-    }
-  } catch (err) {
-    console.warn("[LandlordTaxonomyCache] Failed fetching dynamic attributes", err);
-  }
-  return current || [];
+  const fresh = await revalidate();
+  return fresh || current || [];
 }
 
 /**
  * 🏷️ Fetches or retrieves cached attribute sub-groups.
- * Instant return from cache + background revalidation if stale.
+ * Instant return from cache + background revalidation against live DB API.
  */
-export async function getCachedSubGroups() {
+export async function getCachedSubGroups(forceFresh = false) {
   const current = getSyncSubGroups();
-  const isFresh = (Date.now() - taxonomyCache.timestamp) < CACHE_TTL_MS;
 
-  if (current && current.length > 0 && isFresh) {
-    return current;
+  const revalidate = async () => {
+    try {
+      const res = await axios.get(`/api/admin/sub-groups?t=${Date.now()}`);
+      const sgs = res.data?.data;
+      if (Array.isArray(sgs) && sgs.length > 0) {
+        const hasChanged = JSON.stringify(sgs) !== JSON.stringify(taxonomyCache.subGroups);
+        taxonomyCache.subGroups = sgs;
+        taxonomyCache.timestamp = Date.now();
+        safeSetStorage(STORAGE_KEYS.SUB_GROUPS, sgs);
+        safeSetStorage(STORAGE_KEYS.TIMESTAMP, taxonomyCache.timestamp);
+        if (hasChanged) {
+          notifyTaxonomyUpdated({ subGroups: sgs });
+        }
+        return sgs;
+      }
+    } catch (err) {
+      console.warn("[LandlordTaxonomyCache] Background revalidation failed for subGroups", err);
+    }
+    return null;
+  };
+
+  if (forceFresh) {
+    const fresh = await revalidate();
+    if (fresh) return fresh;
+  } else {
+    revalidate();
   }
 
   if (current && current.length > 0) {
-    // Revalidate in background
-    getActiveSubGroups().then(sgs => {
-      if (sgs && sgs.length > 0) {
-        taxonomyCache.subGroups = sgs;
-        safeSetStorage(STORAGE_KEYS.SUB_GROUPS, sgs);
-      }
-    }).catch(err => console.warn("[LandlordTaxonomyCache] Background revalidation failed for subGroups", err));
-
     return current;
   }
 
-  try {
-    const sgs = await getActiveSubGroups();
-    if (sgs && sgs.length > 0) {
-      taxonomyCache.subGroups = sgs;
-      taxonomyCache.timestamp = Date.now();
-      safeSetStorage(STORAGE_KEYS.SUB_GROUPS, sgs);
-      safeSetStorage(STORAGE_KEYS.TIMESTAMP, taxonomyCache.timestamp);
-      return sgs;
-    }
-  } catch (err) {
-    console.warn("[LandlordTaxonomyCache] Failed fetching subGroups", err);
-  }
-  return current || [];
+  const fresh = await revalidate();
+  return fresh || current || [];
 }
 
 /**
@@ -326,4 +341,6 @@ export function clearLandlordTaxonomyCache() {
   safeRemoveStorage(STORAGE_KEYS.COLLEGES);
   safeRemoveStorage(STORAGE_KEYS.ROOM_TYPES);
   safeRemoveStorage(STORAGE_KEYS.TIMESTAMP);
+
+  notifyTaxonomyUpdated({ cleared: true });
 }
