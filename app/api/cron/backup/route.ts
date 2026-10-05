@@ -156,7 +156,7 @@ export async function GET(req: NextRequest) {
             if (details.url) {
               // Decrypt the stored URL before using it
               const rawUrl = decryptMessage(details.url);
-              await backendClient.cronBackups.deleteFile({ url: rawUrl });
+              await (backendClient.cronBackups as any).delete({ url: rawUrl });
               console.log(`[CRON_BACKUP] Deleted old backup file from EdgeStore.`);
             }
           } catch (e) {

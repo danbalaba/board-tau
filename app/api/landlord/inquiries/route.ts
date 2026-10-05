@@ -159,7 +159,7 @@ export async function DELETE(request: NextRequest) {
 
               // Verify we are sending a valid external URL to EdgeStore
               if (targetUrl.startsWith('http')) {
-                 return await backendClient.identityDocs.deleteFile({ url: targetUrl });
+                 return await (backendClient.identityDocs as any).delete({ url: targetUrl });
               } else {
                  console.warn(`⚠️ Skipping delete for invalid/non-external URL: ${targetUrl}`);
               }

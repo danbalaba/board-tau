@@ -12,7 +12,7 @@ export const edgeStoreRouter = es.router({
   publicFiles: es
     .fileBucket({
       maxSize: 1024 * 1024 * 10,
-      accept: ["image/jpeg", "image/png", "image/webp"],
+      accept: ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"],
     })
     .metadata(({ ctx }) => ({
       userId: ctx.userId,
