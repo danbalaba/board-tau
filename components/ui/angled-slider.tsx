@@ -123,7 +123,7 @@ const AngledCard = ({
                             src={item.urls && item.urls.length > 0 ? item.urls[currentIndex] : "/images/placeholder.jpg"}
                             alt={item.alt || item.title || "Slider Image"}
                             fill
-                            className="object-cover transition-transform duration-[5s] group-hover:scale-105"
+                            className="object-cover transition-transform [transition-duration:5s] group-hover:scale-105"
                             draggable={false}
                         />
                     </motion.div>
