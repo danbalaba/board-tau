@@ -105,8 +105,8 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                 mirrored={facingMode === "user"}
                 videoConstraints={
                   selectedDeviceId
-                    ? { deviceId: { exact: selectedDeviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
-                    : { facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 720 } }
+                    ? { deviceId: { exact: selectedDeviceId }, width: { ideal: 640 }, height: { ideal: 480 } }
+                    : { facingMode: facingMode, width: { ideal: 640 }, height: { ideal: 480 } }
                 }
                 className="w-full h-full object-cover grayscale-[0.15]"
               />

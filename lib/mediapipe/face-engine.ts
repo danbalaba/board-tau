@@ -185,8 +185,8 @@ export class FaceEngine {
     
     // FIXED MIRRORING BUG:
     if (leftDist > 0 && rightDist > 0) {
-      if (rightDist / leftDist > 2.0) turnRight = true;
-      if (leftDist / rightDist > 2.0) turnLeft = true;
+      if (rightDist / leftDist > 1.4) turnRight = true;
+      if (leftDist / rightDist > 1.4) turnLeft = true;
     }
 
     let blink = false;
@@ -205,10 +205,10 @@ export class FaceEngine {
       const browOuterRight = categories.find(c => c.categoryName === 'browOuterUpRight')?.score ?? 0;
       const browInner = categories.find(c => c.categoryName === 'browInnerUp')?.score ?? 0;
 
-      if (leftBlink > 0.45 || rightBlink > 0.45) blink = true;
-      if (smileLeft > 0.5 && smileRight > 0.5) smile = true;
-      if (jawOpen > 0.30) openMouth = true;
-      if (browOuterLeft > 0.35 || browOuterRight > 0.35 || browInner > 0.35) raiseEyebrows = true;
+      if (leftBlink > 0.35 || rightBlink > 0.35) blink = true;
+      if (smileLeft > 0.40 && smileRight > 0.40 && jawOpen < 0.35) smile = true;
+      if (jawOpen > 0.25 && (smileLeft < 0.40 || smileRight < 0.40)) openMouth = true;
+      if (browOuterLeft > 0.20 || browOuterRight > 0.20 || browInner > 0.20) raiseEyebrows = true;
     }
 
     return { 
@@ -247,8 +247,8 @@ export class FaceEngine {
     let turnRight = false;
     
     if (leftDist > 0 && rightDist > 0) {
-      if (rightDist / leftDist > 2.0) turnRight = true;
-      if (leftDist / rightDist > 2.0) turnLeft = true;
+      if (rightDist / leftDist > 1.4) turnRight = true;
+      if (leftDist / rightDist > 1.4) turnLeft = true;
     }
 
     // 2. Calculate Blendshapes (Blink, Smile, Open Mouth, Raise Eyebrows)
@@ -268,10 +268,10 @@ export class FaceEngine {
       const browOuterRight = categories.find(c => c.categoryName === 'browOuterUpRight')?.score ?? 0;
       const browInner = categories.find(c => c.categoryName === 'browInnerUp')?.score ?? 0;
 
-      if (leftBlink > 0.45 || rightBlink > 0.45) blink = true;
-      if (smileLeft > 0.5 && smileRight > 0.5) smile = true;
-      if (jawOpen > 0.30) openMouth = true;
-      if (browOuterLeft > 0.35 || browOuterRight > 0.35 || browInner > 0.35) raiseEyebrows = true;
+      if (leftBlink > 0.35 || rightBlink > 0.35) blink = true;
+      if (smileLeft > 0.40 && smileRight > 0.40 && jawOpen < 0.35) smile = true;
+      if (jawOpen > 0.25 && (smileLeft < 0.40 || smileRight < 0.40)) openMouth = true;
+      if (browOuterLeft > 0.20 || browOuterRight > 0.20 || browInner > 0.20) raiseEyebrows = true;
     }
 
     return { blink, smile, turnLeft, turnRight, openMouth, raiseEyebrows };

@@ -41,8 +41,10 @@ const mockFaceEngine = {
   dispose: jest.fn(),
 };
 
+const mockValidateIDCard = jest.fn().mockResolvedValue({ isValid: true });
+
 const mockIdEngine = {
-  validateIDCard: jest.fn(),
+  validateIDCard: mockValidateIDCard,
   warmup: jest.fn(),
 };
 

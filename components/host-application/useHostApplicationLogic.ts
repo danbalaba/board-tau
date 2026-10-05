@@ -111,6 +111,8 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
 
   // Biometric / File States
   const webcamRef = useRef<Webcam>(null);
+  const scaledCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const isFaceAlignedRef = useRef(false);
   const [capturedSelfie, setCapturedSelfie] = useState<string | null>(null);
   const [capturedID, setCapturedID] = useState<string | null>(null);
   const [livenessStatus, setLivenessStatus] = useState<'idle' | 'passed'>('idle');
@@ -407,9 +409,13 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
   }, [step, capturedSelfie, faceEngine]);
 
   const getScaledCanvas = (video: HTMLVideoElement) => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 320;
-    canvas.height = 240;
+    if (!scaledCanvasRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 320;
+      canvas.height = 240;
+      scaledCanvasRef.current = canvas;
+    }
+    const canvas = scaledCanvasRef.current;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx?.drawImage(video, 0, 0, 320, 240);
     return canvas;
@@ -447,7 +453,10 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
           const scaledCanvas = getScaledCanvas(video);
           
           const result = await faceEngine.quickValidateFace(scaledCanvas);
-          setIsFaceAligned(result.isValid);
+          if (isFaceAlignedRef.current !== result.isValid) {
+            isFaceAlignedRef.current = result.isValid;
+            setIsFaceAligned(result.isValid);
+          }
           
           if (livenessStatus === 'passed') {
             if (!result.isValid) {
@@ -571,6 +580,13 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
         loadImage(imageSrc)
       ]);
 
+      // 1. Anti-spoofing & Selfie-as-ID structural validation
+      const idValidation = await idEngine.validateIDCard(idImg);
+      if (!idValidation.isValid) {
+        toast.error(idValidation.reason || "Invalid ID document photo. Please upload your physical ID card.");
+        return;
+      }
+
       const selfieCacheKey = `selfie_${capturedSelfie.length}_${capturedSelfie.slice(0, 50)}`;
       const idCacheKey = `file_${imageFile.name}_${imageFile.size}_${imageFile.lastModified}`;
 
@@ -600,6 +616,10 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
       }
 
       const distance = faceMatcher.getFaceDistance(selfieDescriptor, idDescriptor);
+      if (distance < 0.08) {
+        toast.error("Selfie photo detected as ID. Please upload a clear photo of your physical ID card, not your live selfie.");
+        return;
+      }
       if (distance > 0.6) {
         toast.error("Verification failed: The face on the ID does not match your live selfie. Please try again.");
         return;
