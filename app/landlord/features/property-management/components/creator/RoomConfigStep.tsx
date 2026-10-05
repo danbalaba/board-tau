@@ -171,29 +171,45 @@ export default function RoomConfigStep({
   const [roomTypeOptions, setRoomTypeOptions] = useState<any[]>(() => (propertyTypeId ? getSyncRoomTypes(propertyTypeId) || [] : []));
 
   useEffect(() => {
-    const syncAttrs = getSyncAttributes();
-    if (syncAttrs && syncAttrs.length > 0) {
-      setDynamicAttributes(syncAttrs);
-      setIsLoadingAttrs(false);
-    } else {
-      getCachedAttributes().then(attrs => {
-        setDynamicAttributes(attrs || []);
+    const updateFromCache = () => {
+      const syncAttrs = getSyncAttributes();
+      if (syncAttrs && syncAttrs.length > 0) {
+        setDynamicAttributes(syncAttrs);
         setIsLoadingAttrs(false);
-      });
-    }
+      }
+      const syncSgs = getSyncSubGroups();
+      if (syncSgs && syncSgs.length > 0) {
+        setDbSubGroups(syncSgs);
+      }
+    };
 
-    const syncSgs = getSyncSubGroups();
-    if (syncSgs && syncSgs.length > 0) {
-      setDbSubGroups(syncSgs);
-    } else {
-      getCachedSubGroups().then(sgs => {
-        setDbSubGroups(sgs || []);
-      });
-    }
+    updateFromCache();
+
+    getCachedAttributes(true).then(attrs => {
+      if (attrs && attrs.length > 0) setDynamicAttributes(attrs);
+      setIsLoadingAttrs(false);
+    });
+
+    getCachedSubGroups(true).then(sgs => {
+      if (sgs && sgs.length > 0) setDbSubGroups(sgs);
+    });
 
     if (!getSyncPropertyTypes()) {
       getCachedPropertyTypes();
     }
+
+    const handleTaxonomyUpdated = () => {
+      updateFromCache();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('landlord_taxonomy_updated', handleTaxonomyUpdated);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('landlord_taxonomy_updated', handleTaxonomyUpdated);
+      }
+    };
   }, []);
 
   const cachedPropertyTypes = getSyncPropertyTypes() || [];

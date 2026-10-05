@@ -139,25 +139,51 @@ export default function PropertyConfigStep({
 
   // Fetch Taxonomy & Sub-Groups
   useEffect(() => {
-    const syncAttrs = getSyncAttributes();
-    if (syncAttrs && syncAttrs.length > 0) {
-      setDynamicAttributes(syncAttrs);
-      setIsLoadingAttrs(false);
-    } else {
-      getCachedAttributes().then(attrs => {
-        setDynamicAttributes(attrs);
+    const updateFromCache = () => {
+      const syncAttrs = getSyncAttributes();
+      if (syncAttrs && syncAttrs.length > 0) {
+        setDynamicAttributes(syncAttrs);
         setIsLoadingAttrs(false);
-      });
-    }
+      }
+      const syncSgs = getSyncSubGroups();
+      if (syncSgs && syncSgs.length > 0) {
+        setDbSubGroups(syncSgs);
+      }
+    };
 
-    const syncSgs = getSyncSubGroups();
-    if (syncSgs && syncSgs.length > 0) {
-      setDbSubGroups(syncSgs);
-    } else {
-      getCachedSubGroups().then(sgs => {
+    updateFromCache();
+    
+    getCachedAttributes(true).then(attrs => {
+      if (attrs && attrs.length > 0) {
+        setDynamicAttributes(attrs);
+      }
+      setIsLoadingAttrs(false);
+    });
+
+    getCachedSubGroups(true).then(sgs => {
+      if (sgs && sgs.length > 0) {
         setDbSubGroups(sgs);
+      }
+    });
+
+    const handleTaxonomyUpdated = (e: any) => {
+      updateFromCache();
+      getCachedAttributes().then(attrs => {
+        if (attrs && attrs.length > 0) setDynamicAttributes(attrs);
       });
+      getCachedSubGroups().then(sgs => {
+        if (sgs && sgs.length > 0) setDbSubGroups(sgs);
+      });
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('landlord_taxonomy_updated', handleTaxonomyUpdated);
     }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('landlord_taxonomy_updated', handleTaxonomyUpdated);
+      }
+    };
   }, []);
 
   // Sub-step setup choices
@@ -174,17 +200,33 @@ export default function PropertyConfigStep({
     }
   }, [getValues, setValue]);
 
-  // Ensure propertyTypes cache is populated
+  // Ensure propertyTypes cache is populated and stored in state for reactive re-rendering
+  const [cachedPropertyTypes, setCachedPropertyTypes] = useState<any[]>(() => getSyncPropertyTypes() || []);
+
   useEffect(() => {
-    if (!getSyncPropertyTypes()) {
-      getCachedPropertyTypes();
+    const sync = getSyncPropertyTypes();
+    if (sync && sync.length > 0) {
+      setCachedPropertyTypes(sync);
+    } else {
+      getCachedPropertyTypes().then(types => {
+        if (types && types.length > 0) setCachedPropertyTypes(types);
+      });
     }
   }, []);
 
-  const cachedPropertyTypes = getSyncPropertyTypes() || [];
-  const matchedPropertyType = cachedPropertyTypes.find(
-    (pt: any) => pt.id === selectedPropertyTypeId || pt.name === selectedPropertyTypeId
-  );
+  const matchedPropertyType = useMemo(() => {
+    if (!cachedPropertyTypes || cachedPropertyTypes.length === 0) return null;
+    const target = (selectedPropertyTypeId || watchCategory || '').toLowerCase().trim();
+    if (!target) return null;
+    return cachedPropertyTypes.find(
+      (pt: any) =>
+        pt.id === selectedPropertyTypeId ||
+        pt.id?.toLowerCase() === target ||
+        pt.name?.toLowerCase().trim() === target ||
+        target.includes(pt.name?.toLowerCase().trim() || '') ||
+        (pt.name && target.includes(pt.name.toLowerCase().trim()))
+    ) || null;
+  }, [cachedPropertyTypes, selectedPropertyTypeId, watchCategory]);
 
   const resolvedCategoryName = matchedPropertyType?.name || watchCategory || selectedPropertyTypeId || '';
 
@@ -233,44 +275,49 @@ export default function PropertyConfigStep({
     );
   }, [propRoomTypes, resolvedCategoryName, watchCategory, selectedPropertyTypeId]);
 
+  const normalizeSubGroupKey = useCallback((key?: string | null) => {
+    if (!key) return '';
+    const u = key.toUpperCase().trim();
+    if (u === 'DISASTER_SAFETY' || u === 'DISASTER_PREP') return 'DISASTER_PREP';
+    if (u === 'SECURITY' || u === 'SECURITY_ACCESS') return 'SECURITY';
+    return u;
+  }, []);
+
   const isAttrMatchingPropertyType = useMemo(() => {
     return (attr: any) => {
+      if (!attr) return false;
       if (attr.isUniversal) return true;
-      if (!selectedPropertyTypeId && !resolvedCategoryName) return true;
 
       const typeIds: string[] = Array.isArray(attr.propertyTypeIds) ? attr.propertyTypeIds : [];
-      const typeNames: string[] = Array.isArray(attr.propertyTypeNames)
-        ? attr.propertyTypeNames
-        : Array.isArray(attr.propertyTypes)
-        ? attr.propertyTypes.map((pt: any) => (pt.name || pt).toString())
+      const typeNames: string[] = Array.isArray(attr.propertyTypeNames) ? attr.propertyTypeNames : [];
+      const typeObjs: string[] = Array.isArray(attr.propertyTypes)
+        ? attr.propertyTypes.map((pt: any) => (pt.name || pt.id || pt).toString())
         : [];
 
-      if (typeIds.length === 0 && typeNames.length === 0) return true;
+      const attrScopes = [...typeIds, ...typeNames, ...typeObjs].map(s => String(s).toLowerCase().trim());
 
-      if (selectedPropertyTypeId && typeIds.includes(selectedPropertyTypeId)) return true;
-      if (matchedPropertyType?.id && typeIds.includes(matchedPropertyType.id)) return true;
+      if (attrScopes.length === 0) return true;
 
-      const targetCategory = (resolvedCategoryName || matchedPropertyType?.name || '').toLowerCase();
-      if (targetCategory && typeNames.length > 0) {
-        return typeNames.some((n: string) => {
-          const lowerName = n.toLowerCase();
-          return lowerName.includes(targetCategory) || targetCategory.includes(lowerName);
-        });
-      }
+      // 1. Direct ID matches
+      if (selectedPropertyTypeId && typeIds.some(id => String(id).toLowerCase().trim() === String(selectedPropertyTypeId).toLowerCase().trim())) return true;
+      if (matchedPropertyType?.id && typeIds.some(id => String(id).toLowerCase().trim() === String(matchedPropertyType.id).toLowerCase().trim())) return true;
 
-      if (cachedPropertyTypes.length > 0 && typeIds.length > 0) {
-        const matchedPropTypes = cachedPropertyTypes.filter((pt: any) => typeIds.includes(pt.id));
-        if (matchedPropTypes.length > 0) {
-          return matchedPropTypes.some((pt: any) => {
-            const pName = (pt.name || '').toLowerCase();
-            return pName.includes(targetCategory) || targetCategory.includes(pName);
-          });
-        }
-      }
+      // 2. Candidate strings set (IDs and Names of selected property type)
+      const candidates = [
+        selectedPropertyTypeId,
+        watchCategory,
+        resolvedCategoryName,
+        matchedPropertyType?.name,
+        matchedPropertyType?.id
+      ].filter(Boolean).map(s => String(s).toLowerCase().trim());
 
-      return false;
+      if (candidates.length === 0) return true;
+
+      return attrScopes.some(scope =>
+        candidates.some(cand => scope === cand || scope.includes(cand) || cand.includes(scope))
+      );
     };
-  }, [selectedPropertyTypeId, resolvedCategoryName, matchedPropertyType, cachedPropertyTypes]);
+  }, [selectedPropertyTypeId, resolvedCategoryName, matchedPropertyType, watchCategory]);
 
   const SINGLE_SELECT_RULE_SUBGROUPS = useMemo(() => ['GENDER_POLICY', 'CURFEW', 'VISITOR_POLICY', 'PET_POLICY', 'SMOKING_POLICY', 'ALCOHOL_POLICY'], []);
   const REQUIRED_RULE_SUBGROUPS = useMemo(() => ['GENDER_POLICY', 'CURFEW', 'VISITOR_POLICY', 'PET_POLICY', 'SMOKING_POLICY', 'ALCOHOL_POLICY'], []);
@@ -308,7 +355,7 @@ export default function PropertyConfigStep({
   }, [isSingleGenderProperty]);
 
   const checkRuleSubGroupHasSelection = useCallback((subGroupKey: string) => {
-    if (!REQUIRED_RULE_SUBGROUPS.includes(subGroupKey)) return true;
+    if (!subGroupKey) return true;
 
     const amenitiesArr: string[] = Array.isArray(getValues('propertyConfig.amenities'))
       ? getValues('propertyConfig.amenities')
@@ -317,8 +364,10 @@ export default function PropertyConfigStep({
       : [];
     const rulesObj = getValues('propertyConfig.rules') || currentRules || {};
 
+    const normKey = normalizeSubGroupKey(subGroupKey);
+
     const groupAttrs = dynamicAttributes.filter(
-      a => isAttrMatchingPropertyType(a) && a.type === 'RULE' && a.subGroupKey === subGroupKey && isVisitorAttrVisible(a)
+      a => isAttrMatchingPropertyType(a) && normalizeSubGroupKey(a.subGroupKey) === normKey && isVisitorAttrVisible(a)
     );
 
     if (groupAttrs.length === 0) return true;
@@ -331,21 +380,21 @@ export default function PropertyConfigStep({
 
     if (hasAttrSelected) return true;
 
-    if (subGroupKey === 'GENDER_POLICY') {
+    if (normKey === 'GENDER_POLICY') {
       if (rulesObj.femaleOnly || rulesObj.maleOnly) return true;
     }
-    if (subGroupKey === 'CURFEW') {
+    if (normKey === 'CURFEW') {
       if (rulesObj.noCurfew) return true;
     }
-    if (subGroupKey === 'VISITOR_POLICY') {
+    if (normKey === 'VISITOR_POLICY') {
       if (rulesObj.visitorsAllowed !== undefined && rulesObj.visitorsAllowed !== null) return true;
     }
-    if (subGroupKey === 'PET_POLICY') {
+    if (normKey === 'PET_POLICY') {
       if (rulesObj.petsAllowed !== undefined && rulesObj.petsAllowed !== null) return true;
     }
 
     return false;
-  }, [selectedAmenities, currentRules, dynamicAttributes, isAttrMatchingPropertyType, isVisitorAttrVisible, getValues, REQUIRED_RULE_SUBGROUPS]);
+  }, [selectedAmenities, currentRules, dynamicAttributes, isAttrMatchingPropertyType, isVisitorAttrVisible, getValues, normalizeSubGroupKey]);
 
   useEffect(() => {
     if (checkRuleSubGroupHasSelection(activeRuleTab)) {
@@ -476,7 +525,7 @@ export default function PropertyConfigStep({
 
         const matchingAttrs = dynamicAttributes.filter((a: any) => {
           if (!a.isActive && a.status !== 'ACTIVE') return false;
-          if (a.subGroupKey !== sg.key) return false;
+          if (normalizeSubGroupKey(a.subGroupKey) !== normalizeSubGroupKey(sg.key)) return false;
           return isAttrMatchingPropertyType(a);
         });
 
@@ -490,7 +539,7 @@ export default function PropertyConfigStep({
 
     list.push(...dbAmenitySgs);
     return list;
-  }, [dbSubGroups, kitchenSetup, bathroomSetup, dynamicAttributes, isAttrMatchingPropertyType]);
+  }, [dbSubGroups, kitchenSetup, bathroomSetup, dynamicAttributes, isAttrMatchingPropertyType, normalizeSubGroupKey]);
 
   const ruleSubGroups = useMemo(() => {
     return dbSubGroups
@@ -499,7 +548,7 @@ export default function PropertyConfigStep({
 
         const matchingAttrs = dynamicAttributes.filter((a: any) => {
           if (!a.isActive && a.status !== 'ACTIVE') return false;
-          if (a.subGroupKey !== sg.key) return false;
+          if (normalizeSubGroupKey(a.subGroupKey) !== normalizeSubGroupKey(sg.key)) return false;
           return isAttrMatchingPropertyType(a);
         });
 
@@ -510,7 +559,7 @@ export default function PropertyConfigStep({
         label: sg.tabLabel || sg.title || sg.key,
         icon: resolveLucideIcon(sg.icon, Shield),
       }));
-  }, [dbSubGroups, dynamicAttributes, isAttrMatchingPropertyType]);
+  }, [dbSubGroups, dynamicAttributes, isAttrMatchingPropertyType, normalizeSubGroupKey]);
 
   const featureSubGroups = useMemo(() => {
     return dbSubGroups
@@ -519,7 +568,7 @@ export default function PropertyConfigStep({
 
         const matchingAttrs = dynamicAttributes.filter((a: any) => {
           if (!a.isActive && a.status !== 'ACTIVE') return false;
-          if (a.subGroupKey !== sg.key) return false;
+          if (normalizeSubGroupKey(a.subGroupKey) !== normalizeSubGroupKey(sg.key)) return false;
           return isAttrMatchingPropertyType(a);
         });
 
@@ -530,7 +579,7 @@ export default function PropertyConfigStep({
         label: sg.tabLabel || sg.title || sg.key,
         icon: resolveLucideIcon(sg.icon, ShieldCheck),
       }));
-  }, [dbSubGroups, dynamicAttributes, isAttrMatchingPropertyType]);
+  }, [dbSubGroups, dynamicAttributes, isAttrMatchingPropertyType, normalizeSubGroupKey]);
 
   // Auto-sync activeAmenityTab & clamp unlocked index ONLY if out of bounds (when property type changes)
   useEffect(() => {
@@ -1486,7 +1535,7 @@ export default function PropertyConfigStep({
                 {/* Sub-Group Item Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 py-1">
                   {dynamicAttributes
-                    .filter(a => isAttrMatchingPropertyType(a) && a.type === 'RULE' && a.subGroupKey === activeRuleTab && isVisitorAttrVisible(a))
+                    .filter(a => isAttrMatchingPropertyType(a) && normalizeSubGroupKey(a.subGroupKey) === normalizeSubGroupKey(activeRuleTab) && isVisitorAttrVisible(a))
                     .map(attr => {
                       const isSelected = selectedAmenities.includes(attr.id) || selectedAmenities.includes(String(attr.id)) || selectedAmenities.includes(attr.name);
                       const Icon = getSafeLucideIcon(attr.icon, Shield);
@@ -1604,7 +1653,7 @@ export default function PropertyConfigStep({
               {/* Sub-Group Item Grid (2 Column on Mobile) */}
               <div className="grid grid-cols-2 gap-3 sm:gap-4 py-2 sm:py-4">
                 {dynamicAttributes
-                  .filter(a => isAttrMatchingPropertyType(a) && a.type === 'FEATURE' && a.subGroupKey === activeFeatureTab)
+                  .filter(a => isAttrMatchingPropertyType(a) && normalizeSubGroupKey(a.subGroupKey) === normalizeSubGroupKey(activeFeatureTab))
                   .map(attr => {
                     const isSelected = selectedAmenities.includes(attr.id) || selectedAmenities.includes(String(attr.id)) || selectedAmenities.includes(attr.name);
                     const Icon = getSafeLucideIcon(attr.icon, Star);

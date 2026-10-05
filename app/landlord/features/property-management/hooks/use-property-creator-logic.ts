@@ -303,6 +303,12 @@ export function usePropertyCreatorLogic(initialData: any) {
   const loadDraft = () => {
     if (isDraftActionExecuted || !savedDraftData) return;
     setIsDraftActionExecuted(true);
+
+    // Clear stale taxonomy cache so newly added admin features load cleanly when resuming draft
+    try {
+      clearLandlordTaxonomyCache();
+    } catch (e) {}
+
     methods.reset(savedDraftData.formValues);
     if (typeof savedDraftData.currentStep === 'number') {
       setCurrentStep(savedDraftData.currentStep);

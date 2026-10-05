@@ -260,26 +260,44 @@ export const LandlordRoomEditModal: React.FC<LandlordRoomEditModalProps> = ({
 
   // Load Dynamic Attributes & Sub-Groups
   useEffect(() => {
-    const syncSgs = getSyncSubGroups();
-    if (syncSgs && syncSgs.length > 0) {
-      setDbSubGroups(syncSgs);
-    } else {
-      getCachedSubGroups().then((sgs: any[]) => {
-        setDbSubGroups(sgs || []);
-      });
-    }
-  }, []);
+    const updateFromCache = () => {
+      const syncSgs = getSyncSubGroups();
+      if (syncSgs && syncSgs.length > 0) {
+        setDbSubGroups(syncSgs);
+      }
+      const syncAttrs = getSyncAttributes();
+      if (syncAttrs && syncAttrs.length > 0) {
+        setDynamicAttributes(syncAttrs.filter((a: any) => a.type === 'ROOM_AMENITY'));
+      }
+    };
 
-  useEffect(() => {
-    const syncAttrs = getSyncAttributes();
-    if (syncAttrs && syncAttrs.length > 0) {
-      setDynamicAttributes(syncAttrs.filter((a: any) => a.type === 'ROOM_AMENITY'));
-    } else {
-      getCachedAttributes().then((attrs: any[]) => {
-        setDynamicAttributes((attrs || []).filter((a: any) => a.type === 'ROOM_AMENITY'));
+    updateFromCache();
+
+    if (isOpen) {
+      getCachedSubGroups(true).then((sgs: any[]) => {
+        if (sgs && sgs.length > 0) setDbSubGroups(sgs);
+      });
+
+      getCachedAttributes(true).then((attrs: any[]) => {
+        if (attrs && attrs.length > 0) {
+          setDynamicAttributes(attrs.filter((a: any) => a.type === 'ROOM_AMENITY'));
+        }
       });
     }
-  }, []);
+
+    const handleTaxonomyUpdated = () => {
+      updateFromCache();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('landlord_taxonomy_updated', handleTaxonomyUpdated);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('landlord_taxonomy_updated', handleTaxonomyUpdated);
+      }
+    };
+  }, [isOpen]);
 
   // Compute if Flat-Rate property
   const isFlatRateProperty = useMemo(() => {
