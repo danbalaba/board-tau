@@ -49,3 +49,12 @@ export const contactLimiter = new Ratelimit({
   analytics: true,
   prefix: "ratelimit:contact",
 });
+
+// 6. KYC Verification Limiter: Protect AWS Rekognition from spam/DDoS & billing attacks
+// 10 requests per 1 minute per user/IP
+export const kycLimiter = new Ratelimit({
+  redis: redis,
+  limiter: Ratelimit.slidingWindow(10, "1 m"),
+  analytics: true,
+  prefix: "ratelimit:kyc",
+});

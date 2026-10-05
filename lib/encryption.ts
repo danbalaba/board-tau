@@ -15,7 +15,8 @@ function getEncryptionKey(): Buffer {
 
 // 2. URL Chat Token Encryption Key (Client & Server)
 function getChatTokenKey(): Buffer {
-  const secret = process.env.NEXT_PUBLIC_CHAT_TOKEN_SECRET 
+  const secret = process.env.CHAT_TOKEN_SECRET
+    || process.env.NEXT_PUBLIC_CHAT_TOKEN_SECRET 
     || process.env.MESSAGE_ENCRYPTION_KEY 
     || process.env.NEXTAUTH_SECRET 
     || 'boardtau-chat-url-token-secret';

@@ -13,12 +13,13 @@ export interface RestrictionTokenPayload {
 }
 
 function getSecretKey(): string {
-  const secret = process.env.NEXT_PUBLIC_CHAT_TOKEN_SECRET 
+  const secret = process.env.CHAT_TOKEN_SECRET
+    || process.env.NEXT_PUBLIC_CHAT_TOKEN_SECRET 
     || process.env.NEXTAUTH_SECRET 
     || process.env.MESSAGE_ENCRYPTION_KEY;
 
   if (!secret) {
-    throw new Error("CRITICAL SECURITY ERROR: Neither NEXT_PUBLIC_CHAT_TOKEN_SECRET, NEXTAUTH_SECRET, nor MESSAGE_ENCRYPTION_KEY is defined in .env!");
+    throw new Error("CRITICAL SECURITY ERROR: Neither CHAT_TOKEN_SECRET, NEXT_PUBLIC_CHAT_TOKEN_SECRET, NEXTAUTH_SECRET, nor MESSAGE_ENCRYPTION_KEY is defined in .env!");
   }
   return secret;
 }
