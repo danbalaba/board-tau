@@ -29,6 +29,7 @@ interface RulesStepProps {
   showValidationError?: boolean;
   onClearValidationError?: () => void;
   onLoadingChange?: (isLoading: boolean) => void;
+  onSubStepValidChange?: (isValid: boolean) => void;
 }
 
 export default function RulesStep({
@@ -44,6 +45,7 @@ export default function RulesStep({
   showValidationError = false,
   onClearValidationError,
   onLoadingChange,
+  onSubStepValidChange,
 }: RulesStepProps) {
   const propName = propertyTypeSelected[0] || "Boarding House";
 
@@ -71,7 +73,7 @@ export default function RulesStep({
   }, [isLoading, onLoadingChange]);
 
   useEffect(() => {
-    fetchTaxonomyData("RULE")
+    fetchTaxonomyData("RULE", true)
       .then((data) => {
         setDynamicAttributes(data.attributes || []);
         setDynamicSubGroups(data.subGroups || []);
@@ -97,17 +99,20 @@ export default function RulesStep({
   const isAttrMatchingPropertyType = React.useCallback(
     (attr: any) => {
       if (!attr || !attr.isActive) return false;
-      const selectedProp = (propertyTypeSelected[0] || "Boarding House").toLowerCase().trim();
-      const rawTypes = attr.propertyTypeNames || attr.propertyTypes || attr.propertyTypeIds || [];
+      if (attr.isUniversal) return true;
 
-      if (!attr.isUniversal && rawTypes && rawTypes.length > 0) {
-        return rawTypes.some((pt: any) => {
-          const pName = (pt.name || pt || "").toString().toLowerCase().trim();
-          return pName.includes(selectedProp) || selectedProp.includes(pName);
-        });
-      }
+      const selectedProp = (propertyTypeSelected[0] || "").toLowerCase().trim();
+      if (!selectedProp) return true;
 
-      return attr.isUniversal ?? true;
+      const typeNames = Array.isArray(attr.propertyTypeNames) ? attr.propertyTypeNames : [];
+      const typeIds = Array.isArray(attr.propertyTypeIds) ? attr.propertyTypeIds : [];
+      const typeObjs = Array.isArray(attr.propertyTypes) ? attr.propertyTypes.map((pt: any) => pt.name || pt.id || pt) : [];
+
+      const allMatches = [...typeNames, ...typeIds, ...typeObjs].map((x: any) => String(x || "").toLowerCase().trim());
+
+      if (allMatches.length === 0) return true;
+
+      return allMatches.some((m) => m === selectedProp || m.includes(selectedProp) || selectedProp.includes(m));
     },
     [propertyTypeSelected]
   );
@@ -125,6 +130,7 @@ export default function RulesStep({
 
       return dbAttrs.map((attr) => ({
         id: attr.name,
+        attrId: attr.id,
         name: attr.name,
         title: attr.name,
         desc: attr.description || `${attr.name} rule.`,
@@ -237,25 +243,69 @@ export default function RulesStep({
     return [...base, ...ruleTabs];
   }, [ruleSubGroupsList]);
 
-  const hasCurrentSubStepSelections =
-    subStep === 0
-      ? Boolean(genderPolicy)
-      : currentConfig.items
-      ? currentConfig.items.some((item: any) => rulesSelected.includes(item.id))
-      : false;
+  const hasCurrentSubStepSelections = useMemo(() => {
+    if (subStep === 0) return Boolean(genderPolicy);
+    if (!currentConfig.items || currentConfig.items.length === 0) return false;
+    return currentConfig.items.some(
+      (opt: any) =>
+        rulesSelected.includes(opt.id) ||
+        rulesSelected.includes(opt.name) ||
+        (currentConfig.key === "PET_POLICY" && petPolicy === opt.id) ||
+        (currentConfig.key === "VISITOR_POLICY" && visitorPolicy === opt.id)
+    );
+  }, [subStep, genderPolicy, currentConfig.items, rulesSelected, petPolicy, visitorPolicy]);
+
+  useEffect(() => {
+    if (onSubStepValidChange) {
+      onSubStepValidChange(hasCurrentSubStepSelections);
+    }
+  }, [hasCurrentSubStepSelections, onSubStepValidChange]);
 
   const handleClearSubStep = () => {
     if (subStep === 0) {
       setCustomValue("genderPolicy", "");
-      if (rulesSelected.includes("female-only")) toggleMulti("rules", "female-only");
-      if (rulesSelected.includes("male-only")) toggleMulti("rules", "male-only");
+      const otherRules = rulesSelected.filter((r) => r !== "female-only" && r !== "male-only");
+      setCustomValue("rules", otherRules);
     } else if (currentConfig.items) {
-      currentConfig.items.forEach((item: any) => {
-        if (rulesSelected.includes(item.id)) toggleMulti("rules", item.id);
-      });
+      const itemIds = currentConfig.items.flatMap((i: any) => [i.id, i.name, i.attrId]).filter(Boolean);
+      const otherRules = rulesSelected.filter((r: string) => !itemIds.includes(r));
+      setCustomValue("rules", otherRules);
       if (currentConfig.key === "PET_POLICY") setCustomValue("petPolicy", "");
       if (currentConfig.key === "VISITOR_POLICY") setCustomValue("visitorPolicy", "");
     }
+  };
+
+  const handleRuleToggle = (opt: any) => {
+    const currentSubGroupItemIdentifiers = (currentConfig.items || []).flatMap((item: any) => [
+      item.id,
+      item.name,
+      item.attrId,
+    ]).filter(Boolean);
+
+    const otherRules = rulesSelected.filter(
+      (r: string) => !currentSubGroupItemIdentifiers.includes(r)
+    );
+
+    const isAlreadySelected =
+      rulesSelected.includes(opt.id) ||
+      rulesSelected.includes(opt.name) ||
+      (currentConfig.key === "PET_POLICY" && petPolicy === opt.id) ||
+      (currentConfig.key === "VISITOR_POLICY" && visitorPolicy === opt.id);
+
+    let newRules: string[] = [];
+
+    if (isAlreadySelected) {
+      newRules = otherRules;
+      if (currentConfig.key === "PET_POLICY") setCustomValue("petPolicy", "");
+      if (currentConfig.key === "VISITOR_POLICY") setCustomValue("visitorPolicy", "");
+    } else {
+      newRules = [...otherRules, opt.id];
+      if (currentConfig.key === "PET_POLICY") setCustomValue("petPolicy", opt.id);
+      if (currentConfig.key === "VISITOR_POLICY") setCustomValue("visitorPolicy", opt.id);
+    }
+
+    setCustomValue("rules", newRules);
+    if (onClearValidationError) onClearValidationError();
   };
 
   const activeTabRef = React.useRef<HTMLButtonElement | null>(null);
@@ -272,8 +322,10 @@ export default function RulesStep({
 
   const handleGenderPolicyChoice = (choice: string) => {
     setCustomValue("genderPolicy", choice);
-    if (choice === "Female-Only Property") toggleMulti("rules", "female-only");
-    else if (choice === "Male-Only Property") toggleMulti("rules", "male-only");
+    const otherRules = rulesSelected.filter((r) => r !== "female-only" && r !== "male-only");
+    if (choice === "Female-Only Property") setCustomValue("rules", [...otherRules, "female-only"]);
+    else if (choice === "Male-Only Property") setCustomValue("rules", [...otherRules, "male-only"]);
+    else setCustomValue("rules", otherRules);
     if (onClearValidationError) onClearValidationError();
   };
 
@@ -424,7 +476,7 @@ export default function RulesStep({
                           <Icon size={22} />
                         </div>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? "border-[#2f7d6d] bg-[#2f7d6d] text-white" : "border-slate-300 dark:border-slate-600"}`}>
-                          {isSelected && <Check size={12} strokeWidth={3} />}
+                          {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
                         </div>
                       </div>
                       <div className="mt-4">
@@ -474,22 +526,17 @@ export default function RulesStep({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {currentConfig.items?.map((opt: any) => {
-                  const isSelected = rulesSelected.includes(opt.id) || (currentConfig.key === "PET_POLICY" && petPolicy === opt.id);
+                  const isSelected =
+                    rulesSelected.includes(opt.id) ||
+                    rulesSelected.includes(opt.name) ||
+                    (currentConfig.key === "PET_POLICY" && petPolicy === opt.id) ||
+                    (currentConfig.key === "VISITOR_POLICY" && visitorPolicy === opt.id);
                   const Icon = opt.icon;
 
                   return (
                     <div
                       key={opt.id}
-                      onClick={() => {
-                        if (currentConfig.key === "PET_POLICY") {
-                          setCustomValue("petPolicy", opt.id);
-                        }
-                        if (currentConfig.key === "VISITOR_POLICY") {
-                          setCustomValue("visitorPolicy", opt.id);
-                        }
-                        toggleMulti("rules", opt.id);
-                        if (onClearValidationError) onClearValidationError();
-                      }}
+                      onClick={() => handleRuleToggle(opt)}
                       className={`p-4 rounded-2xl cursor-pointer border-2 transition-all flex items-start justify-between ${
                         isSelected
                           ? "bg-[#2f7d6d]/10 border-[#2f7d6d] dark:border-emerald-400 shadow-md ring-2 ring-[#2f7d6d]/20"
@@ -506,8 +553,8 @@ export default function RulesStep({
                         </div>
                       </div>
 
-                      <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${isSelected ? "border-[#2f7d6d] bg-[#2f7d6d] text-white" : "border-slate-300 dark:border-slate-600"}`}>
-                        {isSelected && <Check size={12} strokeWidth={3} />}
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? "border-[#2f7d6d] bg-[#2f7d6d] text-white" : "border-slate-300 dark:border-slate-600"}`}>
+                        {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
                       </div>
                     </div>
                   );

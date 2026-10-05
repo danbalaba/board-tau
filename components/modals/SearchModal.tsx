@@ -71,6 +71,7 @@ export default function SearchModal({
   const [dynamicIsBranchB, setDynamicIsBranchB] = useState<boolean>(false);
   const [inUnitValidationError, setInUnitValidationError] = useState(false);
   const [rulesValidationError, setRulesValidationError] = useState(false);
+  const [isRulesSubStepValid, setIsRulesSubStepValid] = useState<boolean>(false);
 
   const [totalSharedSubSteps, setTotalSharedSubSteps] = useState<number>(7);
   const [totalInUnitSubSteps, setTotalInUnitSubSteps] = useState<number>(6);
@@ -560,89 +561,7 @@ export default function SearchModal({
     }
 
     if (step === STEPS.RULES) {
-      const genderPolicy = watch("genderPolicy");
-      const rulesSelected = values.rulesSelected || [];
-
-      let isCurrentSubStepValid = false;
-      if (rulesSubStep === 0) {
-        isCurrentSubStepValid = Boolean(genderPolicy);
-      } else {
-        const ruleTaxonomy = getTaxonomyDataSync("RULE");
-        const subGroups = ruleTaxonomy?.subGroups || [];
-        const attributes = ruleTaxonomy?.attributes || [];
-
-        const selectedProp = (values.propertyTypeSelected[0] || "Boarding House").toLowerCase().trim();
-        const isSingleGenderProperty = (() => {
-          if (!genderPolicy) return false;
-          const lower = (genderPolicy || "").toLowerCase();
-          return lower.includes("female-only") || lower.includes("female only") || lower.includes("male-only") || lower.includes("male only");
-        })();
-
-        const dbGroups = subGroups.filter(
-          (sg: any) =>
-            sg.type === "RULE" &&
-            sg.isActive &&
-            sg.key !== "GENDER_POLICY" &&
-            sg.key !== "SMOKE_ALCOHOL" &&
-            sg.key !== "SMOKE" &&
-            sg.key !== "ALCOHOL"
-        );
-
-        const standardOrder = ["CURFEW", "VISITOR_POLICY", "PET_POLICY", "SMOKING_POLICY", "ALCOHOL_POLICY"];
-        const sortedDbGroups = [...dbGroups].sort((a: any, b: any) => {
-          const idxA = standardOrder.indexOf((a.key || "").toUpperCase());
-          const idxB = standardOrder.indexOf((b.key || "").toUpperCase());
-          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-          if (idxA !== -1) return -1;
-          if (idxB !== -1) return 1;
-          return (a.displayOrder || 99) - (b.displayOrder || 99);
-        });
-
-        const validRuleSubGroups: any[] = [];
-        sortedDbGroups.forEach((sg: any) => {
-          const keyUpper = (sg.key || "").toUpperCase().trim();
-          const matchingAttrs = attributes.filter((attr: any) => {
-            if (!attr.isActive) return false;
-            if ((attr.subGroupKey || "").toUpperCase().trim() !== keyUpper) return false;
-
-            if (keyUpper === "VISITOR_POLICY" && isSingleGenderProperty) {
-              const nameLower = (attr.name || "").toLowerCase();
-              if (nameLower.includes("restricted")) return false;
-            }
-
-            const rawTypes = attr.propertyTypeNames || attr.propertyTypes || attr.propertyTypeIds || [];
-            if (!attr.isUniversal && rawTypes && rawTypes.length > 0) {
-              const match = rawTypes.some((pt: any) => {
-                const pName = (pt.name || pt || "").toString().toLowerCase().trim();
-                return pName.includes(selectedProp) || selectedProp.includes(pName);
-              });
-              if (!match) return false;
-            }
-            return attr.isUniversal ?? true;
-          });
-
-          if (matchingAttrs.length > 0) {
-            validRuleSubGroups.push({ sg, attrs: matchingAttrs });
-          }
-        });
-
-        const currentGroupObj = validRuleSubGroups[rulesSubStep - 1];
-        if (currentGroupObj) {
-          const { sg, attrs } = currentGroupObj;
-          isCurrentSubStepValid = attrs.some(
-            (attr: any) =>
-              rulesSelected.includes(attr.name) ||
-              rulesSelected.includes(attr.id) ||
-              rulesSelected.includes(String(attr.id)) ||
-              (sg.key === "PET_POLICY" && watch("petPolicy") === attr.id) ||
-              (sg.key === "VISITOR_POLICY" && watch("visitorPolicy") === attr.id)
-          );
-        } else {
-          isCurrentSubStepValid = rulesSelected.length > 0;
-        }
-      }
-
-      if (!isCurrentSubStepValid) {
+      if (!isRulesSubStepValid) {
         setRulesValidationError(true);
         contentBodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
         return;
@@ -825,6 +744,7 @@ export default function SearchModal({
             showValidationError={rulesValidationError}
             onClearValidationError={() => setRulesValidationError(false)}
             onLoadingChange={setIsStepLoading}
+            onSubStepValidChange={(isValid) => setIsRulesSubStepValid(isValid)}
           />
         );
 
