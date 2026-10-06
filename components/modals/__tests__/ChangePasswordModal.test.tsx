@@ -68,17 +68,22 @@ describe('ChangePasswordModal Component', () => {
   const mockSuccess = jest.fn();
   const mockError = jest.fn();
 
+  const originalLocation = window.location;
+
+  beforeAll(() => {
+    delete (window as any).location;
+    window.location = { ...originalLocation, reload: jest.fn() } as any;
+  });
+
+  afterAll(() => {
+    window.location = originalLocation;
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     (useResponsiveToast as jest.Mock).mockReturnValue({
       success: mockSuccess,
       error: mockError,
-    });
-    
-    // Mock window.location.reload
-    Object.defineProperty(window, 'location', {
-      writable: true,
-      value: { reload: jest.fn() },
     });
   });
 
