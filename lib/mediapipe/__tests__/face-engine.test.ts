@@ -68,7 +68,6 @@ describe("FaceEngine", () => {
 
     it("fails if eyes are closed", async () => {
       const video = createMockVideo();
-      mockObjectDetector.detect.mockReturnValue({ detections: [] });
       
       // Perfectly centered face
       const landmarks = Array(300).fill({ x: 0.5, y: 0.5 });
