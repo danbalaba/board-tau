@@ -71,11 +71,14 @@ describe('ChangePasswordModal Component', () => {
   const originalLocation = window.location;
 
   beforeAll(() => {
-    delete (window as any).location;
-    window.location = { ...originalLocation, reload: jest.fn() } as any;
+    // @ts-ignore
+    delete window.location;
+    // @ts-ignore
+    window.location = { ...originalLocation, reload: jest.fn() };
   });
 
   afterAll(() => {
+    // @ts-ignore
     window.location = originalLocation;
   });
 
