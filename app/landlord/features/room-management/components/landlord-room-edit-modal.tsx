@@ -1271,7 +1271,6 @@ export const LandlordRoomEditModal: React.FC<LandlordRoomEditModalProps> = ({
                                    : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700 hover:border-primary/40"
                                )}
                              >
-                                <CatIcon size={14} />
                                 <span>{cat.label}</span>
                                 {selectedCount > 0 && (
                                   <span className={cn(
@@ -1314,9 +1313,14 @@ export const LandlordRoomEditModal: React.FC<LandlordRoomEditModalProps> = ({
                                      {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3.5px]" />}
                                    </div>
                                    <Icon size={16} className={cn("shrink-0 transition-colors", isSelected ? "text-primary" : "text-gray-400 group-hover:text-primary")} />
-                                   <span className={cn("text-xs font-bold flex-1 transition-colors leading-snug line-clamp-2 uppercase tracking-wide", isSelected ? "text-primary dark:text-white font-extrabold" : "text-gray-700 dark:text-gray-300")}>
+                                    <div className="min-w-0 flex-1">
+                                   <span className={cn("text-xs font-bold transition-colors leading-snug line-clamp-2 uppercase tracking-wide block truncate", isSelected ? "text-primary dark:text-white font-extrabold" : "text-gray-700 dark:text-gray-300")}>
                                      {amenity.name}
                                    </span>
+                                      {amenity.description && (
+                                        <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mt-0.5 leading-tight truncate">{amenity.description}</p>
+                                      )}
+                                    </div>
                                 </button>
                               );
                           })}

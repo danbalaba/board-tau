@@ -403,7 +403,10 @@ export default function PropertyConfigStep({
   }, [activeRuleTab, checkRuleSubGroupHasSelection]);
 
   const handleAttributeToggle = (attr: any) => {
-    const isSingleSelect = SINGLE_SELECT_RULE_SUBGROUPS.includes(attr.subGroupKey);
+    const isSingleSelect = attr.type === 'RULE' || 
+      SINGLE_SELECT_RULE_SUBGROUPS.includes(attr.subGroupKey) || 
+      ruleSubGroups.some(sg => normalizeSubGroupKey(sg.key) === normalizeSubGroupKey(attr.subGroupKey)) ||
+      dbSubGroups.some((sg: any) => sg.type === 'RULE' && normalizeSubGroupKey(sg.key) === normalizeSubGroupKey(attr.subGroupKey));
     const currentAmenitiesArr: string[] = Array.isArray(getValues('propertyConfig.amenities'))
       ? getValues('propertyConfig.amenities')
       : Array.isArray(selectedAmenities)
@@ -411,10 +414,10 @@ export default function PropertyConfigStep({
       : [];
 
     const groupAttrIds = dynamicAttributes
-      .filter(a => a.subGroupKey === attr.subGroupKey)
+      .filter(a => normalizeSubGroupKey(a.subGroupKey) === normalizeSubGroupKey(attr.subGroupKey))
       .map(a => a.id);
     const groupAttrNames = dynamicAttributes
-      .filter(a => a.subGroupKey === attr.subGroupKey)
+      .filter(a => normalizeSubGroupKey(a.subGroupKey) === normalizeSubGroupKey(attr.subGroupKey))
       .map(a => a.name);
 
     let newAmenities: string[] = [];
@@ -1394,7 +1397,6 @@ export default function PropertyConfigStep({
                           : 'bg-gray-50 dark:bg-gray-800/40 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50'
                       }`}
                     >
-                      <Icon size={14} className="shrink-0" />
                       <span>{sg.label}</span>
                       {!isUnlocked && <Lock size={10} className="ml-1 opacity-60 shrink-0" />}
                     </button>
@@ -1434,11 +1436,16 @@ export default function PropertyConfigStep({
                           }`}>
                             <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                           </div>
-                          <span className={`text-[12px] sm:text-xs font-bold leading-tight line-clamp-2 min-w-0 ${
-                            isSelected ? 'text-blue-600 dark:text-blue-300 font-extrabold' : 'text-gray-800 dark:text-gray-200'
-                          }`}>
-                            {attr.name}
-                          </span>
+                          <div className="min-w-0 flex-1">
+                            <h4 className={`text-xs font-black uppercase tracking-wider truncate ${
+                              isSelected ? 'text-blue-600 dark:text-blue-300 font-extrabold' : 'text-gray-900 dark:text-white'
+                            }`}>
+                              {attr.name}
+                            </h4>
+                            {attr.description && (
+                              <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mt-0.5 leading-tight truncate">{attr.description}</p>
+                            )}
+                          </div>
                         </div>
 
                         <div className={`w-5 h-5 sm:w-5 sm:h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
@@ -1506,7 +1513,6 @@ export default function PropertyConfigStep({
                           : 'bg-gray-50 dark:bg-gray-800/40 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50'
                       }`}
                     >
-                      <Icon size={14} className="shrink-0" />
                       <span>{sg.label}</span>
                       {!isUnlocked && <Lock size={10} className="ml-1 opacity-60 shrink-0" />}
                     </button>
@@ -1539,7 +1545,10 @@ export default function PropertyConfigStep({
                     .map(attr => {
                       const isSelected = selectedAmenities.includes(attr.id) || selectedAmenities.includes(String(attr.id)) || selectedAmenities.includes(attr.name);
                       const Icon = getSafeLucideIcon(attr.icon, Shield);
-                      const isSingleSelect = SINGLE_SELECT_RULE_SUBGROUPS.includes(attr.subGroupKey);
+                      const isSingleSelect = attr.type === 'RULE' || 
+                        SINGLE_SELECT_RULE_SUBGROUPS.includes(attr.subGroupKey) || 
+                        ruleSubGroups.some(sg => normalizeSubGroupKey(sg.key) === normalizeSubGroupKey(attr.subGroupKey)) ||
+                        dbSubGroups.some((sg: any) => sg.type === 'RULE' && normalizeSubGroupKey(sg.key) === normalizeSubGroupKey(attr.subGroupKey));
 
                       return (
                         <div
@@ -1642,7 +1651,6 @@ export default function PropertyConfigStep({
                           : 'bg-gray-50 dark:bg-gray-800/40 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50'
                       }`}
                     >
-                      <Icon size={14} className="shrink-0" />
                       <span>{sg.label}</span>
                       {!isUnlocked && <Lock size={10} className="ml-1 opacity-60 shrink-0" />}
                     </button>
@@ -1673,11 +1681,16 @@ export default function PropertyConfigStep({
                           }`}>
                             <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                           </div>
-                          <span className={`text-[12px] sm:text-xs font-bold leading-tight line-clamp-2 min-w-0 ${
-                            isSelected ? 'text-amber-600 dark:text-amber-300 font-extrabold' : 'text-gray-800 dark:text-gray-200'
-                          }`}>
-                            {attr.name}
-                          </span>
+                          <div className="min-w-0 flex-1">
+                            <h4 className={`text-xs font-black uppercase tracking-wider truncate ${
+                              isSelected ? 'text-amber-600 dark:text-amber-300 font-extrabold' : 'text-gray-900 dark:text-white'
+                            }`}>
+                              {attr.name}
+                            </h4>
+                            {attr.description && (
+                              <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mt-0.5 leading-tight truncate">{attr.description}</p>
+                            )}
+                          </div>
                         </div>
 
                         <div className={`w-5 h-5 sm:w-5 sm:h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
