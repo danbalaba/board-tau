@@ -68,7 +68,7 @@ describe('useWalkInModal', () => {
   it('initializes at step 1', () => {
     const { result } = renderHook(() => useWalkInModal('landlord-1', mockOnSuccess, mockOnClose));
     expect(result.current.currentStep).toBe(1);
-    expect(result.current.totalSteps).toBe(6);
+    expect(result.current.totalSteps).toBe(4);
   });
 
   it('navigates forward when step is completed and valid', async () => {

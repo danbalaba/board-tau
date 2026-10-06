@@ -237,6 +237,7 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
         // Force immediate notification sync
         queryClient.invalidateQueries({ queryKey: ["landlord-notifications"] });
         router.refresh();
+        success(`Reservation status updated to ${status}.`);
       } else {
         const data = await response.json();
         toastError(data.error || `Failed to update status.`);
@@ -251,7 +252,7 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
     } finally {
       setUpdatingId(null);
     }
-  }, [reservations, router, queryClient, toastError]);
+  }, [reservations, router, queryClient, success, toastError]);
 
   const handleGenerateReport = async (dateRange?: DateRange) => {
     try {

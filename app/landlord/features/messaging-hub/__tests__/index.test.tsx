@@ -6,7 +6,10 @@ import { useSearchParams } from 'next/navigation';
 
 // Mock dependencies
 jest.mock('next/navigation', () => ({
-  useSearchParams: jest.fn(() => ({ get: jest.fn() }))
+  useRouter: jest.fn(() => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() })),
+  useSearchParams: jest.fn(() => ({ get: jest.fn() })),
+  usePathname: jest.fn(() => '/landlord/messaging-hub'),
+  useParams: jest.fn(() => ({})),
 }));
 
 jest.mock('../hooks/use-messaging-hub', () => ({

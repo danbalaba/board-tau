@@ -35,7 +35,7 @@ describe('SearchManager', () => {
     render(<SearchManager />);
     
     expect(screen.getByTestId('modal')).toBeInTheDocument();
-    expect(screen.getByTestId('modal-trigger')).toBeInTheDocument();
+    expect(screen.getAllByTestId('modal-trigger')[0]).toBeInTheDocument();
     
     // Desktop labels (rendered multiple times due to mobile/desktop layouts)
     expect(screen.getAllByText('Anywhere').length).toBeGreaterThan(0);

@@ -31,6 +31,11 @@ export const getSafeImageSrcString = (image: string | null | undefined): string 
   
   const trimmed = image.trim();
   const lower = trimmed.toLowerCase();
+
+  if (trimmed.includes('<') || trimmed.includes('>') || trimmed.includes('"') || trimmed.includes("'") || lower.includes('javascript:')) {
+    return '';
+  }
+
   const isSafeProtocol = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('blob:');
   const isRelative = trimmed.startsWith('/');
 

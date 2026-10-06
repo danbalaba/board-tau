@@ -26,10 +26,9 @@ describe("PaymentStep", () => {
     setup();
 
     // Check titles
-    expect(screen.getByText("Credit/Debit Card (Stripe)")).toBeInTheDocument();
-    // Fixed the intentional error for the final green screenshot!
-    expect(screen.getByText("GCash")).toBeInTheDocument();
-    expect(screen.getByText("Maya")).toBeInTheDocument();
+    expect(screen.getByText("Credit / Debit Card")).toBeInTheDocument();
+    expect(screen.getByText("GCash Mobile Wallet")).toBeInTheDocument();
+    expect(screen.getByText("Maya Wallet")).toBeInTheDocument();
 
     // Check radio buttons are passed to register
     const radioButtons = screen.getAllByRole("radio");
@@ -43,10 +42,10 @@ describe("PaymentStep", () => {
 
     // Since our styling relies on classNames matching a condition, we can test that the GCash label
     // gets the active classes ('bg-primary/5')
-    const gcashLabel = screen.getByText("GCash").closest("label");
+    const gcashLabel = screen.getByText("GCash Mobile Wallet").closest("label");
     expect(gcashLabel).toHaveClass("bg-primary/5");
 
-    const stripeLabel = screen.getByText("Credit/Debit Card (Stripe)").closest("label");
+    const stripeLabel = screen.getByText("Credit / Debit Card").closest("label");
     expect(stripeLabel).not.toHaveClass("bg-primary/5");
   });
 

@@ -64,6 +64,7 @@ describe('AvailableRoomsSection', () => {
       availableSlots: 1,
       images: [],
       roomType: 'SOLO',
+      roomTypeDefinition: { name: 'Private Solo Rooms' },
       status: 'AVAILABLE',
       reservationFee: 500,
     },
@@ -75,6 +76,7 @@ describe('AvailableRoomsSection', () => {
       availableSlots: 4,
       images: [],
       roomType: 'BEDSPACE',
+      roomTypeDefinition: { name: 'Shared Bedspaces' },
       status: 'AVAILABLE',
       reservationFee: 500,
     },
@@ -86,13 +88,14 @@ describe('AvailableRoomsSection', () => {
       availableSlots: 0,
       images: [],
       roomType: 'SOLO',
+      roomTypeDefinition: { name: 'Private Solo Rooms' },
       status: 'UNAVAILABLE',
       reservationFee: 500,
     },
-    { id: '4', name: 'Solo 4', price: 2000, capacity: 1, availableSlots: 1, images: [], roomType: 'SOLO', status: 'AVAILABLE', reservationFee: 500 },
-    { id: '5', name: 'Solo 5', price: 2000, capacity: 1, availableSlots: 1, images: [], roomType: 'SOLO', status: 'AVAILABLE', reservationFee: 500 },
-    { id: '6', name: 'Solo 6', price: 2000, capacity: 1, availableSlots: 1, images: [], roomType: 'SOLO', status: 'AVAILABLE', reservationFee: 500 },
-    { id: '7', name: 'Solo 7', price: 2000, capacity: 1, availableSlots: 1, images: [], roomType: 'SOLO', status: 'AVAILABLE', reservationFee: 500 },
+    { id: '4', name: 'Solo 4', price: 2000, capacity: 1, availableSlots: 1, images: [], roomType: 'SOLO', roomTypeDefinition: { name: 'Private Solo Rooms' }, status: 'AVAILABLE', reservationFee: 500 },
+    { id: '5', name: 'Solo 5', price: 2000, capacity: 1, availableSlots: 1, images: [], roomType: 'SOLO', roomTypeDefinition: { name: 'Private Solo Rooms' }, status: 'AVAILABLE', reservationFee: 500 },
+    { id: '6', name: 'Solo 6', price: 2000, capacity: 1, availableSlots: 1, images: [], roomType: 'SOLO', roomTypeDefinition: { name: 'Private Solo Rooms' }, status: 'AVAILABLE', reservationFee: 500 },
+    { id: '7', name: 'Solo 7', price: 2000, capacity: 1, availableSlots: 1, images: [], roomType: 'SOLO', roomTypeDefinition: { name: 'Private Solo Rooms' }, status: 'AVAILABLE', reservationFee: 500 },
   ];
 
   const defaultProps = {
@@ -117,21 +120,21 @@ describe('AvailableRoomsSection', () => {
   it('renders tabs based on available room types', () => {
     render(<AvailableRoomsSection {...defaultProps} />);
     
-    expect(screen.getByText('Private Solo Rooms')).toBeInTheDocument();
-    expect(screen.getByText('Shared Bedspaces')).toBeInTheDocument();
+    expect(screen.getAllByText('Private Solo Rooms')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Shared Bedspaces')[0]).toBeInTheDocument();
   });
 
-  it('shows only solo rooms by default (since they exist)', () => {
+  it('shows all rooms by default when tab is ALL', () => {
     render(<AvailableRoomsSection {...defaultProps} />);
     
     expect(screen.getByText('Solo 1')).toBeInTheDocument();
-    expect(screen.queryByText('Bedspace 1')).not.toBeInTheDocument();
+    expect(screen.getByText('Bedspace 1')).toBeInTheDocument();
   });
 
   it('switches to bedspace tab', () => {
     render(<AvailableRoomsSection {...defaultProps} />);
     
-    fireEvent.click(screen.getByText('Shared Bedspaces'));
+    fireEvent.click(screen.getByRole('button', { name: /Shared Bedspaces/i }));
     
     expect(screen.getByText('Bedspace 1')).toBeInTheDocument();
     expect(screen.queryByText('Solo 1')).not.toBeInTheDocument();

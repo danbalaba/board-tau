@@ -17,7 +17,7 @@ jest.mock('@/components/common/ResponsiveToast', () => ({
 
 jest.mock('@/lib/pusher-client', () => ({
   pusherClient: {
-    subscribe: jest.fn(() => ({ bind: jest.fn() })),
+    subscribe: jest.fn(() => ({ bind: jest.fn(), unbind: jest.fn() })),
     unsubscribe: jest.fn(),
   },
 }));

@@ -15,6 +15,13 @@ jest.mock('@/hooks/useIsClient', () => ({
   useIsClient: () => true
 }));
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => '/',
+  useParams: () => ({}),
+}));
+
 jest.mock('framer-motion', () => {
   const React = require('react');
   return {

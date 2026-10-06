@@ -44,6 +44,18 @@ jest.mock('framer-motion', () => ({
     }),
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
+  useMotionValue: (val: any) => {
+    const React = require('react');
+    const ref = React.useRef(null);
+    if (!ref.current) {
+      ref.current = {
+        get: jest.fn(() => val),
+        set: jest.fn(),
+        onChange: jest.fn(),
+      };
+    }
+    return ref.current;
+  },
 }));
 
 describe('FloatingMessagingWidget', () => {

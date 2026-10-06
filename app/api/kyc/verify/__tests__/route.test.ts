@@ -5,6 +5,12 @@ import { POST } from "../route";
 
 const mockSend = jest.fn();
 
+jest.mock("next-auth", () => ({
+  getServerSession: jest.fn().mockResolvedValue({
+    user: { id: "test-user-id", name: "Test User", email: "test@example.com" },
+  }),
+}));
+
 jest.mock("@aws-sdk/client-rekognition", () => {
   return {
     RekognitionClient: jest.fn().mockImplementation(() => ({
@@ -60,13 +66,13 @@ describe("KYC Verify API Route (/api/kyc/verify)", () => {
 
     mockSend
       .mockResolvedValueOnce({
-        FaceMatches: [{ Similarity: 95.5 }],
-      })
-      .mockResolvedValueOnce({
         TextDetections: [
           { DetectedText: "REPUBLIC OF THE PHILIPPINES" },
           { DetectedText: "DRIVER LICENSE" },
         ],
+      })
+      .mockResolvedValueOnce({
+        FaceMatches: [{ Similarity: 95.5 }],
       });
 
     const req = new Request("http://localhost/api/kyc/verify", {

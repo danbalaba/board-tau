@@ -300,6 +300,7 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
         setListings(prev => prev.map(i => i.id === inquiryId ? { ...i, status } : i));
         queryClient.invalidateQueries({ queryKey: ["landlord-notifications"] });
         router.refresh();
+        success(`Inquiry ${status.toLowerCase()} successfully.`);
       } else {
         toastError(`Failed to update status.`);
         setApprovalLoaderInquiry(null);
@@ -312,7 +313,7 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     } finally {
       setRespondingId(null);
     }
-  }, [listings, selectedInquiry, queryClient, router, toastError]);
+  }, [listings, selectedInquiry, queryClient, router, success, toastError]);
 
   const handleConfirmReject = useCallback(async (inquiryId: string, reason: string) => {
     await handleRespond(inquiryId, "REJECTED", reason);

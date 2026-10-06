@@ -6,6 +6,7 @@ import { SlideToConfirm } from '../slide-to-confirm';
 jest.mock('framer-motion', () => {
   const React = require('react');
   return {
+    animate: jest.fn(),
     motion: {
       div: React.forwardRef(({ children, onDragEnd, initial, animate, exit, drag, transition, whileHover, whileTap, whileDrag, whileFocus, whileInView, dragConstraints, dragElastic, dragMomentum, layoutId, layout, ...props }: any, ref: any) => {
         // Find if this is the draggable thumb by checking onDragEnd prop

@@ -17,7 +17,7 @@ describe('ListingPinCard Component', () => {
     title: 'Pin Listing',
     price: 2500,
     region: 'Tarlac',
-    rooms: [{ status: 'available' }],
+    rooms: [{ status: 'AVAILABLE' }],
   };
 
   beforeEach(() => {
@@ -40,7 +40,7 @@ describe('ListingPinCard Component', () => {
     expect(screen.getByText('Pin Listing')).toBeInTheDocument();
     expect(screen.getByText(/2,500/)).toBeInTheDocument();
     // Fixed: Room availability strings are correctly formatted
-    expect(screen.getByText(/1 room available/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 Units Available/i)).toBeInTheDocument();
   });
 
   it('calls onClose when close button is clicked', () => {

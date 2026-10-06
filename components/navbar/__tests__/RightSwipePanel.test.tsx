@@ -129,8 +129,7 @@ describe('RightSwipePanel Component', () => {
     
     render(<RightSwipePanel />);
     
-    expect(screen.getByText('Navigation')).toBeInTheDocument();
-    expect(screen.getByText('Home')).toBeInTheDocument();
+    expect(screen.getByText('Student Navigation')).toBeInTheDocument();
     expect(screen.getByText('Login')).toBeInTheDocument();
     expect(screen.getByText('Signup')).toBeInTheDocument();
   });
@@ -141,7 +140,7 @@ describe('RightSwipePanel Component', () => {
     render(<RightSwipePanel user={mockUser as any} />);
     
     expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('My favorites')).toBeInTheDocument();
+    expect(screen.getByText('Favorites')).toBeInTheDocument();
     expect(screen.getByText('Logout')).toBeInTheDocument();
   });
 
@@ -153,7 +152,7 @@ describe('RightSwipePanel Component', () => {
     // Timer makes it interactable
     act(() => { jest.advanceTimersByTime(500); });
     
-    const favBtn = screen.getByText('My favorites').closest('button');
+    const favBtn = screen.getByText('Favorites').closest('button');
     if (favBtn) fireEvent.click(favBtn);
     
     expect(mockOnClose).toHaveBeenCalled();

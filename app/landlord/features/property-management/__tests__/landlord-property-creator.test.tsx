@@ -51,7 +51,13 @@ jest.mock('../components/creator/ReviewStep', () => () => <div data-testid="step
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     back: jest.fn(),
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
   }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => '/',
+  useParams: () => ({}),
 }));
 
 jest.mock('framer-motion', () => ({

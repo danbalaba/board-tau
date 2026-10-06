@@ -19,6 +19,7 @@ describe('RoomTooltip', () => {
     availableSlots: 2,
     images: [],
     roomType: 'SOLO',
+    roomTypeDefinition: { name: 'Private Solo Room' },
     status: 'AVAILABLE',
     size: 15,
     amenities: ['Wifi', 'AC', 'Bed', 'Cabinet'],

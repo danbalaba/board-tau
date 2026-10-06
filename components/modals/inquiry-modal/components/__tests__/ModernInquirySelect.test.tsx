@@ -27,13 +27,13 @@ describe("ModernInquirySelect", () => {
     expect(screen.queryByText("Option 1")).not.toBeInTheDocument();
 
     // Click button to open
-    const button = screen.getByRole("button");
-    fireEvent.click(button);
+    const control = screen.getByRole("combobox");
+    fireEvent.keyDown(control, { key: "ArrowDown", keyCode: 40 });
     expect(screen.getByText("Option 1")).toBeInTheDocument();
     expect(screen.getByText("Option 2")).toBeInTheDocument();
 
-    // Click again to close
-    fireEvent.click(button);
+    // Click again or press Escape to close
+    fireEvent.keyDown(control, { key: "Escape", keyCode: 27 });
     await waitFor(() => {
       expect(screen.queryByText("Option 1")).not.toBeInTheDocument();
     });
@@ -44,7 +44,7 @@ describe("ModernInquirySelect", () => {
     render(<ModernInquirySelect options={options} value="" onChange={mockOnChange} />);
     
     // Open dropdown
-    fireEvent.click(screen.getByRole("button"));
+    fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown", keyCode: 40 });
     
     // Click option
     fireEvent.click(screen.getByText("Option 2"));
@@ -62,15 +62,16 @@ describe("ModernInquirySelect", () => {
     expect(screen.getByText("This is an error")).toBeInTheDocument();
   });
 
-  it("closes when clicking outside", async () => {
+  it("closes when blurring or escaping", async () => {
     render(<ModernInquirySelect options={options} value="" onChange={jest.fn()} />);
     
     // Open dropdown
-    fireEvent.click(screen.getByRole("button"));
+    const control = screen.getByRole("combobox");
+    fireEvent.keyDown(control, { key: "ArrowDown", keyCode: 40 });
     expect(screen.getByText("Option 1")).toBeInTheDocument();
 
-    // Click outside
-    fireEvent.mouseDown(document.body);
+    // Blur input
+    fireEvent.blur(control);
     await waitFor(() => {
       expect(screen.queryByText("Option 1")).not.toBeInTheDocument();
     });

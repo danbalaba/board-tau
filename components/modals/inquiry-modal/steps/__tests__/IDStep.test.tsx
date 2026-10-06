@@ -54,7 +54,7 @@ describe("IDStep Component", () => {
   it("renders the upload UI initially", () => {
     render(<IDStep {...defaultProps} />);
 
-    expect(screen.getByText("Step 2: Upload Your ID Card")).toBeInTheDocument();
+    expect(screen.getByText("Step 6: Upload Government or School ID Card")).toBeInTheDocument();
     expect(screen.getByText("Take Photo")).toBeInTheDocument();
     expect(screen.getByText("Gallery")).toBeInTheDocument();
   });

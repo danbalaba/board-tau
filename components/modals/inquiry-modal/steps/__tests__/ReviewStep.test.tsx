@@ -36,7 +36,7 @@ describe("ReviewStep Component", () => {
   it("renders summary details correctly", () => {
     render(<ReviewStep {...defaultProps} />);
 
-    expect(screen.getByText("Final Summary & Review")).toBeInTheDocument();
+    expect(screen.getByText("Step 8: Final Summary & Review")).toBeInTheDocument();
     
     // Check In Date
     expect(screen.getByText(format(new Date("2023-12-25"), 'MMM dd, yyyy'))).toBeInTheDocument();
@@ -47,7 +47,7 @@ describe("ReviewStep Component", () => {
     // Reservation Fee calculation (1000 * 1 = 1000)
     // It appears twice: once in the total, once in the calculation breakdown
     expect(screen.getAllByText(/₱ 1,000/)).toHaveLength(2);
-    expect(screen.getByText(/1 occupants/)).toBeInTheDocument();
+    expect(screen.getByText(/1 Person/)).toBeInTheDocument();
   });
 
   it("calculates Solo Buyout fee correctly", () => {

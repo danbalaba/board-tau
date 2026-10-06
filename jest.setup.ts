@@ -86,6 +86,19 @@ if (typeof window !== 'undefined') {
       createImageData: jest.fn(),
       setTransform: jest.fn(),
       drawFocusIfNeeded: jest.fn(),
+      clearRect: jest.fn(),
+      fillRect: jest.fn(),
+      strokeRect: jest.fn(),
+      fillText: jest.fn(),
+      stroke: jest.fn(),
+      beginPath: jest.fn(),
+      arc: jest.fn(),
+      fill: jest.fn(),
+      save: jest.fn(),
+      restore: jest.fn(),
+      translate: jest.fn(),
+      rotate: jest.fn(),
+      scale: jest.fn(),
       canvas: {},
     })) as any;
   }
@@ -131,7 +144,7 @@ jest.mock('@/lib/redis', () => ({
 
 // Global jsPDF & contract PDF generator mock to prevent ESM parsing errors in tests
 jest.mock('jspdf', () => {
-  return jest.fn().mockImplementation(() => ({
+  const MockJsPDF = jest.fn().mockImplementation(() => ({
     addImage: jest.fn(),
     setFontSize: jest.fn(),
     setFont: jest.fn(),
@@ -143,10 +156,18 @@ jest.mock('jspdf', () => {
     setFillColor: jest.fn(),
     roundedRect: jest.fn(),
     rect: jest.fn(),
+    circle: jest.fn(),
+    splitTextToSize: jest.fn((text: string) => [text]),
+    getTextWidth: jest.fn().mockReturnValue(50),
     save: jest.fn(),
     output: jest.fn().mockReturnValue(new Blob()),
     lastAutoTable: { finalY: 100 }
   }));
+  return {
+    __esModule: true,
+    default: MockJsPDF,
+    jsPDF: MockJsPDF,
+  };
 });
 
 jest.mock('@/utils/contractPdfGenerator', () => ({
@@ -346,28 +367,54 @@ jest.mock('framer-motion', () => {
       stop: jest.fn(),
       set: jest.fn(),
     })),
-    useMotionValue: jest.fn((val: any) => ({
-      get: () => val,
-      set: jest.fn(),
-      onChange: jest.fn(),
-    })),
+    useMotionValue: (val: any) => {
+      const ref = React.useRef(null);
+      if (!ref.current) {
+        ref.current = {
+          get: () => val,
+          set: jest.fn(),
+          onChange: jest.fn(),
+        };
+      }
+      return ref.current;
+    },
     useMotionTemplate: (strings: any, ...values: any[]) => {
       if (Array.isArray(strings)) {
         return strings.reduce((acc, str, i) => acc + str + (values[i] ?? ''), '');
       }
       return '';
     },
-    useTransform: jest.fn((val: any) => ({
-      get: () => val,
-      onChange: jest.fn(),
-    })),
-    useSpring: jest.fn((val: any) => ({
-      get: () => val,
-      onChange: jest.fn(),
-    })),
+    useTransform: (val: any) => {
+      const ref = React.useRef(null);
+      if (!ref.current) {
+        ref.current = {
+          get: () => val,
+          onChange: jest.fn(),
+        };
+      }
+      return ref.current;
+    },
+    useSpring: (val: any) => {
+      const ref = React.useRef(null);
+      if (!ref.current) {
+        ref.current = {
+          get: () => val,
+          onChange: jest.fn(),
+        };
+      }
+      return ref.current;
+    },
     useInView: jest.fn(() => true),
     useScroll: jest.fn(() => ({ scrollY: { get: () => 0 }, scrollYProgress: { get: () => 0 } })),
-    useVelocity: jest.fn(() => ({ get: () => 0 })),
+    useVelocity: (val: any) => {
+      const ref = React.useRef(null);
+      if (!ref.current) {
+        ref.current = {
+          get: () => val,
+        };
+      }
+      return ref.current;
+    },
     useReducedMotion: jest.fn(() => false),
   };
 });
@@ -440,6 +487,80 @@ jest.mock('@/lib/taxonomyCache', () => ({
   fetchTaxonomyData: jest.fn(() => Promise.resolve({ attributes: [], subGroups: [] })),
   getTaxonomyDataSync: jest.fn(() => ({ attributes: [], subGroups: [] })),
   clearTaxonomyCache: jest.fn(),
+}));
+
+// Global next/navigation mock for component & hook tests
+jest.mock('next/navigation', () => ({
+  __esModule: true,
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
+  })),
+  useSearchParams: jest.fn(() => new URLSearchParams()),
+  usePathname: jest.fn(() => '/'),
+  useParams: jest.fn(() => ({})),
+}));
+
+// Global next-themes mock for component tests
+jest.mock('next-themes', () => ({
+  useTheme: jest.fn(() => ({
+    theme: 'light',
+    resolvedTheme: 'light',
+    setTheme: jest.fn(),
+  })),
+  ThemeProvider: ({ children }: any) => children,
+}));
+jest.mock('next-auth/react', () => ({
+  useSession: jest.fn(() => ({
+    data: { user: { id: 'test-user-id', name: 'Test Landlord', email: 'landlord@test.com', role: 'LANDLORD' } },
+    status: 'authenticated',
+  })),
+  SessionProvider: ({ children }: any) => children,
+  signIn: jest.fn(),
+  signOut: jest.fn(),
+}));
+
+// Global @edgestore/react mock to prevent ESM import syntax errors in tests
+jest.mock('@edgestore/react', () => ({
+  createEdgeStoreProvider: jest.fn(() => ({
+    EdgeStoreProvider: ({ children }: any) => children,
+    useEdgeStore: jest.fn(() => ({
+      edgestore: {
+        publicFiles: {
+          upload: jest.fn().mockResolvedValue({ url: 'https://files.edgestore.dev/test.png' }),
+          confirmUpload: jest.fn().mockResolvedValue({}),
+          delete: jest.fn().mockResolvedValue({}),
+        },
+      },
+    })),
+  })),
+  useEdgeStore: jest.fn(() => ({
+    edgestore: {
+      publicFiles: {
+        upload: jest.fn().mockResolvedValue({ url: 'https://files.edgestore.dev/test.png' }),
+        confirmUpload: jest.fn().mockResolvedValue({}),
+        delete: jest.fn().mockResolvedValue({}),
+      },
+    },
+  })),
+}));
+
+// Global pusher-client mock for real-time subscription hooks in tests
+jest.mock('@/lib/pusher-client', () => ({
+  pusherClient: {
+    subscribe: jest.fn(() => ({
+      bind: jest.fn(),
+      unbind: jest.fn(),
+      unbind_all: jest.fn(),
+    })),
+    unsubscribe: jest.fn(),
+    bind: jest.fn(),
+    unbind: jest.fn(),
+  },
 }));
 
 

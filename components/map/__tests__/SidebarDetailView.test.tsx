@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import SidebarDetailView from '../SidebarDetailView';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock Swiper CSS
 jest.mock('swiper/css', () => ({}), { virtual: true });
@@ -32,27 +33,36 @@ describe('SidebarDetailView Component', () => {
     rules: { femaleOnly: true },
   };
 
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+
+  const renderWithProviders = (ui: React.ReactElement) => {
+    return render(
+      <QueryClientProvider client={queryClient}>
+        {ui}
+      </QueryClientProvider>
+    );
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('renders listing details correctly', () => {
-    render(<SidebarDetailView listing={mockListing} onBack={mockOnBack} />);
+    renderWithProviders(<SidebarDetailView listing={mockListing} onBack={mockOnBack} />);
     
     expect(screen.getByText('Test Listing')).toBeInTheDocument();
     expect(screen.getByText('1,500')).toBeInTheDocument(); // Format price
     expect(screen.getByText('Test Host')).toBeInTheDocument();
-    // Fixed: Nested JSON rules and features are correctly parsed and rendered
     expect(screen.getByText('Strictly Female Only')).toBeInTheDocument();
     expect(screen.getByText(/CCTV/i)).toBeInTheDocument();
   });
 
   it('calls onBack when back button is clicked', () => {
-    render(<SidebarDetailView listing={mockListing} onBack={mockOnBack} />);
+    renderWithProviders(<SidebarDetailView listing={mockListing} onBack={mockOnBack} />);
     
-    // The back button is the first button inside the top nav
     const buttons = screen.getAllByRole('button');
-    // Actually wait, let's find it by the lucide icon or just click the first button
     fireEvent.click(buttons[0]);
     expect(mockOnBack).toHaveBeenCalled();
   });

@@ -6,7 +6,10 @@ import { useRegisterActions } from 'kbar';
 import { useInquiryLogic } from '../hooks/use-inquiry-logic';
 
 jest.mock('next/navigation', () => ({
-  useSearchParams: jest.fn()
+  useRouter: jest.fn(() => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() })),
+  useSearchParams: jest.fn(() => ({ get: jest.fn() })),
+  usePathname: jest.fn(() => '/landlord/inquiry-center'),
+  useParams: jest.fn(() => ({})),
 }));
 
 jest.mock('kbar', () => ({
@@ -114,8 +117,8 @@ describe('LandlordInquiryCenter', () => {
       ...mockLogicReturn,
       isLoading: true
     });
-    render(<LandlordInquiryCenter inquiries={mockInquiriesData} />);
-    expect(screen.getByText('Syncing Inquiries')).toBeInTheDocument();
+    const { container } = render(<LandlordInquiryCenter inquiries={mockInquiriesData} />);
+    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 
   it('renders empty state when there are no filtered inquiries', () => {

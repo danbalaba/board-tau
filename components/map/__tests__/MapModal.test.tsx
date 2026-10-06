@@ -4,6 +4,7 @@ import MapModal from '../MapModal';
 import { useSession } from 'next-auth/react';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { useRecentStore } from '@/hooks/use-recent-store';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 jest.mock('next-auth/react', () => ({
   useSession: jest.fn(),
@@ -65,6 +66,18 @@ describe('MapModal Component', () => {
   const mockToastError = jest.fn();
   const mockAddRecentListing = jest.fn();
 
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+
+  const renderWithProviders = (ui: React.ReactElement) => {
+    return render(
+      <QueryClientProvider client={queryClient}>
+        {ui}
+      </QueryClientProvider>
+    );
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     (useSession as jest.Mock).mockReturnValue({ data: null, status: 'unauthenticated' });
@@ -73,27 +86,25 @@ describe('MapModal Component', () => {
   });
 
   it('does not render when isOpen is false', () => {
-    const { container } = render(<MapModal isOpen={false} onClose={mockOnClose} listings={mockListings} />);
+    const { container } = renderWithProviders(<MapModal isOpen={false} onClose={mockOnClose} listings={mockListings} />);
     expect(container.firstChild).toBeNull();
   });
 
   it('renders correctly when isOpen is true', () => {
-    render(<MapModal isOpen={true} onClose={mockOnClose} listings={mockListings} />);
+    renderWithProviders(<MapModal isOpen={true} onClose={mockOnClose} listings={mockListings} />);
     expect(screen.getByTestId('mock-map-action-sidebar')).toBeInTheDocument();
-    // activeView is "none" by default now, so list view is not shown initially
     expect(screen.queryByTestId('mock-sidebar-list-view')).not.toBeInTheDocument();
     expect(screen.getByTestId('mock-interactive-map')).toBeInTheDocument();
   });
 
   it('calls onClose when escape key is pressed', () => {
-    render(<MapModal isOpen={true} onClose={mockOnClose} listings={mockListings} />);
+    renderWithProviders(<MapModal isOpen={true} onClose={mockOnClose} listings={mockListings} />);
     fireEvent.keyDown(window, { key: 'Escape' });
-    // Fixed: Escape key listener is properly bound and handles close actions
     expect(mockOnClose).toHaveBeenCalled();
   });
 
   it('requires auth to view saved listings', () => {
-    render(<MapModal isOpen={true} onClose={mockOnClose} listings={mockListings} />);
+    renderWithProviders(<MapModal isOpen={true} onClose={mockOnClose} listings={mockListings} />);
     fireEvent.click(screen.getByText('Saved'));
     
     expect(mockToastError).toHaveBeenCalled();
@@ -103,7 +114,7 @@ describe('MapModal Component', () => {
 
   it('shows saved view if authenticated', () => {
     (useSession as jest.Mock).mockReturnValue({ data: { user: { id: '1' } }, status: 'authenticated' });
-    render(<MapModal isOpen={true} onClose={mockOnClose} listings={mockListings} />);
+    renderWithProviders(<MapModal isOpen={true} onClose={mockOnClose} listings={mockListings} />);
     
     fireEvent.click(screen.getByText('Saved'));
     
