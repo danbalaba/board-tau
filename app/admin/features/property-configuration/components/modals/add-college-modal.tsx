@@ -36,6 +36,7 @@ import { formatCleanTitle } from "@/utils/helper";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEdgeStore } from "@/lib/edgestore";
 import { sanitizeImgUrl } from "@/lib/security/sanitize";
+import { clearCollegesCache } from "@/lib/landlordTaxonomyCache";
 
 import MapLoadingState from "@/components/common/MapLoadingState";
 
@@ -73,7 +74,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
   const queryClient = useQueryClient();
   const { edgestore } = useEdgeStore();
   
-  const { data: fetchedColleges } = useColleges();
+  const { data: fetchedColleges } = useColleges({ includeDisabled: true });
 
   const combinedPresets = useMemo(() => {
     const listSource = (existingColleges && existingColleges.length > 0)
@@ -362,6 +363,7 @@ export const AddCollegeModal: React.FC<AddCollegeModalProps> = ({
         await axios.post("/api/colleges", payload);
         toast.success(`Landmark "${cleanCode}" added successfully!`);
       }
+      clearCollegesCache();
       queryClient.invalidateQueries({ queryKey: ["colleges"] });
       if (onSuccess) onSuccess();
       if (onCloseModal) onCloseModal();

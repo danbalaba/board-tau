@@ -7,6 +7,7 @@ import axios from "axios";
 import { Button } from "@/app/admin/components/ui/button";
 import { motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
+import { clearCollegesCache } from "@/lib/landlordTaxonomyCache";
 
 interface DeleteCollegeModalProps {
   college: {
@@ -36,6 +37,7 @@ export function DeleteCollegeModal({
 
       if (res.data?.success) {
         toast.success(`Campus landmark "${college.code || college.name}" deleted successfully.`);
+        clearCollegesCache();
         queryClient.invalidateQueries({ queryKey: ["colleges"] });
         if (onSuccess) onSuccess();
         onCloseModal?.();
