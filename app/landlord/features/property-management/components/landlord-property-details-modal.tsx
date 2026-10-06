@@ -81,6 +81,7 @@ import { Property } from '../hooks/use-property-logic';
 import SafeImage from '@/components/common/SafeImage';
 import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
 import { SharedAmenitiesModal } from '@/components/common/SharedAmenitiesModal';
+import { LandlordRoomDetailsModal } from '@/app/landlord/features/room-management/components/landlord-room-details-modal';
 import dynamic from 'next/dynamic';
 
 import { 
@@ -170,6 +171,7 @@ export function LandlordPropertyDetailsModal({
 
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'LOCATION' | 'CONFIG' | 'ROOMS' | 'IMAGES'>('OVERVIEW');
   const [selectedRoomIdx, setSelectedRoomIdx] = useState<number>(0);
+  const [selectedRoomForModal, setSelectedRoomForModal] = useState<any | null>(null);
   const [isMapFullscreenOpen, setIsMapFullscreenOpen] = useState<boolean>(false);
   const roomTabContainerRef = useRef<HTMLDivElement>(null);
 
@@ -300,6 +302,17 @@ export function LandlordPropertyDetailsModal({
     if (hasPrev && onNavigate) {
       onNavigate(properties[currentIndex - 1]);
       if (container) container.scrollTop = 0;
+    }
+  };
+
+  const handleNavigateModalRoom = (direction: 'prev' | 'next') => {
+    if (!selectedRoomForModal || !roomsList || roomsList.length === 0) return;
+    const currentIdx = roomsList.findIndex((r: any) => (r.id && selectedRoomForModal.id ? r.id === selectedRoomForModal.id : r === selectedRoomForModal));
+    if (currentIdx === -1) return;
+    if (direction === 'prev' && currentIdx > 0) {
+      setSelectedRoomForModal(roomsList[currentIdx - 1]);
+    } else if (direction === 'next' && currentIdx < roomsList.length - 1) {
+      setSelectedRoomForModal(roomsList[currentIdx + 1]);
     }
   };
 
@@ -1358,13 +1371,28 @@ export function LandlordPropertyDetailsModal({
                                             </div>
                                           </div>
 
-                                          <div className="text-left sm:text-right bg-primary/5 sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none w-full sm:w-auto border border-primary/10 sm:border-0">
-                                            <span className="text-xs sm:text-sm font-black text-primary uppercase block">
-                                              ₱{Number(room.price || property.price || 0).toLocaleString()}/mo {isFlatRate ? '(Whole Unit)' : '(per Head)'}
-                                            </span>
-                                            {room.reservationFee && (
-                                              <span className="text-[9px] font-bold text-gray-400 uppercase block mt-0.5">₱{Number(room.reservationFee).toLocaleString()} Reservation Fee</span>
-                                            )}
+                                          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedRoomForModal(room);
+                                              }}
+                                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 hover:bg-primary text-primary hover:text-white border border-primary/30 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm shrink-0"
+                                              title="Open full unit dashboard modal"
+                                            >
+                                              <ExternalLink size={12} />
+                                              <span>View / Manage Unit</span>
+                                            </button>
+
+                                            <div className="text-left sm:text-right bg-primary/5 sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none border border-primary/10 sm:border-0">
+                                              <span className="text-xs sm:text-sm font-black text-primary uppercase block">
+                                                ₱{Number(room.price || property.price || 0).toLocaleString()}/mo {isFlatRate ? '(Whole Unit)' : '(per Head)'}
+                                              </span>
+                                              {room.reservationFee && (
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase block mt-0.5">₱{Number(room.reservationFee).toLocaleString()} Reservation Fee</span>
+                                              )}
+                                            </div>
                                           </div>
                                         </div>
 
@@ -1427,6 +1455,47 @@ export function LandlordPropertyDetailsModal({
                                             <span className="text-[11px] font-bold text-gray-400 italic">No in-unit features selected</span>
                                           )}
                                         </div>
+
+                                        {/* Room Unit Photos Grid */}
+                                        {(() => {
+                                          const roomPhotos: string[] = Array.isArray(room.images)
+                                            ? room.images.map((img: any) => typeof img === 'string' ? img : (img?.url || img?.src)).filter(Boolean)
+                                            : (room.imageSrc || room.image) ? [room.imageSrc || room.image] : [];
+
+                                          return (
+                                            <div className="space-y-3 pt-2 border-t border-gray-200/50 dark:border-gray-700/50">
+                                              <span className="text-[10px] font-black uppercase tracking-wider text-gray-900 dark:text-white flex items-center gap-1.5">
+                                                <Camera size={13} className="text-primary" />
+                                                <span>Unit Photos ({roomPhotos.length})</span>
+                                              </span>
+
+                                              {roomPhotos.length > 0 ? (
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                                  {roomPhotos.map((photoUrl: string, imgIdx: number) => (
+                                                    <button
+                                                      key={imgIdx}
+                                                      type="button"
+                                                      onClick={() => openGallery(roomPhotos, imgIdx, `${roomTypeName} Photos`)}
+                                                      className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 group cursor-pointer shadow-sm hover:shadow-md transition-all"
+                                                    >
+                                                      <SafeImage
+                                                        src={photoUrl}
+                                                        alt={`${roomTypeName} photo ${imgIdx + 1}`}
+                                                        fill
+                                                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                      />
+                                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                                        <Maximize2 size={16} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                                                      </div>
+                                                    </button>
+                                                  ))}
+                                                </div>
+                                              ) : (
+                                                <span className="text-[11px] font-bold text-gray-400 italic">No unit photos uploaded yet</span>
+                                              )}
+                                            </div>
+                                          );
+                                        })()}
 
                                         {/* Dynamic Bottom Room Navigation Buttons */}
                                         {roomsList.length > 1 && (
@@ -1699,6 +1768,15 @@ export function LandlordPropertyDetailsModal({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Room Details Modal */}
+      <LandlordRoomDetailsModal
+        isOpen={!!selectedRoomForModal}
+        room={selectedRoomForModal}
+        rooms={roomsList}
+        onClose={() => setSelectedRoomForModal(null)}
+        onNavigateRoom={handleNavigateModalRoom}
+      />
 
       {/* Shared Amenities, Rules & Features Full Breakdown Modal */}
       <SharedAmenitiesModal
