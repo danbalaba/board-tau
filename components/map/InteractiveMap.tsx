@@ -255,13 +255,15 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
   // Dedicated effect for dynamic college landmarks rendering
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !collegesData || collegesData.length === 0) return;
+    if (!map) return;
 
-    // Clear existing landmark markers to avoid duplicates
+    // Always clear existing landmark markers first
     landmarkMarkersRef.current.forEach((m) => {
       if (map.hasLayer(m)) map.removeLayer(m);
     });
     landmarkMarkersRef.current = [];
+
+    if (!collegesData || collegesData.length === 0) return;
 
     const dynamicLandmarks = collegesData.map((c: any) => ({
       id: c.code,
@@ -341,7 +343,7 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
       });
       landmarkMarkersRef.current.push(marker);
     });
-  }, [collegesData]);
+  }, [collegesData, resolvedTheme]);
 
   // Keep track of a temporary marker to show the starting point during Phase 2
   const tempSelectedMarkerRef = useRef<L.Marker | null>(null);

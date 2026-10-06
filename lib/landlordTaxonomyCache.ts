@@ -249,40 +249,51 @@ export async function getCachedSubGroups(forceFresh = false) {
 
 /**
  * 🎓 Fetches or retrieves cached campus colleges.
- * Instant return from cache + background revalidation if stale.
+ * Instant return from cache + background revalidation against live API.
  */
-export async function getCachedColleges() {
+export async function getCachedColleges(forceFresh = false) {
   const current = getSyncColleges();
-  const isFresh = (Date.now() - taxonomyCache.timestamp) < CACHE_TTL_MS;
 
-  if (current && current.length > 0 && isFresh) {
-    return current;
+  const revalidate = async () => {
+    try {
+      const res = await axios.get(`/api/colleges?t=${Date.now()}`);
+      if (Array.isArray(res.data)) {
+        const hasChanged = JSON.stringify(res.data) !== JSON.stringify(taxonomyCache.colleges);
+        taxonomyCache.colleges = res.data;
+        safeSetStorage(STORAGE_KEYS.COLLEGES, res.data);
+        if (hasChanged) {
+          notifyTaxonomyUpdated({ colleges: res.data });
+        }
+        return res.data;
+      }
+    } catch (err) {
+      console.warn("[LandlordTaxonomyCache] Background revalidation failed for colleges", err);
+    }
+    return null;
+  };
+
+  if (forceFresh) {
+    const fresh = await revalidate();
+    if (fresh) return fresh;
+  } else {
+    revalidate();
   }
 
   if (current && current.length > 0) {
-    axios.get('/api/colleges').then(res => {
-      if (Array.isArray(res.data) && res.data.length > 0) {
-        taxonomyCache.colleges = res.data;
-        safeSetStorage(STORAGE_KEYS.COLLEGES, res.data);
-      }
-    }).catch(err => console.warn("[LandlordTaxonomyCache] Background revalidation failed for colleges", err));
-
     return current;
   }
 
-  try {
-    const res = await axios.get('/api/colleges');
-    if (Array.isArray(res.data) && res.data.length > 0) {
-      taxonomyCache.colleges = res.data;
-      taxonomyCache.timestamp = Date.now();
-      safeSetStorage(STORAGE_KEYS.COLLEGES, res.data);
-      safeSetStorage(STORAGE_KEYS.TIMESTAMP, taxonomyCache.timestamp);
-      return res.data;
-    }
-  } catch (err) {
-    console.warn("[LandlordTaxonomyCache] Failed fetching colleges from API", err);
-  }
-  return current || [];
+  const fresh = await revalidate();
+  return fresh || current || [];
+}
+
+/**
+ * 🎓 Clears ONLY the college taxonomy cache and notifies listeners.
+ */
+export function clearCollegesCache() {
+  taxonomyCache.colleges = null;
+  safeRemoveStorage(STORAGE_KEYS.COLLEGES);
+  notifyTaxonomyUpdated({ collegesCleared: true });
 }
 
 /**

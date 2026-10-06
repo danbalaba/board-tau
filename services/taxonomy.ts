@@ -102,6 +102,10 @@ export async function getActiveCampusColleges() {
   return colleges;
 }
 
+export async function invalidateCampusCollegesCache() {
+  await cache.del("taxonomy:campusColleges:active");
+}
+
 export async function getActiveSubGroups() {
   const cacheKey = "taxonomy:subGroups:active";
   const cached = await cache.get(cacheKey);

@@ -68,13 +68,41 @@ export default function SharedFacilitiesStep({
   }, [isLoading, onLoadingChange]);
 
   useEffect(() => {
-    fetchTaxonomyData("AMENITY")
-      .then((data) => {
-        setDynamicAttributes(data.attributes);
-        setDynamicSubGroups(data.subGroups);
-      })
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
+    let isMounted = true;
+
+    const loadData = (force = false) => {
+      fetchTaxonomyData("AMENITY", force)
+        .then((data) => {
+          if (isMounted && data) {
+            setDynamicAttributes(data.attributes || []);
+            setDynamicSubGroups(data.subGroups || []);
+          }
+        })
+        .catch(() => { })
+        .finally(() => {
+          if (isMounted) setIsLoading(false);
+        });
+    };
+
+    loadData();
+
+    const handleTaxonomyUpdate = (e: any) => {
+      const type = e?.detail?.type;
+      if (!type || type === "AMENITY" || e?.detail?.cleared) {
+        loadData(true);
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("search_taxonomy_updated", handleTaxonomyUpdate);
+    }
+
+    return () => {
+      isMounted = false;
+      if (typeof window !== "undefined") {
+        window.removeEventListener("search_taxonomy_updated", handleTaxonomyUpdate);
+      }
+    };
   }, []);
 
   const activeSubGroups = useMemo(() => {
@@ -96,7 +124,7 @@ export default function SharedFacilitiesStep({
       const matchingAttrs = dynamicAttributes.filter((attr: any) => {
         if (!attr.isActive) return false;
         if (attr.subGroupKey !== sg.key) return false;
-        
+
         const rawTypes = attr.propertyTypeNames || attr.propertyTypes || [];
         if (!attr.isUniversal && rawTypes && rawTypes.length > 0) {
           return rawTypes.some((pt: any) => {
@@ -272,15 +300,14 @@ export default function SharedFacilitiesStep({
                 type="button"
                 disabled={isLocked}
                 onClick={() => !isLocked && setSubStep(tab.index)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-black transition-all shrink-0 flex items-center gap-1.5 ${
-                  isActive
+                className={`px-3.5 py-1.5 rounded-full text-xs font-black transition-all shrink-0 flex items-center gap-1.5 ${isActive
                     ? "bg-[#2f7d6d] text-white shadow-md ring-2 ring-[#2f7d6d]/30"
                     : isDone
-                    ? "bg-slate-200 dark:bg-slate-800 text-[#2f7d6d] dark:text-emerald-400 font-bold"
-                    : isLocked
-                    ? "bg-slate-100/60 dark:bg-slate-800/30 text-slate-400 dark:text-slate-600 opacity-50 cursor-not-allowed border border-slate-200/50 dark:border-slate-800/50"
-                    : "bg-slate-100 dark:bg-slate-800/50 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer"
-                }`}
+                      ? "bg-slate-200 dark:bg-slate-800 text-[#2f7d6d] dark:text-emerald-400 font-bold"
+                      : isLocked
+                        ? "bg-slate-100/60 dark:bg-slate-800/30 text-slate-400 dark:text-slate-600 opacity-50 cursor-not-allowed border border-slate-200/50 dark:border-slate-800/50"
+                        : "bg-slate-100 dark:bg-slate-800/50 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer"
+                  }`}
                 title={isLocked ? `${tab.label} (Locked - Complete previous tabs first)` : tab.label}
               >
                 <span>{tab.label}</span>
@@ -329,11 +356,10 @@ export default function SharedFacilitiesStep({
                 <div
                   key={opt.id}
                   onClick={() => toggleMulti("amenities", opt.id)}
-                  className={`p-4 rounded-2xl cursor-pointer transition-all duration-200 border-2 flex items-start justify-between ${
-                    isSelected
+                  className={`p-4 rounded-2xl cursor-pointer transition-all duration-200 border-2 flex items-start justify-between ${isSelected
                       ? "bg-[#2f7d6d]/10 border-[#2f7d6d] dark:border-emerald-400 shadow-md ring-2 ring-[#2f7d6d]/20"
                       : "bg-white hover:border-slate-300 dark:bg-slate-900/60 dark:hover:border-slate-700 border-slate-200 dark:border-slate-800"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start gap-3.5">
                     <div className={`p-2.5 rounded-xl shrink-0 ${isSelected ? "bg-[#2f7d6d] text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-emerald-400 border border-slate-200 dark:border-slate-700"}`}>
