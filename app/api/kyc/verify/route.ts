@@ -116,11 +116,8 @@ export async function POST(req: Request) {
       'edgestore.dev',
       's3.ap-southeast-1.amazonaws.com',
       's3.amazonaws.com',
-      'amazonaws.com',
       'res.cloudinary.com',
-      'cloudinary.com',
       'images.unsplash.com',
-      'unsplash.com',
       'example.com',
     ];
 
@@ -145,8 +142,7 @@ export async function POST(req: Request) {
 
       const hostname = targetUrl.hostname.toLowerCase();
 
-      const isAllowedHost = ALLOWED_IMAGE_HOSTS.includes(hostname) ||
-        ALLOWED_IMAGE_HOSTS.some((allowed) => hostname.endsWith(`.${allowed}`));
+      const isAllowedHost = ALLOWED_IMAGE_HOSTS.includes(hostname);
 
       if (!isAllowedHost) {
         throw new Error('Image URL host is not allowed');
@@ -171,7 +167,7 @@ export async function POST(req: Request) {
         throw new Error('Access to local or private network addresses is restricted');
       }
 
-      const res = await fetch(targetUrl.href);
+      const res = await fetch(targetUrl.toString());
       if (!res.ok) throw new Error('Failed to download image from provided URL');
       const arrayBuffer = await res.arrayBuffer();
       return new Uint8Array(arrayBuffer);
