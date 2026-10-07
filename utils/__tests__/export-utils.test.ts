@@ -31,7 +31,7 @@ describe('export-utils', () => {
     exportToExcel([{ id: 1, name: 'Test' }], 'test', 'Sheet1', metadata);
     expect(XLSX.utils.book_new).toHaveBeenCalled();
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalled();
-    expect(XLSX.utils.sheet_add_json).toHaveBeenCalled();
+    expect(XLSX.utils.json_to_sheet).toHaveBeenCalled();
     expect(XLSX.writeFile).toHaveBeenCalledWith(expect.any(Object), 'test.xlsx');
   });
 
@@ -67,18 +67,18 @@ describe('export-utils', () => {
 
   it('prepareDataForExport prepares room data', () => {
     const result = prepareDataForExport([{ title: 'R1', property: { title: 'P1' }, type: 'SOLO', capacity: 2, price: 100, isArchived: true, createdAt: '2026-01-01' }], 'room');
-    expect(result[0]['Room Name']).toBe('R1');
+    expect(result[0]['Room Title']).toBe('R1');
     expect(result[0]['Status']).toBe('Archived');
   });
 
   it('prepareDataForExport prepares booking data', () => {
     const result = prepareDataForExport([{ user: { name: 'U1' }, room: { title: 'R1', property: { title: 'P1' } }, startDate: '2026-01-01', endDate: '2026-01-02', totalPrice: 100, status: 'CONFIRMED', paymentStatus: 'PAID' }], 'booking');
-    expect(result[0]['Guest']).toBe('U1');
+    expect(result[0]['Guest Name']).toBe('U1');
   });
 
   it('prepareDataForExport prepares inquiry data', () => {
     const result = prepareDataForExport([{ user: { name: 'U1' }, listing: { title: 'L1' }, message: 'Hello', status: 'PENDING', createdAt: '2026-01-01' }], 'inquiry');
-    expect(result[0]['Tenant']).toBe('U1');
+    expect(result[0]['Tenant Name']).toBe('U1');
   });
 
   it('prepareDataForExport prepares review data', () => {
@@ -88,7 +88,7 @@ describe('export-utils', () => {
 
   it('prepareDataForExport prepares reservation data', () => {
     const result = prepareDataForExport([{ user: { name: 'U1' }, room: { name: 'R1' }, startDate: '2026-01-01', endDate: '2026-01-02', totalPrice: 100, status: 'CONFIRMED', createdAt: '2026-01-01' }], 'reservation');
-    expect(result[0]['Guest']).toBe('U1');
+    expect(result[0]['Guest Name']).toBe('U1');
   });
 
   it('prepareDataForExport handles unknown type', () => {

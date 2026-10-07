@@ -94,8 +94,8 @@ describe('ReportExportModal', () => {
     
     fireEvent.click(screen.getByText('Download Report'));
     expect(mockOnGenerate).not.toHaveBeenCalled();
-    expect(screen.getByText('Scope Selection Required')).toBeInTheDocument();
-    expect(screen.getByText('Format Selection Required')).toBeInTheDocument();
+    expect(screen.getByText('Select records')).toBeInTheDocument();
+    expect(screen.getByText('Select format')).toBeInTheDocument();
   });
 
   it('allows selecting scope and format and then downloading report', () => {
@@ -107,8 +107,8 @@ describe('ReportExportModal', () => {
       />
     );
     
-    fireEvent.click(screen.getByText('Filtered View'));
-    fireEvent.click(screen.getByText('Vector PDF Report'));
+    fireEvent.click(screen.getAllByText('Current Filtered List')[0]);
+    fireEvent.click(screen.getByText('PDF Document'));
     fireEvent.click(screen.getByText('Download PDF Report'));
 
     expect(mockOnGenerate).toHaveBeenCalledWith({
@@ -128,8 +128,8 @@ describe('ReportExportModal', () => {
       />
     );
     
-    fireEvent.click(screen.getByText('Filtered View'));
-    fireEvent.click(screen.getByText('CSV Raw Data'));
+    fireEvent.click(screen.getAllByText('Current Filtered List')[0]);
+    fireEvent.click(screen.getByText('CSV (.csv)'));
     fireEvent.click(screen.getByText('Download CSV Report'));
     
     expect(mockOnGenerate).toHaveBeenCalledWith({
@@ -149,8 +149,8 @@ describe('ReportExportModal', () => {
       />
     );
     
-    fireEvent.click(screen.getByText('Complete History'));
-    fireEvent.click(screen.getByText('2-Tab Excel (.xlsx)'));
+    fireEvent.click(screen.getAllByText('All Records')[0]);
+    fireEvent.click(screen.getByText('Excel (.xlsx)'));
     fireEvent.click(screen.getByText('Download EXCEL Report'));
     
     expect(mockOnGenerate).toHaveBeenCalledWith({
@@ -173,7 +173,7 @@ describe('ReportExportModal', () => {
       />
     );
     
-    expect(screen.getByText('Generating PDF...')).toBeInTheDocument();
+    expect(screen.getByText('Generating...')).toBeInTheDocument();
     
     // Cancel button should be disabled
     const cancelBtn = screen.getByRole('button', { name: /cancel/i });

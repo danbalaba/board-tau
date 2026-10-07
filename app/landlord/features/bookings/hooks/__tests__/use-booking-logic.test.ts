@@ -118,7 +118,7 @@ describe('useBookingLogic', () => {
     });
 
     expect(mockGenerateTablePDF).toHaveBeenCalled();
-    expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining('Generated enterprise report'));
+    expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining('Generated booking report'));
   });
 
   it('handles archive record successfully', async () => {
