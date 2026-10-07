@@ -5,6 +5,9 @@ import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { encryptMessage, decryptMessage } from '@/lib/encryption';
 import { backendClient } from '@/lib/edgestore-server';
+
+export const dynamic = 'force-dynamic';
+
 const backupSchema = z.object({
   timestamp: z.string().datetime(),
   scope: z.string(),
