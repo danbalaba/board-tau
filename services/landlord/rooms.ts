@@ -22,11 +22,17 @@ export async function getLandlordRooms(args?: {
 
     if (listingId && listingId !== 'all') where.listingId = listingId;
     if (roomType && roomType !== 'all') {
-      where.OR = [
-        { roomTypeDefinitionId: roomType },
-        { roomTypeDefinition: { name: { equals: roomType, mode: 'insensitive' } } },
-        { roomTypeDefinition: { code: { equals: roomType, mode: 'insensitive' } } }
-      ];
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(roomType);
+      if (isObjectId) {
+        where.OR = [
+          { roomTypeDefinitionId: roomType },
+          { roomTypeDefinition: { name: { equals: roomType, mode: 'insensitive' } } }
+        ];
+      } else {
+        where.roomTypeDefinition = {
+          name: { contains: roomType, mode: 'insensitive' }
+        };
+      }
     }
     if (status && status !== 'all') where.status = status;
     if (capacity && !isNaN(Number(capacity))) where.capacity = Number(capacity);
@@ -80,7 +86,7 @@ export async function getLandlordRooms(args?: {
       propertyRegion: room.listing?.region,
       propertyStatus: room.listing?.status,
       propertyTypeId: room.listing?.propertyTypeId || room.listing?.propertyType?.id || null,
-      roomType: room.roomTypeDefinitionId || room.roomTypeDefinition?.code || room.roomTypeDefinition?.name || '',
+      roomType: room.roomTypeDefinition?.name || room.roomTypeDefinition?.code || room.roomTypeDefinitionId || '',
       imageSrc: room.images[0]?.url || null,
       images: room.images.map((img: any) => img.url),
       amenities: room.roomLinks.map((rl: any) => rl.attribute)

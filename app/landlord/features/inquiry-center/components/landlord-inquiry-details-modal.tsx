@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Modal from '@/components/modals/Modal';
+import { useSession } from 'next-auth/react';
 import { Inquiry } from '../hooks/use-inquiry-logic';
 import Avatar from '@/components/common/Avatar';
 import { 
@@ -21,7 +22,8 @@ import {
   IconChevronRight,
   IconTag,
   IconFileText,
-  IconShieldCheck
+  IconShieldCheck,
+  IconDownload
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,6 +34,8 @@ import { LandlordInquiryDeclineModal } from './landlord-inquiry-decline-modal';
 import { generateLeaseContractPDF, previewPdfBlob } from '@/utils/contractPdfGenerator';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
+import { generateSingleItemPDF } from '@/utils/pdfGenerator';
+import { prepareSingleItemForExport } from '@/utils/export-utils';
 
 interface LandlordInquiryDetailsModalProps {
   inquiry: Inquiry | null;
@@ -48,6 +52,7 @@ export function LandlordInquiryDetailsModal({
   onUpdateStatus,
   isUpdatingStatus
 }: LandlordInquiryDetailsModalProps) {
+  const { data: session } = useSession();
   const responsiveToast = useResponsiveToast();
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   
@@ -562,6 +567,43 @@ export function LandlordInquiryDetailsModal({
             
             {/* Right Primary Actions */}
             <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                className="flex-1 sm:flex-none h-10 sm:h-11 px-3 sm:px-4 text-[11px] sm:text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                title="Export Inquiry Spec Sheet PDF"
+                onClick={async () => {
+                  try {
+                    const formattedItem = prepareSingleItemForExport(inquiry, 'inquiry');
+                    const dateStamp = new Date().toISOString().slice(0, 10);
+                    const reportId = `BTAU-INQ-${dateStamp.replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+                    const fileName = `BoardTAU_Inquiry_${(inquiry.user?.name || 'Tenant').replace(/\s+/g, '_')}_Dossier`;
+
+                    const authorName = session?.user?.name || session?.user?.email || 'BoardTAU Landlord';
+
+                    await generateSingleItemPDF(
+                      fileName,
+                      formattedItem.title,
+                      formattedItem.category,
+                      formattedItem.kvPairs,
+                      formattedItem.sections,
+                      {
+                        title: formattedItem.title,
+                        subtitle: (formattedItem as any).subtitle,
+                        author: authorName,
+                        reportId: reportId,
+                        type: 'inquiry',
+                        showQR: false
+                      }
+                    );
+                    responsiveToast.success("Exported Inquiry Dossier PDF!");
+                  } catch (e) {
+                    responsiveToast.error("Failed to export inquiry dossier.");
+                  }
+                }}
+              >
+                <IconDownload size={15} />
+                <span>Export Report</span>
+              </button>
+
               {inquiry.status === 'APPROVED' && (
                 <button
                   className="flex-1 sm:flex-none h-10 sm:h-11 px-4 sm:px-5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"

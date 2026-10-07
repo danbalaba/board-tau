@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Modal from '@/components/modals/Modal';
+import { useSession } from 'next-auth/react';
 import { ReservationRequest } from '../hooks/use-reservation-logic';
 import Avatar from '@/components/common/Avatar';
 import { 
@@ -21,7 +22,8 @@ import {
   IconEye,
   IconShieldCheck,
   IconDeviceMobile,
-  IconMessage
+  IconMessage,
+  IconDownload
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import { cn } from '@/utils/helper';
@@ -31,6 +33,8 @@ import { LandlordReservationCancelModal } from './landlord-reservation-cancel-mo
 import { generateLeaseContractPDF, previewPdfBlob } from '@/utils/contractPdfGenerator';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
+import { generateSingleItemPDF } from '@/utils/pdfGenerator';
+import { prepareSingleItemForExport } from '@/utils/export-utils';
 
 interface LandlordReservationDetailsModalProps {
   reservation: ReservationRequest | null;
@@ -47,6 +51,7 @@ export function LandlordReservationDetailsModal({
   onUpdateStatus,
   isUpdatingStatus
 }: LandlordReservationDetailsModalProps) {
+  const { data: session } = useSession();
   const responsiveToast = useResponsiveToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -504,6 +509,44 @@ export function LandlordReservationDetailsModal({
             
             {/* Right Primary Actions */}
             <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                className="flex-1 sm:flex-none h-10 sm:h-11 px-3 sm:px-4 text-[11px] sm:text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                title="Export Reservation Spec Sheet PDF"
+                onClick={async () => {
+                  try {
+                    const formattedItem = prepareSingleItemForExport(reservation, 'reservation');
+                    const dateStamp = new Date().toISOString().slice(0, 10);
+                    const reportId = `BTAU-RES-${dateStamp.replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+                    const guestName = (reservation.user?.name || reservation.guestName || 'Guest');
+                    const fileName = `BoardTAU_Reservation_${guestName.replace(/\s+/g, '_')}_Document`;
+
+                    const authorName = session?.user?.name || session?.user?.email || 'BoardTAU Landlord';
+
+                    await generateSingleItemPDF(
+                      fileName,
+                      formattedItem.title,
+                      formattedItem.category,
+                      formattedItem.kvPairs,
+                      formattedItem.sections,
+                      {
+                        title: formattedItem.title,
+                        subtitle: (formattedItem as any).subtitle,
+                        author: authorName,
+                        reportId: reportId,
+                        type: 'reservation',
+                        showQR: false
+                      }
+                    );
+                    responsiveToast.success("Exported Reservation Document PDF!");
+                  } catch (e) {
+                    responsiveToast.error("Failed to export reservation document.");
+                  }
+                }}
+              >
+                <IconDownload size={15} />
+                <span>Export Report</span>
+              </button>
+
               {(reservation.status === 'RESERVED' || reservation.status === 'CHECKED_IN' || reservation.status === 'COMPLETED' || reservation.status === 'CONFIRMED') && (
                 <button
                   disabled={isLoading}

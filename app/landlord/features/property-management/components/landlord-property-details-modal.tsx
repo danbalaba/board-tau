@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
+import { useSession } from 'next-auth/react';
 import { useIsClient } from '@/hooks/useIsClient';
 import { 
   Building2, 
@@ -83,6 +84,10 @@ import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
 import { SharedAmenitiesModal } from '@/components/common/SharedAmenitiesModal';
 import { LandlordRoomDetailsModal } from '@/app/landlord/features/room-management/components/landlord-room-details-modal';
 import dynamic from 'next/dynamic';
+import { toast } from 'react-hot-toast';
+import { generateSingleItemPDF } from '@/utils/pdfGenerator';
+import { prepareSingleItemForExport } from '@/utils/export-utils';
+import { Download } from 'lucide-react';
 
 import { 
   getCachedPropertyTypes,
@@ -167,6 +172,7 @@ export function LandlordPropertyDetailsModal({
   onNavigate
 }: PropertyDetailsModalProps) {
   const isClient = useIsClient();
+  const { data: session } = useSession();
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
 
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'LOCATION' | 'CONFIG' | 'ROOMS' | 'IMAGES'>('OVERVIEW');
@@ -203,6 +209,37 @@ export function LandlordPropertyDetailsModal({
 
   const toggleSection = (key: string) => {
     setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleExportSpecSheet = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const formattedItem = prepareSingleItemForExport(property, 'property');
+      const dateStamp = new Date().toISOString().slice(0, 10);
+      const reportId = `BTAU-PROP-${dateStamp.replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      const fileName = `BoardTAU_Property_${(property.title || 'Listing').replace(/\s+/g, '_')}_SpecSheet`;
+      const authorName = session?.user?.name || session?.user?.email || 'BoardTAU Landlord';
+
+      await generateSingleItemPDF(
+        fileName,
+        formattedItem.title,
+        formattedItem.category,
+        formattedItem.kvPairs,
+        formattedItem.sections,
+        {
+          title: formattedItem.title,
+          subtitle: (formattedItem as any).subtitle,
+          author: authorName,
+          reportId: reportId,
+          type: 'property',
+          showQR: false
+        }
+      );
+      toast.success('Property Specification PDF exported successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to export property specification PDF.');
+    }
   };
 
   const [propertyTypes, setPropertyTypes] = useState<any[]>(() => getSyncPropertyTypes() || []);
@@ -772,9 +809,19 @@ export function LandlordPropertyDetailsModal({
                         <span>{formatStatus(property.status)}</span>
                       </div>
 
-                      <button onClick={onClose} className="p-2 sm:p-3 bg-black/30 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all border border-white/20 z-50 shadow-2xl cursor-pointer">
-                        <X size={16} className="sm:w-[18px] sm:h-[18px]" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={handleExportSpecSheet}
+                          className="px-3 py-1.5 bg-black/40 hover:bg-black/70 backdrop-blur-md rounded-xl text-white transition-all border border-white/20 z-50 shadow-2xl cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                          title="Export Property Datasheet PDF"
+                        >
+                          <Download size={14} />
+                          <span className="hidden sm:inline uppercase text-[10px] tracking-wider font-extrabold">Export Listing</span>
+                        </button>
+                        <button onClick={onClose} className="p-2 sm:p-3 bg-black/30 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all border border-white/20 z-50 shadow-2xl cursor-pointer">
+                          <X size={16} className="sm:w-[18px] sm:h-[18px]" />
+                        </button>
+                      </div>
                     </div>
 
                     <div 

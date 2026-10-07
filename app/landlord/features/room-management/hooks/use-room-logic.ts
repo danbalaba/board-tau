@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -36,6 +37,7 @@ const PAGE_SIZE = 12;
 export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | null) {
   const router = useRouter();
   const responsiveToast = useResponsiveToast();
+  const { data: session } = useSession();
   const [rooms, setRooms] = useState(initialRooms);
   const [nextCursor, setNextCursor] = useState(initialNextCursor);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -87,7 +89,7 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
     setIsFilterLoading(true);
     const timer = setTimeout(() => {
       setIsFilterLoading(false);
-    }, 500);
+    }, 700);
     return () => clearTimeout(timer);
   }, [filters]);
 
@@ -194,7 +196,7 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
   }, [router, rooms]);
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 700);
+    const t = setTimeout(() => setIsLoading(false), 1200);
     return () => clearTimeout(t);
   }, []);
 
@@ -358,9 +360,16 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
     setSearchInput('');
   }, []);
 
-  const handleGenerateReport = async (dateRange?: DateRange) => {
+  const handleGenerateReport = async (options?: { scope?: 'filtered' | 'all'; format?: string; includeSummary?: boolean; includeGlossary?: boolean; dateRange?: DateRange } | DateRange) => {
     try {
-      let exportData = filteredRooms;
+      const isParamDateRange = options && ('from' in options || 'to' in options);
+      const dateRange = isParamDateRange ? (options as DateRange) : (options as any)?.dateRange;
+      const exportScope = !isParamDateRange && (options as any)?.scope ? (options as any).scope : 'filtered';
+      const includeSummary = !isParamDateRange && (options as any)?.includeSummary !== undefined ? (options as any).includeSummary : true;
+      const includeGlossary = !isParamDateRange && (options as any)?.includeGlossary !== undefined ? (options as any).includeGlossary : true;
+
+      let exportData = exportScope === 'all' ? rooms : filteredRooms;
+
       if (dateRange?.from) {
         const fromDate = dateRange.from;
         const toDate = dateRange.to;
@@ -374,66 +383,121 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
       }
 
       const totalUnits = exportData.length;
-      let summaryData: any[] = [];
-      let subtitle = `Detailed auditing for ${totalUnits} active room listings`;
+      const totalCapacity = exportData.reduce((acc, r) => acc + (r.capacity || 0), 0);
+      const totalPrice = exportData.reduce((acc, r) => acc + (r.price || 0), 0);
+      const avgPrice = totalUnits > 0 ? totalPrice / totalUnits : 0;
 
-      if (filters.type !== 'all') {
-        const totalCapacity = exportData.reduce((acc, r) => acc + (r.capacity || 0), 0);
-        summaryData = [
-          { label: 'Room Type', value: `${filters.type}` },
-          { label: 'Inventory', value: `${totalUnits} Units` },
-          { label: 'Capacity', value: `${totalCapacity} Pax` }
-        ];
-        subtitle = `Auditing ${filters.type} inventory for ${totalUnits} rooms`;
-      } 
-      else if (filters.property !== 'all') {
-        const avgPrice = totalUnits > 0 ? exportData.reduce((acc, r) => acc + r.price, 0) / totalUnits : 0;
-        summaryData = [
-          { label: 'Property Filter', value: `Active` },
-          { label: 'Inventory', value: `${totalUnits} Units` },
-          { label: 'Avg Rate', value: `₱${Math.round(avgPrice).toLocaleString()}` }
-        ];
-        subtitle = `Auditing property inventory for ${totalUnits} rooms`;
-      }
-      else {
-        // Global 'all' view
-        const totalCapacity = exportData.reduce((acc, r) => acc + (r.capacity || 0), 0);
-        const avgPrice = totalUnits > 0 ? exportData.reduce((acc, r) => acc + r.price, 0) / totalUnits : 0;
-        
-        summaryData = [
-          { label: 'Room Inventory', value: `${totalUnits} Units` },
-          { label: 'Total Capacity', value: `${totalCapacity} Pax` },
-          { label: 'Avg Rate', value: `₱${Math.round(avgPrice).toLocaleString()}` }
-        ];
-      }
+      // Status Distribution Data for Bar Graph
+      const availableCount = exportData.filter(r => (r.status || '').toLowerCase() === 'available').length;
+      const fullCount = exportData.filter(r => (r.status || '').toLowerCase() === 'full').length;
+      const maintCount = exportData.filter(r => (r.status || '').toLowerCase() === 'maintenance').length;
 
-      const columns = ['Room Name', 'Property', 'Type', 'Price (PHP)', 'Capacity', 'Status'];
+      const distributionData = [
+        { label: 'Available Units', count: availableCount, percentage: totalUnits ? (availableCount / totalUnits) * 100 : 0, color: [47, 125, 109] as [number, number, number] },
+        { label: 'Full Capacity', count: fullCount, percentage: totalUnits ? (fullCount / totalUnits) * 100 : 0, color: [37, 99, 235] as [number, number, number] },
+        { label: 'Under Maintenance', count: maintCount, percentage: totalUnits ? (maintCount / totalUnits) * 100 : 0, color: [217, 119, 6] as [number, number, number] }
+      ];
+
+      const getRoomTypeName = (r: Room) => {
+        const rawName = (r as any).roomTypeDefinition?.name || 
+                        (r as any).roomTypeName || 
+                        (r.roomType && !/^[0-9a-fA-F]{24}$/.test(r.roomType) ? r.roomType : null);
+        return rawName || 'Standard Room';
+      };
+
+      // Room Type Breakdown for Horizontal Bar Chart Graph
+      const typeCounts: Record<string, number> = {};
+      exportData.forEach(r => {
+        const typeName = getRoomTypeName(r);
+        typeCounts[typeName] = (typeCounts[typeName] || 0) + 1;
+      });
+
+      const categoryData = Object.entries(typeCounts)
+        .map(([label, count]) => ({ label, count }))
+        .sort((a, b) => b.count - a.count);
+
+      // Monthly Unit Creation Trajectory for Line Graph
+      const monthCounts: Record<string, number> = {};
+      exportData.forEach(r => {
+        const date = new Date(r.createdAt || Date.now());
+        const monthLabel = date.toLocaleDateString('en-US', { month: 'short' });
+        monthCounts[monthLabel] = (monthCounts[monthLabel] || 0) + 1;
+      });
+      const trendData = Object.entries(monthCounts).map(([label, value]) => ({ label, value }));
+
+      const summaryData = [
+        { label: 'Total Rooms', value: `${totalUnits} Rooms`, subValue: `${availableCount} Vacant | ${fullCount} Full` },
+        { label: 'Total Capacity', value: `${totalCapacity} Guests`, subValue: 'Maximum guest capacity' },
+        { label: 'Total Monthly Rent', value: `PHP ${totalPrice.toLocaleString()}`, subValue: 'Combined room rent' },
+        { label: 'Avg Room Price', value: `PHP ${Math.round(avgPrice).toLocaleString()}`, subValue: 'Average price per room' }
+      ];
+
+      const columns = ['Room Name', 'Property Title', 'Room Type', 'Price (PHP)', 'Capacity', 'Status'];
       const data = exportData.map(r => [
         r.name,
-        r.propertyTitle,
-        r.roomType,
+        r.propertyTitle || 'N/A',
+        getRoomTypeName(r),
         r.price.toLocaleString(),
-        r.capacity.toString(),
-        r.status
+        `${r.capacity || 1} Guests`,
+        (r.status || 'AVAILABLE').toUpperCase()
       ]);
 
-      await generateTablePDF('Rooms_Report', columns, data, {
-        title: 'Room Inventory Report',
+      const totalsRow = [
+        'TOTALS',
+        `${totalUnits} Rooms`,
+        '-',
+        `PHP ${totalPrice.toLocaleString()}`,
+        `${totalCapacity} Guests`,
+        `${availableCount} Vacant`
+      ];
+
+      const glossaryItems = [
+        { term: 'Total Room Units', definition: 'Count of individual rental units and rooms registered under your properties.' },
+        { term: 'Room Occupancy & Vacancy', definition: 'Current availability state — Vacant (ready for move-in), Fully Occupied, or Under Maintenance.' },
+        { term: 'Maximum Capacity', definition: 'Maximum number of tenant occupants permitted for the room unit.' },
+        { term: 'Monthly Rental Rate', definition: 'Agreed monthly rental fee charged per occupant or per room unit.' },
+        { term: 'Reservation Hold Fee', definition: 'Advance deposit required from prospective tenants to lock and reserve a room slot before check-in.' },
+        { term: 'Bathroom Setup', definition: 'Sanitation facility arrangement — Private Bathroom (inside unit) or Shared CR (communal facility).' },
+        { term: 'In-Unit Amenities', definition: 'Dedicated appliances and features inside the room (e.g., Aircon, Storage Closet, Study Desk, Hot Shower).' }
+      ];
+
+      const subtitle = exportScope === 'all'
+        ? `All-Time Room Inventory for ${totalUnits} rooms (${availableCount} Vacant, ${fullCount} Full, ${maintCount} Maintenance)`
+        : `Filtered Room Report for ${totalUnits} rooms`;
+
+      const authorName = session?.user?.name || session?.user?.email || 'BoardTAU Landlord Portal';
+
+      await generateTablePDF('Room_Inventory_Report', columns, data, {
+        title: 'Room & Unit Summary Report',
         subtitle: subtitle,
-        author: 'Landlord Management System',
-        summaryData: summaryData
+        author: authorName,
+        summaryData: summaryData,
+        distributionData: distributionData,
+        categoryData: categoryData,
+        trendData: trendData,
+        statusChartTitle: 'Room Availability',
+        categoryChartTitle: 'Room Types',
+        trendChartTitle: 'Monthly Room Additions',
+        glossaryItems: glossaryItems,
+        totalsRow: totalsRow,
+        scopeTag: exportScope === 'all' ? 'Complete History' : 'Filtered View',
+        type: 'room',
+        includeSummary: includeSummary,
+        includeGlossary: includeGlossary
       });
       
-      responsiveToast.success({ title: 'SUCCESS', description: `Generated enterprise report for ${totalUnits} rooms` });
+      responsiveToast.success({ title: 'SUCCESS', description: `Generated room report for ${totalUnits} rooms` });
     } catch (error) {
       console.error('Failed to generate report:', error);
-      responsiveToast.error({ title: 'ERROR', description: 'Failed to generate complete report' });
+      responsiveToast.error({ title: 'ERROR', description: 'Failed to generate room report' });
     }
   };
 
   return {
     // Room data
     rooms: paginatedRooms,
+    allRooms: rooms,
+    allFilteredRooms: filteredRooms,
     totalCount,
     currentPage,
     setCurrentPage,
@@ -478,6 +542,8 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
     isLoadingMore: isFetchingNextPage,
     handleLoadMore,
     // Status
+    isHeaderLoading: isLoading,
+    isSyncing: isQueryLoading || isFilterLoading,
     isLoading: isLoading || isQueryLoading || isFilterLoading,
     // Actions
     handleConfirmDelete,

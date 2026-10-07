@@ -41,7 +41,6 @@ import {
   DropdownMenuTrigger,
 } from '@/app/admin/components/ui/dropdown-menu';
 import { Button } from '@/app/admin/components/ui/button';
-import Skeleton from '@/components/common/Skeleton';
 
 interface LandlordRoomHeaderProps {
   sortBy: string;
@@ -50,6 +49,8 @@ interface LandlordRoomHeaderProps {
   setViewMode: (val: 'grid' | 'list') => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  allRooms?: any[];
+  filteredRooms?: any[];
   rooms: any[];
   onGenerateReport: () => Promise<void>;
   propertyFilter: string;
@@ -60,7 +61,7 @@ interface LandlordRoomHeaderProps {
   setCapacityFilter: (val: string) => void;
   statusFilter: string;
   setStatusFilter: (val: string) => void;
-  uniqueProperties: { id: string; title: string }[];
+  uniqueProperties: { id: string; title: string; propertyTypeId?: string | null; propertyType?: any }[];
   uniqueCapacities: number[];
   onClear: () => void;
   isArchived: boolean;
@@ -76,6 +77,8 @@ export function LandlordRoomHeader({
   setViewMode,
   searchQuery,
   setSearchQuery,
+  allRooms,
+  filteredRooms,
   rooms,
   onGenerateReport,
   propertyFilter,
@@ -164,52 +167,51 @@ export function LandlordRoomHeader({
 
     const loadRoomTypes = async () => {
       if (propertyFilter === 'all') {
-        // If "All Properties" is selected, do NOT fetch room types. Reset options.
         if (isMounted) {
           setRoomTypeOptions([]);
           setIsLoadingRoomTypes(false);
-          if (typeFilter !== 'all') {
-            setTypeFilter('all');
-          }
         }
         return;
       }
 
-      // Specific property IS selected: show loader while fetching
       if (isMounted) {
         setIsLoadingRoomTypes(true);
       }
 
       try {
-        const matchingRoom = rooms.find(
-          (r) => r.propertyId === propertyFilter || r.listingId === propertyFilter || r.listing?.id === propertyFilter
-        );
-        const targetPropTypeId = matchingRoom?.propertyTypeId;
+        // 1. Find property object in uniqueProperties to get propertyTypeId
+        const matchedProp = uniqueProperties.find((p: any) => p.id === propertyFilter);
+        let targetPropTypeId = matchedProp?.propertyTypeId || (matchedProp as any)?.propertyType?.id;
 
+        // 2. Fallback: search allRooms or rooms array for propertyTypeId
+        if (!targetPropTypeId) {
+          const roomList = allRooms || rooms || [];
+          const matchingRoom = roomList.find(
+            (r: any) => r.propertyId === propertyFilter || r.listingId === propertyFilter || r.listing?.id === propertyFilter
+          );
+          targetPropTypeId = matchingRoom?.propertyTypeId || matchingRoom?.listing?.propertyTypeId;
+        }
+
+        // 3. Fetch room types for the property type
         if (targetPropTypeId) {
           const types = await getCachedRoomTypes(targetPropTypeId);
-          if (isMounted && Array.isArray(types)) {
+          if (isMounted && Array.isArray(types) && types.length > 0) {
             setRoomTypeOptions(types);
+            return;
           }
-        } else {
-          // Fallback: search room type definitions of matching property rooms
-          const propRooms = rooms.filter(
-            (r) => r.propertyId === propertyFilter || r.listingId === propertyFilter || r.listing?.id === propertyFilter
-          );
-          const uniqueMap = new Map<string, { id: string; name: string; label?: string }>();
-          propRooms.forEach((r) => {
-            const rtId = r.roomTypeDefinitionId || r.roomTypeDefinition?.id || r.roomType;
-            const rtName = r.roomTypeDefinition?.name || r.roomTypeName || r.roomType;
-            if (rtId && rtName) {
-              const key = rtName.toLowerCase().trim();
-              if (!uniqueMap.has(key)) {
-                uniqueMap.set(key, { id: rtId, name: rtName, label: rtName });
-              }
-            }
-          });
-          if (isMounted) {
-            setRoomTypeOptions(Array.from(uniqueMap.values()));
-          }
+        }
+
+        // 4. Fallback: try synchronous cache
+        const syncTypes = getSyncRoomTypes(targetPropTypeId);
+        if (syncTypes && Array.isArray(syncTypes) && syncTypes.length > 0) {
+          if (isMounted) setRoomTypeOptions(syncTypes);
+          return;
+        }
+
+        // 5. General fallback: fetch all active room types
+        const allCachedRoomTypes = await getCachedRoomTypes();
+        if (isMounted && Array.isArray(allCachedRoomTypes) && allCachedRoomTypes.length > 0) {
+          setRoomTypeOptions(allCachedRoomTypes);
         }
       } catch (err) {
         console.error('Error loading room types:', err);
@@ -225,42 +227,12 @@ export function LandlordRoomHeader({
     return () => {
       isMounted = false;
     };
-  }, [propertyFilter, rooms]);
+  }, [propertyFilter, uniqueProperties, allRooms]);
 
-  if (isLoading) {
-    return (
-      <div className="relative p-4 sm:p-8 rounded-[22px] sm:rounded-[3rem] border border-primary/10 shadow-xl bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl z-20">
-        <div className="relative z-10 flex flex-col gap-4 sm:gap-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
-            <div className="flex items-center gap-3.5 sm:gap-5">
-              <Skeleton className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl shrink-0" />
-              <div className="space-y-2">
-                <Skeleton className="h-7 sm:h-8 w-36 sm:w-48 rounded-xl" />
-                <Skeleton className="h-3 sm:h-3.5 w-56 sm:w-80 rounded-lg opacity-70" />
-              </div>
-            </div>
-            <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full md:w-auto">
-              <Skeleton className="h-9 sm:h-11 w-20 sm:w-24 rounded-xl sm:rounded-2xl shrink-0" />
-              <Skeleton className="h-9 sm:h-11 w-28 sm:w-36 rounded-xl sm:rounded-2xl shrink-0" />
-              <Skeleton className="h-9 sm:h-11 w-28 sm:w-36 rounded-xl sm:rounded-2xl shrink-0" />
-            </div>
-          </div>
-          <div className="flex flex-col lg:flex-row lg:items-center gap-3 sm:gap-4 pt-4 sm:pt-8 border-t border-gray-100 dark:border-gray-800">
-            <Skeleton className="h-10 sm:h-11 w-full lg:max-w-md rounded-xl sm:rounded-2xl" />
-            <div className="hidden lg:flex items-center gap-2 lg:ml-auto">
-              <Skeleton className="h-9 sm:h-10 w-28 rounded-xl" />
-              <Skeleton className="h-9 sm:h-10 w-28 rounded-xl" />
-              <Skeleton className="h-9 sm:h-10 w-24 rounded-xl" />
-              <Skeleton className="h-9 sm:h-10 w-24 rounded-xl" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+
 
   const handleGenerateCSV = async (dateRange?: DateRange) => {
-    let exportData = rooms;
+    let exportData = filteredRooms || rooms;
     if (dateRange?.from) {
       const fromDate = dateRange.from;
       const toDate = dateRange.to;
@@ -288,7 +260,7 @@ export function LandlordRoomHeader({
   };
 
   const handleGenerateExcel = async (dateRange?: DateRange) => {
-    let exportData = rooms;
+    let exportData = filteredRooms || rooms;
     if (dateRange?.from) {
       const fromDate = dateRange.from;
       const toDate = dateRange.to;
@@ -319,10 +291,53 @@ export function LandlordRoomHeader({
     p.title.toLowerCase().includes(debouncedPropertySearch.toLowerCase())
   );
 
-  const selectedTypeObj = roomTypeOptions.find(t => t.id === typeFilter || t.name === typeFilter);
-  const typeDisplayLabel = typeFilter === 'all' 
-    ? 'Room Type' 
-    : (selectedTypeObj?.name || selectedTypeObj?.label || typeFilter);
+  const resolveRoomTypeLabel = (typeKey: string) => {
+    if (!typeKey || typeKey === 'all') return 'Room Type';
+
+    // 1. Check in active dropdown roomTypeOptions
+    const foundInOptions = roomTypeOptions.find(
+      t => t.id === typeKey || (t as any)._id === typeKey || t.name === typeKey || (t as any).code === typeKey || t.label === typeKey
+    );
+    if (foundInOptions?.name || foundInOptions?.label) {
+      return foundInOptions.name || foundInOptions.label;
+    }
+
+    // 2. Check in synchronized taxonomy cache across all property types
+    const syncTypes = getSyncRoomTypes();
+    if (syncTypes && Array.isArray(syncTypes)) {
+      const foundInCache = syncTypes.find(
+        (t: any) => t.id === typeKey || t._id === typeKey || t.name === typeKey || t.code === typeKey || t.label === typeKey
+      );
+      if (foundInCache?.name || foundInCache?.label) {
+        return foundInCache.name || foundInCache.label;
+      }
+    }
+
+    // 3. Check in rooms array passed as prop
+    const matchingRoom = (rooms || []).find(
+      (r: any) =>
+        r.roomTypeDefinitionId === typeKey ||
+        r.roomTypeDefinition?.id === typeKey ||
+        r.roomTypeDefinition?._id === typeKey ||
+        r.roomTypeDefinition?.name === typeKey ||
+        r.roomType === typeKey
+    );
+    if (matchingRoom) {
+      const name = matchingRoom.roomTypeDefinition?.name || matchingRoom.roomTypeName || matchingRoom.roomType;
+      if (name && !/^[0-9a-fA-F]{24}$/.test(name)) {
+        return name;
+      }
+    }
+
+    // 4. If key is non-ObjectId string, return key directly
+    if (!/^[0-9a-fA-F]{24}$/.test(typeKey)) {
+      return typeKey;
+    }
+
+    return 'Room Type';
+  };
+
+  const typeDisplayLabel = resolveRoomTypeLabel(typeFilter);
 
   return (
     <motion.div
@@ -387,6 +402,10 @@ export function LandlordRoomHeader({
                 onGeneratePDF={onGenerateReport}
                 onGenerateCSV={handleGenerateCSV}
                 onGenerateExcel={handleGenerateExcel}
+                moduleType="room"
+                moduleTitle="Rooms"
+                allData={allRooms || rooms}
+                filteredData={filteredRooms || rooms}
                 label="Generate Report"
                 outline={false}
                 className="flex-1 sm:flex-none h-10 sm:h-11 px-3.5 sm:px-5 rounded-xl sm:rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary font-black uppercase text-[10px] sm:text-[11px] tracking-wider sm:tracking-widest shadow-xs border border-primary/20 transition-all flex items-center justify-center gap-1.5 shrink-0"

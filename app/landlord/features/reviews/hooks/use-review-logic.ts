@@ -1,4 +1,4 @@
-'use client';
+import { toast } from 'react-hot-toast';
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -68,7 +68,7 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
     setIsFilterLoading(true);
     const timer = setTimeout(() => {
       setIsFilterLoading(false);
-    }, 500);
+    }, 700);
     return () => clearTimeout(timer);
   }, [searchQuery, selectedStatus, selectedRating, sortBy]);
 
@@ -78,7 +78,7 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
   }, [searchQuery, selectedStatus, selectedRating, sortBy]);
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 700);
+    const t = setTimeout(() => setIsLoading(false), 1200);
     return () => clearTimeout(t);
   }, []);
 
@@ -182,13 +182,20 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
     }
   }, [nextCursor, isLoadingMore]);
 
-  const handleGenerateReport = async (dateRange?: DateRange) => {
+  const handleGenerateReport = async (options?: { scope?: 'filtered' | 'all'; format?: string; includeSummary?: boolean; includeGlossary?: boolean; dateRange?: DateRange } | DateRange) => {
     try {
-      let exportData = filteredReviews;
+      const isParamDateRange = options && ('from' in options || 'to' in options);
+      const dateRange = isParamDateRange ? (options as DateRange) : (options as any)?.dateRange;
+      const exportScope = !isParamDateRange && (options as any)?.scope ? (options as any).scope : 'filtered';
+      const includeSummary = !isParamDateRange && (options as any)?.includeSummary !== undefined ? (options as any).includeSummary : true;
+      const includeGlossary = !isParamDateRange && (options as any)?.includeGlossary !== undefined ? (options as any).includeGlossary : true;
+
+      let exportData = exportScope === 'all' ? listings : filteredReviews;
+
       if (dateRange?.from) {
         const fromDate = dateRange.from;
         const toDate = dateRange.to;
-        exportData = exportData.filter(r => {
+        exportData = exportData.filter((r: any) => {
           const createdAt = new Date(r.createdAt);
           if (toDate) {
             return createdAt >= fromDate && createdAt <= toDate;
@@ -198,64 +205,96 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
       }
 
       const totalReviews = exportData.length;
-      let summaryData: any[] = [];
-      let subtitle = `Auditing feedback and response performance for ${totalReviews} guest reviews`;
-      const responseCount = exportData.filter(r => r.response !== null).length;
+      const responseCount = exportData.filter((r: any) => r.response !== null && r.response !== undefined).length;
+      const avgRating = totalReviews > 0 ? exportData.reduce((acc: number, r: any) => acc + (r.rating || 5), 0) / totalReviews : 5.0;
 
-      if (selectedStatus === 'needs_response') {
-        summaryData = [
-          { label: 'Unanswered Reviews', value: `${totalReviews}` },
-          { label: 'Status', value: `Needs Response` },
-          { label: 'Action Required', value: `Yes` }
-        ];
-        subtitle = `Auditing guest reviews requiring landlord response`;
-      }
-      else if (selectedStatus === 'responded') {
-        summaryData = [
-          { label: 'Responded Reviews', value: `${totalReviews}` },
-          { label: 'Status', value: `Responded` },
-          { label: 'Action Required', value: `No` }
-        ];
-        subtitle = `Auditing guest reviews with active landlord responses`;
-      } 
-      else if (selectedRating !== 'all') {
-        summaryData = [
-          { label: 'Star Rating', value: `${selectedRating} Stars` },
-          { label: 'Total Reviews', value: `${totalReviews}` },
-          { label: 'Response Rate', value: `${((responseCount / (totalReviews || 1)) * 100).toFixed(0)}%` }
-        ];
-        subtitle = `Auditing ${selectedRating}-star reviews for ${totalReviews} feedback entries`;
-      }
-      else {
-        // Global 'all' view
-        const avgRating = totalReviews > 0 
-          ? exportData.reduce((acc, r) => acc + r.rating, 0) / totalReviews 
-          : 0;
+      const fiveStarCount = exportData.filter((r: any) => r.rating === 5).length;
+      const fourStarCount = exportData.filter((r: any) => r.rating === 4).length;
+      const lowStarCount = exportData.filter((r: any) => r.rating <= 3).length;
 
-        summaryData = [
-          { label: 'Average Rating', value: `${avgRating.toFixed(1)} / 5.0`, subValue: 'Overall guest satisfaction' },
-          { label: 'Total Reviews', value: `${totalReviews}`, subValue: 'Feedback volume' },
-          { label: 'Response Rate', value: `${((responseCount / (totalReviews || 1)) * 100).toFixed(0)}%`, subValue: `${responseCount} Responses provided` }
-        ];
-      }
+      const distributionData = [
+        { label: '5-Star Ratings', count: fiveStarCount, percentage: totalReviews ? (fiveStarCount / totalReviews) * 100 : 0, color: [47, 125, 109] as [number, number, number] },
+        { label: '4-Star Ratings', count: fourStarCount, percentage: totalReviews ? (fourStarCount / totalReviews) * 100 : 0, color: [37, 99, 235] as [number, number, number] },
+        { label: '1 to 3 Stars', count: lowStarCount, percentage: totalReviews ? (lowStarCount / totalReviews) * 100 : 0, color: [217, 119, 6] as [number, number, number] }
+      ];
 
-      const columns = ['Listing', 'Guest', 'Rating', 'Comment', 'Date'];
-      const data = exportData.map((r) => [
-        r.listing.title,
-        r.user.name || r.user.email,
-        `${r.rating} / 5`,
-        r.comment || 'N/A',
+      // Rating Category Breakdown for Horizontal Bar Chart Graph
+      const ratingCounts: Record<string, number> = {
+        '5 Stars': fiveStarCount,
+        '4 Stars': fourStarCount,
+        '1 to 3 Stars': lowStarCount,
+      };
+
+      const categoryData = Object.entries(ratingCounts)
+        .map(([label, count]) => ({ label, count }))
+        .filter(c => c.count > 0);
+
+      // Monthly Review Feedback Trajectory
+      const monthCounts: Record<string, number> = {};
+      exportData.forEach((r: any) => {
+        const date = new Date(r.createdAt || Date.now());
+        const monthLabel = date.toLocaleDateString('en-US', { month: 'short' });
+        monthCounts[monthLabel] = (monthCounts[monthLabel] || 0) + 1;
+      });
+      const trendData = Object.entries(monthCounts).map(([label, value]) => ({ label, value }));
+
+      const summaryData = [
+        { label: 'Average Rating', value: `${avgRating.toFixed(1)} / 5.0 Stars`, subValue: 'Guest satisfaction score' },
+        { label: 'Total Reviews', value: `${totalReviews} Reviews`, subValue: `${responseCount} Landlord replies` },
+        { label: 'Reply Rate', value: `${totalReviews ? Math.round((responseCount / totalReviews) * 100) : 100}%`, subValue: 'Landlord reply rate' }
+      ];
+
+      const columns = ['Property Title', 'Guest / Reviewer', 'Rating', 'Landlord Response', 'Date Posted'];
+      const data = exportData.map((r: any) => [
+        r.listing?.title || (r as any).propertyTitle || 'N/A',
+        r.user?.name || r.user?.email || 'N/A',
+        r.rating ? `★ ${r.rating}.0 / 5.0` : 'N/A',
+        r.response ? 'Responded' : 'No Response',
         new Date(r.createdAt).toLocaleDateString()
       ]);
 
-      await generateTablePDF('Reviews_Report', columns, data, {
-        title: 'Property Reputation Business Report',
+      const totalsRow = [
+        'TOTALS',
+        `${totalReviews} Reviews`,
+        `Avg ★ ${avgRating.toFixed(1)}`,
+        `${responseCount} Responded`,
+        new Date().toLocaleDateString()
+      ];
+
+      const glossaryItems = [
+        { term: 'Satisfaction Rating Score', definition: 'Tenant satisfaction score rated on a 1.0 (Lowest) to 5.0 (Highest) star scale.' },
+        { term: 'Average Reputation Rating', definition: 'Mean average star score calculated across all verified tenant reviews.' },
+        { term: 'Landlord Reply Rate', definition: 'Percentage of tenant reviews that have received an official landlord response.' }
+      ];
+
+      const subtitle = exportScope === 'all'
+        ? `All-Time Review Record for ${totalReviews} tenant reviews (★ ${avgRating.toFixed(1)} Avg Rating)`
+        : `Filtered Review Report for ${totalReviews} feedback records`;
+
+      const authorName = session?.user?.name || session?.user?.email || 'BoardTAU Landlord Portal';
+
+      await generateTablePDF('Tenant_Reputation_Report', columns, data, {
+        title: 'Tenant Review & Rating Summary Report',
         subtitle: subtitle,
-        author: 'Landlord Relationship Management',
-        summaryData: summaryData
+        author: authorName,
+        summaryData: summaryData,
+        distributionData: distributionData,
+        categoryData: categoryData,
+        trendData: trendData,
+        statusChartTitle: 'Star Ratings',
+        categoryChartTitle: 'Rating Categories',
+        trendChartTitle: 'Monthly Review Trend',
+        glossaryItems: glossaryItems,
+        totalsRow: totalsRow,
+        scopeTag: exportScope === 'all' ? 'Complete History' : 'Filtered View',
+        type: 'review',
+        includeSummary: includeSummary,
+        includeGlossary: includeGlossary
       });
+      toast.success(`Generated review report for ${totalReviews} records`);
     } catch (error) {
       console.error('Failed to generate report:', error);
+      toast.error('Failed to generate review report');
     }
   };
 
@@ -274,6 +313,7 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
 
   return {
     filteredReviews: paginatedReviews,
+    allFilteredReviews: filteredReviews,
     totalReviews: filteredReviews.length,
     currentPage,
     setCurrentPage,
@@ -297,6 +337,8 @@ export function useReviewLogic(initialReviews: Review[], initialNextCursor: stri
     respondModal,
     setRespondModal,
     updateReviewResponse,
+    isHeaderLoading: isLoading,
+    isSyncing: isFilterLoading || isLoadingMore,
     isLoading: isLoading || isFilterLoading
   };
 }

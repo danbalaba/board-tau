@@ -38,7 +38,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/app/admin/components/ui/dropdown-menu';
-import Skeleton from '@/components/common/Skeleton';
 
 interface LandlordBookingHeaderProps {
   sortBy: string;
@@ -53,6 +52,7 @@ interface LandlordBookingHeaderProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   rawBookings: Booking[];
+  filteredBookings?: Booking[];
   isArchived: boolean;
   onToggleArchived: () => void;
   isLoading?: boolean;
@@ -71,6 +71,7 @@ export function LandlordBookingHeader({
   searchQuery,
   setSearchQuery,
   rawBookings,
+  filteredBookings,
   isArchived,
   onToggleArchived,
   isLoading
@@ -131,39 +132,10 @@ export function LandlordBookingHeader({
     { value: 'failed', label: 'FAILED', icon: AlertCircle },
   ], []);
 
-  if (isLoading) {
-    return (
-      <div className="relative p-4 sm:p-8 rounded-[22px] sm:rounded-[3rem] border border-primary/10 shadow-xl bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl z-20">
-        <div className="relative z-10 flex flex-col gap-4 sm:gap-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
-            <div className="flex items-center gap-3.5 sm:gap-5">
-              <Skeleton className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl shrink-0" />
-              <div className="space-y-2">
-                <Skeleton className="h-7 sm:h-8 w-36 sm:w-48 rounded-xl" />
-                <Skeleton className="h-3 sm:h-3.5 w-56 sm:w-80 rounded-lg opacity-70" />
-              </div>
-            </div>
-            <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full md:w-auto">
-              <Skeleton className="h-9 sm:h-11 w-20 sm:w-24 rounded-xl sm:rounded-2xl shrink-0" />
-              <Skeleton className="h-9 sm:h-11 w-28 sm:w-36 rounded-xl sm:rounded-2xl shrink-0" />
-            </div>
-          </div>
-          <div className="flex flex-col lg:flex-row lg:items-center gap-3 sm:gap-4 pt-4 sm:pt-8 border-t border-gray-100 dark:border-gray-800">
-            <Skeleton className="h-10 sm:h-11 w-full lg:max-w-md rounded-xl sm:rounded-2xl" />
-            <div className="hidden lg:flex items-center gap-2 lg:ml-auto">
-              <Skeleton className="h-9 sm:h-10 w-28 rounded-xl" />
-              <Skeleton className="h-9 sm:h-10 w-28 rounded-xl" />
-              <Skeleton className="h-9 sm:h-10 w-24 rounded-xl" />
-              <Skeleton className="h-9 sm:h-10 w-24 rounded-xl" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+
 
   const handleGenerateCSV = async (dateRange?: DateRange) => {
-    let exportData = rawBookings;
+    let exportData = filteredBookings || rawBookings;
     if (dateRange?.from) {
       const fromDate = dateRange.from;
       const toDate = dateRange.to;
@@ -192,7 +164,7 @@ export function LandlordBookingHeader({
   };
 
   const handleGenerateExcel = async (dateRange?: DateRange) => {
-    let exportData = rawBookings;
+    let exportData = filteredBookings || rawBookings;
     if (dateRange?.from) {
       const fromDate = dateRange.from;
       const toDate = dateRange.to;
@@ -281,6 +253,10 @@ export function LandlordBookingHeader({
               onGeneratePDF={handleGenerateReport}
               onGenerateCSV={handleGenerateCSV}
               onGenerateExcel={handleGenerateExcel}
+              moduleType="booking"
+              moduleTitle="Bookings"
+              allData={rawBookings}
+              filteredData={filteredBookings || rawBookings}
               label="Generate Report"
               outline={false}
               className="w-auto h-9 sm:h-11 px-3 sm:px-5 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] sm:text-[11px] tracking-wider sm:tracking-widest shadow-md shadow-primary/20 border-b-2 sm:border-b-4 border-primary/30 active:border-b-0 transition-all flex items-center justify-center gap-1.5 shrink-0"

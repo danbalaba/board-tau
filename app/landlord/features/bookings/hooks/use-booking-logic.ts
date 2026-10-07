@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
+import { formatDynamicCodeLabel } from '@/utils/export-utils';
 import { DateRange } from 'react-day-picker';
 import { useSession } from 'next-auth/react';
 import { pusherClient } from '@/lib/pusher-client';
@@ -77,7 +78,7 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     setIsFilterLoading(true);
     const timer = setTimeout(() => {
       setIsFilterLoading(false);
-    }, 500);
+    }, 700);
     return () => clearTimeout(timer);
   }, [searchQuery, selectedStatus, selectedPaymentStatus, sortBy, isArchived]);
 
@@ -132,7 +133,7 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
   }, [initialBookings, initialCursor]);
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 700);
+    const t = setTimeout(() => setIsLoading(false), 1200);
     return () => clearTimeout(t);
   }, []);
 
@@ -237,13 +238,20 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     }
   }, [nextCursor, isLoadingMore]);
 
-  const handleGenerateReport = async (dateRange?: DateRange) => {
+  const handleGenerateReport = async (options?: { scope?: 'filtered' | 'all'; format?: string; includeSummary?: boolean; includeGlossary?: boolean; dateRange?: DateRange } | DateRange) => {
     try {
-      let exportData = filteredBookings;
+      const isParamDateRange = options && ('from' in options || 'to' in options);
+      const dateRange = isParamDateRange ? (options as DateRange) : (options as any)?.dateRange;
+      const exportScope = !isParamDateRange && (options as any)?.scope ? (options as any).scope : 'filtered';
+      const includeSummary = !isParamDateRange && (options as any)?.includeSummary !== undefined ? (options as any).includeSummary : true;
+      const includeGlossary = !isParamDateRange && (options as any)?.includeGlossary !== undefined ? (options as any).includeGlossary : true;
+
+      let exportData = exportScope === 'all' ? listings : filteredBookings;
+
       if (dateRange?.from) {
         const fromDate = dateRange.from;
         const toDate = dateRange.to;
-        exportData = exportData.filter(b => {
+        exportData = exportData.filter((b: any) => {
           const createdAt = new Date(b.createdAt);
           if (toDate) {
             return createdAt >= fromDate && createdAt <= toDate;
@@ -253,66 +261,99 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
       }
 
       const totalBookings = exportData.length;
-      let summaryData: any[] = [];
-      let subtitle = `Financial auditing for ${totalBookings} stay records`;
+      const totalRevenue = exportData.reduce((acc: number, b: any) => acc + (b.reservationFee || b.totalPrice || b.amount || b.room?.reservationFee || 0), 0);
+      const activeStays = exportData.filter((b: any) => (b.status || '').toLowerCase() === 'checked_in').length;
+      const completedStays = exportData.filter((b: any) => (b.status || '').toLowerCase() === 'completed').length;
+      const cancelledStays = exportData.filter((b: any) => (b.status || '').toLowerCase() === 'cancelled').length;
 
-      if (selectedStatus === 'CHECKED_IN') {
-        const totalRevenue = exportData.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
-        summaryData = [
-          { label: 'Active Stays', value: `${totalBookings}` },
-          { label: 'Revenue Generated', value: `₱${totalRevenue.toLocaleString()}` },
-          { label: 'Status', value: `Checked In` }
-        ];
-        subtitle = `Auditing active stays for ${totalBookings} bookings`;
-      } 
-      else if (selectedStatus === 'COMPLETED') {
-        const totalRevenue = exportData.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
-        summaryData = [
-          { label: 'Completed Stays', value: `${totalBookings}` },
-          { label: 'Total Revenue', value: `₱${totalRevenue.toLocaleString()}` },
-          { label: 'Status', value: `Completed` }
-        ];
-        subtitle = `Auditing completed stays for ${totalBookings} bookings`;
-      }
-      else if (selectedPaymentStatus === 'pending') {
-        const pendingAmount = exportData.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
-        summaryData = [
-          { label: 'Unpaid Bookings', value: `${totalBookings}` },
-          { label: 'Pending Amount', value: `₱${pendingAmount.toLocaleString()}` },
-          { label: 'Status', value: `Pending Payment` }
-        ];
-        subtitle = `Auditing unpaid bookings for ${totalBookings} stays`;
-      }
-      else {
-        // Global 'all' view
-        const totalRevenue = exportData.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
-        const activeStays = exportData.filter(b => b.status?.toLowerCase() === 'checked_in').length;
-        
-        summaryData = [
-          { label: 'Total Bookings', value: `${totalBookings}` },
-          { label: 'Total Revenue', value: `₱${totalRevenue.toLocaleString()}` },
-          { label: 'Active Stays', value: `${activeStays}` }
-        ];
-      }
+      const distributionData = [
+        { label: 'Checked-In (Active)', count: activeStays, percentage: totalBookings ? (activeStays / totalBookings) * 100 : 0, color: [47, 125, 109] as [number, number, number] },
+        { label: 'Completed Stays', count: completedStays, percentage: totalBookings ? (completedStays / totalBookings) * 100 : 0, color: [37, 99, 235] as [number, number, number] },
+        { label: 'Cancelled / Other', count: cancelledStays, percentage: totalBookings ? (cancelledStays / totalBookings) * 100 : 0, color: [220, 38, 38] as [number, number, number] }
+      ];
 
-      const columns = ['Listing', 'Guest', 'Status', 'Payment', 'Total Price', 'Dates'];
+      // Payment Status Category Breakdown for Horizontal Bar Chart Graph
+      const payCounts: Record<string, number> = {};
+      exportData.forEach((b: any) => {
+        const payStatus = b.paymentStatus ? b.paymentStatus.toUpperCase() : 'PAID';
+        payCounts[payStatus] = (payCounts[payStatus] || 0) + 1;
+      });
+
+      const categoryData = Object.entries(payCounts)
+        .map(([label, count]) => ({ label, count }))
+        .sort((a, b) => b.count - a.count);
+
+      // Monthly Revenue & Stay Creation Trajectory
+      const monthCounts: Record<string, number> = {};
+      exportData.forEach((b: any) => {
+        const date = new Date(b.createdAt || b.startDate || Date.now());
+        const monthLabel = date.toLocaleDateString('en-US', { month: 'short' });
+        monthCounts[monthLabel] = (monthCounts[monthLabel] || 0) + 1;
+      });
+      const trendData = Object.entries(monthCounts).map(([label, value]) => ({ label, value }));
+
+      const summaryData = [
+        { label: 'Total Holding Fees', value: `PHP ${totalRevenue.toLocaleString()}`, subValue: 'Online reservation fees collected' },
+        { label: 'Total Bookings', value: `${totalBookings} Stays`, subValue: `${activeStays} Active | ${completedStays} Completed` },
+        { label: 'Active Guests', value: `${activeStays} Guests`, subValue: 'Currently checked in' },
+        { label: 'Avg Holding Fee', value: `PHP ${Math.round(totalBookings ? totalRevenue / totalBookings : 0).toLocaleString()}`, subValue: 'Average reservation fee per booking' }
+      ];
+
+      const columns = ['Listing', 'Room Unit', 'Guest Name', 'Status', 'Payment', 'Reservation Fee (PHP)', 'Stay Dates'];
       const data = exportData.map((b: any) => [
-        b.listing.title,
-        (b.user?.name || b.guestName) || (b.user?.email || b.guestContact),
-        b.status.toUpperCase(),
-        b.paymentStatus.toUpperCase(),
-        `PHP ${b.totalPrice.toLocaleString()}`,
+        b.listing?.title || b.propertyTitle || 'N/A',
+        b.room?.name || b.room?.title || b.roomTitle || 'Standard Unit',
+        (b.user?.name || b.guestName || b.user?.email || 'N/A'),
+        formatDynamicCodeLabel(b.status, 'Confirmed'),
+        formatDynamicCodeLabel(b.paymentStatus || b.status, 'Paid'),
+        `PHP ${(b.reservationFee || b.totalPrice || b.amount || b.room?.reservationFee || 0).toLocaleString()}`,
         `${new Date(b.startDate).toLocaleDateString()} - ${new Date(b.endDate).toLocaleDateString()}`
       ]);
 
-      await generateTablePDF('Bookings_Report', columns, data, {
-        title: 'Booking & Revenue Business Report',
+      const totalsRow = [
+        'TOTALS',
+        `${totalBookings} Stays`,
+        `${activeStays} Active`,
+        'Payment Verified',
+        'Holding Fees Paid',
+        `PHP ${totalRevenue.toLocaleString()}`,
+        new Date().toLocaleDateString()
+      ];
+
+      const glossaryItems = [
+        { term: 'Total Booking Count', definition: 'Count of confirmed tenant stay agreements recorded in the system.' },
+        { term: 'Active Tenant Stays', definition: 'Count of tenants currently checked in and residing in the property.' },
+        { term: 'Reservation Holding Fee', definition: 'Advance fee collected online via Stripe/PayMongo to lock and reserve the room slot before move-in.' },
+        { term: 'Booking Status', definition: 'Current lease contract status — Active (checked-in), Pending Payment, Completed (moved out), or Cancelled.' },
+        { term: 'Payment Settlement', definition: 'Transaction verification state — Paid (verified reservation fee), Pending Verification, or Unpaid.' }
+      ];
+
+      const subtitle = exportScope === 'all'
+        ? `All-Time Booking Record for ${totalBookings} bookings (PHP ${totalRevenue.toLocaleString()} Total Holding Fees)`
+        : `Filtered Booking Report for ${totalBookings} stay records`;
+
+      const authorName = session?.user?.name || session?.user?.email || 'BoardTAU Landlord Portal';
+
+      await generateTablePDF('Booking_Financial_Report', columns, data, {
+        title: 'Booking & Reservation Summary Report',
         subtitle: subtitle,
-        author: 'Landlord Revenue Management',
-        summaryData: summaryData
+        author: authorName,
+        summaryData: summaryData,
+        distributionData: distributionData,
+        categoryData: categoryData,
+        trendData: trendData,
+        statusChartTitle: 'Booking Status',
+        categoryChartTitle: 'Payment Breakdown',
+        trendChartTitle: 'Monthly Stay Activity',
+        glossaryItems: glossaryItems,
+        totalsRow: totalsRow,
+        scopeTag: exportScope === 'all' ? 'Complete History' : 'Filtered View',
+        type: 'booking',
+        includeSummary: includeSummary,
+        includeGlossary: includeGlossary
       });
       
-      success(`Generated enterprise report for ${totalBookings} bookings`);
+      success(`Generated booking report for ${totalBookings} bookings`);
     } catch (error) {
       console.error('Failed to generate report:', error);
       toastError('Failed to generate complete report');
@@ -366,6 +407,7 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     viewMode,
     setViewMode,
     filteredBookings: paginatedBookings,
+    allFilteredBookings: filteredBookings,
     totalBookings: filteredBookings.length,
     currentPage,
     setCurrentPage,
@@ -383,6 +425,8 @@ export function useBookingLogic(initialBookings: Booking[], initialCursor: strin
     updatingId,
     completeLoaderBooking,
     setCompleteLoaderBooking,
+    isHeaderLoading: isLoading,
+    isSyncing: isFilterLoading || isLoadingMore,
     isLoading: isLoading || isFilterLoading
   };
 }

@@ -13,6 +13,7 @@ import { LandlordInquiryHeader } from './components/landlord-inquiry-header';
 import { LandlordInquiryCard } from './components/landlord-inquiry-card';
 import { LandlordInquiryModals } from './components/landlord-inquiry-modals';
 import { LandlordPagination } from '../shared/landlord-pagination';
+import { useLoading } from '@/components/loading/LoadingContext';
 
 interface LandlordInquiryCenterProps {
   inquiries: {
@@ -22,8 +23,10 @@ interface LandlordInquiryCenterProps {
 }
 
 export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCenterProps) {
+  const { isLoading: isGlobalLoading } = useLoading();
   const {
     filteredInquiries,
+    allFilteredInquiries,
     totalInquiries,
     currentPage,
     setCurrentPage,
@@ -64,9 +67,12 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
     rejectionLoaderInquiry,
     setRejectionLoaderInquiry,
     rawInquiries,
+    isHeaderLoading,
+    isSyncing,
     isLoading
   } = useInquiryLogic(inquiries);
 
+  const showSyncingSpinner = !isGlobalLoading && (isSyncing || isLoading);
   const searchParams = useSearchParams();
 
   React.useEffect(() => {
@@ -109,38 +115,24 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
         setViewMode={setViewMode}
         handleGenerateReport={handleGenerateReport}
         rawInquiries={rawInquiries}
+        filteredInquiries={allFilteredInquiries || filteredInquiries}
         isArchived={isArchived}
         onToggleArchived={handleToggleArchived}
-        isLoading={isLoading}
+        isLoading={isHeaderLoading}
       />
 
       <div className="min-h-[400px] relative">
         <AnimatePresence mode="wait">
-          {isLoading ? (
+          {showSyncingSpinner ? (
             <motion.div 
               key="loader"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className={cn(viewMode === 'grid' ? "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-6" : "space-y-4")}
+              className="py-24 flex flex-col items-center justify-center gap-6"
             >
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 sm:p-5 space-y-4 animate-pulse shadow-sm">
-                  <div className="flex justify-between items-center">
-                    <div className="h-4 w-24 bg-gray-200 dark:bg-gray-800 rounded-lg" />
-                    <div className="h-6 w-20 bg-gray-200 dark:bg-gray-800 rounded-full" />
-                  </div>
-                  <div className="h-28 sm:h-36 bg-gray-200 dark:bg-gray-800 rounded-xl w-full" />
-                  <div className="space-y-2">
-                    <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-800 rounded-lg" />
-                    <div className="h-3 w-1/2 bg-gray-200 dark:bg-gray-800 rounded-lg" />
-                  </div>
-                  <div className="pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
-                    <div className="h-4 w-16 bg-gray-200 dark:bg-gray-800 rounded-lg" />
-                    <div className="h-8 w-24 bg-gray-200 dark:bg-gray-800 rounded-xl" />
-                  </div>
-                </div>
-              ))}
+              <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin shadow-xl shadow-primary/10" />
+              <p className="text-[11px] font-black uppercase tracking-[0.4em] text-gray-500 animate-pulse">Syncing Inquiries</p>
             </motion.div>
           ) : (
             <motion.div

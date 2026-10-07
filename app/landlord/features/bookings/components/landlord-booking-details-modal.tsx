@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Modal from '@/components/modals/Modal';
+import { useSession } from 'next-auth/react';
 import { Booking } from '../hooks/use-booking-logic';
 import Avatar from '@/components/common/Avatar';
 import { 
@@ -21,7 +22,8 @@ import {
   IconShieldCheck,
   IconDeviceMobile,
   IconMessage,
-  IconHome
+  IconHome,
+  IconDownload
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import { cn } from '@/utils/helper';
@@ -30,6 +32,8 @@ import { getSafeImageSrcString } from '@/components/modals/inquiry-modal/Inquiry
 import { generateLeaseContractPDF, previewPdfBlob } from '@/utils/contractPdfGenerator';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
+import { generateSingleItemPDF } from '@/utils/pdfGenerator';
+import { prepareSingleItemForExport } from '@/utils/export-utils';
 
 interface LandlordBookingDetailsModalProps {
   booking: Booking | null;
@@ -46,6 +50,7 @@ export function LandlordBookingDetailsModal({
   onUpdateStatus,
   isUpdatingStatus
 }: LandlordBookingDetailsModalProps) {
+  const { data: session } = useSession();
   const responsiveToast = useResponsiveToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -496,6 +501,44 @@ export function LandlordBookingDetailsModal({
             
             {/* Right Primary Actions */}
             <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                className="flex-1 sm:flex-none h-10 sm:h-11 px-3 sm:px-4 text-[11px] sm:text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                title="Export Booking Confirmation Receipt PDF"
+                onClick={async () => {
+                  try {
+                    const formattedItem = prepareSingleItemForExport(booking, 'booking');
+                    const dateStamp = new Date().toISOString().slice(0, 10);
+                    const reportId = `BTAU-BOOK-${dateStamp.replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+                    const guestName = (booking.user?.name || booking.guestName || 'Guest');
+                    const fileName = `BoardTAU_Booking_${guestName.replace(/\s+/g, '_')}_Receipt`;
+
+                    const authorName = session?.user?.name || session?.user?.email || 'BoardTAU Landlord';
+
+                    await generateSingleItemPDF(
+                      fileName,
+                      formattedItem.title,
+                      formattedItem.category,
+                      formattedItem.kvPairs,
+                      formattedItem.sections,
+                      {
+                        title: formattedItem.title,
+                        subtitle: (formattedItem as any).subtitle,
+                        author: authorName,
+                        reportId: reportId,
+                        type: 'booking',
+                        showQR: false
+                      }
+                    );
+                    responsiveToast.success("Exported Booking Confirmation Receipt PDF!");
+                  } catch (e) {
+                    responsiveToast.error("Failed to export booking receipt.");
+                  }
+                }}
+              >
+                <IconDownload size={15} />
+                <span>Export Receipt</span>
+              </button>
+
               <button
                 disabled={isLoading}
                 className="flex-1 sm:flex-none h-10 sm:h-11 px-4 sm:px-5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"

@@ -205,8 +205,12 @@ export const getAllLandlordProperties = async (): Promise<LandlordPropertyResult
       imageSrc: true,
       createdAt: true,
       isArchived: true,
-      region: true,
-      country: true,
+      amenities_list: true,
+      listingLinks: {
+        include: {
+          attribute: true
+        }
+      },
       propertyType: {
         select: {
           name: true,
@@ -306,7 +310,7 @@ export const getRoomDetails = async (roomId: string) => {
     propertyStatus: room.listing.status,
     propertyTypeId: room.listing.propertyTypeId || (room.listing.propertyType as any)?.id || null,
     bathroomCount: room.listing.bathroomCount || 0,
-    roomType: room.roomTypeDefinitionId || (room.roomTypeDefinition as any)?.code || room.roomTypeDefinition?.name || '',
+    roomType: room.roomTypeDefinition?.name || room.roomTypeDefinitionId || '',
     imageSrc: room.images[0]?.url || null,
     images: room.images.map((img: any) => img.url),
     amenities: room.roomLinks.map((rl: any) => rl.attribute)
