@@ -12,28 +12,23 @@ export async function POST(request: NextRequest) {
        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { email, otp } = await request.json();
+    const { otp } = await request.json();
 
-    if (!email || !otp) {
-      return NextResponse.json({ error: 'Email and OTP are required' }, { status: 400 });
+    if (!otp) {
+      return NextResponse.json({ error: 'OTP is required' }, { status: 400 });
     }
 
-    // The email they are verifying must match their logged-in session email
-    if (user.email !== email) {
-      return NextResponse.json({ error: "Email mismatch" }, { status: 403 });
-    }
-
-    // Sanitize inputs
-    const sanitizedEmail = sanitizeInput(email);
+    // Sanitize OTP input
+    const sanitizedEmail = sanitizeInput(user.email);
     const sanitizedOTP = sanitizeInput(otp);
 
-    // Validate email
+    // Validate email format
     const emailError = validateEmail(sanitizedEmail);
     if (emailError) {
       return NextResponse.json({ error: emailError }, { status: 400 });
     }
 
-    // Verify OTP using existing library (This handles the progressive rate limiting and full account suspension)
+    // Verify OTP using authenticated session email
     await verifyOTP(sanitizedEmail, sanitizedOTP);
 
     return NextResponse.json(

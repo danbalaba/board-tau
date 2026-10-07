@@ -15,10 +15,8 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - name: Checkout PR commit
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Apply PR Labels
         uses: actions/labeler@v5
