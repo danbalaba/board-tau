@@ -112,14 +112,56 @@ export async function POST(req: Request) {
     });
 
     // Fetch images asynchronously from EdgeStore / S3 URLs or parse base64 data URLs
+    const getValidatedImageUrl = (urlInput: string): string => {
+      if (typeof urlInput !== 'string') {
+        throw new Error('Invalid image input parameter');
+      }
+
+      let parsed: URL;
+      try {
+        parsed = new URL(urlInput);
+      } catch {
+        throw new Error('Invalid image URL format');
+      }
+
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        throw new Error('Only HTTP and HTTPS protocols are permitted');
+      }
+
+      const hostname = parsed.hostname.toLowerCase();
+
+      // SSRF Protection: Block localhost, metadata endpoints, and internal/private IP ranges
+      const isPrivateOrLoopback =
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === '0.0.0.0' ||
+        hostname === '::1' ||
+        hostname === '169.254.169.254' || // AWS EC2 / IMDS metadata endpoint
+        hostname.startsWith('10.') ||
+        hostname.startsWith('192.168.') ||
+        hostname.endsWith('.internal') ||
+        hostname.endsWith('.local') ||
+        (hostname.startsWith('172.') && (() => {
+          const secondOctet = parseInt(hostname.split('.')[1] || '0', 10);
+          return secondOctet >= 16 && secondOctet <= 31;
+        })());
+
+      if (isPrivateOrLoopback) {
+        throw new Error('Access to local or private network addresses is restricted');
+      }
+
+      return parsed.href;
+    };
+
     const fetchImageBuffer = async (input: string): Promise<Uint8Array> => {
       if (input.startsWith('data:') || !input.startsWith('http')) {
         const base64Data = input.replace(/^data:image\/\w+;base64,/, '');
         const buffer = Buffer.from(base64Data, 'base64');
         return new Uint8Array(buffer);
       }
-      const res = await fetch(input);
-      if (!res.ok) throw new Error(`Failed to download image from ${input}`);
+      const safeUrl = getValidatedImageUrl(input);
+      const res = await fetch(safeUrl);
+      if (!res.ok) throw new Error('Failed to download image from provided URL');
       const arrayBuffer = await res.arrayBuffer();
       return new Uint8Array(arrayBuffer);
     };
@@ -144,7 +186,7 @@ export async function POST(req: Request) {
         });
       }
     } catch (cacheErr) {
-      console.warn('[KYC Cache Lookup Warning]:', cacheErr);
+      console.warn('[KYC Cache Lookup Warning]:', cacheErr instanceof Error ? cacheErr.message.replace(/[\r\n]/g, ' ') : String(cacheErr));
     }
 
     // 1. Run DetectText (OCR AI) FIRST to verify whether idCardUrl is actually an ID card document!
@@ -153,7 +195,7 @@ export async function POST(req: Request) {
     });
 
     const textResult = await client.send(textCmd).catch((err) => {
-      console.warn('[AWS Rekognition] DetectText failed:', err);
+      console.warn('[AWS Rekognition] DetectText failed:', err instanceof Error ? err.message.replace(/[\r\n]/g, ' ') : String(err));
       return null;
     });
 
@@ -181,7 +223,7 @@ export async function POST(req: Request) {
       });
 
       const labelsResult = await client.send(labelsCmd).catch((err) => {
-        console.warn('[AWS Rekognition] DetectLabels failed:', err);
+        console.warn('[AWS Rekognition] DetectLabels failed:', err instanceof Error ? err.message.replace(/[\r\n]/g, ' ') : String(err));
         return null;
       });
 
@@ -234,7 +276,7 @@ export async function POST(req: Request) {
                 userAgent: req.headers.get("user-agent") || undefined,
               });
             } catch (auditErr) {
-              console.warn('[KYC Lockout Audit Log Warning]:', auditErr);
+              console.warn('[KYC Lockout Audit Log Warning]:', auditErr instanceof Error ? auditErr.message.replace(/[\r\n]/g, ' ') : String(auditErr));
             }
           }
 
@@ -263,7 +305,7 @@ export async function POST(req: Request) {
           consecutiveFailures: newAttempts,
         });
       } catch (err) {
-        console.warn('[KYC Failure Lockout Track Warning]:', err);
+        console.warn('[KYC Failure Lockout Track Warning]:', err instanceof Error ? err.message.replace(/[\r\n]/g, ' ') : String(err));
         return NextResponse.json(payload);
       }
     };
@@ -293,7 +335,7 @@ export async function POST(req: Request) {
     try {
       compareResult = await client.send(compareCmd);
     } catch (err: any) {
-      console.warn('[AWS Rekognition] CompareFaces failed:', err);
+      console.warn('[AWS Rekognition] CompareFaces failed:', err instanceof Error ? err.message.replace(/[\r\n]/g, ' ') : String(err));
       if (
         err.name === 'UnrecognizedClientException' ||
         err.name === 'InvalidSignatureException' ||
@@ -366,16 +408,18 @@ export async function POST(req: Request) {
         await cache.del(phaseStateKey);
         await cache.del(lockoutKey);
       } catch (cacheSetErr) {
-        console.warn('[KYC Cache Set Warning]:', cacheSetErr);
+        console.warn('[KYC Cache Set Warning]:', cacheSetErr instanceof Error ? cacheSetErr.message.replace(/[\r\n]/g, ' ') : String(cacheSetErr));
       }
       return NextResponse.json(responsePayload);
     } else {
       return handleFailureResponse(responsePayload);
     }
   } catch (error: any) {
-    console.error('[Server KYC Error]:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const sanitizedLogMessage = errorMessage.replace(/[\r\n]/g, ' ');
+    console.error('[Server KYC Error]:', sanitizedLogMessage);
     return NextResponse.json(
-      { error: 'Server verification failed', details: error.message },
+      { error: 'Server verification failed', details: sanitizedLogMessage },
       { status: 500 }
     );
   }
