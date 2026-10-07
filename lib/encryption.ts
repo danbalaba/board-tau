@@ -197,3 +197,33 @@ export function decryptEntityId(token: string): string {
   }
 }
 
+export function decryptReportToken(token: string): { reportId: string | null; isTampered: boolean } {
+  if (!token) return { reportId: null, isTampered: false };
+  if (/^BTAU-[A-Z0-9-]+$/.test(token)) {
+    return { reportId: token, isTampered: false };
+  }
+  try {
+    let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    const raw = Buffer.from(base64, 'base64').toString('utf8');
+    const parts = raw.split(':');
+    if (parts.length !== 3) return { reportId: null, isTampered: true };
+
+    const iv = Buffer.from(parts[0], 'hex');
+    const tag = Buffer.from(parts[1], 'hex');
+    const encrypted = parts[2];
+
+    const decipher = crypto.createDecipheriv(ALGORITHM, getChatTokenKey(), iv);
+    decipher.setAuthTag(tag);
+
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    return { reportId: decrypted || null, isTampered: false };
+  } catch (error) {
+    return { reportId: null, isTampered: true };
+  }
+}
+

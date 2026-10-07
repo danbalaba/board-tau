@@ -115,6 +115,16 @@ export const edgeStoreRouter = es.router({
         { userId: { path: "owner" } },
       ],
     }),
+
+  reportAudits: es
+    .fileBucket({
+      maxSize: 1024 * 1024 * 25,
+      accept: ["application/pdf"],
+    })
+    .beforeUpload(({ ctx }) => {
+      const allowedRoles = ["LANDLORD", "ADMIN", "SUPER_ADMIN"];
+      return ctx.userId !== "unauthenticated" && allowedRoles.includes(ctx.role);
+    }),
 });
 
 export type EdgeStoreRouter = typeof edgeStoreRouter;
