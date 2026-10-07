@@ -196,14 +196,15 @@ export async function DELETE(req: NextRequest) {
     ].filter(Boolean) as string[];
 
     // 3. WIPE files from EdgeStore Cloud
-    console.log(`🛡️ SECURITY PURGE: Deleting ${fileUrls.length} files from EdgeStore for application ${id}`);
+    console.log(`🛡️ SECURITY PURGE: Deleting ${fileUrls.length} files from EdgeStore for application`);
     
     await Promise.all(
-      fileUrls.map(url => 
-        (backendClient.identityDocs as any).deleteFile({ url }).catch((err: any) => {
-          console.error(`Failed to delete file from EdgeStore: ${url}`, err);
-        })
-      )
+      fileUrls.map(url => {
+        return (backendClient.identityDocs as any).deleteFile({ url }).catch((err: any) => {
+          const cleanErr = err instanceof Error ? err.message.replace(/[\r\n]/g, ' ') : String(err);
+          console.error("Failed to delete file from EdgeStore", cleanErr);
+        });
+      })
     );
 
     // 4. Delete the database record

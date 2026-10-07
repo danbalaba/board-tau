@@ -38,7 +38,6 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    console.log("--> POST /api/admin/sub-groups payload received:", body);
     const { key, type, title, subtitle, tabLabel, displayOrder, isActive } = body;
 
     if (!key || !type || !tabLabel) {

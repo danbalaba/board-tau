@@ -169,7 +169,8 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
               setViewModalOpen(true);
             } else {
               // Fetch from API
-              const res = await fetch(`/api/landlord/rooms/${roomId}`);
+              const safeRoomId = encodeURIComponent(roomId);
+              const res = await fetch(`/api/landlord/rooms/${safeRoomId}`);
               const json = await res.json();
               if (json.success && json.room) {
                 setSelectedRoom(json.room);

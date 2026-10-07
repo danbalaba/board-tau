@@ -23,7 +23,6 @@ export async function POST(request: Request) {
     }
 
     const data = await request.json();
-    console.log("Inquiry data:", data);
 
     const {
       listingId,
@@ -50,7 +49,6 @@ export async function POST(request: Request) {
       if (!moveInDate) missingFields.push("moveInDate");
       if (!checkOutDate) missingFields.push("checkOutDate");
       if (!role) missingFields.push("role");
-      console.log("Missing fields:", missingFields);
       return NextResponse.json({ error: "Missing required fields", missingFields }, { status: 400 });
     }
 
@@ -59,16 +57,13 @@ export async function POST(request: Request) {
       where: { id: roomId },
       include: { images: true }
     });
-    console.log("Room details:", room);
 
     if (!room) {
-      console.log("Room not found");
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
     // Optional: Check if room has available slots before creating inquiry
     if (room.availableSlots <= 0) {
-      console.log("Room has no available slots");
       return NextResponse.json({ error: "Room is fully booked" }, { status: 400 });
     }
 
@@ -216,7 +211,6 @@ export async function POST(request: Request) {
       console.error("PostHog inquiry_created capture failed:", phErr);
     }
 
-    console.log("Inquiry created successfully:", inquiry);
     return NextResponse.json(inquiry);
   } catch (error: any) {
     console.error("Error creating inquiry:", error);

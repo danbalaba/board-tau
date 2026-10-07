@@ -62,7 +62,6 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    console.log("--> POST /api/admin/attributes payload received:", body);
     const { name, type, subGroupKey, setupContext, description, icon, isActive, isUniversal, propertyTypeNames } = body;
 
     const cleanName = name.trim().replace(/\s+/g, " ");

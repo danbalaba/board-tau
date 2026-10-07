@@ -19,6 +19,9 @@ export async function POST(req: Request) {
     const metadata = payload.data.attributes.resource.attributes.metadata;
     const inquiryId = metadata?.inquiryId;
 
+    const cleanInquiryId = String(inquiryId || '').replace(/[\r\n]/g, '');
+    const cleanEventType = String(eventType || '').replace(/[\r\n]/g, '');
+
     switch (eventType) {
       case "checkout_session.payment.paid":
         if (!inquiryId) {
@@ -26,7 +29,7 @@ export async function POST(req: Request) {
           return NextResponse.json({ message: "Invalid metadata" }, { status: 400 });
         }
 
-        console.log(`Payment confirmed for inquiry: ${inquiryId}`);
+        console.log("Payment confirmed for inquiry");
 
         const inquiry = await db.inquiry.findUnique({
           where: { id: inquiryId },
@@ -41,7 +44,7 @@ export async function POST(req: Request) {
             });
             
             if (!pendingReservation) {
-              console.log(`ℹ️ PayMongo: Reservation ${inquiryId} already finalized. Skipping inventory update.`);
+              console.log("ℹ️ PayMongo: Reservation already finalized. Skipping inventory update.");
               return NextResponse.json({ ok: true });
             }
 
@@ -163,7 +166,7 @@ export async function POST(req: Request) {
 
       case "checkout_session.expired":
         if (inquiryId) {
-          console.log(`Checkout session expired for inquiry: ${inquiryId}`);
+          console.log("Checkout session expired for inquiry");
           // Mark the reservation as EXPIRED
           await db.reservation.updateMany({
             where: { inquiryId: inquiryId },
@@ -177,7 +180,7 @@ export async function POST(req: Request) {
 
       case "payment.failed":
         if (inquiryId) {
-          console.log(`Payment failed for inquiry: ${inquiryId}`);
+          console.log("Payment failed for inquiry");
           await db.reservation.updateMany({
             where: { inquiryId: inquiryId },
             data: {
@@ -189,7 +192,7 @@ export async function POST(req: Request) {
         break;
 
       default:
-        console.log(`Unhandled event type: ${eventType}`);
+        console.log("Unhandled PayMongo event type received");
     }
 
     return NextResponse.json({ ok: true });

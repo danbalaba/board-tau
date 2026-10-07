@@ -68,7 +68,8 @@ export const cache = {
 
       return typeof data === 'string' ? JSON.parse(data, dateReviver) : data;
     } catch (error) {
-      console.error('Cache get error for key %s:', key, error);
+      const cleanErr = error instanceof Error ? error.message.replace(/[\r\n]/g, ' ') : String(error);
+      console.error("Cache get error:", cleanErr);
       return null;
     }
   },
@@ -83,7 +84,8 @@ export const cache = {
       await redis.set(key, JSON.stringify(data), { ex: ttl });
       return true;
     } catch (error) {
-      console.error('Cache set error for key %s:', key, error);
+      const cleanErr = error instanceof Error ? error.message.replace(/[\r\n]/g, ' ') : String(error);
+      console.error("Cache set error:", cleanErr);
       return false;
     }
   },
@@ -96,7 +98,8 @@ export const cache = {
       await redis.del(key);
       return true;
     } catch (error) {
-      console.error('Cache delete error for key %s:', key, error);
+      const cleanErr = error instanceof Error ? error.message.replace(/[\r\n]/g, ' ') : String(error);
+      console.error("Cache delete error:", cleanErr);
       return false;
     }
   },
@@ -113,7 +116,8 @@ export const cache = {
       }
       return true;
     } catch (error) {
-      console.error('Cache delete pattern error for pattern %s:', pattern, error);
+      const cleanErr = error instanceof Error ? error.message.replace(/[\r\n]/g, ' ') : String(error);
+      console.error("Cache delete pattern error:", cleanErr);
       return false;
     }
   },
@@ -126,7 +130,8 @@ export const cache = {
       const result = await redis.exists(key);
       return result === 1;
     } catch (error) {
-      console.error('Cache exists check error for key %s:', key, error);
+      const cleanErr = error instanceof Error ? error.message.replace(/[\r\n]/g, ' ') : String(error);
+      console.error("Cache exists check error:", cleanErr);
       return false;
     }
   },

@@ -206,7 +206,7 @@ export async function DELETE(
     const imageUrls = existing.images.map((img: any) => img.url).filter(Boolean);
     
     if (imageUrls.length > 0) {
-      console.log(`🛡️ SECURITY PURGE: Wiping ${imageUrls.length} images for Room ${roomId}`);
+      console.log(`🛡️ SECURITY PURGE: Wiping ${imageUrls.length} room images from EdgeStore`);
       
       const extractRealUrl = (url: string) => {
         let targetUrl = url;

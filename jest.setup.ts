@@ -28,7 +28,8 @@ console.error = (...args: any[]) => {
   ) {
     return; // Ignore expected test noise
   }
-  originalConsoleError(...args);
+  const cleanArgs = args.map(arg => typeof arg === 'string' ? arg.replace(/[\r\n]/g, ' ') : arg);
+  originalConsoleError(...cleanArgs);
 };
 
 console.log = (...args: any[]) => {
@@ -39,7 +40,8 @@ console.log = (...args: any[]) => {
   ) {
     return; // Ignore expected test noise
   }
-  originalConsoleLog(...args);
+  const cleanArgs = args.map(arg => typeof arg === 'string' ? arg.replace(/[\r\n]/g, ' ') : arg);
+  originalConsoleLog(...cleanArgs);
 };
 
 // Global next/image mock for JSDOM testing

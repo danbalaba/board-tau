@@ -9,7 +9,7 @@ import { logAdminAction } from '@/lib/admin';
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ listingId: string }> }) {
   try {
     const { listingId: id } = await params;
-    console.log(`🚀 [MODERATION] Processing decision for Listing ID: ${id}`);
+    console.log('🚀 [MODERATION] Processing listing decision');
     // Check authentication
     const session = await getServerSession(authOptions);
     const role = session?.user?.role;

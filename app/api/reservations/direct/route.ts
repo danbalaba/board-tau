@@ -6,18 +6,13 @@ import { encryptEntityId } from "@/lib/encryption";
 
 export async function POST(request: Request) {
   try {
-    console.log("Received reservation request");
-    
     const user = await getCurrentUser();
-    console.log("Current user:", user);
 
     if (!user) {
-      console.log("No user found - returning 401");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const data = await request.json();
-    console.log("Reservation data:", data);
 
     const {
       listingId,
@@ -41,7 +36,6 @@ export async function POST(request: Request) {
       if (!stayDuration) missingFields.push("stayDuration");
       if (!role) missingFields.push("role");
       if (!contactMethod) missingFields.push("contactMethod");
-      console.log("Missing fields:", missingFields);
       return NextResponse.json({ error: "Missing required fields", missingFields }, { status: 400 });
     }
 
@@ -49,16 +43,13 @@ export async function POST(request: Request) {
     const room = await db.room.findUnique({
       where: { id: roomId },
     });
-    console.log("Room details:", room);
 
     if (!room) {
-      console.log("Room not found");
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
     // Optional: Check if room has available slots before creating reservation
     if (room.availableSlots <= 0) {
-      console.log("Room has no available slots");
       return NextResponse.json({ error: "Room is fully booked" }, { status: 400 });
     }
 
@@ -111,7 +102,6 @@ export async function POST(request: Request) {
       payload: reservation,
     });
 
-    console.log("Reservation created successfully:", reservation);
     return NextResponse.json(reservation);
   } catch (error: any) {
     console.error("Error creating reservation directly:", error);
