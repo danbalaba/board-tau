@@ -111,54 +111,53 @@ export async function POST(req: Request) {
       },
     });
 
+    const ALLOWED_IMAGE_HOSTS = [
+      'files.edgestore.dev',
+      'edgestore.dev',
+      's3.ap-southeast-1.amazonaws.com',
+      's3.amazonaws.com',
+      'amazonaws.com',
+      'res.cloudinary.com',
+      'cloudinary.com',
+      'images.unsplash.com',
+      'unsplash.com',
+      'example.com',
+    ];
+
     // Fetch images asynchronously from EdgeStore / S3 URLs or parse base64 data URLs
-    const getValidatedImageUrl = (urlInput: string): string => {
-      if (typeof urlInput !== 'string') {
+    const fetchImageBuffer = async (input: string): Promise<Uint8Array> => {
+      if (typeof input !== 'string') {
         throw new Error('Invalid image input parameter');
       }
 
-      let parsed: URL;
-      try {
-        parsed = new URL(urlInput);
-      } catch {
-        throw new Error('Invalid image URL format');
+      if (input.startsWith('data:') || !input.startsWith('http')) {
+        const base64Data = input.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+        return new Uint8Array(buffer);
       }
 
-      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      // Inline URL Parsing & Host Validation for CodeQL SSRF Dataflow Analysis
+      const targetUrl = new URL(input);
+
+      if (targetUrl.protocol !== 'http:' && targetUrl.protocol !== 'https:') {
         throw new Error('Only HTTP and HTTPS protocols are permitted');
       }
 
-      const hostname = parsed.hostname.toLowerCase();
+      const hostname = targetUrl.hostname.toLowerCase();
 
-      // Allowed hostname list to satisfy CodeQL SSRF static analysis
-      const allowedHosts = [
-        'files.edgestore.dev',
-        'edgestore.dev',
-        's3.ap-southeast-1.amazonaws.com',
-        's3.amazonaws.com',
-        'amazonaws.com',
-        'res.cloudinary.com',
-        'cloudinary.com',
-        'images.unsplash.com',
-        'unsplash.com',
-        'example.com',
-      ];
-
-      const isAllowedHost = allowedHosts.some(
-        (allowed) => hostname === allowed || hostname.endsWith(`.${allowed}`)
-      );
+      const isAllowedHost = ALLOWED_IMAGE_HOSTS.includes(hostname) ||
+        ALLOWED_IMAGE_HOSTS.some((allowed) => hostname.endsWith(`.${allowed}`));
 
       if (!isAllowedHost) {
         throw new Error('Image URL host is not allowed');
       }
 
-      // SSRF Protection: Block localhost, metadata endpoints, and internal/private IP ranges
       const isPrivateOrLoopback =
         hostname === 'localhost' ||
         hostname === '127.0.0.1' ||
         hostname === '0.0.0.0' ||
         hostname === '::1' ||
-        hostname === '169.254.169.254' || // AWS EC2 / IMDS metadata endpoint
+        hostname === '169.254.169.254' ||
         hostname.startsWith('10.') ||
         hostname.startsWith('192.168.') ||
         hostname.endsWith('.internal') ||
@@ -172,17 +171,7 @@ export async function POST(req: Request) {
         throw new Error('Access to local or private network addresses is restricted');
       }
 
-      return parsed.href;
-    };
-
-    const fetchImageBuffer = async (input: string): Promise<Uint8Array> => {
-      if (input.startsWith('data:') || !input.startsWith('http')) {
-        const base64Data = input.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-        return new Uint8Array(buffer);
-      }
-      const safeUrl = getValidatedImageUrl(input);
-      const res = await fetch(safeUrl);
+      const res = await fetch(targetUrl.href);
       if (!res.ok) throw new Error('Failed to download image from provided URL');
       const arrayBuffer = await res.arrayBuffer();
       return new Uint8Array(arrayBuffer);
