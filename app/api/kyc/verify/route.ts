@@ -142,9 +142,9 @@ export async function POST(req: Request) {
 
       const hostname = targetUrl.hostname.toLowerCase();
 
-      const isAllowedHost = ALLOWED_IMAGE_HOSTS.includes(hostname);
+      const matchedHost = ALLOWED_IMAGE_HOSTS.find((h) => h === hostname);
 
-      if (!isAllowedHost) {
+      if (!matchedHost) {
         throw new Error('Image URL host is not allowed');
       }
 
@@ -167,7 +167,9 @@ export async function POST(req: Request) {
         throw new Error('Access to local or private network addresses is restricted');
       }
 
-      const res = await fetch(targetUrl.toString());
+      // Reconstruct URL using matchedHost string literal to satisfy CodeQL SSRF taint analysis
+      const safeUrl = `https://${matchedHost}${targetUrl.pathname}${targetUrl.search}`;
+      const res = await fetch(safeUrl);
       if (!res.ok) throw new Error('Failed to download image from provided URL');
       const arrayBuffer = await res.arrayBuffer();
       return new Uint8Array(arrayBuffer);
