@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'mongodb://localhost:27017/dummy' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
