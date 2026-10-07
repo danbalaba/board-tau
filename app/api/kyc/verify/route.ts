@@ -130,6 +130,28 @@ export async function POST(req: Request) {
 
       const hostname = parsed.hostname.toLowerCase();
 
+      // Allowed hostname list to satisfy CodeQL SSRF static analysis
+      const allowedHosts = [
+        'files.edgestore.dev',
+        'edgestore.dev',
+        's3.ap-southeast-1.amazonaws.com',
+        's3.amazonaws.com',
+        'amazonaws.com',
+        'res.cloudinary.com',
+        'cloudinary.com',
+        'images.unsplash.com',
+        'unsplash.com',
+        'example.com',
+      ];
+
+      const isAllowedHost = allowedHosts.some(
+        (allowed) => hostname === allowed || hostname.endsWith(`.${allowed}`)
+      );
+
+      if (!isAllowedHost) {
+        throw new Error('Image URL host is not allowed');
+      }
+
       // SSRF Protection: Block localhost, metadata endpoints, and internal/private IP ranges
       const isPrivateOrLoopback =
         hostname === 'localhost' ||
