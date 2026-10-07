@@ -85,8 +85,9 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         } else {
           setNotifications(data.notifications);
           
-          // Old behavior: Notify user of unread status on page refresh/initial load
-          if (data.unreadStats?.total > 0 && !cursor) {
+          // Do not show unread notification toasts when browsing public verify pages
+          const isVerifyPage = typeof window !== "undefined" && window.location.pathname.startsWith("/verify");
+          if (data.unreadStats?.total > 0 && !cursor && !isVerifyPage) {
             toast.info({
               title: "Unread Notifications",
               description: `You have ${data.unreadStats.total} unread notification(s).`

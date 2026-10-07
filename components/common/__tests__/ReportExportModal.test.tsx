@@ -55,7 +55,7 @@ describe('ReportExportModal', () => {
     expect(screen.getByText('Export Business Report')).toBeInTheDocument();
   });
 
-  it('calls onClose when close button is clicked', () => {
+  it('calls onClose when top drag handle bar is clicked', () => {
     render(
       <ReportExportModal 
         isOpen={true} 
@@ -64,9 +64,9 @@ describe('ReportExportModal', () => {
       />
     );
     
-    // Header close button
-    const closeButtons = screen.getAllByRole('button').filter(b => b.querySelector('svg'));
-    fireEvent.click(closeButtons[0]);
+    // Top drag handle bar
+    const dragHandle = screen.getByTitle('Slide down to close');
+    fireEvent.click(dragHandle);
     expect(mockOnClose).toHaveBeenCalled();
   });
 
@@ -83,7 +83,7 @@ describe('ReportExportModal', () => {
     expect(mockOnClose).toHaveBeenCalled();
   });
 
-  it('selects PDF format by default and generates', () => {
+  it('shows required validation toast and error when downloading with no scope or format selected', () => {
     render(
       <ReportExportModal 
         isOpen={true} 
@@ -92,8 +92,31 @@ describe('ReportExportModal', () => {
       />
     );
     
-    fireEvent.click(screen.getByText('Generate Report'));
-    expect(mockOnGenerate).toHaveBeenCalledWith('PDF', undefined);
+    fireEvent.click(screen.getByText('Download Report'));
+    expect(mockOnGenerate).not.toHaveBeenCalled();
+    expect(screen.getByText('Scope Selection Required')).toBeInTheDocument();
+    expect(screen.getByText('Format Selection Required')).toBeInTheDocument();
+  });
+
+  it('allows selecting scope and format and then downloading report', () => {
+    render(
+      <ReportExportModal 
+        isOpen={true} 
+        onClose={mockOnClose} 
+        onGenerate={mockOnGenerate} 
+      />
+    );
+    
+    fireEvent.click(screen.getByText('Filtered View'));
+    fireEvent.click(screen.getByText('Vector PDF Report'));
+    fireEvent.click(screen.getByText('Download PDF Report'));
+
+    expect(mockOnGenerate).toHaveBeenCalledWith({
+      scope: 'filtered',
+      format: 'pdf',
+      includeSummary: true,
+      includeGlossary: true
+    });
   });
 
   it('can select CSV format and generate', () => {
@@ -105,10 +128,16 @@ describe('ReportExportModal', () => {
       />
     );
     
-    fireEvent.click(screen.getByText('CSV Data'));
-    fireEvent.click(screen.getByText('Generate Report'));
+    fireEvent.click(screen.getByText('Filtered View'));
+    fireEvent.click(screen.getByText('CSV Raw Data'));
+    fireEvent.click(screen.getByText('Download CSV Report'));
     
-    expect(mockOnGenerate).toHaveBeenCalledWith('CSV', undefined);
+    expect(mockOnGenerate).toHaveBeenCalledWith({
+      scope: 'filtered',
+      format: 'csv',
+      includeSummary: true,
+      includeGlossary: true
+    });
   });
 
   it('can select EXCEL format and generate', () => {
@@ -120,66 +149,16 @@ describe('ReportExportModal', () => {
       />
     );
     
-    fireEvent.click(screen.getByText('Excel Spreadsheet'));
-    fireEvent.click(screen.getByText('Generate Report'));
+    fireEvent.click(screen.getByText('Complete History'));
+    fireEvent.click(screen.getByText('2-Tab Excel (.xlsx)'));
+    fireEvent.click(screen.getByText('Download EXCEL Report'));
     
-    expect(mockOnGenerate).toHaveBeenCalledWith('EXCEL', undefined);
-  });
-
-  it('handles preset selection', () => {
-    render(
-      <ReportExportModal 
-        isOpen={true} 
-        onClose={mockOnClose} 
-        onGenerate={mockOnGenerate} 
-      />
-    );
-    
-    fireEvent.click(screen.getByText('Today'));
-    fireEvent.click(screen.getByText('Generate Report'));
-    
-    expect(mockOnGenerate).toHaveBeenCalledWith('PDF', expect.objectContaining({
-      from: expect.any(Date),
-      to: expect.any(Date)
-    }));
-  });
-
-  it('handles preset "Last Month"', () => {
-    render(
-      <ReportExportModal 
-        isOpen={true} 
-        onClose={mockOnClose} 
-        onGenerate={mockOnGenerate} 
-      />
-    );
-    
-    fireEvent.click(screen.getByText('Last Month'));
-    fireEvent.click(screen.getByText('Generate Report'));
-    
-    expect(mockOnGenerate).toHaveBeenCalledWith('PDF', expect.objectContaining({
-      from: expect.any(Date),
-      to: expect.any(Date)
-    }));
-  });
-
-  it('handles custom date range selection from DayPicker', () => {
-    render(
-      <ReportExportModal 
-        isOpen={true} 
-        onClose={mockOnClose} 
-        onGenerate={mockOnGenerate} 
-      />
-    );
-    
-    // Simulate selecting a custom range from the DayPicker mock
-    fireEvent.click(screen.getByText('Select Range'));
-    
-    fireEvent.click(screen.getByText('Generate Report'));
-    
-    expect(mockOnGenerate).toHaveBeenCalledWith('PDF', expect.objectContaining({
-      from: new Date('2023-01-01'),
-      to: new Date('2023-01-31')
-    }));
+    expect(mockOnGenerate).toHaveBeenCalledWith({
+      scope: 'all',
+      format: 'excel',
+      includeSummary: true,
+      includeGlossary: true
+    });
   });
 
   it('shows generating state when isGenerating is true', () => {
@@ -188,15 +167,13 @@ describe('ReportExportModal', () => {
         isOpen={true} 
         onClose={mockOnClose} 
         onGenerate={mockOnGenerate} 
+        scope="filtered"
+        format="pdf"
         isGenerating={true}
       />
     );
     
-    expect(screen.getByText('Generating...')).toBeInTheDocument();
-    
-    // Generate button should be disabled
-    const generateBtn = screen.getByRole('button', { name: /generating/i });
-    expect(generateBtn).toBeDisabled();
+    expect(screen.getByText('Generating PDF...')).toBeInTheDocument();
     
     // Cancel button should be disabled
     const cancelBtn = screen.getByRole('button', { name: /cancel/i });

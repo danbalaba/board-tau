@@ -11,8 +11,10 @@ import { motion, AnimatePresence } from "framer-motion";
 interface CheckboxProps {
   id: string;
   label: string;
-  register: UseFormRegister<any>;
-  watch: UseFormWatch<any>;
+  register?: UseFormRegister<any>;
+  watch?: UseFormWatch<any>;
+  checked?: boolean;
+  onChange?: (checked: boolean) => void;
   value?: string; // Optional specific value for array-based checkboxes
   required?: boolean;
   className?: string;
@@ -24,16 +26,26 @@ const Checkbox: React.FC<CheckboxProps> = ({
   label,
   register,
   watch,
+  checked: controlledChecked,
+  onChange,
   value: choiceValue,
   required = false,
   className,
   icon,
 }) => {
   // Check if it's checked by watching either the boolean id or if choiceValue exists in the array
-  const watchedValue = watch(id);
-  const isChecked = Array.isArray(watchedValue) 
-    ? watchedValue.includes(choiceValue) 
-    : !!watchedValue;
+  const watchedValue = watch ? watch(id) : undefined;
+  const isChecked = controlledChecked !== undefined 
+    ? controlledChecked 
+    : Array.isArray(watchedValue) 
+      ? watchedValue.includes(choiceValue) 
+      : !!watchedValue;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (onChange) {
+      onChange(e.target.checked);
+    }
+  };
 
   return (
     <label 
@@ -45,8 +57,10 @@ const Checkbox: React.FC<CheckboxProps> = ({
           type="checkbox"
           id={choiceValue ? `${id}-${choiceValue}` : id}
           value={choiceValue}
-          {...register(id)}
-          className="sr-only" // Hide the native checkbox but keep it functional for RHF
+          checked={isChecked}
+          onChange={handleChange}
+          {...(register ? register(id) : {})}
+          className="sr-only" // Hide the native checkbox but keep it functional
         />
         
         {/* Custom Checkbox Box */}
@@ -80,7 +94,7 @@ const Checkbox: React.FC<CheckboxProps> = ({
 
       <span
         className={cn(
-          "text-[14px] font-medium transition-colors duration-200 flex items-center gap-2",
+          "text-[13px] font-medium transition-colors duration-200 flex items-center gap-2",
           isChecked ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300",
           className
         )}
