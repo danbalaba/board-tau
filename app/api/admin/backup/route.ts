@@ -5,6 +5,8 @@ import { authOptions } from '@/lib/auth';
 import { backendClient } from '@/lib/edgestore-server';
 import { encryptMessage } from '@/lib/encryption';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

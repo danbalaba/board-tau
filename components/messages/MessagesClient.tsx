@@ -12,7 +12,8 @@ import { motion } from "framer-motion";
 import Heading from "@/components/common/Heading";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { useNotification } from "@/context/NotificationContext";
-import { IconChevronLeft } from "@tabler/icons-react";
+import { decryptChatToken, encryptChatToken } from "@/lib/encryption";
+import { ChevronLeft } from "lucide-react";
 
 interface MessagesClientProps {
   initialConversations: TenantConversation[];
@@ -86,19 +87,39 @@ const MessagesClient: React.FC<MessagesClientProps> = ({
     hasAutoSelected.current = true;
   }, [commitArchive, commitUnarchive, setActiveConversation, toast]);
 
-  // Handle URL Deep Linking
+  // Handle URL Deep Linking & Encryption Masking
   useEffect(() => {
     if (hasAutoSelected.current || conversations.length === 0) return;
 
     const listingId = searchParams.get("listingId");
     const otherUserId = searchParams.get("otherUserId");
+    const token = searchParams.get("token");
 
-    if (listingId && otherUserId) {
-      const match = conversations.find(c => c.listingId === listingId && c.landlordId === otherUserId);
+    let targetListingId = listingId;
+    let targetOtherUserId = otherUserId;
+
+    if (token) {
+      const decrypted = decryptChatToken(token);
+      if (decrypted) {
+        targetListingId = decrypted.listingId;
+        targetOtherUserId = decrypted.otherUserId;
+      }
+    }
+
+    if (targetListingId && targetOtherUserId) {
+      const match = conversations.find(c => c.listingId === targetListingId && c.landlordId === targetOtherUserId);
       if (match) {
         setActiveConversation(match);
         hasAutoSelected.current = true;
         setMobileView("chat");
+
+        // Mask legacy raw parameters in URL bar with encrypted token
+        if (listingId && otherUserId && !token && typeof window !== "undefined") {
+          const encToken = encryptChatToken(listingId, otherUserId);
+          if (encToken) {
+            window.history.replaceState(null, "", `/messages?token=${encToken}`);
+          }
+        }
       }
     }
   }, [searchParams, conversations, setActiveConversation]);
@@ -165,7 +186,7 @@ const MessagesClient: React.FC<MessagesClientProps> = ({
           >
             <div className="flex flex-col items-center gap-1 opacity-60">
               <div className="w-1 h-6 bg-gray-400 dark:bg-gray-500 rounded-full" />
-              <IconChevronLeft className="w-4 h-4 text-gray-500 dark:text-gray-400 rotate-180 -ml-0.5" />
+              <ChevronLeft className="w-4 h-4 text-gray-500 dark:text-gray-400 rotate-180 -ml-0.5" />
             </div>
           </div>
         )}

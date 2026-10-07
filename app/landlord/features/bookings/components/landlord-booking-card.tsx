@@ -81,7 +81,8 @@ export function LandlordBookingCard({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-2.5 sm:p-6 rounded-2xl sm:rounded-3xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col h-full"
+        onClick={() => onViewDetails(booking)}
+        className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-2.5 sm:p-6 rounded-2xl sm:rounded-3xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col h-full cursor-pointer"
       >
         {/* Top Image Section */}
         <div className="relative h-28 sm:h-48 w-full rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 sm:mb-6 bg-gray-100 dark:bg-gray-800 z-10 flex-shrink-0">
@@ -149,7 +150,10 @@ export function LandlordBookingCard({
           {/* Action Buttons */}
           <div className="flex items-center gap-1.5 sm:gap-2 pt-2.5 sm:pt-4 border-t border-gray-100 dark:border-gray-800 w-full mt-auto">
             <Button
-              onClick={() => onViewDetails(booking)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails(booking);
+              }}
               className={cn(
                 "h-10 rounded-xl px-2 text-[10px] sm:text-xs font-black uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200/60 dark:border-gray-700/60",
                 booking.status === 'CHECKED_IN' ? "w-full sm:flex-1" : "w-full"
@@ -184,7 +188,8 @@ export function LandlordBookingCard({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="group relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-800 p-3 sm:p-6 hover:shadow-xl transition-all duration-300 shadow-sm"
+      onClick={() => onViewDetails(booking)}
+      className="group relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-800 p-3 sm:p-6 hover:shadow-xl transition-all duration-300 shadow-sm cursor-pointer"
     >
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-6">
         {/* Left Row on Mobile: Image + Details */}
@@ -247,7 +252,10 @@ export function LandlordBookingCard({
         {/* Action Column */}
         <div className="flex sm:flex-col items-center gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0 border-t sm:border-t-0 sm:border-l border-gray-100 dark:border-gray-800 pt-2.5 sm:pt-0 sm:pl-6">
           <Button
-            onClick={() => onViewDetails(booking)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails(booking);
+            }}
             className="flex-1 sm:w-36 rounded-xl sm:rounded-2xl py-2.5 sm:py-3 px-3 text-[10px] font-black uppercase tracking-widest bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200/60 dark:border-gray-700/60 transition-all cursor-pointer"
           >
             <span className="flex items-center justify-center gap-1.5">

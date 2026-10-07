@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, CreditCard, Check, ArrowRight, Eye, X, MapPin, Star } from "lucide-react";
+import { Home, CreditCard, Check, ArrowRight, Eye, X, MapPin, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
 import { generateConfirmationSlipPDF } from "@/utils/slipGenerator";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
@@ -65,6 +65,33 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
     currentUserEmail = "tenant@example.com",
 }) => {
     const responsiveToast = useResponsiveToast();
+    const [imgIdx, setImgIdx] = React.useState(0);
+
+    const cardImages = React.useMemo(() => {
+        const roomImgs: string[] = [];
+        if (Array.isArray(reservation.room?.images)) {
+            reservation.room.images.forEach((img: any) => {
+                const url = typeof img === 'string' ? img : img?.url;
+                if (url) roomImgs.push(url);
+            });
+        }
+        if (roomImgs.length > 0) {
+            return Array.from(new Set(roomImgs));
+        }
+
+        const listingImgs: string[] = [];
+        if (Array.isArray(reservation.listing?.images)) {
+            reservation.listing.images.forEach((img: any) => {
+                const url = typeof img === 'string' ? img : img?.url;
+                if (url) listingImgs.push(url);
+            });
+        }
+        if (reservation.listing?.imageSrc) {
+            listingImgs.push(reservation.listing.imageSrc);
+        }
+        const uniqueListing = Array.from(new Set(listingImgs.filter(Boolean)));
+        return uniqueListing.length > 0 ? uniqueListing : ["/images/placeholder.jpg"];
+    }, [reservation]);
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString("en-US", {
@@ -165,21 +192,50 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
                     repeatDelay: 1
                 }
             }}
-            className="bg-white dark:bg-gray-800/90 rounded-2xl shadow-md hover:shadow-xl border border-gray-200/80 dark:border-gray-700/60 relative group flex flex-col h-full overflow-hidden transition-all duration-300"
+            onClick={onViewDetails}
+            className="bg-white dark:bg-gray-800/90 rounded-2xl shadow-md hover:shadow-xl border border-gray-200/80 dark:border-gray-700/60 relative group flex flex-col h-full overflow-hidden transition-all duration-300 cursor-pointer"
         >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
 
-            <div className="relative h-44 overflow-hidden shrink-0 z-10">
+            <div className="relative h-44 overflow-hidden shrink-0 z-10 group/cardgallery">
                 <SafeImage
-                    src={(reservation.room?.images && reservation.room.images.length > 0)
-                        ? reservation.room.images[0].url
-                        : (reservation.listing?.images && reservation.listing.images.length > 0)
-                            ? reservation.listing.images[0].url
-                            : reservation.listing?.imageSrc || "/images/placeholder.jpg"
-                    }
+                    src={cardImages[imgIdx] || cardImages[0]}
                     alt={reservation.room.name}
                     unoptimized={true}
                 />
+
+                {cardImages.length > 1 && (
+                    <>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setImgIdx((prev) => (prev === 0 ? cardImages.length - 1 : prev - 1));
+                            }}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/cardgallery:opacity-100 transition-opacity hover:bg-black/80 z-30 cursor-pointer shadow-md"
+                            aria-label="Previous image"
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setImgIdx((prev) => (prev === cardImages.length - 1 ? 0 : prev + 1));
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/cardgallery:opacity-100 transition-opacity hover:bg-black/80 z-30 cursor-pointer shadow-md"
+                            aria-label="Next image"
+                        >
+                            <ChevronRight size={16} />
+                        </button>
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-20">
+                            {cardImages.map((_, idx) => (
+                                <div
+                                    key={idx}
+                                    className={`h-1 rounded-full transition-all ${idx === imgIdx ? "w-4 bg-white" : "w-1 bg-white/50"}`}
+                                />
+                            ))}
+                        </div>
+                    </>
+                )}
                 <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
                     <AnimatePresence>
                         {hasNotification && (
@@ -251,7 +307,10 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
 
                 <div className="flex items-center gap-2 mt-auto w-full">
                     <button
-                        onClick={onViewDetails}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onViewDetails();
+                        }}
                         className="flex-1 py-2.5 px-2.5 sm:px-3 font-bold text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all shadow-sm min-w-0"
                     >
                         <Eye size={14} className="text-primary shrink-0" />
@@ -260,7 +319,10 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
 
                     {canPay && onPayNow && (
                         <button
-                            onClick={onPayNow}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onPayNow();
+                            }}
                             className="flex-1 py-2.5 px-2.5 sm:px-3 font-black text-xs uppercase tracking-wider text-white bg-primary rounded-xl hover:bg-primary-dark shadow-md transition-all flex justify-center items-center gap-1.5 min-w-0"
                         >
                             <Check size={14} className="shrink-0" /> <span className="truncate">Pay Now</span>
@@ -276,7 +338,10 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
                         ) : (
                             onReview && (
                                 <button
-                                    onClick={onReview}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onReview();
+                                    }}
                                     className="flex-1 py-2.5 px-2.5 sm:px-3 font-bold text-xs text-white bg-purple-600 rounded-xl hover:bg-purple-700 shadow-md transition-all flex justify-center items-center gap-1.5 min-w-0"
                                 >
                                     <Star size={14} className="fill-white shrink-0" />
@@ -288,7 +353,10 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
 
                     {!canPay && reservation.status !== "COMPLETED" && canCancel && onCancel && (
                         <button
-                            onClick={onCancel}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onCancel();
+                            }}
                             className="flex-1 py-2.5 px-2.5 sm:px-3 font-bold text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 dark:text-rose-400 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors flex justify-center items-center gap-1.5 border border-rose-200 dark:border-rose-900/30 min-w-0"
                         >
                             <X size={14} className="shrink-0" />
@@ -298,11 +366,15 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
 
                     {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
                         <button
-                            onClick={() => {
-                                responsiveToast.loading("Generating Boarding Pass...");
-                                generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail)
-                                    .then(() => responsiveToast.success("Downloaded successfully!"))
-                                    .catch(() => responsiveToast.error("Failed to generate."));
+                            onClick={async (e) => {
+                                e.stopPropagation();
+                                const toastId = responsiveToast.loading("Generating Boarding Pass...");
+                                try {
+                                    await generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail);
+                                    responsiveToast.success("Downloaded successfully!", { id: toastId });
+                                } catch (err) {
+                                    responsiveToast.error("Failed to generate.", { id: toastId });
+                                }
                             }}
                             title="Download Confirmation Slip"
                             className="w-10 h-10 shrink-0 font-bold text-xs text-primary bg-primary/10 rounded-xl hover:bg-primary/20 border border-primary/20 transition-all flex justify-center items-center"

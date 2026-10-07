@@ -1,14 +1,14 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { faceEngine } from '@/lib/mediapipe/face-engine';
-import { idEngine } from '@/lib/mediapipe/id-engine';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 
 export type KYCStep = 'SELFIE' | 'ID';
 
 export const useKYC = () => {
-  const [isInitializing, setIsInitializing] = useState(false); // No longer warming up on mount
+  const [isInitializing, setIsInitializing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const responsiveToast = useResponsiveToast();
+
   /**
    * Validates a Selfie capture
    */
@@ -37,43 +37,10 @@ export const useKYC = () => {
     }
   };
 
-  /**
-   * Validates an ID capture
-   */
-  const validateID = async (imageSrc: string): Promise<boolean> => {
-    setIsProcessing(true);
-    try {
-      const img = new Image();
-      img.src = imageSrc;
-      await new Promise((resolve) => (img.onload = resolve));
-
-      // 1. Detect ID Card Presence
-      const idResult = await idEngine.validateIDCard(img);
-      if (!idResult.isValid) {
-        responsiveToast.error(idResult.reason || "ID card not detected");
-        return false;
-      }
-
-      // 2. OCR Check (Optional: You can still use Tesseract here, but now 
-      // we know there is actually a card in the frame)
-      
-      responsiveToast.success("ID card detected!");
-      return true;
-    } catch (error) {
-      console.error("KYC Error:", error);
-      responsiveToast.error("Error during ID verification");
-      return false;
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   return {
     isInitializing,
     isProcessing: isProcessing || isInitializing,
     validateSelfie,
-    validateID,
-    faceEngine,
-    idEngine
+    faceEngine
   };
 };

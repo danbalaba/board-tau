@@ -71,12 +71,9 @@ export function LandlordRoomCard({
     if ((room as any).roomTypeDefinition?.name) return (room as any).roomTypeDefinition.name;
     if ((room as any).roomTypeName) return (room as any).roomTypeName;
     if (matchedRoomType?.name) return matchedRoomType.name;
-    if (room.roomType === 'SOLO') return 'Private Solo Room';
-    if (room.roomType === 'BEDSPACE') return 'Shared Bedspace';
-    if (room.roomType === 'STUDIO') return 'Studio Unit';
     if (room.roomType && !/^[a-f0-9]{24}$/i.test(room.roomType)) return room.roomType;
     return 'Standard Room';
-  }, [matchedRoomType, room.roomType]);
+  }, [matchedRoomType, room]);
 
   const RoomTypeIcon = matchedRoomType?.icon ? getDynamicIcon(matchedRoomType.icon, Layers) : Layers;
 
@@ -102,7 +99,8 @@ export function LandlordRoomCard({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-2.5 sm:p-6 rounded-2xl sm:rounded-3xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col h-full"
+        onClick={() => onView(room)}
+        className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-2.5 sm:p-6 rounded-2xl sm:rounded-3xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col h-full cursor-pointer"
       >
         {/* Top Image Section */}
         <div className="relative h-28 sm:h-48 w-full rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 sm:mb-6 bg-gray-100 dark:bg-gray-800 z-10 flex-shrink-0">
@@ -204,7 +202,10 @@ export function LandlordRoomCard({
           {/* Footer Actions */}
           <div className="flex items-center gap-1.5 sm:gap-2 pt-2.5 sm:pt-4 border-t border-gray-100 dark:border-gray-800 mt-auto w-full">
             <Button
-              onClick={() => onView(room)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onView(room);
+              }}
               className="flex-1 h-10 rounded-xl px-2 text-[10px] sm:text-xs font-black uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200/60 dark:border-gray-700/60 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Eye size={14} />
@@ -213,7 +214,10 @@ export function LandlordRoomCard({
 
             {!room.isArchived && (
               <Button
-                onClick={() => onEdit && onEdit(room)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit && onEdit(room);
+                }}
                 className="flex-1 h-10 rounded-xl px-2 text-[10px] sm:text-xs font-black uppercase tracking-wider bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 group/btn transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Pencil size={14} className="group-hover:scale-110 transition-transform" />
@@ -222,7 +226,10 @@ export function LandlordRoomCard({
             )}
             {room.isArchived && (
               <Button
-                onClick={() => onDelete(room)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(room);
+                }}
                 className="flex-1 h-10 rounded-xl px-2 border border-rose-200 text-rose-500 hover:bg-rose-500 hover:text-white dark:border-rose-900/40 dark:hover:bg-rose-900 transition-all group/btn flex items-center justify-center gap-1.5 cursor-pointer text-[10px] sm:text-xs font-black uppercase tracking-wider"
               >
                 <Trash2 size={14} className="group-hover:rotate-12 transition-transform" />
@@ -241,7 +248,8 @@ export function LandlordRoomCard({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="group relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-800 p-3 sm:p-6 hover:shadow-xl transition-all duration-300 shadow-sm"
+      onClick={() => onView(room)}
+      className="group relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-800 p-3 sm:p-6 hover:shadow-xl transition-all duration-300 shadow-sm cursor-pointer"
     >
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-6">
         {/* Left Row on Mobile: Image + Main Details */}
@@ -319,7 +327,10 @@ export function LandlordRoomCard({
         {/* Right / Actions Row */}
         <div className="flex sm:flex-col items-center gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0 border-t sm:border-t-0 sm:border-l border-gray-100 dark:border-gray-800 pt-2.5 sm:pt-0 sm:pl-6">
           <button 
-            onClick={() => onView(room)} 
+            onClick={(e) => {
+              e.stopPropagation();
+              onView(room);
+            }} 
             className="flex-1 sm:w-full rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-primary transition-all flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-widest cursor-pointer"
           >
             <Eye size={13} />
@@ -328,7 +339,10 @@ export function LandlordRoomCard({
 
           {!room.isArchived && (
             <Button 
-              onClick={() => onEdit && onEdit(room)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit && onEdit(room);
+              }}
               className="flex-1 sm:w-full rounded-xl px-3 sm:px-5 py-2 sm:py-2.5 bg-primary hover:bg-primary/90 text-white font-black text-[10px] uppercase tracking-widest shadow-md group/btn transition-all cursor-pointer"
             >
               <span className="flex items-center justify-center gap-1.5">
@@ -339,7 +353,10 @@ export function LandlordRoomCard({
           )}
           
           <button 
-            onClick={() => onArchive(room)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onArchive(room);
+            }}
             className={cn(
               "flex-1 sm:w-full rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 cursor-pointer border shadow-xs",
               room.isArchived
@@ -363,7 +380,10 @@ export function LandlordRoomCard({
 
           {room.isArchived && (
             <button
-              onClick={() => onDelete(room)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(room);
+              }}
               className="flex-1 sm:w-full rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-widest cursor-pointer border border-rose-100 dark:border-rose-900/30"
               title="Delete Permanently"
             >

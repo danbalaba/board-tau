@@ -14,7 +14,7 @@ jest.mock('lucide-react', () => {
   return new Proxy({}, {
     get: function(target, prop) {
       if (prop === '__esModule') return true;
-      return () => <div data-testid={`icon-${String(prop)}`} />;
+      return () => <span data-testid={`icon-${String(prop)}`} />;
     }
   });
 });

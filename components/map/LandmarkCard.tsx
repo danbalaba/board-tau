@@ -2,8 +2,8 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
-import { X, MapPin, List } from "lucide-react";
+import { X, MapPin, List, Building2 } from "lucide-react";
+import SafeImage from "@/components/common/SafeImage";
 
 interface LandmarkCardProps {
   landmark: {
@@ -23,69 +23,70 @@ export default function LandmarkCard({ landmark, nearbyCount, onClose, onShowLis
       {landmark && (
         <motion.div
           key={landmark.id}
-          initial={{ opacity: 0, y: 24, scale: 0.95, x: "-50%" }}
+          initial={{ opacity: 0, y: 28, scale: 0.94, x: "-50%" }}
           animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
-          exit={{ opacity: 0, y: 16, scale: 0.95, x: "-50%" }}
-          transition={{ type: "spring", damping: 22, stiffness: 280 }}
-          className="absolute bottom-6 left-1/2 z-[200] w-[90%] max-w-[320px] pointer-events-auto"
+          exit={{ opacity: 0, y: 20, scale: 0.94, x: "-50%" }}
+          transition={{ type: "spring", damping: 24, stiffness: 320 }}
+          className="absolute bottom-6 left-1/2 z-[250] w-[90%] max-w-[340px] pointer-events-auto"
         >
-          <div className="relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] border border-white/60 dark:border-gray-700/60 overflow-hidden">
+          <div className="relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] border border-white/60 dark:border-gray-700/60 overflow-hidden">
             
-            {/* Top accent stripe using primary color */}
-            <div className="h-1.5 w-full" style={{ background: "var(--primary-color)" }} />
+            {/* Top Primary Accent Gradient Bar */}
+            <div className="h-1.5 w-full bg-gradient-to-r from-primary to-emerald-400" />
 
-            {/* Close button */}
+            {/* Close Button */}
             <button
+              type="button"
               onClick={onClose}
-              className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
+              className="absolute top-3.5 right-3.5 z-20 p-1.5 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400 cursor-pointer shadow-xs"
+              title="Close landmark card"
             >
               <X size={14} />
             </button>
 
-            <div className="p-5 flex flex-col items-center gap-4">
-              {/* Logo */}
-              <div className="relative w-24 h-24 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.12)] border-4 flex items-center justify-center overflow-hidden" style={{ borderColor: "var(--primary-color)" }}>
+            <div className="p-5 flex flex-col items-center text-center gap-3.5">
+              {/* Landmark Avatar / Logo Container */}
+              <div className="relative w-20 h-20 rounded-2xl bg-white dark:bg-gray-800 shadow-lg border-2 border-primary/30 p-1 flex items-center justify-center overflow-hidden shrink-0">
                 {landmark.logo ? (
-                  <Image
+                  <SafeImage
                     src={landmark.logo}
                     alt={landmark.name}
-                    fill
-                    className="object-cover scale-110 rounded-full"
+                    containerClassName="w-full h-full rounded-xl overflow-hidden"
                   />
                 ) : (
-                  <MapPin size={36} style={{ color: "var(--primary-color)" }} />
+                  <Building2 size={32} className="text-primary" />
                 )}
               </div>
 
-              {/* Name & subtitle */}
-              <div className="text-center">
-                <h3 className="font-bold text-gray-900 dark:text-white text-sm leading-snug">
+              {/* Title & Subtitle */}
+              <div>
+                <h3 className="font-extrabold text-gray-900 dark:text-white text-base leading-tight">
                   {landmark.name}
                 </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-center gap-1">
-                  <MapPin size={10} style={{ color: "var(--primary-color)" }} />
-                  Tarlac Agricultural University
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-center gap-1.5">
+                  <MapPin size={12} className="text-primary shrink-0" />
+                  <span>Tarlac Agricultural University</span>
                 </p>
               </div>
 
-              {/* Nearby count badge */}
+              {/* Nearby Count Badge */}
               {nearbyCount !== undefined && (
-                <div className="px-3 py-1 rounded-full text-xs font-semibold text-white" style={{ backgroundColor: "var(--primary-color)" }}>
-                  {nearbyCount} listing{nearbyCount !== 1 ? "s" : ""} nearby
+                <div className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider text-primary dark:text-primary-light bg-primary/10 dark:bg-primary/20 border border-primary/20">
+                  {nearbyCount} Listing{nearbyCount !== 1 ? "s" : ""} Nearby
                 </div>
               )}
 
-              {/* Action button */}
+              {/* Action Button */}
               <button
+                type="button"
                 onClick={() => {
                   onShowListings();
                   onClose();
                 }}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm text-white transition-all hover:opacity-90 active:scale-[0.98]"
-                style={{ backgroundColor: "var(--primary-color)" }}
+                className="w-full py-3 rounded-2xl font-black text-xs uppercase tracking-wider text-white bg-primary hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2 active:scale-95 cursor-pointer mt-1"
               >
-                <List size={15} />
-                View Nearby Listings
+                <List size={14} />
+                <span>View Nearby Listings</span>
               </button>
             </div>
           </div>

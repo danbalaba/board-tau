@@ -87,7 +87,7 @@ describe("StayStep Component", () => {
     await act(async () => {
       render(<StayStepWrapper />);
     });
-    expect(screen.getByText(/2. Stay Details/i)).toBeInTheDocument();
+    expect(screen.getByText(/Step 2/i)).toBeInTheDocument();
     expect(screen.getByText("Number of Occupants (Including you)")).toBeInTheDocument();
   });
 
@@ -120,14 +120,14 @@ describe("StayStep Component", () => {
     await act(async () => {
       render(<StayStepWrapper roomProps={{ roomType: "BEDSPACE", capacity: 4, availableSlots: 4 }} />);
     });
-    expect(screen.getByText("Rent Entire Room (Solo Occupancy)")).toBeInTheDocument();
+    expect(screen.getByText(/Rent Entire Room/i)).toBeInTheDocument();
   });
 
   it("hides solo buyout if availableSlots < capacity", async () => {
     await act(async () => {
       render(<StayStepWrapper roomProps={{ roomType: "BEDSPACE", capacity: 4, availableSlots: 3 }} />);
     });
-    expect(screen.queryByText("Rent Entire Room (Solo Occupancy)")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Rent Entire Room/i)).not.toBeInTheDocument();
   });
 
   it("renders contact info input dynamically based on contact method", async () => {
@@ -179,25 +179,25 @@ describe("StayStep Component", () => {
     });
     
     // Check if dates are rendered
-    expect(screen.getByText(/Oct 01, 2024/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Oct 01, 2024/)[0]).toBeInTheDocument();
     
     // Open calendar
-    const calendarContainer = screen.getByText(/Oct 01, 2024/).closest('div.flex.items-center.gap-2.w-full') || screen.getByText(/Oct 01, 2024/);
+    const calendarContainer = screen.getAllByText(/Oct 01, 2024/)[0].closest('div') || screen.getAllByText(/Oct 01, 2024/)[0];
     fireEvent.click(calendarContainer);
     
-    // The calendar should now be open, meaning the Done button should be visible
-    const doneBtn = screen.getByText("Done");
-    expect(doneBtn).toBeInTheDocument();
+    // The calendar should now be open, meaning the Apply Dates button should be visible
+    const applyBtn = screen.getAllByText("Apply Dates")[0];
+    expect(applyBtn).toBeInTheDocument();
     
-    // Close calendar via Done button
-    fireEvent.click(doneBtn);
-    expect(screen.queryByText("Done")).not.toBeInTheDocument();
+    // Close calendar via Apply Dates button
+    fireEvent.click(applyBtn);
+    expect(screen.queryByText("Apply Dates")).not.toBeInTheDocument();
     
     // Clear dates
     const clearBtn = screen.getByTitle("Clear dates");
     fireEvent.click(clearBtn);
     
-    expect(screen.getByText("Select dates")).toBeInTheDocument();
+    expect(screen.getByText(/Choose check-in/i)).toBeInTheDocument();
   });
 
   it("updates occupant count when solo buyout is checked", async () => {

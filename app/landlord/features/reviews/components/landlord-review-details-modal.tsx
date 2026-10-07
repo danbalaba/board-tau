@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Modal from '@/components/modals/Modal';
+import { useSession } from 'next-auth/react';
 import Avatar from '@/components/common/Avatar';
 import { 
   IconStarFilled, 
@@ -17,7 +18,8 @@ import {
   IconClock,
   IconBuilding,
   IconShieldCheck,
-  IconEye
+  IconEye,
+  IconDownload
 } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
 import { format } from 'date-fns';
@@ -25,6 +27,8 @@ import { toast } from 'sonner';
 import SafeImage from '@/components/common/SafeImage';
 import { getSafeImageSrcString } from '@/components/modals/inquiry-modal/InquiryModalUtils';
 import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
+import { generateSingleItemPDF } from '@/utils/pdfGenerator';
+import { prepareSingleItemForExport } from '@/utils/export-utils';
 
 interface Review {
   id: string;
@@ -86,6 +90,7 @@ export function LandlordReviewDetailsModal({
   reviewId,
   onSuccess
 }: LandlordReviewDetailsModalProps) {
+  const { data: session } = useSession();
   const [review, setReview] = useState<Review | null>(null);
   const [loading, setLoading] = useState(true);
   const [responseText, setResponseText] = useState('');
@@ -227,8 +232,8 @@ export function LandlordReviewDetailsModal({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} fullOnMobile={true}>
-        <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl">
+      <Modal isOpen={isOpen} onClose={onClose} width="full" noPadding={true} hasFixedFooter={true} closeOnOutsideClick={false} fullOnMobile={true}>
+        <div className="w-full h-full sm:h-auto sm:max-h-[90vh] max-w-full sm:max-w-5xl mx-auto sm:my-auto overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl border-0 sm:border sm:border-gray-200 dark:sm:border-gray-800 shadow-2xl">
           
           {/* Top Header Bar - Mobile Collision Proof */}
           <div className="px-3.5 sm:px-8 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0 bg-white dark:bg-gray-900">
@@ -508,8 +513,46 @@ export function LandlordReviewDetailsModal({
                 <span>Chat with Reviewer</span>
               </button>
               
-              {/* Right Status / Reply Indicator */}
+              {/* Right Status / Reply Indicator & Export Button */}
               <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button
+                  className="flex-1 sm:flex-none h-10 sm:h-11 px-3 sm:px-4 text-[11px] sm:text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  title="Export Review Audit Certificate PDF"
+                  onClick={async () => {
+                    if (!review) return;
+                    try {
+                      const formattedItem = prepareSingleItemForExport(review, 'review');
+                      const dateStamp = new Date().toISOString().slice(0, 10);
+                      const reportId = `BTAU-REV-${dateStamp.replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+                      const fileName = `BoardTAU_Review_${(review.user?.name || 'Guest').replace(/\s+/g, '_')}_AuditRecord`;
+
+                      const authorName = session?.user?.name || session?.user?.email || 'BoardTAU Landlord';
+
+                      await generateSingleItemPDF(
+                        fileName,
+                        formattedItem.title,
+                        formattedItem.category,
+                        formattedItem.kvPairs,
+                        formattedItem.sections,
+                        {
+                          title: formattedItem.title,
+                          subtitle: (formattedItem as any).subtitle,
+                          author: authorName,
+                          reportId: reportId,
+                          type: 'review',
+                          showQR: false
+                        }
+                      );
+                      toast.success("Exported Review Audit Certificate PDF!");
+                    } catch (e) {
+                      toast.error("Failed to export review audit PDF.");
+                    }
+                  }}
+                >
+                  <IconDownload size={15} />
+                  <span>Export Report</span>
+                </button>
+
                 {review.response ? (
                   <div className="w-full sm:w-auto h-10 sm:h-11 px-4 text-[11px] sm:text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2">
                     <IconCircleCheck size={16} />
@@ -521,6 +564,7 @@ export function LandlordReviewDetailsModal({
                   </span>
                 )}
               </div>
+
             </div>
           )}
 

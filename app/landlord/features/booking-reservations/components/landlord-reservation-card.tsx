@@ -12,6 +12,7 @@ import {
   IconRestore
 } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
+import { formatDate } from '@/lib/utils';
 import Button from "@/components/common/Button";
 import { motion } from 'framer-motion';
 import Avatar from '@/components/common/Avatar';
@@ -30,8 +31,8 @@ interface LandlordReservationCardProps {
 
 const statusColors: Record<string, string> = {
   PENDING_PAYMENT: 'bg-amber-500/90 text-white border-amber-400/50 shadow-amber-500/20',
-  RESERVED: 'bg-emerald-500/90 text-white border-emerald-400/50 shadow-emerald-500/20',
-  CONFIRMED: 'bg-emerald-500/90 text-white border-emerald-400/50 shadow-emerald-500/20',
+  RESERVED: 'bg-primary/90 text-white border-primary/40 shadow-primary/20',
+  CONFIRMED: 'bg-primary/90 text-white border-primary/40 shadow-primary/20',
   CHECKED_IN: 'bg-blue-500/90 text-white border-blue-400/50 shadow-blue-500/20',
   CANCELLED: 'bg-rose-500/90 text-white border-rose-400/50 shadow-rose-500/20',
 };
@@ -93,7 +94,8 @@ export function LandlordReservationCard({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-2.5 sm:p-6 rounded-2xl sm:rounded-3xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col h-full"
+        onClick={() => onViewDetails(reservation)}
+        className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-2.5 sm:p-6 rounded-2xl sm:rounded-3xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col h-full cursor-pointer"
       >
         {/* Top Image Section */}
         <div className="relative h-28 sm:h-48 w-full rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 sm:mb-6 bg-gray-100 dark:bg-gray-800 z-10 flex-shrink-0">
@@ -149,10 +151,10 @@ export function LandlordReservationCard({
 
           <div className="grid grid-cols-2 gap-1.5 sm:gap-3 bg-gray-50 dark:bg-gray-800/50 p-1.5 sm:p-3 rounded-lg sm:rounded-2xl border border-gray-100 dark:border-gray-800 mb-2.5 sm:mb-4">
             <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0">
-              <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-gray-400">Move In</span>
+              <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-gray-400">Check-In</span>
               <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-black text-gray-900 dark:text-gray-100 truncate">
                 <IconCalendar size={10} className="text-primary shrink-0 sm:w-3 sm:h-3" />
-                <span>{new Date(reservation.moveInDate).toLocaleDateString()}</span>
+                <span>{formatDate(reservation.moveInDate)}</span>
               </div>
             </div>
             <div className="flex flex-col gap-0.5 sm:gap-1 text-right min-w-0">
@@ -167,7 +169,10 @@ export function LandlordReservationCard({
           {/* Footer Actions */}
           <div className="flex items-center gap-1.5 sm:gap-2 pt-2.5 sm:pt-4 border-t border-gray-100 dark:border-gray-800 mt-auto w-full">
             <Button
-              onClick={() => onViewDetails(reservation)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails(reservation);
+              }}
               className={cn(
                 "h-10 rounded-xl px-2 text-[10px] sm:text-xs font-black uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200/60 dark:border-gray-700/60",
                 ((reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED' || reservation.status === 'PENDING_PAYMENT') && !reservation.isArchived)
@@ -181,7 +186,10 @@ export function LandlordReservationCard({
             
             {(reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED') && (
               <Button
-                onClick={() => onUpdateStatus(reservation.id, 'CHECKED_IN')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUpdateStatus(reservation.id, 'CHECKED_IN');
+                }}
                 isLoading={isUpdating}
                 className="hidden sm:flex flex-1 h-10 rounded-xl px-2 text-xs font-black uppercase tracking-wider bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 group/btn cursor-pointer items-center justify-center gap-1.5"
               >
@@ -193,7 +201,10 @@ export function LandlordReservationCard({
             {reservation.status === 'PENDING_PAYMENT' && (
               reservation.isWalkIn ? (
                 <Button
-                  onClick={() => onUpdateStatus(reservation.id, 'RESERVED')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdateStatus(reservation.id, 'RESERVED');
+                  }}
                   isLoading={isUpdating}
                   className="hidden sm:flex flex-1 h-10 rounded-xl px-2 text-xs font-black uppercase tracking-wider bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 group/btn cursor-pointer items-center justify-center gap-1.5"
                 >
@@ -218,7 +229,8 @@ export function LandlordReservationCard({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="group relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-800 p-3 sm:p-6 hover:shadow-xl transition-all duration-300 shadow-sm"
+      onClick={() => onViewDetails(reservation)}
+      className="group relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-800 p-3 sm:p-6 hover:shadow-xl transition-all duration-300 shadow-sm cursor-pointer"
     >
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-6">
         {/* Left Row on Mobile: Image + Details */}
@@ -246,7 +258,7 @@ export function LandlordReservationCard({
             <div>
               <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1 flex-wrap">
                 <span className="text-[8px] sm:text-[9px] font-black text-primary uppercase tracking-widest flex items-center gap-1 truncate max-w-[130px] sm:max-w-none">
-                  <IconCalendar size={10} className="shrink-0" /> Move in: {new Date(reservation.moveInDate).toLocaleDateString()}
+                  <IconCalendar size={10} className="shrink-0" /> Check-in: {formatDate(reservation.moveInDate)}
                 </span>
                 <span className="hidden sm:inline-block w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full" />
                 <span className="hidden sm:inline-block text-[9px] font-black text-gray-400 uppercase tracking-widest">
@@ -274,7 +286,7 @@ export function LandlordReservationCard({
             <div className="hidden sm:flex flex-wrap items-center gap-2 pt-1">
               <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50/60 dark:bg-blue-500/10 rounded-xl border border-blue-100/60 dark:border-blue-500/20 text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase">
                 <IconCalendar size={12} /> 
-                <span>Move in: {new Date(reservation.moveInDate).toLocaleDateString()}</span>
+                <span>Check-in: {formatDate(reservation.moveInDate)}</span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 dark:bg-primary/20 rounded-xl border border-primary/20 text-[9px] font-black text-primary dark:text-primary-400 uppercase">
                 <IconClock size={12} /> 
@@ -287,7 +299,10 @@ export function LandlordReservationCard({
         {/* Right / Actions Row */}
         <div className="flex sm:flex-col items-center gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0 border-t sm:border-t-0 sm:border-l border-gray-100 dark:border-gray-800 pt-2.5 sm:pt-0 sm:pl-6">
           <button 
-            onClick={() => onViewDetails(reservation)} 
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails(reservation);
+            }} 
             className="flex-1 sm:w-full rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-primary transition-all flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-widest cursor-pointer"
           >
             <IconEye size={13} />
@@ -296,7 +311,10 @@ export function LandlordReservationCard({
 
           {(reservation.status === 'RESERVED' || reservation.status === 'CONFIRMED') && (
             <Button
-              onClick={() => onUpdateStatus(reservation.id, 'CHECKED_IN')}
+              onClick={(e) => {
+                e.stopPropagation();
+                onUpdateStatus(reservation.id, 'CHECKED_IN');
+              }}
               isLoading={isUpdating}
               className="flex-1 sm:w-full rounded-xl px-3 sm:px-5 py-2 sm:py-2.5 bg-primary hover:bg-primary/90 text-white font-black text-[10px] uppercase tracking-widest shadow-md group/btn transition-all cursor-pointer"
             >
@@ -309,7 +327,10 @@ export function LandlordReservationCard({
 
           {reservation.status === 'PENDING_PAYMENT' && reservation.isWalkIn && (
             <Button
-              onClick={() => onUpdateStatus(reservation.id, 'RESERVED')}
+              onClick={(e) => {
+                e.stopPropagation();
+                onUpdateStatus(reservation.id, 'RESERVED');
+              }}
               isLoading={isUpdating}
               className="flex-1 sm:w-full rounded-xl px-3 sm:px-5 py-2 sm:py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-black text-[10px] uppercase tracking-widest shadow-md transition-all cursor-pointer"
             >
@@ -321,7 +342,10 @@ export function LandlordReservationCard({
           )}
 
           <button 
-            onClick={onArchive}
+            onClick={(e) => {
+              e.stopPropagation();
+              onArchive();
+            }}
             className={cn(
               "flex-1 sm:w-full rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 cursor-pointer border shadow-xs",
               reservation.isArchived

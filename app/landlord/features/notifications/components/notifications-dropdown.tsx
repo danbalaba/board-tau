@@ -81,9 +81,6 @@ export function NotificationsDropdown() {
     if (notif.type === 'message') {
       return notif.link.replace('/landlord/messages?', '/landlord?openChat=true&');
     }
-    if (notif.link.startsWith('/landlord/reservations')) {
-      return '/landlord/reservations';
-    }
     return notif.link;
   };
 

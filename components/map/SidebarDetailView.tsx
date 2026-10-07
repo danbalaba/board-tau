@@ -56,7 +56,7 @@ import 'swiper/css/navigation';
 // @ts-ignore
 import 'swiper/css/pagination';
 import Link from "next/link";
-import { formatPrice, calculateAverageRating } from "@/utils/helper";
+import { formatPrice, calculateAverageRating, getListingUrl } from "@/utils/helper";
 import Avatar from "@/components/common/Avatar";
 import { SharedAmenitiesModal } from "@/components/common/SharedAmenitiesModal";
 import {
@@ -68,12 +68,15 @@ import {
   getSyncSubGroups
 } from "@/lib/landlordTaxonomyCache";
 
+import HeartButton from "@/components/favorites/HeartButton";
+
 interface SidebarDetailViewProps {
   listing: any;
   onBack: () => void;
+  hasFavorited?: boolean;
 }
 
-export default function SidebarDetailView({ listing, onBack }: SidebarDetailViewProps) {
+export default function SidebarDetailView({ listing, onBack, hasFavorited = false }: SidebarDetailViewProps) {
   const price = listing.price || 0;
 
   // Taxonomy Cache State
@@ -321,12 +324,12 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
             
             {/* Custom Nav Buttons */}
             <div 
-              className={`swiper-prev-detail-${listing.id} absolute left-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-slate-100 border border-slate-200/50 dark:border-slate-700/50 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
+              className={`swiper-prev-detail-${listing.id} absolute left-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-slate-100 border border-slate-200/50 dark:border-slate-700/50 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
             >
               <ChevronLeft size={18} className="text-slate-800 dark:text-slate-100 -ml-0.5" />
             </div>
             <div 
-              className={`swiper-next-detail-${listing.id} absolute right-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-slate-100 border border-slate-200/50 dark:border-slate-700/50 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-0 group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
+              className={`swiper-next-detail-${listing.id} absolute right-2 top-1/2 -translate-y-1/2 z-[60] w-8 h-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-slate-100 border border-slate-200/50 dark:border-slate-700/50 rounded-full flex items-center justify-center shadow-md cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/swiper:opacity-100 transition-all hover:scale-110 hover:bg-white dark:hover:bg-slate-700`}
             >
               <ChevronRight size={18} className="text-slate-800 dark:text-slate-100 -mr-0.5" />
             </div>
@@ -336,14 +339,18 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
         )}
          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none z-10"></div>
          
-         {/* Top Nav Back Button */}
-         <div className="absolute top-4 left-4 z-20">
+         {/* Top Nav Back & Heart Buttons */}
+         <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
            <button 
              onClick={onBack}
              className="p-2.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-slate-200 rounded-full shadow-lg hover:bg-white dark:hover:bg-slate-700 transition-colors border border-white/20 cursor-pointer"
+             title="Back to list"
            >
              <ArrowLeft size={18} />
            </button>
+           <div className="p-2 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full shadow-lg border border-white/20 flex items-center justify-center">
+             <HeartButton listingId={listing.id} hasFavorited={hasFavorited} />
+           </div>
          </div>
 
          {/* Price Badge */}
@@ -576,7 +583,7 @@ export default function SidebarDetailView({ listing, onBack }: SidebarDetailView
       {/* Sticky Action Button */}
       <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
         <Link 
-          href={`/listings/${listing.id}`} 
+          href={getListingUrl(listing.id, listing.title)} 
           className="w-full flex items-center justify-center gap-2 bg-primary dark:bg-primary text-white py-3.5 rounded-xl font-bold text-sm hover:scale-[1.02] transition shadow-lg hover:bg-primary/90 no-underline cursor-pointer"
         >
           View Details & Reserve

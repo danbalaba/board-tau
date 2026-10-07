@@ -22,8 +22,9 @@ import { format, formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/utils/helper";
 import SafeImage from "@/components/common/SafeImage";
-import Skeleton from "react-loading-skeleton";
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { useTheme } from "next-themes";
 
 interface TenantProfile {
   id: string;
@@ -57,6 +58,31 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
   const [isLoading, setIsLoading] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
+  const { resolvedTheme, theme } = useTheme();
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const checkDark = () => {
+      return (
+        resolvedTheme === "dark" ||
+        theme === "dark" ||
+        document.documentElement.classList.contains("dark")
+      );
+    };
+    setIsDark(checkDark());
+
+    const observer = new MutationObserver(() => {
+      setIsDark(checkDark());
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, [resolvedTheme, theme]);
+
   useEffect(() => {
     if (!activeConversation) return;
     setTenant(null);
@@ -86,15 +112,19 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
   const memberSince = tenant ? format(new Date(tenant.createdAt), "MMM yyyy") : null;
   const isEmailVerified = !!tenant?.emailVerified;
 
-  return (
-    <div className="h-full flex flex-col bg-gray-50/50 dark:bg-gray-900/50 border-l border-gray-100 dark:border-gray-800 p-6 overflow-y-auto scrollbar-hide gap-6">
+  const baseColor = isDark ? "#1e293b" : "#e2e8f0";
+  const highlightColor = isDark ? "#334155" : "#f1f5f9";
 
-      {/* Header — Tenant Avatar & Name */}
-      <div className="flex flex-col items-center text-center pt-2">
-        <div className="relative mb-4">
-          {isLoading ? (
-            <Skeleton width={80} height={80} borderRadius={28} enableAnimation={false} />
-          ) : (
+  return (
+    <SkeletonTheme baseColor={baseColor} highlightColor={highlightColor}>
+      <div className="h-full flex flex-col bg-gray-50/50 dark:bg-gray-900/50 border-l border-gray-100 dark:border-gray-800 p-6 overflow-y-auto scrollbar-hide gap-6">
+
+        {/* Header — Tenant Avatar & Name */}
+        <div className="flex flex-col items-center text-center pt-2">
+          <div className="relative mb-4">
+            {isLoading ? (
+              <Skeleton width={80} height={80} borderRadius={28} />
+            ) : (
             <>
               <button
                 onClick={() => setIsPreviewOpen(true)}
@@ -119,13 +149,19 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
           )}
         </div>
         <h3 className="text-lg font-black text-gray-900 dark:text-white mb-0.5 min-w-[120px]">
-          {isLoading ? <Skeleton width="80%" enableAnimation={false} /> : activeConversation.tenantName}
+          {isLoading ? <Skeleton width="80%" /> : activeConversation.tenantName}
         </h3>
         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-          {isLoading ? <Skeleton width="60%" enableAnimation={false} /> : (isEmailVerified ? "Verified Account" : "Unverified Account")}
+          {isLoading ? <Skeleton width="60%" /> : (isEmailVerified ? "Verified Account" : "Unverified Account")}
         </p>
 
-        {(activeConversation.isArchived || activeConversation.isPendingArchive) && (
+        {activeConversation.isClosed ? (
+          <div className="mt-3 px-3 py-1 bg-gray-200/80 dark:bg-gray-800 border border-gray-300/50 dark:border-gray-700/50 rounded-full flex items-center gap-1.5 animate-in fade-in zoom-in duration-300">
+            <span className="text-[9px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-300">
+              Chat Closed
+            </span>
+          </div>
+        ) : (activeConversation.isArchived || activeConversation.isPendingArchive) && (
           <div className="mt-3 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center gap-1.5 animate-in fade-in zoom-in duration-300">
             <IconArchive size={10} className="text-amber-500" />
             <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
@@ -134,12 +170,11 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
           </div>
         )}
       </div>
-
       {/* Trust Indicators */}
       <section className="space-y-2">
         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
           <IconShieldCheck size={12} />
-          Trust Indicators
+          Account & Trust
         </label>
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
@@ -150,7 +185,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
               Email Verified
             </div>
             {isLoading ? (
-              <Skeleton width={60} height={16} borderRadius={8} enableAnimation={false} />
+              <Skeleton width={60} height={16} borderRadius={8} />
             ) : (
               <span className={cn(
                 "text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full",
@@ -170,7 +205,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
               Member Since
             </div>
             <span className="text-[11px] font-black text-gray-900 dark:text-white">
-              {isLoading ? <Skeleton width={60} enableAnimation={false} /> : memberSince ?? "—"}
+              {isLoading ? <Skeleton width={60} /> : memberSince ?? "—"}
             </span>
           </div>
 
@@ -181,7 +216,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
               Account Status
             </div>
             {isLoading ? (
-              <Skeleton width={50} height={16} borderRadius={8} enableAnimation={false} />
+              <Skeleton width={50} height={16} borderRadius={8} />
             ) : (
               <span className={cn(
                 "text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full",
@@ -199,11 +234,11 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
       {/* Bio */}
       <section className="space-y-2">
         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-          Personal Bio
+          Bio
         </label>
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4">
           {isLoading ? (
-            <Skeleton count={2} enableAnimation={false} />
+            <Skeleton count={2} />
           ) : (
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 italic leading-relaxed">
               "{tenant?.bio || "This tenant hasn't added a bio yet."}"
@@ -215,7 +250,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
       {/* Contact Information */}
       <section className="space-y-2">
         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-          Contact Info
+          Contact Information
         </label>
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
@@ -226,7 +261,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
             <div className="min-w-0 flex-1">
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Email</p>
               <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
-                {isLoading ? <Skeleton width="90%" enableAnimation={false} /> : tenant?.email ?? "—"}
+                {isLoading ? <Skeleton width="90%" /> : tenant?.email ?? "—"}
               </p>
             </div>
           </div>
@@ -238,7 +273,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
             <div className="min-w-0 flex-1">
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Phone</p>
               <p className="text-xs font-bold text-gray-900 dark:text-white">
-                {isLoading ? <Skeleton width="70%" enableAnimation={false} /> : tenant?.phoneNumber ?? "Not provided"}
+                {isLoading ? <Skeleton width="70%" /> : tenant?.phoneNumber ?? "Not provided"}
               </p>
             </div>
           </div>
@@ -250,7 +285,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
             <div className="min-w-0 flex-1">
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Location</p>
               <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
-                {isLoading ? <Skeleton width="80%" enableAnimation={false} /> : [tenant?.city, tenant?.region].filter(Boolean).join(", ") || "Not provided"}
+                {isLoading ? <Skeleton width="80%" /> : [tenant?.city, tenant?.region].filter(Boolean).join(", ") || "Not provided"}
               </p>
             </div>
           </div>
@@ -261,15 +296,15 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
       <section className="space-y-2">
         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
           <IconCalendar size={12} />
-          Latest Inquiry
+          Recent Inquiry
         </label>
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4">
           {isLoading ? (
             <div className="space-y-4">
-              <div className="flex justify-between"><Skeleton width={60} enableAnimation={false} /><Skeleton width={100} enableAnimation={false} /></div>
-              <div className="flex justify-between"><Skeleton width={60} enableAnimation={false} /><Skeleton width={40} enableAnimation={false} /></div>
-              <div className="flex justify-between pt-2 border-t border-gray-50 dark:border-gray-800"><Skeleton width={40} enableAnimation={false} /><Skeleton width={60} enableAnimation={false} /></div>
+              <div className="flex justify-between"><Skeleton width={60} /><Skeleton width={100} /></div>
+              <div className="flex justify-between"><Skeleton width={60} /><Skeleton width={40} /></div>
+              <div className="flex justify-between pt-2 border-t border-gray-50 dark:border-gray-800"><Skeleton width={40} /><Skeleton width={60} /></div>
             </div>
           ) : latestInquiry ? (
             <div className="space-y-3">
@@ -306,13 +341,11 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
         </div>
       </section>
 
-
-
       {/* Manage Booking CTA */}
       <section className="pb-4">
         <button 
           onClick={() => window.location.href = `/landlord/reservations?tenantId=${activeConversation.tenantId}`}
-          className="w-full py-3.5 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+          className="w-full py-3.5 rounded-2xl bg-primary hover:bg-primary/90 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
         >
           Manage Booking
         </button>
@@ -360,5 +393,6 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ activeConversation
         )}
       </AnimatePresence>
     </div>
+    </SkeletonTheme>
   );
 };

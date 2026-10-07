@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
-import { createNotification } from "@/services/notification";
+import { createNotification, broadcastStatusChange } from "@/services/notification";
+import { encryptEntityId } from "@/lib/encryption";
 
 export async function POST(request: Request) {
   try {
@@ -79,7 +80,16 @@ export async function POST(request: Request) {
         paymentStatus: "PENDING",
       },
       include: {
-        listing: { select: { userId: true, title: true } }
+        listing: { 
+          select: { 
+            id: true, 
+            userId: true, 
+            title: true, 
+            imageSrc: true 
+          } 
+        },
+        user: { select: { id: true, name: true, email: true, image: true } },
+        room: { select: { id: true, name: true, price: true } }
       }
     }) as any;
 
@@ -89,7 +99,16 @@ export async function POST(request: Request) {
       type: "reservation",
       title: "New Direct Booking",
       description: `${user.name || 'A student'} has initiated a direct booking for ${reservation.listing.title}.`,
-      link: `/landlord/bookings`
+      link: `/landlord/bookings?id=${encryptEntityId(reservation.id)}`
+    });
+
+    await broadcastStatusChange({
+      tenantId: user.id,
+      landlordId: reservation.listing.userId,
+      entityType: "reservation",
+      entityId: reservation.id,
+      status: "PENDING_PAYMENT",
+      payload: reservation,
     });
 
     console.log("Reservation created successfully:", reservation);

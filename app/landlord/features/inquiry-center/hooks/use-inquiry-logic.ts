@@ -4,9 +4,12 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
+import { formatDynamicCodeLabel } from '@/utils/export-utils';
 import { DateRange } from 'react-day-picker';
 import { toast } from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
+import { pusherClient } from '@/lib/pusher-client';
 
 export interface Inquiry {
   id: string;
@@ -75,9 +78,66 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
   const [isArchiving, setIsArchiving] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [approvalLoaderInquiry, setApprovalLoaderInquiry] = useState<Inquiry | null>(null);
+  const [rejectionLoaderInquiry, setRejectionLoaderInquiry] = useState<Inquiry | null>(null);
+
+  const { data: session } = useSession();
+  const userId = (session?.user as any)?.id;
+
+  // Real-time Pusher listener for landlord inquiry center
+  useEffect(() => {
+    if (!userId) return;
+
+    const channelName = `private-user-${userId}`;
+    const channel = pusherClient.subscribe(channelName);
+
+    const handleInquiryUpdated = (data: any) => {
+      if (!data || !data.entityId) return;
+
+      setListings((prev) => {
+        const index = prev.findIndex((i) => i.id === data.entityId);
+        if (index === -1) {
+          if (data.payload && data.payload.id) {
+            return [data.payload, ...prev];
+          }
+          return prev;
+        }
+
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          status: data.status || updated[index].status,
+          rejectionReason: data.payload?.rejectionReason || updated[index].rejectionReason,
+          ...(data.payload || {}),
+        };
+        return updated;
+      });
+
+      setSelectedInquiry((prevSelected) => {
+        if (prevSelected && prevSelected.id === data.entityId) {
+          return {
+            ...prevSelected,
+            status: data.status || prevSelected.status,
+            rejectionReason: data.payload?.rejectionReason || prevSelected.rejectionReason,
+            ...(data.payload || {}),
+          };
+        }
+        return prevSelected;
+      });
+    };
+
+    channel.bind("inquiry-updated", handleInquiryUpdated);
+    channel.bind("new-notification", () => {
+      queryClient.invalidateQueries({ queryKey: ["landlord-notifications"] });
+    });
+
+    return () => {
+      channel.unbind("inquiry-updated", handleInquiryUpdated);
+    };
+  }, [userId, queryClient]);
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 700);
+    const t = setTimeout(() => setIsLoading(false), 1200);
     return () => clearTimeout(t);
   }, []);
 
@@ -100,7 +160,7 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     setIsFilterLoading(true);
     const timer = setTimeout(() => {
       setIsFilterLoading(false);
-    }, 500);
+    }, 700);
     return () => clearTimeout(timer);
   }, [searchQuery, selectedStatus, sortBy, isArchived]);
 
@@ -223,8 +283,14 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
   }, [selectedInquiry, success, toastError]);
 
   const handleRespond = useCallback(async (inquiryId: string, status: "APPROVED" | "REJECTED", message?: string) => {
+    const targetInquiry = listings.find(i => i.id === inquiryId) || selectedInquiry;
+    if (status === "APPROVED" && targetInquiry) {
+      setApprovalLoaderInquiry(targetInquiry);
+    } else if (status === "REJECTED" && targetInquiry) {
+      setRejectionLoaderInquiry(targetInquiry);
+    }
+
     setRespondingId(inquiryId);
-    const loadingToast = toast.loading(`${status === "APPROVED" ? "Approving" : "Rejecting"} inquiry...`);
     try {
       const response = await fetch(`/api/landlord/inquiries?id=${inquiryId}`, {
         method: "PUT",
@@ -238,14 +304,17 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
         success(`Inquiry ${status.toLowerCase()} successfully.`);
       } else {
         toastError(`Failed to update status.`);
+        setApprovalLoaderInquiry(null);
+        setRejectionLoaderInquiry(null);
       }
     } catch (error) {
       toastError("An error occurred.");
+      setApprovalLoaderInquiry(null);
+      setRejectionLoaderInquiry(null);
     } finally {
       setRespondingId(null);
-      toast.dismiss(loadingToast);
     }
-  }, [router]);
+  }, [listings, selectedInquiry, queryClient, router, success, toastError]);
 
   const handleConfirmReject = useCallback(async (inquiryId: string, reason: string) => {
     await handleRespond(inquiryId, "REJECTED", reason);
@@ -269,13 +338,20 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     }
   }, [nextCursor, isLoadingMore]);
 
-  const handleGenerateReport = async (dateRange?: DateRange) => {
+  const handleGenerateReport = async (options?: { scope?: 'filtered' | 'all'; format?: string; includeSummary?: boolean; includeGlossary?: boolean; dateRange?: DateRange } | DateRange) => {
     try {
-      let exportData = filteredInquiries;
+      const isParamDateRange = options && ('from' in options || 'to' in options);
+      const dateRange = isParamDateRange ? (options as DateRange) : (options as any)?.dateRange;
+      const exportScope = !isParamDateRange && (options as any)?.scope ? (options as any).scope : 'filtered';
+      const includeSummary = !isParamDateRange && (options as any)?.includeSummary !== undefined ? (options as any).includeSummary : true;
+      const includeGlossary = !isParamDateRange && (options as any)?.includeGlossary !== undefined ? (options as any).includeGlossary : true;
+
+      let exportData = exportScope === 'all' ? listings : filteredInquiries;
+
       if (dateRange?.from) {
         const fromDate = dateRange.from;
         const toDate = dateRange.to;
-        exportData = exportData.filter(i => {
+        exportData = exportData.filter((i: any) => {
           const createdAt = new Date(i.createdAt);
           if (toDate) {
             return createdAt >= fromDate && createdAt <= toDate;
@@ -285,71 +361,109 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
       }
 
       const totalInquiries = exportData.length;
-      let summaryData: any[] = [];
-      let subtitle = `Auditing engagement for ${totalInquiries} potential tenants`;
+      const pendingCount = exportData.filter((i: any) => (i.status || '').toUpperCase() === 'PENDING').length;
+      const approvedCount = exportData.filter((i: any) => (i.status || '').toUpperCase() === 'APPROVED').length;
+      const rejectedCount = exportData.filter((i: any) => (i.status || '').toUpperCase() === 'REJECTED').length;
+      const uniqueListings = new Set(exportData.map((i: any) => i.listingId || i.listing?.title)).size;
 
-      if (selectedStatus === 'PENDING') {
-        const uniqueProperties = new Set(exportData.map(i => i.listingId)).size;
-        summaryData = [
-          { label: 'Unanswered Inquiries', value: `${totalInquiries}` },
-          { label: 'Need to Answer', value: `${uniqueProperties} Properties` },
-          { label: 'Status', value: `Pending Action` }
-        ];
-        subtitle = `Auditing pending inquiries for ${totalInquiries} tenants`;
-      } 
-      else if (selectedStatus === 'APPROVED') {
-        summaryData = [
-          { label: 'Approved Inquiries', value: `${totalInquiries}` },
-          { label: 'Potential Tenants', value: `${totalInquiries}` },
-          { label: 'Status', value: `Approved` }
-        ];
-        subtitle = `Auditing approved inquiries for ${totalInquiries} tenants`;
-      }
-      else if (selectedStatus === 'REJECTED') {
-        summaryData = [
-          { label: 'Rejected Inquiries', value: `${totalInquiries}` },
-          { label: 'Total Rejected', value: `${totalInquiries}` },
-          { label: 'Status', value: `Rejected` }
-        ];
-        subtitle = `Auditing rejected inquiries for ${totalInquiries} tenants`;
-      }
-      else {
-        // Global 'all' view
-        const uniqueListings = new Set(exportData.map(i => i.listingId)).size;
-        const pendingCount = exportData.filter(i => i.status === 'PENDING').length;
-        
-        summaryData = [
-          { label: 'Total Inquiries', value: `${totalInquiries}` },
-          { label: 'Properties Inquired', value: `${uniqueListings}` },
-          { label: 'Need to Answer', value: `${pendingCount}` }
-        ];
-      }
+      const distributionData = [
+        { label: 'Approved Inquiries', count: approvedCount, percentage: totalInquiries ? (approvedCount / totalInquiries) * 100 : 0, color: [47, 125, 109] as [number, number, number] },
+        { label: 'Pending Response', count: pendingCount, percentage: totalInquiries ? (pendingCount / totalInquiries) * 100 : 0, color: [217, 119, 6] as [number, number, number] },
+        { label: 'Declined Inquiries', count: rejectedCount, percentage: totalInquiries ? (rejectedCount / totalInquiries) * 100 : 0, color: [220, 38, 38] as [number, number, number] }
+      ];
 
-      const columns = ['Listing', 'Tenant', 'Status', 'Date', 'Message'];
-      const data = exportData.map((i) => [
-        i.listing.title,
-        i.user?.name || i.user?.email || 'Guest',
-        i.status,
-        new Date(i.createdAt).toLocaleDateString(),
-        (i.message || 'N/A').length > 50 ? `${(i.message || '').substring(0, 50)}...` : (i.message || 'N/A'),
+      // Property Inquiry Category Breakdown for Horizontal Bar Chart Graph
+      const inqCounts: Record<string, number> = {};
+      exportData.forEach((i: any) => {
+        const propTitle = i.listing?.title || i.propertyTitle || 'Listing Unit';
+        inqCounts[propTitle] = (inqCounts[propTitle] || 0) + 1;
+      });
+
+      const categoryData = Object.entries(inqCounts)
+        .map(([label, count]) => ({ label, count }))
+        .sort((a, b) => b.count - a.count);
+
+      // Inquiry Volume Trend Trajectory for Line Graph
+      const monthCounts: Record<string, number> = {};
+      exportData.forEach((i: any) => {
+        const date = new Date(i.createdAt || Date.now());
+        const monthLabel = date.toLocaleDateString('en-US', { month: 'short' });
+        monthCounts[monthLabel] = (monthCounts[monthLabel] || 0) + 1;
+      });
+      const trendData = Object.entries(monthCounts).map(([label, value]) => ({ label, value }));
+
+      const summaryData = [
+        { label: 'TOTAL INQUIRIES', value: `${totalInquiries} Inquiries`, subValue: `${uniqueListings} Properties targeted` },
+        { label: 'PENDING RESPONSE', value: `${pendingCount} Pending`, subValue: 'Action required' },
+        { label: 'RESPONSE RATE', value: `${totalInquiries ? Math.round(((totalInquiries - pendingCount) / totalInquiries) * 100) : 100}%`, subValue: 'Landlord response rate' }
+      ];
+
+      const columns = ['Target Property', 'Target Room Unit', 'Tenant Name', 'Status', 'Check-In', 'Check-Out', 'Payment Method', 'Date Received'];
+      const data = exportData.map((i: any) => [
+        i.listing?.title || (i as any).propertyTitle || 'N/A',
+        i.room?.name || i.room?.title || (i as any).roomTitle || 'Standard Unit',
+        i.user?.name || i.user?.email || (i as any).tenantName || 'N/A',
+        formatDynamicCodeLabel(i.status, 'Pending'),
+        i.moveInDate ? new Date(i.moveInDate).toLocaleDateString() : 'N/A',
+        i.checkOutDate ? new Date(i.checkOutDate).toLocaleDateString() : 'N/A',
+        formatDynamicCodeLabel(i.paymentMethod || i.contactMethod, 'Online Payment'),
+        new Date(i.createdAt).toLocaleDateString()
       ]);
 
-      await generateTablePDF('Inquiries_Report', columns, data, {
-        title: 'Tenant Inquiries Business Report',
+      const totalsRow = [
+        'TOTALS',
+        `${uniqueListings} Properties`,
+        `${totalInquiries} Inquiries`,
+        `${approvedCount} Approved`,
+        'Move-In Scheduled',
+        'Move-Out Scheduled',
+        'Verified',
+        new Date().toLocaleDateString()
+      ];
+
+      const glossaryItems = [
+        { term: 'Total Inquiry Count', definition: 'Total number of prospective tenant inquiries received across your property listings.' },
+        { term: 'Inquiry Status', definition: 'Prospective tenant query state — Received (awaiting response), Approved (accepted by landlord), or Closed.' },
+        { term: 'Target Room Unit', definition: 'Specific property room unit queried by the prospective tenant.' },
+        { term: 'Intended Stay Window', definition: 'Tenant requested check-in (move-in) and check-out dates for their stay duration.' },
+        { term: 'Payment Method', definition: 'Tenant preferred payment channel specified during inquiry submission.' }
+      ];
+
+      const subtitle = exportScope === 'all'
+        ? `All-Time Inquiry Record for ${totalInquiries} tenant inquiries`
+        : `Filtered Inquiry Report for ${totalInquiries} tenant inquiries`;
+
+      const authorName = session?.user?.name || session?.user?.email || 'BoardTAU Landlord Portal';
+
+      await generateTablePDF('Tenant_Inquiries_Report', columns, data, {
+        title: 'Tenant Inquiry Summary Report',
         subtitle: subtitle,
-        author: 'Landlord Inquiry Management',
-        summaryData: summaryData
+        author: authorName,
+        summaryData: summaryData,
+        distributionData: distributionData,
+        categoryData: categoryData,
+        trendData: trendData,
+        statusChartTitle: 'Inquiry Status',
+        categoryChartTitle: 'Inquiries by Property',
+        trendChartTitle: 'Monthly Inquiry Volume',
+        glossaryItems: glossaryItems,
+        totalsRow: totalsRow,
+        scopeTag: exportScope === 'all' ? 'Complete History' : 'Filtered View',
+        type: 'inquiry',
+        includeSummary: includeSummary,
+        includeGlossary: includeGlossary
       });
       
-      success(`Generated enterprise report for ${totalInquiries} inquiries`);
+      success(`Generated inquiry report for ${totalInquiries} inquiries`);
     } catch (error) {
       console.error('Failed to generate report:', error);
-      toastError('Failed to generate complete report');
+      toastError('Failed to generate inquiry report');
     }
   };
 
   return {
     filteredInquiries: paginatedInquiries,
+    allFilteredInquiries: filteredInquiries,
     totalInquiries: filteredInquiries.length,
     currentPage,
     setCurrentPage,
@@ -386,6 +500,12 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     handleGenerateReport,
     isArchived,
     handleToggleArchived,
+    approvalLoaderInquiry,
+    setApprovalLoaderInquiry,
+    rejectionLoaderInquiry,
+    setRejectionLoaderInquiry,
+    isHeaderLoading: isLoading,
+    isSyncing: isFilterLoading || isLoadingMore,
     isLoading: isLoading || isFilterLoading,
     rawInquiries: listings
   };

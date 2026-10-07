@@ -4,8 +4,9 @@ import { db } from "@/lib/db";
 import validator from "validator";
 import { pusherServer } from "@/lib/pusher";
 import { sendNewMessageEmail } from "@/services/email/notifications";
-import { encryptMessage } from "@/lib/encryption";
+import { encryptMessage, encryptChatToken } from "@/lib/encryption";
 import { getCurrentUser } from "@/services/user";
+import { createNotification } from "@/services/notification";
 
 /**
  * GET: Fetches the list of conversations for the Landlord Inbox Hub
@@ -57,6 +58,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
     }
 
+    // Verify messaging is open for this listing & tenant
+    const [activeInquiry, activeReservation, existingMessage] = await Promise.all([
+      db.inquiry.findFirst({
+        where: {
+          listingId,
+          userId: receiverId,
+          status: { in: ["PENDING", "APPROVED"] as any },
+        },
+        select: { id: true }
+      }),
+      db.reservation.findFirst({
+        where: {
+          listingId,
+          userId: receiverId,
+          status: { in: ["PENDING_PAYMENT", "RESERVED", "CHECKED_IN", "COMPLETED"] as any },
+        },
+        select: { id: true }
+      }),
+      db.message.findFirst({
+        where: {
+          listingId,
+          OR: [
+            { senderId: user.id, receiverId },
+            { senderId: receiverId, receiverId: user.id }
+          ]
+        },
+        select: { id: true }
+      })
+    ]);
+
+    const canMessage = Boolean(activeInquiry || activeReservation || existingMessage);
+
+    if (!canMessage) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Messaging is closed because there is no active inquiry or reservation for this listing." 
+      }, { status: 403 });
+    }
+
     // 1. Create the message (Encrypting the content before DB insert)
     const message = await db.message.create({
       data: {
@@ -82,16 +122,14 @@ export async function POST(request: NextRequest) {
       select: { title: true }
     });
 
-    const deepLink = `/messages?listingId=${listingId}&otherUserId=${user.id}`;
+    const deepLink = `/messages?token=${encryptChatToken(listingId, user.id)}`;
 
-    await db.notification.create({
-      data: {
-        userId: receiverId,
-        type: "message",
-        title: "New Message from host",
-        description: `${user.name || "Host"}: ${displayContent.substring(0, 50)}...`,
-        link: deepLink,
-      }
+    await createNotification({
+      userId: receiverId,
+      type: "message",
+      title: "New Message from host",
+      description: `${user.name || "Host"}: ${displayContent.substring(0, 50)}...`,
+      link: deepLink,
     });
 
     // 3. Trigger Email Notification (Await to ensure delivery)
@@ -117,6 +155,13 @@ export async function POST(request: NextRequest) {
     // 4. Trigger Pusher for real-time update
     const channel = `private-chat-${listingId}-${[user.id, receiverId].sort().join("-")}`;
     await pusherServer.trigger(channel, "new-message", decryptedMessageForBroadcast);
+
+    // Global notification for both parties (to update Inbox/Badge in real-time)
+    const syncPayload = { listingId, senderId: user.id, message: displayContent.substring(0, 120) };
+    await Promise.all([
+      pusherServer.trigger(`private-user-${receiverId}`, "message-notification", syncPayload),
+      pusherServer.trigger(`private-user-${user.id}`, "message-notification", syncPayload)
+    ]);
 
     return NextResponse.json({
       success: true,

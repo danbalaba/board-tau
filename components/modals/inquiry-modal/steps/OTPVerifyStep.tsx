@@ -93,38 +93,46 @@ const OTPVerifyStep: React.FC<OTPVerifyStepProps> = ({
   }, [lockoutCountdown, setLockoutCountdown, setOtpAttemptLimitReached]);
 
   return (
-    <div className="flex flex-col gap-5 p-4 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm animate-in fade-in slide-in-from-bottom-4">
-      <div className="text-center space-y-2">
-        <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/20 shadow-inner">
-          <FaShieldAlt className="text-3xl text-blue-500" />
+    <div className="flex flex-col gap-4 p-5 bg-white dark:bg-gray-900/60 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm animate-in fade-in slide-in-from-bottom-4">
+      <div className="text-center space-y-1.5">
+        <div className="w-14 h-14 bg-primary/10 dark:bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-2 border border-primary/20 shadow-inner text-primary">
+          <FaShieldAlt className="text-2xl" />
         </div>
-        <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight uppercase">Security Verification</h3>
-        <p className="text-xs text-gray-500 font-medium">To protect landlords from spam, please verify your identity before submitting this inquiry.</p>
+        <h3 className="text-lg font-extrabold text-gray-900 dark:text-white tracking-tight uppercase">
+          Step 7: Security Verification OTP
+        </h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto leading-relaxed">
+          To protect hosts from spam inquiries, enter the 6-digit confirmation code sent to your registered account.
+        </p>
       </div>
 
-      {/* Clarification Alert */}
-      <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-3 flex items-start gap-3 text-left">
-        <div className="mt-0.5 text-amber-500">
+      {/* Security Clarification Alert */}
+      <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-3.5 flex items-start gap-3 text-left">
+        <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
           <FaShieldAlt size={14} />
         </div>
-        <p className="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400 font-medium">
-          <strong className="font-bold">Security Notice:</strong> The verification code is sent to your <u>registered account email</u>, NOT the contact details you provided for the landlord earlier.
+        <p className="text-[11px] leading-relaxed text-amber-800 dark:text-amber-300 font-medium">
+          <strong className="font-extrabold uppercase tracking-wider block mb-0.5">Security Notice:</strong>
+          The OTP code is sent to your <u>registered account email</u> below, NOT the contact details specified for the host in Step 2.
         </p>
       </div>
 
-      {/* Account Email Display */}
-      <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-500/20 text-center shadow-inner">
-        <p className="text-[10px] font-bold text-blue-400/80 uppercase tracking-widest mb-1.5 flex items-center justify-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+      {/* Account Email Display Card */}
+      <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-2xl border border-primary/20 text-center shadow-inner">
+        <p className="text-[10px] font-extrabold text-primary dark:text-primary-light uppercase tracking-widest mb-1 flex items-center justify-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-primary animate-ping"></span>
           Registered Account Email
         </p>
-        <p className="text-sm font-black text-blue-600 dark:text-blue-400 tracking-wide select-all">{userEmail}</p>
+        <p className="text-sm font-black text-gray-900 dark:text-white tracking-wide select-all font-mono">
+          {userEmail}
+        </p>
       </div>
 
-      <div className="w-full px-0 sm:px-2">
+      {/* OTP 6-Digit Input Container */}
+      <div className="w-full px-0 sm:px-2 py-1">
         <OtpInput
           id="otp"
-          label="6-Digit Verification Code"
+          label="6-Digit Confirmation Code"
           disabled={isProcessing || otpAttemptLimitReached}
           register={register as any}
           errors={errors as any}
@@ -135,20 +143,20 @@ const OTPVerifyStep: React.FC<OTPVerifyStepProps> = ({
       </div>
 
       {lockoutCountdown > 0 && (
-        <div className="text-center text-rose-500 font-black text-[10px] uppercase tracking-widest my-2 bg-rose-500/5 py-2 rounded-lg border border-rose-500/10 animate-pulse">
+        <div className="text-center text-rose-500 font-extrabold text-[11px] uppercase tracking-widest my-1 bg-rose-50 dark:bg-rose-950/30 py-2.5 rounded-xl border border-rose-200 dark:border-rose-800/40 animate-pulse">
           Security Lockout: {lockoutCountdown} seconds remaining
         </div>
       )}
 
-      <div className="flex justify-center mt-2">
+      <div className="flex justify-center mt-1">
         <button
           type="button"
           onClick={sendOTP}
           disabled={isProcessing || resendCooldown > 0 || otpAttemptLimitReached}
-          className="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 font-black uppercase tracking-widest disabled:text-gray-400 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
+          className="text-xs text-primary hover:text-primary-hover font-extrabold uppercase tracking-widest disabled:text-gray-400 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 cursor-pointer py-1"
         >
           {resendCooldown > 0
-            ? `Resend available in ${resendCooldown}s`
+            ? `Resend code in ${resendCooldown}s`
             : otpAttemptLimitReached
             ? `Locked for ${lockoutCountdown}s`
             : "Didn't receive code? Send again"}

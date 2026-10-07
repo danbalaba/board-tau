@@ -34,6 +34,7 @@ import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { UserMobileFilterSheet } from "@/components/common/UserMobileFilterSheet";
 import { CancellationStrikeWarningCard } from "@/components/common/CancellationStrikeWarningCard";
+import { pusherClient } from "@/lib/pusher-client";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -111,6 +112,55 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
     useEffect(() => {
         setReservations(initialReservations);
     }, [initialReservations]);
+
+    // Real-time Pusher listener for reservation updates
+    useEffect(() => {
+        if (!userId) return;
+
+        const channelName = `private-user-${userId}`;
+        const channel = pusherClient.subscribe(channelName);
+
+        const handleReservationUpdated = (data: any) => {
+            if (!data || !data.entityId) return;
+
+            setReservations((prev) => {
+                const index = prev.findIndex((r) => r.id === data.entityId);
+                if (index === -1) {
+                    if (data.payload && data.payload.id) {
+                        return [data.payload, ...prev];
+                    }
+                    return prev;
+                }
+
+                const updated = [...prev];
+                updated[index] = {
+                    ...updated[index],
+                    status: data.status || updated[index].status,
+                    paymentStatus: data.payload?.paymentStatus || updated[index].paymentStatus,
+                    ...(data.payload || {}),
+                };
+                return updated;
+            });
+
+            setSelectedReservation((prevSelected) => {
+                if (prevSelected && prevSelected.id === data.entityId) {
+                    return {
+                        ...prevSelected,
+                        status: data.status || prevSelected.status,
+                        paymentStatus: data.payload?.paymentStatus || prevSelected.paymentStatus,
+                        ...(data.payload || {}),
+                    };
+                }
+                return prevSelected;
+            });
+        };
+
+        channel.bind("reservation-updated", handleReservationUpdated);
+
+        return () => {
+            channel.unbind("reservation-updated", handleReservationUpdated);
+        };
+    }, [userId]);
 
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
@@ -191,10 +241,12 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
             };
 
             syncPayment();
+            window.history.replaceState({}, '', '/reservations');
         }
 
         if (statusParam === "cancelled" && isMounted) {
             toast.error("Payment was cancelled or failed. Please try again.");
+            window.history.replaceState({}, '', '/reservations');
         }
     }, [statusParam, isMounted, router]);
 
@@ -479,7 +531,7 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
 
             {isLoading ? (
                 <div className="flex-1 flex items-center justify-center min-h-[400px]">
-                    <ModernLoader text="Syncing your reservations..." />
+                    <ModernLoader text="Loading reservations..." mascotSrc="/assets/mascot/kerby-global-scooter.png" />
                 </div>
             ) : (
                 <>
@@ -573,6 +625,7 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                 isOpen={showCancelConfirm}
                 onClose={() => setShowCancelConfirm(false)}
                 width="sm"
+                fullOnMobile={false}
             >
                 <ConfirmModal
                     isOpen={showCancelConfirm}
@@ -599,10 +652,10 @@ const ReservationsClient: React.FC<ReservationsClientProps> = ({
                 width="md"
                 title=""
                 closeOnOutsideClick={false}
-                hasFixedFooter={true}
-                fullOnMobile={true}
+                hasFixedFooter={false}
+                fullOnMobile={false}
             >
-                <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl relative">
+                <div className="flex flex-col h-auto max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-3xl relative">
                     {/* X Close Button */}
                     <button
                         onClick={() => setShowCancelReason(false)}

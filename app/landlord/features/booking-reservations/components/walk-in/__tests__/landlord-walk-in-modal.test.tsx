@@ -26,10 +26,10 @@ jest.mock('framer-motion', () => ({
 
 jest.mock('../steps/walk-in-location-step', () => () => <div data-testid="step-1">Location Step</div>);
 jest.mock('../steps/walk-in-guest-step', () => () => <div data-testid="step-2">Guest Step</div>);
-jest.mock('@/components/modals/inquiry-modal/steps/SelfieStep', () => () => <div data-testid="step-3">Selfie Step</div>);
-jest.mock('@/components/modals/inquiry-modal/steps/IDStep', () => () => <div data-testid="step-4">ID Step</div>);
-jest.mock('../steps/walk-in-payment-step', () => () => <div data-testid="step-5">Payment Step</div>);
-jest.mock('../steps/walk-in-review-step', () => () => <div data-testid="step-6">Review Step</div>);
+jest.mock('../steps/walk-in-payment-step', () => () => <div data-testid="step-3">Payment Step</div>);
+jest.mock('../steps/walk-in-review-step', () => () => <div data-testid="step-4">Review Step</div>);
+jest.mock('../components/WalkInProgressBar', () => () => <div data-testid="mock-progress-bar">Progress Bar</div>);
+jest.mock('../components/WalkInSubmissionLoaderModal', () => () => <div data-testid="mock-loader-modal">Loader Modal</div>);
 
 describe('LandlordWalkInModal', () => {
   const mockOnClose = jest.fn();
@@ -37,7 +37,7 @@ describe('LandlordWalkInModal', () => {
 
   const mockModalLogic = {
     currentStep: 1,
-    totalSteps: 6,
+    totalSteps: 4,
     direction: 1,
     isUploading: false,
     submitted: false,
@@ -97,6 +97,7 @@ describe('LandlordWalkInModal', () => {
     (useWalkInModal as jest.Mock).mockReturnValue({ ...mockModalLogic, submitted: true });
     render(<LandlordWalkInModal isOpen={true} onClose={mockOnClose} landlordId="l-1" listings={mockListings} onSuccess={mockOnSuccess} />);
     
-    expect(screen.getByText('WALK-IN CREATED!')).toBeInTheDocument();
+    expect(screen.getByText('Success')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-loader-modal')).toBeInTheDocument();
   });
 });

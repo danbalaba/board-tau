@@ -23,11 +23,11 @@ jest.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
-jest.mock('react-loading-skeleton', () => {
-  return function MockSkeleton() {
-    return <span data-testid="mock-skeleton" />;
-  };
-});
+jest.mock('react-loading-skeleton', () => ({
+  __esModule: true,
+  default: () => <span data-testid="mock-skeleton" />,
+  SkeletonTheme: ({ children }: any) => <>{children}</>,
+}));
 
 describe('ConversationsList', () => {
   const mockConversations = [

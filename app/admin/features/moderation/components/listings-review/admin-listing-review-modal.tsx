@@ -675,6 +675,20 @@ export function AdminListingReviewModal({
       const roomPrices = rooms.map((r: any) => Number(r.price || 0)).filter((p: number) => p > 0);
       const rentPrice = roomPrices.length > 0 ? Math.min(...roomPrices) : Number(listing?.price || 0);
 
+      const ruleAttributeNames = (listing?.listingLinks || [])
+        .filter((link: any) => link?.attribute?.type === "RULE")
+        .map((link: any) => link?.attribute?.name)
+        .filter(Boolean);
+
+      const rawRules = [
+        ...ruleAttributeNames,
+        ...(Array.isArray(listing?.rules) ? listing.rules : []),
+        ...(Array.isArray(listing?.propertyConfig?.rules) ? listing.propertyConfig.rules : []),
+        ...(Array.isArray(listing?.businessInfo?.rules) ? listing.businessInfo.rules : [])
+      ];
+
+      const houseRules = Array.from(new Set(rawRules)).filter(Boolean);
+
       const pdfBlob = await generateLeaseContractPDF(`${cleanPropTitle}_BoardTAU_Smart_Lease_Contract.pdf`, {
         contractHash: `AUDIT-${listing?.id ? String(listing.id).substring(0, 8).toUpperCase() : Math.random().toString(36).substring(2, 8).toUpperCase()}`,
         landlordName: listing?.landlord?.fullName || listing?.landlordName || listing?.hostName || 'Property Owner / Landlord',
@@ -688,6 +702,7 @@ export function AdminListingReviewModal({
         rentAmount: rentPrice,
         moveOutNoticeDays: noticeDays,
         customClauses: clauses,
+        houseRules,
         landlordSignatureBase64: signature,
         tenantSignatureBase64: ''
       }, true);
@@ -1715,6 +1730,53 @@ export function AdminListingReviewModal({
                                       ) : (
                                         <span className="text-[11px] font-bold text-slate-400 italic">No specific in-unit amenities selected</span>
                                       )}
+
+                                      {/* Unit Photos Grid */}
+                                      {(() => {
+                                        const roomPhotos: string[] = Array.isArray(room.images)
+                                          ? room.images.map((img: any) => typeof img === 'string' ? img : (img?.url || img?.src)).filter(Boolean)
+                                          : (room.imageSrc || room.image) ? [room.imageSrc || room.image] : [];
+
+                                        return (
+                                          <div className="space-y-3 pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
+                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
+                                              <Camera size={13} className="text-primary" />
+                                              <span>Unit Photos ({roomPhotos.length})</span>
+                                            </span>
+
+                                            {roomPhotos.length > 0 ? (
+                                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                                {roomPhotos.map((photoUrl: string, imgIdx: number) => (
+                                                  <button
+                                                    key={imgIdx}
+                                                    type="button"
+                                                    onClick={() => setPreviewState({
+                                                      isOpen: true,
+                                                      images: roomPhotos,
+                                                      currentIndex: imgIdx,
+                                                      title: `${roomTypeName} Photos`,
+                                                      isDocument: false
+                                                    })}
+                                                    className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 group cursor-pointer shadow-sm hover:shadow-md transition-all"
+                                                  >
+                                                    <SafeImage
+                                                      src={photoUrl}
+                                                      alt={`${roomTypeName} photo ${imgIdx + 1}`}
+                                                      fill
+                                                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                                      <Maximize2 size={16} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                                                    </div>
+                                                  </button>
+                                                ))}
+                                              </div>
+                                            ) : (
+                                              <span className="text-[11px] font-bold text-slate-400 italic">No unit photos uploaded yet</span>
+                                            )}
+                                          </div>
+                                        );
+                                      })()}
 
                                       {/* Dynamic Bottom Room Navigation Buttons */}
                                       {roomsList.length > 1 && (

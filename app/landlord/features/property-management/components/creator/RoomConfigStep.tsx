@@ -163,83 +163,115 @@ export default function RoomConfigStep({
   const [justCopied, setJustCopied] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const propertyTypeId = watch('propertyInfo.propertyTypeId') || watch('propertyInfo.category') || '';
+  const propertyTypeId = watch('propertyInfo.propertyTypeId') || watch('propertyInfo.category') || watch('businessInfo.businessType') || watch('propertyBasic.propertyTypeId') || '';
   const watchCategory = watch('propertyInfo.category') || '';
+  const watchBusinessType = watch('businessInfo.businessType') || '';
+
   const [dynamicAttributes, setDynamicAttributes] = useState<any[]>(() => getSyncAttributes() || []);
   const [dbSubGroups, setDbSubGroups] = useState<any[]>(() => getSyncSubGroups() || []);
   const [isLoadingAttrs, setIsLoadingAttrs] = useState<boolean>(() => !getSyncAttributes() || getSyncAttributes()!.length === 0);
   const [roomTypeOptions, setRoomTypeOptions] = useState<any[]>(() => (propertyTypeId ? getSyncRoomTypes(propertyTypeId) || [] : []));
+  const [cachedPropertyTypes, setCachedPropertyTypes] = useState<any[]>(() => getSyncPropertyTypes() || []);
 
   useEffect(() => {
-    const syncAttrs = getSyncAttributes();
-    if (syncAttrs && syncAttrs.length > 0) {
-      setDynamicAttributes(syncAttrs);
-      setIsLoadingAttrs(false);
-    } else {
-      getCachedAttributes().then(attrs => {
-        setDynamicAttributes(attrs || []);
-        setIsLoadingAttrs(false);
+    const updateFromCache = () => {
+      getCachedAttributes(true).then(attrs => {
+        if (attrs && attrs.length > 0) {
+          setDynamicAttributes(attrs);
+          setIsLoadingAttrs(false);
+        }
       });
-    }
+      getCachedSubGroups(true).then(sgs => {
+        if (sgs && sgs.length > 0) {
+          setDbSubGroups(sgs);
+        }
+      });
+      const syncTypes = getSyncPropertyTypes();
+      if (syncTypes && syncTypes.length > 0) {
+        setCachedPropertyTypes(syncTypes);
+      } else {
+        getCachedPropertyTypes().then(types => {
+          if (types && types.length > 0) setCachedPropertyTypes(types);
+        });
+      }
+    };
 
-    const syncSgs = getSyncSubGroups();
-    if (syncSgs && syncSgs.length > 0) {
-      setDbSubGroups(syncSgs);
-    } else {
-      getCachedSubGroups().then(sgs => {
-        setDbSubGroups(sgs || []);
-      });
-    }
+    updateFromCache();
 
     if (!getSyncPropertyTypes()) {
-      getCachedPropertyTypes();
+      getCachedPropertyTypes().then(types => {
+        if (types && types.length > 0) setCachedPropertyTypes(types);
+      });
     }
+
+    const handleTaxonomyUpdated = () => {
+      updateFromCache();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('landlord_taxonomy_updated', handleTaxonomyUpdated);
+      window.addEventListener('search_taxonomy_updated', handleTaxonomyUpdated);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('landlord_taxonomy_updated', handleTaxonomyUpdated);
+        window.removeEventListener('search_taxonomy_updated', handleTaxonomyUpdated);
+      }
+    };
   }, []);
 
-  const cachedPropertyTypes = getSyncPropertyTypes() || [];
-  const matchedPropertyType = cachedPropertyTypes.find(
-    (pt: any) => pt.id === propertyTypeId || pt.name === propertyTypeId
-  );
-  const resolvedCategoryName = matchedPropertyType?.name || watchCategory || propertyTypeId || '';
+  const matchedPropertyType = useMemo(() => {
+    if (!cachedPropertyTypes || cachedPropertyTypes.length === 0) return null;
+    const target = (propertyTypeId || watchCategory || watchBusinessType || '').toLowerCase().trim();
+    if (!target) return null;
+    return cachedPropertyTypes.find(
+      (pt: any) =>
+        pt.id === propertyTypeId ||
+        pt.id?.toLowerCase() === target ||
+        pt.name?.toLowerCase().trim() === target ||
+        target.includes(pt.name?.toLowerCase().trim() || '') ||
+        (pt.name && target.includes(pt.name.toLowerCase().trim()))
+    ) || null;
+  }, [cachedPropertyTypes, propertyTypeId, watchCategory, watchBusinessType]);
+
+  const resolvedCategoryName = matchedPropertyType?.name || watchCategory || watchBusinessType || propertyTypeId || '';
 
   const isAttrMatchingPropertyType = useMemo(() => {
     return (attr: any) => {
+      if (!attr) return false;
       if (attr.isUniversal) return true;
-      if (!propertyTypeId && !resolvedCategoryName) return true;
 
       const typeIds: string[] = Array.isArray(attr.propertyTypeIds) ? attr.propertyTypeIds : [];
-      const typeNames: string[] = Array.isArray(attr.propertyTypeNames)
-        ? attr.propertyTypeNames
-        : Array.isArray(attr.propertyTypes)
-        ? attr.propertyTypes.map((pt: any) => (pt.name || pt).toString())
+      const typeNames: string[] = Array.isArray(attr.propertyTypeNames) ? attr.propertyTypeNames : [];
+      const typeObjs: string[] = Array.isArray(attr.propertyTypes)
+        ? attr.propertyTypes.map((pt: any) => (pt.name || pt.id || pt).toString())
         : [];
 
-      if (typeIds.length === 0 && typeNames.length === 0) return true;
+      const attrScopes = [...typeIds, ...typeNames, ...typeObjs].map(s => String(s).toLowerCase().trim());
 
-      if (propertyTypeId && typeIds.includes(propertyTypeId)) return true;
-      if (matchedPropertyType?.id && typeIds.includes(matchedPropertyType.id)) return true;
+      if (attrScopes.length === 0) return true;
 
-      const targetCategory = (resolvedCategoryName || matchedPropertyType?.name || '').toLowerCase();
-      if (targetCategory && typeNames.length > 0) {
-        return typeNames.some((n: string) => {
-          const lowerName = n.toLowerCase();
-          return lowerName.includes(targetCategory) || targetCategory.includes(lowerName);
-        });
-      }
+      // 1. Direct ID matches
+      if (propertyTypeId && typeIds.some(id => String(id).toLowerCase().trim() === String(propertyTypeId).toLowerCase().trim())) return true;
+      if (matchedPropertyType?.id && typeIds.some(id => String(id).toLowerCase().trim() === String(matchedPropertyType.id).toLowerCase().trim())) return true;
 
-      if (cachedPropertyTypes.length > 0 && typeIds.length > 0) {
-        const matchedPropTypes = cachedPropertyTypes.filter((pt: any) => typeIds.includes(pt.id));
-        if (matchedPropTypes.length > 0) {
-          return matchedPropTypes.some((pt: any) => {
-            const pName = (pt.name || '').toLowerCase();
-            return pName.includes(targetCategory) || targetCategory.includes(pName);
-          });
-        }
-      }
+      // 2. Candidate strings set (IDs and Names of selected property type)
+      const candidates = [
+        propertyTypeId,
+        watchCategory,
+        watchBusinessType,
+        resolvedCategoryName,
+        matchedPropertyType?.name,
+        matchedPropertyType?.id
+      ].filter(Boolean).map(s => String(s).toLowerCase().trim());
 
-      return false;
+      if (candidates.length === 0) return true;
+
+      return attrScopes.some(scope =>
+        candidates.some(cand => scope === cand || scope.includes(cand) || cand.includes(scope))
+      );
     };
-  }, [propertyTypeId, resolvedCategoryName, matchedPropertyType, cachedPropertyTypes]);
+  }, [propertyTypeId, resolvedCategoryName, matchedPropertyType, watchCategory, watchBusinessType]);
 
   // Sub-step Room Tab State
   const [activeRoomTab, setActiveRoomTab] = useState<number>(() => (defaultToLastRoom && fields.length > 0 ? fields.length - 1 : 0));
@@ -732,8 +764,13 @@ export default function RoomConfigStep({
 
               const matchingAttrs = dynamicAttributes.filter((a: any) => {
                 if (a.isActive === false || a.status === 'INACTIVE') return false;
-                if ((a.subGroupKey || '').toUpperCase().trim() !== sgKeyUpper) return false;
-                if (a.setupContext === 'SHARED' || a.setupContext === 'COMMON_CR') return false;
+                if (a.type && a.type !== 'ROOM_AMENITY') return false;
+                const aSubKeyUpper = (a.subGroupKey || '').toUpperCase().trim();
+                if (sgKeyUpper === 'COOLING' || sgKeyUpper === 'AC') {
+                  if (!(aSubKeyUpper === 'COOLING' || aSubKeyUpper === 'AC' || aSubKeyUpper === 'AIR_CONDITIONING' || aSubKeyUpper.includes('COOLING') || aSubKeyUpper.includes('AIRCON'))) return false;
+                } else if (aSubKeyUpper !== sgKeyUpper) {
+                  return false;
+                }
                 return isAttrMatchingPropertyType(a);
               });
 
@@ -1165,7 +1202,6 @@ export default function RoomConfigStep({
                                 : "bg-gray-100 dark:bg-gray-800 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                             )}
                           >
-                            <GrpIcon size={14} className={isTabActive ? "text-white" : "text-primary shrink-0"} />
                             <span>{grp.label}</span>
                           </button>
                         );
@@ -1178,7 +1214,7 @@ export default function RoomConfigStep({
                         return dynamicAttributes
                           .filter(a => {
                             if (a.isActive === false || a.status === 'INACTIVE') return false;
-                            if (a.setupContext === 'SHARED' || a.setupContext === 'COMMON_CR') return false;
+                            if (a.type && a.type !== 'ROOM_AMENITY') return false;
                             if (!isAttrMatchingPropertyType(a)) return false;
 
                             const nameLower = (a.name || a.title || '').toLowerCase();
@@ -1188,14 +1224,17 @@ export default function RoomConfigStep({
                             const aSubKeyUpper = (a.subGroupKey || '').toUpperCase().trim();
                             const currentTabUpper = (currentTab || '').toUpperCase().trim();
 
-                            if (currentTabUpper === 'KITCHEN_APP') {
-                              matchesSubGroup = aSubKeyUpper === 'KITCHEN_APP' || aSubKeyUpper === 'KITCHEN';
-                            } else if (currentTabUpper === 'BATHROOM_FIX') {
-                              matchesSubGroup = aSubKeyUpper === 'BATHROOM_FIX' || aSubKeyUpper === 'BATHROOM' || aSubKeyUpper === 'CR_FEATURES';
-                            } else if (currentTabUpper === 'COOLING') {
-                              matchesSubGroup = aSubKeyUpper === 'COOLING' || aSubKeyUpper === 'AC' || aSubKeyUpper === 'AIR_CONDITIONING';
-                            } else if (currentTabUpper === 'FURNITURE') {
-                              matchesSubGroup = aSubKeyUpper === 'FURNITURE' || aSubKeyUpper === 'ROOM_FURNITURE';
+                            // Scope setupContext filtering strictly to Kitchen and Bathroom tabs
+                            if (currentTabUpper === 'KITCHEN_APP' || currentTabUpper === 'KITCHEN') {
+                              if (a.setupContext === 'SHARED') return false;
+                              matchesSubGroup = aSubKeyUpper === 'KITCHEN_APP' || aSubKeyUpper === 'KITCHEN' || aSubKeyUpper.includes('KITCHEN');
+                            } else if (currentTabUpper === 'BATHROOM_FIX' || currentTabUpper === 'CR_FEATURES' || currentTabUpper === 'CR' || currentTabUpper === 'BATHROOM') {
+                              if (a.setupContext === 'COMMON_CR' || a.setupContext === 'SHARED') return false;
+                              matchesSubGroup = aSubKeyUpper === 'BATHROOM_FIX' || aSubKeyUpper === 'BATHROOM' || aSubKeyUpper === 'CR_FEATURES' || aSubKeyUpper.includes('BATHROOM') || aSubKeyUpper.includes('CR');
+                            } else if (currentTabUpper === 'COOLING' || currentTabUpper === 'AC' || currentTabUpper.includes('COOLING') || currentTabUpper.includes('AIRCON')) {
+                              matchesSubGroup = aSubKeyUpper === 'COOLING' || aSubKeyUpper === 'AC' || aSubKeyUpper === 'AIR_CONDITIONING' || aSubKeyUpper.includes('COOLING') || aSubKeyUpper.includes('AIRCON') || aSubKeyUpper.includes('AIR_CONDITIONING');
+                            } else if (currentTabUpper === 'FURNITURE' || currentTabUpper.includes('FURNITURE')) {
+                              matchesSubGroup = aSubKeyUpper === 'FURNITURE' || aSubKeyUpper === 'ROOM_FURNITURE' || aSubKeyUpper.includes('FURNITURE');
                             } else {
                               matchesSubGroup = aSubKeyUpper === currentTabUpper;
                             }
@@ -1227,9 +1266,14 @@ export default function RoomConfigStep({
                                   {isChecked && <Check className="w-3.5 h-3.5 text-white stroke-[3.5px]" />}
                                 </div>
                                 <Icon size={16} className={cn("shrink-0 transition-colors", isChecked ? "text-primary" : "text-gray-400")} />
-                                <span className={cn("text-xs flex-1 transition-colors leading-snug line-clamp-2", isChecked ? "text-gray-900 dark:text-white font-extrabold" : "text-gray-700 dark:text-gray-300 font-bold")}>
-                                  {attr.name}
-                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <span className={cn("text-xs transition-colors leading-snug line-clamp-2 block truncate", isChecked ? "text-gray-900 dark:text-white font-extrabold" : "text-gray-700 dark:text-gray-300 font-bold")}>
+                                    {attr.name}
+                                  </span>
+                                  {attr.description && (
+                                    <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mt-0.5 leading-tight truncate">{attr.description}</p>
+                                  )}
+                                </div>
                               </div>
                             );
                           });

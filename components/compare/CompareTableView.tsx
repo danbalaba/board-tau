@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import SafeImage from "../common/SafeImage";
 import Link from "next/link";
-import { formatPrice, calculateAverageRating } from "@/utils/helper";
+import { formatPrice, calculateAverageRating, getListingUrl } from "@/utils/helper";
 import { computeStudentBadges } from "./compare-utils";
 import { getDynamicIcon } from "@/lib/iconResolver";
 import { 
@@ -558,7 +558,7 @@ export const CompareTableView: React.FC<CompareTableViewProps> = ({
                         </span>
                       </div>
                       <Link
-                        href={`/listings/${l.id}`}
+                        href={getListingUrl(l.id, l.title)}
                         onClick={() => {
                           onClose();
                           clearListings();
@@ -794,7 +794,7 @@ export const CompareTableView: React.FC<CompareTableViewProps> = ({
             {listings.map((l) => (
               <td key={l.id} className="p-2 sm:p-4 text-center">
                 <Link
-                  href={`/listings/${l.id}`}
+                  href={getListingUrl(l.id, l.title)}
                   onClick={() => {
                     onClose();
                     clearListings();

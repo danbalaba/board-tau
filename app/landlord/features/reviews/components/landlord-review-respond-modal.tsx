@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { IconMessage } from '@tabler/icons-react';
 import Button from "@/components/common/Button";
 
@@ -21,8 +22,32 @@ export function LandlordReviewRespondModal({
 }: LandlordReviewRespondModalProps) {
   const [responseText, setResponseText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !isOpen) return;
+    const body = document.body;
+    const html = document.documentElement;
+
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    body.style.overflow = "hidden";
+    html.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    return () => {
+      body.style.overflow = "";
+      html.style.overflow = "";
+      body.style.paddingRight = "";
+    };
+  }, [mounted, isOpen]);
+
+  if (!isOpen || !mounted) return null;
 
   const handleSubmitResponse = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,9 +73,17 @@ export function LandlordReviewRespondModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+  return createPortal(
+    <div 
+      className="fixed inset-0 w-screen h-screen bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4 sm:p-6 animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div 
+        className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-6">
           <h2 className="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">Respond to Review</h2>
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-6 line-clamp-1">For property: <span className="text-primary">{reviewTitle}</span></p>
@@ -74,6 +107,7 @@ export function LandlordReviewRespondModal({
           </form>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -8,6 +8,7 @@ import { cn } from '@/utils/helper';
 import { Check, Sparkles, DoorOpen, CloudUpload, ShieldCheck, Bed, Layers } from 'lucide-react';
 
 import { preloadKerbyAssets } from '@/utils/imagePreloader';
+import { triggerConfetti } from '@/components/lightswind/confetti-button';
 
 interface RoomSubmissionLoaderModalProps {
   isOpen: boolean;
@@ -80,6 +81,7 @@ export function RoomSubmissionLoaderModal({
   const [internalStage, setInternalStage] = useState<1 | 2 | 3 | 4>(1);
   const [tipIdx, setTipIdx] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const confettiFiredRef = React.useRef(false);
 
   useEffect(() => {
     setMounted(true);
@@ -91,6 +93,22 @@ export function RoomSubmissionLoaderModal({
       preloadKerbyAssets();
     }
   }, [isOpen]);
+
+  // Trigger celebratory confetti on Step 4 completion
+  useEffect(() => {
+    if (!isOpen) {
+      confettiFiredRef.current = false;
+      return;
+    }
+    const stageNum = externalStage !== undefined ? externalStage : internalStage;
+    if (stageNum === 4 && !confettiFiredRef.current) {
+      confettiFiredRef.current = true;
+      triggerConfetti({
+        particleCount: 150,
+        colors: ['#2f7d6d', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899']
+      });
+    }
+  }, [isOpen, externalStage, internalStage]);
 
   // Auto-progress simulation if external progress is not passed
   useEffect(() => {

@@ -728,7 +728,6 @@ const BulkConfigureModal: React.FC<BulkConfigureModalProps> = ({
                       const matchingAttrs = dynamicAttributes.filter((a: any) => {
                         if (a.type !== 'ROOM_AMENITY') return false;
                         if (a.subGroupKey !== sg.key) return false;
-                        if (a.setupContext === 'SHARED' || a.setupContext === 'COMMON_CR') return false;
                         if (propertyTypeId && !a.isUniversal && a.propertyTypeIds && a.propertyTypeIds.length > 0) {
                           if (!a.propertyTypeIds.includes(propertyTypeId)) return false;
                         }
@@ -763,7 +762,7 @@ const BulkConfigureModal: React.FC<BulkConfigureModalProps> = ({
                         }
                         if (sg.key === 'KITCHEN_APP') return a.subGroupKey === 'KITCHEN_APP' && a.setupContext === 'IN_UNIT';
                         if (sg.key === 'BATHROOM_FIX') return a.subGroupKey === 'BATHROOM_FIX' && a.setupContext === 'PRIVATE';
-                        return a.subGroupKey === sg.key && a.setupContext !== 'SHARED' && a.setupContext !== 'COMMON_CR';
+                        return a.subGroupKey === sg.key;
                       })
                       .filter((a: any) => template.amenities.includes(a.id)).length;
 
@@ -816,7 +815,7 @@ const BulkConfigureModal: React.FC<BulkConfigureModalProps> = ({
                     }
                     if (currentTab === 'KITCHEN_APP') return a.subGroupKey === 'KITCHEN_APP' && a.setupContext === 'IN_UNIT';
                     if (currentTab === 'BATHROOM_FIX') return a.subGroupKey === 'BATHROOM_FIX' && a.setupContext === 'PRIVATE';
-                    return a.subGroupKey === currentTab && a.setupContext !== 'SHARED' && a.setupContext !== 'COMMON_CR';
+                    return a.subGroupKey === currentTab;
                   });
 
                   if (filteredAmenities.length === 0) {

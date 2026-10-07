@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AllRoomsModal from '../AllRoomsModal';
 import { toast } from 'react-hot-toast';
 
@@ -56,6 +56,7 @@ describe('AllRoomsModal', () => {
       availableSlots: 1,
       images: [],
       roomType: 'SOLO',
+      roomTypeDefinition: { name: 'Private Solo Room' },
       status: 'AVAILABLE',
       reservationFee: 500,
     },
@@ -67,6 +68,7 @@ describe('AllRoomsModal', () => {
       availableSlots: 0,
       images: [],
       roomType: 'BEDSPACE',
+      roomTypeDefinition: { name: 'Shared Bedspace' },
       status: 'UNAVAILABLE',
       reservationFee: 500,
     },
@@ -103,7 +105,7 @@ describe('AllRoomsModal', () => {
     expect(screen.getByText('₱1,000')).toBeInTheDocument();
   });
 
-  it('filters rooms by room type', () => {
+  it('filters rooms by room type', async () => {
     render(<AllRoomsModal {...mockProps} />);
     
     // Toggle filters open
@@ -113,11 +115,13 @@ describe('AllRoomsModal', () => {
     const roomTypeDropdown = screen.getByText('All Room Types');
     fireEvent.click(roomTypeDropdown);
     
-    const soloOption = screen.getAllByText('Private Solo Room')[0];
+    const soloOption = screen.getByText('SOLO');
     fireEvent.click(soloOption);
     
-    expect(screen.getByText('Room A')).toBeInTheDocument();
-    expect(screen.queryByText('Room B')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Room A')).toBeInTheDocument();
+      expect(screen.queryByText('Room B')).not.toBeInTheDocument();
+    });
   });
 
   it('calls onViewDetails when clicking Details button', () => {

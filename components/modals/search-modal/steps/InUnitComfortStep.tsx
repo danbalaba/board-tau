@@ -88,13 +88,41 @@ export default function InUnitComfortStep({
   }, [isLoading, onLoadingChange]);
 
   useEffect(() => {
-    fetchTaxonomyData("ROOM_AMENITY")
-      .then((data) => {
-        setDynamicAttributes(data.attributes);
-        setDynamicSubGroups(data.subGroups);
-      })
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
+    let isMounted = true;
+
+    const loadData = (force = false) => {
+      fetchTaxonomyData("ROOM_AMENITY", force)
+        .then((data) => {
+          if (isMounted && data) {
+            setDynamicAttributes(data.attributes || []);
+            setDynamicSubGroups(data.subGroups || []);
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (isMounted) setIsLoading(false);
+        });
+    };
+
+    loadData();
+
+    const handleTaxonomyUpdate = (e: any) => {
+      const type = e?.detail?.type;
+      if (!type || type === "ROOM_AMENITY" || e?.detail?.cleared) {
+        loadData(true);
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("search_taxonomy_updated", handleTaxonomyUpdate);
+    }
+
+    return () => {
+      isMounted = false;
+      if (typeof window !== "undefined") {
+        window.removeEventListener("search_taxonomy_updated", handleTaxonomyUpdate);
+      }
+    };
   }, []);
 
   const isAttrMatchingPropertyType = useCallback(

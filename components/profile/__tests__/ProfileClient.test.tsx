@@ -116,12 +116,12 @@ describe('ProfileClient Component', () => {
   it('shows loading state initially then renders content', () => {
     render(<ProfileClient profile={mockProfile as any} />);
     
-    expect(screen.queryByText('Securely loading your profile...')).not.toBeInTheDocument();
+    expect(screen.queryByText('Loading profile...')).not.toBeInTheDocument();
     
     act(() => {
       jest.advanceTimersByTime(800);
     });
-    expect(screen.getByText('Securely loading your profile...')).toBeInTheDocument();
+    expect(screen.getByText('Loading profile...')).toBeInTheDocument();
 
     act(() => {
       jest.advanceTimersByTime(1000);

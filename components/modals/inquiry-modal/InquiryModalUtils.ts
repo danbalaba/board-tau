@@ -27,17 +27,20 @@ export const getSafeImageSrc = (file: File | null): string => {
  * Validates and sanitizes image sources from URI strings using a strict whitelist.
  */
 export const getSafeImageSrcString = (image: string | null | undefined): string => {
-  if (!image || typeof image !== 'string' || image.length > 2048) return '';
+  if (!image || typeof image !== 'string' || image.length > 4096) return '';
   
-  const lower = image.toLowerCase();
+  const trimmed = image.trim();
+  const lower = trimmed.toLowerCase();
+
+  if (trimmed.includes('<') || trimmed.includes('>') || trimmed.includes('"') || trimmed.includes("'") || lower.includes('javascript:')) {
+    return '';
+  }
+
   const isSafeProtocol = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('blob:');
-  const isRelative = image.startsWith('/');
+  const isRelative = trimmed.startsWith('/');
 
   if (isSafeProtocol || isRelative) {
-    const safeUrl = image.split('').filter(c => /^[-a-zA-Z0-9:/_. ?#&%=@+,;()!]$/.test(c)).join('');
-    if (safeUrl === image) {
-      return safeUrl;
-    }
+    return trimmed;
   }
   
   return '';

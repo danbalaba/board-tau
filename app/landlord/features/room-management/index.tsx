@@ -17,6 +17,8 @@ import { useRoomLogic, Room } from './hooks/use-room-logic';
 import { LandlordRoomCard } from './components/landlord-room-card';
 import { LandlordPagination } from '../shared/landlord-pagination';
 
+import { useLoading } from '@/components/loading/LoadingContext';
+
 const statusColors: Record<string, string> = {
   AVAILABLE: 'bg-primary/90 text-white border-primary/40 shadow-primary/20',
   FULL: 'bg-rose-500/90 text-white border-rose-400/50 shadow-rose-500/20',
@@ -34,8 +36,11 @@ interface LandlordRoomManagementHubProps {
 
 export default function LandlordRoomManagementHub({ initialData }: LandlordRoomManagementHubProps) {
   const router = useRouter();
+  const { isLoading: isGlobalLoading } = useLoading();
   const {
     rooms,
+    allRooms,
+    allFilteredRooms,
     totalCount,
     currentPage,
     setCurrentPage,
@@ -75,11 +80,14 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
     handleConfirmDelete,
     isDeleting,
     isArchiving,
+    isHeaderLoading,
+    isSyncing,
     isLoading,
     handleStatusChange,
     refetchRooms,
   } = useRoomLogic(initialData.rooms, initialData.nextCursor);
 
+  const showSyncingSpinner = !isGlobalLoading && (isSyncing || isLoading);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
   return (
@@ -93,7 +101,9 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
         setViewMode={setViewMode}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        rooms={rooms}
+        allRooms={allRooms}
+        filteredRooms={allFilteredRooms || rooms}
+        rooms={allRooms || rooms}
         onGenerateReport={handleGenerateReport}
         propertyFilter={propertyFilter}
         setPropertyFilter={setPropertyFilter}
@@ -109,12 +119,13 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
         isArchived={isArchived}
         onToggleArchived={() => setIsArchived(!isArchived)}
         onAddRoom={() => setAddModalOpen(true)}
+        isLoading={isHeaderLoading}
       />
 
       {/* 2. Main Content Area */}
       <div className="min-h-[400px] relative">
         <AnimatePresence mode="wait">
-          {isLoading ? (
+          {showSyncingSpinner ? (
             <motion.div 
               key="loader"
               initial={{ opacity: 0 }}
@@ -123,7 +134,7 @@ export default function LandlordRoomManagementHub({ initialData }: LandlordRoomM
               className="py-24 flex flex-col items-center justify-center gap-6"
             >
               <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin shadow-xl shadow-primary/10" />
-              <p className="text-[11px] font-black uppercase tracking-[0.4em] text-gray-500 animate-pulse">Syncing Inventory</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.4em] text-gray-500 animate-pulse">Syncing Room Units</p>
             </motion.div>
           ) : (
             <motion.div

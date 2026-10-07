@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Modal from '@/components/modals/Modal';
+import { useSession } from 'next-auth/react';
 import { Inquiry } from '../hooks/use-inquiry-logic';
 import Avatar from '@/components/common/Avatar';
 import { 
@@ -21,7 +22,8 @@ import {
   IconChevronRight,
   IconTag,
   IconFileText,
-  IconShieldCheck
+  IconShieldCheck,
+  IconDownload
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,6 +34,8 @@ import { LandlordInquiryDeclineModal } from './landlord-inquiry-decline-modal';
 import { generateLeaseContractPDF, previewPdfBlob } from '@/utils/contractPdfGenerator';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
+import { generateSingleItemPDF } from '@/utils/pdfGenerator';
+import { prepareSingleItemForExport } from '@/utils/export-utils';
 
 interface LandlordInquiryDetailsModalProps {
   inquiry: Inquiry | null;
@@ -48,6 +52,7 @@ export function LandlordInquiryDetailsModal({
   onUpdateStatus,
   isUpdatingStatus
 }: LandlordInquiryDetailsModalProps) {
+  const { data: session } = useSession();
   const responsiveToast = useResponsiveToast();
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   
@@ -110,7 +115,7 @@ export function LandlordInquiryDetailsModal({
     if (reservationStatus === "CHECKED_IN") {
       return {
         label: "Checked In",
-        className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+        className: "bg-primary/10 text-primary dark:text-primary-light border-primary/30",
       };
     }
     if (reservationStatus === "CANCELLED") {
@@ -129,7 +134,7 @@ export function LandlordInquiryDetailsModal({
       case 'APPROVED':
         return {
           label: 'Inquiry Approved',
-          className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+          className: 'bg-primary/10 text-primary dark:text-primary-light border-primary/30',
         };
       case 'REJECTED':
         return {
@@ -178,8 +183,8 @@ export function LandlordInquiryDetailsModal({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} fullOnMobile={true}>
-        <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl">
+      <Modal isOpen={isOpen} onClose={onClose} width="full" noPadding={true} hasFixedFooter={true} closeOnOutsideClick={false} fullOnMobile={true}>
+        <div className="w-full h-full sm:h-auto sm:max-h-[90vh] max-w-full sm:max-w-5xl mx-auto sm:my-auto overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl border-0 sm:border sm:border-gray-200 dark:sm:border-gray-800 shadow-2xl">
           
           {/* Top Header Bar - Mobile Collision Proof */}
           <div className="px-3.5 sm:px-8 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0 bg-white dark:bg-gray-900">
@@ -425,17 +430,16 @@ export function LandlordInquiryDetailsModal({
                 </div>
 
                 {/* Verification Documents Card */}
-                <div className="bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-gray-100 dark:border-gray-800 shadow-xs space-y-2.5 sm:space-y-3">
-                  <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
-                    <IconShieldCheck size={14} className="text-primary" />
-                    <span>Verification Documents</span>
-                  </h4>
+                {(signedProfileUrl || signedIdUrl) && (
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-gray-100 dark:border-gray-800 shadow-xs space-y-3">
+                    <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                      <IconShieldCheck size={14} className="text-primary" />
+                      <span>Identity Verification Documents</span>
+                    </h4>
 
-                  <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-                    {/* Selfie Photo */}
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-gray-400">Tenant Selfie</span>
-                      {signedProfileUrl ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Selfie Verification Card */}
+                      {signedProfileUrl && (
                         <div 
                           onClick={() => setMediaOverlay({
                             isOpen: true,
@@ -444,30 +448,29 @@ export function LandlordInquiryDetailsModal({
                             title: `Tenant Selfie - ${inquiry.user.name || 'Tenant'}`,
                             isDocument: true,
                           })}
-                          className="group relative h-20 sm:h-28 rounded-xl sm:rounded-2xl overflow-hidden shadow-xs cursor-pointer border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"
+                          className="p-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 hover:border-primary/50 transition-all flex items-center gap-3.5 group cursor-pointer select-none"
                         >
-                          <SafeImage 
-                            src={signedProfileUrl} 
-                            alt="Tenant Profile Photo" 
-                            className="w-full h-full object-cover transition-transform group-hover:scale-105" 
-                            unoptimized={true}
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider backdrop-blur-[1px]">
-                            <IconEye size={14} />
-                            <span>Preview</span>
+                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-900 border border-gray-200 dark:border-gray-700 shrink-0 relative shadow-inner flex items-center justify-center">
+                            <SafeImage src={signedProfileUrl} alt="Tenant Selfie" unoptimized={true} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                              <IconEye size={14} />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-extrabold text-gray-900 dark:text-white truncate">Live Biometric Selfie</span>
+                              <IconCheck size={13} className="text-primary shrink-0" />
+                            </div>
+                            <p className="text-[10px] text-gray-400 font-medium truncate mt-0.5">Liveness Facial Scan</p>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary mt-1 group-hover:underline">
+                              <IconEye size={11} /> View Full Photo
+                            </span>
                           </div>
                         </div>
-                      ) : (
-                        <div className="h-20 sm:h-28 rounded-xl sm:rounded-2xl bg-gray-50 dark:bg-gray-800/50 flex items-center justify-center text-gray-400 text-[10px] sm:text-xs font-bold border border-dashed border-gray-200 dark:border-gray-700">
-                          Not Provided
-                        </div>
                       )}
-                    </div>
 
-                    {/* ID Attachment */}
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-gray-400">Government ID</span>
-                      {signedIdUrl ? (
+                      {/* ID Verification Card */}
+                      {signedIdUrl && (
                         <div 
                           onClick={() => setMediaOverlay({
                             isOpen: true,
@@ -476,27 +479,29 @@ export function LandlordInquiryDetailsModal({
                             title: `Government ID - ${inquiry.user.name || 'Tenant'}`,
                             isDocument: true,
                           })}
-                          className="group relative h-20 sm:h-28 rounded-xl sm:rounded-2xl overflow-hidden shadow-xs cursor-pointer border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"
+                          className="p-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 hover:border-primary/50 transition-all flex items-center gap-3.5 group cursor-pointer select-none"
                         >
-                          <SafeImage 
-                            src={signedIdUrl} 
-                            alt="Tenant ID Attachment" 
-                            className="w-full h-full object-cover transition-transform group-hover:scale-105" 
-                            unoptimized={true}
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider backdrop-blur-[1px]">
-                            <IconEye size={14} />
-                            <span>Preview</span>
+                          <div className="w-16 h-12 rounded-xl overflow-hidden bg-gray-900 border border-gray-200 dark:border-gray-700 shrink-0 relative shadow-inner flex items-center justify-center">
+                            <SafeImage src={signedIdUrl} alt="Government ID" unoptimized={true} className="w-full h-full object-contain p-0.5" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                              <IconEye size={14} />
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="h-20 sm:h-28 rounded-xl sm:rounded-2xl bg-gray-50 dark:bg-gray-800/50 flex items-center justify-center text-gray-400 text-[10px] sm:text-xs font-bold border border-dashed border-gray-200 dark:border-gray-700">
-                          Not Provided
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-extrabold text-gray-900 dark:text-white truncate">Valid Physical ID</span>
+                              <IconCheck size={13} className="text-primary shrink-0" />
+                            </div>
+                            <p className="text-[10px] text-gray-400 font-medium truncate mt-0.5">Government / Student ID</p>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary mt-1 group-hover:underline">
+                              <IconEye size={11} /> View Document
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Special Request / Message Card */}
                 <div className="bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-gray-100 dark:border-gray-800 shadow-xs space-y-1.5 sm:space-y-2">
@@ -562,6 +567,43 @@ export function LandlordInquiryDetailsModal({
             
             {/* Right Primary Actions */}
             <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                className="flex-1 sm:flex-none h-10 sm:h-11 px-3 sm:px-4 text-[11px] sm:text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                title="Export Inquiry Spec Sheet PDF"
+                onClick={async () => {
+                  try {
+                    const formattedItem = prepareSingleItemForExport(inquiry, 'inquiry');
+                    const dateStamp = new Date().toISOString().slice(0, 10);
+                    const reportId = `BTAU-INQ-${dateStamp.replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+                    const fileName = `BoardTAU_Inquiry_${(inquiry.user?.name || 'Tenant').replace(/\s+/g, '_')}_Dossier`;
+
+                    const authorName = session?.user?.name || session?.user?.email || 'BoardTAU Landlord';
+
+                    await generateSingleItemPDF(
+                      fileName,
+                      formattedItem.title,
+                      formattedItem.category,
+                      formattedItem.kvPairs,
+                      formattedItem.sections,
+                      {
+                        title: formattedItem.title,
+                        subtitle: (formattedItem as any).subtitle,
+                        author: authorName,
+                        reportId: reportId,
+                        type: 'inquiry',
+                        showQR: false
+                      }
+                    );
+                    responsiveToast.success("Exported Inquiry Dossier PDF!");
+                  } catch (e) {
+                    responsiveToast.error("Failed to export inquiry dossier.");
+                  }
+                }}
+              >
+                <IconDownload size={15} />
+                <span>Export Report</span>
+              </button>
+
               {inquiry.status === 'APPROVED' && (
                 <button
                   className="flex-1 sm:flex-none h-10 sm:h-11 px-4 sm:px-5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"

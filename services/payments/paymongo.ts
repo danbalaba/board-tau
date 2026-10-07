@@ -25,11 +25,7 @@ export const createPayMongoCheckoutSession = async ({
 }) => {
   // Check if PayMongo is configured
   if (!PAYMONGO_SECRET_KEY) {
-    // Return a mock URL for testing if no key is provided
-    console.warn("PayMongo Secret Key not found. Using Mock simulation.");
-    return {
-      url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/reservations/mock-payment?inquiryId=${inquiryId}&status=success&method=${paymentMethod}`
-    };
+    throw new Error("PayMongo Secret Key not configured in environment variables (PAYMONGO_SECRET_KEY).");
   }
 
   try {

@@ -3,7 +3,8 @@ import { getCurrentUser } from "@/services/user";
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import { sendReservationNotificationEmail } from "@/services/email/notifications";
-import { createNotification } from "@/services/notification";
+import { createNotification, broadcastStatusChange } from "@/services/notification";
+import { encryptEntityId } from "@/lib/encryption";
 
 export async function GET() {
   try {
@@ -131,15 +132,23 @@ export async function GET() {
       });
 
       if (listing) {
-        await (db as any).notification.create({
-          data: {
-            userId: listing.userId,
-            type: "reservation",
-            title: "Payment Confirmed",
-            description: `${user.name || 'A student'} paid the reservation fee for ${listing.title}. Room is now RESERVED!`,
-            link: `/landlord/reservations`,
-            isRead: false
-          }
+        // Create in-app notification for Landlord & trigger Pusher real-time event
+        await createNotification({
+          userId: listing.userId,
+          type: "reservation",
+          title: "New Confirmed Reservation",
+          description: `${user.name || 'A student'} paid the reservation fee for ${listing.title}. Room is now RESERVED!`,
+          link: `/landlord/reservations?id=${encryptEntityId(updatedReservation.id)}`
+        });
+
+        // Broadcast real-time status update to Landlord & Tenant dashboards
+        await broadcastStatusChange({
+          tenantId: updatedReservation.userId!,
+          landlordId: listing.userId,
+          entityType: "reservation",
+          entityId: updatedReservation.id,
+          status: "RESERVED",
+          payload: updatedReservation,
         });
 
         // 🔥 Trigger Email Notifications
@@ -148,7 +157,7 @@ export async function GET() {
           select: { email: true, name: true }
         });
 
-        // Tenant
+        // Tenant Email & Notification
         if (updatedReservation.user?.email) {
           await sendReservationNotificationEmail(
             updatedReservation.user!,
@@ -158,7 +167,6 @@ export async function GET() {
             `Success! Your payment for ${updatedReservation.listing.title} has been verified and your stay is now secured.`
           );
 
-          // Add in-app notification for the Tenant
           await createNotification({
             userId: updatedReservation.userId!,
             type: "reservation",
@@ -168,7 +176,7 @@ export async function GET() {
           });
         }
 
-        // Landlord
+        // Landlord Email
         if (landlord && landlord.email) {
           await sendReservationNotificationEmail(
             landlord,

@@ -4,7 +4,10 @@ import LandlordPropertyManagement from '../index';
 import { usePropertyLogic } from '../hooks/use-property-logic';
 
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
+  useSearchParams: jest.fn(() => new URLSearchParams()),
+  usePathname: jest.fn(() => '/landlord/property-management'),
+  useParams: jest.fn(() => ({})),
 }));
 
 jest.mock('framer-motion', () => ({

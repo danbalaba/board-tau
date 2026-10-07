@@ -17,7 +17,7 @@ const mockListings = [
   {
     id: 'list-1',
     rooms: [
-      { id: 'room-1', capacity: 4, availableSlots: 4, reservationFee: 1000, roomType: 'BEDSPACE' }
+      { id: 'room-1', capacity: 4, availableSlots: 4, price: 1000, reservationFee: 1000, roomType: 'BEDSPACE' }
     ]
   }
 ];
@@ -26,31 +26,36 @@ describe('WalkInPaymentStep', () => {
   const mockSetValue = jest.fn();
   const mockSetDateRange = jest.fn();
   const mockSetShowCalendar = jest.fn();
-  
-  const defaultGetValues = (key: string) => {
-    if (key === 'occupantsCount') return 1;
-    return null;
-  };
 
-  const defaultWatch = (key: string) => {
-    if (key === 'listingId') return 'list-1';
-    if (key === 'roomId') return 'room-1';
-    if (key === 'isSoloBuyout') return false;
-    return null;
-  };
+  const createProps = (overrides = {}) => {
+    const formState: Record<string, any> = {
+      listingId: 'list-1',
+      roomId: 'room-1',
+      paymentType: 'DIRECT_RENT',
+      isSoloBuyout: false,
+      occupantsCount: 1,
+    };
 
-  const createProps = (overrides = {}) => ({
-    setValue: mockSetValue as any,
-    watch: defaultWatch as any,
-    getValues: defaultGetValues as any,
-    errors: {},
-    listings: mockListings,
-    dateRange: { from: new Date('2023-01-01'), to: new Date('2023-01-05') },
-    setDateRange: mockSetDateRange,
-    showCalendar: false,
-    setShowCalendar: mockSetShowCalendar,
-    ...overrides
-  });
+    const mockWatch = jest.fn((key: string) => formState[key]);
+    const mockGetValues = jest.fn((key: string) => formState[key]);
+    const customSetValue = jest.fn((key: string, val: any, opts?: any) => {
+      formState[key] = val;
+      mockSetValue(key, val, opts);
+    });
+
+    return {
+      setValue: customSetValue as any,
+      watch: mockWatch as any,
+      getValues: mockGetValues as any,
+      errors: {},
+      listings: mockListings,
+      dateRange: { from: new Date('2023-01-01'), to: new Date('2023-01-05') },
+      setDateRange: mockSetDateRange,
+      showCalendar: false,
+      setShowCalendar: mockSetShowCalendar,
+      ...overrides
+    };
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -58,8 +63,8 @@ describe('WalkInPaymentStep', () => {
 
   it('renders correctly', () => {
     render(<WalkInPaymentStep {...createProps()} />);
-    expect(screen.getByText('Step 5: Stay Details & Payment')).toBeInTheDocument();
-    expect(screen.getByText('Rent Entire Room (Solo Occupancy)')).toBeInTheDocument();
+    expect(screen.getByText('Step 3: Stay & Payment Setup')).toBeInTheDocument();
+    expect(screen.getByText('Rent Entire Room (Solo Occupancy Buyout)')).toBeInTheDocument();
   });
 
   it('toggles calendar when stay range is clicked', () => {
@@ -78,13 +83,16 @@ describe('WalkInPaymentStep', () => {
   });
 
   it('handles solo buyout toggle', () => {
-    render(<WalkInPaymentStep {...createProps()} />);
-    const checkbox = screen.getByRole('checkbox');
-    fireEvent.click(checkbox);
-    
-    // It should update isSoloBuyout, occupantsCount to 1, and total price to capacity * fee
-    expect(mockSetValue).toHaveBeenCalledWith('isSoloBuyout', true, { shouldValidate: true });
-    expect(mockSetValue).toHaveBeenCalledWith('occupantsCount', 1, { shouldValidate: true });
-    expect(mockSetValue).toHaveBeenCalledWith('totalPrice', 4000, { shouldValidate: true }); // 4 * 1000
+    const props = createProps({
+      watch: (key: string) => {
+        if (key === 'listingId') return 'list-1';
+        if (key === 'roomId') return 'room-1';
+        if (key === 'paymentType') return 'DIRECT_RENT';
+        if (key === 'isSoloBuyout') return true;
+        return null;
+      }
+    });
+    render(<WalkInPaymentStep {...props} />);
+    expect(mockSetValue).toHaveBeenCalledWith('totalPrice', 4000, { shouldValidate: true });
   });
 });

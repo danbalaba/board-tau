@@ -46,15 +46,15 @@ describe("SelfieStep Component", () => {
   it("renders the webcam initially when no selfie is captured", () => {
     render(<SelfieStep {...defaultProps} />);
 
-    expect(screen.getByText("Step 1: Capture Your Selfie")).toBeInTheDocument();
+    expect(screen.getByText("Step 5: Live Biometric Selfie Check")).toBeInTheDocument();
     expect(screen.getByTestId("webcam")).toBeInTheDocument();
     expect(screen.getByText("Follow Prompt to Capture")).toBeInTheDocument();
   });
 
-  it("displays 'Please Blink to Continue' when face is aligned but not blinked", () => {
+  it("displays 'Blink to Continue' when face is aligned but not blinked", () => {
     render(<SelfieStep {...defaultProps} isFaceAligned={true} livenessStatus="idle" />);
 
-    expect(screen.getByText(/Please Blink to Continue/i)).toBeInTheDocument();
+    expect(screen.getByText(/Blink to Continue/i)).toBeInTheDocument();
     
     // Capture button should show 'Follow Prompt' and be disabled
     const captureBtn = screen.getByRole("button", { name: /Follow Prompt/i });
@@ -95,7 +95,7 @@ describe("SelfieStep Component", () => {
     const img = screen.getByAltText("Captured Selfie");
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute("src", "data:image/jpeg;base64,123");
-    expect(screen.getByText("Verified Biometric")).toBeInTheDocument();
+    expect(screen.getByText("Verified Biometric Photo")).toBeInTheDocument();
   });
 
   it("allows clearing the captured selfie", () => {

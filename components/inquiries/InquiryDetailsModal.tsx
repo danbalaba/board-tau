@@ -23,8 +23,9 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import SafeImage from "@/components/common/SafeImage";
+import { encryptChatToken } from "@/lib/encryption";
 import { useRouter } from "next/navigation";
-import { cn } from "@/utils/helper";
+import { cn, getListingUrl } from "@/utils/helper";
 import { getSafeImageSrcString } from "@/components/modals/inquiry-modal/InquiryModalUtils";
 import { generateLeaseContractPDF, previewPdfBlob } from "@/utils/contractPdfGenerator";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
@@ -139,7 +140,30 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
     }
   }, [isOpen, activeNotification, onMarkAsRead]);
 
-  const images = useMemo(() => inquiry?.room?.images || [], [inquiry?.room?.images]);
+  const images = useMemo(() => {
+    const roomImgs: string[] = [];
+    if (Array.isArray(inquiry?.room?.images)) {
+      inquiry.room.images.forEach((img: any) => {
+        const url = typeof img === 'string' ? img : img?.url;
+        if (url) roomImgs.push(url);
+      });
+    }
+    if (roomImgs.length > 0) {
+      return Array.from(new Set(roomImgs));
+    }
+
+    const listingImgs: string[] = [];
+    if (Array.isArray(inquiry?.listing?.images)) {
+      inquiry.listing.images.forEach((img: any) => {
+        const url = typeof img === 'string' ? img : img?.url;
+        if (url) listingImgs.push(url);
+      });
+    }
+    if (inquiry?.listing?.imageSrc) {
+      listingImgs.push(inquiry.listing.imageSrc);
+    }
+    return Array.from(new Set(listingImgs.filter(Boolean)));
+  }, [inquiry?.room?.images, inquiry?.listing?.images, inquiry?.listing?.imageSrc]);
 
   const formatDate = useCallback((dateString: string) => {
     if (!dateString) return "";
@@ -160,7 +184,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
     if (reservationStatus === "CHECKED_IN") {
       return {
         label: "Checked In",
-        className: "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/80 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800",
+        className: "bg-primary/10 text-primary-dark dark:bg-primary/20 dark:text-primary-light border-primary/20",
       };
     }
     if (reservationStatus === "CANCELLED") {
@@ -220,8 +244,8 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} fullOnMobile={true}>
-        <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[82vh] overflow-hidden">
+      <Modal isOpen={isOpen} onClose={onClose} width="full" noPadding={true} hasFixedFooter={true} closeOnOutsideClick={false} fullOnMobile={true}>
+        <div className="w-full h-full sm:h-auto sm:max-h-[90vh] max-w-full sm:max-w-5xl mx-auto sm:my-auto overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl border-0 sm:border sm:border-gray-200 dark:sm:border-gray-800 shadow-2xl">
           
           {/* Clean Modern Header */}
           <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 bg-white dark:bg-gray-900">
@@ -310,10 +334,8 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                     <SafeImage
                       src={getSafeImageSrcString(
                         images.length > 0 
-                          ? images[currentImageIndex]?.url 
-                          : (inquiry.listing?.images && inquiry.listing.images.length > 0)
-                            ? inquiry.listing.images[0].url
-                            : inquiry.listing?.imageSrc || "/images/placeholder.jpg"
+                          ? images[currentImageIndex] 
+                          : inquiry.listing?.imageSrc || "/images/placeholder.jpg"
                       )}
                       alt={inquiry.room.name}
                       unoptimized={true}
@@ -326,7 +348,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                             e.stopPropagation();
                             setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
                           }}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80 z-10"
                         >
                           <ChevronLeft size={18} />
                         </button>
@@ -335,7 +357,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                             e.stopPropagation();
                             setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
                           }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80 z-10"
                         >
                           <ChevronRight size={18} />
                         </button>
@@ -408,6 +430,11 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                   )}
                 </div>
 
+              </div>
+
+              {/* Right Column: Schedule, Guest Details & Verification */}
+              <div className="space-y-6">
+
                 {/* Stay Dates Card */}
                 <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
                   <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
@@ -435,11 +462,6 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                     </div>
                   </div>
                 </div>
-
-              </div>
-
-              {/* Right Column: Guest Information & Note */}
-              <div className="space-y-6">
                 
                 {/* Guest Details Card */}
                 <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
@@ -487,42 +509,63 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                   <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
                     <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
                       <ShieldCheck size={14} className="text-primary" />
-                      <span>Identity Documents</span>
+                      <span>Identity Verification Documents</span>
                     </h4>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Selfie Verification Card */}
                       {inquiry.profilePhotoUrl && (
-                        <div className="space-y-1.5">
-                          <span className="text-[10px] font-black uppercase text-gray-400 block">Selfie Photo</span>
-                          <div
-                            className="aspect-square rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 cursor-zoom-in group relative shadow-sm"
-                            onClick={() => setPreviewImage(inquiry.profilePhotoUrl || null)}
-                          >
-                            <SafeImage src={inquiry.profilePhotoUrl} alt="Selfie" unoptimized={true} />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <IconEye size={20} className="text-white" />
+                        <div 
+                          onClick={() => setPreviewImage(inquiry.profilePhotoUrl || null)}
+                          className="p-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 hover:border-primary/50 transition-all flex items-center gap-3.5 group cursor-pointer select-none"
+                        >
+                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-900 border border-gray-200 dark:border-gray-700 shrink-0 relative shadow-inner flex items-center justify-center">
+                            <SafeImage src={inquiry.profilePhotoUrl} alt="Selfie Photo" unoptimized={true} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                              <IconEye size={14} />
                             </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-extrabold text-gray-900 dark:text-white truncate">Live Biometric Selfie</span>
+                              <IconCircleCheck size={13} className="text-primary shrink-0" />
+                            </div>
+                            <p className="text-[10px] text-gray-400 font-medium truncate mt-0.5">Liveness Facial Scan</p>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary mt-1 group-hover:underline">
+                              <IconEye size={11} /> View Full Photo
+                            </span>
                           </div>
                         </div>
                       )}
 
+                      {/* ID Verification Card */}
                       {inquiry.idAttachmentUrl && (
-                        <div className="space-y-1.5">
-                          <span className="text-[10px] font-black uppercase text-gray-400 block">Valid ID Card</span>
-                          <div
-                            className="aspect-square rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 cursor-zoom-in group relative shadow-sm"
-                            onClick={() => setPreviewImage(inquiry.idAttachmentUrl || null)}
-                          >
-                            <SafeImage src={inquiry.idAttachmentUrl} alt="ID Document" unoptimized={true} />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <IconEye size={20} className="text-white" />
+                        <div 
+                          onClick={() => setPreviewImage(inquiry.idAttachmentUrl || null)}
+                          className="p-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 hover:border-primary/50 transition-all flex items-center gap-3.5 group cursor-pointer select-none"
+                        >
+                          <div className="w-16 h-12 rounded-xl overflow-hidden bg-gray-900 border border-gray-200 dark:border-gray-700 shrink-0 relative shadow-inner flex items-center justify-center">
+                            <SafeImage src={inquiry.idAttachmentUrl} alt="ID Document" unoptimized={true} className="w-full h-full object-contain p-0.5" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                              <IconEye size={14} />
                             </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-extrabold text-gray-900 dark:text-white truncate">Valid Physical ID</span>
+                              <IconCircleCheck size={13} className="text-primary shrink-0" />
+                            </div>
+                            <p className="text-[10px] text-gray-400 font-medium truncate mt-0.5">Government / Student ID</p>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary mt-1 group-hover:underline">
+                              <IconEye size={11} /> View Document
+                            </span>
                           </div>
                         </div>
                       )}
                     </div>
                   </div>
                 )}
+
 
               </div>
             </div>
@@ -556,7 +599,7 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
               {inquiry.status === "REJECTED" && (
                 <button
                   className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0"
-                  onClick={() => router.push(`/listings/${inquiry.listingId}?room=${inquiry.roomId}&autoInquire=true`)}
+                  onClick={() => router.push(`${getListingUrl(inquiry.listingId, (inquiry as any).listingTitle)}?room=${inquiry.roomId}&autoInquire=true`)}
                 >
                   <Home size={14} />
                   <span>Apply Again</span>
@@ -568,7 +611,10 @@ const InquiryDetailsModal: React.FC<InquiryDetailsModalProps> = ({
                 {canChat ? (
                   <button
                     className="w-full sm:w-auto px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 truncate"
-                    onClick={() => router.push(`/messages?listingId=${inquiry.listingId}&otherUserId=${landlordId}`)}
+                    onClick={() => {
+                      const encToken = encryptChatToken(inquiry.listingId, landlordId);
+                      router.push(encToken ? `/messages?token=${encToken}` : `/messages?listingId=${inquiry.listingId}&otherUserId=${landlordId}`);
+                    }}
                   >
                     <Mail size={14} className="shrink-0" />
                     <span className="truncate">Chat with Host</span>

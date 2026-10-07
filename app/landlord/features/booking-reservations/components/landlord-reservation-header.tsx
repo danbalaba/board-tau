@@ -49,9 +49,11 @@ interface LandlordReservationHeaderProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   rawReservations: ReservationRequest[];
+  filteredReservations?: ReservationRequest[];
   isArchived: boolean;
   onToggleArchived: () => void;
   onCreateWalkIn?: () => void;
+  isLoading?: boolean;
 }
 
 export function LandlordReservationHeader({
@@ -65,11 +67,14 @@ export function LandlordReservationHeader({
   searchQuery,
   setSearchQuery,
   rawReservations,
+  filteredReservations,
   isArchived,
   onToggleArchived,
-  onCreateWalkIn
+  onCreateWalkIn,
+  isLoading
 }: LandlordReservationHeaderProps) {
   const isMobile = useIsMobile();
+
   // Animated Arrow states for each dropdown
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
@@ -78,6 +83,8 @@ export function LandlordReservationHeader({
   const [draftStatus, setDraftStatus] = useState(selectedStatus);
   const [draftSortBy, setDraftSortBy] = useState(sortBy);
   const [draftIsArchived, setDraftIsArchived] = useState(isArchived);
+
+
 
   const handleMobileSheetOpen = (open: boolean) => {
     if (open) {
@@ -107,7 +114,7 @@ export function LandlordReservationHeader({
   };
 
   const handleGenerateCSV = async (dateRange?: DateRange) => {
-    let exportData = rawReservations;
+    let exportData = filteredReservations || rawReservations;
     if (dateRange?.from) {
       const fromDate = dateRange.from;
       const toDate = dateRange.to;
@@ -136,7 +143,7 @@ export function LandlordReservationHeader({
   };
 
   const handleGenerateExcel = async (dateRange?: DateRange) => {
-    let exportData = rawReservations;
+    let exportData = filteredReservations || rawReservations;
     if (dateRange?.from) {
       const fromDate = dateRange.from;
       const toDate = dateRange.to;
@@ -196,17 +203,17 @@ export function LandlordReservationHeader({
                 Reservations
               </h1>
               <div className="flex items-center gap-2 mt-0.5 sm:mt-1">
-                <p className="text-[10px] sm:text-[11px] text-gray-500 font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] line-clamp-1">
+                <p className="text-[10px] sm:text-[11px] text-gray-500 font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] sm:line-clamp-1">
                   View reservation requests, check payments, and add walk-in guests
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-2.5 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-3 w-full md:w-auto">
             {/* View Mode Toggles */}
-            <div className="flex items-center justify-start w-full sm:w-auto">
-              <div className="flex items-center gap-1 bg-gray-100/50 dark:bg-gray-800/50 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shrink-0">
+            <div className="flex items-center justify-between sm:justify-start gap-1 bg-gray-100/50 dark:bg-gray-800/50 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shrink-0">
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={cn(
@@ -228,23 +235,27 @@ export function LandlordReservationHeader({
               </div>
             </div>
 
-            {/* Action Buttons: Clean 2-column side-by-side grid on mobile */}
-            <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:items-center sm:gap-2.5 sm:w-auto">
+            {/* Side-by-Side Action Buttons */}
+            <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto shrink-0">
               <GenerateReportButton 
                 onGeneratePDF={handleGenerateReport}
                 onGenerateCSV={handleGenerateCSV}
                 onGenerateExcel={handleGenerateExcel}
-                label="Report"
+                moduleType="reservation"
+                moduleTitle="Reservations"
+                allData={rawReservations}
+                filteredData={filteredReservations || rawReservations}
+                label="Generate Report"
                 outline={false}
-                className="w-full sm:w-auto h-11 sm:h-12 px-3 sm:px-6 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] sm:text-[11px] tracking-widest shadow-lg shadow-primary/25 border-b-4 border-primary/30 active:border-b-0 active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 sm:gap-2 shrink-0"
+                className="flex-1 sm:flex-none h-10 sm:h-11 px-3.5 sm:px-5 rounded-xl sm:rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary font-black uppercase text-[10px] sm:text-[11px] tracking-wider sm:tracking-widest shadow-xs border border-primary/20 transition-all flex items-center justify-center gap-1.5 shrink-0"
               />
 
               {onCreateWalkIn && (
                 <Button 
                   onClick={onCreateWalkIn}
-                  className="w-full sm:w-auto h-11 sm:h-12 px-3 sm:px-7 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] sm:text-[11px] tracking-widest shadow-lg shadow-primary/25 border-b-4 border-primary/30 active:border-b-0 active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 sm:gap-2 group shrink-0"
+                  className="flex-1 sm:flex-none h-10 sm:h-11 px-3.5 sm:px-5 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] sm:text-[11px] tracking-wider sm:tracking-widest shadow-md shadow-primary/20 border-b-2 sm:border-b-4 border-primary/30 active:border-b-0 transition-all flex items-center justify-center gap-1.5 group shrink-0"
                 >
-                  <Plus size={16} className="sm:w-[18px] sm:h-[18px] group-hover:rotate-90 transition-transform duration-300 stroke-[3]" />
+                  <Plus size={14} className="sm:w-[16px] sm:h-[16px] group-hover:rotate-90 transition-transform duration-300 stroke-[3]" />
                   <span className="truncate">Create Walk-In</span>
                 </Button>
               )}

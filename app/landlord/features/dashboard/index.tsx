@@ -311,21 +311,37 @@ export default function LandlordDashboardFeature({ user, isLoading: externalLoad
       <motion.div variants={itemVariants} className="space-y-4">
         {/* Date & Dynamic Time Greeting */}
         <div className="px-1">
-          <p className="text-[11px] font-black tracking-widest text-gray-400 dark:text-gray-500 uppercase mb-1">
-            {formattedDate || 'TODAY'}
-          </p>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-[#2f7d6d]/10 dark:bg-emerald-500/10 text-[#2f7d6d] dark:text-emerald-400 border border-[#2f7d6d]/20 shrink-0">
-              <TimeIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#2f7d6d] dark:text-emerald-400" strokeWidth={2.5} />
+          {isLoading ? (
+            <div className="space-y-2 animate-pulse">
+              <div className="h-3 w-36 bg-gray-200 dark:bg-slate-800 rounded-md" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gray-200 dark:bg-slate-800 shrink-0" />
+                <div className="h-7 sm:h-8 w-56 sm:w-72 bg-gray-200 dark:bg-slate-800 rounded-xl" />
+              </div>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-              {greeting}, <span className="bg-gradient-to-r from-[#2f7d6d] to-emerald-500 bg-clip-text text-transparent">{firstName}!</span>
-            </h1>
-          </div>
+          ) : (
+            <>
+              <p className="text-[11px] font-black tracking-widest text-gray-400 dark:text-gray-500 uppercase mb-1">
+                {formattedDate || 'TODAY'}
+              </p>
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-[#2f7d6d]/10 dark:bg-emerald-500/10 text-[#2f7d6d] dark:text-emerald-400 border border-[#2f7d6d]/20 shrink-0">
+                  <TimeIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#2f7d6d] dark:text-emerald-400" strokeWidth={2.5} />
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                  {greeting}, <span className="bg-gradient-to-r from-[#2f7d6d] to-emerald-500 bg-clip-text text-transparent">{firstName}!</span>
+                </h1>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Kerby Assistant Speech Banner Card */}
-        {!isLoading && <KerbyBanner kerbyState={kerbyState} />}
+        {isLoading ? (
+          <div className="h-28 sm:h-24 w-full bg-gray-200 dark:bg-slate-800/60 rounded-[22px] animate-pulse border border-slate-200/50 dark:border-slate-800/50" />
+        ) : (
+          <KerbyBanner kerbyState={kerbyState} />
+        )}
       </motion.div>
 
       {/* Quick Actions Feature Zone */}

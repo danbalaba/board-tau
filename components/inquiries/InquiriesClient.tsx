@@ -35,6 +35,7 @@ import ConfirmModal from "@/components/common/ConfirmModal";
 import { UserMobileFilterSheet } from "@/components/common/UserMobileFilterSheet";
 import { useNotification, NotificationItem } from "@/context/NotificationContext";
 import { CancellationStrikeWarningCard } from "@/components/common/CancellationStrikeWarningCard";
+import { pusherClient } from "@/lib/pusher-client";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -134,8 +135,61 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
   const [isCancelling, setIsCancelling] = useState(false);
   const [strikeStatus, setStrikeStatus] = useState<any>(null);
   const [isLoadingStrikeStatus, setIsLoadingStrikeStatus] = useState(false);
-  const unreadNotifications = notifications.filter((n: NotificationItem) => !n.isRead && n.type === "inquiry");
+  const unreadNotifications = notifications.filter((n: NotificationItem) => !n.isRead && n.type?.toLowerCase() === "inquiry");
   const hasAutoOpened = useRef(false);
+
+  // Real-time Pusher listener for status updates
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const channelName = `private-user-${currentUserId}`;
+    const channel = pusherClient.subscribe(channelName);
+
+    const handleInquiryUpdated = (data: any) => {
+      if (!data || !data.entityId) return;
+
+      setInquiries((prev) => {
+        const index = prev.findIndex((i) => i.id === data.entityId);
+        if (index === -1) {
+          if (data.payload && data.payload.id) {
+            return [data.payload, ...prev];
+          }
+          return prev;
+        }
+
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          status: data.status || updated[index].status,
+          rejectionReason: data.payload?.rejectionReason || updated[index].rejectionReason,
+          isApproved: data.status === "APPROVED" ? true : updated[index].isApproved,
+          updatedAt: data.updatedAt || new Date().toISOString(),
+          ...(data.payload || {}),
+        };
+        return updated;
+      });
+
+      setSelectedInquiry((prevSelected) => {
+        if (prevSelected && prevSelected.id === data.entityId) {
+          return {
+            ...prevSelected,
+            status: data.status || prevSelected.status,
+            rejectionReason: data.payload?.rejectionReason || prevSelected.rejectionReason,
+            isApproved: data.status === "APPROVED" ? true : prevSelected.isApproved,
+            updatedAt: data.updatedAt || new Date().toISOString(),
+            ...(data.payload || {}),
+          };
+        }
+        return prevSelected;
+      });
+    };
+
+    channel.bind("inquiry-updated", handleInquiryUpdated);
+
+    return () => {
+      channel.unbind("inquiry-updated", handleInquiryUpdated);
+    };
+  }, [currentUserId]);
 
   // Auto-open modal if ID is in URL
   useEffect(() => {
@@ -392,7 +446,7 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
 
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center min-h-[400px]">
-          <ModernLoader text="Securely loading your inquiries..." />
+          <ModernLoader text="Loading inquiries..." mascotSrc="/assets/mascot/kerby-global-search.png" />
         </div>
       ) : (
         <>
@@ -431,7 +485,7 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
             >
               {filteredInquiries.map((inquiry) => {
                 const hasNotification = unreadNotifications.some(n => 
-                  n.link.includes(inquiry.id) && !n.isRead
+                  Boolean(n.link?.includes(inquiry.id)) && !n.isRead
                 );
                 
                 return (
@@ -460,14 +514,14 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
             inquiry={selectedInquiry || inquiries[0] || ({} as any)}
             isOpen={showDetailsModal}
             currentUserId={currentUserId}
-            notification={selectedInquiry ? unreadNotifications.find(n => n.link.includes(selectedInquiry.id)) : undefined}
+            notification={selectedInquiry ? unreadNotifications.find(n => n.link?.includes(selectedInquiry.id)) : undefined}
             onClose={() => {
               setShowDetailsModal(false);
               setTimeout(() => setSelectedInquiry(null), 300);
             }}
             onMarkAsRead={() => {
               if (selectedInquiry) {
-                const notif = unreadNotifications.find(n => n.link.includes(selectedInquiry.id));
+                const notif = unreadNotifications.find(n => n.link?.includes(selectedInquiry.id));
                 if (notif) markAsRead(notif.id, "inquiry");
               }
             }}
@@ -483,6 +537,7 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
             isOpen={showCancelConfirm} 
             onClose={() => setShowCancelConfirm(false)} 
             width="sm"
+            fullOnMobile={false}
           >
             <ConfirmModal
               isOpen={showCancelConfirm}
@@ -509,10 +564,10 @@ export default function InquiriesClient({ initialInquiries, currentUserId }: Inq
             width="md"
             title=""
             closeOnOutsideClick={false}
-            hasFixedFooter={true}
-            fullOnMobile={true}
+            hasFixedFooter={false}
+            fullOnMobile={false}
           >
-            <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl relative">
+            <div className="flex flex-col h-auto max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-3xl relative">
               {/* X Close Button */}
               <button
                 onClick={() => setShowCancelReason(false)}

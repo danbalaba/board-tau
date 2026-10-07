@@ -18,6 +18,7 @@ import {
   IconEye
 } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
+import { formatDate } from '@/lib/utils';
 import Button from '@/components/common/Button';
 import { Inquiry } from '../hooks/use-inquiry-logic';
 import Avatar from '@/components/common/Avatar';
@@ -37,7 +38,7 @@ interface LandlordInquiryCardProps {
 
 const statusColors: Record<string, string> = {
   PENDING: "bg-amber-500/90 text-white border-amber-400/50 shadow-amber-500/20",
-  APPROVED: "bg-emerald-500/90 text-white border-emerald-400/50 shadow-emerald-500/20",
+  APPROVED: "bg-primary/90 text-white border-primary/40 shadow-primary/20",
   REJECTED: "bg-rose-500/90 text-white border-rose-400/50 shadow-rose-500/20",
 };
 
@@ -79,7 +80,7 @@ export function LandlordInquiryCard({
       return { label: "COMPLETED", colorClass: "bg-purple-600 text-white border-white/30 shadow-md" };
     }
     if (reservationStatus === "CHECKED_IN") {
-      return { label: "CHECKED IN", colorClass: "bg-emerald-600 text-white border-white/30 shadow-md" };
+      return { label: "CHECKED IN", colorClass: "bg-primary/90 text-white border-primary/40 shadow-md" };
     }
     if (reservationStatus === "CANCELLED") {
       return { label: "CANCELLED", colorClass: "bg-gray-600 text-white border-white/30 shadow-md" };
@@ -98,7 +99,8 @@ export function LandlordInquiryCard({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-2.5 sm:p-6 rounded-2xl sm:rounded-3xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col h-full"
+        onClick={onViewDetails}
+        className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-2.5 sm:p-6 rounded-2xl sm:rounded-3xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-sm flex flex-col h-full cursor-pointer"
       >
         {/* Thumbnail Section */}
         <div className="relative h-28 sm:h-48 w-full rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 sm:mb-6 bg-gray-100 dark:bg-gray-800 z-10 flex-shrink-0">
@@ -165,14 +167,17 @@ export function LandlordInquiryCard({
           <div className="flex items-center justify-between text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2.5 sm:mb-4 px-0.5">
             <div className="flex items-center gap-1 sm:gap-1.5">
               <IconCalendarEvent size={10} className="text-gray-300 dark:text-gray-600 sm:w-3 sm:h-3" />
-              <span>{new Date(inquiry.createdAt).toLocaleDateString()}</span>
+              <span>{formatDate(inquiry.createdAt)}</span>
             </div>
           </div>
 
           {/* Footer Actions */}
           <div className="flex items-center gap-1.5 sm:gap-2 pt-2.5 sm:pt-4 border-t border-gray-100 dark:border-gray-800 mt-auto w-full">
             <Button
-              onClick={onViewDetails}
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails();
+              }}
               className={cn(
                 "h-10 rounded-xl px-2 text-[10px] sm:text-xs font-black uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200/60 dark:border-gray-700/60",
                 (inquiry.status === "PENDING" && !inquiry.isArchived) ? "w-full sm:flex-1" : "w-full"
@@ -185,7 +190,10 @@ export function LandlordInquiryCard({
             {inquiry.status === "PENDING" && !inquiry.isArchived && (
               <div className="hidden sm:flex gap-1.5 sm:gap-2 flex-1 min-w-0">
                 <Button
-                  onClick={() => handleRespond(inquiry.id, "APPROVED")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRespond(inquiry.id, "APPROVED");
+                  }}
                   isLoading={isResponding}
                   className="flex-1 h-10 rounded-xl px-2 text-xs font-black uppercase tracking-wider bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 group/btn cursor-pointer flex items-center justify-center gap-1"
                 >
@@ -193,7 +201,10 @@ export function LandlordInquiryCard({
                   <span>Approve</span>
                 </Button>
                 <button
-                  onClick={() => onReject(inquiry.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onReject(inquiry.id);
+                  }}
                   title="Reject Inquiry"
                   className="h-10 px-2.5 rounded-xl border border-rose-200 dark:border-rose-900/40 text-rose-500 hover:bg-rose-500 hover:text-white transition-all group/btn cursor-pointer flex items-center justify-center shrink-0"
                 >
@@ -213,7 +224,8 @@ export function LandlordInquiryCard({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="group relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-800 p-3 sm:p-6 hover:shadow-xl transition-all duration-300 shadow-sm"
+      onClick={onViewDetails}
+      className="group relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-800 p-3 sm:p-6 hover:shadow-xl transition-all duration-300 shadow-sm cursor-pointer"
     >
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-6">
         {/* Left Row on Mobile: Image + Details */}
@@ -245,7 +257,7 @@ export function LandlordInquiryCard({
                 </span>
                 <span className="hidden sm:inline-block w-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-full" />
                 <span className="hidden sm:inline-block text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                  Received: {new Date(inquiry.createdAt).toLocaleDateString()}
+                  Received: {formatDate(inquiry.createdAt)}
                 </span>
               </div>
               <h3 className="text-sm sm:text-xl font-black text-gray-900 dark:text-white group-hover:text-primary transition-colors truncate tracking-tight">
@@ -283,7 +295,10 @@ export function LandlordInquiryCard({
         {/* Right / Actions Row */}
         <div className="flex sm:flex-col items-center gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0 border-t sm:border-t-0 sm:border-l border-gray-100 dark:border-gray-800 pt-2.5 sm:pt-0 sm:pl-6">
           <button 
-            onClick={onViewDetails} 
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails();
+            }} 
             className="flex-1 sm:w-full rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-primary transition-all flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-widest cursor-pointer"
           >
             <IconEye size={13} />
@@ -291,7 +306,10 @@ export function LandlordInquiryCard({
           </button>
 
           <button
-            onClick={() => onArchive(inquiry.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onArchive(inquiry.id);
+            }}
             className={cn(
               "flex-1 sm:w-full rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 cursor-pointer border shadow-xs",
               inquiry.isArchived
@@ -315,7 +333,10 @@ export function LandlordInquiryCard({
 
           {inquiry.isArchived && (
             <button
-              onClick={() => onDelete(inquiry)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(inquiry);
+              }}
               className="flex-1 sm:w-full rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-widest cursor-pointer border border-rose-100 dark:border-rose-900/30"
               title="Delete Permanently"
             >

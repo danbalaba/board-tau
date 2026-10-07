@@ -12,10 +12,10 @@ export default function OverViewLayout({
   area_stats
 }: {
   children: React.ReactNode;
-  sales: React.ReactNode;
-  pie_stats: React.ReactNode;
-  bar_stats: React.ReactNode;
-  area_stats: React.ReactNode;
+  sales?: React.ReactNode;
+  pie_stats?: React.ReactNode;
+  bar_stats?: React.ReactNode;
+  area_stats?: React.ReactNode;
 }) {
   return <>{children}</>;
 }

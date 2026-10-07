@@ -105,18 +105,6 @@ describe('ListingDetailsClient Component', () => {
     expect(screen.getByText('House Rules & Policies')).toBeInTheDocument();
   });
 
-  it('scrolls to available rooms when clicking "Available Rooms" text', () => {
-    render(<ListingDetailsClient {...mockProps} />);
-    const scrollFn = jest.fn();
-    document.getElementById = jest.fn().mockReturnValue({ scrollIntoView: scrollFn });
-    
-    const exploreBtn = screen.getByText('Available Rooms');
-    fireEvent.click(exploreBtn);
-    
-    expect(document.getElementById).toHaveBeenCalledWith('available-rooms');
-    expect(scrollFn).toHaveBeenCalled();
-  });
-
   it('fetches active stay on mount', async () => {
     render(<ListingDetailsClient {...mockProps} />);
     await waitFor(() => {

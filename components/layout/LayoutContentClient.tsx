@@ -67,8 +67,10 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
     }
   }, [isMessages]);
 
-  // BLOCK public UI for Admins, Landlords, auth errors, and internal role unauthorized page
-  if (isAdmin || isLandlord || isAuthErrorPage || (pathname === '/unauthorized' && isInternalRole)) {
+  const isVerifyPage = pathname.startsWith('/verify');
+
+  // BLOCK public UI for Admins, Landlords, verify pages, auth errors, and internal role unauthorized page
+  if (isAdmin || isLandlord || isVerifyPage || isAuthErrorPage || (pathname === '/unauthorized' && isInternalRole)) {
     return <>{children}</>;
   }
 

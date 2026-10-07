@@ -12,7 +12,7 @@ export const edgeStoreRouter = es.router({
   publicFiles: es
     .fileBucket({
       maxSize: 1024 * 1024 * 10,
-      accept: ["image/jpeg", "image/png", "image/webp"],
+      accept: ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"],
     })
     .metadata(({ ctx }) => ({
       userId: ctx.userId,
@@ -114,6 +114,16 @@ export const edgeStoreRouter = es.router({
         { userId: { path: "landlord" } },
         { userId: { path: "owner" } },
       ],
+    }),
+
+  reportAudits: es
+    .fileBucket({
+      maxSize: 1024 * 1024 * 25,
+      accept: ["application/pdf"],
+    })
+    .beforeUpload(({ ctx }) => {
+      const allowedRoles = ["LANDLORD", "ADMIN", "SUPER_ADMIN"];
+      return ctx.userId !== "unauthenticated" && allowedRoles.includes(ctx.role);
     }),
 });
 

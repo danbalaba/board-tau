@@ -54,9 +54,9 @@ export async function POST(
     }
 
     // Check if the reservation is in PENDING_PAYMENT status
-    if ((reservation.status as string) !== "PENDING_PAYMENT") {
+    if ((reservation.status as string) !== "PENDING_PAYMENT" || (reservation.paymentStatus as string) === "PAID") {
       return NextResponse.json(
-        { message: "Reservation is not pending payment" },
+        { message: "Reservation is already paid or not pending payment" },
         { status: 400 }
       );
     }
@@ -71,10 +71,18 @@ export async function POST(
     }
 
     // Save selected payment method onto reservation record
+    const upperMethod = (paymentMethod || "STRIPE").toUpperCase();
+    let validMethod: "STRIPE" | "GCASH" | "MAYA" | "BANK_TRANSFER" | "CASH" = "STRIPE";
+    if (upperMethod === "GCASH") validMethod = "GCASH";
+    else if (upperMethod === "MAYA") validMethod = "MAYA";
+    else if (upperMethod === "BANK_TRANSFER") validMethod = "BANK_TRANSFER";
+    else if (upperMethod === "CASH") validMethod = "CASH";
+    else validMethod = "STRIPE";
+
     await db.reservation.update({
       where: { id: reservationId },
       data: {
-        paymentMethod: (paymentMethod || "STRIPE").toUpperCase() as any,
+        paymentMethod: validMethod as any,
       },
     });
 
@@ -88,7 +96,7 @@ export async function POST(
       }
 
       // Create Stripe checkout session
-      const stripeSession = await createStripeCheckoutSession(reservation.inquiryId);
+      const stripeSession = await createStripeCheckoutSession(reservation.inquiryId, reservation.totalPrice);
 
       return NextResponse.json(stripeSession);
     } else if (paymentMethod === "GCASH" || paymentMethod === "MAYA") {

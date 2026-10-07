@@ -40,7 +40,8 @@ export default function AuditLogs() {
     columns: columns as any,
     shallow: true,
     debounceMs: 500,
-    pageCount: pageCount
+    pageCount: pageCount,
+    manualSorting: false
   });
 
   const handleExport = async (formatType: 'CSV' | 'EXCEL' | 'PDF') => {

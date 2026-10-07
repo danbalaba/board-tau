@@ -19,7 +19,7 @@ export const sanitizeSecurityString = (str: string): string => {
     .trim();
   
   // Prevent common SQL injection keywords if they appear as standalone words
-  const sqlKeywords = /\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|OR|AND|EXEC)\b/gi;
+  const sqlKeywords = /\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|EXEC)\b/gi;
   const sanitized = clean.replace(sqlKeywords, '');
   
   return sanitized.slice(0, 500); // Limit to 500 chars for inquiry safety
@@ -41,8 +41,8 @@ export const validateStrictChars = (str: string): boolean => {
  */
 export const isCleanString = (str: string): boolean => {
   if (!str) return true;
-  // Check for suspicious characters like < > { } [ ] \ / 
-  const suspiciousChars = /[<>{}[\]\\/]/;
+  // Check for suspicious characters like < > { } [ ] 
+  const suspiciousChars = /[<>{}[\]]/;
   return !suspiciousChars.test(str);
 };
 

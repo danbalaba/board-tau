@@ -48,8 +48,10 @@ interface LandlordInquiryHeaderProps {
   setViewMode: (m: 'grid' | 'list') => void;
   handleGenerateReport: () => Promise<void>;
   rawInquiries: Inquiry[];
+  filteredInquiries?: Inquiry[];
   isArchived: boolean;
   onToggleArchived: () => void;
+  isLoading?: boolean;
 }
 
 export function LandlordInquiryHeader({
@@ -63,10 +65,13 @@ export function LandlordInquiryHeader({
   setViewMode,
   handleGenerateReport,
   rawInquiries,
+  filteredInquiries,
   isArchived,
-  onToggleArchived
+  onToggleArchived,
+  isLoading
 }: LandlordInquiryHeaderProps) {
   const isMobile = useIsMobile();
+
   // Dropdown open states for animated chevron indicators
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
@@ -75,6 +80,8 @@ export function LandlordInquiryHeader({
   const [draftStatus, setDraftStatus] = useState(selectedStatus);
   const [draftSortBy, setDraftSortBy] = useState(sortBy);
   const [draftIsArchived, setDraftIsArchived] = useState(isArchived);
+
+
 
   const handleMobileSheetOpen = (open: boolean) => {
     if (open) {
@@ -104,7 +111,7 @@ export function LandlordInquiryHeader({
   };
 
   const handleGenerateCSV = async (dateRange?: DateRange) => {
-    let exportData = rawInquiries;
+    let exportData = filteredInquiries || rawInquiries;
     if (dateRange?.from) {
       const fromDate = dateRange.from;
       const toDate = dateRange.to;
@@ -133,7 +140,7 @@ export function LandlordInquiryHeader({
   };
 
   const handleGenerateExcel = async (dateRange?: DateRange) => {
-    let exportData = rawInquiries;
+    let exportData = filteredInquiries || rawInquiries;
     if (dateRange?.from) {
       const fromDate = dateRange.from;
       const toDate = dateRange.to;
@@ -193,15 +200,15 @@ export function LandlordInquiryHeader({
                 Tenant Inquiries
               </h1>
               <div className="flex items-center gap-2 mt-0.5 sm:mt-1">
-                <p className="text-[10px] sm:text-[11px] text-gray-500 font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] line-clamp-1">
+                <p className="text-[10px] sm:text-[11px] text-gray-500 font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] sm:line-clamp-1">
                   View tenant messages, answer questions, and respond to inquiries
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full md:w-auto">
-            {/* View Toggles */}
+          <div className="flex items-center justify-between gap-2.5 w-full md:w-auto">
+            {/* View Mode Toggles */}
             <div className="flex items-center gap-1 bg-gray-100/50 dark:bg-gray-800/50 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shrink-0">
               <button
                 onClick={() => setViewMode('grid')}
@@ -227,9 +234,13 @@ export function LandlordInquiryHeader({
               onGeneratePDF={handleGenerateReport}
               onGenerateCSV={handleGenerateCSV}
               onGenerateExcel={handleGenerateExcel}
+              moduleType="inquiry"
+              moduleTitle="Inquiries"
+              allData={rawInquiries}
+              filteredData={filteredInquiries || rawInquiries}
               label="Generate Report"
               outline={false}
-              className="h-9 sm:h-12 px-3 sm:px-6 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] sm:text-[11px] tracking-widest shadow-lg shadow-primary/25 border-b-4 border-primary/30 active:border-b-0 active:translate-y-0.5 transition-all flex items-center gap-1.5 sm:gap-2 shrink-0"
+              className="w-auto h-9 sm:h-11 px-3 sm:px-5 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] sm:text-[11px] tracking-wider sm:tracking-widest shadow-md shadow-primary/20 border-b-2 sm:border-b-4 border-primary/30 active:border-b-0 transition-all flex items-center justify-center gap-1.5 shrink-0"
             />
           </div>
         </div>

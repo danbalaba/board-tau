@@ -40,6 +40,8 @@ describe("security validations", () => {
     it("allows clean strings", () => {
       expect(isCleanString("Hello World")).toBe(true);
       expect(isCleanString("Price: 500")).toBe(true);
+      expect(isCleanString("Quiet Area / Study Desk")).toBe(true);
+      expect(isCleanString("Near Window / Balcony")).toBe(true);
     });
 
     it("rejects suspicious characters", () => {

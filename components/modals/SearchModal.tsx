@@ -71,6 +71,7 @@ export default function SearchModal({
   const [dynamicIsBranchB, setDynamicIsBranchB] = useState<boolean>(false);
   const [inUnitValidationError, setInUnitValidationError] = useState(false);
   const [rulesValidationError, setRulesValidationError] = useState(false);
+  const [isRulesSubStepValid, setIsRulesSubStepValid] = useState<boolean>(false);
 
   const [totalSharedSubSteps, setTotalSharedSubSteps] = useState<number>(7);
   const [totalInUnitSubSteps, setTotalInUnitSubSteps] = useState<number>(6);
@@ -560,89 +561,7 @@ export default function SearchModal({
     }
 
     if (step === STEPS.RULES) {
-      const genderPolicy = watch("genderPolicy");
-      const rulesSelected = values.rulesSelected || [];
-
-      let isCurrentSubStepValid = false;
-      if (rulesSubStep === 0) {
-        isCurrentSubStepValid = Boolean(genderPolicy);
-      } else {
-        const ruleTaxonomy = getTaxonomyDataSync("RULE");
-        const subGroups = ruleTaxonomy?.subGroups || [];
-        const attributes = ruleTaxonomy?.attributes || [];
-
-        const selectedProp = (values.propertyTypeSelected[0] || "Boarding House").toLowerCase().trim();
-        const isSingleGenderProperty = (() => {
-          if (!genderPolicy) return false;
-          const lower = (genderPolicy || "").toLowerCase();
-          return lower.includes("female-only") || lower.includes("female only") || lower.includes("male-only") || lower.includes("male only");
-        })();
-
-        const dbGroups = subGroups.filter(
-          (sg: any) =>
-            sg.type === "RULE" &&
-            sg.isActive &&
-            sg.key !== "GENDER_POLICY" &&
-            sg.key !== "SMOKE_ALCOHOL" &&
-            sg.key !== "SMOKE" &&
-            sg.key !== "ALCOHOL"
-        );
-
-        const standardOrder = ["CURFEW", "VISITOR_POLICY", "PET_POLICY", "SMOKING_POLICY", "ALCOHOL_POLICY"];
-        const sortedDbGroups = [...dbGroups].sort((a: any, b: any) => {
-          const idxA = standardOrder.indexOf((a.key || "").toUpperCase());
-          const idxB = standardOrder.indexOf((b.key || "").toUpperCase());
-          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-          if (idxA !== -1) return -1;
-          if (idxB !== -1) return 1;
-          return (a.displayOrder || 99) - (b.displayOrder || 99);
-        });
-
-        const validRuleSubGroups: any[] = [];
-        sortedDbGroups.forEach((sg: any) => {
-          const keyUpper = (sg.key || "").toUpperCase().trim();
-          const matchingAttrs = attributes.filter((attr: any) => {
-            if (!attr.isActive) return false;
-            if ((attr.subGroupKey || "").toUpperCase().trim() !== keyUpper) return false;
-
-            if (keyUpper === "VISITOR_POLICY" && isSingleGenderProperty) {
-              const nameLower = (attr.name || "").toLowerCase();
-              if (nameLower.includes("restricted")) return false;
-            }
-
-            const rawTypes = attr.propertyTypeNames || attr.propertyTypes || attr.propertyTypeIds || [];
-            if (!attr.isUniversal && rawTypes && rawTypes.length > 0) {
-              const match = rawTypes.some((pt: any) => {
-                const pName = (pt.name || pt || "").toString().toLowerCase().trim();
-                return pName.includes(selectedProp) || selectedProp.includes(pName);
-              });
-              if (!match) return false;
-            }
-            return attr.isUniversal ?? true;
-          });
-
-          if (matchingAttrs.length > 0) {
-            validRuleSubGroups.push({ sg, attrs: matchingAttrs });
-          }
-        });
-
-        const currentGroupObj = validRuleSubGroups[rulesSubStep - 1];
-        if (currentGroupObj) {
-          const { sg, attrs } = currentGroupObj;
-          isCurrentSubStepValid = attrs.some(
-            (attr: any) =>
-              rulesSelected.includes(attr.name) ||
-              rulesSelected.includes(attr.id) ||
-              rulesSelected.includes(String(attr.id)) ||
-              (sg.key === "PET_POLICY" && watch("petPolicy") === attr.id) ||
-              (sg.key === "VISITOR_POLICY" && watch("visitorPolicy") === attr.id)
-          );
-        } else {
-          isCurrentSubStepValid = rulesSelected.length > 0;
-        }
-      }
-
-      if (!isCurrentSubStepValid) {
+      if (!isRulesSubStepValid) {
         setRulesValidationError(true);
         contentBodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
         return;
@@ -825,6 +744,7 @@ export default function SearchModal({
             showValidationError={rulesValidationError}
             onClearValidationError={() => setRulesValidationError(false)}
             onLoadingChange={setIsStepLoading}
+            onSubStepValidChange={(isValid) => setIsRulesSubStepValid(isValid)}
           />
         );
 
@@ -871,7 +791,7 @@ export default function SearchModal({
           onCloseModal?.();
         }
       }}
-      className={`w-full h-full flex items-end md:items-center justify-center ${isMapOverlay ? 'p-0 md:p-4' : 'p-0 md:p-6 lg:p-12'}`}
+      className={`w-full h-full flex items-end md:items-center justify-center ${isMapOverlay ? 'p-0' : 'p-0 md:p-2 lg:p-3'}`}
     >
       <motion.div
         drag={isMobile ? "y" : false}
@@ -884,10 +804,10 @@ export default function SearchModal({
             onCloseModal?.();
           }
         }}
-        className={`w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-t md:border border-slate-200 dark:border-white/10 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden font-sans rounded-t-[32px] rounded-b-none md:rounded-3xl transition-all duration-200 mt-auto mb-0 ${
+        className={`w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-t md:border border-slate-200 dark:border-white/10 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden font-sans rounded-t-[32px] rounded-b-none md:rounded-3xl mt-auto mb-0 ${
           showWizard
-            ? "h-[85vh] md:h-[85vh] max-h-[85vh] md:max-h-[820px] max-w-5xl mx-auto md:my-auto"
-            : "h-auto max-h-[80vh] md:max-h-[650px] max-w-2xl mx-auto md:my-auto"
+            ? "w-full h-full md:w-full md:h-full max-h-full mx-auto md:my-auto"
+            : "w-full h-auto max-h-[85vh] md:max-h-[650px] max-w-2xl mx-auto md:my-auto"
         }`}
       >
         {/* Mobile Draggable Pull Handle Line */}
@@ -1105,7 +1025,7 @@ export default function SearchModal({
             /* VIEW 2: Full-Size Guided Wizard with Adaptive Kerby Mascot Panel */
             <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
               {/* DESKTOP LEFT COLUMN: Full Kerby Mascot Panel */}
-              <div className={`hidden md:flex flex-col justify-between w-full ${isMapOverlay ? 'md:w-[300px] lg:w-[320px] p-3.5' : 'md:w-[380px] lg:w-[420px] p-6'} border-r border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-slate-900/40 flex-shrink-0 overflow-y-auto`}>
+              <div className={`hidden md:flex flex-col justify-between w-full ${isMapOverlay ? 'md:w-[320px] lg:w-[360px] p-3' : 'md:w-[360px] lg:w-[400px] p-4'} border-r border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-slate-900/40 flex-shrink-0 overflow-y-auto`}>
                 <KerbyMascot
                   pose={dynamicPoseOverride || kerbyState.pose}
                   outfitMode={outfitMode}
@@ -1163,7 +1083,7 @@ export default function SearchModal({
                 </div>
 
                 {/* Scrollable Step Content Body */}
-                <div ref={contentBodyRef} className="flex-1 p-4 md:p-6 overflow-y-auto custom-scrollbar min-h-0">
+                <div ref={contentBodyRef} className="flex-1 p-4 md:p-6 overflow-y-auto custom-scrollbar min-h-0 flex flex-col">
                   {renderStepContent()}
                 </div>
 

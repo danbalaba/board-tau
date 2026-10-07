@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Listing } from '@prisma/client';
 import HeartButton from '@/components/favorites/HeartButton';
 import { Star, MapPin } from 'lucide-react';
+import { getListingUrl } from '@/utils/helper';
 
 interface CompactListingCardProps {
   data: Listing;
@@ -73,7 +74,7 @@ const CompactListingCard: React.FC<CompactListingCardProps> = ({
   }
 
   return (
-    <Link href={`/listings/${data.id}`} prefetch={false} className="block w-full">
+    <Link href={getListingUrl(data.id, data.title)} prefetch={false} className="block w-full">
       {CardContent}
     </Link>
   );

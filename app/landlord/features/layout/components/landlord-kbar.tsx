@@ -30,49 +30,69 @@ import {
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { getAllLandlordProperties } from '@/services/landlord/properties';
-import { getLandlordInquiries } from '@/services/landlord/inquiries';
-import { getLandlordBookings } from '@/services/landlord/bookings';
-import { getLandlordReviews } from '@/services/landlord/reviews';
-import { getLandlordTenants } from '@/services/landlord/tenants';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/app/admin/components/ui/badge';
 
 import Skeleton from '@/components/common/Skeleton';
 
-// --- Improved Content Fetching (react-query) ---
+// --- Improved Content Fetching (react-query over API routes) ---
 const useLandlordSearchData = () => {
   const propertiesQuery = useQuery({
     queryKey: ['landlord-search-properties'],
-    queryFn: () => getAllLandlordProperties(),
+    queryFn: async () => {
+      const res = await fetch('/api/landlord/properties');
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.data?.listings || json.data || [];
+    },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 
   const inquiriesQuery = useQuery({
     queryKey: ['landlord-search-inquiries'],
-    queryFn: () => getLandlordInquiries({ cursor: undefined }),
+    queryFn: async () => {
+      const res = await fetch('/api/landlord/inquiries');
+      if (!res.ok) return { inquiries: [] };
+      const json = await res.json();
+      return json.data || { inquiries: [] };
+    },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 
   const bookingsQuery = useQuery({
     queryKey: ['landlord-search-bookings'],
-    queryFn: () => getLandlordBookings({ cursor: undefined }),
+    queryFn: async () => {
+      const res = await fetch('/api/landlord/bookings');
+      if (!res.ok) return { bookings: [] };
+      const json = await res.json();
+      return json.data || { bookings: [] };
+    },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 
   const reviewsQuery = useQuery({
     queryKey: ['landlord-search-reviews'],
-    queryFn: () => getLandlordReviews({ cursor: undefined }),
+    queryFn: async () => {
+      const res = await fetch('/api/landlord/reviews');
+      if (!res.ok) return { reviews: [] };
+      const json = await res.json();
+      return json.data || { reviews: [] };
+    },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 
   const tenantsQuery = useQuery({
     queryKey: ['landlord-search-tenants'],
-    queryFn: () => getLandlordTenants({ cursor: undefined }),
+    queryFn: async () => {
+      const res = await fetch('/api/landlord/tenants');
+      if (!res.ok) return { tenants: [] };
+      const json = await res.json();
+      return json.data || { tenants: [] };
+    },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
@@ -213,11 +233,11 @@ const DynamicActionRegistry = () => {
   const dynamicActions = useMemo(() => {
     const list: any[] = [];
 
-    properties.forEach((p: any) => {
+    (Array.isArray(properties) ? properties : []).forEach((p: any) => {
       list.push({
         id: `property-${p.id}`,
         name: p.title,
-        subtitle: `₱${p.price.toLocaleString()} • ${p.region || 'Unknown Location'}`,
+        subtitle: `₱${(p.price || 0).toLocaleString()} • ${p.region || 'Unknown Location'}`,
         keywords: `property listing ${p.title}`,
         section: 'Properties',
         perform: () => router.push(`/landlord/properties?id=${p.id}`),
@@ -225,7 +245,7 @@ const DynamicActionRegistry = () => {
       });
     });
 
-    inquiries.forEach((inq: any) => {
+    (Array.isArray(inquiries) ? inquiries : []).forEach((inq: any) => {
       list.push({
         id: `inquiry-${inq.id}`,
         name: inq.user?.name || 'Guest User',
@@ -237,7 +257,7 @@ const DynamicActionRegistry = () => {
       });
     });
 
-    bookings.forEach((bk: any) => {
+    (Array.isArray(bookings) ? bookings : []).forEach((bk: any) => {
       list.push({
         id: `booking-${bk.id}`,
         name: bk.user?.name || 'Guest User',
@@ -249,7 +269,7 @@ const DynamicActionRegistry = () => {
       });
     });
 
-    reviews.forEach((rev: any) => {
+    (Array.isArray(reviews) ? reviews : []).forEach((rev: any) => {
       list.push({
         id: `review-${rev.id}`,
         name: `Review by ${rev.user?.name || 'Guest'}`,
@@ -261,7 +281,7 @@ const DynamicActionRegistry = () => {
       });
     });
 
-    tenants.forEach((t: any) => {
+    (Array.isArray(tenants) ? tenants : []).forEach((t: any) => {
       list.push({
         id: `tenant-${t.id}`,
         name: t.user?.name || 'Tenant',

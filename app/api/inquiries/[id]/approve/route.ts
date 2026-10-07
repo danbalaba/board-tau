@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
 import { sendInquiryStatusEmail } from "@/services/email/notifications";
-import { createNotification } from "@/services/notification";
+import { createNotification, broadcastStatusChange } from "@/services/notification";
 import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function POST(
@@ -100,6 +100,25 @@ export async function POST(
         title: "Inquiry Approved",
         description: `Your inquiry for ${inquiry.listing.title} has been approved. You can now proceed to pay.`,
         link: `/inquiries?id=${inquiry.id}`,
+      });
+
+      // Broadcast Real-time Status Updates to Pusher
+      await broadcastStatusChange({
+        tenantId: inquiry.userId,
+        landlordId: user.id,
+        entityType: "inquiry",
+        entityId: inquiry.id,
+        status: "APPROVED",
+        payload: updatedInquiry,
+      });
+
+      await broadcastStatusChange({
+        tenantId: inquiry.userId,
+        landlordId: user.id,
+        entityType: "reservation",
+        entityId: reservation.id,
+        status: "PENDING_PAYMENT",
+        payload: reservation,
       });
 
       // Send Email Notification

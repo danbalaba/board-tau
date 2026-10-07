@@ -5,7 +5,8 @@ import { IconSearchOff, IconChevronDown, IconBuilding, IconPlus } from '@tabler/
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import { useRegisterActions } from 'kbar';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { decryptEntityId } from '@/lib/encryption';
 import { usePropertyLogic, Property } from './hooks/use-property-logic';
 import { LandlordPropertyHeader } from './components/landlord-property-header';
 import { LandlordPropertyCard } from './components/landlord-property-card';
@@ -38,10 +39,12 @@ const formatStatus = (status: string) => status.charAt(0).toUpperCase() + status
 
 export default function LandlordPropertyManagement({ properties }: LandlordPropertyManagementProps) {
   const router = useRouter();
-  const { startLoading } = useLoading();
+  const searchParams = useSearchParams();
+  const { startLoading, isLoading: isGlobalLoading } = useLoading();
   const {
     listings,
     allListings,
+    filteredListings,
     totalListings,
     currentPage,
     setCurrentPage,
@@ -74,8 +77,24 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
     handleGenerateReport,
     handleClearFilters,
     handleConfirmArchive,
+    isHeaderLoading,
+    isSyncing,
     isLoading
   } = usePropertyLogic(properties.listings, properties.nextCursor);
+
+  const showSyncingSpinner = !isGlobalLoading && (isSyncing || isLoading);
+
+  React.useEffect(() => {
+    const id = searchParams?.get('id');
+    if (id && listings.length > 0 && !viewModalOpen) {
+      const realId = decryptEntityId(id);
+      const target = listings.find(p => p.id === realId || p.id === id);
+      if (target) {
+        setSelectedProperty(target);
+        setViewModalOpen(true);
+      }
+    }
+  }, [searchParams, listings, viewModalOpen, setSelectedProperty, setViewModalOpen]);
 
   useRegisterActions(
     [
@@ -114,7 +133,9 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
         setViewMode={setViewMode}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        listings={allListings || listings}
+        allListings={allListings}
+        filteredListings={filteredListings}
+        listings={allListings}
         onGenerateReport={handleGenerateReport}
         categoryFilter={categoryFilter}
         setCategoryFilter={setCategoryFilter}
@@ -124,12 +145,13 @@ export default function LandlordPropertyManagement({ properties }: LandlordPrope
         onClear={handleClearFilters}
         isArchived={isArchived}
         onToggleArchived={() => setIsArchived(!isArchived)}
+        isLoading={isHeaderLoading}
       />
 
       {/* 2. Main Content Area */}
       <div className="flex-1 flex flex-col min-h-[400px] relative">
         <AnimatePresence mode="wait">
-          {isLoading ? (
+          {showSyncingSpinner ? (
             <motion.div 
               key="loader"
               initial={{ opacity: 0 }}

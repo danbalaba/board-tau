@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/services/user";
 import { sendReservationNotificationEmail } from "@/services/email/notifications";
 import { recordCancellationStrike } from "@/lib/strikes";
 import { baseUrl } from "@/services/email/constants";
+import { broadcastStatusChange } from "@/services/notification";
 
 export async function PUT(
   request: Request,
@@ -67,6 +68,16 @@ export async function PUT(
 
     // Record a strike for the user
     await recordCancellationStrike(user.id, inquiryId, `Cancelled inquiry for ${inquiry.listing.title}: ${reason || "No reason specified"}`);
+
+    // Broadcast Real-time Status Change
+    await broadcastStatusChange({
+      tenantId: user.id,
+      landlordId: inquiry.listing.userId,
+      entityType: "inquiry",
+      entityId: inquiryId,
+      status: "CANCELLED",
+      payload: updatedInquiry,
+    });
 
     // Notify Landlord of cancellation
     try {

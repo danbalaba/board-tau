@@ -111,10 +111,10 @@ const ReservationRequestModal: React.FC<ReservationRequestModalProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Move-in Date */}
+                  {/* Check-in Date */}
                   <div>
                     <label className="block font-semibold text-sm mb-2 text-text-primary dark:text-gray-100">
-                      Move-in Date
+                      Check-In Date
                     </label>
                     <input
                       type="month"
@@ -352,7 +352,7 @@ const ReservationRequestModal: React.FC<ReservationRequestModalProps> = ({
                   {/* Reservation Details */}
                   <div className="mb-6 space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Move-in Date:</span>
+                      <span className="text-gray-600 dark:text-gray-400">Check-In Date:</span>
                       <span className="font-semibold text-text-primary dark:text-gray-100">
                         {formData.moveInDate}
                       </span>

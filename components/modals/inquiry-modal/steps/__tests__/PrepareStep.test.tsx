@@ -30,24 +30,24 @@ describe("PrepareStep Component", () => {
   it("renders the guidelines view initially", () => {
     render(<PrepareStep {...defaultProps} />);
 
-    expect(screen.getByText("Identity Verification")).toBeInTheDocument();
-    expect(screen.getByText(/Please prepare a valid ID and make sure your camera is turned on/i)).toBeInTheDocument();
-    expect(screen.getByText("I UNDERSTAND & I'M READY")).toBeInTheDocument();
+    expect(screen.getByText("Step 4: Identity Verification Guidelines")).toBeInTheDocument();
+    expect(screen.getByText(/Please prepare a physical valid government ID/i)).toBeInTheDocument();
+    expect(screen.getByText(/I HAVE PREPARED MY ID/i)).toBeInTheDocument();
   });
 
   it("clicks the link to show accepted IDs list", () => {
     render(<PrepareStep {...defaultProps} />);
 
-    const linkButton = screen.getByText(/List of accepted IDs/i);
+    const linkButton = screen.getByText(/Accepted IDs List/i);
     fireEvent.click(linkButton);
 
     expect(mockSetIsShowingIDList).toHaveBeenCalledWith(true);
   });
 
-  it("clicks the 'I UNDERSTAND & I'M READY' button", () => {
+  it("clicks the 'I HAVE PREPARED MY ID' button", () => {
     render(<PrepareStep {...defaultProps} />);
 
-    const readyButton = screen.getByText("I UNDERSTAND & I'M READY");
+    const readyButton = screen.getByText(/I HAVE PREPARED MY ID/i);
     fireEvent.click(readyButton);
 
     expect(mockSetHasReadGuidelines).toHaveBeenCalledWith(true); // Toggle value
@@ -56,16 +56,16 @@ describe("PrepareStep Component", () => {
   it("shows different button text if hasReadGuidelines is true", () => {
     render(<PrepareStep {...defaultProps} hasReadGuidelines={true} />);
 
-    expect(screen.getByText("I AM READY TO PROCEED")).toBeInTheDocument();
+    expect(screen.getByText(/GUIDELINES CONFIRMED/i)).toBeInTheDocument();
   });
 
   describe("ID List View", () => {
     it("renders the ID list when isShowingIDList is true", () => {
       render(<PrepareStep {...defaultProps} isShowingIDList={true} />);
 
-      expect(screen.getByText("List of valid IDs")).toBeInTheDocument();
-      expect(screen.getByText("Primary IDs")).toBeInTheDocument();
-      expect(screen.getByText("Secondary IDs")).toBeInTheDocument();
+      expect(screen.getByText("List of Accepted IDs")).toBeInTheDocument();
+      expect(screen.getByText(/Primary Government IDs/i)).toBeInTheDocument();
+      expect(screen.getByText(/Secondary & Student IDs/i)).toBeInTheDocument();
     });
 
     it("displays Primary IDs by default", () => {
@@ -86,7 +86,7 @@ describe("PrepareStep Component", () => {
     it("calls setSelectedIDTab when tab is clicked", () => {
       render(<PrepareStep {...defaultProps} isShowingIDList={true} />);
 
-      const secondaryTab = screen.getByText("Secondary IDs");
+      const secondaryTab = screen.getByText(/Secondary & Student IDs/i);
       fireEvent.click(secondaryTab);
 
       expect(mockSetSelectedIDTab).toHaveBeenCalledWith("secondary");
@@ -95,7 +95,7 @@ describe("PrepareStep Component", () => {
     it("calls setIsShowingIDList and setHasReadGuidelines when 'Understood' button is clicked", () => {
       render(<PrepareStep {...defaultProps} isShowingIDList={true} />);
 
-      const understoodButton = screen.getByText(/Understood, let's continue/i);
+      const understoodButton = screen.getByText(/Understood, Return to Guidelines/i);
       fireEvent.click(understoodButton);
 
       expect(mockSetIsShowingIDList).toHaveBeenCalledWith(false);
@@ -118,7 +118,7 @@ describe("PrepareStep Component", () => {
     it("calls setSelectedIDTab when primary tab is clicked", () => {
       render(<PrepareStep {...defaultProps} isShowingIDList={true} selectedIDTab="secondary" />);
 
-      const primaryTab = screen.getByText("Primary IDs");
+      const primaryTab = screen.getByText(/Primary Government IDs/i);
       fireEvent.click(primaryTab);
 
       expect(mockSetSelectedIDTab).toHaveBeenCalledWith("primary");

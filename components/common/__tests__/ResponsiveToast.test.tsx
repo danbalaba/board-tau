@@ -70,7 +70,7 @@ describe('ResponsiveToast', () => {
         </ResponsiveToastProvider>
       );
       
-      expect(hotToast.success).toHaveBeenCalledWith('Success message', expect.objectContaining({ id: 'Success message' }));
+      expect(hotToast.success).toHaveBeenCalledWith('Success message', undefined);
     });
 
     it('calls hot-toast error', () => {
@@ -80,7 +80,7 @@ describe('ResponsiveToast', () => {
         </ResponsiveToastProvider>
       );
       
-      expect(hotToast.error).toHaveBeenCalledWith('Error message', expect.objectContaining({ id: 'Error message' }));
+      expect(hotToast.error).toHaveBeenCalledWith('Error message', undefined);
     });
   });
 

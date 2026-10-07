@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
+import { useSession } from 'next-auth/react';
 import { useIsClient } from '@/hooks/useIsClient';
 import { 
   Building2, 
@@ -81,7 +82,12 @@ import { Property } from '../hooks/use-property-logic';
 import SafeImage from '@/components/common/SafeImage';
 import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
 import { SharedAmenitiesModal } from '@/components/common/SharedAmenitiesModal';
+import { LandlordRoomDetailsModal } from '@/app/landlord/features/room-management/components/landlord-room-details-modal';
 import dynamic from 'next/dynamic';
+import { toast } from 'react-hot-toast';
+import { generateSingleItemPDF } from '@/utils/pdfGenerator';
+import { prepareSingleItemForExport } from '@/utils/export-utils';
+import { Download } from 'lucide-react';
 
 import { 
   getCachedPropertyTypes,
@@ -166,10 +172,12 @@ export function LandlordPropertyDetailsModal({
   onNavigate
 }: PropertyDetailsModalProps) {
   const isClient = useIsClient();
+  const { data: session } = useSession();
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
 
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'LOCATION' | 'CONFIG' | 'ROOMS' | 'IMAGES'>('OVERVIEW');
   const [selectedRoomIdx, setSelectedRoomIdx] = useState<number>(0);
+  const [selectedRoomForModal, setSelectedRoomForModal] = useState<any | null>(null);
   const [isMapFullscreenOpen, setIsMapFullscreenOpen] = useState<boolean>(false);
   const roomTabContainerRef = useRef<HTMLDivElement>(null);
 
@@ -201,6 +209,37 @@ export function LandlordPropertyDetailsModal({
 
   const toggleSection = (key: string) => {
     setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleExportSpecSheet = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const formattedItem = prepareSingleItemForExport(property, 'property');
+      const dateStamp = new Date().toISOString().slice(0, 10);
+      const reportId = `BTAU-PROP-${dateStamp.replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      const fileName = `BoardTAU_Property_${(property.title || 'Listing').replace(/\s+/g, '_')}_SpecSheet`;
+      const authorName = session?.user?.name || session?.user?.email || 'BoardTAU Landlord';
+
+      await generateSingleItemPDF(
+        fileName,
+        formattedItem.title,
+        formattedItem.category,
+        formattedItem.kvPairs,
+        formattedItem.sections,
+        {
+          title: formattedItem.title,
+          subtitle: (formattedItem as any).subtitle,
+          author: authorName,
+          reportId: reportId,
+          type: 'property',
+          showQR: false
+        }
+      );
+      toast.success('Property Specification PDF exported successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to export property specification PDF.');
+    }
   };
 
   const [propertyTypes, setPropertyTypes] = useState<any[]>(() => getSyncPropertyTypes() || []);
@@ -300,6 +339,17 @@ export function LandlordPropertyDetailsModal({
     if (hasPrev && onNavigate) {
       onNavigate(properties[currentIndex - 1]);
       if (container) container.scrollTop = 0;
+    }
+  };
+
+  const handleNavigateModalRoom = (direction: 'prev' | 'next') => {
+    if (!selectedRoomForModal || !roomsList || roomsList.length === 0) return;
+    const currentIdx = roomsList.findIndex((r: any) => (r.id && selectedRoomForModal.id ? r.id === selectedRoomForModal.id : r === selectedRoomForModal));
+    if (currentIdx === -1) return;
+    if (direction === 'prev' && currentIdx > 0) {
+      setSelectedRoomForModal(roomsList[currentIdx - 1]);
+    } else if (direction === 'next' && currentIdx < roomsList.length - 1) {
+      setSelectedRoomForModal(roomsList[currentIdx + 1]);
     }
   };
 
@@ -687,7 +737,7 @@ export function LandlordPropertyDetailsModal({
         onClick={onClose} 
         className="absolute inset-0 bg-gray-900/40 dark:bg-gray-950/80 backdrop-blur-sm" 
       />
-      <motion.div initial={{ opacity: 0, scale: 0.95, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 40 }} className="relative bg-white dark:bg-[#111827] rounded-none sm:rounded-[2.5rem] border-0 sm:border border-gray-100 dark:border-white/10 max-w-6xl w-full h-full sm:h-auto max-h-full sm:max-h-[92vh] shadow-2xl overflow-hidden flex flex-col antialiased">
+      <motion.div initial={{ opacity: 0, scale: 0.95, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 40 }} className="relative bg-white dark:bg-[#111827] rounded-none sm:rounded-[2.5rem] border-0 sm:border border-gray-100 dark:border-white/10 max-w-6xl w-full h-full sm:h-auto max-h-full sm:max-h-[92vh] sm:my-auto shadow-2xl overflow-hidden flex flex-col antialiased">
         
         {/* Scrollable Container */}
         <div ref={setContainer} className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar scroll-smooth">
@@ -759,9 +809,19 @@ export function LandlordPropertyDetailsModal({
                         <span>{formatStatus(property.status)}</span>
                       </div>
 
-                      <button onClick={onClose} className="p-2 sm:p-3 bg-black/30 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all border border-white/20 z-50 shadow-2xl cursor-pointer">
-                        <X size={16} className="sm:w-[18px] sm:h-[18px]" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={handleExportSpecSheet}
+                          className="px-3 py-1.5 bg-black/40 hover:bg-black/70 backdrop-blur-md rounded-xl text-white transition-all border border-white/20 z-50 shadow-2xl cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                          title="Export Property Datasheet PDF"
+                        >
+                          <Download size={14} />
+                          <span className="hidden sm:inline uppercase text-[10px] tracking-wider font-extrabold">Export Listing</span>
+                        </button>
+                        <button onClick={onClose} className="p-2 sm:p-3 bg-black/30 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all border border-white/20 z-50 shadow-2xl cursor-pointer">
+                          <X size={16} className="sm:w-[18px] sm:h-[18px]" />
+                        </button>
+                      </div>
                     </div>
 
                     <div 
@@ -1358,13 +1418,28 @@ export function LandlordPropertyDetailsModal({
                                             </div>
                                           </div>
 
-                                          <div className="text-left sm:text-right bg-primary/5 sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none w-full sm:w-auto border border-primary/10 sm:border-0">
-                                            <span className="text-xs sm:text-sm font-black text-primary uppercase block">
-                                              ₱{Number(room.price || property.price || 0).toLocaleString()}/mo {isFlatRate ? '(Whole Unit)' : '(per Head)'}
-                                            </span>
-                                            {room.reservationFee && (
-                                              <span className="text-[9px] font-bold text-gray-400 uppercase block mt-0.5">₱{Number(room.reservationFee).toLocaleString()} Reservation Fee</span>
-                                            )}
+                                          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedRoomForModal(room);
+                                              }}
+                                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 hover:bg-primary text-primary hover:text-white border border-primary/30 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm shrink-0"
+                                              title="Open full unit dashboard modal"
+                                            >
+                                              <ExternalLink size={12} />
+                                              <span>View / Manage Unit</span>
+                                            </button>
+
+                                            <div className="text-left sm:text-right bg-primary/5 sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none border border-primary/10 sm:border-0">
+                                              <span className="text-xs sm:text-sm font-black text-primary uppercase block">
+                                                ₱{Number(room.price || property.price || 0).toLocaleString()}/mo {isFlatRate ? '(Whole Unit)' : '(per Head)'}
+                                              </span>
+                                              {room.reservationFee && (
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase block mt-0.5">₱{Number(room.reservationFee).toLocaleString()} Reservation Fee</span>
+                                              )}
+                                            </div>
                                           </div>
                                         </div>
 
@@ -1427,6 +1502,47 @@ export function LandlordPropertyDetailsModal({
                                             <span className="text-[11px] font-bold text-gray-400 italic">No in-unit features selected</span>
                                           )}
                                         </div>
+
+                                        {/* Room Unit Photos Grid */}
+                                        {(() => {
+                                          const roomPhotos: string[] = Array.isArray(room.images)
+                                            ? room.images.map((img: any) => typeof img === 'string' ? img : (img?.url || img?.src)).filter(Boolean)
+                                            : (room.imageSrc || room.image) ? [room.imageSrc || room.image] : [];
+
+                                          return (
+                                            <div className="space-y-3 pt-2 border-t border-gray-200/50 dark:border-gray-700/50">
+                                              <span className="text-[10px] font-black uppercase tracking-wider text-gray-900 dark:text-white flex items-center gap-1.5">
+                                                <Camera size={13} className="text-primary" />
+                                                <span>Unit Photos ({roomPhotos.length})</span>
+                                              </span>
+
+                                              {roomPhotos.length > 0 ? (
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                                  {roomPhotos.map((photoUrl: string, imgIdx: number) => (
+                                                    <button
+                                                      key={imgIdx}
+                                                      type="button"
+                                                      onClick={() => openGallery(roomPhotos, imgIdx, `${roomTypeName} Photos`)}
+                                                      className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 group cursor-pointer shadow-sm hover:shadow-md transition-all"
+                                                    >
+                                                      <SafeImage
+                                                        src={photoUrl}
+                                                        alt={`${roomTypeName} photo ${imgIdx + 1}`}
+                                                        fill
+                                                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                      />
+                                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                                        <Maximize2 size={16} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                                                      </div>
+                                                    </button>
+                                                  ))}
+                                                </div>
+                                              ) : (
+                                                <span className="text-[11px] font-bold text-gray-400 italic">No unit photos uploaded yet</span>
+                                              )}
+                                            </div>
+                                          );
+                                        })()}
 
                                         {/* Dynamic Bottom Room Navigation Buttons */}
                                         {roomsList.length > 1 && (
@@ -1699,6 +1815,15 @@ export function LandlordPropertyDetailsModal({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Room Details Modal */}
+      <LandlordRoomDetailsModal
+        isOpen={!!selectedRoomForModal}
+        room={selectedRoomForModal}
+        rooms={roomsList}
+        onClose={() => setSelectedRoomForModal(null)}
+        onNavigateRoom={handleNavigateModalRoom}
+      />
 
       {/* Shared Amenities, Rules & Features Full Breakdown Modal */}
       <SharedAmenitiesModal

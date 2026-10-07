@@ -3,8 +3,8 @@ import { db } from '@/lib/db';
 import { backendClient } from '@/lib/edgestore-server';
 import { encryptMessage, decryptMessage } from '@/lib/encryption';
 
-// This is required to let Vercel know this is a Cron Job and bypass some auth checks if needed
-// However, we should still ensure it's called securely (Vercel sets a CRON secret header)
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     // Basic security: In production, verify the CRON_SECRET from Vercel
@@ -156,7 +156,7 @@ export async function GET(req: NextRequest) {
             if (details.url) {
               // Decrypt the stored URL before using it
               const rawUrl = decryptMessage(details.url);
-              await backendClient.cronBackups.deleteFile({ url: rawUrl });
+              await (backendClient.cronBackups as any).delete({ url: rawUrl });
               console.log(`[CRON_BACKUP] Deleted old backup file from EdgeStore.`);
             }
           } catch (e) {

@@ -82,7 +82,7 @@ describe("InquiryModal Component", () => {
 
     // Should display the header
     expect(screen.getByText("Send Inquiry")).toBeInTheDocument();
-    expect(screen.getByText("Grand Resort")).toBeInTheDocument();
+    expect(screen.getAllByText("Grand Resort")[0]).toBeInTheDocument();
     
     // Should display step indicators (Pay, Stay, Note, etc.)
     expect(screen.getAllByText(/Pay/i).length).toBeGreaterThan(0);
@@ -169,6 +169,7 @@ describe("InquiryModal Component", () => {
       register: jest.fn(),
       errors: {},
       getValues: jest.fn().mockReturnValue(1),
+      watch: jest.fn().mockReturnValue(1),
       watchedValues: {},
     });
 
@@ -186,7 +187,7 @@ describe("InquiryModal Component", () => {
     );
 
     // Success overlay
-    expect(screen.getByText("INQUIRY SENT!")).toBeInTheDocument();
+    expect(screen.getByText("Success")).toBeInTheDocument();
   });
 
   it("toggles mobile details and image carousel", () => {

@@ -6,14 +6,15 @@ import { FaUsers, FaEye, FaFile, FaHistory } from 'react-icons/fa';
 import { Tenant } from '../hooks/use-tenant-logic';
 
 import SafeImage from '@/components/common/SafeImage';
+import { formatDate } from '@/lib/utils';
 
 interface LandlordTenantCardProps {
   tenant: Tenant;
 }
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-  active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  pending: 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200',
+  active: 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light',
   past: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
 };
 
@@ -51,9 +52,9 @@ export function LandlordTenantCard({ tenant }: LandlordTenantCardProps) {
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{tenant.user.email}</p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Property: {tenant.listing.title}</p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-              {new Date(tenant.startDate).toLocaleDateString()} - {new Date(tenant.endDate).toLocaleDateString()}
+              Check-in & Check-out: {formatDate(tenant.startDate)} - {formatDate(tenant.endDate)}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Joined on {new Date(tenant.createdAt).toLocaleDateString()}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Joined on {formatDate(tenant.createdAt)}</p>
           </div>
         </div>
       </div>

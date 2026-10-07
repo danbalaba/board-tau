@@ -38,6 +38,7 @@ const RoomTooltip: React.FC<RoomTooltipProps> = ({ room, isVisible, onViewDetail
   }, []);
 
   const roomTypeLabel = useMemo(() => {
+    if ((room as any).roomTypeDefinition?.name) return (room as any).roomTypeDefinition.name;
     if (!room.roomType) return "Standard Room";
     const target = String(room.roomType).trim();
     const matched = roomTypesList.find((rt: any) =>
@@ -49,10 +50,8 @@ const RoomTooltip: React.FC<RoomTooltipProps> = ({ room, isVisible, onViewDetail
       rt.id?.toLowerCase() === target.toLowerCase()
     );
     if (matched?.name) return matched.name;
-    if (target.toUpperCase() === 'SOLO') return 'Private Solo Room';
-    if (target.toUpperCase() === 'BEDSPACE') return 'Shared Bedspace';
-    return room.roomType;
-  }, [room.roomType, roomTypesList]);
+    return room.roomType || "Standard Room";
+  }, [room, roomTypesList]);
 
   const parsedAmenities = useMemo(() => {
     const rawList = Array.isArray(room.amenities) ? room.amenities : [];

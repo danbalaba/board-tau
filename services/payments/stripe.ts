@@ -5,9 +5,10 @@ import {
   sendReservationNotificationEmail,
   sendReservationFeeEmail
 } from "@/services/email/notifications";
-import { createNotification } from "@/services/notification";
+import { createNotification, broadcastStatusChange } from "@/services/notification";
+import { encryptEntityId } from "@/lib/encryption";
 
-export const createStripeCheckoutSession = async (inquiryId: string) => {
+export const createStripeCheckoutSession = async (inquiryId: string, customAmount?: number) => {
   // Check if Stripe is configured
   if (!stripe) {
     throw new Error("Stripe not configured");
@@ -32,18 +33,19 @@ export const createStripeCheckoutSession = async (inquiryId: string) => {
     throw new Error("Reservation request not found");
   }
 
-  // Check if the inquiry is approved and unpaid
-  if (inquiry.status !== "APPROVED" || (inquiry as any).paymentStatus === "PAID") {
-    throw new Error("Reservation request is not approved or already paid");
-  }
-
   // Check if the current user is the one who made the reservation
   if (inquiry.userId !== user.id) {
     throw new Error("Unauthorized");
   }
 
-  // Use the fixed reservation fee stored in the inquiry
-  const totalPrice = (inquiry as any).reservationFee || 0;
+  // Determine total price from customAmount, inquiry reservationFee, room reservationFee, or listing price
+  const totalPrice = (customAmount && customAmount > 0)
+    ? customAmount
+    : ((inquiry as any).reservationFee || inquiry.room?.reservationFee || inquiry.listing.price || 0);
+
+  if (totalPrice <= 0) {
+    throw new Error("Invalid payment amount");
+  }
 
   // Create Stripe product
   const product = await stripe.products.create({
@@ -60,7 +62,7 @@ export const createStripeCheckoutSession = async (inquiryId: string) => {
 
   // Create Stripe checkout session
   const stripeSession = await stripe.checkout.sessions.create({
-    success_url: `${baseUrl}/reservations`,
+    success_url: `${baseUrl}/reservations?status=success&method=STRIPE`,
     cancel_url: `${baseUrl}/listings/${inquiry.listingId}`,
     payment_method_types: ['card'],
     mode: 'payment',
@@ -223,7 +225,7 @@ export const handleStripeWebhook = async (session: any) => {
         type: 'reservation',
         title: 'Booking Confirmed!',
         description: `Your reservation for ${updatedReservation.listing.title} is now secured and confirmed.`,
-        link: `/reservations?id=${updatedReservation.id}`
+        link: `/reservations?id=${encryptEntityId(updatedReservation.id)}`
       });
     }
 
@@ -242,7 +244,17 @@ export const handleStripeWebhook = async (session: any) => {
         type: 'reservation',
         title: 'New Confirmed Reservation',
         description: `${updatedReservation.user?.name} has secured their reservation for ${updatedReservation.listing.title} via Stripe.`,
-        link: `/landlord/reservations`
+        link: `/landlord/reservations?id=${encryptEntityId(updatedReservation.id)}`
+      });
+
+      // Real-time broadcast for Landlord & Tenant UI
+      await broadcastStatusChange({
+        tenantId: updatedReservation.userId!,
+        landlordId: updatedReservation.listing.userId,
+        entityType: "reservation",
+        entityId: updatedReservation.id,
+        status: "RESERVED",
+        payload: updatedReservation,
       });
     }
   } catch (emailError) {

@@ -105,3 +105,44 @@ export function formatCleanTitle(input?: string | null): string {
     })
     .join(' ');
 }
+
+/**
+ * Extract raw 24-character hexadecimal MongoDB ObjectId from direct ID or hybrid slug.
+ * Examples:
+ * - "6ac0c2d468777956964da42e" -> "6ac0c2d468777956964da42e"
+ * - "mang-escanor-transient-house-6ac0c2d468777956964da42e" -> "6ac0c2d468777956964da42e"
+ */
+export function extractListingId(param: string): string {
+  if (!param || typeof param !== 'string') return param;
+  const trimmed = param.trim();
+  if (/^[0-9a-fA-F]{24}$/.test(trimmed)) {
+    return trimmed;
+  }
+  const parts = trimmed.split("-");
+  const tailId = parts[parts.length - 1];
+  if (/^[0-9a-fA-F]{24}$/.test(tailId)) {
+    return tailId;
+  }
+  return trimmed;
+}
+
+/**
+ * Generate a hybrid URL for a listing: /listings/[slug]-[id] or /listings/[id] if no title.
+ * Examples:
+ * - ("6ac0c2d468777956964da42e", "Mang Escanor Transient House") -> "/listings/mang-escanor-transient-house-6ac0c2d468777956964da42e"
+ */
+export function getListingUrl(id: string, title?: string | null): string {
+  if (!id) return "/listings";
+  if (!title || typeof title !== 'string' || !title.trim()) {
+    return `/listings/${id}`;
+  }
+  const cleanSlug = title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  if (!cleanSlug) return `/listings/${id}`;
+  return `/listings/${cleanSlug}-${id}`;
+}
+

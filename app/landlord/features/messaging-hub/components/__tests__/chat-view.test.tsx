@@ -18,16 +18,30 @@ jest.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
-jest.mock('react-loading-skeleton', () => {
-  return function MockSkeleton() {
-    return <span data-testid="mock-skeleton" />;
-  };
-});
+jest.mock('react-loading-skeleton', () => ({
+  __esModule: true,
+  default: ({ children }: any) => <span data-testid="mock-skeleton">{children}</span>,
+  SkeletonTheme: ({ children }: any) => <>{children}</>,
+}));
 
 jest.mock('@/components/modals/Modal', () => ({
   __esModule: true,
   default: ({ children, isOpen }: any) => isOpen ? <div data-testid="mock-modal">{children}</div> : null
 }));
+
+jest.mock('@/components/common/ConfirmModal', () => ({
+  __esModule: true,
+  default: () => <div data-testid="mock-confirm-modal" />
+}));
+
+jest.mock('lucide-react', () => {
+  return new Proxy({}, {
+    get: function(target, prop) {
+      if (prop === '__esModule') return true;
+      return () => <span data-testid={`icon-${String(prop)}`} />;
+    }
+  });
+});
 
 describe('ChatView', () => {
   const mockConversation = {

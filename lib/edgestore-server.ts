@@ -1,9 +1,16 @@
-import { initEdgeStoreClient } from '@edgestore/server/core';
 import { edgeStoreRouter } from '@/lib/edgestore-router';
 
-export const backendClient = initEdgeStoreClient({
-  router: edgeStoreRouter,
-  baseUrl: process.env.NEXTAUTH_URL
-    ? `${process.env.NEXTAUTH_URL}/api/edgestore`
-    : 'http://localhost:3000/api/edgestore',
+/**
+ * Lazy proxy wrapper for EdgeStore backend client.
+ * Prevents throwing EdgeStoreCredentialsError during Next.js build-time static evaluation
+ * when EDGE_STORE_ACCESS_KEY or EDGE_STORE_SECRET_KEY environment variables are missing.
+ */
+export const backendClient = new Proxy({} as typeof edgeStoreRouter.client, {
+  get(_target, prop) {
+    const client = edgeStoreRouter.client;
+    if (typeof client === 'string') {
+      return client;
+    }
+    return (client as any)?.[prop];
+  },
 });

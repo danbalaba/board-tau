@@ -6,6 +6,7 @@ import {
 } from "@/services/landlord/reviews";
 import { hasPermission } from "@/lib/rbac";
 import { getCurrentUser } from "@/services/user";
+import { decryptEntityId } from "@/lib/encryption";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,7 +22,8 @@ export async function GET(request: NextRequest) {
 
     if (id) {
       // Get single review details
-      const result = await getReviewDetails(id);
+      const realId = decryptEntityId(id);
+      const result = await getReviewDetails(realId);
       return NextResponse.json({
         success: true,
         data: result,
@@ -78,7 +80,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const result = await respondToReview(reviewId, response.trim());
+    const result = await respondToReview(decryptEntityId(reviewId), response.trim());
 
     return NextResponse.json({
       success: true,

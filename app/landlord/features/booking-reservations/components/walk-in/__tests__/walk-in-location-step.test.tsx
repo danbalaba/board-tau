@@ -57,6 +57,7 @@ describe('WalkInLocationStep', () => {
   });
 
   it('renders listings and rooms based on selection', () => {
+    mockWatch.mockImplementation((key: string) => (key === 'listingId' ? 'list-1' : key === 'roomId' ? 'room-1' : null));
     render(<WalkInLocationStep {...mockProps} />);
     expect(screen.getByText('Sunny Apartment')).toBeInTheDocument();
     expect(screen.getByText('Room A')).toBeInTheDocument();
@@ -66,6 +67,7 @@ describe('WalkInLocationStep', () => {
   });
 
   it('filters listings on search', () => {
+    mockWatch.mockImplementation(() => null);
     render(<WalkInLocationStep {...mockProps} />);
     const propertySearch = screen.getByPlaceholderText('Search properties...');
     fireEvent.change(propertySearch, { target: { value: 'None' } });
@@ -75,6 +77,7 @@ describe('WalkInLocationStep', () => {
   });
 
   it('calls setValue when listing is clicked', () => {
+    mockWatch.mockImplementation(() => null);
     render(<WalkInLocationStep {...mockProps} />);
     const listingDiv = screen.getByText('Sunny Apartment').closest('div');
     fireEvent.click(listingDiv!);
@@ -83,6 +86,7 @@ describe('WalkInLocationStep', () => {
   });
 
   it('calls setValue when room is clicked', () => {
+    mockWatch.mockImplementation((key: string) => (key === 'listingId' ? 'list-1' : null));
     render(<WalkInLocationStep {...mockProps} />);
     const roomDiv = screen.getByText('Room A').closest('div');
     fireEvent.click(roomDiv!);

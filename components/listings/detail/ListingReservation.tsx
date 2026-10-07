@@ -34,10 +34,10 @@ const ListingReservation: React.FC<ListingReservationProps> = ({
       </div>
       <hr className="border-neutral-200 dark:border-gray-700" />
 
-      {/* Move-in Month Selector */}
+      {/* Check-in Month Selector */}
       <div className="p-4 flex flex-col gap-4">
         <div>
-          <label className="block font-semibold text-[15px] mb-2 text-text-primary dark:text-gray-100">Move-in Month</label>
+          <label className="block font-semibold text-[15px] mb-2 text-text-primary dark:text-gray-100">Check-in Month</label>
           <input
             type="month"
             value={moveInMonth}

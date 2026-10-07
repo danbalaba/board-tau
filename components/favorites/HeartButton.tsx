@@ -5,6 +5,7 @@ import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { cn } from "@/utils/helper";
 import { updateFavorite } from "@/services/user/favorites";
@@ -24,6 +25,7 @@ const HeartButton: React.FC<HeartButtonProps> = ({
   const session = useSession();
   const status = session?.status;
   const { error } = useResponsiveToast();
+  const queryClient = useQueryClient();
   const [isPending, startTransition] = useTransition();
   const [mounted, setMounted] = useState(false);
   const lastToastTime = React.useRef<number>(0);
@@ -68,6 +70,8 @@ const HeartButton: React.FC<HeartButtonProps> = ({
           listingId,
           favorite: newValue,
         });
+        // Invalidate React Query cache so components like SavedListView update instantly
+        queryClient.invalidateQueries({ queryKey: ['favorites'] });
         // Silently refresh in background so favorites page stays in sync
         router.refresh();
       } catch (err) {

@@ -8,9 +8,10 @@ interface SidebarListViewProps {
   selectedLandmark: any;
   onListingSelect: (listing: any) => void;
   listings: Listing[];
+  favoriteIds?: string[];
 }
 
-export default function SidebarListView({ selectedLandmark, onListingSelect, listings }: SidebarListViewProps) {
+export default function SidebarListView({ selectedLandmark, onListingSelect, listings, favoriteIds = [] }: SidebarListViewProps) {
   // Helper function to calculate distance in km using Haversine formula
   const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371; // Radius of the earth in km
@@ -63,7 +64,7 @@ export default function SidebarListView({ selectedLandmark, onListingSelect, lis
             <div key={listing.id}>
               <CompactListingCard 
                 data={listing} 
-                hasFavorited={false} 
+                hasFavorited={favoriteIds.includes(listing.id)} 
                 onClickOverride={(e) => {
                   if ((e.target as Element).closest('button')) return;
                   onListingSelect(listing);

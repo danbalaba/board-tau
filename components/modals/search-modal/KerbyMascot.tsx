@@ -27,7 +27,7 @@ interface KerbyMascotProps {
   isTyping?: boolean;
   transparentBg?: boolean;
   bubblePosition?: 'top' | 'top-right' | 'right';
-  guideType?: 'host' | 'search' | 'student';
+  guideType?: 'host' | 'search' | 'student' | 'inquiry';
   showCloseButton?: boolean;
   disableTyping?: boolean;
   customAssetSrc?: string;
@@ -93,10 +93,10 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
 
   return (
     <div className={cn(
-      "relative select-none transition-colors duration-300 flex flex-col items-center justify-end w-full h-full",
+      "relative select-none transition-colors duration-300 flex flex-col items-center justify-between w-full h-full",
       transparentBg 
         ? "p-0 bg-transparent border-0 shadow-none overflow-visible" 
-        : "p-6 rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/60 backdrop-blur-xl shadow-lg"
+        : "p-4 sm:p-5 rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/60 backdrop-blur-xl shadow-lg"
     )}>
       {/* Top Header Badge */}
       {collegeName && !transparentBg && (
@@ -175,7 +175,7 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
                   <span className="font-bold text-[#2f7d6d]">{badgeLabel}</span>
                   <div className="flex items-center gap-1 text-[9px] text-[#2f7d6d]/80 font-mono uppercase">
                     <Sparkles className="w-3 h-3 text-[#2f7d6d] shrink-0" />
-                    <span>{guideType === "host" ? "Host Guide" : "Search Guide"}</span>
+                    <span>{guideType === "host" ? "Host Guide" : guideType === "inquiry" ? "Inquiry Guide" : guideType === "student" ? "Student Guide" : "Search Guide"}</span>
                   </div>
                 </div>
               )}
@@ -261,7 +261,7 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
                 "object-contain filter drop-shadow-[0_25px_35px_rgba(0,0,0,0.45)] transition-all duration-500",
                 transparentBg
                   ? "w-[280px] h-[280px] sm:w-[330px] sm:h-[330px] max-w-none transform scale-110 sm:scale-125"
-                  : "w-full max-w-[290px] sm:max-w-[340px] md:max-w-[380px] lg:max-w-[410px] h-auto max-h-[440px] transform scale-105"
+                  : "w-full max-w-[320px] sm:max-w-[380px] md:max-w-[440px] lg:max-w-[480px] h-auto max-h-[500px] transform scale-110 sm:scale-115 md:scale-120"
               )}
             />
           </AnimatePresence>

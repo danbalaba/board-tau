@@ -9,13 +9,6 @@ jest.mock("@/lib/mediapipe/face-engine", () => ({
   },
 }));
 
-jest.mock("@/lib/mediapipe/id-engine", () => ({
-  idEngine: {
-    warmup: jest.fn().mockResolvedValue(true),
-    validateIDCard: jest.fn(),
-  },
-}));
-
 // Mock ResponsiveToast
 const mockToastError = jest.fn();
 const mockToastSuccess = jest.fn();
@@ -28,7 +21,6 @@ jest.mock("@/components/common/ResponsiveToast", () => ({
 
 describe("useKYC hook", () => {
   const { faceEngine } = require("@/lib/mediapipe/face-engine");
-  const { idEngine } = require("@/lib/mediapipe/id-engine");
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -56,7 +48,6 @@ describe("useKYC hook", () => {
     // isInitializing should be false as we no longer warm up on mount
     expect(result.current.isInitializing).toBe(false);
     expect(faceEngine.warmup).not.toHaveBeenCalled();
-    expect(idEngine.warmup).not.toHaveBeenCalled();
   });
 
   describe("validateSelfie", () => {
@@ -87,36 +78,6 @@ describe("useKYC hook", () => {
 
       expect(isValid).toBe(false);
       expect(mockToastError).toHaveBeenCalledWith("No face detected");
-    });
-  });
-
-  describe("validateID", () => {
-    it("returns true and shows success toast when ID is valid", async () => {
-      idEngine.validateIDCard.mockResolvedValueOnce({ isValid: true });
-      
-      const { result } = renderHook(() => useKYC());
-      
-      let isValid = false;
-      await act(async () => {
-        isValid = await result.current.validateID("data:image/png;base64,dummy");
-      });
-
-      expect(isValid).toBe(true);
-      expect(mockToastSuccess).toHaveBeenCalledWith("ID card detected!");
-    });
-
-    it("returns false and shows error toast when ID is invalid", async () => {
-      idEngine.validateIDCard.mockResolvedValueOnce({ isValid: false, reason: "ID not found" });
-      
-      const { result } = renderHook(() => useKYC());
-      
-      let isValid = true;
-      await act(async () => {
-        isValid = await result.current.validateID("data:image/png;base64,dummy");
-      });
-
-      expect(isValid).toBe(false);
-      expect(mockToastError).toHaveBeenCalledWith("ID not found");
     });
   });
 });

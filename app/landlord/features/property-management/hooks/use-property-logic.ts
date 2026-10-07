@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { generateTablePDF } from '@/utils/pdfGenerator';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -33,6 +34,7 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
   const router = useRouter();
   const queryClient = useQueryClient();
   const responsiveToast = useResponsiveToast();
+  const { data: session } = useSession();
   
   // 1. Infinite Query for Listings
   const {
@@ -84,7 +86,13 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const [isInitialHeaderLoading, setIsInitialHeaderLoading] = useState(true);
   const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsInitialHeaderLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Trigger loader animation when filters change
   useEffect(() => {
@@ -95,7 +103,7 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
     setIsFilterLoading(true);
     const timer = setTimeout(() => {
       setIsFilterLoading(false);
-    }, 500);
+    }, 700);
     return () => clearTimeout(timer);
   }, [searchQuery, categoryFilter, statusFilter, sortBy, isArchived]);
 
@@ -110,6 +118,22 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
     }, 300);
     return () => clearTimeout(handler);
   }, [searchInput]);
+
+  // Deep Linking from Messaging / Widget ("View Listing")
+  const searchParams = useSearchParams();
+  const deepListingId = searchParams ? (searchParams.get('listingId') || searchParams.get('propertyId')) : null;
+  const processedDeepLink = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!deepListingId || processedDeepLink.current === deepListingId) return;
+
+    const match = listings.find((p: Property) => p.id === deepListingId);
+    if (match) {
+      setSelectedProperty(match);
+      setViewModalOpen(true);
+      processedDeepLink.current = deepListingId;
+    }
+  }, [deepListingId, listings]);
 
   // 2. Mutations
   const archiveMutation = useMutation({
@@ -261,9 +285,16 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
     setArchiveModalOpen(false);
   }, []);
 
-  const handleGenerateReport = async (dateRange?: DateRange) => {
+  const handleGenerateReport = async (options?: { scope?: 'filtered' | 'all'; format?: string; includeSummary?: boolean; includeGlossary?: boolean; dateRange?: DateRange } | DateRange) => {
     try {
-      let exportData = filteredListings;
+      const isParamDateRange = options && ('from' in options || 'to' in options);
+      const dateRange = isParamDateRange ? (options as DateRange) : (options as any)?.dateRange;
+      const exportScope = !isParamDateRange && (options as any)?.scope ? (options as any).scope : 'filtered';
+      const includeSummary = !isParamDateRange && (options as any)?.includeSummary !== undefined ? (options as any).includeSummary : true;
+      const includeGlossary = !isParamDateRange && (options as any)?.includeGlossary !== undefined ? (options as any).includeGlossary : true;
+
+      let exportData = exportScope === 'all' ? listings : filteredListings;
+
       if (dateRange?.from) {
         const fromDate = dateRange.from;
         const toDate = dateRange.to;
@@ -276,51 +307,162 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
         });
       }
 
-      const totalValue = exportData.reduce((acc, p) => acc + p.price, 0);
+      const totalValue = exportData.reduce((acc, p) => acc + (p.price || 0), 0);
       const totalRooms = exportData.reduce((acc, p) => acc + (p.roomCount || 0), 0);
+      const totalBaths = exportData.reduce((acc, p) => acc + (p.bathroomCount || 0), 0);
       const totalListings = exportData.length;
-      let summaryData: any[] = [];
-      let subtitle = `Comprehensive auditing report for ${totalListings} active assets`;
 
-      if (categoryFilter !== 'all') {
-        const avgPrice = totalListings > 0 ? totalValue / totalListings : 0;
-        summaryData = [
-          { label: 'Category', value: `${categoryFilter}` },
-          { label: 'Portfolio Value', value: `₱${totalValue.toLocaleString()}` },
-          { label: 'Avg Rate', value: `₱${Math.round(avgPrice).toLocaleString()}` }
-        ];
-        subtitle = `Auditing ${categoryFilter} properties for ${totalListings} assets`;
-      } else {
-        const avgPrice = totalListings > 0 ? totalValue / totalListings : 0;
-        summaryData = [
-          { label: 'Portfolio Value', value: `PHP ${totalValue.toLocaleString()}`, subValue: 'Total market value' },
-          { label: 'Room Inventory', value: `${totalRooms} Units`, subValue: `${totalListings} Properties` },
-          { label: 'Avg Rate', value: `PHP ${Math.round(avgPrice).toLocaleString()}`, subValue: 'Per listing' }
-        ];
-      }
+      // Calculate Status Distribution for Bar Graph
+      const approvedCount = exportData.filter(p => (p.status || '').toLowerCase() === 'approved' || (p.status || '').toLowerCase() === 'active').length;
+      const pendingCount = exportData.filter(p => (p.status || '').toLowerCase() === 'pending').length;
+      const rejectedCount = exportData.filter(p => (p.status || '').toLowerCase() === 'rejected').length;
 
-      const columns = ['Title', 'Price (PHP)', 'Status', 'Rooms', 'Baths', 'Date Added'];
-      const data = exportData.map(p => [
-        p.title, p.price.toLocaleString(), p.status.toUpperCase(), 
-        p.roomCount.toString(), p.bathroomCount.toString(), 
-        new Date(p.createdAt).toLocaleDateString()
-      ]);
+      const distributionData = [
+        { label: 'Approved / Active', count: approvedCount, percentage: totalListings ? (approvedCount / totalListings) * 100 : 0, color: [47, 125, 109] as [number, number, number] },
+        { label: 'Pending Review', count: pendingCount, percentage: totalListings ? (pendingCount / totalListings) * 100 : 0, color: [217, 119, 6] as [number, number, number] },
+        { label: 'Rejected', count: rejectedCount, percentage: totalListings ? (rejectedCount / totalListings) * 100 : 0, color: [220, 38, 38] as [number, number, number] }
+      ];
 
-      await generateTablePDF('Properties_Report', columns, data, {
-        title: 'Property Portfolio Report',
-        subtitle: subtitle,
-        author: 'Landlord Management System',
-        summaryData: summaryData
+      // Calculate Category Breakdown for Visual Bar Chart Graph
+      const categoryCounts: Record<string, number> = {};
+      exportData.forEach(p => {
+        const catName = (p as any).propertyType?.name 
+          || (typeof (p as any).propertyType === 'string' ? (p as any).propertyType : null)
+          || p.categories?.[0]?.category?.name 
+          || 'Boarding House';
+        categoryCounts[catName] = (categoryCounts[catName] || 0) + 1;
       });
-      responsiveToast.success({ title: 'SUCCESS', description: `Generated enterprise report` });
+
+      const categoryData = Object.entries(categoryCounts)
+        .map(([label, count]) => ({ label, count }))
+        .sort((a, b) => b.count - a.count);
+
+      // Calculate Monthly Trend Trajectory Data for Trend Line Chart
+      const monthCounts: Record<string, number> = {};
+      exportData.forEach(p => {
+        const date = new Date(p.createdAt || Date.now());
+        const monthLabel = date.toLocaleDateString('en-US', { month: 'short' });
+        monthCounts[monthLabel] = (monthCounts[monthLabel] || 0) + 1;
+      });
+      const trendData = Object.entries(monthCounts).map(([label, value]) => ({ label, value }));
+
+      const subtitle = exportScope === 'all'
+        ? `All-Time Property Record for ${totalListings} total properties (${approvedCount} Active, ${pendingCount} Pending, ${rejectedCount} Rejected)`
+        : `Filtered Report for ${totalListings} properties`;
+
+      const avgPrice = totalListings > 0 ? totalValue / totalListings : 0;
+      const summaryData = [
+        { label: 'Total Monthly Rent', value: `PHP ${totalValue.toLocaleString()}`, subValue: 'Total monthly rental income' },
+        { label: 'Total Properties', value: `${totalListings} Properties`, subValue: `${approvedCount} Approved | ${pendingCount} Pending` },
+        { label: 'Total Rooms', value: `${totalRooms} Rooms`, subValue: `${totalBaths} Total Bathrooms` },
+        { label: 'Average Price', value: `PHP ${Math.round(avgPrice).toLocaleString()}`, subValue: 'Average rent per property' }
+      ];
+
+      const columns = ['Property Title', 'Category / Type', 'Price (PHP)', 'Status', 'Units', 'Key Highlights', 'Date Added'];
+      const data = exportData.map(p => {
+        const propType = (p as any).propertyType?.name 
+          || (typeof (p as any).propertyType === 'string' ? (p as any).propertyType : null)
+          || p.categories?.[0]?.category?.name 
+          || 'N/A';
+
+        // Dynamically extract real amenities/attributes from database relations
+        const rawHighlights: string[] = [];
+
+        // 1. From listingLinks (Attribute relation)
+        if (Array.isArray((p as any).listingLinks)) {
+          (p as any).listingLinks.forEach((link: any) => {
+            const name = link?.attribute?.name || link?.name;
+            if (name && typeof name === 'string' && !rawHighlights.includes(name)) {
+              rawHighlights.push(name);
+            }
+          });
+        }
+
+        // 2. From amenities_list (String array)
+        if (Array.isArray((p as any).amenities_list)) {
+          (p as any).amenities_list.forEach((item: any) => {
+            const name = typeof item === 'string' ? item : item?.name;
+            if (name && typeof name === 'string' && !name.includes('|') && !rawHighlights.includes(name)) {
+              rawHighlights.push(name);
+            }
+          });
+        }
+
+        // 3. From p.amenities
+        if (Array.isArray(p.amenities)) {
+          p.amenities.forEach((item: any) => {
+            const name = typeof item === 'string' ? item : item?.name;
+            if (name && typeof name === 'string' && !rawHighlights.includes(name)) {
+              rawHighlights.push(name);
+            }
+          });
+        }
+
+        const highlights = rawHighlights.length > 0
+          ? rawHighlights.slice(0, 3).join(', ')
+          : 'None Specified';
+
+        return [
+          p.title,
+          propType,
+          p.price.toLocaleString(),
+          (p.status || 'ACTIVE').toUpperCase(),
+          `${p.roomCount || 0} Rooms`,
+          highlights,
+          new Date(p.createdAt).toLocaleDateString()
+        ];
+      });
+
+      const totalsRow = [
+        'TOTALS',
+        `${totalListings} Properties`,
+        `PHP ${totalValue.toLocaleString()}`,
+        `${approvedCount} Active`,
+        `${totalRooms} Rooms`,
+        'All Checked',
+        new Date().toLocaleDateString()
+      ];
+
+      const glossaryItems = [
+        { term: 'Total Property Count', definition: 'Count of active boarding houses, transient houses, or apartments registered in your landlord portfolio.' },
+        { term: 'Combined Base Rent', definition: 'Cumulative sum of base monthly rental prices across all listed properties.' },
+        { term: 'Property Category', definition: 'Classification type of accommodation (e.g., Boarding House, Transient House, Apartment).' },
+        { term: 'Listing Status', definition: 'Platform status — Active Listing (live for bookings), Pending Review (under admin audit), or Archived.' },
+        { term: 'Shared Facilities & Amenities', definition: 'Building-wide facilities provided for residents (e.g., Fiber WiFi, Backup Generator, CCTV, Caretaker).' },
+        { term: 'House Rules & Policies', definition: 'Resident guidelines regarding curfew, visitor policies, gender restrictions, and pets.' }
+      ];
+
+      const authorName = session?.user?.name || session?.user?.email || 'BoardTAU Landlord Portal';
+
+      await generateTablePDF('Property_Portfolio_Report', columns, data, {
+        title: 'Property Summary & Status Report',
+        subtitle: subtitle,
+        author: authorName,
+        summaryData: summaryData,
+        distributionData: distributionData,
+        categoryData: categoryData,
+        trendData: trendData,
+        statusChartTitle: 'Approval Status',
+        categoryChartTitle: 'Property Types',
+        trendChartTitle: 'Monthly Listings',
+        glossaryItems: glossaryItems,
+        totalsRow: totalsRow,
+        scopeTag: exportScope === 'all' ? 'Complete History' : 'Filtered View',
+        type: 'property',
+        includeSummary: includeSummary,
+        includeGlossary: includeGlossary
+      });
+      responsiveToast.success({ title: 'SUCCESS', description: `Generated property report (${totalListings} items)` });
     } catch (error) {
-      responsiveToast.error({ title: 'ERROR', description: 'Failed to generate report' });
+      console.error('Failed to generate report:', error);
+      responsiveToast.error({ title: 'ERROR', description: 'Failed to generate property report' });
     }
   };
 
   return {
     listings: paginatedListings,
     allListings: listings,
+    filteredListings: filteredListings,
     totalListings: filteredListings.length,
     currentPage,
     setCurrentPage,
@@ -349,7 +491,9 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
     isArchived,
     setIsArchived,
     uniqueCategories,
-    isLoading: isQueryLoading || isFilterLoading,
+    isHeaderLoading: isInitialHeaderLoading,
+    isSyncing: isQueryLoading || isFilterLoading,
+    isLoading: isInitialHeaderLoading || isQueryLoading || isFilterLoading,
     searchQuery: searchInput,
     setSearchQuery: setSearchInput,
     handleConfirmDelete,

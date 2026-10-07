@@ -104,16 +104,16 @@ export default function CollegeStep({ college, setCustomValue, mapCenter, onLoad
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-3.5 sm:gap-4 flex-1 h-full min-h-0"
     >
       {isLoading ? (
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 flex flex-col justify-center">
           <div className="space-y-2 py-1">
             <div className="h-7 w-72 rounded-xl bg-slate-200/70 dark:bg-slate-800/70" />
             <div className="h-4 w-96 max-w-full rounded-lg bg-slate-200/50 dark:bg-slate-800/50" />
           </div>
           <div className="h-12 w-full rounded-2xl bg-slate-200/60 dark:bg-slate-800/60" />
-          <div className="h-[220px] sm:h-[260px] md:h-[380px] rounded-2xl bg-slate-200/50 dark:bg-slate-800/50 flex items-center justify-center p-4">
+          <div className="flex-1 min-h-[280px] rounded-2xl bg-slate-200/50 dark:bg-slate-800/50 flex items-center justify-center p-4">
             <MapLoadingState label="TAU Campus Map" />
           </div>
         </div>
@@ -136,7 +136,7 @@ export default function CollegeStep({ college, setCustomValue, mapCenter, onLoad
               ) : null
             }
           />
-          <div className="w-full">
+          <div className="w-full shrink-0">
             <ModernSelect
               options={colleges.map((c) => ({ value: c.value, label: c.label }))}
               value={college || "any"}
@@ -157,7 +157,7 @@ export default function CollegeStep({ college, setCustomValue, mapCenter, onLoad
             />
           </div>
           <div 
-            className="w-full h-[220px] sm:h-[260px] md:h-[380px] min-h-[220px] rounded-2xl overflow-hidden shadow-md border border-gray-200 dark:border-gray-700 relative mt-1 transition-all duration-300 bg-slate-100 dark:bg-slate-900"
+            className="w-full flex-1 min-h-[250px] sm:min-h-[300px] md:min-h-[380px] lg:min-h-[430px] rounded-2xl overflow-hidden shadow-md border border-gray-200 dark:border-gray-700 relative mt-1 transition-all duration-300 bg-slate-100 dark:bg-slate-900"
           >
             <Map 
               center={activeLandmark ? activeLandmark.coords : mapCenter} 

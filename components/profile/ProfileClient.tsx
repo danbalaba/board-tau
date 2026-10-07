@@ -83,7 +83,7 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
   if (isPageLoading) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[70vh]">
-        <ModernLoader text="Securely loading your profile..." />
+        <ModernLoader text="Loading profile..." mascotSrc="/assets/mascot/kerby-global-navigation.png" />
       </div>
     );
   }
@@ -366,6 +366,7 @@ const ProfileClient: React.FC<ProfileClientProps> = ({ profile }) => {
         isOpen={showLogoutConfirm}
         onClose={() => setShowLogoutConfirm(false)}
         width="xs"
+        fullOnMobile={false}
       >
         <ConfirmModal
           isOpen={showLogoutConfirm}

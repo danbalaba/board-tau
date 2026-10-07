@@ -379,7 +379,7 @@ const Map: React.FC<MapProps> = ({
   };
 
   return (
-    <div className="relative h-full w-full rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-800 shadow-md group">
+    <div className="relative h-full w-full rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-800 shadow-md group bg-slate-100 dark:bg-slate-900">
       <div ref={containerRef} className="h-full w-full z-0" />
       <button
         onClick={(e) => {
@@ -415,9 +415,12 @@ const Map: React.FC<MapProps> = ({
           box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
         }
         .leaflet-container {
-          background-color: #0f172a !important;
+          background-color: ${isDark ? "#0f172a" : "#f1f5f9"} !important;
           width: 100% !important;
           height: 100% !important;
+        }
+        .dark .leaflet-container {
+          background-color: #0f172a !important;
         }
         .light .leaflet-container {
           background-color: #f1f5f9 !important;

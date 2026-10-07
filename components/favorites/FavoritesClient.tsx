@@ -237,7 +237,7 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
 
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center min-h-[400px]">
-          <ModernLoader text="Organizing your favorites..." />
+          <ModernLoader text="Loading favorites..." mascotSrc="/assets/mascot/kerby-casual-excited.png" />
         </div>
       ) : (
         <>

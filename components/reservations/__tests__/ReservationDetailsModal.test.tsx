@@ -212,7 +212,7 @@ describe('ReservationDetailsModal', () => {
     
     const chatBtn = screen.getByText('Chat with Host');
     fireEvent.click(chatBtn);
-    expect(mockPush).toHaveBeenCalledWith('/messages?listingId=list-1&otherUserId=landlord-1');
+    expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('/messages?token='));
   });
 
   it('displays notification and marks as read', () => {

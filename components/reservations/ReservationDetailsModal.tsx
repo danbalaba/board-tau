@@ -14,10 +14,13 @@ import {
   FileText,
   Mail,
   User,
-  Tag
+  Tag,
+  ShieldCheck,
+  Eye as IconEye
 } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
-import { cn } from "@/utils/helper";
+import { encryptChatToken } from "@/lib/encryption";
+import { cn, getListingUrl } from "@/utils/helper";
 import { generateConfirmationSlipPDF } from "@/utils/slipGenerator";
 import { generateLeaseContractPDF, previewPdfBlob } from "@/utils/contractPdfGenerator";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
@@ -101,6 +104,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
   const router = useRouter();
   const responsiveToast = useResponsiveToast();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [activeNotification, setActiveNotification] = useState(notification);
 
   React.useEffect(() => {
@@ -132,7 +136,30 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
     }
   }, [isOpen, activeNotification, onMarkAsRead]);
 
-  const images = useMemo(() => reservation?.room?.images || [], [reservation?.room?.images]);
+  const images = useMemo(() => {
+    const roomImgs: string[] = [];
+    if (Array.isArray(reservation?.room?.images)) {
+      reservation.room.images.forEach((img: any) => {
+        const url = typeof img === 'string' ? img : img?.url;
+        if (url) roomImgs.push(url);
+      });
+    }
+    if (roomImgs.length > 0) {
+      return Array.from(new Set(roomImgs));
+    }
+
+    const listingImgs: string[] = [];
+    if (Array.isArray(reservation?.listing?.images)) {
+      reservation.listing.images.forEach((img: any) => {
+        const url = typeof img === 'string' ? img : img?.url;
+        if (url) listingImgs.push(url);
+      });
+    }
+    if (reservation?.listing?.imageSrc) {
+      listingImgs.push(reservation.listing.imageSrc);
+    }
+    return Array.from(new Set(listingImgs.filter(Boolean)));
+  }, [reservation?.room?.images, reservation?.listing?.images, reservation?.listing?.imageSrc]);
 
   const formatDate = useCallback((dateString: string) => {
     if (!dateString) return "";
@@ -218,10 +245,13 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
   const statusInfo = getStatusBadge(reservation.status);
   const paymentInfo = getPaymentBadge(reservation.paymentStatus);
 
+  const selfieUrl = (reservation as any).profilePhotoUrl || (reservation as any).guestPhotoUrl || (reservation as any).inquiry?.profilePhotoUrl;
+  const idUrl = (reservation as any).idAttachmentUrl || (reservation as any).guestIdUrl || (reservation as any).inquiry?.idAttachmentUrl;
+
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} fullOnMobile={true}>
-        <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[82vh] overflow-hidden">
+      <Modal isOpen={isOpen} onClose={onClose} width="full" noPadding={true} hasFixedFooter={true} closeOnOutsideClick={false} fullOnMobile={true}>
+        <div className="w-full h-full sm:h-auto sm:max-h-[90vh] max-w-full sm:max-w-5xl mx-auto sm:my-auto overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl border-0 sm:border sm:border-gray-200 dark:sm:border-gray-800 shadow-2xl">
           
           {/* Header Bar */}
           <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 bg-white dark:bg-gray-900">
@@ -284,7 +314,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
             {/* 2-Column Responsive Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               
-              {/* Left Column: Room Showcase & Financial Summary */}
+              {/* Left Column: Room Showcase & Booking Details */}
               <div className="space-y-6">
                 
                 {/* Room Showcase Card */}
@@ -292,10 +322,8 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                   <div className="aspect-video w-full relative group/gallery bg-gray-100 dark:bg-gray-800">
                     <SafeImage
                       src={images.length > 0 
-                        ? images[currentImageIndex]?.url 
-                        : (reservation.listing?.images && reservation.listing.images.length > 0)
-                          ? reservation.listing.images[0].url
-                          : reservation.listing.imageSrc || "/images/placeholder.jpg"
+                        ? images[currentImageIndex] 
+                        : reservation.listing?.imageSrc || "/images/placeholder.jpg"
                       }
                       alt={reservation.room.name}
                       unoptimized={true}
@@ -308,7 +336,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                             e.stopPropagation();
                             setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
                           }}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80 z-10"
                         >
                           <ChevronLeft size={18} />
                         </button>
@@ -317,7 +345,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                             e.stopPropagation();
                             setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
                           }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-0 group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/gallery:opacity-100 transition-opacity hover:bg-black/80 z-10"
                         >
                           <ChevronRight size={18} />
                         </button>
@@ -354,6 +382,77 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Booking Details Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                    <User size={14} className="text-primary" />
+                    <span>Booking Details</span>
+                  </h4>
+
+                  <div className="space-y-3.5 divide-y divide-gray-100 dark:divide-gray-800">
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Room Type</span>
+                      <span className="text-xs font-black text-gray-900 dark:text-white uppercase">
+                        {(reservation.room as any)?.roomTypeDefinition?.name || (reservation.room as any)?.roomType || (typeof (reservation.listing as any)?.propertyType === 'object' ? (reservation.listing as any)?.propertyType?.name : (reservation.listing as any)?.propertyType) || (Array.isArray((reservation.listing as any)?.category) ? (reservation.listing as any)?.category[0] : (reservation.listing as any)?.category) || "Solo Room"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Number of Guests</span>
+                      <span className="text-xs font-black text-gray-900 dark:text-white">
+                        {reservation.occupantsCount === 1 ? "1 Guest" : `${reservation.occupantsCount || 1} Guests`}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Reservation Reference</span>
+                      <span className="text-xs sm:text-sm font-mono font-black text-primary dark:text-primary-light tracking-wider" title={reservation.id}>
+                        #RES-{reservation.id.slice(-8).toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Column: Schedule, Payment & Verification */}
+              <div className="space-y-6">
+                
+                {/* Stay Schedule Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                    <Calendar size={14} className="text-primary" />
+                    <span>Stay Schedule</span>
+                  </h4>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3.5 bg-primary/10 dark:bg-primary/20 border border-primary/20 rounded-xl text-center">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-primary-dark dark:text-primary-light block mb-1">
+                        Check-in Date
+                      </span>
+                      <span className="text-xs font-black text-primary-dark dark:text-white">
+                        {formatDate(reservation.startDate)}
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 rounded-xl text-center">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 block mb-1">
+                        Check-out Date
+                      </span>
+                      <span className="text-xs font-black text-amber-950 dark:text-amber-100">
+                        {formatDate(reservation.endDate)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {Boolean(reservation.durationInDays) && (
+                    <div className="p-2.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-300">
+                      <Clock size={14} className="text-primary" />
+                      <span>Total Stay Duration: {reservation.durationInDays} Nights</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Financial Details Card */}
@@ -404,77 +503,67 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                   </div>
                 </div>
 
-              </div>
+                {/* Identity Verification Documents (if uploaded) */}
+                {(selfieUrl || idUrl) && (
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                      <ShieldCheck size={14} className="text-primary" />
+                      <span>Identity Verification Documents</span>
+                    </h4>
 
-              {/* Right Column: Schedule & Booking Details */}
-              <div className="space-y-6">
-                
-                {/* Stay Schedule Card */}
-                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                    <Calendar size={14} className="text-primary" />
-                    <span>Stay Schedule</span>
-                  </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Selfie Verification Card */}
+                      {selfieUrl && (
+                        <div 
+                          onClick={() => setPreviewImage(selfieUrl)}
+                          className="p-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 hover:border-primary/50 transition-all flex items-center gap-3.5 group cursor-pointer select-none"
+                        >
+                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-900 border border-gray-200 dark:border-gray-700 shrink-0 relative shadow-inner flex items-center justify-center">
+                            <SafeImage src={selfieUrl} alt="Selfie Photo" unoptimized={true} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                              <IconEye size={14} />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-extrabold text-gray-900 dark:text-white truncate">Live Biometric Selfie</span>
+                              <IconCircleCheck size={13} className="text-primary shrink-0" />
+                            </div>
+                            <p className="text-[10px] text-gray-400 font-medium truncate mt-0.5">Liveness Facial Scan</p>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary mt-1 group-hover:underline">
+                              <IconEye size={11} /> View Full Photo
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3.5 bg-primary/10 dark:bg-primary/20 border border-primary/20 rounded-xl text-center">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-primary-dark dark:text-primary-light block mb-1">
-                        Check-in Date
-                      </span>
-                      <span className="text-xs font-black text-primary-dark dark:text-white">
-                        {formatDate(reservation.startDate)}
-                      </span>
-                    </div>
-
-                    <div className="p-3.5 bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 rounded-xl text-center">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 block mb-1">
-                        Check-out Date
-                      </span>
-                      <span className="text-xs font-black text-amber-950 dark:text-amber-100">
-                        {formatDate(reservation.endDate)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {Boolean(reservation.durationInDays) && (
-                    <div className="p-2.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-300">
-                      <Clock size={14} className="text-primary" />
-                      <span>Total Stay Duration: {reservation.durationInDays} Nights</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Booking Details Card */}
-                <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                    <User size={14} className="text-primary" />
-                    <span>Booking Details</span>
-                  </h4>
-
-                  <div className="space-y-3.5 divide-y divide-gray-100 dark:divide-gray-800">
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Room Type</span>
-                      <span className="text-xs font-black text-gray-900 dark:text-white uppercase">
-                        {(reservation.room as any)?.roomTypeDefinition?.name || (reservation.room as any)?.roomType || (typeof (reservation.listing as any)?.propertyType === 'object' ? (reservation.listing as any)?.propertyType?.name : (reservation.listing as any)?.propertyType) || (Array.isArray((reservation.listing as any)?.category) ? (reservation.listing as any)?.category[0] : (reservation.listing as any)?.category) || "Solo Room"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3">
-                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Number of Guests</span>
-                      <span className="text-xs font-black text-gray-900 dark:text-white">
-                        {reservation.occupantsCount === 1 ? "1 Guest" : `${reservation.occupantsCount || 1} Guests`}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3">
-                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Booking Reference ID</span>
-                      <span className="text-xs font-mono font-bold text-gray-900 dark:text-white truncate max-w-[160px]">
-                        {reservation.id}
-                      </span>
+                      {/* ID Verification Card */}
+                      {idUrl && (
+                        <div 
+                          onClick={() => setPreviewImage(idUrl)}
+                          className="p-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 hover:border-primary/50 transition-all flex items-center gap-3.5 group cursor-pointer select-none"
+                        >
+                          <div className="w-16 h-12 rounded-xl overflow-hidden bg-gray-900 border border-gray-200 dark:border-gray-700 shrink-0 relative shadow-inner flex items-center justify-center">
+                            <SafeImage src={idUrl} alt="ID Document" unoptimized={true} className="w-full h-full object-contain p-0.5" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                              <IconEye size={14} />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-extrabold text-gray-900 dark:text-white truncate">Valid Physical ID</span>
+                              <IconCircleCheck size={13} className="text-primary shrink-0" />
+                            </div>
+                            <p className="text-[10px] text-gray-400 font-medium truncate mt-0.5">Government / Student ID</p>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary mt-1 group-hover:underline">
+                              <IconEye size={11} /> View Document
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-
+                )}
               </div>
             </div>
 
@@ -507,7 +596,10 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
               {canChat ? (
                 <button
                   className="w-full sm:w-auto px-4 py-2.5 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-xl transition-all flex items-center justify-center gap-2"
-                  onClick={() => router.push(`/messages?listingId=${reservation.listingId}&otherUserId=${landlordId}`)}
+                  onClick={() => {
+                    const encToken = encryptChatToken(reservation.listingId, landlordId);
+                    router.push(encToken ? `/messages?token=${encToken}` : `/messages?listingId=${reservation.listingId}&otherUserId=${landlordId}`);
+                  }}
                 >
                   <Mail size={14} />
                   <span>Chat with Host</span>
@@ -527,11 +619,14 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                 <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:flex-row sm:gap-2.5">
                   <button
                     className="w-full sm:w-auto px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 truncate"
-                    onClick={() => {
-                      responsiveToast.loading("Preparing boarding pass...");
-                      generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail)
-                        .then(() => responsiveToast.success("Boarding pass downloaded!"))
-                        .catch(() => responsiveToast.error("Could not generate boarding pass."));
+                    onClick={async () => {
+                      const toastId = responsiveToast.loading("Preparing boarding pass...");
+                      try {
+                        await generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail);
+                        responsiveToast.success("Boarding pass downloaded!", { id: toastId });
+                      } catch (err) {
+                        responsiveToast.error("Could not generate boarding pass.", { id: toastId });
+                      }
                     }}
                   >
                     <IconCircleCheck size={14} className="shrink-0" />
@@ -585,7 +680,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                   {reservation.status === "COMPLETED" && (
                     <button
                       className="w-full sm:w-auto px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-primary hover:bg-primary-dark rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
-                      onClick={() => router.push(`/listings/${reservation.listingId}`)}
+                      onClick={() => router.push(getListingUrl(reservation.listingId, (reservation as any).listingTitle))}
                     >
                       <Home size={14} />
                       <span>View Listing</span>
@@ -607,6 +702,42 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
 
         </div>
       </Modal>
+
+      {/* Enlarged Photo Overlay */}
+      <AnimatePresence>
+        {previewImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[20000] bg-black/95 flex items-center justify-center p-4"
+            onClick={() => setPreviewImage(null)}
+          >
+            <motion.button
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+              onClick={() => setPreviewImage(null)}
+            >
+              <X size={20} />
+            </motion.button>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-[90vw] h-[80vh] flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SafeImage
+                src={previewImage as string}
+                alt="Enlarged Document"
+                unoptimized={true}
+                className="object-contain"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

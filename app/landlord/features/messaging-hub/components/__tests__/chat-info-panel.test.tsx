@@ -27,11 +27,11 @@ jest.mock('framer-motion', () => ({
 }));
 
 // Provide a mock for react-loading-skeleton
-jest.mock('react-loading-skeleton', () => {
-  return function MockSkeleton() {
-    return <span data-testid="mock-skeleton" />;
-  };
-});
+jest.mock('react-loading-skeleton', () => ({
+  __esModule: true,
+  default: () => <span data-testid="mock-skeleton" />,
+  SkeletonTheme: ({ children }: any) => <>{children}</>,
+}));
 
 describe('ChatInfoPanel', () => {
   const mockConversation = {
@@ -64,7 +64,7 @@ describe('ChatInfoPanel', () => {
 
   it('renders section headers', async () => {
     render(<ChatInfoPanel activeConversation={mockConversation} />);
-    expect(await screen.findByText('Trust Indicators')).toBeInTheDocument();
-    expect(screen.getByText('Contact Info')).toBeInTheDocument();
+    expect(await screen.findByText('Account & Trust')).toBeInTheDocument();
+    expect(screen.getByText('Contact Information')).toBeInTheDocument();
   });
 });

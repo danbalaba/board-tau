@@ -186,7 +186,6 @@ export const reverseGeocode = async (lat: number, lng: number): Promise<AddressI
 const parseAddress = (displayName: string, addressComponents?: any): { city: string; province: string; zipCode: string } => {
   // Try to extract address components from Nominatim's structured address if available
   if (addressComponents) {
-    console.log('Parsing address with components:', addressComponents); // Debug log
     const city = addressComponents.city || addressComponents.town || addressComponents.municipality || '';
     let province = addressComponents.province || addressComponents.county || addressComponents.state || addressComponents.region || '';
     let zipCode = addressComponents.postcode || '';

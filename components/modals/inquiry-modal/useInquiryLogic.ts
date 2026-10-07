@@ -9,7 +9,6 @@ import { DateRange } from "react-day-picker";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import Webcam from "react-webcam";
 import { base64ToFile } from "./InquiryModalUtils";
-import { faceMatcher } from "@/lib/mediapipe/face-matcher";
 
 export interface FormData {
   moveInDate: string;
@@ -36,7 +35,7 @@ export const useInquiryLogic = (
   const router = useRouter();
   const responsiveToast = useResponsiveToast();
   const { edgestore } = useEdgeStore();
-  const { isProcessing, faceEngine, idEngine } = useKYC();
+  const { isProcessing, faceEngine } = useKYC();
 
   // Step & Image State
   const [currentStep, setCurrentStep] = useState(1);
@@ -56,6 +55,8 @@ export const useInquiryLogic = (
 
   // KYC States
   const webcamRef = useRef<Webcam>(null);
+  const scaledCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const isFaceAlignedRef = useRef(false);
   const [isFaceAligned, setIsFaceAligned] = useState(false);
   const [isIDAligned, setIsIDAligned] = useState(false);
   const [isPhoneDetected, setIsPhoneDetected] = useState(false);
@@ -169,9 +170,13 @@ export const useInquiryLogic = (
   }, [currentStep, capturedSelfie, faceEngine]);
 
   const getScaledCanvas = (video: HTMLVideoElement) => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 320;
-    canvas.height = 240;
+    if (!scaledCanvasRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 320;
+      canvas.height = 240;
+      scaledCanvasRef.current = canvas;
+    }
+    const canvas = scaledCanvasRef.current;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx?.drawImage(video, 0, 0, 320, 240);
     return canvas;
@@ -186,9 +191,12 @@ export const useInquiryLogic = (
         if (video && video.readyState === 4) {
           const scaledCanvas = getScaledCanvas(video);
           
-          // Use the new quickValidateFace to do everything in one pass!
+          // Use quickValidateFace to do everything in one pass!
           const result = await faceEngine.quickValidateFace(scaledCanvas);
-          setIsFaceAligned(result.isValid);
+          if (isFaceAlignedRef.current !== result.isValid) {
+            isFaceAlignedRef.current = result.isValid;
+            setIsFaceAligned(result.isValid);
+          }
 
           // FACE-LOSS DETECTION: Reset liveness if face disappears
           if (livenessStatus === 'passed') {
@@ -227,7 +235,7 @@ export const useInquiryLogic = (
             }
           }
         }
-      }, 600); // Changed from 200ms to 600ms to save CPU
+      }, 600);
     }
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -311,7 +319,6 @@ export const useInquiryLogic = (
     }
 
     setIsIDProcessing(true);
-    const startStep = currentStepRef.current;
 
     try {
       const reader = new FileReader();
@@ -321,7 +328,6 @@ export const useInquiryLogic = (
         reader.readAsDataURL(imageFile);
       });
 
-      // Load images into Image elements for face-api
       const loadImage = (src: string): Promise<HTMLImageElement> => {
         return new Promise((resolve, reject) => {
           const img = new Image();
@@ -331,51 +337,48 @@ export const useInquiryLogic = (
         });
       };
 
-      const [selfieImg, idImg] = await Promise.all([
-        loadImage(capturedSelfie),
-        loadImage(imageSrc)
-      ]);
-
-      const selfieCacheKey = `selfie_${capturedSelfie.length}_${capturedSelfie.slice(0, 50)}`;
-      const idCacheKey = `file_${imageFile.name}_${imageFile.size}_${imageFile.lastModified}`;
-
-      const [selfieDescriptor, idDescriptor] = await Promise.all([
-        faceMatcher.getFaceDescriptorCached(selfieCacheKey, selfieImg),
-        faceMatcher.getFaceDescriptorCached(idCacheKey, idImg, 0.2) // Explicitly lower threshold for ID
-      ]);
-
-      if (currentStepRef.current !== startStep) {
-        console.warn("ID scan aborted: User navigated away from ID step.");
-        return;
+      // AWS Rekognition Cloud Verification (Biometrics, OCR, and Document AI)
+      let kycResult: any = null;
+      try {
+        const kycRes = await fetch('/api/kyc/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ selfieUrl: capturedSelfie, idCardUrl: imageSrc }),
+        });
+        kycResult = await kycRes.json();
+      } catch (err) {
+        console.warn('[AWS Rekognition Fetch Error]:', err);
       }
 
-      if (!selfieDescriptor) {
-        setSelfieRetakeNeeded(true);
-        setCapturedSelfie(null);
+      // Enforce strict AWS Rekognition verification result!
+      if (kycResult && (!kycResult.success || kycResult.status !== 'VERIFIED')) {
+        if (kycResult.lockoutRemainingSeconds) {
+          try {
+            const until = Date.now() + kycResult.lockoutRemainingSeconds * 1000;
+            localStorage.setItem('kycLockoutUntil', until.toString());
+            window.dispatchEvent(new Event('kycLockoutTriggered'));
+          } catch (e) {}
+        }
+        
+        let failureReason = kycResult.reason || kycResult.error || 'Verification failed.';
+        if (failureReason.includes('temporarily locked for')) {
+          const minsMatch = failureReason.match(/\d+/);
+          const mins = minsMatch ? minsMatch[0] : '5';
+          failureReason = `Verification locked for ${mins} minutes.`;
+        }
+        
+        responsiveToast.error(failureReason);
         setCapturedID(null);
-        responsiveToast.error("Could not verify your live selfie. Please retake it.");
-        return;
-      }
-
-      // Reset if we get past this point
-      setSelfieRetakeNeeded(false);
-
-      if (!idDescriptor) {
-        responsiveToast.error("Could not detect a face on your ID card. Please ensure the ID photo is clearly visible.");
-        return;
-      }
-
-      const distance = faceMatcher.getFaceDistance(selfieDescriptor, idDescriptor);
-      if (distance > 0.6) {
-        responsiveToast.error("Verification failed: The face on the ID does not match your live selfie. Please try again.");
-        return;
+        return; // BLOCK USER FROM PROCEEDING!
       }
 
       setCapturedID(imageSrc);
-      responsiveToast.success("ID card matched successfully!");
+      const similarityText = kycResult?.similarity ? ` (${kycResult.similarity}% face match)` : '';
+      responsiveToast.success(`Identity Verified Successfully!${similarityText}`);
     } catch (error) {
-      console.error("Face matching error:", error);
-      responsiveToast.error("Failed to perform face matching.");
+      console.error("ID processing error:", error);
+      responsiveToast.error("Failed to process ID card image.");
+      setCapturedID(null);
     } finally {
       setIsIDProcessing(false);
     }
@@ -553,6 +556,22 @@ export const useInquiryLogic = (
       }
 
       await Promise.all(uploadTasks);
+
+      if (profilePhotoUrl && idAttachmentUrl) {
+        try {
+          const kycRes = await fetch('/api/kyc/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ selfieUrl: profilePhotoUrl, idCardUrl: idAttachmentUrl }),
+          });
+          const kycResult = await kycRes.json();
+          if (kycResult.status === 'NEEDS_MANUAL_REVIEW') {
+            responsiveToast.warning('Identity verification flagged for manual review: ' + (kycResult.reason || 'Verification check unconfirmed.'));
+          }
+        } catch (err) {
+          console.warn('[KYC Verify Error]:', err);
+        }
+      }
 
       const inquiryData = {
         listingId,

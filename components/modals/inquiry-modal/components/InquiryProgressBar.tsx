@@ -80,16 +80,22 @@ export default function InquiryProgressBar({
     <div className="w-full flex flex-col gap-2.5 py-1 px-1 md:px-2 mb-4 md:mb-6 bg-white dark:bg-gray-800/40 p-3 md:p-4 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-xs">
       {/* Top Progress & Expand Header */}
       <div className="flex items-center justify-between gap-2 text-xs font-semibold px-1">
-        {/* Step Badge & Expand Toggle */}
+        {/* Step Badge & Title */}
         <div className="flex items-center gap-2 min-w-0">
+          {/* Mobile Interactive Toggle Button (With Chevron) */}
           <button
             type="button"
             onClick={() => setIsExpandedMobile(!isExpandedMobile)}
-            className="px-2.5 py-1 rounded-full bg-primary/15 text-primary font-extrabold border border-primary/30 text-[11px] uppercase tracking-wider flex items-center gap-1.5 transition-all hover:bg-primary/25 active:scale-95 shrink-0 cursor-pointer"
+            className="md:hidden px-2.5 py-1 rounded-full bg-primary/15 text-primary font-extrabold border border-primary/30 text-[11px] uppercase tracking-wider flex items-center gap-1.5 transition-all hover:bg-primary/25 active:scale-95 shrink-0 cursor-pointer"
           >
             <span>Step {displayStep} of {totalSteps}</span>
             <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", isExpandedMobile && "rotate-180")} />
           </button>
+
+          {/* Desktop Static Badge (Clean Tag without Chevron) */}
+          <span className="hidden md:inline-flex px-2.5 py-1 rounded-full bg-primary/15 text-primary font-extrabold border border-primary/30 text-[11px] uppercase tracking-wider shrink-0 select-none">
+            Step {displayStep} of {totalSteps}
+          </span>
           
           <span className="font-extrabold text-gray-900 dark:text-white truncate text-xs md:text-sm">
             {currentStepObj?.label}

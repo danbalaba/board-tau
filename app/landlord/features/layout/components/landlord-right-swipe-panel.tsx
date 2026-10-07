@@ -286,7 +286,7 @@ export default function LandlordRightSwipePanel({ user: initialUser }: LandlordR
       </AnimatePresence>
 
       {/* Logout Confirmation Modal */}
-      <Modal isOpen={showLogoutConfirm && !isLoggingOut} onClose={() => setShowLogoutConfirm(false)} width="xs">
+      <Modal isOpen={showLogoutConfirm && !isLoggingOut} onClose={() => setShowLogoutConfirm(false)} width="xs" fullOnMobile={false}>
         <ConfirmModal
           isOpen={showLogoutConfirm}
           onClose={() => setShowLogoutConfirm(false)}

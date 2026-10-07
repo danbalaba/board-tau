@@ -47,6 +47,8 @@ interface LandlordReviewHeaderProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   rawReviews: Review[];
+  filteredReviews?: Review[];
+  isLoading?: boolean;
 }
 
 export function LandlordReviewHeader({
@@ -61,9 +63,12 @@ export function LandlordReviewHeader({
   handleGenerateReport,
   searchQuery,
   setSearchQuery,
-  rawReviews
+  rawReviews,
+  filteredReviews,
+  isLoading
 }: LandlordReviewHeaderProps) {
   const isMobile = useIsMobile();
+
   // Animated Arrow states for dropdowns
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const [ratingDropdownOpen, setRatingDropdownOpen] = useState(false);
@@ -73,6 +78,8 @@ export function LandlordReviewHeader({
   const [draftStatus, setDraftStatus] = useState(selectedStatus);
   const [draftRating, setDraftRating] = useState(selectedRating);
   const [draftSortBy, setDraftSortBy] = useState(sortBy);
+
+
 
   const handleMobileSheetOpen = (open: boolean) => {
     if (open) {
@@ -98,7 +105,7 @@ export function LandlordReviewHeader({
   };
 
   const handleGenerateCSV = async (dateRange?: DateRange) => {
-    let exportData = rawReviews;
+    let exportData = filteredReviews || rawReviews;
     if (dateRange?.from) {
       const fromDate = dateRange.from;
       const toDate = dateRange.to;
@@ -129,7 +136,7 @@ export function LandlordReviewHeader({
   };
 
   const handleGenerateExcel = async (dateRange?: DateRange) => {
-    let exportData = rawReviews;
+    let exportData = filteredReviews || rawReviews;
     if (dateRange?.from) {
       const fromDate = dateRange.from;
       const toDate = dateRange.to;
@@ -190,15 +197,15 @@ export function LandlordReviewHeader({
                 Guest Reviews
               </h1>
               <div className="flex items-center gap-2 mt-0.5 sm:mt-1">
-                <p className="text-[10px] sm:text-[11px] text-gray-500 font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] line-clamp-1">
+                <p className="text-[10px] sm:text-[11px] text-gray-500 font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] sm:line-clamp-1">
                   Read tenant reviews, check ratings, and write replies
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full md:w-auto">
-            {/* View Toggles */}
+          <div className="flex items-center justify-between gap-2.5 w-full md:w-auto">
+            {/* View Mode Toggles */}
             <div className="flex items-center gap-1 bg-gray-100/50 dark:bg-gray-800/50 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shrink-0">
               <button
                 onClick={() => setViewMode('grid')}
@@ -224,9 +231,13 @@ export function LandlordReviewHeader({
               onGeneratePDF={handleGenerateReport}
               onGenerateCSV={handleGenerateCSV}
               onGenerateExcel={handleGenerateExcel}
+              moduleType="review"
+              moduleTitle="Reviews"
+              allData={rawReviews}
+              filteredData={filteredReviews || rawReviews}
               label="Generate Report"
               outline={false}
-              className="h-9 sm:h-12 px-3 sm:px-6 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] sm:text-[11px] tracking-widest shadow-lg shadow-primary/25 border-b-4 border-primary/30 active:border-b-0 active:translate-y-0.5 transition-all flex items-center gap-1.5 sm:gap-2 shrink-0"
+              className="w-auto h-9 sm:h-11 px-3 sm:px-5 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] sm:text-[11px] tracking-wider sm:tracking-widest shadow-md shadow-primary/20 border-b-2 sm:border-b-4 border-primary/30 active:border-b-0 transition-all flex items-center justify-center gap-1.5 shrink-0"
             />
           </div>
         </div>

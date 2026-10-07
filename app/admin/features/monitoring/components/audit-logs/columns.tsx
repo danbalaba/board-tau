@@ -17,16 +17,67 @@ export interface AuditLog {
   details?: string | any;
 }
 
-// Friendly human names for technical Prisma model names
-const ENTITY_TYPE_LABELS: Record<string, string> = {
-  FeatureFlag: 'Feature Flag',
-  CampusLandmark: 'TAU Landmark',
-  PropertyType: 'Property Category',
-  Listing: 'Property Listing',
-  RoomTypeDefinition: 'Room Type',
-  Attribute: 'Amenity & Rule',
-  User: 'User Account',
-  HostApplication: 'Host Application'
+// Friendly human names for technical Prisma model names & internal targets
+export const formatTargetLabel = (rawType?: string): string => {
+  if (!rawType) return 'System';
+
+  // 1. Colon-delimited Report types (e.g. Report:property -> Property Summary Report)
+  if (rawType.startsWith('Report:')) {
+    const reportKind = rawType.split(':')[1] || '';
+    switch (reportKind.toLowerCase()) {
+      case 'property': return 'Property Summary Report';
+      case 'inquiry': return 'Inquiry Summary Report';
+      case 'booking': return 'Booking Summary Report';
+      case 'review': return 'Review Summary Report';
+      case 'user': return 'User Analytics Report';
+      case 'system': return 'System Summary Report';
+      default:
+        return `${reportKind.charAt(0).toUpperCase() + reportKind.slice(1)} Report`;
+    }
+  }
+
+  // 2. Specific Prisma model & system entity mappings
+  const map: Record<string, string> = {
+    FeatureFlag: 'Feature Flag',
+    CampusLandmark: 'TAU Landmark',
+    PropertyType: 'Property Category',
+    Listing: 'Property Listing',
+    RoomTypeDefinition: 'Room Type',
+    RoomType: 'Room Type',
+    DynamicAttribute: 'Amenity & Rule',
+    Attribute: 'Amenity & Rule',
+    AttributeSubGroup: 'Amenity Sub-Group',
+    User: 'User Account',
+    HostApplication: 'Host Application',
+    SystemBackup: 'System Backup',
+    SafetySnapshot: 'Safety Snapshot',
+  };
+
+  if (map[rawType]) return map[rawType];
+
+  // 3. Fallback camelCase / PascalCase to spaced words
+  return rawType
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/_/g, ' ')
+    .trim();
+};
+
+// Dynamic environment detection (Local vs Production)
+export const formatEnvironmentLabel = (env?: string): string => {
+  if (env) {
+    const lower = env.toLowerCase();
+    if (lower === 'production' || lower === 'prod') return 'Production';
+    if (lower.includes('dev') || lower.includes('local')) return 'Development (Local)';
+  }
+
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.local')) {
+      return 'Development (Local)';
+    }
+  }
+
+  return process.env.NODE_ENV === 'production' ? 'Production' : 'Development (Local)';
 };
 
 // Format human-friendly action labels dynamically across all platform entities
@@ -34,7 +85,8 @@ export const formatAuditActionLabel = (action: string, entityType?: string): str
   if (!action) return 'Action';
   const act = action.toUpperCase();
 
-  // 1. System Backups & Restores
+  // 1. System Backups, Restores & Generated Reports
+  if (act === 'GENERATED_SUMMARY_REPORT') return 'Generated Summary Report';
   if (act === 'AUTOMATED_SYSTEM_BACKUP') return 'Automated System Backup';
   if (act === 'PRE_RESTORE_SAFETY_SNAPSHOT') return 'Safety Snapshot';
   if (act === 'SYSTEM_RESTORE') return 'System Restore';
@@ -105,6 +157,10 @@ export const formatAuditActionLabel = (action: string, entityType?: string): str
 const getActionStyle = (action: string) => {
   const act = action.toUpperCase();
 
+  // Reports & Audits -> Emerald
+  if (act.includes('REPORT') || act.includes('SUMMARY')) {
+    return 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20';
+  }
   // Backup & Safety Snapshots -> Indigo
   if (act.includes('BACKUP') || act.includes('SNAPSHOT')) {
     return 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/20';
@@ -164,6 +220,7 @@ export const getColumns = (onViewDetails: (log: AuditLog) => void): ColumnDef<Au
       variant: 'text',
       icon: IconUser
     },
+    enableSorting: true,
     enableColumnFilter: true
   },
   {
@@ -184,6 +241,7 @@ export const getColumns = (onViewDetails: (log: AuditLog) => void): ColumnDef<Au
         </Badge>
       );
     },
+    enableSorting: true,
     enableColumnFilter: true,
     meta: {
       label: 'Action',
@@ -205,13 +263,14 @@ export const getColumns = (onViewDetails: (log: AuditLog) => void): ColumnDef<Au
     ),
     cell: ({ cell }) => {
       const rawType = cell.getValue<string>() || 'System';
-      const label = ENTITY_TYPE_LABELS[rawType] || rawType.replace(/([A-Z])/g, ' $1').trim();
+      const label = formatTargetLabel(rawType);
       return (
         <span className="text-xs font-extrabold text-gray-800 dark:text-gray-200">
           {label}
         </span>
       );
     },
+    enableSorting: true,
     enableColumnFilter: true,
     meta: {
       label: 'Target',
@@ -235,6 +294,7 @@ export const getColumns = (onViewDetails: (log: AuditLog) => void): ColumnDef<Au
         </div>
       );
     },
+    enableSorting: true,
     meta: {
       label: 'Record Reference',
       placeholder: 'Search ID...',
@@ -245,19 +305,25 @@ export const getColumns = (onViewDetails: (log: AuditLog) => void): ColumnDef<Au
   {
     id: 'environment',
     accessorKey: 'environment',
-    header: 'Environment',
+    header: ({ column }: { column: Column<AuditLog, unknown> }) => (
+      <DataTableColumnHeader column={column} title='Environment' />
+    ),
     meta: { label: 'Environment' },
-    cell: () => (
+    enableSorting: true,
+    cell: ({ row }) => (
       <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
-        Production
+        {formatEnvironmentLabel(row.original.environment)}
       </span>
     )
   },
   {
     id: 'createdAt',
     accessorKey: 'createdAt',
-    header: 'Timestamp',
+    header: ({ column }: { column: Column<AuditLog, unknown> }) => (
+      <DataTableColumnHeader column={column} title='Timestamp' />
+    ),
     meta: { label: 'Timestamp' },
+    enableSorting: true,
     cell: ({ cell }) => {
       const d = new Date(cell.getValue<string>());
       return (

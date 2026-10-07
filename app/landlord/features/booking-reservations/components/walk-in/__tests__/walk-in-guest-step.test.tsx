@@ -16,7 +16,7 @@ describe('WalkInGuestStep', () => {
 
   it('renders input fields correctly', () => {
     render(<WalkInGuestStep {...mockProps} />);
-    expect(screen.getByPlaceholderText('e.g. John Doe')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('e.g. Juan Dela Cruz')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('e.g. 09123456789')).toBeInTheDocument();
   });
 

@@ -9,10 +9,11 @@ import { GiFamilyHouse } from "react-icons/gi";
 export const LISTINGS_BATCH = 16;
 
 export const menuItems = [
-  { label: "My messages", path: "/messages" },
-  { label: "My favorites", path: "/favorites" },
   { label: "My inquiries", path: "/inquiries" },
   { label: "My reservations", path: "/reservations" },
+  { label: "My favorites", path: "/favorites" },
+  { label: "My messages", path: "/messages" },
+  { label: "Notifications", path: "/notifications" },
   { label: "My reviews", path: "/my-reviews" },
   { label: "My profile", path: "/profile" },
 ];

@@ -44,7 +44,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section ref={containerRef} className="relative min-h-[60vh] md:min-h-[550px] overflow-hidden pt-24 md:pt-28">
+    <section ref={containerRef} className="relative min-h-[460px] md:min-h-[550px] overflow-hidden pt-20 md:pt-28 pb-10 md:pb-0">
       {/* Dark Mode Static Background */}
       <div className="absolute inset-0 hidden dark:block bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a]" />
 
@@ -93,19 +93,19 @@ export default function HeroSection() {
       <div className="absolute bottom-32 left-1/2 -translate-x-1/2 w-[600px] md:w-[1000px] h-[400px] md:h-[600px] bg-white/40 dark:bg-gray-800/20 rounded-full blur-[60px] md:blur-[100px] pointer-events-none transform-gpu opacity-80" />
 
       <motion.div
-        className="relative main-container h-full min-h-[60vh] md:min-h-[550px] flex flex-col items-center"
+        className="relative main-container h-full min-h-[460px] md:min-h-[550px] flex flex-col items-center justify-between"
         initial="hidden"
         animate="show"
       >
         {/* Main content with parallax */}
         <motion.div
-          className="flex-1 flex flex-col items-center justify-start w-full max-w-5xl text-center pt-12 md:pt-20 pb-8 md:pb-12"
+          className="flex-1 flex flex-col items-center justify-center md:justify-start w-full max-w-5xl text-center py-4 md:pt-20 md:pb-12"
         >
           <motion.h1
             variants={headlineFadeIn}
             initial="hidden"
             animate="show"
-            className="text-6xl md:text-8xl font-bold tracking-tighter mb-8 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 drop-shadow-lg"
+            className="text-4xl sm:text-6xl md:text-8xl font-bold tracking-tighter mb-4 md:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 drop-shadow-lg"
             style={{
               textShadow: '0 4px 20px rgba(0, 0, 0, 0.05), 0 0 60px rgba(47, 125, 109, 0.08)'
             }}
@@ -116,7 +116,7 @@ export default function HeroSection() {
             variants={subtitleFadeIn}
             initial="hidden"
             animate="show"
-            className="text-xl md:text-2xl max-w-3xl mx-auto text-gray-600 dark:text-gray-300 leading-relaxed"
+            className="text-lg sm:text-xl md:text-2xl max-w-3xl mx-auto px-4 text-gray-600 dark:text-gray-300 leading-relaxed font-normal"
             style={{
               textShadow: '0 2px 10px rgba(0, 0, 0, 0.03)'
             }}
@@ -140,7 +140,7 @@ export default function HeroSection() {
             delayChildren: 0.05,
             staggerChildren: 0.03
           }}
-          className="w-full absolute bottom-0 left-0 pb-8 md:pb-12"
+          className="w-full relative md:absolute md:bottom-0 md:left-0 pt-4 pb-4 md:pb-12"
         >
           <div className="w-full max-w-5xl mx-auto px-4">
             <SearchManager isScrolled={isScrolled} />

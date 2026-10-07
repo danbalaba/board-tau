@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, ChevronLeft, ChevronRight, Building2, Pencil, 
   DoorOpen, Users, Bed, ShowerHead, Utensils, Maximize2, 
   Clock, CheckCircle2, AlertCircle, Ban, Wrench, Sparkles,
-  Layers, Zap, FileText, Camera, Loader2
+  Layers, Zap, FileText, Camera, Loader2, Download
 } from 'lucide-react';
 import { cn } from '@/utils/helper';
 import SafeImage from '@/components/common/SafeImage';
@@ -17,6 +18,8 @@ import { toast } from 'sonner';
 import { getCachedAttributes, getCachedRoomTypes, getSyncAttributes, getSyncRoomTypes } from "@/lib/landlordTaxonomyCache";
 import { Room } from '../hooks/use-room-logic';
 import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
+import { generateSingleItemPDF } from '@/utils/pdfGenerator';
+import { prepareSingleItemForExport } from '@/utils/export-utils';
 
 const CLEAN_BATHROOM_LABELS: Record<string, string> = {
   PRIVATE_CR: "Private Bathroom",
@@ -75,6 +78,7 @@ export function LandlordRoomDetailsModal({
   onStatusChange,
   onNavigateRoom,
 }: LandlordRoomDetailsModalProps) {
+  const { data: session } = useSession();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
@@ -285,11 +289,10 @@ export function LandlordRoomDetailsModal({
   }, [room?.roomType, roomTypesList]);
 
   const roomTypeLabel = useMemo(() => {
+    if ((room as any)?.roomTypeDefinition?.name) return (room as any).roomTypeDefinition.name;
     if (matchedRoomType?.name) return matchedRoomType.name;
-    if (room?.roomType === 'SOLO') return 'Private Solo Room';
-    if (room?.roomType === 'BEDSPACE') return 'Shared Bedspace';
     return room?.roomType || 'Standard Room';
-  }, [matchedRoomType, room?.roomType]);
+  }, [matchedRoomType, room]);
 
   const RoomTypeIcon = matchedRoomType?.icon ? getDynamicIcon(matchedRoomType.icon, Layers) : Layers;
 
@@ -454,7 +457,7 @@ export function LandlordRoomDetailsModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 40 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="relative w-full max-w-5xl h-full sm:h-[88vh] bg-white dark:bg-[#111827] rounded-none sm:rounded-[2.5rem] border-0 sm:border border-gray-100 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col"
+        className="relative w-full max-w-5xl h-full sm:h-[88vh] sm:my-auto bg-white dark:bg-[#111827] rounded-none sm:rounded-[2.5rem] border-0 sm:border border-gray-100 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Scrollable Container */}
@@ -532,16 +535,57 @@ export function LandlordRoomDetailsModal({
                         <span>{formatStatus(currentStatus)}</span>
                       </div>
 
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMediaPreviewState({ isOpen: false, index: 0 });
-                          onClose();
-                        }} 
-                        className="p-2.5 sm:p-3 bg-black/30 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all border border-white/20 z-50 shadow-2xl cursor-pointer"
-                      >
-                        <X size={16} className="sm:w-[18px] sm:h-[18px]" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (!room) return;
+                            try {
+                              const formattedItem = prepareSingleItemForExport(room, 'room');
+                              const dateStamp = new Date().toISOString().slice(0, 10);
+                              const reportId = `BTAU-ROOM-${dateStamp.replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+                              const fileName = `BoardTAU_Room_${(room.name || 'Unit').replace(/\s+/g, '_')}_SpecSheet`;
+
+                              const authorName = session?.user?.name || session?.user?.email || 'BoardTAU Landlord';
+
+                              await generateSingleItemPDF(
+                                fileName,
+                                formattedItem.title,
+                                formattedItem.category,
+                                formattedItem.kvPairs,
+                                formattedItem.sections,
+                                {
+                                  title: formattedItem.title,
+                                  subtitle: (formattedItem as any).subtitle,
+                                  author: authorName,
+                                  reportId: reportId,
+                                  type: 'room',
+                                  showQR: false
+                                }
+                              );
+                              toast.success('Room Specification PDF exported successfully!');
+                            } catch (err) {
+                              console.error(err);
+                              toast.error('Failed to export room specification PDF.');
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-black/40 hover:bg-black/70 backdrop-blur-md rounded-xl text-white transition-all border border-white/20 z-50 shadow-2xl cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                          title="Export Room Datasheet PDF"
+                        >
+                          <Download size={14} />
+                          <span className="hidden sm:inline uppercase text-[10px] tracking-wider font-extrabold">Export Details</span>
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMediaPreviewState({ isOpen: false, index: 0 });
+                            onClose();
+                          }} 
+                          className="p-2.5 sm:p-3 bg-black/30 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all border border-white/20 z-50 shadow-2xl cursor-pointer"
+                        >
+                          <X size={16} className="sm:w-[18px] sm:h-[18px]" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="space-y-1 sm:space-y-2">

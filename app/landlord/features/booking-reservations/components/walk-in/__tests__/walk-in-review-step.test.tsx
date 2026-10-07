@@ -22,8 +22,9 @@ jest.mock('framer-motion', () => ({
 const mockListings = [
   {
     id: 'list-1',
+    title: 'Test Listing',
     rooms: [
-      { id: 'room-1', reservationFee: 1500 }
+      { id: 'room-1', name: 'Room 1', price: 1500, reservationFee: 1500 }
     ]
   }
 ];
@@ -34,13 +35,12 @@ describe('WalkInReviewStep', () => {
     if (key === 'roomId') return 'room-1';
     if (key === 'occupantsCount') return 2;
     if (key === 'moveInDate') return new Date('2023-01-01').toISOString();
+    if (key === 'totalPrice') return 3000;
     return null;
   });
 
   const mockProps = {
     getValues: mockGetValues as any,
-    capturedSelfie: '/selfie.jpg',
-    capturedID: '/id.jpg',
     listings: mockListings
   };
 
@@ -50,16 +50,8 @@ describe('WalkInReviewStep', () => {
 
   it('renders review step and calculated price correctly', () => {
     render(<WalkInReviewStep {...mockProps} />);
-    expect(screen.getByText('Step 6: Final Summary & Review')).toBeInTheDocument();
-    
-    // Fee * occupants = 1500 * 2 = 3000
-    expect(screen.getByText('₱ 3,000')).toBeInTheDocument();
-    expect(screen.getByText(/Calculated as ₱ 1,500 × 2 occupants/)).toBeInTheDocument();
-  });
-
-  it('renders images if captured', () => {
-    render(<WalkInReviewStep {...mockProps} />);
-    const images = screen.getAllByTestId('mock-safe-image');
-    expect(images).toHaveLength(2);
+    expect(screen.getByText('Step 4: Final Summary & Review')).toBeInTheDocument();
+    expect(screen.getByText('3,000', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText(/Includes 1st Month Rent/)).toBeInTheDocument();
   });
 });

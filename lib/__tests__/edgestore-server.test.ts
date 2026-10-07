@@ -1,11 +1,9 @@
 import { backendClient } from '../edgestore-server';
 
-jest.mock('@edgestore/server/core', () => ({
-  initEdgeStoreClient: jest.fn().mockReturnValue('mockBackendClient')
-}));
-
 jest.mock('../edgestore-router', () => ({
-  edgeStoreRouter: 'mockRouter'
+  edgeStoreRouter: {
+    client: 'mockBackendClient'
+  }
 }));
 
 describe('edgestore-server', () => {

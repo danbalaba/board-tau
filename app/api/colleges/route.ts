@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { cache } from "@/lib/redis";
+
+export const dynamic = "force-dynamic";
 
 // Public & Admin GET - Fetch colleges for dropdowns or admin management
 export async function GET(req: Request) {
@@ -11,7 +14,8 @@ export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
     const isAdmin = session?.user?.role === "SUPER_ADMIN" || session?.user?.role === "ADMIN";
 
-    const whereCondition = (includeDisabled || isAdmin) ? {} : { isActive: true };
+    // Only include disabled colleges when explicitly requested AND caller is admin
+    const whereCondition = (includeDisabled && isAdmin) ? {} : { isActive: true };
 
     const colleges = await db.campusCollege.findMany({
       where: whereCondition,
@@ -20,7 +24,11 @@ export async function GET(req: Request) {
       },
     });
 
-    return NextResponse.json(colleges);
+    return NextResponse.json(colleges, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      },
+    });
   } catch (error) {
     console.error("[COLLEGES_GET]", error);
     return NextResponse.json({ message: "Failed to fetch campus colleges" }, { status: 500 });
@@ -100,6 +108,13 @@ export async function POST(req: Request) {
       }
     } catch (logErr) {
       console.error("[COLLEGES_POST_AUDIT_ERROR]", logErr);
+    }
+
+    // Invalidate Redis taxonomy cache
+    try {
+      await cache.del("taxonomy:campusColleges:active");
+    } catch (cErr) {
+      console.error("[COLLEGES_POST_CACHE_CLEAR_ERROR]", cErr);
     }
 
     return NextResponse.json(college);

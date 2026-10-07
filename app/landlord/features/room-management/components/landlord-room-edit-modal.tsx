@@ -260,26 +260,44 @@ export const LandlordRoomEditModal: React.FC<LandlordRoomEditModalProps> = ({
 
   // Load Dynamic Attributes & Sub-Groups
   useEffect(() => {
-    const syncSgs = getSyncSubGroups();
-    if (syncSgs && syncSgs.length > 0) {
-      setDbSubGroups(syncSgs);
-    } else {
-      getCachedSubGroups().then((sgs: any[]) => {
-        setDbSubGroups(sgs || []);
-      });
-    }
-  }, []);
+    const updateFromCache = () => {
+      const syncSgs = getSyncSubGroups();
+      if (syncSgs && syncSgs.length > 0) {
+        setDbSubGroups(syncSgs);
+      }
+      const syncAttrs = getSyncAttributes();
+      if (syncAttrs && syncAttrs.length > 0) {
+        setDynamicAttributes(syncAttrs.filter((a: any) => a.type === 'ROOM_AMENITY'));
+      }
+    };
 
-  useEffect(() => {
-    const syncAttrs = getSyncAttributes();
-    if (syncAttrs && syncAttrs.length > 0) {
-      setDynamicAttributes(syncAttrs.filter((a: any) => a.type === 'ROOM_AMENITY'));
-    } else {
-      getCachedAttributes().then((attrs: any[]) => {
-        setDynamicAttributes((attrs || []).filter((a: any) => a.type === 'ROOM_AMENITY'));
+    updateFromCache();
+
+    if (isOpen) {
+      getCachedSubGroups(true).then((sgs: any[]) => {
+        if (sgs && sgs.length > 0) setDbSubGroups(sgs);
+      });
+
+      getCachedAttributes(true).then((attrs: any[]) => {
+        if (attrs && attrs.length > 0) {
+          setDynamicAttributes(attrs.filter((a: any) => a.type === 'ROOM_AMENITY'));
+        }
       });
     }
-  }, []);
+
+    const handleTaxonomyUpdated = () => {
+      updateFromCache();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('landlord_taxonomy_updated', handleTaxonomyUpdated);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('landlord_taxonomy_updated', handleTaxonomyUpdated);
+      }
+    };
+  }, [isOpen]);
 
   // Compute if Flat-Rate property
   const isFlatRateProperty = useMemo(() => {
@@ -1253,7 +1271,6 @@ export const LandlordRoomEditModal: React.FC<LandlordRoomEditModalProps> = ({
                                    : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700 hover:border-primary/40"
                                )}
                              >
-                                <CatIcon size={14} />
                                 <span>{cat.label}</span>
                                 {selectedCount > 0 && (
                                   <span className={cn(
@@ -1296,9 +1313,14 @@ export const LandlordRoomEditModal: React.FC<LandlordRoomEditModalProps> = ({
                                      {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3.5px]" />}
                                    </div>
                                    <Icon size={16} className={cn("shrink-0 transition-colors", isSelected ? "text-primary" : "text-gray-400 group-hover:text-primary")} />
-                                   <span className={cn("text-xs font-bold flex-1 transition-colors leading-snug line-clamp-2 uppercase tracking-wide", isSelected ? "text-primary dark:text-white font-extrabold" : "text-gray-700 dark:text-gray-300")}>
+                                    <div className="min-w-0 flex-1">
+                                   <span className={cn("text-xs font-bold transition-colors leading-snug line-clamp-2 uppercase tracking-wide block truncate", isSelected ? "text-primary dark:text-white font-extrabold" : "text-gray-700 dark:text-gray-300")}>
                                      {amenity.name}
                                    </span>
+                                      {amenity.description && (
+                                        <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mt-0.5 leading-tight truncate">{amenity.description}</p>
+                                      )}
+                                    </div>
                                 </button>
                               );
                           })}

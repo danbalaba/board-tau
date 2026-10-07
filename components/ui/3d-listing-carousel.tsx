@@ -51,13 +51,13 @@ const EMBEDDED_CSS = `
 /* Slide Positioning Classes */
 .cascade-slider_item.next {
     left: 50%;
-    transform: translateY(-50%) translateX(-110%) scale(0.7);
+    transform: translateY(-50%) translateX(10%) scale(0.7);
     opacity: 1;
     z-index: 4; 
 }
 .cascade-slider_item.prev {
     left: 50%;
-    transform: translateY(-50%) translateX(10%) scale(0.7);
+    transform: translateY(-50%) translateX(-110%) scale(0.7);
     opacity: 1;
     z-index: 4; 
 }
@@ -118,23 +118,23 @@ const EMBEDDED_CSS = `
     .listing-card-wrapper { width: 320px; }
 }
 @media screen and (min-width: 768px) {
-    .cascade-slider_item.next { transform: translateY(-50%) translateX(-120%) scale(0.7); }
-    .cascade-slider_item.prev { transform: translateY(-50%) translateX(20%) scale(0.7); }
+    .cascade-slider_item.next { transform: translateY(-50%) translateX(20%) scale(0.7); }
+    .cascade-slider_item.prev { transform: translateY(-50%) translateX(-120%) scale(0.7); }
     .listing-card-wrapper { width: 340px; }
 }
 @media screen and (min-width: 991px) {
-    .cascade-slider_item.next { transform: translateY(-50%) translateX(-110%) scale(0.65); z-index: 4; }
-    .cascade-slider_item.prev { transform: translateY(-50%) translateX(10%) scale(0.65); z-index: 4; }
-    .cascade-slider_item.next2 { transform: translateY(-50%) translateX(-150%) scale(0.4); z-index: 1; }
-    .cascade-slider_item.prev2 { transform: translateY(-50%) translateX(50%) scale(0.4); z-index: 2; }
+    .cascade-slider_item.next { transform: translateY(-50%) translateX(10%) scale(0.65); z-index: 4; }
+    .cascade-slider_item.prev { transform: translateY(-50%) translateX(-110%) scale(0.65); z-index: 4; }
+    .cascade-slider_item.next2 { transform: translateY(-50%) translateX(50%) scale(0.4); z-index: 2; }
+    .cascade-slider_item.prev2 { transform: translateY(-50%) translateX(-150%) scale(0.4); z-index: 1; }
     .listing-card-wrapper { width: 360px; }
     .cascade-slider_container { height: 480px; }
 }
 @media screen and (min-width: 1100px) {
-    .cascade-slider_item.next { transform: translateY(-50%) translateX(-120%) scale(0.65); }
-    .cascade-slider_item.prev { transform: translateY(-50%) translateX(20%) scale(0.65); }
-    .cascade-slider_item.next2 { transform: translateY(-50%) translateX(-170%) scale(0.4); }
-    .cascade-slider_item.prev2 { transform: translateY(-50%) translateX(70%) scale(0.4); }
+    .cascade-slider_item.next { transform: translateY(-50%) translateX(20%) scale(0.65); }
+    .cascade-slider_item.prev { transform: translateY(-50%) translateX(-120%) scale(0.65); }
+    .cascade-slider_item.next2 { transform: translateY(-50%) translateX(70%) scale(0.4); }
+    .cascade-slider_item.prev2 { transform: translateY(-50%) translateX(-170%) scale(0.4); }
     .listing-card-wrapper { width: 380px; }
 }
 `;

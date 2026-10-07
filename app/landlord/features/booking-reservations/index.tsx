@@ -12,9 +12,13 @@ import { LandlordReservationHeader } from './components/landlord-reservation-hea
 import { LandlordReservationCard } from './components/landlord-reservation-card';
 import { LandlordReservationDetailsModal } from './components/landlord-reservation-details-modal';
 import { useSearchParams } from 'next/navigation';
+import { decryptEntityId } from '@/lib/encryption';
 import { LandlordPagination } from '../shared/landlord-pagination';
 import LandlordArchiveModal from '../inquiry-center/components/landlord-inquiry-archive-modal';
 import LandlordWalkInModal from './components/walk-in/landlord-walk-in-modal';
+import ReservationCheckInLoaderModal from './components/ReservationCheckInLoaderModal';
+import ReservationCancelLoaderModal from './components/ReservationCancelLoaderModal';
+import { useLoading } from '@/components/loading/LoadingContext';
 
 
 interface LandlordBookingReservationsProps {
@@ -24,8 +28,10 @@ interface LandlordBookingReservationsProps {
 }
 
 export default function LandlordBookingReservations({ reservations, landlordId, listings }: LandlordBookingReservationsProps) {
+  const { isLoading: isGlobalLoading } = useLoading();
   const {
     filteredReservations,
+    allFilteredReservations,
     totalReservations,
     currentPage,
     setCurrentPage,
@@ -46,8 +52,16 @@ export default function LandlordBookingReservations({ reservations, landlordId, 
     handleUpdateStatus,
     handleGenerateReport,
     updatingId,
+    checkInLoaderReservation,
+    setCheckInLoaderReservation,
+    cancelLoaderReservation,
+    setCancelLoaderReservation,
+    isHeaderLoading,
+    isSyncing,
     isLoading
   } = useReservationLogic(reservations);
+
+  const showSyncingSpinner = !isGlobalLoading && (isSyncing || isLoading);
 
   const [selectedReservation, setSelectedReservation] = useState<ReservationRequest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,7 +77,8 @@ export default function LandlordBookingReservations({ reservations, landlordId, 
     setMounted(true);
     const id = searchParams?.get('id');
     if (id && rawReservations.length > 0) {
-      const target = rawReservations.find(r => r.id === id);
+      const realId = decryptEntityId(id);
+      const target = rawReservations.find(r => r.id === realId || r.id === id);
       if (target && !isModalOpen) {
         setSelectedReservation(target);
         setIsModalOpen(true);
@@ -113,14 +128,16 @@ export default function LandlordBookingReservations({ reservations, landlordId, 
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         rawReservations={rawReservations}
+        filteredReservations={allFilteredReservations || filteredReservations}
         isArchived={isArchived}
         onToggleArchived={handleToggleArchivedView}
         onCreateWalkIn={() => setIsWalkInModalOpen(true)}
+        isLoading={isHeaderLoading}
       />
 
       <div className="min-h-[400px] relative">
         <AnimatePresence mode="wait">
-          {isLoading ? (
+          {showSyncingSpinner ? (
             <motion.div 
               key="loader"
               initial={{ opacity: 0 }}
@@ -235,6 +252,26 @@ export default function LandlordBookingReservations({ reservations, landlordId, 
             listings={listings}
             onSuccess={() => {
               window.location.reload();
+            }}
+          />
+
+          {/* Fullscreen Mascot Check-In Loader Modal */}
+          <ReservationCheckInLoaderModal
+            isOpen={!!checkInLoaderReservation}
+            guestName={checkInLoaderReservation?.user?.name || checkInLoaderReservation?.guestName || 'Guest'}
+            listingTitle={checkInLoaderReservation?.listing?.title}
+            onComplete={() => {
+              setCheckInLoaderReservation(null);
+            }}
+          />
+
+          {/* Fullscreen Mascot Cancellation Loader Modal */}
+          <ReservationCancelLoaderModal
+            isOpen={!!cancelLoaderReservation}
+            guestName={cancelLoaderReservation?.user?.name || cancelLoaderReservation?.guestName || 'Guest'}
+            listingTitle={cancelLoaderReservation?.listing?.title}
+            onComplete={() => {
+              setCancelLoaderReservation(null);
             }}
           />
         </>,

@@ -11,9 +11,12 @@ import { useBookingLogic, Booking } from './hooks/use-booking-logic';
 import { LandlordBookingHeader } from './components/landlord-booking-header';
 import { LandlordBookingCard } from './components/landlord-booking-card';
 import { LandlordBookingDetailsModal } from './components/landlord-booking-details-modal';
+import BookingCompleteLoaderModal from './components/BookingCompleteLoaderModal';
 import { useSearchParams } from 'next/navigation';
+import { decryptEntityId } from '@/lib/encryption';
 import { LandlordPagination } from '../shared/landlord-pagination';
 import LandlordArchiveModal from '../inquiry-center/components/landlord-inquiry-archive-modal';
+import { useLoading } from '@/components/loading/LoadingContext';
 
 interface LandlordBookingsProps {
   bookings: {
@@ -37,6 +40,7 @@ const paymentStatusColors: Record<string, string> = {
 };
 
 export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
+  const { isLoading: isGlobalLoading } = useLoading();
   const {
     nextCursor,
     isLoadingMore,
@@ -54,6 +58,7 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
     viewMode,
     setViewMode,
     filteredBookings,
+    allFilteredBookings,
     searchQuery,
     setSearchQuery,
     rawBookings,
@@ -64,8 +69,14 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
     handleLoadMore,
     handleGenerateReport,
     updatingId,
+    completeLoaderBooking,
+    setCompleteLoaderBooking,
+    isHeaderLoading,
+    isSyncing,
     isLoading
   } = useBookingLogic(bookings.bookings, bookings.nextCursor);
+
+  const showSyncingSpinner = !isGlobalLoading && (isSyncing || isLoading);
 
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -79,7 +90,8 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
     setMounted(true);
     const id = searchParams?.get('id');
     if (id && rawBookings.length > 0) {
-      const target = rawBookings.find(b => b.id === id);
+      const realId = decryptEntityId(id);
+      const target = rawBookings.find(b => b.id === realId || b.id === id);
       if (target && !isModalOpen) {
         setSelectedBooking(target);
         setIsModalOpen(true);
@@ -131,13 +143,15 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         rawBookings={rawBookings}
+        filteredBookings={allFilteredBookings || filteredBookings}
         isArchived={isArchived}
         onToggleArchived={handleToggleArchivedView}
+        isLoading={isHeaderLoading}
       />
 
       <div className="min-h-[400px] relative">
         <AnimatePresence mode="wait">
-          {isLoading ? (
+          {showSyncingSpinner ? (
             <motion.div 
               key="loader"
               initial={{ opacity: 0 }}
@@ -235,6 +249,13 @@ export default function LandlordBookings({ bookings }: LandlordBookingsProps) {
               }
             />
           )}
+
+          <BookingCompleteLoaderModal
+            isOpen={!!completeLoaderBooking}
+            guestName={(completeLoaderBooking?.user?.name || completeLoaderBooking?.guestName) || 'Tenant'}
+            listingTitle={completeLoaderBooking?.listing?.title}
+            onComplete={() => setCompleteLoaderBooking(null)}
+          />
         </>,
         document.body
       )}

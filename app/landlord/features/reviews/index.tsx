@@ -9,12 +9,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/helper';
 import { useRegisterActions } from 'kbar';
 import Button from "@/components/common/Button";
+import { useSearchParams } from 'next/navigation';
+import { decryptEntityId } from '@/lib/encryption';
 import { useReviewLogic, Review } from './hooks/use-review-logic';
 import { LandlordReviewHeader } from './components/landlord-review-header';
 import { LandlordReviewCard } from './components/landlord-review-card';
 import { LandlordReviewRespondModal } from './components/landlord-review-respond-modal';
 import { LandlordReviewDetailsModal } from './components/landlord-review-details-modal';
 import { LandlordPagination } from '../shared/landlord-pagination';
+import { useLoading } from '@/components/loading/LoadingContext';
 
 interface LandlordReviewsProps {
   reviews: {
@@ -24,8 +27,11 @@ interface LandlordReviewsProps {
 }
 
 export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
+  const searchParams = useSearchParams();
+  const { isLoading: isGlobalLoading } = useLoading();
   const {
     filteredReviews,
+    allFilteredReviews,
     totalReviews,
     currentPage,
     setCurrentPage,
@@ -49,13 +55,25 @@ export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
     respondModal,
     setRespondModal,
     updateReviewResponse,
+    isHeaderLoading,
+    isSyncing,
     isLoading
   } = useReviewLogic(reviews.reviews, reviews.nextCursor);
+
+  const showSyncingSpinner = !isGlobalLoading && (isSyncing || isLoading);
 
   const [detailsModal, setDetailsModal] = React.useState<{
     isOpen: boolean;
     reviewId: string | null;
   }>({ isOpen: false, reviewId: null });
+
+  React.useEffect(() => {
+    const id = searchParams?.get('id');
+    if (id && !detailsModal.isOpen) {
+      const decryptedId = decryptEntityId(id);
+      setDetailsModal({ isOpen: true, reviewId: decryptedId });
+    }
+  }, [searchParams, detailsModal.isOpen]);
 
   useRegisterActions(
     rawReviews.map((review) => ({
@@ -87,12 +105,14 @@ export default function LandlordReviews({ reviews }: LandlordReviewsProps) {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         rawReviews={rawReviews}
+        filteredReviews={allFilteredReviews || filteredReviews}
+        isLoading={isHeaderLoading}
       />
 
 
       <div className="min-h-[400px] relative">
         <AnimatePresence mode="wait">
-          {isLoading ? (
+          {showSyncingSpinner ? (
             <motion.div 
               key="loader"
               initial={{ opacity: 0 }}

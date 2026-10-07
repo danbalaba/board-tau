@@ -67,18 +67,23 @@ export function useLandlordSettings(initialTab?: 'profile' | 'security') {
 
   // Fetch initial data
   useEffect(() => {
+    let isMounted = true;
     const fetchProfile = async () => {
       try {
         const response = await fetch('/api/user/profile');
+        if (!response.ok) {
+          console.warn(`[Profile Fetch] Received status ${response.status}`);
+          return;
+        }
         const data = await response.json();
         
-        if (data) {
+        if (data && !data.error && isMounted) {
           let initialLatLng: [number, number] = TAU_COORDINATES;
           const addressQuery = data.address || (data.city ? `${data.city}, ${data.region || ''}` : '');
           if (addressQuery && addressQuery.length > 3) {
             try {
               const addressInfo = await geocodeAddress(addressQuery);
-              if (addressInfo && addressInfo.coordinates) {
+              if (addressInfo && addressInfo.coordinates && isMounted) {
                 initialLatLng = addressInfo.coordinates;
               }
             } catch (e) {
@@ -102,13 +107,18 @@ export function useLandlordSettings(initialTab?: 'profile' | 'security') {
           setInitialFormData(fetchedData);
         }
       } catch (err) {
-        console.error('Error fetching profile:', err);
+        console.warn('Unable to fetch profile (network or session issue):', err);
       } finally {
-        setIsInitialLoad(false);
+        if (isMounted) {
+          setIsInitialLoad(false);
+        }
       }
     };
 
     fetchProfile();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const isDirty = Boolean(

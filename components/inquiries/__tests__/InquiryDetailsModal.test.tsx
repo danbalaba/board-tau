@@ -196,7 +196,7 @@ describe('InquiryDetailsModal', () => {
 
     const chatBtn = screen.getByText(/Chat with Host/i);
     fireEvent.click(chatBtn);
-    expect(mockRouter.push).toHaveBeenCalledWith('/messages?listingId=list-1&otherUserId=landlord-1');
+    expect(mockRouter.push).toHaveBeenCalledWith(expect.stringContaining('/messages?token='));
   });
 
   it('navigates to reservations when View button is clicked (APPROVED status)', () => {

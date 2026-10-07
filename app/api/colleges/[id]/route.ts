@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { cache } from "@/lib/redis";
 
 // Helper function to create audit log
 async function createAuditLog(action: string, entityId: string, details: any, req: Request) {
@@ -113,6 +114,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       req
     );
 
+    try { await cache.del("taxonomy:campusColleges:active"); } catch (cErr) { console.error("[COLLEGES_PUT_CACHE_CLEAR_ERROR]", cErr); }
+
     return NextResponse.json(updatedCollege);
   } catch (error: any) {
     console.error("[COLLEGES_PUT]", error);
@@ -164,6 +167,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       req
     );
 
+    try { await cache.del("taxonomy:campusColleges:active"); } catch (cErr) { console.error("[COLLEGES_PATCH_CACHE_CLEAR_ERROR]", cErr); }
+
     return NextResponse.json(updatedCollege);
   } catch (error: any) {
     console.error("[COLLEGES_PATCH]", error);
@@ -206,6 +211,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       },
       req
     );
+
+    try { await cache.del("taxonomy:campusColleges:active"); } catch (cErr) { console.error("[COLLEGES_DELETE_CACHE_CLEAR_ERROR]", cErr); }
 
     return NextResponse.json({ success: true, message: `Campus landmark '${existingCollege.name}' deleted.` });
   } catch (error: any) {

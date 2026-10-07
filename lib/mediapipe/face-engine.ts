@@ -14,7 +14,6 @@ export interface FaceValidationResult {
  */
 export class FaceEngine {
   private faceLandmarker: FaceLandmarker | null = null;
-  private objectDetector: ObjectDetector | null = null;
 
   public async warmup() {
     await this.getModels();
@@ -23,22 +22,17 @@ export class FaceEngine {
   public dispose() {
     visionManager.disposeAll();
     this.faceLandmarker = null;
-    this.objectDetector = null;
   }
 
   private async getModels() {
     if (!this.faceLandmarker) this.faceLandmarker = await visionManager.createFaceLandmarker();
-    if (!this.objectDetector) this.objectDetector = await visionManager.createObjectDetector();
-    return { 
-      face: this.faceLandmarker, 
-      object: this.objectDetector
-    };
+    return { face: this.faceLandmarker };
   }
 
   public async validateFace(
     imageElement: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement
   ): Promise<FaceValidationResult> {
-    const { face, object } = await this.getModels();
+    const { face } = await this.getModels();
 
     // Protection: Ensure the element actually has loaded frame data
     const width = 'videoWidth' in imageElement ? imageElement.videoWidth : imageElement.width;
@@ -49,27 +43,6 @@ export class FaceEngine {
             score: 0,
             reason: "Camera stream initializing..."
         };
-    }
-
-    // 1. ANTI-SPOOFING (Phone/Screen Detection)
-    const objectResult = object.detect(imageElement);
-    const spoofCategories = [
-      "phone", "cell", "laptop", "tv", "monitor", "tablet", 
-      "screen", "display", "book", "remote", "paper", "picture", "photo"
-    ];
-    
-    const spoofDetection = objectResult.detections?.find(d => {
-      const categoryName = d.categories[0].categoryName.toLowerCase();
-      return spoofCategories.some(spoof => categoryName.includes(spoof));
-    });
-
-    // Extreme Paranoia Threshold (10%) to catch completely obscured/close-up devices
-    if (spoofDetection && spoofDetection.categories[0].score > 0.10) {
-      return {
-        isValid: false,
-        score: 0,
-        reason: `Spoofing detected (${spoofDetection.categories[0].categoryName}). Please use your real face.`
-      };
     }
 
 
@@ -185,8 +158,8 @@ export class FaceEngine {
     
     // FIXED MIRRORING BUG:
     if (leftDist > 0 && rightDist > 0) {
-      if (rightDist / leftDist > 2.0) turnRight = true;
-      if (leftDist / rightDist > 2.0) turnLeft = true;
+      if (rightDist / leftDist > 1.4) turnRight = true;
+      if (leftDist / rightDist > 1.4) turnLeft = true;
     }
 
     let blink = false;
@@ -205,10 +178,10 @@ export class FaceEngine {
       const browOuterRight = categories.find(c => c.categoryName === 'browOuterUpRight')?.score ?? 0;
       const browInner = categories.find(c => c.categoryName === 'browInnerUp')?.score ?? 0;
 
-      if (leftBlink > 0.45 || rightBlink > 0.45) blink = true;
-      if (smileLeft > 0.5 && smileRight > 0.5) smile = true;
-      if (jawOpen > 0.30) openMouth = true;
-      if (browOuterLeft > 0.35 || browOuterRight > 0.35 || browInner > 0.35) raiseEyebrows = true;
+      if (leftBlink > 0.35 || rightBlink > 0.35) blink = true;
+      if (smileLeft > 0.40 && smileRight > 0.40 && jawOpen < 0.35) smile = true;
+      if (jawOpen > 0.25 && (smileLeft < 0.40 || smileRight < 0.40)) openMouth = true;
+      if (browOuterLeft > 0.20 || browOuterRight > 0.20 || browInner > 0.20) raiseEyebrows = true;
     }
 
     return { 
@@ -247,8 +220,8 @@ export class FaceEngine {
     let turnRight = false;
     
     if (leftDist > 0 && rightDist > 0) {
-      if (rightDist / leftDist > 2.0) turnRight = true;
-      if (leftDist / rightDist > 2.0) turnLeft = true;
+      if (rightDist / leftDist > 1.4) turnRight = true;
+      if (leftDist / rightDist > 1.4) turnLeft = true;
     }
 
     // 2. Calculate Blendshapes (Blink, Smile, Open Mouth, Raise Eyebrows)
@@ -268,10 +241,10 @@ export class FaceEngine {
       const browOuterRight = categories.find(c => c.categoryName === 'browOuterUpRight')?.score ?? 0;
       const browInner = categories.find(c => c.categoryName === 'browInnerUp')?.score ?? 0;
 
-      if (leftBlink > 0.45 || rightBlink > 0.45) blink = true;
-      if (smileLeft > 0.5 && smileRight > 0.5) smile = true;
-      if (jawOpen > 0.30) openMouth = true;
-      if (browOuterLeft > 0.35 || browOuterRight > 0.35 || browInner > 0.35) raiseEyebrows = true;
+      if (leftBlink > 0.35 || rightBlink > 0.35) blink = true;
+      if (smileLeft > 0.40 && smileRight > 0.40 && jawOpen < 0.35) smile = true;
+      if (jawOpen > 0.25 && (smileLeft < 0.40 || smileRight < 0.40)) openMouth = true;
+      if (browOuterLeft > 0.20 || browOuterRight > 0.20 || browInner > 0.20) raiseEyebrows = true;
     }
 
     return { blink, smile, turnLeft, turnRight, openMouth, raiseEyebrows };

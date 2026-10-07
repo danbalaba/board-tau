@@ -22,6 +22,7 @@ jest.mock('@/utils/pdfGenerator', () => ({
 jest.mock('next/navigation', () => ({
   __esModule: true,
   useRouter: jest.fn(),
+  useSearchParams: jest.fn().mockReturnValue(new URLSearchParams()),
 }));
 
 const mockProperties: Property[] = [

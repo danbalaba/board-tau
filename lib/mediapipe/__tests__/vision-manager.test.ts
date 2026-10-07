@@ -52,17 +52,4 @@ describe("visionManager", () => {
       numFaces: 1,
     }));
   });
-
-  it("creates ObjectDetector with correct options", async () => {
-    const obj = await visionManager.createObjectDetector();
-    expect(obj).toBe("mock-object-detector");
-    expect(ObjectDetector.createFromOptions).toHaveBeenCalledWith("mock-resolver", expect.objectContaining({
-      baseOptions: {
-        modelAssetPath: `/models/id_detector.tflite`,
-        delegate: "GPU",
-      },
-      scoreThreshold: 0.5,
-      runningMode: "IMAGE",
-    }));
-  });
 });

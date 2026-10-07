@@ -5,23 +5,19 @@ import { visionManager } from "../vision-manager";
 jest.mock("../vision-manager", () => ({
   visionManager: {
     createFaceLandmarker: jest.fn(),
-    createObjectDetector: jest.fn(),
   }
 }));
 
 describe("FaceEngine", () => {
   let engine: FaceEngine;
   let mockFaceLandmarker: any;
-  let mockObjectDetector: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
     
     mockFaceLandmarker = { detect: jest.fn() };
-    mockObjectDetector = { detect: jest.fn() };
 
     (visionManager.createFaceLandmarker as jest.Mock).mockResolvedValue(mockFaceLandmarker);
-    (visionManager.createObjectDetector as jest.Mock).mockResolvedValue(mockObjectDetector);
 
     engine = new FaceEngine();
   });
@@ -35,7 +31,6 @@ describe("FaceEngine", () => {
     it("initializes all models", async () => {
       await engine.warmup();
       expect(visionManager.createFaceLandmarker).toHaveBeenCalled();
-      expect(visionManager.createObjectDetector).toHaveBeenCalled();
     });
   });
 
@@ -47,19 +42,8 @@ describe("FaceEngine", () => {
       expect(result.reason).toBe("Camera stream initializing...");
     });
 
-    it("detects spoofing (phone/screen)", async () => {
-      const video = createMockVideo();
-      mockObjectDetector.detect.mockReturnValue({
-        detections: [{ categories: [{ categoryName: "cell phone", score: 0.15 }] }]
-      });
-      const result = await engine.validateFace(video);
-      expect(result.isValid).toBe(false);
-      expect(result.reason).toContain("Spoofing detected");
-    });
-
     it("fails if no face detected", async () => {
       const video = createMockVideo();
-      mockObjectDetector.detect.mockReturnValue({ detections: [] });
       mockFaceLandmarker.detect.mockReturnValue({ faceLandmarks: [] });
 
       const result = await engine.validateFace(video);
@@ -69,7 +53,6 @@ describe("FaceEngine", () => {
 
     it("fails if face is not centered", async () => {
       const video = createMockVideo();
-      mockObjectDetector.detect.mockReturnValue({ detections: [] });
       
       // Face pushed to the extreme top left
       mockFaceLandmarker.detect.mockReturnValue({ 
@@ -85,7 +68,6 @@ describe("FaceEngine", () => {
 
     it("fails if eyes are closed", async () => {
       const video = createMockVideo();
-      mockObjectDetector.detect.mockReturnValue({ detections: [] });
       
       // Perfectly centered face
       const landmarks = Array(300).fill({ x: 0.5, y: 0.5 });
@@ -107,7 +89,6 @@ describe("FaceEngine", () => {
 
     it("fails if anatomical integrity fails (obscured/weird aspect ratio)", async () => {
       const video = createMockVideo();
-      mockObjectDetector.detect.mockReturnValue({ detections: [] });
       
       const landmarks = Array(300).fill({ x: 0.5, y: 0.5 });
       // Break symmetry ratio by making left eye super far
@@ -130,7 +111,6 @@ describe("FaceEngine", () => {
 
     it("passes a valid centered face", async () => {
       const video = createMockVideo();
-      mockObjectDetector.detect.mockReturnValue({ detections: [] });
       
       const landmarks = Array(300).fill({ x: 0.5, y: 0.5 });
       // Normal proportions

@@ -24,80 +24,95 @@ function safeSetStorage(key: string, value: any): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  } catch {}
+  } catch { }
 }
 
 function safeRemoveStorage(key: string): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(key);
-  } catch {}
+  } catch { }
 }
 
 const memoryCache: Record<string, TaxonomyCacheEntry> = {};
 
-if (typeof window !== 'undefined') {
-  window.addEventListener('storage', (event) => {
+export function notifySearchTaxonomyUpdated(detail?: any) {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("search_taxonomy_updated", { detail }));
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
     if (event.key && event.key.startsWith(STORAGE_PREFIX)) {
-      const type = event.key.replace(STORAGE_PREFIX, '');
+      const type = event.key.replace(STORAGE_PREFIX, "");
       const stored = safeGetStorage<TaxonomyCacheEntry>(event.key);
       if (stored) {
         memoryCache[type] = stored;
       } else {
         delete memoryCache[type];
       }
+      notifySearchTaxonomyUpdated({ storageEvent: true, key: event.key, type });
     }
   });
 }
 
 /**
- * ⚡ Fetches user-side search taxonomy data (Amenities, Rules, Features) with instant local cache.
+ * ⚡ Fetches user-side search taxonomy data (Amenities, Rules, Features) with instant local cache + background revalidation.
  */
-export async function fetchTaxonomyData(type: string, forceFresh = false) {
+export async function fetchTaxonomyData(type: string, forceFresh = false): Promise<TaxonomyCacheEntry> {
   const now = Date.now();
   const syncData = getTaxonomyDataSync(type);
 
-  if (!forceFresh && syncData && now - syncData.timestamp < CACHE_TTL_MS) {
-    return syncData;
-  }
+  const revalidate = async () => {
+    try {
+      const [attrRes, sgRes] = await Promise.all([
+        axios.get(`/api/admin/attributes?type=${type}&t=${Date.now()}`),
+        axios.get(`/api/admin/sub-groups?type=${type}&t=${Date.now()}`),
+      ]);
 
-  if (syncData && !forceFresh) {
-    // Revalidate in background if cache is old
-    Promise.all([
-      axios.get(`/api/admin/attributes?type=${type}&t=${now}`),
-      axios.get(`/api/admin/sub-groups?type=${type}&t=${now}`),
-    ]).then(([attrRes, sgRes]) => {
+      const freshAttrs = attrRes.data?.data || [];
+      const freshSubGroups = sgRes.data?.data || [];
       const entry: TaxonomyCacheEntry = {
-        attributes: attrRes.data?.data || [],
-        subGroups: sgRes.data?.data || [],
-        timestamp: now,
+        attributes: freshAttrs,
+        subGroups: freshSubGroups,
+        timestamp: Date.now(),
       };
+
+      const prevEntry = memoryCache[type] || safeGetStorage<TaxonomyCacheEntry>(STORAGE_PREFIX + type);
+      const hasChanged =
+        !prevEntry ||
+        JSON.stringify(prevEntry.attributes) !== JSON.stringify(freshAttrs) ||
+        JSON.stringify(prevEntry.subGroups) !== JSON.stringify(freshSubGroups);
+
       memoryCache[type] = entry;
       safeSetStorage(STORAGE_PREFIX + type, entry);
-    }).catch(err => console.warn(`[TaxonomyCache] Background revalidation failed for ${type}`, err));
 
+      if (hasChanged) {
+        notifySearchTaxonomyUpdated({ type, entry });
+      }
+
+      return entry;
+    } catch (err) {
+      console.warn(`[TaxonomyCache] Background revalidation failed for ${type}`, err);
+    }
+    return null;
+  };
+
+  if (forceFresh) {
+    const fresh = await revalidate();
+    if (fresh) return fresh;
+  } else {
+    // Initiate background revalidation so admin edits update tenant UI immediately
+    revalidate();
+  }
+
+  if (syncData) {
     return syncData;
   }
 
-  try {
-    const [attrRes, sgRes] = await Promise.all([
-      axios.get(`/api/admin/attributes?type=${type}&t=${now}`),
-      axios.get(`/api/admin/sub-groups?type=${type}&t=${now}`),
-    ]);
-
-    const entry: TaxonomyCacheEntry = {
-      attributes: attrRes.data?.data || [],
-      subGroups: sgRes.data?.data || [],
-      timestamp: now,
-    };
-
-    memoryCache[type] = entry;
-    safeSetStorage(STORAGE_PREFIX + type, entry);
-    return entry;
-  } catch (err) {
-    console.warn(`[TaxonomyCache] Failed fetching taxonomy for ${type}`, err);
-  }
-  return syncData || { attributes: [], subGroups: [], timestamp: now };
+  const fresh = await revalidate();
+  return fresh || { attributes: [], subGroups: [], timestamp: now };
 }
 
 /**
@@ -125,6 +140,8 @@ export function clearTaxonomyCache() {
       Object.keys(localStorage)
         .filter((k) => k.startsWith(STORAGE_PREFIX))
         .forEach((k) => safeRemoveStorage(k));
-    } catch {}
+    } catch { }
   }
+  notifySearchTaxonomyUpdated({ cleared: true });
 }
+

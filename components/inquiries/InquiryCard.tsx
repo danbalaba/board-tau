@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
-import { Eye, Calendar, Home, Trash2, MapPin, User, ArrowRight } from "lucide-react";
+import { Eye, Calendar, Home, Trash2, MapPin, User, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import SafeImage from "@/components/common/SafeImage";
 
@@ -60,6 +60,17 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
   hasNotification,
 }) => {
   const router = useRouter();
+  const [imgIdx, setImgIdx] = React.useState(0);
+
+  const cardImages = React.useMemo(() => {
+    if (inquiry.room?.images && inquiry.room.images.length > 0) {
+      return inquiry.room.images.map((img: any) => (typeof img === 'string' ? img : img.url));
+    }
+    if (inquiry.listing?.images && inquiry.listing.images.length > 0) {
+      return inquiry.listing.images.map((img: any) => (typeof img === 'string' ? img : img.url));
+    }
+    return [inquiry.listing?.imageSrc || "/images/placeholder.jpg"];
+  }, [inquiry]);
 
   const reservationStatus = (inquiry as any).reservations?.[0]?.status;
 
@@ -135,17 +146,45 @@ const InquiryCard: React.FC<InquiryCardProps> = ({
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
       
       {/* Room Image */}
-      <div className="h-44 w-full bg-gray-100 dark:bg-gray-700 relative overflow-hidden shrink-0">
+      <div className="h-44 w-full bg-gray-100 dark:bg-gray-700 relative overflow-hidden shrink-0 group/cardgallery">
         <SafeImage
-          src={(inquiry.room?.images && inquiry.room.images.length > 0) 
-            ? inquiry.room.images[0].url 
-            : (inquiry.listing?.images && inquiry.listing.images.length > 0)
-              ? inquiry.listing.images[0].url
-              : inquiry.listing?.imageSrc || "/images/placeholder.jpg"
-          }
+          src={cardImages[imgIdx] || cardImages[0]}
           alt={inquiry.room.name}
           unoptimized={true}
         />
+
+        {cardImages.length > 1 && (
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setImgIdx((prev) => (prev === 0 ? cardImages.length - 1 : prev - 1));
+              }}
+              className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/cardgallery:opacity-100 transition-opacity hover:bg-black/80 z-30 cursor-pointer shadow-md"
+              aria-label="Previous image"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setImgIdx((prev) => (prev === cardImages.length - 1 ? 0 : prev + 1));
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover/cardgallery:opacity-100 transition-opacity hover:bg-black/80 z-30 cursor-pointer shadow-md"
+              aria-label="Next image"
+            >
+              <ChevronRight size={16} />
+            </button>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-20">
+              {cardImages.map((_, idx) => (
+                <div
+                  key={idx}
+                  className={`h-1 rounded-full transition-all ${idx === imgIdx ? "w-4 bg-white" : "w-1 bg-white/50"}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
         
         {hasNotification && (
           <div className="absolute top-3 left-3 z-20">

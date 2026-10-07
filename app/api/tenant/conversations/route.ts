@@ -12,10 +12,17 @@ export async function GET(request: NextRequest) {
 
     const conversations = await getTenantConversations();
 
-    return NextResponse.json({
-      success: true,
-      data: conversations,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: conversations,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error fetching tenant conversations:", error);
     return NextResponse.json(

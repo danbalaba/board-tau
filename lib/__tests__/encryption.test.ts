@@ -24,7 +24,7 @@ describe('encryption', () => {
 
   it('returns placeholder if decryption fails due to invalid format', () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect(decryptMessage('invalid:format:string')).toBe('🔒 This message could not be decrypted.');
+    expect(decryptMessage('invalid:format:string')).toBe('🔒 This message was encrypted with a previous key.');
     consoleSpy.mockRestore();
   });
 });

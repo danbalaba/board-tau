@@ -5,7 +5,6 @@ import { IconChartLine } from '@tabler/icons-react';
 import ModernSelect from '@/components/common/ModernSelect';
 import GenerateReportButton from '@/components/common/GenerateReportButton';
 
-import Skeleton from '@/components/common/Skeleton';
 
 interface LandlordAnalyticsHeaderProps {
   timePeriod?: 'month' | 'quarter' | 'year';
@@ -20,25 +19,7 @@ export function LandlordAnalyticsHeader({
   handleGenerateReport,
   isLoading
 }: LandlordAnalyticsHeaderProps) {
-  if (isLoading) {
-    return (
-      <div className="bg-white dark:bg-gray-950 p-8 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <Skeleton className="w-16 h-16 rounded-[24px]" />
-            <div>
-              <Skeleton className="h-8 w-48 mb-2" variant="text" />
-              <Skeleton className="h-3 w-64 opacity-60" variant="text" />
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-40 rounded-xl" />
-            <Skeleton className="h-10 w-32 rounded-xl" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+
   return (
     <div className="bg-white dark:bg-gray-950 p-8 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-2xl shadow-gray-200/50 dark:shadow-black/20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -71,7 +52,7 @@ export function LandlordAnalyticsHeader({
           <GenerateReportButton 
             onGeneratePDF={handleGenerateReport || (async () => {})}
             outline={false}
-            className="h-10 sm:h-12 px-4 sm:px-6 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] sm:text-[11px] tracking-widest shadow-lg shadow-primary/25 border-b-4 border-primary/30 active:border-b-0 active:translate-y-0.5 transition-all flex items-center gap-2 shrink-0"
+            className="w-auto h-9 sm:h-11 px-3 sm:px-5 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] sm:text-[11px] tracking-wider sm:tracking-widest shadow-md shadow-primary/20 border-b-2 sm:border-b-4 border-primary/30 active:border-b-0 transition-all flex items-center justify-center gap-1.5 shrink-0"
           />
         </div>
       </div>

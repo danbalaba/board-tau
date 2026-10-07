@@ -137,6 +137,7 @@ export function UserNav() {
         isOpen={showLogoutConfirm} 
         onClose={() => setShowLogoutConfirm(false)}
         width="xs"
+        fullOnMobile={false}
       >
         <ConfirmModal
           isOpen={showLogoutConfirm}

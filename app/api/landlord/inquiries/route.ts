@@ -11,6 +11,7 @@ import {
 } from "@/services/landlord/inquiries";
 import { hasPermission } from "@/lib/rbac";
 import { getCurrentUser } from "@/services/user";
+import { decryptEntityId } from "@/lib/encryption";
 
 export async function GET(request: NextRequest) {
   try {
@@ -82,7 +83,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const result = await respondToInquiry(inquiryId, status, sanitizedMessage);
+    const result = await respondToInquiry(decryptEntityId(inquiryId), status, sanitizedMessage);
 
     return NextResponse.json({
       success: true,
@@ -158,7 +159,7 @@ export async function DELETE(request: NextRequest) {
 
               // Verify we are sending a valid external URL to EdgeStore
               if (targetUrl.startsWith('http')) {
-                 return await backendClient.identityDocs.deleteFile({ url: targetUrl });
+                 return await (backendClient.identityDocs as any).delete({ url: targetUrl });
               } else {
                  console.warn(`⚠️ Skipping delete for invalid/non-external URL: ${targetUrl}`);
               }

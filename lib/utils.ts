@@ -31,14 +31,17 @@ export function truncateText(text: string, maxLength: number) {
   return text.substring(0, maxLength) + "...";
 }
 
-// Utility function to format date
-export function formatDate(date: Date, options?: Intl.DateTimeFormatOptions) {
+// Utility function to format date into readable text (e.g., Sep 23, 2026)
+export function formatDate(date: Date | string | number | undefined | null, options?: Intl.DateTimeFormatOptions) {
+  if (!date) return '';
+  const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '';
   return new Intl.DateTimeFormat("en-US", {
-    day: "numeric",
     month: "short",
+    day: "numeric",
     year: "numeric",
     ...options,
-  }).format(date);
+  }).format(d);
 }
 
 // Utility function to debounce function calls

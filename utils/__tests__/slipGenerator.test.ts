@@ -30,7 +30,7 @@ beforeAll(() => {
 });
 
 jest.mock('jspdf', () => {
-  return jest.fn().mockImplementation(() => ({
+  const MockJsPDF = jest.fn().mockImplementation(() => ({
     addImage: jest.fn(),
     setFontSize: jest.fn(),
     setFont: jest.fn(),
@@ -42,9 +42,18 @@ jest.mock('jspdf', () => {
     setFillColor: jest.fn(),
     roundedRect: jest.fn(),
     rect: jest.fn(),
+    circle: jest.fn(),
+    splitTextToSize: jest.fn((text: string) => [text]),
+    getTextWidth: jest.fn().mockReturnValue(50),
     save: jest.fn(),
+    output: jest.fn().mockReturnValue(new Blob()),
     lastAutoTable: { finalY: 100 }
   }));
+  return {
+    __esModule: true,
+    default: MockJsPDF,
+    jsPDF: MockJsPDF,
+  };
 });
 
 jest.mock('jspdf-autotable', () => jest.fn());

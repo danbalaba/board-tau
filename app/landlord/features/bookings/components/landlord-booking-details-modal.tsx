@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Modal from '@/components/modals/Modal';
+import { useSession } from 'next-auth/react';
 import { Booking } from '../hooks/use-booking-logic';
 import Avatar from '@/components/common/Avatar';
 import { 
@@ -21,7 +22,8 @@ import {
   IconShieldCheck,
   IconDeviceMobile,
   IconMessage,
-  IconHome
+  IconHome,
+  IconDownload
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import { cn } from '@/utils/helper';
@@ -30,6 +32,8 @@ import { getSafeImageSrcString } from '@/components/modals/inquiry-modal/Inquiry
 import { generateLeaseContractPDF, previewPdfBlob } from '@/utils/contractPdfGenerator';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import MediaPreviewOverlay from '@/components/common/MediaPreviewOverlay';
+import { generateSingleItemPDF } from '@/utils/pdfGenerator';
+import { prepareSingleItemForExport } from '@/utils/export-utils';
 
 interface LandlordBookingDetailsModalProps {
   booking: Booking | null;
@@ -46,6 +50,7 @@ export function LandlordBookingDetailsModal({
   onUpdateStatus,
   isUpdatingStatus
 }: LandlordBookingDetailsModalProps) {
+  const { data: session } = useSession();
   const responsiveToast = useResponsiveToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -155,8 +160,8 @@ export function LandlordBookingDetailsModal({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} width="xl" hasFixedFooter={true} fullOnMobile={true}>
-        <div className="flex flex-col h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl">
+      <Modal isOpen={isOpen} onClose={onClose} width="full" noPadding={true} hasFixedFooter={true} closeOnOutsideClick={false} fullOnMobile={true}>
+        <div className="w-full h-full sm:h-auto sm:max-h-[90vh] max-w-full sm:max-w-5xl mx-auto sm:my-auto overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-none sm:rounded-3xl border-0 sm:border sm:border-gray-200 dark:sm:border-gray-800 shadow-2xl">
           
           {/* Top Header Bar - Mobile Collision Proof */}
           <div className="px-3.5 sm:px-8 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0 bg-white dark:bg-gray-900">
@@ -406,68 +411,39 @@ export function LandlordBookingDetailsModal({
                   </h4>
 
                   <div className="p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center justify-between text-[11px] sm:text-xs">
-                    <span className="text-gray-500 dark:text-gray-400 font-bold">Booking ID</span>
-                    <span className="font-mono font-black text-gray-900 dark:text-white truncate max-w-[140px] sm:max-w-[180px]">
-                      {booking.id}
+                    <span className="text-gray-500 dark:text-gray-400 font-bold">Booking Reference</span>
+                    <span className="font-mono font-black text-primary dark:text-primary-light text-xs sm:text-sm tracking-wider" title={booking.id}>
+                      #BK-{booking.id.slice(-8).toUpperCase()}
                     </span>
                   </div>
 
-                  {/* Verification Docs thumbnails if available */}
-                  {(signedGuestPhoto || signedGuestId) && (
-                    <div className="grid grid-cols-2 gap-2.5 sm:gap-3 pt-1">
-                      {signedGuestPhoto && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-gray-400">Guest Photo</span>
-                          <div 
-                            onClick={() => setMediaOverlay({
-                              isOpen: true,
-                              images: [signedGuestPhoto],
-                              currentIndex: 0,
-                              title: `Guest Photo - ${guestName}`,
-                              isDocument: true,
-                            })}
-                            className="group relative h-20 sm:h-24 rounded-xl sm:rounded-2xl overflow-hidden shadow-xs cursor-pointer border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"
-                          >
-                            <SafeImage 
-                              src={signedGuestPhoto} 
-                              alt="Guest Photo" 
-                              className="w-full h-full object-cover transition-transform group-hover:scale-105" 
-                              unoptimized={true}
-                            />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 text-white text-[10px] font-black uppercase tracking-wider backdrop-blur-[1px]">
-                              <IconEye size={14} />
-                              <span>Preview</span>
-                            </div>
+                  {/* Verification Docs thumbnail if available */}
+                  {signedGuestId && (
+                    <div className="pt-1">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-gray-400">Government ID</span>
+                        <div 
+                          onClick={() => setMediaOverlay({
+                            isOpen: true,
+                            images: [signedGuestId],
+                            currentIndex: 0,
+                            title: `Government ID - ${guestName}`,
+                            isDocument: true,
+                          })}
+                          className="group relative h-20 sm:h-24 rounded-xl sm:rounded-2xl overflow-hidden shadow-xs cursor-pointer border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"
+                        >
+                          <SafeImage 
+                            src={signedGuestId} 
+                            alt="Guest Government ID" 
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+                            unoptimized={true}
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 text-white text-[10px] font-black uppercase tracking-wider backdrop-blur-[1px]">
+                            <IconEye size={14} />
+                            <span>Preview Document</span>
                           </div>
                         </div>
-                      )}
-
-                      {signedGuestId && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-gray-400">Government ID</span>
-                          <div 
-                            onClick={() => setMediaOverlay({
-                              isOpen: true,
-                              images: [signedGuestId],
-                              currentIndex: 0,
-                              title: `Government ID - ${guestName}`,
-                              isDocument: true,
-                            })}
-                            className="group relative h-20 sm:h-24 rounded-xl sm:rounded-2xl overflow-hidden shadow-xs cursor-pointer border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"
-                          >
-                            <SafeImage 
-                              src={signedGuestId} 
-                              alt="Guest Government ID" 
-                              className="w-full h-full object-cover transition-transform group-hover:scale-105" 
-                              unoptimized={true}
-                            />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 text-white text-[10px] font-black uppercase tracking-wider backdrop-blur-[1px]">
-                              <IconEye size={14} />
-                              <span>Preview</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -525,6 +501,44 @@ export function LandlordBookingDetailsModal({
             
             {/* Right Primary Actions */}
             <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                className="flex-1 sm:flex-none h-10 sm:h-11 px-3 sm:px-4 text-[11px] sm:text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                title="Export Booking Confirmation Receipt PDF"
+                onClick={async () => {
+                  try {
+                    const formattedItem = prepareSingleItemForExport(booking, 'booking');
+                    const dateStamp = new Date().toISOString().slice(0, 10);
+                    const reportId = `BTAU-BOOK-${dateStamp.replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+                    const guestName = (booking.user?.name || booking.guestName || 'Guest');
+                    const fileName = `BoardTAU_Booking_${guestName.replace(/\s+/g, '_')}_Receipt`;
+
+                    const authorName = session?.user?.name || session?.user?.email || 'BoardTAU Landlord';
+
+                    await generateSingleItemPDF(
+                      fileName,
+                      formattedItem.title,
+                      formattedItem.category,
+                      formattedItem.kvPairs,
+                      formattedItem.sections,
+                      {
+                        title: formattedItem.title,
+                        subtitle: (formattedItem as any).subtitle,
+                        author: authorName,
+                        reportId: reportId,
+                        type: 'booking',
+                        showQR: false
+                      }
+                    );
+                    responsiveToast.success("Exported Booking Confirmation Receipt PDF!");
+                  } catch (e) {
+                    responsiveToast.error("Failed to export booking receipt.");
+                  }
+                }}
+              >
+                <IconDownload size={15} />
+                <span>Export Receipt</span>
+              </button>
+
               <button
                 disabled={isLoading}
                 className="flex-1 sm:flex-none h-10 sm:h-11 px-4 sm:px-5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"

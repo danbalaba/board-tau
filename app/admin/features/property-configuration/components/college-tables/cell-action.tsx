@@ -11,6 +11,7 @@ import { DeleteCollegeModal } from "../modals/delete-college-modal";
 import { IconDots } from "@tabler/icons-react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
+import { clearCollegesCache } from "@/lib/landlordTaxonomyCache";
 
 interface CellActionProps {
   data: any;
@@ -28,6 +29,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data, onRefresh }) => {
       const newStatus = !data.isActive;
       await axios.patch(`/api/colleges/${data.id}`, { isActive: newStatus });
       toast.success(`Landmark "${data.code || data.name}" ${newStatus ? "enabled" : "disabled"} successfully.`);
+      clearCollegesCache();
       queryClient.invalidateQueries({ queryKey: ["colleges"] });
       if (onRefresh) onRefresh();
     } catch (error: any) {

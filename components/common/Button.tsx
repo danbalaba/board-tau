@@ -32,7 +32,7 @@ const Button: React.FC<ButtonProps> = ({
       whileTap={{ scale: 0.98 }}
       transition={springBounce}
       className={cn(
-        "disabled:opacity-70 disabled:cursor-not-allowed rounded-input font-medium border w-full transition-all duration-200 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+        "disabled:opacity-70 disabled:cursor-not-allowed rounded-input font-medium border w-full transition-all duration-200 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent min-w-0 overflow-hidden",
         size === "small"
           ? "text-[15px] border py-3 px-4"
           : "text-[16px] font-semibold border-2 py-4 px-5",

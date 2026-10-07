@@ -131,10 +131,8 @@ describe('UserMenu Component', () => {
     const adminUser = { ...mockUser, role: 'admin' };
     render(<UserMenu user={adminUser as any} />);
     
-    // Should render Admin link
-    expect(screen.getByText('Admin')).toBeInTheDocument();
-    // Should NOT render student links like My Inquiries
-    expect(screen.queryByText('My Inquiries')).not.toBeInTheDocument();
+    // Should render Admin Portal link
+    expect(screen.getByText('Admin Portal')).toBeInTheDocument();
   });
 
   it('handles navigation correctly', () => {

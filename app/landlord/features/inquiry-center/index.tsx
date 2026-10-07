@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useSearchParams } from 'next/navigation';
+import { decryptEntityId } from '@/lib/encryption';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IconInbox, IconChevronDown, IconMessage } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
@@ -12,6 +13,7 @@ import { LandlordInquiryHeader } from './components/landlord-inquiry-header';
 import { LandlordInquiryCard } from './components/landlord-inquiry-card';
 import { LandlordInquiryModals } from './components/landlord-inquiry-modals';
 import { LandlordPagination } from '../shared/landlord-pagination';
+import { useLoading } from '@/components/loading/LoadingContext';
 
 interface LandlordInquiryCenterProps {
   inquiries: {
@@ -21,8 +23,10 @@ interface LandlordInquiryCenterProps {
 }
 
 export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCenterProps) {
+  const { isLoading: isGlobalLoading } = useLoading();
   const {
     filteredInquiries,
+    allFilteredInquiries,
     totalInquiries,
     currentPage,
     setCurrentPage,
@@ -58,16 +62,24 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
     handleGenerateReport,
     isArchived,
     handleToggleArchived,
+    approvalLoaderInquiry,
+    setApprovalLoaderInquiry,
+    rejectionLoaderInquiry,
+    setRejectionLoaderInquiry,
     rawInquiries,
+    isHeaderLoading,
+    isSyncing,
     isLoading
   } = useInquiryLogic(inquiries);
 
+  const showSyncingSpinner = !isGlobalLoading && (isSyncing || isLoading);
   const searchParams = useSearchParams();
 
   React.useEffect(() => {
     const id = searchParams?.get('id');
     if (id && rawInquiries.length > 0) {
-      const target = rawInquiries.find(i => i.id === id);
+      const realId = decryptEntityId(id);
+      const target = rawInquiries.find(i => i.id === realId || i.id === id);
       if (target && !viewModalOpen) {
         setSelectedInquiry(target);
         setViewModalOpen(true);
@@ -103,13 +115,15 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
         setViewMode={setViewMode}
         handleGenerateReport={handleGenerateReport}
         rawInquiries={rawInquiries}
+        filteredInquiries={allFilteredInquiries || filteredInquiries}
         isArchived={isArchived}
         onToggleArchived={handleToggleArchived}
+        isLoading={isHeaderLoading}
       />
 
       <div className="min-h-[400px] relative">
         <AnimatePresence mode="wait">
-          {isLoading ? (
+          {showSyncingSpinner ? (
             <motion.div 
               key="loader"
               initial={{ opacity: 0 }}
@@ -229,6 +243,10 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
         handleConfirmArchive={handleConfirmArchive}
         handleConfirmReject={handleConfirmReject}
         handleRespond={handleRespond}
+        approvalLoaderInquiry={approvalLoaderInquiry}
+        rejectionLoaderInquiry={rejectionLoaderInquiry}
+        onApprovalComplete={() => setApprovalLoaderInquiry(null)}
+        onRejectionComplete={() => setRejectionLoaderInquiry(null)}
       />
     </div>
   );

@@ -5,7 +5,8 @@ import {
   sendReservationNotificationEmail, 
   sendReservationFeeEmail 
 } from "@/services/email/notifications";
-import { createNotification } from "@/services/notification";
+import { createNotification, broadcastStatusChange } from "@/services/notification";
+import { encryptEntityId } from "@/lib/encryption";
 
 export async function POST(req: Request) {
   try {
@@ -140,7 +141,17 @@ export async function POST(req: Request) {
                 type: 'reservation',
                 title: 'New Confirmed Reservation',
                 description: `${updatedReservation.user?.name} has secured their reservation for ${updatedReservation.listing.title} via PayMongo.`,
-                link: `/landlord/reservations`
+                link: `/landlord/reservations?id=${encryptEntityId(updatedReservation.id)}`
+              });
+
+              // Real-time broadcast for Landlord & Tenant UI
+              await broadcastStatusChange({
+                tenantId: updatedReservation.userId!,
+                landlordId: updatedReservation.listing.userId,
+                entityType: "reservation",
+                entityId: updatedReservation.id,
+                status: "RESERVED",
+                payload: updatedReservation,
               });
             }
           } catch (notifErr) {
