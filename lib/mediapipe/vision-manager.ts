@@ -30,22 +30,29 @@ class VisionManager {
   public async createFaceLandmarker(): Promise<FaceLandmarker> {
     if (!this.faceLandmarkerInstance) {
       const resolver = await this.getResolver();
+      const isMobile = typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      // On mobile (especially iOS WebKit), GPU WebGL delegate causes severe thermal throttling and WebGL crashes.
+      // CPU delegate uses WebAssembly SIMD, which runs cool, stays within RAM limits, and avoids Safari crashes.
+      const primaryDelegate = isMobile ? "CPU" : "GPU";
+      const secondaryDelegate = isMobile ? "GPU" : "CPU";
+
       try {
         this.faceLandmarkerInstance = await FaceLandmarker.createFromOptions(resolver, {
           baseOptions: {
             modelAssetPath: `/models/face_landmarker.task`,
-            delegate: "GPU",
+            delegate: primaryDelegate,
           },
           outputFaceBlendshapes: true,
           runningMode: "IMAGE",
           numFaces: 1,
         });
-      } catch (gpuErr) {
-        console.warn("[VisionManager] GPU delegate failed for FaceLandmarker, falling back to CPU:", gpuErr);
+      } catch (err) {
+        console.warn(`[VisionManager] ${primaryDelegate} delegate failed for FaceLandmarker, falling back to ${secondaryDelegate}:`, err);
         this.faceLandmarkerInstance = await FaceLandmarker.createFromOptions(resolver, {
           baseOptions: {
             modelAssetPath: `/models/face_landmarker.task`,
-            delegate: "CPU",
+            delegate: secondaryDelegate,
           },
           outputFaceBlendshapes: true,
           runningMode: "IMAGE",

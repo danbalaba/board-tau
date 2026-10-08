@@ -157,17 +157,39 @@ export const useInquiryLogic = (
     }
   }, [currentStep, capturedSelfie]);
 
+  const isWarmingUpRef = useRef(false);
+  const isScanningRef = useRef(false);
+
   // Effect 1: Wake up / Sleep face-engine based on step
   useEffect(() => {
+    let isMounted = true;
     // Only load the heavy ML models if we are on the selfie step AND we don't have a selfie yet.
     if (currentStep === 5 && !capturedSelfie) {
-      setIsEngineReady(false); // Show initializing overlay
-      faceEngine.warmup().then(() => setIsEngineReady(true)); 
-    } else if (currentStep > 5 || capturedSelfie) {
+      if (!isEngineReady && !isWarmingUpRef.current) {
+        isWarmingUpRef.current = true;
+        faceEngine.warmup().then(() => {
+          if (isMounted) {
+            setIsEngineReady(true);
+            isWarmingUpRef.current = false;
+          }
+        }).catch((err) => {
+          console.warn("[MediaPipe Warmup Warning]:", err);
+          if (isMounted) {
+            isWarmingUpRef.current = false;
+            setIsEngineReady(true); // Allow fallback capture even if local warmup warns
+          }
+        });
+      }
+    } else if (currentStep !== 5 || capturedSelfie) {
+      isWarmingUpRef.current = false;
       setIsEngineReady(false);
       faceEngine.dispose();
     }
-  }, [currentStep, capturedSelfie, faceEngine]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentStep, capturedSelfie, isEngineReady]);
 
   const getScaledCanvas = (video: HTMLVideoElement) => {
     if (!scaledCanvasRef.current) {
@@ -182,64 +204,72 @@ export const useInquiryLogic = (
     return canvas;
   };
 
-  // Effect 2: Real-time scanning loop
+  // Effect 2: Real-time scanning loop with overlap lock
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (currentStep === 5 && !capturedSelfie && !isProcessing) {
+    if (currentStep === 5 && !capturedSelfie && !isProcessing && isEngineReady) {
       interval = setInterval(async () => {
-        const video = webcamRef.current?.video;
-        if (video && video.readyState === 4) {
-          const scaledCanvas = getScaledCanvas(video);
-          
-          // Use quickValidateFace to do everything in one pass!
-          const result = await faceEngine.quickValidateFace(scaledCanvas);
-          if (isFaceAlignedRef.current !== result.isValid) {
-            isFaceAlignedRef.current = result.isValid;
-            setIsFaceAligned(result.isValid);
-          }
+        if (isScanningRef.current) return; // Prevent async queue build-up on mobile
+        isScanningRef.current = true;
 
-          // FACE-LOSS DETECTION: Reset liveness if face disappears
-          if (livenessStatus === 'passed') {
-            if (!result.isValid) {
-              consecutiveFaceFailures.current += 1;
-              if (consecutiveFaceFailures.current >= 3) {
-                setLivenessStatus('idle');
-                setActiveChallenges(generateUniqueRandomChallenges());
+        try {
+          const video = webcamRef.current?.video;
+          if (video && video.readyState === 4) {
+            const scaledCanvas = getScaledCanvas(video);
+            
+            // Use quickValidateFace to do everything in one pass!
+            const result = await faceEngine.quickValidateFace(scaledCanvas);
+            if (isFaceAlignedRef.current !== result.isValid) {
+              isFaceAlignedRef.current = result.isValid;
+              setIsFaceAligned(result.isValid);
+            }
+
+            // FACE-LOSS DETECTION: Reset liveness if face disappears
+            if (livenessStatus === 'passed') {
+              if (!result.isValid) {
+                consecutiveFaceFailures.current += 1;
+                if (consecutiveFaceFailures.current >= 3) {
+                  setLivenessStatus('idle');
+                  setActiveChallenges(generateUniqueRandomChallenges());
+                  consecutiveFaceFailures.current = 0;
+                }
+              } else {
+                consecutiveFaceFailures.current = 0; 
+              }
+              return; 
+            }
+
+            // Check active challenge
+            const state = result.liveness;
+            if (state && livenessStatus === 'idle' && activeChallenges.length > 0) {
+              const currentChallenge = activeChallenges[0];
+              
+              if (
+                (currentChallenge === 'blink' && state.blink) ||
+                (currentChallenge === 'smile' && state.smile) ||
+                (currentChallenge === 'turnLeft' && state.turnLeft) ||
+                (currentChallenge === 'turnRight' && state.turnRight) ||
+                (currentChallenge === 'openMouth' && state.openMouth) ||
+                (currentChallenge === 'raiseEyebrows' && state.raiseEyebrows)
+              ) {
+                if (activeChallenges.length > 1) {
+                  setActiveChallenges(prev => prev.slice(1));
+                } else {
+                  setLivenessStatus('passed');
+                }
                 consecutiveFaceFailures.current = 0;
               }
-            } else {
-              consecutiveFaceFailures.current = 0; 
-            }
-            return; 
-          }
-
-          // Check active challenge
-          const state = result.liveness;
-          if (state && livenessStatus === 'idle' && activeChallenges.length > 0) {
-            const currentChallenge = activeChallenges[0];
-            
-            if (
-              (currentChallenge === 'blink' && state.blink) ||
-              (currentChallenge === 'smile' && state.smile) ||
-              (currentChallenge === 'turnLeft' && state.turnLeft) ||
-              (currentChallenge === 'turnRight' && state.turnRight) ||
-              (currentChallenge === 'openMouth' && state.openMouth) ||
-              (currentChallenge === 'raiseEyebrows' && state.raiseEyebrows)
-            ) {
-              if (activeChallenges.length > 1) {
-                setActiveChallenges(prev => prev.slice(1));
-              } else {
-                setLivenessStatus('passed');
-              }
-              consecutiveFaceFailures.current = 0;
             }
           }
+        } catch (err) {
+          console.warn("[Scanning Loop Warning]:", err);
+        } finally {
+          isScanningRef.current = false;
         }
-      }, 600);
+      }, 700);
     }
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, capturedSelfie, isProcessing, faceEngine, activeChallenges, livenessStatus]);
+  }, [currentStep, capturedSelfie, isProcessing, isEngineReady, activeChallenges, livenessStatus]);
 
 
   // ID Live Scan Loop REMOVED for Issue #9

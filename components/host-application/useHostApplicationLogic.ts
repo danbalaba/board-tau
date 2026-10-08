@@ -394,17 +394,38 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
   };
 
   const [isEngineReady, setIsEngineReady] = useState(false);
+  const isWarmingUpRef = useRef(false);
+  const isScanningRef = useRef(false);
 
   // Warm up / dispose face-engine based on step (Desktop Step 6 is Selfie Liveness)
   useEffect(() => {
+    let isMounted = true;
     if (step === 6 && !capturedSelfie) {
-      setIsEngineReady(false);
-      faceEngine.warmup().then(() => setIsEngineReady(true));
+      if (!isEngineReady && !isWarmingUpRef.current) {
+        isWarmingUpRef.current = true;
+        faceEngine.warmup().then(() => {
+          if (isMounted) {
+            setIsEngineReady(true);
+            isWarmingUpRef.current = false;
+          }
+        }).catch((err) => {
+          console.warn("[MediaPipe Warmup Warning]:", err);
+          if (isMounted) {
+            isWarmingUpRef.current = false;
+            setIsEngineReady(true);
+          }
+        });
+      }
     } else if (step !== 6 || capturedSelfie) {
+      isWarmingUpRef.current = false;
       setIsEngineReady(false);
       faceEngine.dispose();
     }
-  }, [step, capturedSelfie, faceEngine]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [step, capturedSelfie, isEngineReady]);
 
   const getScaledCanvas = (video: HTMLVideoElement) => {
     if (!scaledCanvasRef.current) {
@@ -444,56 +465,65 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
     let interval: NodeJS.Timeout;
     const isSelfieStep = step === 6;
     
-    if (isSelfieStep && !capturedSelfie && !isProcessing) {
+    if (isSelfieStep && !capturedSelfie && !isProcessing && isEngineReady) {
       interval = setInterval(async () => {
-        const video = webcamRef.current?.video;
-        if (video && video.readyState === 4) {
-          const scaledCanvas = getScaledCanvas(video);
-          
-          const result = await faceEngine.quickValidateFace(scaledCanvas);
-          if (isFaceAlignedRef.current !== result.isValid) {
-            isFaceAlignedRef.current = result.isValid;
-            setIsFaceAligned(result.isValid);
-          }
-          
-          if (livenessStatus === 'passed') {
-            if (!result.isValid) {
-              consecutiveFaceFailures.current += 1;
-              if (consecutiveFaceFailures.current >= 3) {
-                setLivenessStatus('idle');
-                setActiveChallenges(generateUniqueRandomChallenges());
+        if (isScanningRef.current) return;
+        isScanningRef.current = true;
+
+        try {
+          const video = webcamRef.current?.video;
+          if (video && video.readyState === 4) {
+            const scaledCanvas = getScaledCanvas(video);
+            
+            const result = await faceEngine.quickValidateFace(scaledCanvas);
+            if (isFaceAlignedRef.current !== result.isValid) {
+              isFaceAlignedRef.current = result.isValid;
+              setIsFaceAligned(result.isValid);
+            }
+            
+            if (livenessStatus === 'passed') {
+              if (!result.isValid) {
+                consecutiveFaceFailures.current += 1;
+                if (consecutiveFaceFailures.current >= 3) {
+                  setLivenessStatus('idle');
+                  setActiveChallenges(generateUniqueRandomChallenges());
+                  consecutiveFaceFailures.current = 0;
+                }
+              } else {
                 consecutiveFaceFailures.current = 0;
               }
-            } else {
-              consecutiveFaceFailures.current = 0;
+              return;
             }
-            return;
-          }
 
-          const state = result.liveness;
-          if (state && livenessStatus === 'idle' && activeChallenges.length > 0) {
-            const currentChallenge = activeChallenges[0];
-            if (
-              (currentChallenge === 'blink' && state.blink) ||
-              (currentChallenge === 'smile' && state.smile) ||
-              (currentChallenge === 'turnLeft' && state.turnLeft) ||
-              (currentChallenge === 'turnRight' && state.turnRight) ||
-              (currentChallenge === 'openMouth' && state.openMouth) ||
-              (currentChallenge === 'raiseEyebrows' && state.raiseEyebrows)
-            ) {
-              if (activeChallenges.length > 1) {
-                setActiveChallenges(prev => prev.slice(1));
-              } else {
-                setLivenessStatus('passed');
+            const state = result.liveness;
+            if (state && livenessStatus === 'idle' && activeChallenges.length > 0) {
+              const currentChallenge = activeChallenges[0];
+              if (
+                (currentChallenge === 'blink' && state.blink) ||
+                (currentChallenge === 'smile' && state.smile) ||
+                (currentChallenge === 'turnLeft' && state.turnLeft) ||
+                (currentChallenge === 'turnRight' && state.turnRight) ||
+                (currentChallenge === 'openMouth' && state.openMouth) ||
+                (currentChallenge === 'raiseEyebrows' && state.raiseEyebrows)
+              ) {
+                if (activeChallenges.length > 1) {
+                  setActiveChallenges(prev => prev.slice(1));
+                } else {
+                  setLivenessStatus('passed');
+                }
+                consecutiveFaceFailures.current = 0;
               }
-              consecutiveFaceFailures.current = 0;
             }
           }
+        } catch (err) {
+          console.warn("[Scanning Loop Warning]:", err);
+        } finally {
+          isScanningRef.current = false;
         }
-      }, 600);
+      }, 700);
     }
     return () => clearInterval(interval);
-  }, [step, capturedSelfie, isProcessing, faceEngine, activeChallenges, livenessStatus]);
+  }, [step, capturedSelfie, isProcessing, isEngineReady, activeChallenges, livenessStatus]);
 
   const handleCaptureSelfie = async () => {
     const video = webcamRef.current?.video;
