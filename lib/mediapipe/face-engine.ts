@@ -133,7 +133,7 @@ export class FaceEngine {
 
     const landmarks = faceResult.faceLandmarks[0];
 
-    // 1. POSITIONING & CENTERING
+    // 1. POSITIONING & CENTERING (Tuned for both mobile portrait & desktop webcam streams)
     const noseTip = landmarks[1];
     const leftEye = landmarks[33];
     const rightEye = landmarks[263];
@@ -142,7 +142,7 @@ export class FaceEngine {
     const faceCenterY = (leftEye.y + rightEye.y + noseTip.y) / 3;
 
     let isValid = true;
-    if (faceCenterX < 0.35 || faceCenterX > 0.65 || faceCenterY < 0.25 || faceCenterY > 0.75) {
+    if (faceCenterX < 0.25 || faceCenterX > 0.75 || faceCenterY < 0.15 || faceCenterY > 0.85) {
       isValid = false;
     }
 

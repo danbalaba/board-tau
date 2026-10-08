@@ -192,15 +192,35 @@ export const useInquiryLogic = (
   }, [currentStep, capturedSelfie, isEngineReady]);
 
   const getScaledCanvas = (video: HTMLVideoElement) => {
+    const vWidth = video.videoWidth || 320;
+    const vHeight = video.videoHeight || 240;
+    const maxDim = 360;
+    
+    let targetWidth = vWidth;
+    let targetHeight = vHeight;
+    
+    if (vWidth > vHeight) {
+      if (vWidth > maxDim) {
+        targetWidth = maxDim;
+        targetHeight = Math.round((vHeight / vWidth) * maxDim);
+      }
+    } else {
+      if (vHeight > maxDim) {
+        targetHeight = maxDim;
+        targetWidth = Math.round((vWidth / vHeight) * maxDim);
+      }
+    }
+
     if (!scaledCanvasRef.current) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 320;
-      canvas.height = 240;
-      scaledCanvasRef.current = canvas;
+      scaledCanvasRef.current = document.createElement('canvas');
     }
     const canvas = scaledCanvasRef.current;
+    if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+    }
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    ctx?.drawImage(video, 0, 0, 320, 240);
+    ctx?.drawImage(video, 0, 0, targetWidth, targetHeight);
     return canvas;
   };
 
