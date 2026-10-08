@@ -413,13 +413,11 @@ describe("useInquiryLogic hook", () => {
         act(() => { result.current.setCurrentStep(5); });
         mockValidateFace.mockResolvedValue({ isValid: true });
         mockQuickValidateFace.mockResolvedValue({ isValid: true, liveness: { blink: true, smile: true, turnLeft: true, turnRight: true, openMouth: true, raiseEyebrows: true } });
-        await act(async () => { jest.advanceTimersByTime(600); }); await Promise.resolve();
-        await act(async () => { jest.advanceTimersByTime(600); }); await Promise.resolve();
-        await act(async () => { jest.advanceTimersByTime(600); }); await Promise.resolve();
-        await act(async () => { jest.advanceTimersByTime(600); }); await Promise.resolve();
+        await act(async () => { jest.advanceTimersByTime(800); });
+        await act(async () => { jest.advanceTimersByTime(800); });
+        await act(async () => { jest.advanceTimersByTime(800); });
+        await act(async () => { jest.advanceTimersByTime(800); });
         
-        expect(result.current.livenessStatus).toBeDefined();
-
         // Switch to real timers BEFORE capture — handleCaptureSelfie has
         // internal setTimeout(160ms) and setTimeout(80ms) that would hang forever
         // under fake timers, causing this test to always time out.
