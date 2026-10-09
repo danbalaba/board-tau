@@ -90,14 +90,15 @@ export async function POST(req: Request) {
     const region = process.env.AWS_REGION || 'ap-southeast-1';
 
     if (!accessKeyId || !secretAccessKey) {
-      console.warn('[Server KYC] AWS Credentials missing in environment variables. Falling back to local pass.');
+      console.warn('[Server KYC] AWS Credentials missing in environment variables.');
       return NextResponse.json({
-        success: true,
-        verifiedBy: 'client-fallback',
-        similarity: 100,
-        hasIDKeywords: true,
-        message: 'AWS Rekognition credentials not configured; local verification accepted.',
-      });
+        success: false,
+        verifiedBy: 'Biometric AI Engine',
+        similarity: 0,
+        status: 'NEEDS_MANUAL_REVIEW',
+        error: 'Identity verification service configuration error.',
+        reason: 'Identity verification service is currently unavailable.',
+      }, { status: 400 });
     }
 
     const sessionToken = process.env.AWS_SESSION_TOKEN;
@@ -345,32 +346,40 @@ export async function POST(req: Request) {
       compareResult = await client.send(compareCmd);
     } catch (err: any) {
       console.warn('[AWS Rekognition] CompareFaces failed:', err instanceof Error ? err.message.replace(/[\r\n]/g, ' ') : String(err));
+      const errStr = (err.message || '').toLowerCase();
       if (
         err.name === 'UnrecognizedClientException' ||
         err.name === 'InvalidSignatureException' ||
         err.name === 'AccessDeniedException' ||
         err.name === 'AuthFailure' ||
-        err.message?.includes('security token')
+        errStr.includes('security token')
       ) {
         awsAuthError = err.message || 'AWS Rekognition credentials or security token is invalid.';
       } else if (
         err.name === 'InvalidParameterException' ||
-        err.message?.includes('no faces') ||
-        err.message?.includes('invalid parameters')
+        errStr.includes('no faces') ||
+        errStr.includes('invalid parameters')
       ) {
-        noFaceDetectedError = 'No face photo detected on uploaded ID card.';
+        if (errStr.includes('source') || errStr.includes('sourceimage')) {
+          noFaceDetectedError = 'No face detected in your live selfie photo. Please retake a clear selfie showing your face.';
+        } else if (errStr.includes('target') || errStr.includes('targetimage')) {
+          noFaceDetectedError = 'No face photo detected on uploaded ID card.';
+        } else {
+          noFaceDetectedError = 'No face detected in selfie or ID card. Please ensure your face is clearly visible.';
+        }
       }
     }
 
     if (awsAuthError) {
-      console.warn('[AWS Rekognition Auth Warning]: Invalid AWS Credentials in .env file. Falling back to local pass.');
+      console.warn('[AWS Rekognition Auth Warning]: Invalid AWS Credentials in .env file.');
       return NextResponse.json({
-        success: true,
-        verifiedBy: 'client-fallback',
-        similarity: 100,
-        hasIDKeywords: true,
-        message: `AWS Credentials Error: ${awsAuthError}. Falling back to local pass.`,
-      });
+        success: false,
+        verifiedBy: 'Biometric AI Engine',
+        similarity: 0,
+        status: 'NEEDS_MANUAL_REVIEW',
+        error: `Authentication Error: ${awsAuthError}`,
+        reason: 'Identity verification service check failed. Please try again later.',
+      }, { status: 400 });
     }
 
     if (noFaceDetectedError) {
