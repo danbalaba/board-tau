@@ -47,6 +47,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
   const [videoDevices, setVideoDevices] = React.useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = React.useState<string | null>(null);
   const [isRingLightActive, setIsRingLightActive] = React.useState<boolean>(false);
+  const [isStreamLoaded, setIsStreamLoaded] = React.useState<boolean>(false);
   const { isLockedOut, timerText } = useKYCLockout();
 
   // Screen WakeLock to prevent dimming during live selfie scan
@@ -105,6 +106,47 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
     }
   }, [capturedSelfie]);
 
+  const [isMobile, setIsMobile] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const getVideoConstraints = React.useCallback(() => {
+    if (selectedDeviceId) {
+      return { deviceId: { exact: selectedDeviceId } };
+    }
+    if (isMobile) {
+      return {
+        facingMode: facingMode,
+        width: { ideal: 1080 },
+        height: { ideal: 1440 },
+        aspectRatio: { ideal: 0.75 }
+      };
+    }
+    return {
+      facingMode: facingMode,
+      width: { ideal: 1920 },
+      height: { ideal: 1080 },
+      aspectRatio: { ideal: 1.7777777778 }
+    };
+  }, [selectedDeviceId, facingMode, isMobile]);
+
+  const [webcamKey, setWebcamKey] = React.useState<number>(0);
+
+  const handleClearSelfie = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsStreamLoaded(false);
+    setCapturedSelfie(null);
+    setIsFaceAligned(false);
+    setWebcamKey((prev) => prev + 1);
+  };
+
   return (
     <div className="space-y-3.5 animate-in fade-in duration-500">
       {!hideHeader && (
@@ -134,16 +176,14 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
           ) : (
             <>
               <Webcam
-                key={selectedDeviceId || facingMode}
+                key={`${selectedDeviceId || facingMode}-${isMobile ? 'mobile' : 'desktop'}-${webcamKey}`}
                 audio={false}
                 ref={webcamRef as any}
                 screenshotFormat="image/jpeg"
                 mirrored={facingMode === "user"}
-                videoConstraints={
-                  selectedDeviceId
-                    ? { deviceId: { exact: selectedDeviceId }, width: { ideal: 640 }, height: { ideal: 480 } }
-                    : { facingMode: facingMode, width: { ideal: 640 }, height: { ideal: 480 } }
-                }
+                onUserMedia={() => setTimeout(() => setIsStreamLoaded(true), 300)}
+                onUserMediaError={() => setIsStreamLoaded(false)}
+                videoConstraints={getVideoConstraints()}
                 className="w-full h-full object-cover grayscale-[0.2]"
               />
 
@@ -161,22 +201,22 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                   <motion.ellipse
                     cx="50" cy="55" rx="30" ry="42"
                     fill="none"
-                    stroke={isFaceAligned ? "#2f7d6d" : "rgba(255,255,255,0.3)"}
+                    stroke="rgba(255, 255, 255, 0.45)"
                     strokeWidth="1"
                     strokeDasharray="4 2"
                     animate={{ strokeDashoffset: [0, 10] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                   />
 
                   {!isProcessing && (
                     <motion.line
                       x1="20" y1="20" x2="80" y2="20"
-                      stroke="#2f7d6d"
+                      stroke="rgba(255, 255, 255, 0.3)"
                       strokeWidth="0.5"
                       initial={{ y: 0, opacity: 0 }}
                       animate={{
                         y: [30, 90, 30],
-                        opacity: [0, 0.6, 0]
+                        opacity: [0, 0.5, 0]
                       }}
                       transition={{
                         duration: 3,
@@ -191,42 +231,18 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
               {/* Top-Middle Notification System */}
               <div className="absolute top-0 left-0 right-0 z-50 pointer-events-none flex justify-center">
                 <AnimatePresence mode="wait">
-                  {isFaceAligned && livenessStatus === 'passed' && !isProcessing ? (
+                  {!isProcessing && (
                     <motion.div
-                      key="face-centered"
-                      initial={{ y: -60, opacity: 0 }}
-                      animate={{ y: 12, opacity: 1 }}
-                      exit={{ y: -60, opacity: 0 }}
-                      className="bg-primary/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-primary/30 flex items-center justify-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-w-[200px]"
+                      key="face-guide"
+                      initial={{ y: -20, opacity: 0 }}
+                      animate={{ y: 14, opacity: 1 }}
+                      exit={{ y: -20, opacity: 0 }}
+                      className="bg-black/40 backdrop-blur-md text-white/90 px-4 py-1.5 rounded-full border border-white/10 flex items-center justify-center gap-2 shadow-lg"
                     >
-                      <div className="w-2 h-2 bg-white rounded-full animate-ping" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Liveness Confirmed ✓</span>
+                      <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                      <span className="text-[10px] font-medium tracking-wide">Position face within frame</span>
                     </motion.div>
-                  ) : isFaceAligned && livenessStatus === 'idle' && !isProcessing ? (
-                    <motion.div
-                      key="blink-prompt"
-                      initial={{ y: -60, opacity: 0 }}
-                      animate={{ y: 12, opacity: 1 }}
-                      exit={{ y: -60, opacity: 0 }}
-                      className="bg-amber-500/90 backdrop-blur-xl text-white px-6 py-2.5 rounded-2xl border border-amber-400/30 flex items-center justify-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-w-[200px]"
-                    >
-                      <motion.span
-                        animate={{ opacity: [1, 0.3, 1] }}
-                        transition={{ duration: 1.2, repeat: Infinity }}
-                        className="flex items-center justify-center"
-                      >
-                        <Eye size={20} className="text-white" />
-                      </motion.span>
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">
-                        {activeChallenge === 'blink' && 'Please Blink to Continue'}
-                        {activeChallenge === 'smile' && 'Please Smile to Continue'}
-                        {activeChallenge === 'turnLeft' && 'Turn Head Left to Continue'}
-                        {activeChallenge === 'turnRight' && 'Turn Head Right to Continue'}
-                        {activeChallenge === 'openMouth' && 'Open Mouth Slightly to Continue'}
-                        {activeChallenge === 'raiseEyebrows' && 'Raise Eyebrows to Continue'}
-                      </span>
-                    </motion.div>
-                  ) : null}
+                  )}
                 </AnimatePresence>
               </div>
 
@@ -240,20 +256,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                 <RefreshCcw size={18} className={facingMode === 'environment' || Boolean(selectedDeviceId) ? 'rotate-180 transition-transform' : ''} />
               </button>
 
-              {/* Ring Light Studio Toggle Button */}
-              <button
-                type="button"
-                onClick={() => setIsRingLightActive(!isRingLightActive)}
-                className={cn(
-                  "absolute top-6 right-6 backdrop-blur-xl p-3 rounded-full transition-all border z-40 cursor-pointer shadow-lg flex items-center gap-1.5 text-xs font-bold",
-                  isRingLightActive 
-                    ? "bg-amber-300 text-slate-950 border-amber-200 shadow-amber-300/60 scale-105" 
-                    : "bg-black/60 text-white border-white/20 hover:bg-black/80"
-                )}
-                title="Toggle Studio Ring Light for dark rooms"
-              >
-                <SunMedium size={18} className={isRingLightActive ? "animate-spin text-amber-950" : ""} />
-              </button>
+
 
               {/* Flash Overlay */}
               <AnimatePresence>
@@ -267,8 +270,26 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                 )}
               </AnimatePresence>
 
+              {/* Camera Stream Starting Overlay */}
+              {!isStreamLoaded && !isProcessing && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-[60] bg-black/80 backdrop-blur-md gap-3">
+                  <div className="relative">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                      className="w-12 h-12 rounded-full border-4 border-white/10 border-t-primary"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                    </div>
+                  </div>
+                  <span className="text-white text-[10px] font-black uppercase tracking-widest animate-pulse">Starting Camera...</span>
+                  <span className="text-white/50 text-[9px] tracking-wide">Connecting to media stream</span>
+                </div>
+              )}
+
               {/* Engine Initializing Overlay */}
-              {!isEngineReady && !isProcessing && (
+              {isStreamLoaded && !isEngineReady && !isProcessing && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center z-[60] bg-black/70 backdrop-blur-md gap-3">
                   <div className="relative">
                     <motion.div
@@ -307,26 +328,20 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                 <button
                   type="button"
                   onClick={handleCaptureSelfie}
-                  disabled={isLockedOut || isProcessing || !isEngineReady || !isFaceAligned || livenessStatus !== 'passed'}
+                  disabled={isLockedOut || isProcessing || !isEngineReady || !isStreamLoaded}
                   className={cn(
-                    "px-6 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl flex items-center gap-2 transition-all transform active:scale-95 border-2 border-white/20 select-none cursor-pointer",
+                    "px-6 py-2.5 rounded-full font-bold text-xs shadow-xl flex items-center gap-2 transition-all transform active:scale-95 border border-white/20 select-none cursor-pointer",
                     isLockedOut
-                      ? "bg-amber-500/80 text-white cursor-not-allowed scale-95 border-amber-400/30 opacity-90"
-                      : isProcessing ? "opacity-0 scale-50" :
-                    (isFaceAligned && livenessStatus === 'passed')
-                      ? "bg-primary text-white hover:bg-primary-hover hover:scale-105 shadow-primary/30"
-                      : "bg-black/50 backdrop-blur-md text-white/50 cursor-not-allowed scale-95 border-white/10"
+                      ? "bg-amber-500/80 text-white cursor-not-allowed border-amber-400/30 opacity-90"
+                      : isProcessing || !isStreamLoaded ? "opacity-0 scale-50" :
+                      "bg-primary text-white hover:bg-primary-hover hover:scale-105 shadow-primary/30"
                   )}
                 >
-                  <FaCamera size={13} />
+                  <FaCamera size={14} />
                   <span>
                     {isLockedOut
                       ? `Locked (${timerText})`
-                      : isFaceAligned && livenessStatus === 'passed' 
-                      ? 'Capture Selfie Now' 
-                      : isFaceAligned && livenessStatus === 'idle'
-                      ? 'Follow Prompt'
-                      : 'Follow Prompt to Capture'}
+                      : 'Capture Selfie Now'}
                   </span>
                 </button>
               </div>
@@ -342,10 +357,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
             />
             <button
               type="button"
-              onClick={() => {
-                setCapturedSelfie(null);
-                setIsFaceAligned(false);
-              }}
+              onClick={handleClearSelfie}
               className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-red-500 transition-colors z-30 cursor-pointer"
             >
               <FaTimes />
@@ -356,7 +368,7 @@ const SelfieStep: React.FC<SelfieStepProps> = ({
                 animate={{ y: 0, opacity: 1 }}
                 className="bg-primary/90 backdrop-blur-md text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-2xl border border-white/20"
               >
-                Verified Biometric
+                Selfie Photo Captured
               </motion.span>
             </div>
           </div>

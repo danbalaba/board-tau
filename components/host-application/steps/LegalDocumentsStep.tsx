@@ -331,7 +331,7 @@ const LegalDocumentsStep: React.FC<LegalDocumentsStepProps> = ({
                   </div>
                 ) : (
                   /* Visual Image Thumbnail Preview (JPG, PNG, WEBP) */
-                  <div className="relative w-full h-full min-h-[220px] sm:min-h-[240px] rounded-[1.8rem] overflow-hidden group shadow-md bg-gray-100 dark:bg-gray-900">
+                  <div className="relative w-full h-full min-h-[220px] sm:min-h-[240px] rounded-[1.8rem] overflow-hidden group shadow-md">
                     {/* Visual Image */}
                     {previewData.url ? (
                       <img
@@ -341,7 +341,7 @@ const LegalDocumentsStep: React.FC<LegalDocumentsStepProps> = ({
                           e.stopPropagation();
                           if (previewData.url) setPreviewDoc({ url: previewData.url, title: doc.title });
                         }}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 cursor-pointer"
+                        className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105 cursor-pointer rounded-[1.8rem]"
                       />
                     ) : (
                       <div className="w-full h-full bg-gray-100 dark:bg-gray-900 flex items-center justify-center">

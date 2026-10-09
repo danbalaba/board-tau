@@ -278,7 +278,7 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                 logic.clearErrors('propertyEvidence.facadePhotoUrl');
               }
             }}
-            mode={isMobileView ? (mobileStep === 8 ? 'location' : mobileStep === 9 ? 'facade' : 'all') : 'all'}
+            mode={isMobileView ? (mobileStep === 9 ? 'location' : mobileStep === 10 ? 'facade' : 'all') : 'all'}
           />
         );
       case 4:
@@ -299,7 +299,7 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
               logic.setFireSafetyFile(file);
               if (file) logic.clearErrors('verification.fireSafetyUrl');
             }}
-            mode={isMobileView ? (mobileStep === 10 ? 'primary' : mobileStep === 11 ? 'fire' : 'all') : 'all'}
+            mode={isMobileView ? (mobileStep === 11 ? 'primary' : mobileStep === 12 ? 'fire' : 'all') : 'all'}
             errors={logic.errors}
             docChoice={logic.docChoice}
             onDocChoiceChange={(choice) => {
@@ -513,13 +513,21 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
     }
 
     if (isValid && mobileStep < 17) {
-      setMobileStep((prev) => prev + 1);
+      logic.setIsLoadingStep(true);
+      setTimeout(() => {
+        setMobileStep((prev) => prev + 1);
+        logic.setIsLoadingStep(false);
+      }, 450);
     }
   };
 
   const handleMobileBack = () => {
     if (logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing || logic.isSubmitting || logic.isLoadingStep) return;
-    setMobileStep((prev) => Math.max(1, prev - 1));
+    logic.setIsLoadingStep(true);
+    setTimeout(() => {
+      setMobileStep((prev) => Math.max(1, prev - 1));
+      logic.setIsLoadingStep(false);
+    }, 450);
   };
 
   const rawFullName = logic.watch("contactInfo.fullName") || user?.name || "";
@@ -550,6 +558,7 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
         isOpen={showDraftModal}
         onClose={() => setShowDraftModal(false)}
         title="Continue Your Host Application?"
+        fullOnMobile={false}
       >
         <div className="space-y-6 p-1">
           <div className="p-4 rounded-2xl bg-primary/5 dark:bg-primary/10 border border-primary/15 flex items-start gap-4">
@@ -631,7 +640,7 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
           />
         </>
       ) : (
-        <div className="max-w-[1440px] mx-auto w-full px-4 sm:px-6 md:px-8">
+        <div className="max-w-[1440px] mx-auto w-full px-0 sm:px-4 md:px-8">
         {/* Wizard Header Banner (Desktop) */}
         {!logic.submitted && logic.step > 0 && (
           <div className="hidden md:block relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3.5 sm:p-5 rounded-2xl border border-primary/10 shadow-sm mb-3.5">
@@ -698,8 +707,8 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                   <button
                     key={step.title}
                     type="button"
-                    disabled={isLocked}
-                    onClick={() => !isLocked && logic.setStep(stepNum)}
+                    disabled={isLocked || logic.isLoadingStep}
+                    onClick={() => !isLocked && !logic.isLoadingStep && logic.setStep(stepNum)}
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all shrink-0 cursor-pointer select-none",
                       isActive
@@ -744,7 +753,7 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
 
         {/* ---------------- MOBILE 1-QUESTION-AT-A-TIME FLOW (<768px) ---------------- */}
         {!logic.submitted && !isSleepingMobile && (
-          <div className="md:hidden w-full min-h-[100dvh] px-5 pt-4 pb-28 flex flex-col justify-between relative overflow-hidden bg-slate-50 dark:bg-[#0b0f17]">
+          <div className="md:hidden w-full min-h-[100dvh] px-4 pt-4 pb-28 flex flex-col justify-between relative overflow-hidden bg-slate-50 dark:bg-[#0b0f17]">
             {/* Ambient Background Aura Glows */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
               <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-primary/10 dark:bg-primary/15 blur-3xl" />
@@ -786,8 +795,8 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                 exit={{ opacity: 0, y: mobileStep === 2 ? 0 : -15 }}
                 transition={{ duration: 0.25 }}
                 className={cn(
-                  "w-full max-w-sm mx-auto flex flex-col items-center text-center relative z-10",
-                  mobileStep === 2 ? "mt-4 mb-auto" : "my-auto"
+                  "w-full flex flex-col items-center text-center relative z-10",
+                  mobileStep === 2 ? "mt-4 mb-auto max-w-full" : "my-auto w-full max-w-full sm:max-w-md mx-auto"
                 )}
               >
                 {/* 1. Speech Bubble Centered (Intro Cloud Bubble Design) - Hidden on Step 2 for clean welcome layout */}
@@ -832,13 +841,13 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
 
                 {/* 2. Mascot Artwork & Stage (Unified Higher-Positioned Kerby + Cloud Bubble on Step 2) */}
                 {mobileStep === 2 ? (
-                  <div className="relative w-full h-[360px] sm:h-[400px] my-auto overflow-visible pointer-events-none">
+                  <div className="relative w-[calc(100%+2.5rem)] -mx-5 h-[360px] sm:h-[400px] my-auto overflow-visible pointer-events-none">
                     {/* Kerby peeking from left edge - Positioned HIGHER UP so head aligns with speech bubble */}
                     <motion.div
                       initial={{ x: -180, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ type: "spring", stiffness: 140, damping: 16 }}
-                      className="absolute -left-4 sm:-left-8 top-10 sm:top-12 w-[280px] sm:w-[320px] pointer-events-none z-20"
+                      className="absolute -left-3 sm:-left-4 top-10 sm:top-12 w-[280px] sm:w-[320px] pointer-events-none z-20"
                     >
                       <img
                         src="/assets/mascot/kerby-mobile-right-peeking.png"
@@ -852,7 +861,7 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                       initial={{ opacity: 0, scale: 0.88, x: 20 }}
                       animate={{ opacity: 1, scale: 1, x: 0 }}
                       transition={{ type: "spring", stiffness: 220, damping: 20, delay: 0.15 }}
-                      className="absolute right-0 sm:right-2 top-4 sm:top-6 w-[225px] sm:w-[255px] pointer-events-auto z-30"
+                      className="absolute right-5 sm:right-8 top-4 sm:top-6 w-[225px] sm:w-[255px] pointer-events-auto z-30"
                     >
                       {/* Main Cloud Body matching KerbyMascot.tsx / KerbyMascotStage.tsx with generous padding */}
                       <div className="w-full bg-white dark:bg-[#151c2c] border-2 border-primary/30 dark:border-primary/40 p-4 sm:p-5 rounded-[2.2rem] shadow-2xl text-left relative z-10 space-y-1.5">
@@ -894,7 +903,7 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                               : mobileStep === 3
                               ? "/assets/mascot/kerby-mobile-contact.png"
                               : mobileStep === 4
-                              ? "/assets/mascot/kerby-mobile-contact.png"
+                              ? "/assets/mascot/kerby-mobile-email.png"
                               : mobileStep === 5
                               ? "/assets/mascot/kerby-mobile-role.png"
                               : mobileStep === 6
@@ -1246,11 +1255,20 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                   onClick={handleMobileBack}
                   disabled={logic.isSubmitting || logic.isIDProcessing || logic.isSelfieProcessing || logic.isProcessing || logic.isLoadingStep}
                   outline
-                  className="!w-auto min-w-[100px] px-5 py-4 rounded-2xl border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 font-extrabold text-xs shrink-0 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex-1 py-4 rounded-2xl border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 font-extrabold text-xs hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center justify-center gap-1.5">
-                    <ChevronLeft size={18} />
-                    <span>Back</span>
+                    {logic.isLoadingStep ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
+                        <span>Loading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ChevronLeft size={18} />
+                        <span>Back</span>
+                      </>
+                    )}
                   </div>
                 </Button>
               )}
@@ -1262,7 +1280,14 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                   className="flex-1 rounded-2xl py-4 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-primary/30 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <span>{logic.isSubmitting ? "Submitting..." : "Submit Application"}</span>
+                    {logic.isSubmitting || logic.isLoadingStep ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>{logic.isSubmitting ? "Submitting..." : "Loading..."}</span>
+                      </>
+                    ) : (
+                      <span>Submit Application</span>
+                    )}
                   </div>
                 </ConfettiButton>
               ) : mobileStep === 16 ? (
@@ -1273,15 +1298,24 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                   className="flex-1 rounded-2xl py-4 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-primary/30 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <span>Review Application</span>
-                    <ChevronRight size={18} />
+                    {logic.isLoadingStep ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Loading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Review Application</span>
+                        <ChevronRight size={18} />
+                      </>
+                    )}
                   </div>
                 </Button>
               ) : mobileStep === 14 && !logic.capturedSelfie ? (
                 <Button
                   type="button"
                   onClick={logic.handleCaptureSelfie}
-                  disabled={isLockedOut || logic.isProcessing || logic.isSelfieProcessing || !logic.isEngineReady || !logic.isFaceAligned || logic.livenessStatus !== 'passed'}
+                  disabled={isLockedOut || logic.isProcessing || logic.isSelfieProcessing || logic.isLoadingStep || !logic.isEngineReady || !logic.isFaceAligned || logic.livenessStatus !== 'passed'}
                   className={cn(
                     "flex-1 rounded-2xl py-4 font-black text-xs uppercase tracking-wider shadow-lg transition-all",
                     isLockedOut
@@ -1292,16 +1326,23 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                   )}
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <Camera size={18} />
-                    <span>
-                      {isLockedOut
-                        ? `Locked (${timerText})`
-                        : logic.isSelfieProcessing
-                        ? "Verifying Selfie..."
-                        : logic.isFaceAligned && logic.livenessStatus === 'passed'
-                        ? "Capture Selfie Now"
-                        : "Follow Prompt to Capture"}
-                    </span>
+                    {logic.isSelfieProcessing || logic.isLoadingStep ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        <span>{logic.isSelfieProcessing ? "Verifying Selfie..." : "Loading..."}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Camera size={18} />
+                        <span>
+                          {isLockedOut
+                            ? `Locked (${timerText})`
+                            : logic.isFaceAligned && logic.livenessStatus === 'passed'
+                            ? "Capture Selfie Now"
+                            : "Follow Prompt to Capture"}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </Button>
               ) : (
@@ -1312,8 +1353,17 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                   className="flex-1 rounded-2xl py-4 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-primary/30 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <span>Continue</span>
-                    <ChevronRight size={18} />
+                    {logic.isLoadingStep ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Loading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Continue</span>
+                        <ChevronRight size={18} />
+                      </>
+                    )}
                   </div>
                 </Button>
               )}
@@ -1343,35 +1393,22 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
           >
             {/* Step Body */}
             <div className="flex-1 flex flex-col justify-start">
-              {logic.isLoadingStep ? (
-                <div className="min-h-[400px] flex flex-col items-center justify-center gap-3">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                    className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full"
-                  />
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest animate-pulse">
-                    Updating Step...
-                  </p>
-                </div>
-              ) : (
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={logic.step}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -15 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex-1 flex flex-col justify-start"
-                  >
-                    {renderStepContent()}
-                  </motion.div>
-                </AnimatePresence>
-              )}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={logic.step}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex-1 flex flex-col justify-start"
+                >
+                  {renderStepContent()}
+                </motion.div>
+              </AnimatePresence>
             </div>
 
             {/* Desktop Navigation Footer Actions */}
-            {!logic.submitted && logic.step > 0 && !logic.isLoadingStep && (
+            {!logic.submitted && logic.step > 0 && (
               <div className={`pt-6 mt-auto border-t border-gray-100 dark:border-slate-800 flex items-center gap-4 ${logic.step > 1 ? "justify-between" : "justify-end"}`}>
                 {logic.step > 1 && (
                   <Button
@@ -1381,8 +1418,17 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                     className="!w-auto px-6 py-3.5 rounded-2xl border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-extrabold text-xs uppercase tracking-wider transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-center justify-center gap-2">
-                      <ChevronLeft size={16} />
-                      <span>Back</span>
+                      {logic.isLoadingStep ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
+                          <span>Loading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <ChevronLeft size={16} />
+                          <span>Back</span>
+                        </>
+                      )}
                     </div>
                   </Button>
                 )}
@@ -1394,7 +1440,14 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                     className="!w-auto rounded-2xl px-8 py-3.5 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] shadow-xl shadow-primary/30 font-black text-xs text-white uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-center justify-center gap-2">
-                      <span>{logic.isSubmitting ? "Submitting..." : "Submit Application"}</span>
+                      {logic.isSubmitting || logic.isLoadingStep ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>{logic.isSubmitting ? "Submitting..." : "Loading..."}</span>
+                        </>
+                      ) : (
+                        <span>Submit Application</span>
+                      )}
                     </div>
                   </ConfettiButton>
                 ) : (
@@ -1404,8 +1457,17 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
                     className="!w-auto rounded-2xl px-8 py-3.5 bg-gradient-to-r from-primary via-[#2f7d6d] to-[#256357] hover:brightness-110 active:scale-[0.98] shadow-xl shadow-primary/30 font-black text-xs text-white uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-center justify-center gap-2">
-                      <span>Continue</span>
-                      <ChevronRight size={16} />
+                      {logic.isLoadingStep ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Loading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Continue</span>
+                          <ChevronRight size={16} />
+                        </>
+                      )}
                     </div>
                   </Button>
                 )}

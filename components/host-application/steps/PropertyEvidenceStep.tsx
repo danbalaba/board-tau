@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { MapPin, Search, Navigation, Camera, Building2, ShieldCheck, Map as MapIcon, X, AlertCircle, Eye, Maximize2, Check, Sparkles } from 'lucide-react';
+import { MapPin, Search, Navigation, Camera, Building2, ShieldCheck, Map as MapIcon, X, AlertCircle, Eye, Maximize2, Check, Sparkles, Trash2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { geocodeAddress, reverseGeocode } from "@/services/geocoding";
 import { toast } from "react-hot-toast";
@@ -146,25 +146,67 @@ const PropertyEvidenceStep: React.FC<PropertyEvidenceStepProps> = ({
         />
         
         {facadeFile && facadePreviewUrl ? (
-          <div className="relative w-full h-full group">
+          <div className="relative w-full h-full rounded-[1.8rem] overflow-hidden group">
             <SafeImage 
               src={facadePreviewUrl} 
-              alt="Facade Preview"
-              className="w-full h-full object-cover rounded-[1.8rem]"
+              alt="Property Facade Preview"
+              containerClassName="w-full h-full"
+              className="w-full h-full object-cover object-center rounded-[1.8rem]"
             />
             
-            {/* Action Controls on Hover */}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3 p-4 z-20">
+            {/* Permanent Gradient Overlay for Text & Control Contrast */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/35 pointer-events-none z-10" />
+
+            {/* Top Bar: Uploaded Status Badge on Left, Action Buttons (Preview + Remove) on Right */}
+            <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-primary text-white text-[9px] font-black uppercase tracking-wider shadow-md">
+                <Check size={12} strokeWidth={3} />
+                <span>Uploaded</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowPreview(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/90 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700/80 shadow-md backdrop-blur-md hover:bg-primary hover:text-white text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Eye size={12} className="text-primary" />
+                  <span>Preview</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFacadeFile(null);
+                    const input = document.getElementById('facade-input') as HTMLInputElement;
+                    if (input) input.value = '';
+                    toast.success('Facade photo removed');
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-red-500/90 hover:bg-red-600 backdrop-blur-md text-white border border-red-400/30 shadow-md text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                  title="Remove Photo"
+                >
+                  <Trash2 size={12} />
+                  <span>Remove</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Hover Action Controls Veil */}
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 p-4 z-20 pointer-events-none group-hover:pointer-events-auto">
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowPreview(true);
                 }}
-                className="px-4 py-2.5 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-black text-[10px] uppercase tracking-widest border border-white/30 flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                className="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-black text-[10px] uppercase tracking-widest border border-white/30 flex items-center gap-1.5 shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
               >
-                <Eye size={16} />
-                <span>View Fullscreen</span>
+                <Eye size={15} />
+                <span>Fullscreen</span>
               </button>
 
               <button
@@ -173,26 +215,34 @@ const PropertyEvidenceStep: React.FC<PropertyEvidenceStepProps> = ({
                   e.stopPropagation();
                   document.getElementById('facade-input')?.click();
                 }}
-                className="px-4 py-2.5 rounded-2xl bg-slate-900/80 hover:bg-slate-900 backdrop-blur-md text-white font-black text-[10px] uppercase tracking-widest border border-white/20 flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                className="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-black text-[10px] uppercase tracking-widest border border-white/30 flex items-center gap-1.5 shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
               >
-                <Camera size={16} />
-                <span>Change Photo</span>
+                <Camera size={15} />
+                <span>Change</span>
               </button>
-            </div>
 
-            {/* Top Right Quick Preview Badge */}
-            <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowPreview(true);
+                  setFacadeFile(null);
+                  const input = document.getElementById('facade-input') as HTMLInputElement;
+                  if (input) input.value = '';
+                  toast.success('Facade photo removed');
                 }}
-                className="px-3 py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md text-white border border-white/20 shadow-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 hover:bg-primary-hover transition-colors cursor-pointer"
+                className="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl bg-red-600/80 hover:bg-red-600 backdrop-blur-md text-white font-black text-[10px] uppercase tracking-widest border border-red-400/30 flex items-center gap-1.5 shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
               >
-                <Eye size={12} className="text-primary-light" />
-                <span>Tap to Preview</span>
+                <Trash2 size={15} />
+                <span>Remove</span>
               </button>
+            </div>
+
+            {/* Bottom File Name Bar */}
+            <div className="absolute bottom-3 left-3 z-30 pointer-events-none">
+              <div className="px-3 py-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-800 dark:text-slate-100 text-[10px] font-black rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-md truncate max-w-[200px] flex items-center gap-1.5">
+                <Building2 size={12} className="text-primary shrink-0" />
+                <span className="truncate">{facadeFile.name}</span>
+              </div>
             </div>
           </div>
         ) : (
