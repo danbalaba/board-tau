@@ -303,7 +303,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                                 <span className="text-[8px] font-bold text-gray-400 uppercase">Selfie</span>
                                 {logic.capturedSelfie ? (
                                   <span className="text-[8px] font-black uppercase text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded flex items-center gap-0.5">
-                                    Verified <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" />
+                                    Captured <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" />
                                   </span>
                                 ) : (
                                   <span className="text-[8px] font-bold text-gray-400">Step 5</span>
@@ -624,7 +624,7 @@ const InquiryModal: React.FC<InquiryModalProps> = ({
                       <span className="text-[9px] font-bold text-gray-400 uppercase">Selfie</span>
                       {logic.capturedSelfie ? (
                         <span className="text-[9px] font-black uppercase text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
-                          Verified <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" />
+                          Captured <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" />
                         </span>
                       ) : (
                         <span className="text-[9px] font-bold text-gray-400">Step 5</span>

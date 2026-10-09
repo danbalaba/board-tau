@@ -35,7 +35,7 @@ export const useInquiryLogic = (
   const router = useRouter();
   const responsiveToast = useResponsiveToast();
   const { edgestore } = useEdgeStore();
-  const { isProcessing, faceEngine } = useKYC();
+  const { isProcessing } = useKYC();
 
   // Step & Image State
   const [currentStep, setCurrentStep] = useState(1);
@@ -73,7 +73,7 @@ export const useInquiryLogic = (
   const [isFlashActive, setIsFlashActive] = useState(false);
   const [isIDProcessing, setIsIDProcessing] = useState(false);
   const [isSelfieProcessing, setIsSelfieProcessing] = useState(false);
-  const [isEngineReady, setIsEngineReady] = useState(false);
+  const [isEngineReady, setIsEngineReady] = useState(true);
   const [selfieRetakeNeeded, setSelfieRetakeNeeded] = useState(false);
   
   // Signature State
@@ -148,152 +148,64 @@ export const useInquiryLogic = (
     return selected;
   };
 
-  // Reset Liveness State on Step 5
-  useEffect(() => {
-    if (currentStep === 5 && !capturedSelfie) {
-      setLivenessStatus('idle');
-      setActiveChallenges(generateUniqueRandomChallenges());
-      consecutiveFaceFailures.current = 0;
-    }
-  }, [currentStep, capturedSelfie]);
+  const [livenessSessionId, setLivenessSessionId] = useState<string | null>(null);
+  const [isLivenessLoading, setIsLivenessLoading] = useState(false);
 
-  const isWarmingUpRef = useRef(false);
-  const isScanningRef = useRef(false);
-
-  // Effect 1: Wake up / Sleep face-engine based on step
-  useEffect(() => {
-    let isMounted = true;
-    // Only load the heavy ML models if we are on the selfie step AND we don't have a selfie yet.
-    if (currentStep === 5 && !capturedSelfie) {
-      if (!isEngineReady && !isWarmingUpRef.current) {
-        isWarmingUpRef.current = true;
-        faceEngine.warmup().then(() => {
-          if (isMounted) {
-            setIsEngineReady(true);
-            isWarmingUpRef.current = false;
-          }
-        }).catch((err) => {
-          console.warn("[MediaPipe Warmup Warning]:", err);
-          if (isMounted) {
-            isWarmingUpRef.current = false;
-            setIsEngineReady(true); // Allow fallback capture even if local warmup warns
-          }
-        });
+  const startLivenessSession = async () => {
+    setIsLivenessLoading(true);
+    try {
+      const res = await fetch('/api/kyc/liveness/session', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.sessionId) {
+        setLivenessSessionId(data.sessionId);
+      } else {
+        const msg = data.reason || data.error || 'Failed to initialize liveness session';
+        responsiveToast.error(msg);
       }
-    } else if (currentStep !== 5 || capturedSelfie) {
-      isWarmingUpRef.current = false;
-      setIsEngineReady(false);
-      faceEngine.dispose();
+    } catch (err) {
+      console.error('[Liveness Session Error]:', err);
+      responsiveToast.error('Failed to connect to liveness service.');
+    } finally {
+      setIsLivenessLoading(false);
     }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [currentStep, capturedSelfie, isEngineReady]);
-
-  const getScaledCanvas = (video: HTMLVideoElement) => {
-    const vWidth = video.videoWidth || 320;
-    const vHeight = video.videoHeight || 240;
-    const maxDim = 360;
-    
-    let targetWidth = vWidth;
-    let targetHeight = vHeight;
-    
-    if (vWidth > vHeight) {
-      if (vWidth > maxDim) {
-        targetWidth = maxDim;
-        targetHeight = Math.round((vHeight / vWidth) * maxDim);
-      }
-    } else {
-      if (vHeight > maxDim) {
-        targetHeight = maxDim;
-        targetWidth = Math.round((vWidth / vHeight) * maxDim);
-      }
-    }
-
-    if (!scaledCanvasRef.current) {
-      scaledCanvasRef.current = document.createElement('canvas');
-    }
-    const canvas = scaledCanvasRef.current;
-    if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
-      canvas.width = targetWidth;
-      canvas.height = targetHeight;
-    }
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    ctx?.drawImage(video, 0, 0, targetWidth, targetHeight);
-    return canvas;
   };
 
-  // Effect 2: Real-time scanning loop with overlap lock
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (currentStep === 5 && !capturedSelfie && !isProcessing && isEngineReady) {
-      interval = setInterval(async () => {
-        if (isScanningRef.current) return; // Prevent async queue build-up on mobile
-        isScanningRef.current = true;
-
-        try {
-          const video = webcamRef.current?.video;
-          if (video && video.readyState === 4) {
-            const scaledCanvas = getScaledCanvas(video);
-            
-            // Use quickValidateFace to do everything in one pass!
-            const result = await faceEngine.quickValidateFace(scaledCanvas);
-            if (isFaceAlignedRef.current !== result.isValid) {
-              isFaceAlignedRef.current = result.isValid;
-              setIsFaceAligned(result.isValid);
-            }
-
-            // FACE-LOSS DETECTION: Reset liveness if face disappears
-            if (livenessStatus === 'passed') {
-              if (!result.isValid) {
-                consecutiveFaceFailures.current += 1;
-                if (consecutiveFaceFailures.current >= 3) {
-                  setLivenessStatus('idle');
-                  setActiveChallenges(generateUniqueRandomChallenges());
-                  consecutiveFaceFailures.current = 0;
-                }
-              } else {
-                consecutiveFaceFailures.current = 0; 
-              }
-              return; 
-            }
-
-            // Check active challenge
-            const state = result.liveness;
-            if (state && livenessStatus === 'idle' && activeChallenges.length > 0) {
-              const currentChallenge = activeChallenges[0];
-              
-              if (
-                (currentChallenge === 'blink' && state.blink) ||
-                (currentChallenge === 'smile' && state.smile) ||
-                (currentChallenge === 'turnLeft' && state.turnLeft) ||
-                (currentChallenge === 'turnRight' && state.turnRight) ||
-                (currentChallenge === 'openMouth' && state.openMouth) ||
-                (currentChallenge === 'raiseEyebrows' && state.raiseEyebrows)
-              ) {
-                if (activeChallenges.length > 1) {
-                  setActiveChallenges(prev => prev.slice(1));
-                } else {
-                  setLivenessStatus('passed');
-                }
-                consecutiveFaceFailures.current = 0;
-              }
-            }
-          }
-        } catch (err) {
-          console.warn("[Scanning Loop Warning]:", err);
-        } finally {
-          isScanningRef.current = false;
-        }
-      }, 700);
+  const handleLivenessAnalysisComplete = async () => {
+    if (!livenessSessionId) return;
+    setIsSelfieProcessing(true);
+    try {
+      const res = await fetch('/api/kyc/liveness/results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: livenessSessionId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.referenceImage) {
+        setCapturedSelfie(data.referenceImage);
+        setLivenessStatus('passed');
+        responsiveToast.success('Live biometric scan verified!');
+      } else {
+        const msg = data.reason || data.error || 'Liveness check unconfirmed.';
+        responsiveToast.error(msg);
+        setCapturedSelfie(null);
+      }
+    } catch (err) {
+      console.error('[Liveness Results Error]:', err);
+      responsiveToast.error('Failed to verify liveness results.');
+    } finally {
+      setIsSelfieProcessing(false);
+      setLivenessSessionId(null);
     }
-    return () => clearInterval(interval);
-  }, [currentStep, capturedSelfie, isProcessing, isEngineReady, activeChallenges, livenessStatus]);
+  };
 
-
-  // ID Live Scan Loop REMOVED for Issue #9
-
+  // Step 5 Selfie State Initialization (On-Demand AWS Validation on Shutter Click)
+  useEffect(() => {
+    if (currentStep === 5 && !capturedSelfie) {
+      setIsEngineReady(true);
+      setIsFaceAligned(true);
+      setLivenessStatus('passed');
+    }
+  }, [currentStep, capturedSelfie]);
 
   useEffect(() => {
     if (dateRange?.from) {
@@ -307,56 +219,118 @@ export const useInquiryLogic = (
   // Handlers
   const handleCaptureSelfie = async () => {
     const video = webcamRef.current?.video;
-    if (!video) return;
-
-    // LIVENESS GATE: User must have passed the active challenge
-    if (livenessStatus !== 'passed') {
-      responsiveToast.error("Liveness check required. Please perform the requested action to prove you're real.");
+    if (!video || (video.readyState < 2 && video.currentTime === 0)) {
+      responsiveToast.error("Camera is initializing. Please wait a moment for the video stream to load.");
       return;
     }
 
-    // 1. Capture the photo INSTANTLY at click time (0ms shutter lag)
-    let imageSrc = webcamRef.current?.getScreenshot();
-    if (!imageSrc || imageSrc === 'data:,' || imageSrc.length < 500) {
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        imageSrc = canvas.toDataURL('image/jpeg', 0.92);
+    // 1. Multi-strategy webcam capture to ensure valid high-res image across all browsers (Chrome, Brave, Safari)
+    let imageSrc: string | null = null;
+
+    // Strategy 1: react-webcam getScreenshot with natural native camera dimensions (prevents aspect-ratio face distortion)
+    try {
+      if (webcamRef.current?.getScreenshot) {
+        imageSrc = webcamRef.current.getScreenshot();
+      }
+    } catch (e) {
+      console.warn('[Webcam getScreenshot default warning]:', e);
+    }
+
+    // Strategy 2: react-webcam default getScreenshot
+    if (!imageSrc || imageSrc.length < 500) {
+      try {
+        if (webcamRef.current?.getScreenshot) {
+          imageSrc = webcamRef.current.getScreenshot();
+        }
+      } catch (e) {
+        console.warn('[Webcam getScreenshot default warning]:', e);
+      }
+    }
+
+    // Strategy 3: Direct Video Element Canvas Snapshot
+    if ((!imageSrc || imageSrc.length < 500) && video) {
+      try {
+        const vWidth = video.videoWidth || 1280;
+        const vHeight = video.videoHeight || 720;
+        const canvas = document.createElement('canvas');
+        canvas.width = vWidth;
+        canvas.height = vHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          if (facingMode === 'user') {
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+          }
+          ctx.drawImage(video, 0, 0, vWidth, vHeight);
+          imageSrc = canvas.toDataURL('image/jpeg', 0.95);
+        }
+      } catch (e) {
+        console.warn('[Direct Canvas Capture warning]:', e);
       }
     }
 
     if (!imageSrc || imageSrc.length < 500) {
-      responsiveToast.error("Failed to capture photo. Please try again.");
+      responsiveToast.error("Camera stream is loading. Please wait a moment and try again.");
       return;
     }
 
-    // 2. Trigger quick 100ms flash feedback
+    // Verify captured image is not pitch black (uninitialized camera warmup frame)
+    const checkFrameBrightness = (dataUrl: string): Promise<boolean> => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          if (img.width < 50 || img.height < 50) return resolve(false);
+          const canvas = document.createElement('canvas');
+          canvas.width = 40;
+          canvas.height = 40;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return resolve(true);
+          ctx.drawImage(img, 0, 0, 40, 40);
+          const pixels = ctx.getImageData(0, 0, 40, 40).data;
+          let sum = 0;
+          for (let i = 0; i < pixels.length; i += 4) {
+            sum += pixels[i] + pixels[i + 1] + pixels[i + 2];
+          }
+          const avgBrightness = sum / ((pixels.length / 4) * 3);
+          resolve(avgBrightness >= 15);
+        };
+        img.onerror = () => resolve(false);
+        img.src = dataUrl;
+      });
+    };
+
+    const isFrameValid = await checkFrameBrightness(imageSrc);
+    if (!isFrameValid) {
+      responsiveToast.error("Camera stream is warming up. Please wait a moment and click capture again.");
+      return;
+    }
+
+    // 2. Trigger quick 100ms flash feedback & verify face presence via AWS Rekognition
     setIsFlashActive(true);
     setTimeout(() => setIsFlashActive(false), 100);
-
     setIsSelfieProcessing(true);
-    const startStep = currentStepRef.current;
 
     try {
-      const result = await faceEngine.validateFace(video);
-      if (currentStepRef.current !== 5 || currentStepRef.current !== startStep) {
-        console.warn("Selfie scan aborted: User navigated away from selfie step.");
-        return;
-      }
+      const res = await fetch('/api/kyc/detect-face', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selfieUrl: imageSrc }),
+      });
+      const data = await res.json();
 
-      if (!result.isValid) {
-        responsiveToast.error(result.reason || "Selfie verification failed.");
+      if (!res.ok || !data.success) {
+        const failureReason = data.reason || data.error || 'No face detected in photo. Please frame your face clearly inside the oval.';
+        responsiveToast.error(failureReason);
+        setCapturedSelfie(null);
         return;
       }
 
       setCapturedSelfie(imageSrc);
-      responsiveToast.success("Face verified successfully!");
-    } catch (e) {
-      console.error("Selfie capture error:", e);
-      responsiveToast.error("An error occurred during verification.");
+      responsiveToast.success("Selfie verified successfully!");
+    } catch (err) {
+      console.error('[Face Detection Error]:', err);
+      responsiveToast.error("Failed to verify face in photo. Please try again.");
+      setCapturedSelfie(null);
     } finally {
       setIsSelfieProcessing(false);
     }
@@ -676,6 +650,10 @@ export const useInquiryLogic = (
     isStepCompleted, handleNextStep, handlePrevStep, handleStepClick,
     maxUnlockedStep,
     handleCaptureSelfie, handleCaptureID, toggleCamera,
+    livenessSessionId,
+    isLivenessLoading,
+    startLivenessSession,
+    handleLivenessAnalysisComplete,
     activeStay, userEmail,
     resendCooldown, setResendCooldown,
     otpAttemptLimitReached, setOtpAttemptLimitReached,

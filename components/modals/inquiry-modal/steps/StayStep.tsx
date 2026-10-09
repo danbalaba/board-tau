@@ -98,7 +98,7 @@ const StayStep: React.FC<StayStepProps> = ({
   };
 
   return (
-    <div className="space-y-5 pb-16 sm:pb-8">
+    <div className="space-y-5 pb-28 sm:pb-20">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -87,6 +87,7 @@ const KERBY_MASCOT_ASSETS = [
   '/assets/mascot/kerby-desktop-review.png',
   '/assets/mascot/kerby-mobile-name.png',
   '/assets/mascot/kerby-mobile-contact.png',
+  '/assets/mascot/kerby-mobile-email.png',
   '/assets/mascot/kerby-mobile-role.png',
   '/assets/mascot/kerby-mobile-establishment.png',
   '/assets/mascot/kerby-mobile-accommodation.png',

@@ -122,11 +122,8 @@ const IDStep: React.FC<IDStepProps> = ({
       responsiveToast.error(`Verification is locked. Please wait until timer expires (${timerText}).`);
       return;
     }
-    const isMobileSmartphone = typeof window !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && window.innerWidth < 768;
-    if (isMobileSmartphone && fileInputRef.current) {
+    if (fileInputRef.current) {
       fileInputRef.current.click();
-    } else {
-      setIsCameraActive(true);
     }
   };
 
