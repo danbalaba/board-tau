@@ -1,60 +1,87 @@
 'use client';
 
+import * as React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '../../../components/ui/card';
-import { Badge } from '../../../components/ui/badge';
 import { useExecutiveOverview } from '@/app/admin/hooks/use-executive-overview';
-import { IconCurrencyDollar, IconArrowUpRight } from '@tabler/icons-react';
+import { CalendarCheck, ChevronRight, CheckCircle2 } from 'lucide-react';
 
 export function RecentSales({ data: propData }: { data?: any[] }) {
   const { data: apiResponse } = useExecutiveOverview('30d');
   const data = propData || apiResponse?.data?.recentSales || [];
 
+  const totalRecentAmount = React.useMemo(() => {
+    if (!data || data.length === 0) return 0;
+    return data.slice(0, 5).reduce((acc: number, curr: any) => {
+      const cleanNum = Number(String(curr.amount || '0').replace(/[^0-9.-]+/g, '')) || 0;
+      return acc + cleanNum;
+    }, 0);
+  }, [data]);
+
   return (
-    <Card className="flex flex-col border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-xl rounded-[2.5rem] overflow-hidden h-full">
-      <CardHeader className="pb-4 px-8 pt-8 border-b border-gray-100/50 dark:border-gray-800/50">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1.5">
-            <CardTitle className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">Recent Transactions</CardTitle>
-            <CardDescription className="text-[10px] uppercase font-black tracking-widest text-gray-500">
-              Latest successful bookings
+    <Card className="flex flex-col border border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/70 backdrop-blur-xl shadow-xs hover:shadow-lg rounded-[24px] sm:rounded-[26px] overflow-hidden h-full transition-all duration-300">
+      <CardHeader className="flex flex-row items-center justify-between pb-4 px-6 pt-6 border-b border-slate-100 dark:border-slate-800/80">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-xl bg-[#2f7d6d]/10 text-[#2f7d6d] dark:bg-emerald-500/10 dark:text-emerald-400">
+            <CalendarCheck className="w-4 h-4" />
+          </div>
+          <div>
+            <CardTitle className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Recent Bookings</CardTitle>
+            <CardDescription className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+              Latest confirmed student room reservations
             </CardDescription>
           </div>
-          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-none font-black uppercase text-[9px] h-6 px-3 rounded-xl shadow-sm">
-            Live
-          </Badge>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-extrabold uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Live Feed</span>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="pt-8 px-4 pb-8">
-        <div className="space-y-3">
-          {data && data.length > 0 ? data.map((sale: any, index: number) => (
+
+      <CardContent className="pt-5 px-6 pb-6 flex-1 flex flex-col justify-center">
+        <div className="space-y-2.5">
+          {data && data.length > 0 ? data.slice(0, 5).map((sale: any, index: number) => (
             <div
-              key={index}
-              className="group flex items-center gap-4 p-4 rounded-[1.5rem] bg-white/40 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700/50 transition-all hover:bg-white/80 dark:hover:bg-gray-700/80 hover:shadow-md"
+              key={sale.id || index}
+              className="group flex items-center gap-3.5 p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800/80 hover:border-[#2f7d6d]/40 dark:hover:border-emerald-500/40 hover:bg-white dark:hover:bg-slate-900 shadow-2xs hover:shadow-md transition-all duration-300"
             >
-              <Avatar className="h-9 w-9 ring-2 ring-white/10">
-                <AvatarImage src={sale.avatar} alt="Avatar" />
-                <AvatarFallback className="text-xs font-black bg-primary/10 text-primary">
-                  {sale.fallback}
+              <Avatar className="h-10 w-10 rounded-xl border border-slate-200/60 dark:border-slate-700 shadow-2xs">
+                <AvatarImage src={sale.avatar} alt="Avatar" className="object-cover" />
+                <AvatarFallback className="text-xs font-black bg-gradient-to-br from-[#2f7d6d]/20 to-emerald-500/20 text-[#2f7d6d] dark:text-emerald-400">
+                  {sale.fallback || 'TN'}
                 </AvatarFallback>
               </Avatar>
+
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-black tracking-tight truncate">{sale.name}</p>
-                <p className="text-[10px] text-muted-foreground/50 font-bold truncate">{sale.email}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#2f7d6d] dark:group-hover:text-emerald-400 transition-colors truncate">
+                    {sale.name}
+                  </p>
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-extrabold">
+                    <CheckCircle2 className="w-2.5 h-2.5" />
+                    Paid
+                  </span>
+                </div>
+                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                  {sale.email}
+                </p>
               </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <IconArrowUpRight className="w-3 h-3 text-emerald-500" />
-                <span className="text-sm font-black tabular-nums text-emerald-500">{sale.amount}</span>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs font-black px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  +{sale.amount}
+                </span>
+                <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-[#2f7d6d] dark:group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
               </div>
             </div>
           )) : (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <div className="p-3 rounded-2xl bg-muted/20">
-                <IconCurrencyDollar className="w-6 h-6 text-muted-foreground/30" />
-              </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">
-                No transactions recorded
-              </p>
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <CalendarCheck className="w-10 h-10 text-slate-300 dark:text-slate-700 mb-2" />
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-300">No Recent Bookings</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Confirmed student reservations will appear here.</p>
             </div>
           )}
         </div>
