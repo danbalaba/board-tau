@@ -240,6 +240,8 @@ function DropdownMenuSubContent({
   );
 }
 
+const DropdownMenuArrow = DropdownMenuPrimitive.Arrow;
+
 export {
   DropdownMenu,
   DropdownMenuPortal,
@@ -255,5 +257,6 @@ export {
   DropdownMenuShortcut,
   DropdownMenuSub,
   DropdownMenuSubTrigger,
-  DropdownMenuSubContent
+  DropdownMenuSubContent,
+  DropdownMenuArrow
 };

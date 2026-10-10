@@ -19,11 +19,10 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 w-full bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 h-20 flex items-center justify-between px-6 z-50">
+    <header className="sticky top-0 w-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-gray-200/50 dark:border-slate-800/50 h-20 flex items-center justify-between pl-8 pr-6 md:pl-11 z-30">
       <div className='flex items-center gap-4'>
-        <div className="flex items-center gap-3">
-          <SidebarTrigger className='-ml-1 hover:bg-primary/10 transition-colors rounded-xl p-2 h-9 w-9 text-gray-500' />
-          <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 hidden md:block mx-1" />
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className='md:hidden -ml-1 hover:bg-primary/10 transition-colors rounded-xl p-2 h-9 w-9 text-gray-500' />
         </div>
         <div className='hidden md:flex relative'>
           {!mounted ? (
@@ -39,7 +38,7 @@ export default function Header() {
         
         <ThemeToggle />
         
-        <div className="w-[1px] h-6 bg-gray-200 dark:bg-gray-800 mx-2" />
+        <div className="w-[1px] h-6 bg-gray-200 dark:bg-slate-800 mx-2" />
         
         {!mounted ? (
           <Skeleton className="h-9 w-9 rounded-full" />

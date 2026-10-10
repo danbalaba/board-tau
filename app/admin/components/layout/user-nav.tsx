@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { 
   IconLogout, 
@@ -23,18 +23,22 @@ import { UserAvatarProfile } from "../user-avatar-profile";
 import ConfirmModal from '@/components/common/ConfirmModal';
 import Modal from '@/components/modals/Modal';
 import UltimateLogoutOverlay from "@/components/navbar/UltimateLogoutOverlay";
+import { getAdminDisplayName, getAdminRoleBadge } from '@/app/admin/lib/utils';
 
 export function UserNav() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Mock user data for admin
+  const displayName = getAdminDisplayName(session?.user?.name, session?.user?.role);
+  const roleBadge = getAdminRoleBadge(session?.user?.role);
+
   const user = {
-    id: '1',
-    name: 'Admin User',
-    email: 'admin@boardtau.com',
-    image: '/admin-avatar.png'
+    id: session?.user?.id || '1',
+    name: displayName,
+    email: session?.user?.email || (session?.user?.role === 'SUPER_ADMIN' ? 'superadmin@boardtau.com' : 'systemadmin@boardtau.com'),
+    image: session?.user?.image || null
   };
 
   const handleLogout = () => {
@@ -61,10 +65,10 @@ export function UserNav() {
           </div>
           <div className='text-left hidden lg:block'>
             <p className='text-sm font-black text-gray-900 dark:text-white tracking-tight leading-none mb-0.5'>
-              {user.name || "Admin User"}
+              {displayName}
             </p>
             <p className='text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest'>
-              Admin Account
+              {roleBadge}
             </p>
           </div>
           <IconMenu2 size={14} className="text-gray-400 ml-1 group-hover:text-primary transition-colors" />
