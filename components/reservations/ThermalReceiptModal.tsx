@@ -209,7 +209,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-[25000] flex items-center justify-center p-3 sm:p-5 bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md overflow-hidden select-none transition-colors duration-300"
+          className="fixed inset-0 z-[25000] flex items-center justify-center p-0 sm:p-5 bg-slate-900/50 dark:bg-slate-950/85 backdrop-blur-md overflow-hidden select-none transition-colors duration-300"
           onWheel={(e) => {
             // Prevent mouse wheel on background blur from scrolling underlying page
             if (e.target === e.currentTarget) {
@@ -220,19 +220,19 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
           {/* Backdrop Click Dismiss */}
           <div className="fixed inset-0 -z-10" onClick={onClose} />
 
-          {/* Modal Container: Generous width & clean proportions */}
+          {/* Modal Container: Fullscreen on mobile, elegant dialog on desktop */}
           <motion.div
-            initial={{ scale: 0.94, opacity: 0 }}
+            initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.94, opacity: 0 }}
+            exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="w-full max-w-[500px] h-[92vh] max-h-[820px] flex flex-col justify-between"
+            className="w-full h-[100dvh] sm:h-[92vh] sm:max-h-[820px] sm:max-w-[500px] flex flex-col justify-between overflow-hidden bg-slate-900/30 sm:bg-transparent backdrop-blur-xs sm:backdrop-blur-none"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 1. TOP HEADER & PRINTER SLOT (Always Fixed / Pinned) */}
-            <div className="shrink-0 w-full z-20">
+            <div className="shrink-0 w-full z-20 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-0 sm:pt-0">
               {/* Friendly Title Bar */}
-              <div className="w-full flex items-center justify-between pb-3 px-1 text-slate-800 dark:text-white transition-colors">
+              <div className="w-full flex items-center justify-between pb-2 sm:pb-3 px-1 text-slate-800 dark:text-white transition-colors">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold tracking-wide text-slate-900 dark:text-zinc-100 drop-shadow-sm">
                     Confirmation Pass
@@ -258,7 +258,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
               </div>
 
               {/* Simplified Printer Head Mouth */}
-              <div className="w-full bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-zinc-800 dark:to-zinc-900 border border-slate-200/90 dark:border-zinc-700/80 rounded-t-2xl px-5 py-3 shadow-xl dark:shadow-2xl relative transition-colors">
+              <div className="w-full bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-zinc-800 dark:to-zinc-900 border border-slate-200/90 dark:border-zinc-700/80 rounded-t-2xl px-4 sm:px-5 py-2.5 sm:py-3 shadow-xl dark:shadow-2xl relative transition-colors">
                 <div className="flex items-center justify-between text-xs text-slate-600 dark:text-zinc-300 font-semibold tracking-wide mb-2">
                   <span className="flex items-center gap-2">
                     <CheckCircle2 size={15} className={isPrintingDone ? "text-emerald-600 dark:text-emerald-400" : "text-amber-500 dark:text-amber-400 animate-pulse"} />
@@ -285,7 +285,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
             <div
               ref={scrollContainerRef}
               className={cn(
-                "flex-1 min-h-0 py-2 flex justify-center relative custom-scrollbar",
+                "flex-1 min-h-0 py-2 px-3 sm:px-0 flex justify-center relative custom-scrollbar",
                 isPrintingDone ? "overflow-y-auto" : "overflow-hidden"
               )}
             >
@@ -576,38 +576,38 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
             </div>
 
             {/* 3. STICKY / PINNED BOTTOM ACTION TOOLBAR (Always Visible!) */}
-            <div className="shrink-0 w-full pt-3 z-20">
-              <div className="w-full bg-white/95 dark:bg-zinc-900/95 border border-slate-200/90 dark:border-zinc-800 rounded-2xl p-3 shadow-xl dark:shadow-2xl flex items-center justify-between gap-2.5 backdrop-blur-md transition-colors">
+            <div className="shrink-0 w-full pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 sm:pt-3 px-3 sm:px-0 z-20">
+              <div className="w-full bg-white/95 dark:bg-zinc-900/95 border border-slate-200/90 dark:border-zinc-800 rounded-2xl p-2.5 sm:p-3 shadow-xl dark:shadow-2xl flex items-center justify-between gap-1.5 sm:gap-2.5 backdrop-blur-md transition-colors">
                 <button
                   onClick={handleDownload}
                   disabled={isDownloading}
-                  className="flex-1 py-2.5 px-4 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/35 transition-all active:scale-95 disabled:opacity-50"
+                  className="flex-1 py-2.5 px-3 sm:px-4 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider flex items-center justify-center gap-1.5 sm:gap-2 shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/35 transition-all active:scale-95 disabled:opacity-50 min-w-0"
                 >
-                  <Download size={16} />
-                  <span>{isDownloading ? "Saving..." : "PDF Slip"}</span>
+                  <Download size={15} className="shrink-0" />
+                  <span className="truncate">{isDownloading ? "Saving..." : "PDF Slip"}</span>
                 </button>
 
                 <button
                   onClick={handlePrint}
-                  className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200/90 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border border-slate-200 dark:border-zinc-700/80 shadow-xs transition-all active:scale-95"
+                  className="py-2.5 px-2.5 sm:px-4 bg-slate-100 hover:bg-slate-200/90 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 border border-slate-200 dark:border-zinc-700/80 shadow-xs transition-all active:scale-95 shrink-0"
                   title="Print Slip"
                 >
-                  <Printer size={16} />
+                  <Printer size={15} className="shrink-0" />
                   <span>Print</span>
                 </button>
 
                 <button
                   onClick={handleReprint}
-                  className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200/90 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border border-slate-200 dark:border-zinc-700/80 shadow-xs transition-all active:scale-95"
+                  className="py-2.5 px-2.5 sm:px-4 bg-slate-100 hover:bg-slate-200/90 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 border border-slate-200 dark:border-zinc-700/80 shadow-xs transition-all active:scale-95 shrink-0"
                   title="Replay printing animation"
                 >
-                  <RotateCcw size={16} />
+                  <RotateCcw size={15} className="shrink-0" />
                   <span>Reprint</span>
                 </button>
 
                 <button
                   onClick={onClose}
-                  className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200/90 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white rounded-xl text-xs sm:text-sm font-bold border border-slate-200 dark:border-transparent transition-all active:scale-95"
+                  className="py-2.5 px-3 sm:px-4 bg-slate-100 hover:bg-slate-200/90 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white rounded-xl text-xs sm:text-sm font-bold border border-slate-200 dark:border-transparent transition-all active:scale-95 shrink-0"
                 >
                   Close
                 </button>
