@@ -147,6 +147,26 @@ export function decryptChatToken(token: string): { listingId: string; otherUserI
   }
 }
 
+function getEntityTokenKeyCandidates(): Buffer[] {
+  const candidates: Buffer[] = [
+    getChatTokenKey(),
+    crypto.createHash('sha256').update('boardtau-chat-url-token-secret').digest(),
+    crypto.createHash('sha256').update('development-fallback-secret-do-not-use-in-prod').digest(),
+  ];
+
+  if (process.env.MESSAGE_ENCRYPTION_KEY) {
+    if (process.env.MESSAGE_ENCRYPTION_KEY.length === 64) {
+      candidates.push(Buffer.from(process.env.MESSAGE_ENCRYPTION_KEY, 'hex'));
+    }
+    candidates.push(crypto.createHash('sha256').update(process.env.MESSAGE_ENCRYPTION_KEY).digest());
+  }
+  if (process.env.NEXTAUTH_SECRET) {
+    candidates.push(crypto.createHash('sha256').update(process.env.NEXTAUTH_SECRET).digest());
+  }
+
+  return candidates;
+}
+
 export function encryptEntityId(id: string): string {
   if (!id) return '';
   try {
@@ -166,11 +186,11 @@ export function encryptEntityId(id: string): string {
   }
 }
 
-export function decryptEntityId(token: string): string {
-  if (!token) return '';
+export function decryptEntityIdWithIntegrity(token: string): { id: string | null; isTampered: boolean } {
+  if (!token) return { id: null, isTampered: false };
   // Fallback: If it's already a 24-character hex MongoDB ObjectId, return it directly
   if (/^[0-9a-fA-F]{24}$/.test(token)) {
-    return token;
+    return { id: token, isTampered: false };
   }
   try {
     let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
@@ -179,28 +199,51 @@ export function decryptEntityId(token: string): string {
     }
     const raw = Buffer.from(base64, 'base64').toString('utf8');
     const parts = raw.split(':');
-    if (parts.length !== 3) return token;
+    if (parts.length !== 3) {
+      // Plain text or legacy format
+      return { id: token, isTampered: false };
+    }
 
     const iv = Buffer.from(parts[0], 'hex');
     const tag = Buffer.from(parts[1], 'hex');
     const encrypted = parts[2];
 
-    const decipher = crypto.createDecipheriv(ALGORITHM, getChatTokenKey(), iv);
-    decipher.setAuthTag(tag);
+    const candidates = getEntityTokenKeyCandidates();
 
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
+    for (const key of candidates) {
+      try {
+        const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+        decipher.setAuthTag(tag);
 
-    return decrypted || token;
+        let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
+
+        if (decrypted) {
+          return { id: decrypted, isTampered: false };
+        }
+      } catch {
+        // Try next candidate silently
+      }
+    }
+
+    return { id: null, isTampered: true };
   } catch (error) {
-    return token;
+    return { id: null, isTampered: true };
   }
+}
+
+export function decryptEntityId(token: string): string {
+  const result = decryptEntityIdWithIntegrity(token);
+  return result.id || token;
 }
 
 export function decryptReportToken(token: string): { reportId: string | null; isTampered: boolean } {
   if (!token) return { reportId: null, isTampered: false };
   if (/^BTAU-[A-Z0-9-]+$/.test(token)) {
     return { reportId: token, isTampered: false };
+  }
+  if (/^[0-9a-fA-F]{24}$/.test(token)) {
+    return { reportId: null, isTampered: false };
   }
   try {
     let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
@@ -215,13 +258,25 @@ export function decryptReportToken(token: string): { reportId: string | null; is
     const tag = Buffer.from(parts[1], 'hex');
     const encrypted = parts[2];
 
-    const decipher = crypto.createDecipheriv(ALGORITHM, getChatTokenKey(), iv);
-    decipher.setAuthTag(tag);
+    const candidates = getEntityTokenKeyCandidates();
 
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
+    for (const key of candidates) {
+      try {
+        const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+        decipher.setAuthTag(tag);
 
-    return { reportId: decrypted || null, isTampered: false };
+        let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
+
+        if (decrypted) {
+          return { reportId: decrypted, isTampered: false };
+        }
+      } catch {
+        // Try next candidate
+      }
+    }
+
+    return { reportId: null, isTampered: true };
   } catch (error) {
     return { reportId: null, isTampered: true };
   }

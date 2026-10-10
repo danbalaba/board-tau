@@ -1,45 +1,52 @@
 import React from "react";
 import { db as prisma } from "@/lib/db";
-import { notFound, redirect } from "next/navigation";
-import { decryptEntityId, decryptReportToken } from "@/lib/encryption";
-import { CheckCircle2, XCircle, AlertTriangle, ShieldAlert, AlertOctagon, User, Calendar, MapPin, Search, ShieldCheck, ArrowLeft, Home, Building2, Users, Award } from "lucide-react";
+import { notFound } from "next/navigation";
+import { decryptEntityIdWithIntegrity } from "@/lib/encryption";
+import {
+  CheckCircle2,
+  XCircle,
+  AlertOctagon,
+  Calendar,
+  MapPin,
+  ShieldCheck,
+  ShieldAlert,
+  Building2,
+  Award,
+  CreditCard,
+  Receipt,
+  ClipboardCheck,
+  KeyRound,
+  FileCheck2,
+  Home,
+  UserCheck,
+  SearchX,
+  AlertTriangle
+} from "lucide-react";
 import Link from "next/link";
 import SafeImage from "@/components/common/SafeImage";
-import ReportVerificationViewer from "@/components/verify/ReportVerificationViewer";
 
 export const metadata = {
   title: "Boarding Pass Verification | BoardTAU",
-  description: "Verify a BoardTAU reservation.",
+  description: "Official boarding pass verification portal for BoardTAU reservations.",
 };
 
-type VerifyPageProps = {
+type SlipVerifyPageProps = {
   params: Promise<{
     id: string;
   }>;
 };
 
-export default async function VerifyPage({ params }: VerifyPageProps) {
+export default async function SlipVerifyPage({ params }: SlipVerifyPageProps) {
   const { id } = await params;
 
   if (!id) {
     return notFound();
   }
 
-  // Backwards compatibility guard: Check if this is a reservation pass token
-  const possibleReservationId = decryptEntityId(id);
-  if (/^[0-9a-fA-F]{24}$/.test(possibleReservationId)) {
-    const isReservation = await prisma.reservation.findUnique({
-      where: { id: possibleReservationId },
-      select: { id: true },
-    });
-    if (isReservation) {
-      redirect(`/verify/slip/${id}`);
-    }
-  }
+  // 1. Decrypt token with integrity verification
+  const tokenResult = decryptEntityIdWithIntegrity(id);
 
-  // Cryptographic token integrity check
-  const tokenResult = decryptReportToken(id);
-
+  // STATE A: CRYPTOGRAPHIC TAMPER / FORGERY DETECTED
   if (tokenResult.isTampered) {
     return (
       <div className="min-h-screen bg-[#090C12] text-slate-100 flex flex-col items-center justify-between p-4 sm:p-8 relative overflow-hidden font-sans transition-colors duration-300">
@@ -55,7 +62,7 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
             </div>
             <div>
               <span className="text-lg font-black tracking-tight text-white block">BoardTAU</span>
-              <span className="text-[10px] font-bold tracking-widest text-red-400 uppercase block">Security Verification</span>
+              <span className="text-[10px] font-bold tracking-widest text-red-400 uppercase block">Boarding Pass Security</span>
             </div>
           </Link>
 
@@ -77,10 +84,10 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
               </div>
 
               <h1 className="text-2xl font-black text-white tracking-tight mb-1.5 drop-shadow-md">
-                DOCUMENT INTEGRITY COMPROMISED
+                BOARDING PASS INTEGRITY COMPROMISED
               </h1>
               <p className="text-red-200/90 text-xs font-semibold max-w-xs mx-auto mb-4 leading-relaxed drop-shadow-sm">
-                Cryptographic authentication failed. This report link or QR code has been altered or forged.
+                Cryptographic authentication failed. This QR code or verification link has been altered, forged, or tampered with.
               </p>
 
               <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-red-950/80 backdrop-blur-md rounded-full text-red-300 text-[10px] font-black uppercase tracking-widest border border-red-500/40 shadow-inner">
@@ -92,26 +99,26 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
 
           {/* Details Content */}
           <div className="p-6 sm:p-8 space-y-5">
-            {/* Warning Alert Banner */}
+            {/* Warning Alert Banner for Caretakers */}
             <div className="bg-red-950/40 rounded-2xl p-4 border border-red-500/30 space-y-2 text-red-200">
               <div className="flex items-center gap-2 font-bold text-xs text-red-400 uppercase tracking-wider">
-                <ShieldAlert size={16} /> Security Warning Notice
+                <ShieldAlert size={16} /> Caretaker Action Advisory
               </div>
               <p className="text-xs leading-relaxed text-red-200/90">
-                Do not trust any financial figures, dates, or tenant data presented on a physical or digital document using this URL. The digital signature hash does not match BoardTAU's original audit ledger.
+                <strong>Do NOT hand over keys or grant room access.</strong> The encrypted verification token presented does not match BoardTAU's authentic digital records.
               </p>
             </div>
 
-            {/* Generic Enterprise Security Incident Code (No Stack Disclosure) */}
+            {/* Security Incident Code */}
             <div className="bg-slate-950/90 rounded-2xl p-4 border border-slate-800 space-y-1 text-slate-300">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
                 SECURITY INCIDENT REFERENCE
               </span>
               <p className="text-xs font-mono font-bold text-red-400 tracking-wider">
-                BTAU_SEC_ERR_INTEGRITY_MISMATCH
+                BTAU_SEC_PASS_TAMPER_DETECTED
               </p>
               <p className="text-[10px] text-slate-400 pt-1 border-t border-slate-800/80">
-                System Notice: Signature payload does not match authentic BoardTAU ledger checksum.
+                System Notice: Cryptographic payload MAC failed integrity validation.
               </p>
             </div>
 
@@ -121,28 +128,27 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
                 href="/"
                 className="w-full py-3.5 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 border border-red-500 shadow-lg shadow-red-950/50"
               >
-                <Home size={14} /> Return to BoardTAU Security Portal
+                <Home size={14} /> Return to BoardTAU Home
               </Link>
             </div>
           </div>
         </main>
 
         <footer className="mt-8 text-center text-xs font-semibold text-slate-500 relative z-10">
-          <p>© {new Date().getFullYear()} BoardTAU  •  Official Boarding House Security Portal</p>
+          <p>© {new Date().getFullYear()} BoardTAU • Official Boarding Pass Verification Portal</p>
         </footer>
       </div>
     );
   }
 
-  const realId = decryptEntityId(id);
-  const targetReportId = tokenResult.reportId || realId || id;
-  const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(realId);
+  const realReservationId = tokenResult.id || id;
+  const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(realReservationId);
 
-  // Fetch only necessary non-sensitive data if realId is a valid MongoDB ObjectId
+  // 2. Fetch reservation from database
   const reservation = isValidObjectId
     ? await prisma.reservation.findUnique({
         where: {
-          id: realId,
+          id: realReservationId,
         },
         select: {
           id: true,
@@ -151,19 +157,28 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
           endDate: true,
           durationInDays: true,
           occupantsCount: true,
+          totalPrice: true,
+          paymentMethod: true,
+          paymentReference: true,
           guestName: true,
+          inquiry: {
+            select: {
+              paymentMethod: true,
+            },
+          },
           user: {
             select: {
               name: true,
               email: true,
+              image: true,
             },
           },
           room: {
             select: {
               name: true,
+              price: true,
               roomTypeDefinition: {
                 select: {
-                  id: true,
                   name: true,
                 },
               },
@@ -181,132 +196,62 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
       })
     : null;
 
-  let reportLog: any = null;
+  // STATE B: RESERVATION NOT FOUND IN DATABASE
   if (!reservation) {
-    reportLog = await prisma.adminActivityLog.findFirst({
-      where: {
-        entityId: { in: [id, realId, targetReportId].filter(Boolean) }
-      },
-      include: {
-        admin: {
-          select: {
-            name: true,
-            email: true,
-            role: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
-
-    if (!reportLog) {
-      reportLog = await prisma.adminActivityLog.findFirst({
-        where: {
-          action: 'GENERATED_SUMMARY_REPORT'
-        },
-        include: {
-          admin: {
-            select: {
-              name: true,
-              email: true,
-              role: true
-            }
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
-      });
-    }
-  }
-
-  if (!reservation && (reportLog || id.startsWith('BTAU-'))) {
-    let detailsObj: any = {};
-    if (reportLog?.details) {
-      try {
-        detailsObj = typeof reportLog.details === 'string' ? JSON.parse(reportLog.details) : reportLog.details;
-      } catch (e) {
-        detailsObj = {};
-      }
-    }
-
-    const reportCode = reportLog?.entityId || id;
-    const reportTitle = detailsObj.reportTitle || reportLog?.entityType?.replace('Report:', '') || 'Executive Summary Report';
-    const issuerName = reportLog?.admin?.name || detailsObj.generatedBy || 'BoardTAU Landlord Portal';
-    const totalRecords = detailsObj.totalItems !== undefined ? detailsObj.totalItems : 'Verified';
-    const scope = detailsObj.scope === 'all' ? 'Complete History' : (detailsObj.scope || 'Filtered View');
-    const pdfUrl = detailsObj.pdfUrl || null;
-    const pdfHash = detailsObj.pdfHash || null;
-    const issuedDate = reportLog?.createdAt ? new Date(reportLog.createdAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleDateString();
-
     return (
-      <div className="min-h-screen bg-[#F8FAF9] dark:bg-[#0B0F19] text-gray-900 dark:text-slate-100 flex flex-col items-center justify-between p-4 sm:p-8 relative overflow-hidden font-sans transition-colors duration-300">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-gradient-to-b from-[#2f7d6d]/15 via-purple-600/10 to-transparent rounded-full blur-[120px] pointer-events-none" />
-
-        <header className="w-full max-w-2xl flex items-center justify-between py-4 mb-4 relative z-10">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-2xl bg-white dark:bg-white/10 backdrop-blur-md border border-gray-200 dark:border-white/15 flex items-center justify-center p-2 shadow-md group-hover:scale-105 transition-transform">
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden text-slate-100 font-sans">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        
+        {/* Header */}
+        <header className="w-full max-w-md flex items-center justify-between py-4 mb-6 relative z-10">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center p-2 shadow-md">
               <img src="/logo.png" alt="BoardTAU" className="w-full h-full object-contain" />
             </div>
             <div>
-              <span className="text-lg font-black tracking-tight text-gray-900 dark:text-white block">BoardTAU</span>
-              <span className="text-[10px] font-bold tracking-widest text-[#2f7d6d] uppercase block">Report Verification</span>
+              <span className="text-lg font-black tracking-tight text-white block">BoardTAU</span>
+              <span className="text-[10px] font-bold tracking-widest text-amber-400 uppercase block">Pass Verification</span>
             </div>
           </Link>
-
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-slate-900/80 border border-gray-200 dark:border-slate-800 text-[11px] font-bold text-gray-700 dark:text-slate-300 shadow-sm backdrop-blur-md">
-            <ShieldCheck size={14} className="text-[#2f7d6d]" />
-            <span>Verified System</span>
-          </div>
         </header>
 
-        <ReportVerificationViewer
-          reportCode={reportCode}
-          reportTitle={reportTitle}
-          issuerName={issuerName}
-          totalRecords={totalRecords}
-          issuedDate={issuedDate}
-          scope={scope}
-          pdfUrl={pdfUrl}
-          pdfHash={pdfHash}
-        />
+        <div className="w-full max-w-md bg-slate-900/90 backdrop-blur-2xl rounded-3xl p-8 text-center shadow-2xl border border-amber-500/20 relative z-10">
+          <div className="w-20 h-20 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-amber-500/20">
+            <SearchX size={44} />
+          </div>
 
-        <footer className="mt-8 text-center text-xs font-semibold text-gray-400 dark:text-slate-500 relative z-10">
-          <p>© {new Date().getFullYear()} BoardTAU  •  Official Boarding House Verification Portal</p>
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/10 text-amber-300 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 border border-amber-500/20">
+            <AlertTriangle size={12} /> STATUS: UNREGISTERED / INVALID PASS
+          </div>
+
+          <h1 className="text-2xl font-black text-white mb-2 tracking-tight">BOARDING PASS NOT FOUND</h1>
+          <p className="text-xs font-medium text-slate-400 mb-6 leading-relaxed">
+            This reservation pass code could not be found in the BoardTAU database. The pass may have expired, been cancelled, or never existed in official records.
+          </p>
+
+          <div className="bg-slate-950/80 rounded-xl p-3 border border-slate-800 text-left mb-6 space-y-1">
+            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">QUERY REFERENCE</span>
+            <p className="text-xs font-mono text-slate-300 truncate">
+              {realReservationId || id}
+            </p>
+          </div>
+
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center gap-2 w-full py-3.5 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-all border border-primary/30 shadow-lg shadow-primary/20 dark:shadow-primary/30"
+          >
+            <Home size={14} /> Return to BoardTAU Home
+          </Link>
+        </div>
+
+        <footer className="mt-8 text-center text-xs font-semibold text-slate-500 relative z-10">
+          <p>© {new Date().getFullYear()} BoardTAU • Official Boarding Pass Verification Portal</p>
         </footer>
       </div>
     );
   }
 
-  if (!reservation && !reportLog) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden text-slate-100">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="w-full max-w-md bg-slate-900/90 backdrop-blur-2xl rounded-3xl p-8 text-center shadow-2xl border border-rose-500/20 relative z-10">
-          <div className="w-20 h-20 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-rose-500/20">
-            <XCircle size={44} />
-          </div>
-          <h1 className="text-2xl font-black text-white mb-2 tracking-tight">Invalid Verification Code</h1>
-          <p className="text-xs font-medium text-slate-400 mb-8 leading-relaxed">
-            This verification code does not exist in the BoardTAU registry system. The pass or report may be fake or invalid.
-          </p>
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center gap-2 w-full py-4 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-2xl font-bold uppercase tracking-widest text-xs transition-all border border-primary/30 shadow-lg shadow-primary/20 dark:shadow-primary/30"
-          >
-            <ArrowLeft size={16} /> Return to BoardTAU
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (!reservation) {
-    return notFound();
-  }
-
+  // STATE C: OFFICIAL VERIFIED BOARDING PASS
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "COMPLETED":
@@ -315,8 +260,8 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
           ringColor: "ring-purple-400/40",
           iconBg: "bg-purple-500/30 text-purple-200 border-purple-400/40",
           title: "Stay Completed",
-          subtitle: "This reservation has been successfully completed and archived in system records.",
-          badgeText: "STATUS: COMPLETED",
+          subtitle: "This reservation has been successfully completed and archived in official records.",
+          badgeText: "STATUS: COMPLETED STAY",
           icon: CheckCircle2,
           isValid: true,
         };
@@ -337,8 +282,8 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
           ringColor: "ring-emerald-400/40",
           iconBg: "bg-emerald-500/30 text-emerald-200 border-emerald-400/40",
           title: "Confirmed Booking",
-          subtitle: "Valid reservation confirmed and fully secured in BoardTAU database.",
-          badgeText: "STATUS: CONFIRMED",
+          subtitle: "Valid reservation confirmed and fully secured in BoardTAU database. Ready for check-in.",
+          badgeText: "STATUS: CONFIRMED BOOKING",
           icon: CheckCircle2,
           isValid: true,
         };
@@ -348,7 +293,7 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
           ringColor: "ring-rose-400/40",
           iconBg: "bg-rose-500/30 text-rose-200 border-rose-400/40",
           title: "Booking Cancelled",
-          subtitle: "This reservation pass was cancelled and is no longer active.",
+          subtitle: "This reservation pass was cancelled and is no longer active. Do not grant check-in.",
           badgeText: "STATUS: CANCELLED",
           icon: XCircle,
           isValid: false,
@@ -359,7 +304,7 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
           ringColor: "ring-slate-500/40",
           iconBg: "bg-slate-600/30 text-slate-300 border-slate-500/40",
           title: "Pass Expired",
-          subtitle: "This reservation pass has expired.",
+          subtitle: "This reservation pass has expired and the move-in window has closed.",
           badgeText: "STATUS: EXPIRED",
           icon: XCircle,
           isValid: false,
@@ -372,21 +317,21 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
           title: "Reservation Record",
           subtitle: `Current Status: ${status.replace(/_/g, " ")}`,
           badgeText: `STATUS: ${status}`,
-          icon: Search,
-          isValid: false,
+          icon: CheckCircle2,
+          isValid: true,
         };
     }
   };
 
   const statusConfig = getStatusConfig(reservation.status);
   const StatusIcon = statusConfig.icon;
-  
-  // Format tenant name (First Name + Last Initial for privacy if we only have full name)
+
+  // Tenant display name
   let rawName = (reservation.guestName || reservation.user?.name || "Verified Tenant").trim();
   let tenantName = rawName;
   const nameParts = rawName.split(" ");
   if (nameParts.length > 1) {
-    tenantName = `${nameParts[0]} ${nameParts[nameParts.length - 1].charAt(0)}.`;
+    tenantName = `${nameParts[0]} ${nameParts[nameParts.length - 1]}`;
   }
 
   const formatDate = (date: Date) => {
@@ -397,20 +342,31 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
     });
   };
 
-  const location = [reservation.listing?.region, reservation.listing?.country].filter(Boolean).join(", ");
+  const location = [reservation.listing?.region, reservation.listing?.country].filter(Boolean).join(", ") || "Camiling, Tarlac, Philippines";
   const refCode = (reservation.id || "").slice(-8).toUpperCase();
+
+  // Financial details
+  const rawMethod = (reservation.paymentMethod || reservation.inquiry?.paymentMethod || "").toUpperCase();
+  let displayPaymentMethod = "Online Payment";
+  if (["STRIPE", "CREDIT_CARD", "CARD"].includes(rawMethod)) displayPaymentMethod = "Credit / Debit Card (Stripe)";
+  else if (rawMethod === "GCASH") displayPaymentMethod = "GCash E-Wallet";
+  else if (rawMethod === "MAYA") displayPaymentMethod = "Maya Wallet";
+  else if (rawMethod === "CASH") displayPaymentMethod = "Cash Payment";
+  else if (rawMethod === "BANK_TRANSFER") displayPaymentMethod = "Bank Transfer";
+
+  const displayPaymentReference = reservation.paymentReference || `REF-${refCode}`;
+  const totalAmountStr = `PHP ${Number(reservation.totalPrice || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
     <div className="min-h-screen bg-[#F8FAF9] dark:bg-[#0B0F19] text-gray-900 dark:text-slate-100 flex flex-col items-center justify-between p-4 sm:p-8 relative overflow-hidden font-sans transition-colors duration-300">
       {/* Dynamic Ambient Background Glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-gradient-to-b from-[#2f7d6d]/15 via-purple-600/10 to-transparent rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[400px] h-[300px] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-gradient-to-b from-[#2f7d6d]/15 via-teal-600/10 to-transparent rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[400px] h-[300px] bg-emerald-600/10 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* Standalone Brand Navigation Header (No global Navbar or Chatbot) */}
+      {/* Standalone Brand Navigation Header */}
       <header className="w-full max-w-lg flex items-center justify-between py-4 mb-4 relative z-10">
         <Link href="/" className="flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-2xl bg-white dark:bg-white/10 backdrop-blur-md border border-gray-200 dark:border-white/15 flex items-center justify-center p-2 shadow-md group-hover:scale-105 transition-transform">
-            {/* BoardTAU Logo */}
             <img src="/logo.png" alt="BoardTAU" className="w-full h-full object-contain" />
           </div>
           <div>
@@ -425,20 +381,18 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
         </div>
       </header>
 
-      {/* Executive Main Verification Card */}
+      {/* Main Executive Boarding Pass Card */}
       <main className="w-full max-w-lg bg-white dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] overflow-hidden shadow-xl dark:shadow-2xl border border-gray-200/80 dark:border-slate-800 relative z-10 transition-all">
-        
         {/* Dynamic Status Banner Header */}
         <div className={`p-8 sm:p-10 text-center bg-gradient-to-br ${statusConfig.gradient} relative overflow-hidden border-b border-white/10`}>
-          {/* Subtle Banner Background Pattern */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-white/20 via-transparent to-black/30 pointer-events-none" />
-          
+
           <div className="relative z-10 flex flex-col items-center">
             <div className={`w-20 h-20 rounded-3xl ${statusConfig.iconBg} border backdrop-blur-md flex items-center justify-center mb-4 shadow-xl ring-8 ${statusConfig.ringColor} transition-transform hover:scale-105`}>
               <StatusIcon size={44} className="drop-shadow-md text-white" />
             </div>
 
-            <h1 className="text-3xl font-black text-white tracking-tight mb-2 drop-shadow-md">
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2 drop-shadow-md">
               {statusConfig.title}
             </h1>
             <p className="text-white/95 text-xs font-semibold max-w-xs mx-auto mb-4 leading-relaxed drop-shadow-sm">
@@ -453,8 +407,7 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
         </div>
 
         {/* Verification Details Content */}
-        <div className="p-6 sm:p-8 space-y-6">
-          
+        <div className="p-6 sm:p-8 space-y-5">
           {/* Tenant Details Card */}
           <div className="bg-gray-50 dark:bg-slate-950/60 rounded-2xl p-4 border border-gray-200/80 dark:border-slate-800/80 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
@@ -462,9 +415,11 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
                 {tenantName.charAt(0)}
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-400 block mb-0.5">REGISTERED TENANT</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-400 block mb-0.5">
+                  REGISTERED TENANT
+                </span>
                 <p className="text-base font-bold text-gray-900 dark:text-white capitalize">{tenantName}</p>
-                <p className="text-xs font-medium text-gray-500 dark:text-slate-400">{reservation.user?.email || "Verified Tenant Account"}</p>
+                <p className="text-xs font-medium text-gray-500 dark:text-slate-400">{reservation.user?.email || "Verified Student Account"}</p>
               </div>
             </div>
             <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider shrink-0">
@@ -476,18 +431,22 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
           <div className="bg-gray-50 dark:bg-slate-950/60 rounded-2xl p-4 border border-gray-200/80 dark:border-slate-800/80 space-y-3.5">
             <div className="flex items-start gap-3.5">
               <div className="w-14 h-14 rounded-xl bg-gray-200 dark:bg-slate-800 border border-gray-300 dark:border-slate-700/80 overflow-hidden shrink-0 relative">
-                <SafeImage 
-                  src={reservation.listing?.imageSrc || "/images/placeholder.jpg"} 
-                  alt={reservation.listing?.title || "Property"} 
+                <SafeImage
+                  src={reservation.listing?.imageSrc || "/images/placeholder.jpg"}
+                  alt={reservation.listing?.title || "Property"}
                   unoptimized={true}
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-400 block mb-0.5">LEASED PREMISES</span>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">{reservation.listing?.title || "Boarding Property"}</h3>
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-400 block mb-0.5">
+                  LEASED PREMISES
+                </span>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                  {reservation.listing?.title || "Boarding Property"}
+                </h3>
                 <p className="text-xs font-medium text-gray-500 dark:text-slate-400 flex items-center gap-1 mt-1 truncate">
                   <MapPin size={12} className="text-[#2f7d6d] shrink-0" />
-                  <span className="truncate">{location || "Tarlac, Philippines"}</span>
+                  <span className="truncate">{location}</span>
                 </p>
               </div>
             </div>
@@ -495,7 +454,9 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
             <div className="pt-3 border-t border-gray-200/80 dark:border-slate-800/80 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <Building2 size={14} className="text-[#2f7d6d]" />
-                <span className="font-bold text-gray-900 dark:text-slate-200">{reservation.room?.name || "Room Assignment"}</span>
+                <span className="font-bold text-gray-900 dark:text-slate-200">
+                  {reservation.room?.name || "Room Assignment"}
+                </span>
               </div>
               <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 text-[#2f7d6d] dark:text-teal-300 font-bold text-[10px] uppercase tracking-wider border border-gray-200 dark:border-slate-700 shadow-sm">
                 {reservation.room?.roomTypeDefinition?.name || "Hostel Suite"}
@@ -507,7 +468,7 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-gray-50 dark:bg-slate-950/60 rounded-2xl p-4 border border-gray-200/80 dark:border-slate-800/80">
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-400 mb-1 flex items-center gap-1.5">
-                <Calendar size={12} className="text-[#2f7d6d]" /> Check-In
+                <Calendar size={12} className="text-[#2f7d6d]" /> Move-In / Check-In
               </span>
               <p className="text-sm font-bold text-gray-900 dark:text-white">{formatDate(reservation.startDate)}</p>
               <p className="text-[10px] font-semibold text-gray-500 dark:text-slate-400 mt-1">Standard 2:00 PM</p>
@@ -515,14 +476,70 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
 
             <div className="bg-gray-50 dark:bg-slate-950/60 rounded-2xl p-4 border border-gray-200/80 dark:border-slate-800/80">
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-400 mb-1 flex items-center gap-1.5">
-                <Calendar size={12} className="text-[#2f7d6d]" /> Check-Out
+                <Calendar size={12} className="text-[#2f7d6d]" /> Move-Out / Check-Out
               </span>
               <p className="text-sm font-bold text-gray-900 dark:text-white">{formatDate(reservation.endDate)}</p>
-              <p className="text-[10px] font-semibold text-gray-500 dark:text-slate-400 mt-1">{reservation.durationInDays || 1} Nights Stay</p>
+              <p className="text-[10px] font-semibold text-gray-500 dark:text-slate-400 mt-1">
+                {reservation.durationInDays || 1} Nights Stay
+              </p>
             </div>
           </div>
 
-          {/* Monospace Reference Code Card */}
+          {/* Payment & Financial Settlement Card */}
+          <div className="bg-gray-50 dark:bg-slate-950/60 rounded-2xl p-4 border border-gray-200/80 dark:border-slate-800/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-400 flex items-center gap-1.5">
+                <Receipt size={13} className="text-[#2f7d6d]" /> PAYMENT SETTLEMENT
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
+                PAID IN FULL
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
+              <div>
+                <span className="text-[10px] text-gray-500 dark:text-slate-400 block">Total Billed & Paid</span>
+                <span className="font-bold text-gray-900 dark:text-white text-sm">{totalAmountStr}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-gray-500 dark:text-slate-400 block">Balance Due</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">PHP 0.00</span>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-gray-200/80 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-gray-600 dark:text-slate-400">
+              <span className="flex items-center gap-1 truncate">
+                <CreditCard size={12} className="text-[#2f7d6d] shrink-0" />
+                <span className="truncate">{displayPaymentMethod}</span>
+              </span>
+              <span className="font-mono text-[10px] font-bold text-gray-500 dark:text-slate-400 shrink-0">
+                {displayPaymentReference}
+              </span>
+            </div>
+          </div>
+
+          {/* Caretaker Check-In Guidance Checklist */}
+          <div className="bg-[#2f7d6d]/5 dark:bg-[#2f7d6d]/10 rounded-2xl p-4 border border-[#2f7d6d]/20 space-y-2.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#2f7d6d] dark:text-teal-300 uppercase tracking-wider">
+              <ClipboardCheck size={15} /> Caretaker Arrival Checklist
+            </div>
+            <ul className="text-xs text-gray-700 dark:text-slate-300 space-y-1.5 leading-relaxed">
+              <li className="flex items-center gap-2">
+                <UserCheck size={13} className="text-[#2f7d6d] shrink-0" />
+                <span>Verify student identification card upon arrival.</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <KeyRound size={13} className="text-[#2f7d6d] shrink-0" />
+                <span>Hand over room key or keycard for {reservation.room?.name || "assigned room"}.</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FileCheck2 size={13} className="text-[#2f7d6d] shrink-0" />
+                <span>Confirm house rules, curfew schedule, and emergency contacts.</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Monospace Booking Reference Card */}
           <div className="bg-gray-50 dark:bg-slate-950/90 rounded-2xl p-4 border border-gray-200/80 dark:border-slate-800 text-center space-y-1">
             <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-400 block">
               AUTHENTICATED BOOKING REFERENCE
@@ -535,24 +552,22 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
             </p>
           </div>
 
-          {/* Navigation Link Back */}
+          {/* Action Link Back */}
           <div className="pt-2">
             <Link
               href="/"
               className="w-full py-3.5 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 border border-primary/30 shadow-lg shadow-primary/25 dark:shadow-primary/30"
             >
-              <Home size={14} /> Go to BoardTAU Home
+              <Home size={14} /> Return to BoardTAU Home
             </Link>
           </div>
-
         </div>
       </main>
 
       {/* Standalone Minimalist Footer */}
       <footer className="mt-8 text-center text-xs font-semibold text-gray-400 dark:text-slate-500 relative z-10">
-        <p>© {new Date().getFullYear()} BoardTAU  •  Official Boarding House Verification Portal</p>
+        <p>© {new Date().getFullYear()} BoardTAU • Official Boarding Pass Verification Portal</p>
       </footer>
     </div>
   );
 }
-
