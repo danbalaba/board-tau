@@ -981,3 +981,33 @@ dialog.sentry-feedback button[type="submit"]:hover,
   background-color: #1e5146 !important;
   border-color: #1e5146 !important;
 }
+
+/* Print optimization for BoardTAU Thermal Receipt */
+@media print {
+  @page {
+    margin: 0;
+    size: 80mm auto;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #thermal-receipt-paper,
+  #thermal-receipt-paper * {
+    visibility: visible;
+  }
+  #thermal-receipt-paper {
+    position: absolute !important;
+    left: 50% !important;
+    top: 0 !important;
+    transform: translateX(-50%) !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 auto !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

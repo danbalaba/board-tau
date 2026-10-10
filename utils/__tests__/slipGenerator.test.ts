@@ -43,6 +43,8 @@ jest.mock('jspdf', () => {
     roundedRect: jest.fn(),
     rect: jest.fn(),
     circle: jest.fn(),
+    setLineDashPattern: jest.fn(),
+    triangle: jest.fn(),
     splitTextToSize: jest.fn((text: string) => [text]),
     getTextWidth: jest.fn().mockReturnValue(50),
     save: jest.fn(),

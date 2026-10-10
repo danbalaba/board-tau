@@ -1,41 +1,15 @@
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { encryptEntityId } from '@/lib/encryption';
+import { drawCode128InPdf } from '@/utils/barcode';
 
-const PRIMARY_TEAL: [number, number, number] = [47, 125, 109]; // #2F7D6D
-const SECONDARY_NAVY: [number, number, number] = [15, 23, 42]; // #0F172A
-const ACCENT_EMERALD: [number, number, number] = [16, 185, 129]; // #10B981
-const ACCENT_BLUE: [number, number, number] = [30, 58, 138]; // #1E3A8A
-const TEXT_MUTED: [number, number, number] = [100, 116, 139]; // #64748B
-const TEXT_DARK: [number, number, number] = [30, 41, 59]; // #1E293B
-const BG_SLATE: [number, number, number] = [248, 250, 252]; // #F8FAFC
-const BORDER_COLOR: [number, number, number] = [226, 232, 240]; // #E2E8F0
-const MINT_BG: [number, number, number] = [236, 253, 245]; // #ECFDF5
-
-const loadLogoImage = (): Promise<HTMLImageElement | null> => {
-  return new Promise((resolve) => {
-    if (typeof window === 'undefined') return resolve(null);
-    const img = new Image();
-    img.crossOrigin = 'Anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = `${window.location.origin}/logo.png`;
-  });
-};
-
-const drawSectionTitle = (doc: jsPDF, title: string, y: number) => {
-  doc.setFillColor(...PRIMARY_TEAL);
-  doc.roundedRect(14, y - 4, 3, 5, 0.8, 0.8, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10.5);
-  doc.setTextColor(...PRIMARY_TEAL);
-  doc.text(title, 19, y);
-};
+const INK_BLACK: [number, number, number] = [17, 24, 39]; // #111827
+const INK_MUTED: [number, number, number] = [75, 85, 99]; // #4B5563
+const INK_LIGHT: [number, number, number] = [156, 163, 175]; // #9CA3AF
 
 const formatPaymentMethod = (methodRaw?: string, inquiryMethodRaw?: string): string => {
   const method = (methodRaw || inquiryMethodRaw || '').toUpperCase();
   if (method === 'STRIPE' || method === 'CREDIT_CARD' || method === 'CARD') {
-    return 'Credit / Debit Card (Stripe)';
+    return 'Credit/Debit Card (Stripe)';
   }
   if (method === 'GCASH') {
     return 'GCash E-Wallet';
@@ -62,386 +36,426 @@ const formatPaymentReference = (ref?: string, resId?: string): string => {
   return 'N/A';
 };
 
+// Helper to draw serrated paper receipt tear edges
+const drawSerratedEdge = (doc: jsPDF, y: number, isTop: boolean) => {
+  const toothWidth = 3.2;
+  const toothHeight = 1.8;
+  const totalWidth = 80;
+  const count = Math.ceil(totalWidth / toothWidth);
+
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.1);
+
+  for (let i = 0; i < count; i++) {
+    const startX = i * toothWidth;
+    const midX = startX + toothWidth / 2;
+    const endX = startX + toothWidth;
+
+    if (isTop) {
+      doc.triangle(startX, 0, midX, toothHeight, endX, 0, 'FD');
+    } else {
+      doc.triangle(startX, y, midX, y - toothHeight, endX, y, 'FD');
+    }
+  }
+};
+
+
+
+// Helper to generate faint BoardTAU logo watermark (clean, no circles, large)
+const generateWatermarkDataUrl = async (logoUrl: string = '/BoardTAU_Main_Logo.png'): Promise<string> => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return '';
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const size = 500;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve('');
+          return;
+        }
+
+        ctx.clearRect(0, 0, size, size);
+
+        // Large clean high-res faint grayscale BoardTAU logo icon in center
+        ctx.save();
+        ctx.globalAlpha = 0.09;
+        ctx.filter = 'grayscale(100%) contrast(115%)';
+        const logoSize = 460;
+        ctx.drawImage(img, (size - logoSize) / 2, (size - logoSize) / 2, logoSize, logoSize);
+        ctx.restore();
+
+        resolve(canvas.toDataURL('image/png'));
+      } catch {
+        resolve('');
+      }
+    };
+    img.onerror = () => resolve('');
+    img.src = logoUrl;
+  });
+};
+
 export const generateConfirmationSlipPDF = async (
   reservation: any,
   tenantName: string,
   tenantEmail: string,
   returnBlob: boolean = false
 ): Promise<Blob | void> => {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  // Standard 80mm thermal receipt roll dimensions with comfortable spacing (80mm width x 270mm length)
+  const PAGE_HEIGHT = 270;
+  const doc = new jsPDF({
+    unit: 'mm',
+    format: [80, PAGE_HEIGHT],
+  });
 
   const rawResId = String(reservation.id || 'BOARDING-PASS');
   const refCode = rawResId.slice(-8).toUpperCase();
+  const resStatus = String(reservation.status || 'RESERVED').toUpperCase();
+
   const effectiveDate = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
   });
-
-  let logoElement: HTMLImageElement | null = null;
-  try {
-    logoElement = await loadLogoImage();
-  } catch (e) {
-    logoElement = null;
-  }
-
-  // --- EXECUTIVE TOP HEADER BANNER ---
-  doc.setFillColor(...SECONDARY_NAVY);
-  doc.rect(0, 0, 210, 26, 'F');
-
-  // Accent Line at bottom of header banner
-  doc.setFillColor(...PRIMARY_TEAL);
-  doc.rect(0, 26, 210, 1.2, 'F');
-
-  // Circular White Logo Container Badge
-  doc.setFillColor(255, 255, 255);
-  doc.circle(21, 13, 8.5, 'F');
-
-  if (logoElement) {
-    try {
-      doc.addImage(logoElement, 'PNG', 15, 7, 12, 12);
-    } catch (e) {
-      doc.setFillColor(...PRIMARY_TEAL);
-      doc.circle(21, 13, 6, 'F');
-    }
-  } else {
-    doc.setFillColor(...PRIMARY_TEAL);
-    doc.circle(21, 13, 6, 'F');
-  }
-
-  // Brand Name & Metadata
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(17);
-  doc.setTextColor(255, 255, 255);
-  doc.text('BoardTAU', 33, 13.5);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.setTextColor(148, 163, 184);
-  doc.text('HOUSING & ACCOMMODATION SYSTEM', 33, 18);
-
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...ACCENT_EMERALD);
-  doc.text(`OFFICIAL BOARDING PASS  •  ISSUED: ${effectiveDate.toUpperCase()}`, 33, 22.5);
-
-  // Status text and styling based on reservation status
-  const resStatus = String(reservation.status || 'RESERVED').toUpperCase();
-  let headerBadgeText = 'VERIFIED CONFIRMATION SLIP';
-  let ribbonText = 'VERIFIED PAYMENT CONFIRMED  •  RESERVATION FULLY SECURED IN SYSTEM';
-  let badgeBgColor: [number, number, number] = MINT_BG;
-  let badgeBorderColor: [number, number, number] = ACCENT_EMERALD;
-  let badgeTextColor: [number, number, number] = PRIMARY_TEAL;
-
-  if (resStatus === 'COMPLETED') {
-    headerBadgeText = 'VERIFIED COMPLETED STAY';
-    ribbonText = 'STAY FULLY COMPLETED  •  VERIFIED TENANT RECORD ARCHIVED IN SYSTEM';
-    badgeBgColor = [243, 232, 255];
-    badgeBorderColor = [147, 51, 234];
-    badgeTextColor = [126, 34, 206];
-  } else if (resStatus === 'CHECKED_IN') {
-    headerBadgeText = 'VERIFIED CHECKED-IN STAY';
-    ribbonText = 'ACTIVE STAY CONFIRMED  •  TENANT CURRENTLY CHECKED IN AT PROPERTY';
-  } else if (resStatus === 'CANCELLED') {
-    headerBadgeText = 'CANCELLED RESERVATION';
-    ribbonText = 'RESERVATION CANCELLED  •  OFFICIAL RECORD INACTIVE';
-    badgeBgColor = [254, 242, 242];
-    badgeBorderColor = [225, 29, 72];
-    badgeTextColor = [190, 18, 60];
-  }
-
-  // Header Right: Reference Hash & Status Badge
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(226, 232, 240);
-  doc.text(`REF: ${refCode}`, 196, 11, { align: 'right' });
-
-  doc.setFillColor(...badgeBgColor);
-  doc.setDrawColor(...badgeBorderColor);
-  doc.roundedRect(132, 14, 64, 7.5, 1.5, 1.5, 'FD');
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...badgeTextColor);
-  doc.text(headerBadgeText, 164, 18.8, { align: 'center' });
-
-  let currentY = 34;
-
-  // --- SECTION 1: GUEST & PROPERTY DETAILS ---
-  drawSectionTitle(doc, '1. GUEST & PROPERTY DETAILS', currentY);
-  currentY += 5;
-
-  const cardHeight = 22;
-
-  // Tenant Card (Left Side)
-  doc.setFillColor(...BG_SLATE);
-  doc.setDrawColor(...BORDER_COLOR);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(14, currentY, 88, cardHeight, 2, 2, 'FD');
-
-  // Primary Teal Left Indicator Stripe
-  doc.setFillColor(...PRIMARY_TEAL);
-  doc.roundedRect(14, currentY, 3, cardHeight, 1, 1, 'F');
-
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...TEXT_MUTED);
-  doc.text('REGISTERED TENANT / GUEST', 20, currentY + 5.5);
-
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...SECONDARY_NAVY);
-  const displayTenantName = (tenantName || 'Tenant Guest').trim();
-  doc.text(displayTenantName, 20, currentY + 11.5);
-
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...PRIMARY_TEAL);
-  doc.text(tenantEmail || 'Verified Tenant Account', 20, currentY + 16.5);
-
-  // Property Card (Right Side)
-  doc.setFillColor(...BG_SLATE);
-  doc.setDrawColor(...BORDER_COLOR);
-  doc.roundedRect(108, currentY, 88, cardHeight, 2, 2, 'FD');
-
-  // Accent Blue Left Indicator Stripe
-  doc.setFillColor(...ACCENT_BLUE);
-  doc.roundedRect(108, currentY, 3, cardHeight, 1, 1, 'F');
-
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...TEXT_MUTED);
-  doc.text('LEASED PREMISES & ROOM', 114, currentY + 5.5);
-
-  const propTitle = reservation.listing?.title || reservation.listingTitle || 'Boarding House Property';
-  doc.setFontSize(9.5);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...SECONDARY_NAVY);
-  doc.text(doc.splitTextToSize(propTitle, 78)[0], 114, currentY + 10.5);
-
-  const roomName = reservation.room?.name || 'Selected Room';
-  const roomType = reservation.room?.roomType || reservation.room?.roomTypeDefinition?.name || reservation.listing?.propertyType?.name || 'Solo Unit';
-
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...ACCENT_BLUE);
-  doc.text(`${roomName}  •  ${roomType}`, 114, currentY + 16.5);
-
-  currentY += cardHeight + 8;
-
-  // --- SECTION 2: STAY ITINERARY & SCHEDULE ---
-  drawSectionTitle(doc, '2. STAY ITINERARY & SCHEDULE', currentY);
-  currentY += 5;
+  const effectiveTime = new Date().toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   const moveInDate = new Date(reservation.startDate).toLocaleDateString('en-US', {
     year: 'numeric',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
   });
   const moveOutDate = new Date(reservation.endDate).toLocaleDateString('en-US', {
     year: 'numeric',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
   });
 
-  autoTable(doc, {
-    startY: currentY,
-    head: [['Check-In Date', 'Check-Out Date', 'Duration of Stay', 'Registered Occupants']],
-    body: [
-      [moveInDate, moveOutDate, `${reservation.durationInDays || 1} Nights`, `${reservation.occupantsCount || 1} Person(s)`]
-    ],
-    theme: 'grid',
-    headStyles: {
-      fillColor: PRIMARY_TEAL,
-      textColor: [255, 255, 255],
-      fontStyle: 'bold',
-      fontSize: 8.5,
-      cellPadding: 3.5,
-    },
-    bodyStyles: {
-      textColor: TEXT_DARK,
-      fontSize: 8.5,
-      cellPadding: 3.5,
-    },
-    alternateRowStyles: {
-      fillColor: BG_SLATE,
-    },
-    columnStyles: {
-      0: { cellWidth: 46 },
-      1: { cellWidth: 46 },
-      2: { cellWidth: 45 },
-      3: { cellWidth: 45 },
-    },
-    tableLineWidth: 0.2,
-    tableLineColor: BORDER_COLOR,
-    margin: { left: 14, right: 14 },
-  });
-
-  currentY = (doc as any).lastAutoTable.finalY + 8;
-
-  // --- SECTION 3: PAYMENT & FINANCIAL SUMMARY ---
-  drawSectionTitle(doc, '3. PAYMENT & FINANCIAL SUMMARY', currentY);
-  currentY += 5;
-
   const displayPaymentMethod = formatPaymentMethod(reservation.paymentMethod, reservation.inquiry?.paymentMethod);
   const displayPaymentReference = formatPaymentReference(reservation.paymentReference, reservation.id);
-  const totalBillStr = `PHP ${Number(reservation.totalPrice || 0).toLocaleString()}`;
+  const totalBillStr = `PHP ${Number(reservation.totalPrice || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  autoTable(doc, {
-    startY: currentY,
-    head: [['Total Bill Amount', 'Amount Paid', 'Payment Method', 'Payment Reference']],
-    body: [
-      [totalBillStr, totalBillStr, displayPaymentMethod, displayPaymentReference]
-    ],
-    theme: 'grid',
-    headStyles: {
-      fillColor: PRIMARY_TEAL,
-      textColor: [255, 255, 255],
-      fontStyle: 'bold',
-      fontSize: 8.5,
-      cellPadding: 3.5,
-    },
-    bodyStyles: {
-      textColor: TEXT_DARK,
-      fontSize: 8.5,
-      cellPadding: 3.5,
-    },
-    alternateRowStyles: {
-      fillColor: BG_SLATE,
-    },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 42 },
-      1: { fontStyle: 'bold', cellWidth: 42 },
-      2: { cellWidth: 50 },
-      3: { cellWidth: 48 },
-    },
-    tableLineWidth: 0.2,
-    tableLineColor: BORDER_COLOR,
-    margin: { left: 14, right: 14 },
-  });
-
-  currentY = (doc as any).lastAutoTable.finalY + 6;
-
-  // Payment Confirmation Status Ribbon
-  doc.setFillColor(...badgeBgColor);
-  doc.setDrawColor(...badgeBorderColor);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(14, currentY, 182, 7.5, 1.5, 1.5, 'FD');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(...badgeTextColor);
-  doc.text(ribbonText, 105, currentY + 5, { align: 'center' });
-
-  currentY += 14;
-
-  // --- SECTION 4: CHECK-IN GUIDELINES & QR VERIFICATION ---
-  drawSectionTitle(doc, '4. CHECK-IN GUIDELINES & DIGITAL VERIFICATION', currentY);
-  currentY += 6;
-
-  // Generate QR Code
+  // Generate QR Code & Watermark concurrently
   let qrDataUrl = '';
+  let watermarkDataUrl = '';
   try {
-    const QRCode = (await import('qrcode')).default;
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.NEXTAUTH_URL ||
-      (typeof window !== 'undefined' ? window.location.origin : 'https://board-tau-rho.vercel.app');
-    const verifyUrl = `${baseUrl}/verify/${encryptEntityId(reservation.id)}`;
-    qrDataUrl = await QRCode.toDataURL(verifyUrl, {
-      margin: 1,
-      color: {
-        dark: '#0F172A',
-        light: '#ffffff',
-      },
-    });
+    const [qrResult, wmResult] = await Promise.all([
+      (async () => {
+        const QRCode = (await import('qrcode')).default;
+        const baseUrl =
+          process.env.NEXT_PUBLIC_APP_URL ||
+          process.env.NEXTAUTH_URL ||
+          (typeof window !== 'undefined' ? window.location.origin : 'https://board-tau-rho.vercel.app');
+        const verifyUrl = `${baseUrl}/verify/slip/${encryptEntityId(reservation.id)}`;
+        return await QRCode.toDataURL(verifyUrl, {
+          margin: 1,
+          width: 256,
+          color: {
+            dark: '#111827',
+            light: '#FFFFFF',
+          },
+        });
+      })(),
+      generateWatermarkDataUrl('/BoardTAU_Main_Logo.png'),
+    ]);
+    qrDataUrl = qrResult;
+    watermarkDataUrl = wmResult;
   } catch (error) {
-    console.error('Failed to generate QR code:', error);
+    console.error('Failed to generate receipt visual assets:', error);
   }
 
-  const guidelines = [
-    'Present this Confirmation Slip (digital or printed) to the caretaker upon arrival.',
-    'A valid Government ID or Student ID is required upon check-in to verify identity.',
-    'Standard check-in time is typically 2:00 PM unless agreed otherwise with the landlord.',
-    'Keep your payment reference and confirmation code saved for official records.',
-  ];
+  // Draw Top Serrated Paper Tear
+  drawSerratedEdge(doc, 0, true);
 
-  const guidelinesBoxWidth = 138;
-  const qrBoxWidth = 40;
-  const sectionHeight = 48;
-
-  // Guidelines List (Left)
-  guidelines.forEach((guide, idx) => {
-    const itemY = currentY + idx * 11.5;
-    const numStr = String(idx + 1).padStart(2, '0');
-
-    doc.setFillColor(...BG_SLATE);
-    doc.setDrawColor(...BORDER_COLOR);
-    doc.roundedRect(14, itemY, guidelinesBoxWidth, 9.5, 1.5, 1.5, 'FD');
-
-    // Number Pill
-    doc.setFillColor(...PRIMARY_TEAL);
-    doc.roundedRect(16.5, itemY + 1.5, 7, 6.5, 1, 1, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.setTextColor(255, 255, 255);
-    doc.text(numStr, 20, itemY + 5.8, { align: 'center' });
-
-    // Guideline Text
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(...TEXT_DARK);
-    const splitGuide = doc.splitTextToSize(guide, 122);
-    doc.text(splitGuide, 26, itemY + 5.5);
-  });
-
-  // QR Code Verification Card (Right)
-  doc.setFillColor(...BG_SLATE);
-  doc.setDrawColor(...BORDER_COLOR);
-  doc.roundedRect(156, currentY, qrBoxWidth, sectionHeight - 2, 2, 2, 'FD');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(6.5);
-  doc.setTextColor(...TEXT_MUTED);
-  doc.text('SCAN TO VERIFY', 176, currentY + 5, { align: 'center' });
-
-  if (qrDataUrl) {
+  // Draw Official BoardTAU Background Watermark (No circle, large & visible)
+  if (watermarkDataUrl) {
     try {
-      doc.addImage(qrDataUrl, 'PNG', 161, currentY + 7, 30, 30);
+      const watermarkSize = 60; // 60mm width (75% of 80mm roll width)
+      const watermarkX = (80 - watermarkSize) / 2;
+      const watermarkY = 92; // Optical center of receipt body
+      doc.addImage(watermarkDataUrl, 'PNG', watermarkX, watermarkY, watermarkSize, watermarkSize);
     } catch (e) {
-      doc.setFillColor(255, 255, 255);
-      doc.rect(161, currentY + 7, 30, 30, 'F');
+      console.error('Failed to draw watermark in PDF:', e);
     }
   }
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(...PRIMARY_TEAL);
-  doc.text(`#${refCode}`, 176, currentY + 41, { align: 'center' });
+  let curY = 9;
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6);
-  doc.setTextColor(...TEXT_MUTED);
-  doc.text('Instant QR Verification', 176, currentY + 44.5, { align: 'center' });
+  // Header Title
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(...INK_BLACK);
+  doc.text('B O A R D T A U', 40, curY, { align: 'center' });
 
-  // --- EXECUTIVE FOOTER ---
-  doc.setDrawColor(...BORDER_COLOR);
-  doc.setLineWidth(0.4);
-  doc.line(14, 282, 196, 282);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(...SECONDARY_NAVY);
-  doc.text('BoardTAU Housing Management System', 14, 287);
-
-  doc.setFont('helvetica', 'normal');
+  curY += 4.5;
+  doc.setFont('courier', 'normal');
   doc.setFontSize(7);
-  doc.setTextColor(...TEXT_MUTED);
-  doc.text(`|  Verification Reference: REF-${refCode}  |  Authentic Digital Record`, 70, 287);
-  doc.text('Page 1 of 1', 196, 287, { align: 'right' });
+  doc.setTextColor(...INK_MUTED);
+  doc.text('HOUSING & ACCOMMODATION SYSTEM', 40, curY, { align: 'center' });
+
+  curY += 3.5;
+  doc.setFontSize(6.5);
+  doc.text('CAMILING, TARLAC, PHILIPPINES', 40, curY, { align: 'center' });
+
+  // Double Divider
+  curY += 4.5;
+  doc.setDrawColor(...INK_BLACK);
+  doc.setLineWidth(0.3);
+  doc.line(5, curY, 75, curY);
+  doc.line(5, curY + 0.6, 75, curY + 0.6);
+
+  // Subtitle
+  curY += 4.5;
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...INK_BLACK);
+  doc.text('OFFICIAL BOARDING PASS', 40, curY, { align: 'center' });
+  curY += 3.5;
+  doc.setFontSize(7.5);
+  doc.text('& STAY CONFIRMATION SLIP', 40, curY, { align: 'center' });
+
+  curY += 3.5;
+  doc.line(5, curY, 75, curY);
+  doc.line(5, curY + 0.6, 75, curY + 0.6);
+
+  // Metadata / Status
+  curY += 4.5;
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(6.8);
+  doc.setTextColor(...INK_BLACK);
+  doc.text(`DATE/TIME : ${effectiveDate} ${effectiveTime}`, 5, curY);
+  curY += 3.8;
+  doc.text(`BOOKING REF: #${refCode}`, 5, curY);
+  curY += 3.8;
+
+  let statusText = '[ RESERVATION CONFIRMED ]';
+  if (resStatus === 'COMPLETED') statusText = '[ COMPLETED STAY ]';
+  else if (resStatus === 'CHECKED_IN') statusText = '[ CHECKED IN ]';
+  else if (resStatus === 'CANCELLED') statusText = '[ CANCELLED ]';
+  else if (resStatus === 'PENDING_PAYMENT') statusText = '[ PAYMENT PENDING ]';
+
+  doc.setFont('courier', 'bold');
+  doc.text(`STATUS    : ${statusText}`, 5, curY);
+
+  // Dotted Line Helper
+  const drawDottedLine = (yPos: number) => {
+    doc.setLineDashPattern([0.8, 0.8], 0);
+    doc.setDrawColor(...INK_LIGHT);
+    doc.setLineWidth(0.2);
+    doc.line(5, yPos, 75, yPos);
+    doc.setLineDashPattern([], 0); // reset
+  };
+
+  // --- SECTION: GUEST DETAILS ---
+  curY += 4;
+  drawDottedLine(curY);
+  curY += 4;
+
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...INK_BLACK);
+  doc.text('TENANT / GUEST DETAILS', 5, curY);
+
+  curY += 4;
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(6.8);
+  const safeTenantName = (tenantName || 'Tenant Guest').trim();
+  doc.text(`NAME   : ${safeTenantName.toUpperCase()}`, 5, curY);
+  curY += 3.6;
+  doc.text(`ACCOUNT: ${tenantEmail || 'Verified Tenant Account'}`, 5, curY);
+  curY += 3.6;
+  doc.text(`GUESTS : ${reservation.occupantsCount || 1} PERSON(S)`, 5, curY);
+
+  // --- SECTION: PREMISES ---
+  curY += 4;
+  drawDottedLine(curY);
+  curY += 4;
+
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(7.5);
+  doc.text('LEASED PREMISES & UNIT', 5, curY);
+
+  curY += 4;
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(6.8);
+  const propTitle = (reservation.listing?.title || reservation.listingTitle || 'Boarding House Property').toUpperCase();
+  const wrappedProp = doc.splitTextToSize(`PROPERTY: ${propTitle}`, 70);
+  doc.text(wrappedProp, 5, curY);
+  curY += (wrappedProp.length * 3.6);
+
+  const roomName = (reservation.room?.name || 'Selected Room').toUpperCase();
+  const roomType = (reservation.room?.roomType || reservation.room?.roomTypeDefinition?.name || reservation.listing?.propertyType?.name || 'Standard Unit').toUpperCase();
+  doc.text(`ROOM    : ${roomName}`, 5, curY);
+  curY += 3.6;
+  doc.text(`UNIT TYP: ${roomType}`, 5, curY);
+
+  // --- SECTION: ITINERARY ---
+  curY += 4;
+  drawDottedLine(curY);
+  curY += 4;
+
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(7.5);
+  doc.text('STAY SCHEDULE & ITINERARY', 5, curY);
+
+  curY += 4;
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(6.8);
+  doc.text(`CHECK-IN : ${moveInDate.toUpperCase()} (AFTER 02:00 PM)`, 5, curY);
+  curY += 3.6;
+  doc.text(`CHECK-OUT: ${moveOutDate.toUpperCase()} (BEFORE 12:00 PM)`, 5, curY);
+  curY += 3.6;
+  doc.text(`DURATION : ${reservation.durationInDays || 1} NIGHTS`, 5, curY);
+
+  // --- SECTION: FINANCIAL BREAKDOWN ---
+  curY += 4;
+  doc.setDrawColor(...INK_BLACK);
+  doc.setLineWidth(0.2);
+  doc.line(5, curY, 75, curY);
+  curY += 4;
+
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(7.5);
+  doc.text('PAYMENT SUMMARY & RECEIPT', 5, curY);
+
+  curY += 4;
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(6.8);
+  doc.text('Holding Fee / Bill', 5, curY);
+  doc.text(totalBillStr, 75, curY, { align: 'right' });
+
+  curY += 3.6;
+  doc.text(`Period (${reservation.durationInDays || 1} Nights)`, 5, curY);
+  doc.text('INCLUDED', 75, curY, { align: 'right' });
+
+  curY += 3.4;
+  drawDottedLine(curY);
+  curY += 4;
+
+  doc.setFont('courier', 'bold');
+  doc.text('TOTAL BILLED', 5, curY);
+  doc.text(totalBillStr, 75, curY, { align: 'right' });
+
+  curY += 3.6;
+  doc.text('AMOUNT PAID', 5, curY);
+  doc.text(totalBillStr, 75, curY, { align: 'right' });
+
+  curY += 3.6;
+  doc.text('BALANCE DUE', 5, curY);
+  doc.text('PHP 0.00', 75, curY, { align: 'right' });
+
+  curY += 3.6;
+  doc.setFont('courier', 'normal');
+  doc.text(`PAY METHOD : ${displayPaymentMethod.toUpperCase()}`, 5, curY);
+  curY += 3.6;
+  doc.text(`PAY REF NO : ${displayPaymentReference}`, 5, curY);
+
+  // --- SECTION: CARETAKER GUIDELINES ---
+  curY += 4;
+  drawDottedLine(curY);
+  curY += 4;
+
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(7.5);
+  doc.text('CARETAKER CHECK-IN GUIDELINES', 5, curY);
+
+  curY += 4;
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(6.2);
+  const guidelines = [
+    '[1] Present slip (mobile or paper) upon arrival.',
+    '[2] Present valid Student / Gov ID for verification.',
+    '[3] Standard check-in starts at 2:00 PM.',
+    `[4] Retain reference #${refCode} for your record.`
+  ];
+  guidelines.forEach((g) => {
+    doc.text(g, 5, curY);
+    curY += 3.4;
+  });
+
+  // --- SECTION: QR CODE & DIGITAL VERIFICATION ---
+  curY += 2;
+  doc.setDrawColor(...INK_BLACK);
+  doc.setLineWidth(0.3);
+  doc.line(5, curY, 75, curY);
+  curY += 4.5;
+
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(8);
+  doc.text('DIGITAL SCAN VERIFICATION', 40, curY, { align: 'center' });
+  curY += 3.5;
+
+  if (qrDataUrl) {
+    try {
+      const qrSize = 25; // 25x25mm
+      const qrX = (80 - qrSize) / 2; // 27.5mm centered
+      
+      // Subtle framed border box around QR code matching modal UI
+      doc.setDrawColor(215, 215, 215);
+      doc.setLineWidth(0.2);
+      doc.rect(qrX - 1.5, curY - 0.5, qrSize + 3, qrSize + 3);
+
+      doc.addImage(qrDataUrl, 'PNG', qrX, curY + 1, qrSize, qrSize);
+      
+      // Advance curY past QR box with 4.5mm breathing clearance before baseline
+      curY += qrSize + 7.5;
+    } catch {
+      curY += 6;
+    }
+  } else {
+    curY += 6;
+  }
+
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...INK_BLACK);
+  doc.text(`* * ${refCode} * *`, 40, curY, { align: 'center' });
+  curY += 4;
+
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(6.2);
+  doc.setTextColor(...INK_MUTED);
+  doc.text('SCAN TO VERIFY WITH CARETAKER', 40, curY, { align: 'center' });
+
+  // Real Standards-Compliant Code 128 Barcode with quiet zones
+  curY += 4.5;
+  const barcodeWidth = 56;
+  const barcodeHeight = 7.5;
+  const barcodeX = (80 - barcodeWidth) / 2; // 12mm centered
+  drawCode128InPdf(doc, `RES-${refCode}`, barcodeX, curY, barcodeWidth, barcodeHeight, INK_BLACK);
+  
+  // Advance curY past barcode height + breathing room for baseline
+  curY += barcodeHeight + 4.5;
+
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(...INK_BLACK);
+  doc.text(`*RES-${refCode}*`, 40, curY, { align: 'center' });
+
+  curY += 4.5;
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(6.2);
+  doc.setTextColor(...INK_MUTED);
+  doc.text('AUTHENTIC DIGITAL RECORD', 40, curY, { align: 'center' });
+  curY += 3.5;
+  doc.text('*** THANK YOU FOR CHOOSING BOARDTAU ***', 40, curY, { align: 'center' });
+
+  // Draw Bottom Serrated Paper Tear
+  drawSerratedEdge(doc, PAGE_HEIGHT, false);
 
   if (returnBlob) {
     return doc.output('blob');
   }
 
-  doc.save(`BoardTAU_Confirmation_${refCode}.pdf`);
+  doc.save(`BoardTAU_Receipt_${refCode}.pdf`);
 };
