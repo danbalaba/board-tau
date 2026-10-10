@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Home, CreditCard, Check, ArrowRight, Eye, X, MapPin, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
 import { generateConfirmationSlipPDF } from "@/utils/slipGenerator";
+import ThermalReceiptModal from "@/components/reservations/ThermalReceiptModal";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 
 interface ReservationListing {
@@ -66,6 +67,7 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
 }) => {
     const responsiveToast = useResponsiveToast();
     const [imgIdx, setImgIdx] = React.useState(0);
+    const [isReceiptModalOpen, setIsReceiptModalOpen] = React.useState(false);
 
     const cardImages = React.useMemo(() => {
         const roomImgs: string[] = [];
@@ -366,17 +368,11 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
 
                     {(reservation.status === "RESERVED" || reservation.status === "CHECKED_IN" || reservation.status === "COMPLETED") && (
                         <button
-                            onClick={async (e) => {
+                            onClick={(e) => {
                                 e.stopPropagation();
-                                const toastId = responsiveToast.loading("Generating Boarding Pass...");
-                                try {
-                                    await generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail);
-                                    responsiveToast.success("Downloaded successfully!", { id: toastId });
-                                } catch (err) {
-                                    responsiveToast.error("Failed to generate.", { id: toastId });
-                                }
+                                setIsReceiptModalOpen(true);
                             }}
-                            title="Download Confirmation Slip"
+                            title="View / Print Boarding Pass"
                             className="w-10 h-10 shrink-0 font-bold text-xs text-primary bg-primary/10 rounded-xl hover:bg-primary/20 border border-primary/20 transition-all flex justify-center items-center"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
@@ -384,6 +380,15 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
                     )}
                 </div>
             </div>
+
+            {/* Interactive Thermal Receipt Modal */}
+            <ThermalReceiptModal
+                isOpen={isReceiptModalOpen}
+                onClose={() => setIsReceiptModalOpen(false)}
+                reservation={reservation}
+                tenantName={currentUserName}
+                tenantEmail={currentUserEmail}
+            />
         </motion.div>
     );
 };

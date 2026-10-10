@@ -20,7 +20,7 @@ jest.mock('framer-motion', () => {
   const React = require('react');
   return {
     motion: {
-      div: React.forwardRef(({ children, custom, variants, initial, animate, exit, whileHover, whileTap, drag, dragConstraints, dragElastic, ...props }: any, ref: any) => (
+      div: React.forwardRef(({ children, custom, variants, initial, animate, exit, whileHover, whileTap, drag, dragConstraints, dragElastic, onAnimationComplete, ...props }: any, ref: any) => (
         <div ref={ref} {...props}>{children}</div>
       )),
     },
@@ -197,6 +197,9 @@ describe('ReservationDetailsModal', () => {
     
     const dlBtn = screen.getByText('Boarding Pass');
     fireEvent.click(dlBtn);
+
+    const pdfBtn = screen.getByText('PDF Slip');
+    fireEvent.click(pdfBtn);
     expect(generateConfirmationSlipPDF).toHaveBeenCalled();
   });
 

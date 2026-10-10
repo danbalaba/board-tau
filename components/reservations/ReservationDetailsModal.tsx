@@ -23,6 +23,7 @@ import { encryptChatToken } from "@/lib/encryption";
 import { cn, getListingUrl } from "@/utils/helper";
 import { generateConfirmationSlipPDF } from "@/utils/slipGenerator";
 import { generateLeaseContractPDF, previewPdfBlob } from "@/utils/contractPdfGenerator";
+import ThermalReceiptModal from "@/components/reservations/ThermalReceiptModal";
 import { useResponsiveToast } from "@/components/common/ResponsiveToast";
 import { NotificationItem } from "@/context/NotificationContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -106,6 +107,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [activeNotification, setActiveNotification] = useState(notification);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
 
   React.useEffect(() => {
     if (notification && !activeNotification) {
@@ -619,15 +621,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                 <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:flex-row sm:gap-2.5">
                   <button
                     className="w-full sm:w-auto px-3 sm:px-4 py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 truncate"
-                    onClick={async () => {
-                      const toastId = responsiveToast.loading("Preparing boarding pass...");
-                      try {
-                        await generateConfirmationSlipPDF(reservation, currentUserName, currentUserEmail);
-                        responsiveToast.success("Boarding pass downloaded!", { id: toastId });
-                      } catch (err) {
-                        responsiveToast.error("Could not generate boarding pass.", { id: toastId });
-                      }
-                    }}
+                    onClick={() => setShowReceiptModal(true)}
                   >
                     <IconCircleCheck size={14} className="shrink-0" />
                     <span className="truncate">Boarding Pass</span>
@@ -738,6 +732,15 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Interactive Thermal Receipt Modal */}
+      <ThermalReceiptModal
+        isOpen={showReceiptModal}
+        onClose={() => setShowReceiptModal(false)}
+        reservation={reservation}
+        tenantName={currentUserName}
+        tenantEmail={currentUserEmail}
+      />
     </>
   );
 };

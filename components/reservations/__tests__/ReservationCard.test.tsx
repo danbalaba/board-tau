@@ -8,7 +8,7 @@ jest.mock('framer-motion', () => {
   const React = require('react');
   return {
     motion: {
-      div: React.forwardRef(({ children, custom, variants, initial, animate, exit, whileHover, whileTap, drag, dragConstraints, dragElastic, ...props }: any, ref: any) => (
+      div: React.forwardRef(({ children, custom, variants, initial, animate, exit, whileHover, whileTap, drag, dragConstraints, dragElastic, onAnimationComplete, ...props }: any, ref: any) => (
         <div ref={ref} {...props}>{children}</div>
       )),
     },
@@ -128,12 +128,14 @@ describe('ReservationCard', () => {
       />
     );
     
-    // In the component, the download button doesn't have text, it has a title "Download Confirmation Slip"
-    const dlBtn = screen.getByTitle('Download Confirmation Slip');
+    const dlBtn = screen.getByTitle('View / Print Boarding Pass');
     expect(dlBtn).toBeInTheDocument();
     
     fireEvent.click(dlBtn);
     
+    const pdfBtn = await screen.findByText('PDF Slip');
+    fireEvent.click(pdfBtn);
+
     expect(generateConfirmationSlipPDF).toHaveBeenCalled();
   });
 
