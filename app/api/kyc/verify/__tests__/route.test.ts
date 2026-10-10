@@ -41,7 +41,7 @@ describe("KYC Verify API Route (/api/kyc/verify)", () => {
     expect(data.error).toContain("Missing required image URLs");
   });
 
-  it("falls back gracefully when AWS credentials are not configured", async () => {
+  it("returns 400 when AWS credentials are not configured", async () => {
     const req = new Request("http://localhost/api/kyc/verify", {
       method: "POST",
       body: JSON.stringify({ selfieUrl: "https://example.com/selfie.jpg", idCardUrl: "https://example.com/id.jpg" }),
@@ -49,9 +49,9 @@ describe("KYC Verify API Route (/api/kyc/verify)", () => {
     const res = await POST(req);
     const data = await res.json();
 
-    expect(res.status).toBe(200);
-    expect(data.success).toBe(true);
-    expect(data.verifiedBy).toBe("client-fallback");
+    expect(res.status).toBe(400);
+    expect(data.success).toBe(false);
+    expect(data.status).toBe("NEEDS_MANUAL_REVIEW");
   });
 
   it("calls AWS Rekognition and returns verified status when face matches and ID text exists", async () => {

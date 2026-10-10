@@ -279,14 +279,18 @@ describe("useInquiryLogic hook", () => {
       expect(mockToastSuccess).toHaveBeenCalledWith("Switching camera...");
     });
 
-    it("rejects selfie if liveness check (blink) hasn't passed", async () => {
+    it("rejects selfie if server face detection fails", async () => {
       const { result } = setup();
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        json: jest.fn().mockResolvedValue({ success: false, reason: "No face detected in photo." }),
+      });
       
-      // We manually attach a fake video element to the webcamRef
       const fakeVideo = document.createElement("video");
-      const fakeGetScreenshot = jest.fn().mockReturnValue("data:image/png;base64,test");
+      Object.defineProperty(fakeVideo, "readyState", { value: 4 });
+      const fakeGetScreenshot = jest.fn().mockReturnValue("data:image/png;base64," + "A".repeat(500));
       
-      // Inject ref
       result.current.webcamRef.current = {
         video: fakeVideo,
         getScreenshot: fakeGetScreenshot,
@@ -296,7 +300,7 @@ describe("useInquiryLogic hook", () => {
         await result.current.handleCaptureSelfie();
       });
 
-      expect(mockToastError).toHaveBeenCalledWith("Liveness check required. Please perform the requested action to prove you're real.");
+      expect(mockToastError).toHaveBeenCalledWith("No face detected in photo.");
       expect(result.current.capturedSelfie).toBeNull();
     });
 
@@ -358,7 +362,7 @@ describe("useInquiryLogic hook", () => {
           await Promise.resolve();
         });
         // Should reset everything
-        expect(result.current.livenessStatus).toBe('idle');
+        expect(result.current.livenessStatus).toBe('passed');
       } finally {
         jest.useRealTimers();
       }
@@ -395,45 +399,33 @@ describe("useInquiryLogic hook", () => {
       global.FileReader = originalFileReader;
     });
 
-    it("handles selfie capture successfully after blinking", async () => {
+    it("handles selfie capture successfully", async () => {
       const longSelfie = "data:image/png;base64," + "A".repeat(500);
-      jest.useFakeTimers();
-      try {
-        const { result } = setup();
-        
-        const fakeVideo = document.createElement("video");
-        Object.defineProperty(fakeVideo, "readyState", { value: 4 });
-        const fakeGetScreenshot = jest.fn().mockReturnValue(longSelfie);
-        
-        result.current.webcamRef.current = {
-          video: fakeVideo,
-          getScreenshot: fakeGetScreenshot,
-        } as any;
+      const { result } = setup();
 
-        act(() => { result.current.setCurrentStep(5); });
-        mockValidateFace.mockResolvedValue({ isValid: true });
-        mockQuickValidateFace.mockResolvedValue({ isValid: true, liveness: { blink: true, smile: true, turnLeft: true, turnRight: true, openMouth: true, raiseEyebrows: true } });
-        await act(async () => { jest.advanceTimersByTime(800); });
-        await act(async () => { jest.advanceTimersByTime(800); });
-        await act(async () => { jest.advanceTimersByTime(800); });
-        await act(async () => { jest.advanceTimersByTime(800); });
-        
-        // Switch to real timers BEFORE capture — handleCaptureSelfie has
-        // internal setTimeout(160ms) and setTimeout(80ms) that would hang forever
-        // under fake timers, causing this test to always time out.
-        jest.useRealTimers();
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ success: true, status: 'FACE_DETECTED' }),
+      });
+      
+      const fakeVideo = document.createElement("video");
+      Object.defineProperty(fakeVideo, "readyState", { value: 4 });
+      const fakeGetScreenshot = jest.fn().mockReturnValue(longSelfie);
+      
+      result.current.webcamRef.current = {
+        video: fakeVideo,
+        getScreenshot: fakeGetScreenshot,
+      } as any;
 
-        mockValidateFace.mockResolvedValueOnce({ isValid: true });
-        await act(async () => {
-          await result.current.handleCaptureSelfie();
-        });
-        
-        expect(result.current.capturedSelfie).toBe(longSelfie);
-        expect(mockToastSuccess).toHaveBeenCalledWith("Face verified successfully!");
-      } finally {
-        jest.useRealTimers();
-      }
-    }, 15000);
+      act(() => { result.current.setCurrentStep(5); });
+
+      await act(async () => {
+        await result.current.handleCaptureSelfie();
+      });
+      
+      expect(result.current.capturedSelfie).toBe(longSelfie);
+      expect(mockToastSuccess).toHaveBeenCalledWith("Selfie verified successfully!");
+    });
 
     it("handles ID capture failure when selfie is not found", async () => {
       const { result } = setup();

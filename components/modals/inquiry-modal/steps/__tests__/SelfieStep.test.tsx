@@ -11,9 +11,12 @@ jest.mock("@/components/common/SafeImage", () => ({
 
 jest.mock("react-webcam", () => ({
   __esModule: true,
-  default: React.forwardRef(({ audio, screenshotFormat, videoConstraints, mirrored, ...props }: any, ref) => (
-    <div data-testid="webcam" {...props}>Webcam Mock</div>
-  ))
+  default: React.forwardRef(({ audio, screenshotFormat, videoConstraints, mirrored, onUserMedia, onUserMediaError, ...props }: any, ref) => {
+    React.useEffect(() => {
+      if (onUserMedia) onUserMedia();
+    }, [onUserMedia]);
+    return <div data-testid="webcam" {...props}>Webcam Mock</div>;
+  })
 }));
 
 describe("SelfieStep Component", () => {
@@ -48,32 +51,32 @@ describe("SelfieStep Component", () => {
 
     expect(screen.getByText("Step 5: Live Biometric Selfie Check")).toBeInTheDocument();
     expect(screen.getByTestId("webcam")).toBeInTheDocument();
-    expect(screen.getByText("Follow Prompt to Capture")).toBeInTheDocument();
+    expect(screen.getByText("Position face within frame")).toBeInTheDocument();
   });
 
-  it("displays 'Blink to Continue' when face is aligned but not blinked", () => {
+  it("renders camera controls and capture button", () => {
     render(<SelfieStep {...defaultProps} isFaceAligned={true} livenessStatus="idle" />);
 
-    expect(screen.getByText(/Blink to Continue/i)).toBeInTheDocument();
+    expect(screen.getByText("Position face within frame")).toBeInTheDocument();
     
-    // Capture button should show 'Follow Prompt' and be disabled
-    const captureBtn = screen.getByRole("button", { name: /Follow Prompt/i });
+    const captureBtn = screen.getByRole("button", { name: /Capture Selfie Now/i });
     expect(captureBtn).toBeInTheDocument();
-    expect(captureBtn).toBeDisabled();
   });
 
-  it("displays 'Liveness Confirmed' when face is aligned and blinked", () => {
+  it("triggers handleCaptureSelfie when capture button is clicked", () => {
+    jest.useFakeTimers();
     render(<SelfieStep {...defaultProps} isFaceAligned={true} livenessStatus="passed" />);
 
-    expect(screen.getByText(/Liveness Confirmed/i)).toBeInTheDocument();
-    
-    // Capture button should be enabled
-    const captureBtn = screen.getByText("Capture Selfie Now");
+    React.act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    const captureBtn = screen.getByRole("button", { name: /Capture Selfie Now/i });
     expect(captureBtn).not.toBeDisabled();
     
-    // Clicking capture triggers handleCaptureSelfie
     fireEvent.click(captureBtn);
     expect(mockHandleCaptureSelfie).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
   });
 
   it("calls toggleCamera when switch camera button is clicked", () => {
@@ -95,14 +98,12 @@ describe("SelfieStep Component", () => {
     const img = screen.getByAltText("Captured Selfie");
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute("src", "data:image/jpeg;base64,123");
-    expect(screen.getByText("Verified Biometric Photo")).toBeInTheDocument();
+    expect(screen.getByText("Selfie Photo Captured")).toBeInTheDocument();
   });
 
   it("allows clearing the captured selfie", () => {
     render(<SelfieStep {...defaultProps} capturedSelfie="data:image/jpeg;base64,123" />);
 
-    // There should be a close/remove button
-    // The button has a FaTimes icon, we can find it via the parent button (it's the only button in the captured state view)
     const buttons = screen.getAllByRole("button");
     fireEvent.click(buttons[0]);
 
@@ -111,19 +112,16 @@ describe("SelfieStep Component", () => {
   });
 
   it("applies rotation class when facingMode is environment", () => {
-    // Tests line 131 branch
-    const { container } = render(<SelfieStep {...defaultProps} facingMode="environment" />);
-    // The lucide-react icon is rendered as an SVG. We can just check if the class is present on the inner element of the button.
+    render(<SelfieStep {...defaultProps} facingMode="environment" />);
     const switchBtn = screen.getByTitle("Switch Camera");
     const svg = switchBtn.querySelector("svg");
     expect(svg).toHaveClass("rotate-180");
   });
 
   it("applies processing classes to the capture button when isProcessing is true", () => {
-    // Tests line 166 branch
     render(<SelfieStep {...defaultProps} isProcessing={true} />);
     
-    const captureBtn = screen.getByRole("button", { name: /Follow Prompt/i });
+    const captureBtn = screen.getByRole("button", { name: /Capture Selfie Now/i });
     expect(captureBtn).toHaveClass("opacity-0 scale-50");
     expect(captureBtn).toBeDisabled();
   });

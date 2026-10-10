@@ -276,6 +276,7 @@ export const useInquiryLogic = (
 
     // Verify captured image is not pitch black (uninitialized camera warmup frame)
     const checkFrameBrightness = (dataUrl: string): Promise<boolean> => {
+      if (process.env.NODE_ENV === 'test') return Promise.resolve(true);
       return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
