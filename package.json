@@ -17,6 +17,7 @@
     "build:check": "next build",
     "redis:flush": "tsx --env-file=.env scripts/flush-redis.ts",
     "seed:test-user": "tsx prisma/seed-real-listing.ts",
+    "seed:system-admin": "tsx scripts/seed-system-admin.ts",
     "reset-listings": "tsx --env-file=.env scripts/reset-listings.ts"
   },
   "overrides": {

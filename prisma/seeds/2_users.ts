@@ -27,7 +27,28 @@ export async function seedUsers(prisma: PrismaClient) {
     console.log("   ✓ Super Admin exists.");
   }
 
-  // 2. Primary Landlord
+  // 2. System Admin (Moderator & Content In-Charge)
+  const systemAdminEmail = "admin@boardtau.test";
+  const existingSystemAdmin = await prisma.user.findUnique({ where: { email: systemAdminEmail } });
+  if (!existingSystemAdmin) {
+    await prisma.user.create({
+      data: {
+        name: "BoardTAU System Admin",
+        email: systemAdminEmail,
+        password: defaultPassword,
+        role: "ADMIN",
+        emailVerified: new Date(),
+        city: "Camiling",
+        region: "Tarlac",
+        lastLogin: new Date()
+      }
+    });
+    console.log("   ✓ System Admin (Moderator) created.");
+  } else {
+    console.log("   ✓ System Admin (Moderator) exists.");
+  }
+
+  // 3. Primary Landlord
   const landlord1Email = "testlandlord@gmail.com";
   const existingLandlord1 = await prisma.user.findUnique({ where: { email: landlord1Email } });
   if (!existingLandlord1) {
