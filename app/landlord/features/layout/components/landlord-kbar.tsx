@@ -28,7 +28,6 @@ import {
   IconBolt, 
   IconPointFilled
 } from '@tabler/icons-react';
-import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/app/admin/components/ui/badge';
@@ -110,56 +109,65 @@ const useLandlordSearchData = () => {
 };
 
 // --- Custom Result Item ---
-const ResultItem = ({ action, active }: { action: any; active: boolean }) => {
+const ResultItem = React.forwardRef<
+  HTMLDivElement,
+  { action: any; active: boolean }
+>(({ action, active }, ref) => {
   return (
     <div
+      ref={ref}
       className={cn(
-        "group mx-3 my-1 px-4 py-3 rounded-2xl cursor-pointer transition-all duration-300 flex items-center justify-between relative overflow-hidden",
+        "group relative mx-3 my-1 px-4 py-3 rounded-2xl cursor-pointer border transition-all duration-150 ease-out flex items-center justify-between overflow-hidden",
         active 
-          ? "bg-primary/10 text-primary border-primary/20 shadow-sm z-10" 
-          : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+          ? "bg-[#2f7d6d]/10 dark:bg-emerald-500/15 border-[#2f7d6d]/25 dark:border-emerald-500/30 text-slate-900 dark:text-white shadow-xs z-10" 
+          : "border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/50"
       )}
     >
-      {active && (
-        <motion.div 
-          layoutId="active-indicator"
-          className="absolute left-0 top-3 bottom-3 w-1 bg-primary rounded-full shadow-[0_0_10px_rgba(47,125,109,0.5)]"
-          initial={{ opacity: 0, x: -5 }}
-          animate={{ opacity: 1, x: 0 }}
-        />
-      )}
+      {/* Smooth Indicator Pill (fades & scales without layout thrashing) */}
+      <div 
+        className={cn(
+          "absolute left-0.5 top-2.5 bottom-2.5 w-1 bg-[#2f7d6d] dark:bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(47,125,109,0.5)] transition-all duration-150 ease-out pointer-events-none",
+          active ? "opacity-100 scale-y-100" : "opacity-0 scale-y-50"
+        )}
+      />
       
       <div className="flex items-center gap-4 relative z-10 w-full ml-1">
+        {/* Action Icon Box */}
         <div className={cn(
-          "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 flex-shrink-0",
-          active ? "bg-primary text-white scale-110 shadow-lg shadow-primary/25" : "bg-gray-100 dark:bg-gray-900 group-hover:bg-primary/10"
+          "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 ease-out flex-shrink-0",
+          active 
+            ? "bg-[#2f7d6d] text-white shadow-md shadow-[#2f7d6d]/25 dark:bg-emerald-500 dark:text-slate-950 scale-[1.03]" 
+            : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 scale-100 group-hover:bg-[#2f7d6d]/10 group-hover:text-[#2f7d6d]"
         )}>
           {action.icon}
         </div>
+        
         <div className="flex flex-col min-w-0 flex-1 justify-center">
           <div className="flex items-center gap-2 truncate leading-none mb-1">
             <span className={cn(
-              "text-[13px] font-bold tracking-tight truncate",
-              active ? "text-primary" : "text-gray-900 dark:text-white"
+              "text-sm font-bold tracking-tight truncate transition-colors duration-150",
+              active 
+                ? "text-[#2f7d6d] dark:text-emerald-300 font-extrabold" 
+                : "text-slate-900 dark:text-slate-100"
             )}>
               {action.name}
             </span>
             {action.section && !active && (
-              <Badge variant="outline" className="text-[9px] px-1.5 h-4 uppercase opacity-50 shrink-0 border-current">
+              <Badge variant="outline" className="text-[9px] px-2 py-0.5 uppercase tracking-widest shrink-0 font-bold border-[#2f7d6d]/30 bg-[#2f7d6d]/10 text-[#2f7d6d] dark:text-emerald-400">
                 {action.section}
               </Badge>
             )}
           </div>
           {action.subtitle && (
             <div className={cn(
-              "text-[11px] font-medium truncate flex items-center gap-1.5 leading-none",
-              active ? "text-primary/70" : "text-gray-500"
+              "text-xs font-semibold truncate flex items-center gap-1.5 leading-tight mt-0.5 transition-colors duration-150",
+              active ? "text-[#2f7d6d]/80 dark:text-emerald-400/80" : "text-slate-500 dark:text-slate-400"
             )}>
-              {action.subtitle.split(' • ').map((part: string, i: number, arr: any[]) => (
+              {typeof action.subtitle === 'string' && action.subtitle.split(' • ').map((part: string, i: number, arr: any[]) => (
                 <React.Fragment key={i}>
                   {part.includes('★') ? (
                     <div className="flex items-center gap-0.5">
-                      <IconStar size={10} className={cn("fill-current", active ? "text-primary" : "text-amber-500")} />
+                      <IconStar size={11} className={cn("fill-current", active ? "text-[#2f7d6d] dark:text-emerald-400" : "text-amber-500")} />
                       <span>{part.replace('★', '')}</span>
                     </div>
                   ) : (
@@ -176,17 +184,20 @@ const ResultItem = ({ action, active }: { action: any; active: boolean }) => {
         
         <div className="flex items-center gap-3">
           <IconChevronRight 
-            size={14} 
+            size={16} 
             className={cn(
-              "transition-all duration-300 shrink-0",
-              active ? "translate-x-0 text-primary opacity-100" : "-translate-x-2 text-gray-300 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"
+              "transition-all duration-150 ease-out shrink-0",
+              active 
+                ? "translate-x-0 text-[#2f7d6d] dark:text-emerald-400 opacity-100" 
+                : "-translate-x-1.5 text-slate-400 dark:text-slate-500 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"
             )}
           />
         </div>
       </div>
     </div>
   );
-};
+});
+ResultItem.displayName = 'ResultItem';
 
 // --- Custom Result Renderer ---
 const RenderResults = () => {
@@ -210,10 +221,11 @@ const RenderResults = () => {
       )}
       <KBarResults
         items={results}
+        maxHeight={440}
         onRender={({ item, active }) =>
           typeof item === "string" ? (
-            <div className="px-6 py-2 mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-primary/50 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary/30" />
+            <div className="px-6 py-2.5 mt-2.5 text-[11px] font-black uppercase tracking-[0.2em] text-[#2f7d6d] dark:text-emerald-400 flex items-center gap-2 select-none">
+              <span className="w-2 h-2 rounded-full bg-[#2f7d6d] dark:bg-emerald-400" />
               {item}
             </div>
           ) : (
@@ -313,7 +325,7 @@ export default function LandlordKBar({ children }: { children: ReactNode }) {
     {
       id: "dashboard-section",
       name: "Dashboard Section",
-      keywords: "home dashboard section overview",
+      keywords: "home dashboard section overview stats kerby landlord analytics",
       section: "Quick Links",
       perform: () => router.push("/landlord"),
       icon: <IconLayoutDashboard size={20} />,
@@ -321,7 +333,7 @@ export default function LandlordKBar({ children }: { children: ReactNode }) {
     {
       id: "properties-section",
       name: "Properties Section",
-      keywords: "properties section listings",
+      keywords: "properties listings units rooms boarding houses manage properties",
       section: "Quick Links",
       perform: () => router.push("/landlord/properties"),
       icon: <IconBuilding size={20} />,
@@ -329,7 +341,7 @@ export default function LandlordKBar({ children }: { children: ReactNode }) {
     {
       id: "add-property-section",
       name: "Add Property Section",
-      keywords: "add property section create",
+      keywords: "add property new listing upload unit create accommodation boarding house",
       section: "Quick Links",
       perform: () => router.push("/landlord/properties/create"),
       icon: <IconPlus size={20} />,
@@ -337,7 +349,7 @@ export default function LandlordKBar({ children }: { children: ReactNode }) {
     {
       id: "booking-section",
       name: "Booking Section",
-      keywords: "booking section manage",
+      keywords: "booking manage scheduled check-in check-out tenants clients reservations",
       section: "Quick Links",
       perform: () => router.push("/landlord/bookings"),
       icon: <IconCalendarStats size={20} />,
@@ -345,7 +357,7 @@ export default function LandlordKBar({ children }: { children: ReactNode }) {
     {
       id: "reservations-section",
       name: "Reservations Section",
-      keywords: "reservations section pending",
+      keywords: "reservations pending requests approve reject clients visits",
       section: "Quick Links",
       perform: () => router.push("/landlord/reservations"),
       icon: <IconCalendarCheck size={20} />,
@@ -353,7 +365,7 @@ export default function LandlordKBar({ children }: { children: ReactNode }) {
     {
       id: "inquiries-section",
       name: "Inquiries Section",
-      keywords: "inquiries section messages",
+      keywords: "inquiries messages chat questions prospective students tenants inbox",
       section: "Quick Links",
       perform: () => router.push("/landlord/inquiries"),
       icon: <IconMessage size={20} />,
@@ -361,7 +373,7 @@ export default function LandlordKBar({ children }: { children: ReactNode }) {
     {
       id: "reviews-section",
       name: "Reviews Section",
-      keywords: "reviews section feedback",
+      keywords: "reviews ratings stars feedback testimonials student feedback",
       section: "Quick Links",
       perform: () => router.push("/landlord/reviews"),
       icon: <IconStar size={20} />,
@@ -369,7 +381,7 @@ export default function LandlordKBar({ children }: { children: ReactNode }) {
     {
       id: "analytics-section",
       name: "Analytics Section",
-      keywords: "analytics section stats",
+      keywords: "analytics stats revenue earnings occupancy performance reports",
       section: "Quick Links",
       perform: () => router.push("/landlord/analytics"),
       icon: <IconChartBar size={20} />,
@@ -377,7 +389,7 @@ export default function LandlordKBar({ children }: { children: ReactNode }) {
     {
       id: "settings",
       name: "Account Settings",
-      keywords: "settings account profile",
+      keywords: "settings profile account security password preferences config",
       section: "System",
       perform: () => router.push("/landlord/settings"),
       icon: <IconSettings size={20} />,
@@ -399,10 +411,10 @@ const KBarContent = ({ children }: { children: ReactNode }) => {
     <>
       <KBarPortal>
         <KBarPositioner className="fixed inset-0 z-[100000] p-4 bg-gray-950/40 backdrop-blur-md">
-          <KBarAnimator className="w-full max-w-2xl bg-white/90 dark:bg-gray-950/90 backdrop-blur-2xl rounded-[2.5rem] border border-white/20 dark:border-white/5 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-hidden">
+          <KBarAnimator className="w-full max-w-2xl bg-white/95 dark:bg-gray-950/95 backdrop-blur-2xl rounded-[2.5rem] border border-white/20 dark:border-white/5 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-hidden">
             <div className="relative border-b border-gray-100 dark:border-gray-800/50">
               <div className="flex items-center px-8 py-6">
-                <div className="mr-4 flex items-center justify-center w-10 h-10 rounded-2xl bg-primary/10 text-primary shadow-sm shadow-primary/20">
+                <div className="mr-4 flex items-center justify-center w-10 h-10 rounded-2xl bg-[#2f7d6d]/10 text-[#2f7d6d] shadow-sm shadow-[#2f7d6d]/20">
                   <IconSearch size={20} strokeWidth={2.5} />
                 </div>
                 <KBarSearch 
@@ -410,14 +422,14 @@ const KBarContent = ({ children }: { children: ReactNode }) => {
                   placeholder="What can I help you find?" 
                 />
                 <div className="flex items-center gap-2 ml-4">
-                  <Badge variant="outline" className="h-7 px-2 font-black border-primary/20 bg-primary/5 text-primary tracking-tighter">
+                  <Badge variant="outline" className="h-7 px-2 font-black border-[#2f7d6d]/20 bg-[#2f7d6d]/5 text-[#2f7d6d] tracking-tighter">
                     ESC
                   </Badge>
                 </div>
               </div>
             </div>
             
-            <div className="max-h-[60vh] overflow-y-auto [&::-webkit-scrollbar]:hidden">
+            <div className="relative">
               <RenderResults />
             </div>
 
@@ -432,7 +444,7 @@ const KBarContent = ({ children }: { children: ReactNode }) => {
                   <span>Navigate</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary/60">
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#2f7d6d]/70 dark:text-emerald-400/80">
                 <IconBolt size={14} className="animate-pulse" />
                 Quick Search
               </div>
