@@ -23,33 +23,12 @@ export const navItems: NavItem[] = [
     items: []
   },
   {
-    title: 'User Management',
-    url: '/admin/user-management',
+    title: 'User Directory',
+    url: '/admin/user-management/users',
     icon: 'users',
     isActive: false,
-    shortcut: ['u', 'u'],
-    items: [
-      {
-        title: 'User Directory',
-        url: '/admin/user-management/users',
-        icon: 'user',
-        shortcut: ['u', 'd']
-      },
-      {
-        title: 'Roles & Permissions',
-        url: '/admin/user-management/roles',
-        icon: 'shield',
-        shortcut: ['r', 'p'],
-        allowedRoles: ['SUPER_ADMIN']
-      },
-      {
-        title: 'User Analytics',
-        url: '/admin/user-management/analytics',
-        icon: 'chartBar',
-        shortcut: ['u', 'a'],
-        allowedRoles: ['SUPER_ADMIN']
-      }
-    ]
+    shortcut: ['u', 'd'],
+    items: []
   },
   {
     title: 'Content Moderation',
@@ -85,50 +64,6 @@ export const navItems: NavItem[] = [
     ]
   },
   {
-    title: 'Financial Management',
-    url: '/admin/finance',
-    icon: 'currencyDollar',
-    isActive: false,
-    shortcut: ['f', 'f'],
-    allowedRoles: ['SUPER_ADMIN'],
-    items: [
-      {
-        title: 'Revenue Dashboard',
-        url: '/admin/finance/revenue',
-        icon: 'chartLine',
-        shortcut: ['r', 'd']
-      },
-      {
-        title: 'Transactions',
-        url: '/admin/finance/transactions',
-        icon: 'creditCard',
-        shortcut: ['t', 't']
-      },
-      {
-        title: 'Top Performing Listings',
-        url: '/admin/finance/top-listings',
-        icon: 'star',
-        shortcut: ['t', 'l']
-      }
-    ]
-  },
-  {
-    title: 'Property Management',
-    url: '/admin/properties',
-    icon: 'home',
-    isActive: false,
-    shortcut: ['p', 'p'],
-    allowedRoles: ['SUPER_ADMIN'],
-    items: [
-      {
-        title: 'Property Directory',
-        url: '/admin/properties/directory',
-        icon: 'building',
-        shortcut: ['p', 'd']
-      }
-    ]
-  },
-  {
     title: 'System Monitoring',
     url: '/admin/monitoring',
     icon: 'monitor',
@@ -160,7 +95,9 @@ export const navItems: NavItem[] = [
     items: [
       {
         title: 'Property Configuration',
-        url: '/admin/settings/property-configuration'
+        url: '/admin/settings/property-configuration',
+        icon: 'settings',
+        shortcut: ['p', 'c']
       },
       {
         title: 'Feature Flags',
@@ -173,26 +110,6 @@ export const navItems: NavItem[] = [
         url: '/admin/settings/backup',
         icon: 'database',
         shortcut: ['s', 'b']
-      }
-    ]
-  },
-  {
-    title: 'Account',
-    url: '#',
-    icon: 'account',
-    isActive: false,
-    items: [
-      {
-        title: 'Profile',
-        url: '/admin/profile',
-        icon: 'profile',
-        shortcut: ['p', 'p']
-      },
-      {
-        title: 'Logout',
-        shortcut: ['l', 'o'],
-        url: '#logout',
-        icon: 'login'
       }
     ]
   }
