@@ -424,21 +424,17 @@ export function LandlordMenu({ isOpen, onItemClick }: LandlordMenuProps) {
           <li className="w-full grow flex flex-col justify-end pt-6 pb-2">
             {/* Kerby Host Assistant Card / Collapsed Icon (Hidden on Dashboard page) */}
             {!isDashboardPage && (
-              <div className="w-full mb-3 overflow-visible">
+              <div className="w-full mb-3">
                 {isOpen ? (
-                  <div className="relative flex flex-col items-center justify-end w-full overflow-visible">
-                    <div className="w-full flex flex-col items-center overflow-visible">
-                      <KerbyMascot
-                        pose={(kerbyState?.pose as any) || (activeTip.pose as any)}
-                        outfitMode="casual"
-                        customAssetSrc={activeTip.asset}
-                        speechText={kerbyState?.speech || activeTip.speech}
-                        badgeLabel={kerbyState?.badge || activeTip.badge}
-                        transparentBg={true}
-                        bubblePosition="top"
-                      />
-                    </div>
-                  </div>
+                  <KerbyMascot
+                    variant="sidebar"
+                    pose={(kerbyState?.pose as any) || (activeTip.pose as any)}
+                    outfitMode="casual"
+                    customAssetSrc={activeTip.asset}
+                    speechText={kerbyState?.speech || activeTip.speech}
+                    badgeLabel={kerbyState?.badge || activeTip.badge}
+                    onNextTip={() => setTipIndex((prev) => (prev + 1) % currentPool.length)}
+                  />
                 ) : (
                   <div className="flex flex-col items-center justify-center w-full my-2">
                     <TooltipProvider>
