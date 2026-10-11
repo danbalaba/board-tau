@@ -41,15 +41,6 @@ export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProp
   const { theme } = useTheme();
   const isDark = theme === "dark";
   
-  const [localLoading, setLocalLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLocalLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
-
   // Sync global store with initial server data
   useEffect(() => {
     if (!isInitialized && initialUser) {
@@ -58,7 +49,7 @@ export default function LandlordTopbar({ user: initialUser }: LandlordTopbarProp
   }, [isInitialized, initialUser, setUser]);
   
   const user = storeUser || initialUser;
-  const isLoading = localLoading || !isInitialized;
+  const isLoading = !user;
 
   const [modalMode, setModalMode] = useState<'account' | 'security' | 'all'>('all');
 

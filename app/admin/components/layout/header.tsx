@@ -8,14 +8,15 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { NotificationCenter } from '../../features/notifications/components/notification-center';
 import Skeleton from '@/components/common/Skeleton';
 
-export default function Header() {
+interface HeaderProps {
+  adminUser?: any;
+}
+
+export default function Header({ adminUser }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setMounted(true);
-    }, 1000); // 1s delay for skeleton visibility
-    return () => clearTimeout(timer);
+    setMounted(true);
   }, []);
 
   return (
@@ -26,7 +27,7 @@ export default function Header() {
         </div>
         <div className='hidden md:flex relative'>
           {!mounted ? (
-            <Skeleton className="h-10 w-[240px] lg:w-[320px] rounded-2xl" />
+            <div className="h-10 w-[240px] lg:w-[320px] rounded-2xl bg-slate-100/60 dark:bg-slate-800/40 border border-slate-200/40 dark:border-slate-700/40" />
           ) : (
             <SearchInput />
           )}
@@ -40,11 +41,7 @@ export default function Header() {
         
         <div className="w-[1px] h-6 bg-gray-200 dark:bg-slate-800 mx-2" />
         
-        {!mounted ? (
-          <Skeleton className="h-9 w-9 rounded-full" />
-        ) : (
-          <UserNav />
-        )}
+        <UserNav initialUser={adminUser} />
       </div>
     </header>
   );

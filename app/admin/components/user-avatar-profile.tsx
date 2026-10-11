@@ -30,7 +30,7 @@ export function UserAvatarProfile({
     .map(n => n[0])
     .join('')
     .slice(0, 2)
-    ?.toUpperCase() || 'AD';
+    ?.toUpperCase() || 'SA';
 
   // We detect if the passed className implies a rounded-lg design or full circle
   const isRoundedLg = className?.includes('rounded-lg');
@@ -54,17 +54,19 @@ export function UserAvatarProfile({
           className || "h-8 w-8"
         )}
       >
-        {/* Subtle animated background ring on hover */}
+        {/* Subtle accent ring on hover without blinking/pulsing */}
         <div className={cn(
-          "absolute inset-[-3px] z-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100",
-          "bg-gradient-to-tr from-primary/50 via-primary/20 to-primary/50 dark:from-primary/60 dark:via-primary/30 dark:to-primary/60 animate-pulse scale-105",
+          "absolute inset-[-2px] z-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100",
+          "bg-gradient-to-tr from-[#2f7d6d]/40 via-emerald-500/20 to-[#2f7d6d]/40 dark:from-emerald-500/40 dark:via-emerald-500/20 dark:to-emerald-500/40 scale-105",
           borderClass
         )} />
         
         <Avatar className={cn("relative z-20 h-full w-full border border-border/10 shadow-sm transition-shadow group-hover:shadow-md", borderClass)}>
-          <AvatarImage src={user?.image || ''} alt={user?.name || ''} className="object-cover" />
+          {user?.image ? (
+            <AvatarImage src={user.image} alt={user?.name || 'User Avatar'} className="object-cover" />
+          ) : null}
           <AvatarFallback className={cn(
-            'bg-gradient-to-br from-primary/10 to-primary/5 text-primary dark:from-primary/30 dark:to-primary/10 font-bold',
+            'bg-gradient-to-br from-[#2f7d6d]/15 to-emerald-500/10 text-[#2f7d6d] dark:text-emerald-400 font-black text-xs select-none',
             borderClass
           )}>
             {initials}
