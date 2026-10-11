@@ -19,6 +19,13 @@ interface LandlordMobileFilterSheetProps {
   onClearAll?: () => void;
   onApply?: () => void;
   onOpenChange?: (open: boolean) => void;
+  triggerLabel?: string;
+  triggerIcon?: React.ReactNode;
+  triggerLabelClassName?: string;
+  title?: string;
+  subtitle?: string;
+  applyLabel?: string;
+  className?: string;
   children: React.ReactNode;
 }
 
@@ -27,6 +34,13 @@ export function LandlordMobileFilterSheet({
   onClearAll,
   onApply,
   onOpenChange,
+  triggerLabel = 'Filters & Sort',
+  triggerIcon,
+  triggerLabelClassName,
+  title = 'Filter & Sort',
+  subtitle = 'Select options below & tap apply',
+  applyLabel = 'Apply Filters',
+  className,
   children
 }: LandlordMobileFilterSheetProps) {
   const [open, setOpen] = useState(false);
@@ -49,13 +63,14 @@ export function LandlordMobileFilterSheet({
     <Drawer open={open} onOpenChange={handleOpenChange}>
       <DrawerTrigger asChild>
         <button className={cn(
-          "flex lg:hidden items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all shadow-sm shrink-0 cursor-pointer",
+          "flex lg:hidden items-center justify-center gap-2 px-3 sm:px-4 h-9 sm:h-11 rounded-xl sm:rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all shadow-sm shrink-0 cursor-pointer",
           activeFilterCount > 0 
             ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" 
-            : "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:text-primary"
+            : "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:text-primary",
+          className
         )}>
-          <SlidersHorizontal size={14} className="stroke-[2.5]" />
-          <span>Filters & Sort</span>
+          {triggerIcon ?? <SlidersHorizontal size={14} className="stroke-[2.5]" />}
+          <span className={cn("truncate max-w-[150px]", triggerLabelClassName)}>{triggerLabel}</span>
           {activeFilterCount > 0 && (
             <span className="w-5 h-5 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] font-black ml-0.5">
               {activeFilterCount}
@@ -75,7 +90,7 @@ export function LandlordMobileFilterSheet({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <DrawerTitle className="text-lg sm:text-xl font-black text-gray-900 dark:text-white tracking-tight">
-                Filter & Sort
+                {title}
               </DrawerTitle>
               {activeFilterCount > 0 && (
                 <span className="px-2.5 py-0.5 text-[10px] font-extrabold uppercase bg-primary/10 text-primary rounded-full">
@@ -84,7 +99,7 @@ export function LandlordMobileFilterSheet({
               )}
             </div>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
-              Select options below & tap apply
+              {subtitle}
             </p>
           </div>
 
@@ -116,7 +131,7 @@ export function LandlordMobileFilterSheet({
             className="w-full py-3.5 rounded-2xl bg-primary hover:bg-primary/90 active:scale-[0.99] text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-primary/30 transition-all uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2"
           >
             <Check size={18} strokeWidth={2.5} />
-            <span>Apply Filters</span>
+            <span>{applyLabel}</span>
           </button>
         </div>
       </DrawerContent>

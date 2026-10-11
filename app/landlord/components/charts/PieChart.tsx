@@ -132,9 +132,9 @@ export function ChartPieLabel({ data }: ChartPieLabelProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="px-0! pt-4 flex flex-col items-center justify-start min-h-[240px]">
+      <CardContent className="px-0! pt-3 sm:pt-4 flex flex-col items-center justify-start min-h-[275px] sm:min-h-[290px]">
         {totalMetricValue === 0 ? (
-          <div className="flex flex-col items-center justify-center h-[215px] sm:h-[250px] w-full text-center px-4">
+          <div className="flex flex-col items-center justify-center h-[265px] sm:h-[285px] w-full text-center px-4">
             <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-slate-400 mb-2">
               <Layers className="w-6 h-6 opacity-60" />
             </div>
@@ -145,9 +145,9 @@ export function ChartPieLabel({ data }: ChartPieLabelProps) {
         ) : (
           <ChartContainer
             config={chartConfig}
-            className="aspect-auto h-[215px] sm:h-[250px] w-full"
+            className="aspect-auto h-[265px] sm:h-[285px] w-full"
           >
-            <PieChart key={`${activeMetric}-${tick}`}>
+            <PieChart key={`${activeMetric}-${tick}`} margin={{ top: 12, right: 10, bottom: 8, left: 10 }}>
               <ChartTooltip
                 content={
                   <ChartTooltipContent 
@@ -161,10 +161,10 @@ export function ChartPieLabel({ data }: ChartPieLabelProps) {
                 dataKey={activeMetric}
                 nameKey="type"
                 cx="50%"
-                cy="45%"
-                innerRadius={viewType === "donut" ? 50 : 0}
-                outerRadius={80}
-                strokeWidth={3}
+                cy="40%"
+                innerRadius={viewType === "donut" ? 44 : 0}
+                outerRadius={70}
+                strokeWidth={2}
                 stroke="transparent"
                 paddingAngle={4}
               >
@@ -181,8 +181,13 @@ export function ChartPieLabel({ data }: ChartPieLabelProps) {
                 verticalAlign="bottom" 
                 align="center"
                 iconType="circle"
-                wrapperStyle={{ paddingTop: "12px" }}
-                formatter={(value) => <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200 mx-1">{value}</span>}
+                iconSize={8}
+                wrapperStyle={{ paddingTop: "12px", paddingBottom: "4px" }}
+                formatter={(value) => (
+                  <span className="text-[11px] sm:text-xs font-extrabold text-slate-700 dark:text-slate-200 mx-1 leading-tight">
+                    {value}
+                  </span>
+                )}
               />
             </PieChart>
           </ChartContainer>

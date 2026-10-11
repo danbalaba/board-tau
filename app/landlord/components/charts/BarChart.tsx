@@ -95,11 +95,11 @@ export function ChartBarInteractive({ data, listings, listingMap }: ChartBarInte
 
   return (
     <Card className="bg-transparent border-none shadow-none">
-      <CardHeader className="flex flex-row items-center justify-between gap-4 px-0! pb-4 border-b border-gray-100 dark:border-gray-800">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 px-0! pb-4 border-b border-slate-100 dark:border-slate-800/80">
         <div className="flex flex-col gap-0.5">
-          <CardTitle className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">Monthly Revenue by Property</CardTitle>
-          <CardDescription className="text-xs font-medium text-gray-500">
-            Performance breakdown
+          <CardTitle className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Monthly Revenue by Property</CardTitle>
+          <CardDescription className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            Performance breakdown across your listings
           </CardDescription>
         </div>
         
