@@ -57,61 +57,111 @@ export function DataTablePagination<TData>({
   return (
     <div
       className={cn(
-        'flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto sm:flex-row sm:gap-8 text-slate-600 dark:text-slate-400',
+        'flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-8 text-slate-600 dark:text-slate-400',
         className
       )}
       {...props}
     >
-      <div className='flex-1 text-xs font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap'>
-        {table.getFilteredSelectedRowModel().rows.length > 0 ? (
-          <>
-            {table.getFilteredSelectedRowModel().rows.length} of{' '}
-            {table.getFilteredRowModel().rows.length} row(s) selected.
-          </>
-        ) : (
-          <>{table.getFilteredRowModel().rows.length} row(s) total.</>
-        )}
-      </div>
-      <div className='flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8'>
-        <div className='flex items-center space-x-2.5'>
-          <p className='text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap'>Rows per page</p>
+      {/* Mobile Top Row / Desktop Left Section: Row Count & Mobile Page Size */}
+      <div className="flex items-center justify-between w-full sm:w-auto">
+        <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+          {table.getFilteredSelectedRowModel().rows.length > 0 ? (
+            <>
+              {table.getFilteredSelectedRowModel().rows.length} of{' '}
+              {table.getFilteredRowModel().rows.length} row(s) selected.
+            </>
+          ) : (
+            <>{table.getFilteredRowModel().rows.length} row(s) total.</>
+          )}
+        </div>
+
+        {/* Rows Per Page (Visible on mobile inside top row) */}
+        <div className="flex items-center space-x-2 sm:hidden">
+          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+            Rows
+          </p>
           <Select
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
               table.setPageSize(Number(value));
             }}
           >
-            <SelectTrigger className='h-8 w-[5rem] pl-3 pr-1.5 gap-1 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs'>
+            <SelectTrigger className="h-8 w-[4.5rem] pl-2.5 pr-1.5 gap-1 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs">
               <SelectValue placeholder={table.getState().pagination.pageSize} />
             </SelectTrigger>
-            <SelectContent side='top' className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl">
+            <SelectContent
+              side="top"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl"
+            >
               {pageSizeOptions.map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`} className="text-xs font-medium">
+                <SelectItem
+                  key={pageSize}
+                  value={`${pageSize}`}
+                  className="text-xs font-medium"
+                >
                   {pageSize}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        <div className='flex items-center justify-center text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap'>
+      </div>
+
+      {/* Mobile Bottom Row / Desktop Right Section: Controls & Page Buttons */}
+      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 lg:gap-8 w-full sm:w-auto">
+        {/* Rows Per Page (Visible on desktop) */}
+        <div className="hidden sm:flex items-center space-x-2.5">
+          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+            Rows per page
+          </p>
+          <Select
+            value={`${table.getState().pagination.pageSize}`}
+            onValueChange={(value) => {
+              table.setPageSize(Number(value));
+            }}
+          >
+            <SelectTrigger className="h-8 w-[5rem] pl-3 pr-1.5 gap-1 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs">
+              <SelectValue placeholder={table.getState().pagination.pageSize} />
+            </SelectTrigger>
+            <SelectContent
+              side="top"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl"
+            >
+              {pageSizeOptions.map((pageSize) => (
+                <SelectItem
+                  key={pageSize}
+                  value={`${pageSize}`}
+                  className="text-xs font-medium"
+                >
+                  {pageSize}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Page X of Y */}
+        <div className="flex items-center justify-center text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap">
           Page {currentPage} of {totalPages}
         </div>
-        <div className='flex items-center space-x-1.5'>
+
+        {/* Navigation Buttons */}
+        <div className="flex items-center space-x-1 sm:space-x-1.5">
           <Button
-            aria-label='Go to first page'
-            variant='outline'
-            size='icon'
-            className='hidden size-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 lg:flex'
+            aria-label="Go to first page"
+            variant="outline"
+            size="icon"
+            className="hidden size-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 lg:flex"
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
           >
             <ChevronsLeft className="size-4" />
           </Button>
           <Button
-            aria-label='Go to previous page'
-            variant='outline'
-            size='icon'
-            className='size-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+            aria-label="Go to previous page"
+            variant="outline"
+            size="icon"
+            className="size-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
@@ -125,7 +175,7 @@ export function DataTablePagination<TData>({
               <Button
                 key={pageNumber}
                 variant={isSelected ? 'default' : 'outline'}
-                size='icon'
+                size="icon"
                 className={cn(
                   'size-8 rounded-xl text-xs font-semibold transition-all',
                   isSelected
@@ -141,24 +191,26 @@ export function DataTablePagination<TData>({
 
           {/* Ellipsis if needed */}
           {pageNumbers.length < totalPages && (
-            <span className='px-1.5 text-xs font-medium text-slate-400 dark:text-slate-500'>...</span>
+            <span className="px-1 text-xs font-medium text-slate-400 dark:text-slate-500">
+              ...
+            </span>
           )}
 
           <Button
-            aria-label='Go to next page'
-            variant='outline'
-            size='icon'
-            className='size-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+            aria-label="Go to next page"
+            variant="outline"
+            size="icon"
+            className="size-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
             <ChevronRightIcon className="size-4" />
           </Button>
           <Button
-            aria-label='Go to last page'
-            variant='outline'
-            size='icon'
-            className='hidden size-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 lg:flex'
+            aria-label="Go to last page"
+            variant="outline"
+            size="icon"
+            className="hidden size-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 lg:flex"
             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
             disabled={!table.getCanNextPage()}
           >

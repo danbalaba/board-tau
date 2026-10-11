@@ -29,7 +29,8 @@ interface KerbyMascotProps {
   isTyping?: boolean;
   transparentBg?: boolean;
   bubblePosition?: 'top' | 'top-right' | 'right';
-  guideType?: 'host' | 'search' | 'student' | 'inquiry';
+  guideType?: 'host' | 'search' | 'student' | 'inquiry' | 'admin';
+  guideTitle?: string;
   showCloseButton?: boolean;
   disableTyping?: boolean;
   customAssetSrc?: string;
@@ -46,6 +47,7 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
   transparentBg = false,
   bubblePosition = 'top',
   guideType = 'host',
+  guideTitle,
   showCloseButton = true,
   disableTyping = false,
   customAssetSrc,
@@ -99,6 +101,8 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
 
   // ── High-Fidelity Contained Shadcn Sidebar Card Variant ──
   if (variant === "sidebar") {
+    const resolvedGuideTitle = guideTitle || (guideType === 'admin' ? 'Kerby Admin Guide' : 'Kerby Host Guide');
+
     return (
       <div className="w-full select-none transition-all duration-300">
         <AnimatePresence mode="wait">
@@ -109,16 +113,16 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="relative w-full rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-3 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all overflow-hidden group"
+              className="relative w-full rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-3.5 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all overflow-hidden group"
             >
               {/* Soft Ambient Glow */}
-              <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-[#2f7d6d]/10 dark:bg-emerald-500/10 blur-xl pointer-events-none" />
+              <div className="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-[#2f7d6d]/10 dark:bg-emerald-500/10 blur-xl pointer-events-none" />
 
               {/* Header: Topic Badge + Minimize Button */}
-              <div className="flex items-center justify-between gap-1.5 mb-2 relative z-10">
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-[#2f7d6d]/10 dark:bg-[#2f7d6d]/20 text-[#2f7d6d] dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider">
-                  <Sparkles className="w-3 h-3 shrink-0" />
-                  <span className="truncate max-w-[130px]">{badgeLabel || "Host Tip"}</span>
+              <div className="flex items-center justify-between gap-1.5 mb-2.5 relative z-10">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#2f7d6d]/10 dark:bg-[#2f7d6d]/20 text-[#2f7d6d] dark:text-emerald-400 text-[11px] font-bold uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate max-w-[140px]">{badgeLabel || "Tip"}</span>
                 </div>
 
                 {showCloseButton && (
@@ -129,16 +133,16 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
                       setIsBubbleOpen(false);
                     }}
                     className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                    title="Minimize host assistant"
+                    title="Minimize assistant"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
 
               {/* Body: Mascot Illustration + Speech */}
-              <div className="flex items-start gap-2.5 relative z-10">
-                {/* Compact Mascot Frame with Subtle Floating Motion */}
+              <div className="flex items-start gap-3 relative z-10">
+                {/* Mascot Frame with Subtle Floating Motion */}
                 <div className="relative w-14 h-14 shrink-0 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80 p-1 shadow-2xs">
                   <motion.img
                     animate={{ y: [0, -3, 0] }}
@@ -149,21 +153,21 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
                   />
                 </div>
 
-                {/* Speech Text */}
+                {/* Speech Text - Fully visible without truncation */}
                 <div className="flex-1 min-w-0 pt-0.5">
-                  <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200 leading-snug line-clamp-4">
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-relaxed break-words">
                     {displayedText}
                     {!isTypingComplete && (
-                      <span className="inline-block w-1.5 h-3 bg-[#2f7d6d] dark:bg-emerald-400 ml-1 translate-y-0.5 animate-pulse rounded-xs" />
+                      <span className="inline-block w-1.5 h-3.5 bg-[#2f7d6d] dark:bg-emerald-400 ml-1 translate-y-0.5 animate-pulse rounded-xs" />
                     )}
                   </p>
                 </div>
               </div>
 
               {/* Footer: Guide Label + Interactive Cycle Button */}
-              <div className="mt-2.5 pt-1.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium relative z-10">
-                <span className="flex items-center gap-1 font-semibold text-slate-500 dark:text-slate-400">
-                  Kerby Host Guide
+              <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 font-medium relative z-10">
+                <span className="flex items-center gap-1 font-semibold text-slate-500 dark:text-slate-400 truncate max-w-[150px]">
+                  {resolvedGuideTitle}
                 </span>
                 {onNextTip && (
                   <button
@@ -172,10 +176,10 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
                       e.stopPropagation();
                       onNextTip();
                     }}
-                    className="text-[#2f7d6d] dark:text-emerald-400 hover:text-[#256658] dark:hover:text-emerald-300 font-bold flex items-center gap-0.5 transition-colors cursor-pointer"
+                    className="text-[#2f7d6d] dark:text-emerald-400 hover:text-[#256658] dark:hover:text-emerald-300 font-bold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
                   >
                     <span>Next tip</span>
-                    <ChevronRight className="w-3 h-3" />
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
@@ -189,14 +193,14 @@ export const KerbyMascot: React.FC<KerbyMascotProps> = ({
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={() => setIsBubbleOpen(true)}
               className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all text-left group cursor-pointer shadow-xs"
-              title="Click to view Kerby Host Tips"
+              title="Click to view Kerby Tips"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <img src={assetSrc} alt="Kerby" className="w-5 h-5 object-contain" />
                 </div>
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors truncate">
-                  Kerby Host Tips
+                  {resolvedGuideTitle}
                 </span>
               </div>
               <span className="text-[10px] font-bold text-primary dark:text-emerald-400 px-2 py-0.5 rounded-md bg-primary/10 shrink-0">

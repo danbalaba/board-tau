@@ -68,20 +68,20 @@ export function CollapseMenuButton({
         <Button
           variant="ghost"
           className={cn(
-            "w-full justify-start h-10 transition-colors",
+            "w-full justify-start h-11 mb-1.5 transition-all rounded-xl px-3.5",
             isSubmenuActive
-              ? "bg-primary text-white shadow-xs shadow-primary/20 hover:bg-primary/90 hover:text-white font-medium"
-              : "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10"
+              ? "bg-primary text-white shadow-xs shadow-primary/25 hover:bg-primary/90 hover:text-white font-semibold"
+              : "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 font-medium"
           )}
         >
           <div className="w-full items-center flex justify-between">
             <div className="flex items-center">
-              <span className={cn("mr-4", isSubmenuActive ? "text-white" : "text-gray-500 dark:text-gray-400 group-hover:text-primary")}>
-                <Icon size={18} />
+              <span className={cn("mr-3.5", isSubmenuActive ? "text-white" : "text-gray-500 dark:text-gray-400 group-hover:text-primary")}>
+                <Icon size={20} />
               </span>
               <p
                 className={cn(
-                  "max-w-[150px] truncate",
+                  "max-w-[150px] truncate text-sm font-semibold",
                   isOpen
                     ? "translate-x-0 opacity-100"
                     : "-translate-x-96 opacity-0"
@@ -114,20 +114,20 @@ export function CollapseMenuButton({
               key={index}
               variant="ghost"
               className={cn(
-                "w-full justify-start h-10 mb-1 transition-colors",
+                "w-full justify-start h-10 mb-1 transition-colors rounded-xl",
                 isItemActive
                   ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-[#4fa89a] font-semibold hover:bg-primary/15"
-                  : "text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-primary/5 dark:hover:bg-white/5"
+                  : "text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-primary/5 dark:hover:bg-white/5 font-medium"
               )}
               asChild
             >
               <Link href={href}>
-                <span className={cn("mr-4 ml-2", isItemActive ? "text-primary dark:text-[#4fa89a]" : "text-gray-400 dark:text-gray-600")}>
-                  <Dot size={18} />
+                <span className={cn("mr-3 ml-2", isItemActive ? "text-primary dark:text-[#4fa89a]" : "text-gray-400 dark:text-gray-600")}>
+                  <Dot size={20} />
                 </span>
                 <p
                   className={cn(
-                    "max-w-[170px] truncate",
+                    "max-w-[170px] truncate text-sm",
                     isOpen
                       ? "translate-x-0 opacity-100"
                       : "-translate-x-96 opacity-0"
@@ -150,20 +150,21 @@ export function CollapseMenuButton({
               <Button
                 variant="ghost"
                 className={cn(
-                  "w-full justify-start h-10 mb-1 transition-colors",
+                  "w-full h-11 mb-1.5 transition-all rounded-xl",
+                  isOpen === false ? "justify-center px-0" : "justify-start px-3.5",
                   isSubmenuActive
-                    ? "bg-primary text-white shadow-xs shadow-primary/20 hover:bg-primary/90 hover:text-white font-medium"
-                    : "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10"
+                    ? "bg-primary text-white shadow-xs shadow-primary/25 hover:bg-primary/90 hover:text-white font-semibold"
+                    : "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 font-medium"
                 )}
               >
                 <div className="w-full items-center flex justify-between">
                   <div className="flex items-center">
-                    <span className={cn(isOpen === false ? "" : "mr-4", isSubmenuActive ? "text-white" : "text-gray-500 dark:text-gray-400 group-hover:text-primary")}>
-                      <Icon size={18} />
+                    <span className={cn(isOpen === false ? "" : "mr-3.5", isSubmenuActive ? "text-white" : "text-gray-500 dark:text-gray-400 group-hover:text-primary")}>
+                      <Icon size={20} />
                     </span>
                     <p
                       className={cn(
-                        "max-w-[200px] truncate",
+                        "max-w-[200px] truncate text-sm font-semibold",
                         isOpen === false ? "opacity-0" : "opacity-100"
                       )}
                     >

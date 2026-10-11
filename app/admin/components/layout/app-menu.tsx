@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Ellipsis, LogOut } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
@@ -24,6 +25,8 @@ import ConfirmModal from '@/components/common/ConfirmModal';
 import Modal from '@/components/modals/Modal';
 import UltimateLogoutOverlay from "@/components/navbar/UltimateLogoutOverlay";
 import { getAdminDisplayName } from '@/app/admin/lib/utils';
+import { KerbyMascot } from '@/components/modals/search-modal/KerbyMascot';
+import { getAdminTips } from '../../config/admin-tips';
 
 interface MenuProps {
   isOpen: boolean | undefined;
@@ -41,7 +44,24 @@ export function AppMenu({ isOpen, onItemClick }: MenuProps) {
   const { data: session } = useSession();
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+  const [tipIndex, setTipIndex] = React.useState(0);
 
+  const activeRole = session?.user?.role;
+  const currentPool = React.useMemo(() => getAdminTips(activeRole, pathname || ''), [activeRole, pathname]);
+
+  React.useEffect(() => {
+    setTipIndex(0);
+  }, [pathname, activeRole]);
+
+  React.useEffect(() => {
+    if (!currentPool || currentPool.length === 0) return;
+    const interval = setInterval(() => {
+      setTipIndex((prev) => (prev + 1) % currentPool.length);
+    }, 22000);
+    return () => clearInterval(interval);
+  }, [currentPool]);
+
+  const activeTip = currentPool[tipIndex % currentPool.length] || currentPool[0];
   const displayName = getAdminDisplayName(session?.user?.name, session?.user?.role);
 
   const handleLogout = () => {
@@ -112,11 +132,11 @@ export function AppMenu({ isOpen, onItemClick }: MenuProps) {
   return (
     <ScrollArea className="[&>div>div[style]]:!block flex-1">
       <nav className="mt-8 h-full w-full">
-        <ul className="flex flex-col min-h-[calc(100vh-48px-36px-16px-32px)] lg:min-h-[calc(100vh-32px-40px-32px)] items-start space-y-1 px-2">
+        <ul className="flex flex-col min-h-[calc(100vh-48px-36px-16px-32px)] lg:min-h-[calc(100vh-32px-40px-32px)] items-start space-y-1.5 px-2">
           {menuGroups.map(({ groupLabel, menus }, index) => (
             <li className={cn("w-full", groupLabel ? "pt-5" : "")} key={index}>
               {(isOpen && groupLabel) || isOpen === undefined ? (
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-4 pb-2 max-w-[248px] truncate">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3.5 pb-2.5 max-w-[248px] truncate">
                   {groupLabel}
                 </p>
               ) : !isOpen && isOpen !== undefined && groupLabel ? (
@@ -156,25 +176,26 @@ export function AppMenu({ isOpen, onItemClick }: MenuProps) {
                             <Button
                               variant="ghost"
                               className={cn(
-                                "w-full justify-start h-10 mb-1 transition-colors",
+                                "w-full h-11 mb-1.5 transition-all rounded-xl",
+                                isOpen === false ? "justify-center px-0" : "justify-start px-3.5",
                                 isActive
-                                  ? "bg-primary text-white shadow-xs shadow-primary/20 hover:bg-primary/90 hover:text-white font-medium"
-                                  : "text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10"
+                                  ? "bg-primary text-white shadow-xs shadow-primary/25 hover:bg-primary/90 hover:text-white font-semibold"
+                                  : "text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 font-medium"
                               )}
                               asChild
                             >
                               <Link href={item.url} onClick={onItemClick}>
                                 <span
                                   className={cn(
-                                    isOpen === false ? "" : "mr-4",
+                                    isOpen === false ? "" : "mr-3.5",
                                     isActive ? "text-white" : "text-slate-500 dark:text-slate-400 group-hover:text-primary"
                                   )}
                                 >
-                                  <Icon size={18} />
+                                  <Icon size={20} />
                                 </span>
                                 <p
                                   className={cn(
-                                    "max-w-[200px] truncate",
+                                    "max-w-[200px] truncate text-sm font-semibold",
                                     isOpen === false
                                       ? "-translate-x-96 opacity-0"
                                       : "translate-x-0 opacity-100"
@@ -216,7 +237,57 @@ export function AppMenu({ isOpen, onItemClick }: MenuProps) {
               })}
             </li>
           ))}
-          <li className="w-full grow flex items-end">
+
+          {/* Bottom Footer Section: Dynamic Kerby Mascot Tips + Sign Out Button */}
+          <li className="w-full grow flex flex-col justify-end pt-6 pb-2">
+            {/* Kerby Admin Assistant Card (Role-Aware) */}
+            {activeTip && (
+              <div className="w-full mb-3">
+                {isOpen ? (
+                  <KerbyMascot
+                    variant="sidebar"
+                    pose={activeTip.pose}
+                    outfitMode="casual"
+                    guideTitle={activeRole === 'SUPER_ADMIN' ? 'Kerby Super Admin' : 'Kerby Admin Guide'}
+                    guideType="admin"
+                    customAssetSrc={activeTip.asset}
+                    speechText={activeTip.speech}
+                    badgeLabel={activeTip.badge}
+                    onNextTip={() => setTipIndex((prev) => (prev + 1) % currentPool.length)}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center w-full my-2">
+                    <TooltipProvider>
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger asChild>
+                          <div className="w-11 h-11 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-xs hover:scale-110 transition-all duration-300 cursor-pointer relative group/brand overflow-visible">
+                            <Image
+                              src={activeTip.asset || "/assets/mascot/kerby-casual-waving.png"}
+                              alt="Kerby Admin Assistant"
+                              width={26}
+                              height={26}
+                              className="object-contain drop-shadow-xs group-hover:scale-110 transition-transform"
+                              unoptimized
+                            />
+                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 animate-pulse" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                          <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+                            {activeRole === 'SUPER_ADMIN' ? 'Kerby Super Admin Guide' : 'Kerby Admin Guide'}
+                          </p>
+                          <p className="text-xs text-slate-600 dark:text-slate-300 max-w-[200px] mt-1 line-clamp-3">
+                            {activeTip.speech}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Sign Out Button */}
             <TooltipProvider disableHoverableContent>
               <Tooltip delayDuration={100}>
                 <TooltipTrigger asChild>
@@ -226,14 +297,17 @@ export function AppMenu({ isOpen, onItemClick }: MenuProps) {
                       setShowLogoutConfirm(true);
                     }}
                     variant="outline"
-                    className="w-full justify-center h-10 mt-5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-950/30 dark:hover:text-red-400 dark:hover:border-red-900/50 text-slate-700 dark:text-slate-300 shadow-xs transition-all"
+                    className={cn(
+                      "w-full h-11 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-950/30 dark:hover:text-red-400 dark:hover:border-red-900/50 text-slate-700 dark:text-slate-300 shadow-xs transition-all rounded-xl",
+                      isOpen === false ? "justify-center px-0" : "justify-center px-4"
+                    )}
                   >
-                    <span className={cn(isOpen === false ? "" : "mr-4", "text-slate-500 dark:text-slate-400 group-hover:text-red-500")}>
-                      <LogOut size={18} />
+                    <span className={cn(isOpen === false ? "" : "mr-3", "text-slate-500 dark:text-slate-400 group-hover:text-red-500")}>
+                      <LogOut size={20} />
                     </span>
                     <p
                       className={cn(
-                        "whitespace-nowrap font-medium text-sm",
+                        "whitespace-nowrap font-semibold text-sm",
                         isOpen === false ? "opacity-0 hidden" : "opacity-100"
                       )}
                     >

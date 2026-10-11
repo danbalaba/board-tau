@@ -8,7 +8,6 @@ import {
   LogOut, 
   ChevronRight, 
   ChevronDown, 
-  Sparkles, 
   ShieldCheck, 
   User 
 } from 'lucide-react';
@@ -97,10 +96,6 @@ export function UserNav({ initialUser }: UserNavProps) {
       >
         {/* User Profile Header Card */}
         <div className='p-4 rounded-[2rem] bg-gradient-to-br from-primary/10 via-primary/5 to-transparent dark:from-primary/20 dark:to-transparent border border-primary/20 shadow-xs mb-2 relative overflow-hidden'>
-          <div className="absolute top-0 right-0 p-3 opacity-10 pointer-events-none">
-            <Sparkles size={60} className="text-primary" />
-          </div>
-
           <div className='flex items-center gap-3.5 relative z-10'>
             <div className='relative shrink-0'>
               <div className='w-12 h-12 rounded-2xl flex items-center justify-center p-0.5 bg-gradient-to-br from-primary via-emerald-500 to-teal-400 shadow-md shadow-primary/20'>
