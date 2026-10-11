@@ -87,19 +87,19 @@ export default function LandlordSidebar() {
         {/* ── Header: Brand & Logo ── */}
         <Button
           className={cn(
-            "transition-transform ease-in-out duration-300 mb-1 justify-start px-4 hover:no-underline",
+            "transition-transform ease-in-out duration-300 mb-1 justify-start px-3 hover:no-underline",
             !isOpen ? "translate-x-1" : "translate-x-0"
           )}
           variant="link"
           asChild
         >
-          <Link href="/landlord" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 mr-1">
+          <Link href="/landlord" className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 mr-1 shadow-2xs">
               <Image
                 src="/logo.png"
                 alt="BoardTAU"
-                width={20}
-                height={20}
+                width={22}
+                height={22}
                 className="object-contain"
                 priority
                 unoptimized
@@ -113,10 +113,10 @@ export default function LandlordSidebar() {
                   : "translate-x-0 opacity-100"
               )}
             >
-              <span className="font-extrabold text-base tracking-tight text-gray-900 dark:text-white leading-none">
+              <span className="font-extrabold text-[17px] tracking-tight text-gray-900 dark:text-white leading-none">
                 BoardTAU
               </span>
-              <span className="text-[10px] font-bold text-primary uppercase tracking-wider mt-1">
+              <span className="text-[11px] font-bold text-primary uppercase tracking-wider mt-1">
                 Landlord Portal
               </span>
             </div>

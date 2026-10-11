@@ -28,13 +28,13 @@ describe('GenerateReportButton', () => {
 
   it('renders correctly with default label', () => {
     render(<GenerateReportButton onGeneratePDF={mockOnGeneratePDF} />);
-    expect(screen.getByText('Export Report')).toBeInTheDocument();
+    expect(screen.getByText('Generate Report')).toBeInTheDocument();
   });
 
   it('opens modal on click', () => {
     render(<GenerateReportButton onGeneratePDF={mockOnGeneratePDF} />);
     
-    fireEvent.click(screen.getByText('Export Report'));
+    fireEvent.click(screen.getByText('Generate Report'));
     expect(screen.getByTestId('mock-report-export-modal')).toBeInTheDocument();
   });
 
@@ -43,7 +43,7 @@ describe('GenerateReportButton', () => {
     render(<GenerateReportButton onGeneratePDF={mockOnGeneratePDF} />);
     
     // Open modal
-    fireEvent.click(screen.getByText('Export Report'));
+    fireEvent.click(screen.getByText('Generate Report'));
     
     // Trigger generation inside modal
     fireEvent.click(screen.getByText('Generate PDF'));
@@ -62,7 +62,7 @@ describe('GenerateReportButton', () => {
     mockOnGenerateCSV.mockResolvedValueOnce(undefined);
     render(<GenerateReportButton onGeneratePDF={mockOnGeneratePDF} onGenerateCSV={mockOnGenerateCSV} />);
     
-    fireEvent.click(screen.getByText('Export Report'));
+    fireEvent.click(screen.getByText('Generate Report'));
     fireEvent.click(screen.getByText('Generate CSV'));
     
     await waitFor(() => {
@@ -74,7 +74,7 @@ describe('GenerateReportButton', () => {
     mockOnGenerateExcel.mockResolvedValueOnce(undefined);
     render(<GenerateReportButton onGeneratePDF={mockOnGeneratePDF} onGenerateExcel={mockOnGenerateExcel} />);
     
-    fireEvent.click(screen.getByText('Export Report'));
+    fireEvent.click(screen.getByText('Generate Report'));
     fireEvent.click(screen.getByText('Generate EXCEL'));
     
     await waitFor(() => {
@@ -90,7 +90,7 @@ describe('GenerateReportButton', () => {
     
     render(<GenerateReportButton onGeneratePDF={mockOnGeneratePDF} />);
     
-    fireEvent.click(screen.getByText('Export Report'));
+    fireEvent.click(screen.getByText('Generate Report'));
     fireEvent.click(screen.getByText('Generate PDF'));
     
     await waitFor(() => {
@@ -110,7 +110,7 @@ describe('GenerateReportButton', () => {
     
     render(<GenerateReportButton onGeneratePDF={mockOnGeneratePDF} />);
     
-    fireEvent.click(screen.getByText('Export Report'));
+    fireEvent.click(screen.getByText('Generate Report'));
     fireEvent.click(screen.getByText('Generate PDF'));
     
     // Wait for state to update
@@ -123,8 +123,8 @@ describe('GenerateReportButton', () => {
     resolvePromise();
     
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Export Report/i })).not.toBeDisabled();
-      expect(screen.getByText('Export Report')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Generate Report/i })).not.toBeDisabled();
+      expect(screen.getByText('Generate Report')).toBeInTheDocument();
     }, { timeout: 5000 });
   }, 10000);
 });

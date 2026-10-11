@@ -48,7 +48,7 @@ const GenerateReportButton: React.FC<GenerateReportButtonProps> = ({
   allData = [],
   filteredData = [],
   onGenerate,
-  label = "Export Report",
+  label = "Generate Report",
   className,
   outline = false,
   exportHook

@@ -337,11 +337,11 @@ export function LandlordMenu({ isOpen, onItemClick }: LandlordMenuProps) {
   return (
     <ScrollArea className="[&>div>div[style]]:!block flex-1">
       <nav className="mt-8 h-full w-full">
-        <ul className="flex flex-col min-h-[calc(100vh-48px-36px-16px-32px)] lg:min-h-[calc(100vh-32px-40px-32px)] items-start space-y-1 px-2">
+        <ul className="flex flex-col min-h-[calc(100vh-48px-36px-16px-32px)] lg:min-h-[calc(100vh-32px-40px-32px)] items-start space-y-1.5 px-2">
           {navGroups.map(({ groupLabel, menus }, index) => (
             <li className={cn("w-full", groupLabel ? "pt-5" : "")} key={index}>
               {(isOpen && groupLabel) || isOpen === undefined ? (
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-4 pb-2 max-w-[248px] truncate">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3.5 pb-2.5 max-w-[248px] truncate">
                   {groupLabel}
                 </p>
               ) : !isOpen && isOpen !== undefined && groupLabel ? (
@@ -376,27 +376,28 @@ export function LandlordMenu({ isOpen, onItemClick }: LandlordMenuProps) {
                           <Button
                             variant="ghost"
                             className={cn(
-                              "w-full justify-start h-10 mb-1 transition-colors",
+                              "w-full h-11 mb-1.5 transition-all rounded-xl",
+                              isOpen === false ? "justify-center px-0" : "justify-start px-3.5",
                               isActive
-                                ? "bg-primary text-white shadow-xs shadow-primary/20 hover:bg-primary/90 hover:text-white font-medium"
-                                : "text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10"
+                                ? "bg-primary text-white shadow-xs shadow-primary/25 hover:bg-primary/90 hover:text-white font-semibold"
+                                : "text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 font-medium"
                             )}
                             asChild
                           >
                             <Link href={item.url} onClick={onItemClick}>
                               <span
                                 className={cn(
-                                  isOpen === false ? "" : "mr-4",
+                                  isOpen === false ? "" : "mr-3.5",
                                   isActive
                                     ? "text-white"
                                     : "text-slate-500 dark:text-slate-400 group-hover:text-primary"
                                 )}
                               >
-                                <Icon size={18} />
+                                <Icon size={20} />
                               </span>
                               <p
                                 className={cn(
-                                  "max-w-[200px] truncate",
+                                  "max-w-[200px] truncate text-sm font-semibold",
                                   isOpen === false
                                     ? "-translate-x-96 opacity-0"
                                     : "translate-x-0 opacity-100"
@@ -440,12 +441,12 @@ export function LandlordMenu({ isOpen, onItemClick }: LandlordMenuProps) {
                     <TooltipProvider>
                       <Tooltip delayDuration={100}>
                         <TooltipTrigger asChild>
-                          <div className="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-xs hover:scale-110 transition-all duration-300 cursor-pointer relative group/brand overflow-visible">
+                          <div className="w-11 h-11 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-xs hover:scale-110 transition-all duration-300 cursor-pointer relative group/brand overflow-visible">
                             <Image
                               src="/assets/mascot/kerby-casual-waving.png"
                               alt="Kerby Mascot"
-                              width={24}
-                              height={24}
+                              width={26}
+                              height={26}
                               className="object-contain drop-shadow-xs group-hover:scale-110 transition-transform"
                               unoptimized
                             />
@@ -475,19 +476,22 @@ export function LandlordMenu({ isOpen, onItemClick }: LandlordMenuProps) {
                       setShowLogoutConfirm(true);
                     }}
                     variant="outline"
-                    className="w-full justify-center h-10 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-950/30 dark:hover:text-red-400 dark:hover:border-red-900/50 text-slate-700 dark:text-slate-300 shadow-xs transition-all"
+                    className={cn(
+                      "w-full h-11 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-950/30 dark:hover:text-red-400 dark:hover:border-red-900/50 text-slate-700 dark:text-slate-300 shadow-xs transition-all rounded-xl",
+                      isOpen === false ? "justify-center px-0" : "justify-center px-4"
+                    )}
                   >
                     <span
                       className={cn(
-                        isOpen === false ? "" : "mr-4",
+                        isOpen === false ? "" : "mr-3",
                         "text-slate-500 dark:text-slate-400 group-hover:text-red-500"
                       )}
                     >
-                      <LogOut size={18} />
+                      <LogOut size={20} />
                     </span>
                     <p
                       className={cn(
-                        "whitespace-nowrap font-medium text-sm",
+                        "whitespace-nowrap font-semibold text-sm",
                         isOpen === false ? "opacity-0 hidden" : "opacity-100"
                       )}
                     >
