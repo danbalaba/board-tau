@@ -5,6 +5,7 @@ import { UserTable } from '../user-tables';
 import { getColumns } from '../user-tables/columns';
 import { useUsers, useUserStats } from '@/app/admin/hooks/use-users';
 import { parseAsString, useQueryState } from 'nuqs';
+import Modal from '@/components/modals/Modal';
 import { ProvisionUserModal } from './provision-user-modal';
 import {
   Users,
@@ -41,7 +42,7 @@ function computeTrend(current: number, previous: number, invertedLogic = false) 
   const diff = current - previous;
 
   if (previous === 0) {
-    return { label: `+${diff}`, direction: 'up' as const, color: 'text-emerald-500', bg: 'bg-emerald-500/10', icon: ArrowUpRight };
+    return { label: `+${diff}`, direction: 'up' as const, color: 'text-primary', bg: 'bg-primary/10', icon: ArrowUpRight };
   }
 
   const pct = (diff / previous) * 100;
@@ -61,14 +62,13 @@ function computeTrend(current: number, previous: number, invertedLogic = false) 
   return {
     label: displayLabel,
     direction: isUp ? 'up' as const : 'down' as const,
-    color: isGood ? 'text-emerald-500' : 'text-rose-500',
-    bg: isGood ? 'bg-emerald-500/10' : 'bg-rose-500/10',
+    color: isGood ? 'text-primary' : 'text-rose-500',
+    bg: isGood ? 'bg-primary/10' : 'bg-rose-500/10',
     icon: isUp ? ArrowUpRight : ArrowDownRight,
   };
 }
 
 export function UserDirectory() {
-  const [provisioning, setProvisioning] = React.useState(false);
   const [range, setRange] = React.useState('30d');
   const { data: session } = useSession();
   const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
@@ -102,7 +102,9 @@ export function UserDirectory() {
     return <AdminDashboardError onRetry={() => refetch()} />;
   }
 
-  const isAnyLoading = isLoading || isFetching || statsLoading;
+  // Only consider loading on initial fetch when no cached data exists yet
+  const isInitialTableLoading = isLoading && !data;
+  const isInitialStatsLoading = statsLoading && !stats;
 
   const totalUsers = data?.meta?.total || 0;
 
@@ -125,7 +127,7 @@ export function UserDirectory() {
       color: 'text-blue-500',
       bg: 'bg-blue-500/10',
       chartColor: '#3b82f6',
-      trendData: generateTrend(stats?.totalUsers ?? totalUsers, isAnyLoading),
+      trendData: generateTrend(stats?.totalUsers ?? totalUsers, isInitialStatsLoading),
       tooltip: {
         title: 'Total Users',
         description: 'The total number of registered accounts on the platform.',
@@ -140,7 +142,7 @@ export function UserDirectory() {
       color: 'text-rose-500',
       bg: 'bg-rose-500/10',
       chartColor: '#f43f5e',
-      trendData: generateTrend(stats?.suspendedAccounts ?? 0, isAnyLoading),
+      trendData: generateTrend(stats?.suspendedAccounts ?? 0, isInitialStatsLoading),
       tooltip: {
         title: 'Suspended Accounts',
         description: 'Users currently banned from accessing the platform by an admin.',
@@ -155,7 +157,7 @@ export function UserDirectory() {
       color: 'text-fuchsia-500',
       bg: 'bg-fuchsia-500/10',
       chartColor: '#d946ef',
-      trendData: generateTrend(stats?.newThisWeek ?? 0, isAnyLoading),
+      trendData: generateTrend(stats?.newThisWeek ?? 0, isInitialStatsLoading),
       tooltip: {
         title: 'New Arrivals',
         description: 'Registrations in the last 7 days compared to the previous 7-day period.',
@@ -170,7 +172,7 @@ export function UserDirectory() {
       color: 'text-amber-500',
       bg: 'bg-amber-500/10',
       chartColor: '#f59e0b',
-      trendData: generateTrend(stats?.pendingVerification ?? 0, isAnyLoading),
+      trendData: generateTrend(stats?.pendingVerification ?? 0, isInitialStatsLoading),
       tooltip: {
         title: 'Pending Verification',
         description: 'Accounts that have registered but have not yet verified their email address.',
@@ -247,7 +249,6 @@ export function UserDirectory() {
 
   return (
     <div className="p-6 lg:p-10 space-y-6">
-      <ProvisionUserModal open={provisioning} onClose={() => setProvisioning(false)} />
       <AdminUserHeader
         onRefresh={() => {
           toast.promise(refetch(), {
@@ -258,6 +259,7 @@ export function UserDirectory() {
         }}
         onExport={handleExport}
         isFetching={isFetching}
+        isLoading={isInitialTableLoading}
         range={range}
         onRangeChange={setRange}
       />
@@ -288,7 +290,7 @@ export function UserDirectory() {
                         </CardHeader>
                           <CardContent>
                             <div className="text-3xl font-black tabular-nums text-gray-900 dark:text-white tracking-tighter">
-                              {isAnyLoading ? (
+                              {isInitialStatsLoading ? (
                                 <div className="h-9 w-16 bg-muted/50 dark:bg-white/10 animate-pulse rounded-xl" />
                               ) : (
                                 stat.value.toLocaleString()
@@ -363,33 +365,49 @@ export function UserDirectory() {
           </div>
         </TooltipProvider>
 
-        {/* Table */}
+        {/* Table Container */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
-          className="rounded-[2.5rem] border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 p-6 shadow-xl backdrop-blur-xl overflow-hidden"
+          className="rounded-[2.5rem] border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 p-6 sm:p-8 shadow-xl backdrop-blur-xl overflow-hidden"
         >
+          {/* Section Header with Primary Action (matching Property Configuration layout) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                User Accounts
+              </h2>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                Directory of all registered students, landlords, and platform administrative accounts
+              </p>
+            </div>
+            {isSuperAdmin && (
+              <Modal>
+                <Modal.Trigger name="add-user">
+                  <Button
+                    className="h-10 px-4 gap-2 rounded-xl bg-[#2f7d6d] hover:bg-[#256658] text-white shadow-md shadow-[#2f7d6d]/20 font-semibold text-xs tracking-normal transition-all self-start sm:self-auto cursor-pointer"
+                  >
+                    <UserPlus size={16} />
+                    <span>Add User</span>
+                  </Button>
+                </Modal.Trigger>
+                <Modal.Window name="add-user" size="lg" closeOnOutsideClick={false}>
+                  <ProvisionUserModal onSuccess={() => refetch()} />
+                </Modal.Window>
+              </Modal>
+            )}
+          </div>
+
           <UserTable
             data={data?.data || []}
             totalItems={totalUsers}
-            isLoading={isLoading || isFetching || false}
+            isLoading={isInitialTableLoading}
             columns={getColumns(session?.user?.role).filter((col: any) => {
               if (col.accessorKey === 'listingsCount' && role !== 'LANDLORD') return false;
               if (col.accessorKey === 'bookingsCount' && role !== 'USER') return false;
               return true;
             }) as any}
-            toolbarActions={
-              isSuperAdmin && (
-                <Button
-                  size="sm"
-                  onClick={() => setProvisioning(true)}
-                  className="h-8 px-3 gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/20 font-bold text-xs uppercase tracking-wider transition-all"
-                >
-                  <UserPlus size={14} /> Add User
-                </Button>
-              )
-            }
           />
         </motion.div>
       </div>

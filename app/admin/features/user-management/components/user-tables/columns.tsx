@@ -11,8 +11,8 @@ export interface User {
   name: string;
   email: string;
   image?: string | null;
-  role: 'admin' | 'host' | 'renter' | 'user';
-  status: 'active' | 'inactive' | 'suspended' | 'banned';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'LANDLORD' | 'USER' | string;
+  status: 'active' | 'inactive' | 'suspended' | 'banned' | string;
   joinedAt: string;
   lastLogin: string;
   emailVerified: boolean;
@@ -154,8 +154,8 @@ export function getColumns(callerRole?: string | null): ColumnDef<User, unknown>
       cell: ({ cell }) => {
         const status = cell.getValue<User['status']>();
 
-        const statusConfig = {
-          active: { color: 'text-emerald-500', bg: 'bg-emerald-500/10', label: 'Active', icon: IconCheck },
+        const statusConfig: Record<string, { color: string; bg: string; label: string; icon: any }> = {
+          active: { color: 'text-primary dark:text-primary-light', bg: 'bg-primary/10', label: 'Active', icon: IconCheck },
           inactive: { color: 'text-amber-500', bg: 'bg-amber-500/10', label: 'Inactive', icon: IconX },
           suspended: { color: 'text-rose-500', bg: 'bg-rose-500/10', label: 'Suspended', icon: IconX },
           banned: { color: 'text-red-600', bg: 'bg-red-600/10', label: 'Banned', icon: IconBan }
