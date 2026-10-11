@@ -36,28 +36,88 @@ export function matchUserIntent(userMessage: string): IntentMatchResult {
     };
   }
 
-  // 2. Booking & Inquiry Process Flow Intent
+  // 2. Booking & Reservation Lifecycle Intent
   const bookingKeywords = [
     "how to book", "how do i book", "booking process", "how to reserve", 
-    "reservation steps", "how does inquiry work", "steps to rent"
+    "reservation steps", "how does booking work", "steps to rent", "booking flow"
   ];
   if (bookingKeywords.some(kw => query.includes(kw))) {
     return {
       isMatched: true,
       intentKey: "HOW_TO_BOOK",
       response: {
-        reply: `Here is the step-by-step process to reserve a room on BoardTAU:\n\n` +
-          `1. **Search & Filter**: Find your ideal property using the Guided Search Wizard or Map.\n` +
-          `2. **Inquire/Reserve**: Open a listing, select your room option, and click **Inquire**.\n` +
-          `3. **KYC Verification**: Provide your Student/Gov ID and a quick Biometric Selfie.\n` +
-          `4. **Landlord Approval**: The landlord will review your request.\n` +
-          `5. **Sign Lease Contract**: Review and digitally sign your official Lease Agreement.\n` +
-          `6. **Pay Reservation Fee**: Pay via GCash, Maya, Bank Transfer, or Cash to lock in your room.\n\n` +
+        reply: `Here is the complete end-to-end booking and reservation journey on BoardTAU:\n\n` +
+          `1. **Search & Filter**: Find your ideal accommodation using the 10-Step Guided Search Wizard or Spotlight AI Search.\n` +
+          `2. **Compare Rooms**: View property details, campus proximity, and compare rooms under **Available Rooms**.\n` +
+          `3. **Submit Inquiry (with KYC)**: Click **Inquire Now** on your room card and complete the 8-step verification wizard.\n` +
+          `4. **Landlord Review**: The host reviews your inquiry note and verified credentials, then approves or rejects.\n` +
+          `5. **Reservation Pending Payment**: Once approved, your inquiry becomes an official Reservation marked **Payment Pending**.\n` +
+          `6. **Lease Agreement & Holding Deposit**: In checkout, click **Read PDF** to review the lease terms, check the agreement consent box, and **Slide to Pay** via GCash, Maya, or Card (Stripe).\n` +
+          `7. **Check-In**: Upon arrival at the property, the landlord marks you as **Checked-In**, which automatically deducts room occupancy slots.\n` +
+          `8. **Check-Out**: When your stay concludes, the reservation is marked **Completed**, and occupancy slots are restored.\n` +
+          `9. **Review & Rating (Optional)**: Leave a review and rating for future TAU boarders.\n\n` +
           `[NAV: Browse Listings](/)`,
         suggestedPrompts: [
-          "What is required for KYC?",
-          "What payment methods are accepted?",
-          "How does digital lease signing work?"
+          "How do I inquire about a room?",
+          "What is required for tenant KYC?",
+          "What payment methods are accepted?"
+        ]
+      }
+    };
+  }
+
+  // 2B. How to Inquire on a Room Intent (8-Step Inquiry Wizard)
+  const inquiryKeywords = [
+    "how to inquire", "how do i inquire", "inquiry process", "inquiry steps", 
+    "steps to inquire", "send an inquiry", "how do i send inquiry", "inquire room"
+  ];
+  if (inquiryKeywords.some(kw => query.includes(kw))) {
+    return {
+      isMatched: true,
+      intentKey: "HOW_TO_INQUIRE",
+      response: {
+        reply: `Submitting a room inquiry on BoardTAU is quick and secure via the 8-step Inquiry Wizard:\n\n` +
+          `1. **Find Room & Click Inquire**: Go to your chosen listing, scroll to **Available Rooms**, and click **Inquire Now** on the room card.\n` +
+          `2. **Step 1: Payment Method**: Choose GCash, Maya, or Credit/Debit Card (*Zero Immediate Charge Guarantee* — only charged after host approval).\n` +
+          `3. **Step 2: Stay Dates**: Pick your target move-in and check-out dates.\n` +
+          `4. **Step 3: Message to Landlord**: Write an introductory note or inquiry questions for the host.\n` +
+          `5. **Step 4: Review Guidelines**: Review verification guidelines and accepted ID types.\n` +
+          `6. **Step 5: Biometric Selfie**: Complete a quick camera selfie with AI liveness verification.\n` +
+          `7. **Step 6: ID Card Scan**: Capture a clear photo of your Student ID or Government ID.\n` +
+          `8. **Step 7: Email OTP**: Enter the 6-digit verification code sent to your email.\n` +
+          `9. **Step 8: Review & Submit**: Preview your application and submit for landlord review!\n\n` +
+          `[NAV: Browse Listings](/)`,
+        suggestedPrompts: [
+          "What documents are accepted for KYC?",
+          "What happens after my inquiry is approved?",
+          "What payment methods are accepted?"
+        ]
+      }
+    };
+  }
+
+  // 2C. Housing Types & Accommodations Available Intent
+  const housingTypesKeywords = [
+    "housing types", "what type of housing", "types of housing", "what housing options",
+    "accommodation types", "what accommodations", "types of accommodations"
+  ];
+  if (housingTypesKeywords.some(kw => query.includes(kw))) {
+    return {
+      isMatched: true,
+      intentKey: "WHAT_HOUSING_AVAILABLE",
+      response: {
+        reply: `BoardTAU features student accommodations around Tarlac Agricultural University (TAU), managed dynamically by Super Admins:\n\n` +
+          `• **Boarding House**: Traditional student living with shared facilities, offering private **Solo Rooms** or budget-friendly **Bedspaces**.\n` +
+          `• **Dormitory**: Student dorms with shared lounges, resident caretakers, and campus-friendly house rules.\n` +
+          `• **Apartment**: Self-contained whole units (**Studio**, **1-Bedroom**, or **2-Bedroom Units**) with private kitchenettes and CRs.\n` +
+          `• **Transient House**: Short-term daily or weekly whole-unit stays for visiting guests, families, and researchers.\n` +
+          `• **Agri-Hostel**: Specialized lodge suites and group suites for university visitors and delegation reviewees.\n\n` +
+          `Every listing provides exact GIS walking distances and transit times to all 9 TAU colleges!\n\n` +
+          `[NAV: Browse Listings](/)`,
+        suggestedPrompts: [
+          "Show me housing options near TAU campus",
+          "How do I inquire about a room?",
+          "What are the cheapest bedspaces available?"
         ]
       }
     };
@@ -73,90 +133,96 @@ export function matchUserIntent(userMessage: string): IntentMatchResult {
       isMatched: true,
       intentKey: "KYC_REQUIREMENTS",
       response: {
-        reply: `To complete your KYC verification for room booking on BoardTAU, you need:\n\n` +
-          `• **Valid ID**: Government-issued ID or official TAU Student ID.\n` +
-          `• **Biometric Selfie**: A clear camera selfie with liveness detection.\n\n` +
-          `This protects both tenants and landlords and guarantees genuine boarder identity.\n\n` +
+        reply: `To complete your KYC verification for room inquiries on BoardTAU, you need:\n\n` +
+          `• **Valid ID**: Official TAU Student ID or any Government-issued ID (Driver's License, UMID, Passport, National ID, PhilHealth).\n` +
+          `• **Biometric Selfie**: A quick camera selfie with real-time AI liveness verification.\n` +
+          `• **Email OTP**: 6-digit confirmation code sent to your registered email address.\n\n` +
+          `This protects both tenants and landlords, ensuring genuine boarder identity across campus.\n\n` +
           `[NAV: View Profile](/profile)`,
         suggestedPrompts: [
-          "How do I book a room?",
-          "How long does landlord approval take?",
-          "What payment methods are accepted?"
+          "How do I inquire about a room?",
+          "What payment methods are accepted?",
+          "How do I reserve a room and sign a lease?"
         ]
       }
     };
   }
 
-  // 4. Landlord Host Verification Intent
+  // 4. Landlord Host Verification Intent (8-Step Host Onboarding)
   const hostKeywords = [
     "become a host", "landlord verification", "how to list property", 
-    "business permit", "how do landlords register", "list my boarding house"
+    "business permit", "how do landlords register", "list my boarding house", "landlord onboarding"
   ];
   if (hostKeywords.some(kw => query.includes(kw))) {
     return {
       isMatched: true,
       intentKey: "HOST_APPLICATION",
       response: {
-        reply: `To register as a verified landlord on BoardTAU:\n\n` +
+        reply: `To register as a verified landlord on BoardTAU, complete the 8-step onboarding wizard:\n\n` +
           `1. Click **Become a Host** in the top navigation bar.\n` +
-          `2. Fill out your Business & Contact Details.\n` +
-          `3. Upload your **Business Permit**, **Fire Safety Certificate**, Government ID, and Establishment Photo.\n` +
-          `4. Wait for Super Admin review and verification.\n\n` +
+          `2. **Step 1: Landlord Identity**: Enter your full name, mobile number, email, and property ownership role.\n` +
+          `3. **Step 2: Establishment Profile**: Enter business name, accommodation type, and years of hosting experience.\n` +
+          `4. **Step 3: Property Location & Facade**: Provide the address, pin location on the campus map, and upload a clear front facade photo.\n` +
+          `5. **Step 4: Legal Permits & Bills**: Upload your Mayor's Business Permit OR Utility Bill, plus your BFP Fire Safety Certificate.\n` +
+          `6. **Step 5: Host Guidelines**: Review and agree to the Host Community Standards.\n` +
+          `7. **Step 6: Biometric Selfie**: Complete a quick facial scan with active liveness check.\n` +
+          `8. **Step 7: Government ID Scan**: Capture your valid government-issued ID.\n` +
+          `9. **Step 8: Review & Submit**: Review and submit for Super Admin approval *(auto-saves in real-time)*!\n\n` +
           `[NAV: Become a Host](/become-a-host)`,
         suggestedPrompts: [
-          "What documents do landlords need?",
-          "How does landlord dashboard work?",
-          "What is the property approval process?"
+          "What permits do landlords need?",
+          "How does the landlord dashboard work?",
+          "How long does landlord approval take?"
         ]
       }
     };
   }
 
-  // 5. Digital Lease Agreement Intent
+  // 5. Digital Lease Agreement Intent (Checkout & Lease Review)
   const leaseKeywords = [
-    "lease contract", "digital signature", "sign agreement", "contract signing",
-    "digital lease", "lease agreement"
+    "lease contract", "lease agreement", "sign contract", "digital lease", 
+    "terms and agreement", "how does lease work"
   ];
   if (leaseKeywords.some(kw => query.includes(kw))) {
     return {
       isMatched: true,
       intentKey: "LEASE_CONTRACT",
       response: {
-        reply: `BoardTAU features **Digital Lease Contracts**:\n\n` +
-          `• Once your inquiry is approved, both landlord and tenant receive an official Lease Contract.\n` +
-          `• You can draw your signature directly on screen to execute the legal agreement.\n` +
-          `• Signed contracts are stored securely with cryptographic verification hashes.\n\n` +
+        reply: `BoardTAU features a streamlined **Digital Lease Contract & Agreement Review**:\n\n` +
+          `• Once your inquiry is approved by the host, you can finalize your room reservation.\n` +
+          `• In the checkout modal, click **Read PDF** to review the landlord's official lease terms, house rules, and move-out notice period.\n` +
+          `• Check the digital consent box: **"I have read and agree to the Boarding House Lease Agreement & house rules"** (no drawing signature needed!).\n` +
+          `• Checking the agreement box unlocks the **SLIDE TO PAY** slider to complete your holding deposit via GCash, Maya, or Card.\n\n` +
           `[NAV: My Inquiries](/inquiries)`,
         suggestedPrompts: [
-          "How do I pay the reservation fee?",
-          "What is required for KYC?",
-          "How do I book a room?"
+          "What payment methods are accepted?",
+          "What happens after my inquiry is approved?",
+          "How do I inquire about a room?"
         ]
       }
     };
   }
 
-  // 6. Payment Methods Intent
+  // 6. Payment Methods Intent (Payment Gateways & Holding Fee)
   const paymentKeywords = [
-    "payment method", "how to pay", "gcash", "maya", "cash", "bank transfer",
-    "how do i pay reservation fee"
+    "payment method", "how to pay", "gcash", "maya", "credit card", "stripe",
+    "how do i pay reservation fee", "payment options"
   ];
   if (paymentKeywords.some(kw => query.includes(kw))) {
     return {
       isMatched: true,
       intentKey: "PAYMENT_METHODS",
       response: {
-        reply: `BoardTAU supports multiple secure payment methods for reservation fees:\n\n` +
-          `• **GCash e-wallet**\n` +
-          `• **Maya e-wallet**\n` +
-          `• **Direct Bank Transfer**\n` +
-          `• **Over-the-counter Cash**\n\n` +
-          `Payment is made directly after your Inquiry and Digital Lease Contract are approved by the landlord.\n\n` +
+        reply: `BoardTAU supports 3 secure online payment gateways for holding fees and reservation deposits:\n\n` +
+          `• **GCash Mobile Wallet** (Instant e-wallet transfer)\n` +
+          `• **Maya Wallet** (Digital wallet app or card)\n` +
+          `• **Credit / Debit Card via Stripe** (Visa, Mastercard, JCB, AMEX)\n\n` +
+          `🛡️ **Zero Immediate Charge Guarantee:** When submitting an inquiry, your payment authorization is reserved securely. You are only charged after the landlord reviews and approves your reservation request!\n\n` +
           `[NAV: My Inquiries](/inquiries)`,
         suggestedPrompts: [
-          "How do I book a room?",
-          "How does digital lease signing work?",
-          "What is required for KYC?"
+          "How do I inquire about a room?",
+          "How do I reserve a room and sign a lease?",
+          "What is required for tenant KYC?"
         ]
       }
     };

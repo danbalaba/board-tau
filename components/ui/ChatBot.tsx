@@ -69,10 +69,10 @@ const DEFAULT_GREETING: Message = {
 };
 
 const DEFAULT_PROMPTS = [
-  "How do I book a room?",
-  "What is required for KYC?",
-  "Where is BoardTAU located?",
-  "What does this page do?"
+  "Show me housing options near TAU campus",
+  "How do I inquire about a room?",
+  "How do I reserve a room and sign a lease?",
+  "What is required for tenant KYC verification?"
 ];
 
 export default function ChatBot() {

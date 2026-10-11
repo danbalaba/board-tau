@@ -140,7 +140,7 @@ export async function GET(
     let highlightMap = new Map();
     try {
       const model = genAI.getGenerativeModel({
-        model: "gemini-3-flash-preview",
+        model: process.env.GEMINI_MODEL || "gemini-3-flash-preview",
         systemInstruction: `You are an AI assistant for a boarding house platform.
 Your job is to read a source listing that the user is currently viewing, and a list of alternative recommendations.
 For each recommendation, provide ONE short sentence (max 8 words) explaining why it is a good alternative. 
