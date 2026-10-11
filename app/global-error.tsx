@@ -14,7 +14,19 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    // Ignore Next.js internal control-flow redirect exceptions
+    if (error.message?.includes("NEXT_REDIRECT") || error.digest?.startsWith("NEXT_REDIRECT")) {
+      return;
+    }
+
+    // Attach digest to Sentry scope to easily correlate with server logs
+    Sentry.withScope((scope) => {
+      if (error.digest) {
+        scope.setTag("error_digest", error.digest);
+        scope.setExtra("digest", error.digest);
+      }
+      Sentry.captureException(error);
+    });
   }, [error]);
 
   return (
