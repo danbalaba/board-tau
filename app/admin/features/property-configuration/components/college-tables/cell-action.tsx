@@ -44,13 +44,22 @@ export const CellAction: React.FC<CellActionProps> = ({ data, onRefresh }) => {
     <Modal>
       <DropdownMenu open={openDropdown} onOpenChange={setOpenDropdown}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 cursor-pointer" disabled={loading}>
-            <span className="sr-only">Open menu</span>
+          <Button
+            variant="ghost"
+            className="h-8 w-8 p-0 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-pointer transition-colors"
+            disabled={loading}
+          >
             <IconDots className="h-4 w-4" />
+            <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl p-2 shadow-2xl w-48">
-          <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-2 py-1.5">Actions</DropdownMenuLabel>
+        <DropdownMenuContent
+          align="end"
+          className="w-48 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl p-1.5 shadow-xl"
+        >
+          <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-2.5 py-1.5">
+            Actions
+          </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
           <Modal.Trigger name={`edit-college-${data.id}`}>
             <DropdownMenuItem onClick={() => setOpenDropdown(false)} className="cursor-pointer text-xs font-semibold rounded-xl gap-2 py-2 text-slate-700 dark:text-slate-200 focus:bg-slate-100 dark:focus:bg-slate-800 focus:text-slate-900 dark:focus:text-white">

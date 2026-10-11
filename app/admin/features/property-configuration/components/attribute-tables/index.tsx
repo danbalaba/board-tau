@@ -159,10 +159,10 @@ export function AttributeTable({ data = [], isLoading, onRefresh }: AttributeTab
             </div>
           ) : (
             <>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
                 Amenities & Rules
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                 Manage platform-wide property amenities, room features, house rules, and security infrastructure.
               </p>
             </>
@@ -170,7 +170,7 @@ export function AttributeTable({ data = [], isLoading, onRefresh }: AttributeTab
         </div>
         <Modal>
           <Modal.Trigger name="add-attribute">
-            <Button className="bg-primary hover:bg-primary/90 text-white rounded-xl shadow-lg shadow-primary/20 font-black uppercase tracking-wider text-xs gap-2">
+            <Button className="h-10 px-4 gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 font-semibold text-xs tracking-normal transition-all cursor-pointer">
               <Plus size={16} /> Add Amenity / Rule
             </Button>
           </Modal.Trigger>
