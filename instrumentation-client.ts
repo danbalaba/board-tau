@@ -13,6 +13,18 @@ Sentry.init({
   tracesSampleRate: 0.1,
   enableLogs: true,
   sendDefaultPii: true,
+  ignoreErrors: [
+    "ResizeObserver loop limit exceeded",
+    "ResizeObserver loop completed with undelivered notifications",
+    "Failed to fetch",
+    "Load failed",
+    "NetworkError",
+    // Service worker registration rejections (e.g. Incognito mode, Android WebViews, wrsParams)
+    /^Rejected$/,
+    "Rejected",
+    /serviceWorker\.register/i,
+    /wrsParams/i,
+  ],
   integrations: [
     Sentry.feedbackIntegration({
       autoInject: false,
@@ -58,19 +70,31 @@ Sentry.init({
     const error = hint.originalException;
     if (error && typeof error === "object" && "message" in error) {
       const msg = String(error.message);
-      // Filter out benign browser warnings & network drops
+      // Filter out benign browser warnings, network drops & service worker rejections
       if (
+        msg === "Rejected" ||
         msg.includes("ResizeObserver loop limit exceeded") ||
         msg.includes("ResizeObserver loop completed with undelivered notifications") ||
         msg.includes("Failed to fetch") ||
         msg.includes("Load failed") ||
-        msg.includes("NetworkError")
+        msg.includes("NetworkError") ||
+        msg.includes("serviceWorker")
       ) {
         return null;
       }
     }
-    // Ignore browser extension stack traces
-    if (event.exception?.values?.some((e) => e.stacktrace?.frames?.some((f) => f.filename?.includes("chrome-extension://") || f.filename?.includes("moz-extension://")))) {
+    // Ignore browser extension and security scanner (wrsParams) stack traces
+    if (
+      event.exception?.values?.some((e) =>
+        e.stacktrace?.frames?.some(
+          (f) =>
+            f.filename?.includes("chrome-extension://") ||
+            f.filename?.includes("moz-extension://") ||
+            f.function?.includes("wrsParams") ||
+            f.filename?.includes("wrsParams")
+        )
+      )
+    ) {
       return null;
     }
     return event;

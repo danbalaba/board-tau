@@ -14,6 +14,7 @@ import { NetworkStatusManager } from "@/components/common/NetworkStatusManager";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
+import RegisterPWA from "@/components/pwa/RegisterPWA";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
   ? process.env.NEXT_PUBLIC_SITE_URL
@@ -148,6 +149,7 @@ export default function RootLayout({
             <LayoutContent>
               {children}
               <InstallPrompt />
+              <RegisterPWA />
             </LayoutContent>
             <SpeedInsights />
             <Analytics />
