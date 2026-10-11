@@ -19,6 +19,12 @@ Sentry.init({
     "Failed to fetch",
     "Load failed",
     "NetworkError",
+    // EdgeStore background initialization network/API errors
+    "EdgeStoreApiClientError",
+    "EdgeStoreClientError",
+    /EdgeStoreApiClientError/i,
+    /EdgeStoreClientError/i,
+    /edgestore/i,
     // Service worker registration rejections (e.g. Incognito mode, Android WebViews, wrsParams)
     /^Rejected$/,
     "Rejected",
@@ -70,7 +76,7 @@ Sentry.init({
     const error = hint.originalException;
     if (error && typeof error === "object" && "message" in error) {
       const msg = String(error.message);
-      // Filter out benign browser warnings, network drops & service worker rejections
+      // Filter out benign browser warnings, network drops, service worker rejections & EdgeStore background init errors
       if (
         msg === "Rejected" ||
         msg.includes("ResizeObserver loop limit exceeded") ||
@@ -78,10 +84,26 @@ Sentry.init({
         msg.includes("Failed to fetch") ||
         msg.includes("Load failed") ||
         msg.includes("NetworkError") ||
-        msg.includes("serviceWorker")
+        msg.includes("serviceWorker") ||
+        msg.includes("EdgeStoreApiClientError") ||
+        msg.includes("EdgeStoreClientError") ||
+        (error as any)?.name === "EdgeStoreApiClientError" ||
+        (error as any)?.name === "EdgeStoreClientError"
       ) {
         return null;
       }
+    }
+    // Filter EdgeStore unhandled rejection exceptions
+    if (
+      event.exception?.values?.some((e) =>
+        e.type === "EdgeStoreApiClientError" ||
+        e.type === "EdgeStoreClientError" ||
+        e.value?.includes("EdgeStoreApiClientError") ||
+        e.value?.includes("EdgeStoreClientError") ||
+        (e.value?.includes("Internal server error") && e.stacktrace?.frames?.some((f) => f.filename?.includes("edgestore")))
+      )
+    ) {
+      return null;
     }
     // Ignore browser extension and security scanner (wrsParams) stack traces
     if (
