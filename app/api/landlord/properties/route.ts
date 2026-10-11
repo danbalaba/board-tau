@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { backendClient } from "@/lib/edgestore-server";
+import { backendClient, safeDeleteEdgeStoreFiles } from "@/lib/edgestore-server";
 import {
   getLandlordProperties,
   getLandlordPropertiesMinimal,
@@ -180,8 +180,9 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const landlord = await requireLandlord();
-    const permitted = await hasPermission(landlord.id, "UPDATE_PROPERTY");
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    const permitted = await hasPermission(user.id, "UPDATE_PROPERTY");
     if (!permitted) return NextResponse.json({ success: false, error: 'Forbidden: Missing UPDATE_PROPERTY' }, { status: 403 });
 
     const { searchParams } = new URL(request.url);
@@ -196,7 +197,7 @@ export async function DELETE(request: NextRequest) {
     const listing = await db.listing.findFirst({
       where: { 
         id: propertyId,
-        userId: landlord.id 
+        userId: user.id 
       },
       include: {
         images: true,
@@ -212,12 +213,30 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Property not found or unauthorized" }, { status: 404 });
     }
 
+    // Guard: Prevent deletion if there are active checked-in or reserved stays
+    const activeStay = await db.reservation.findFirst({
+      where: {
+        listingId: propertyId,
+        status: { in: ["RESERVED", "CHECKED_IN"] }
+      }
+    });
+
+    if (activeStay) {
+      return NextResponse.json({
+        success: false,
+        error: "Cannot delete a property with active or confirmed guest stays. Please complete or cancel all bookings first."
+      }, { status: 400 });
+    }
+
     // 2. Logic: If not archived, archive it. If already archived, PURGE EVERYTHING.
     if (!listing.isArchived) {
       await db.listing.update({
         where: { id: propertyId },
-        data: { isArchived: true }
+        data: { isArchived: true, status: "UNPUBLISHED" }
       });
+      await cache.del("landlord:properties");
+      await cache.del("listings:{}");
+      await cache.del(`listing:id:${propertyId}`);
       return NextResponse.json({ success: true, message: "Property moved to archive." });
     }
 
@@ -241,68 +260,26 @@ export async function DELETE(request: NextRequest) {
       });
     }
 
-    // --- HELPER: Robust URL Extraction ---
-    const extractRealUrl = (url: string) => {
-      let targetUrl = url;
-      if (url.includes('/api/edgestore/proxy-file')) {
-        try {
-          const urlObj = url.startsWith('http') 
-            ? new URL(url) 
-            : new URL(url, process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
-          const extractedUrl = urlObj.searchParams.get('url');
-          if (extractedUrl) targetUrl = extractedUrl;
-        } catch (err) {
-          console.error("Failed to parse proxied URL during property purge:", url);
-        }
-      }
-      return targetUrl;
-    };
-
-    // Wipe Public Files (Gallery + Rooms)
-    const publicDeletePromises = publicFileUrls.map(url => {
-      const targetUrl = extractRealUrl(url);
-      if (targetUrl.startsWith('http')) {
-        return (backendClient.publicFiles as any).deleteFile({ url: targetUrl }).catch(() => {});
-      }
-      return Promise.resolve();
-    });
-
-    // Wipe Identity Docs (Legal/Business)
-    const identityDeletePromises = documentUrls.map(url => {
-      const targetUrl = extractRealUrl(url);
-      if (targetUrl.startsWith('http')) {
-        return (backendClient.identityDocs as any).deleteFile({ url: targetUrl }).catch((err: any) => {
-          console.error(`❌ Failed to delete identity doc: ${targetUrl}`, err);
-        });
-      }
-      return Promise.resolve();
-    });
-
-    // Run all deletions
-    await Promise.all([...publicDeletePromises, ...identityDeletePromises]);
+    // Wipe Public Files & Identity Docs from EdgeStore safely
+    await Promise.allSettled([
+      safeDeleteEdgeStoreFiles('publicFiles', publicFileUrls),
+      safeDeleteEdgeStoreFiles('identityDocs', documentUrls)
+    ]);
 
     // Finally, drop the record (Cascade will handle sub-records in DB)
-    const result = await deleteProperty(propertyId);
+    await db.listing.delete({
+      where: { id: propertyId }
+    });
 
-    if (result.success) {
-      // Invalidate property cache
-      await cache.del("landlord:properties");
-      // Also invalidate listings cache
-      await cache.del("listings:{}");
+    // Invalidate caches
+    await cache.del("landlord:properties");
+    await cache.del("listings:{}");
+    await cache.del(`listing:id:${propertyId}`);
 
-      return NextResponse.json({
-        success: true,
-        message: "Property and all associated images purged permanently."
-      });
-    } else {
-      return NextResponse.json(
-        {
-          success: false,
-          error: result.error,
-        },
-        { status: 400 }
-      );
-    }
+    return NextResponse.json({
+      success: true,
+      message: "Property and all associated images purged permanently."
+    });
   } catch (error) {
     console.error("Error deleting property:", error);
     return NextResponse.json(

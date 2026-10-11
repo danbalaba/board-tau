@@ -14,7 +14,6 @@ import {
   IconCircleX,
   IconArchive,
   IconRestore,
-  IconTrash,
   IconEye
 } from '@tabler/icons-react';
 import { cn } from '@/utils/helper';
@@ -32,7 +31,6 @@ interface LandlordInquiryCardProps {
   isResponding?: boolean;
   onArchive: (id: string) => void;
   onReject: (id: string) => void;
-  onDelete: (inquiry: Inquiry) => void;
   onViewDetails: () => void;
 }
 
@@ -50,7 +48,6 @@ export function LandlordInquiryCard({
   isResponding,
   onArchive,
   onReject,
-  onDelete,
   onViewDetails
 }: LandlordInquiryCardProps) {
   const isGrid = viewMode === 'grid';
@@ -121,7 +118,7 @@ export function LandlordInquiryCard({
             </span>
           </div>
 
-          <ArchiveButton inquiry={inquiry} onArchive={onArchive} onDelete={onDelete} />
+          <ArchiveButton inquiry={inquiry} onArchive={onArchive} />
         </div>
 
         {/* Content Section */}
@@ -330,20 +327,6 @@ export function LandlordInquiryCard({
               </>
             )}
           </button>
-
-          {inquiry.isArchived && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(inquiry);
-              }}
-              className="flex-1 sm:w-full rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-widest cursor-pointer border border-rose-100 dark:border-rose-900/30"
-              title="Delete Permanently"
-            >
-              <IconTrash size={13} />
-              <span>Delete</span>
-            </button>
-          )}
         </div>
       </div>
     </motion.div>
@@ -352,15 +335,13 @@ export function LandlordInquiryCard({
 
 function ArchiveButton({ 
   inquiry, 
-  onArchive,
-  onDelete
+  onArchive
 }: { 
   inquiry: Inquiry, 
-  onArchive: (id: string) => void,
-  onDelete: (inquiry: Inquiry) => void 
+  onArchive: (id: string) => void
 }) {
   return (
-    <div className="absolute top-3 right-3 z-20 flex flex-col gap-2">
+    <div className="absolute top-3 right-3 z-20">
       <button 
         onClick={(e) => {
           e.stopPropagation();
@@ -380,19 +361,6 @@ function ArchiveButton({
           <IconArchive size={14} strokeWidth={2.5} />
         )}
       </button>
-
-      {inquiry.isArchived && (
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(inquiry);
-          }}
-          className="p-2 rounded-xl bg-rose-500/90 text-white border-rose-400/50 hover:bg-rose-600 backdrop-blur-md transition-all duration-300 shadow-lg border"
-          title="Permanently Delete"
-        >
-          <IconTrash size={14} strokeWidth={2.5} />
-        </button>
-      )}
     </div>
   );
 }

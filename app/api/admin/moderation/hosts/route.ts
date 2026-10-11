@@ -4,7 +4,7 @@ import { ApiResponseFormatter } from '@/lib/api-response';
 import { PrismaErrorHandler } from '@/lib/prisma-error-handler';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { backendClient } from '@/lib/edgestore-server';
+import { safeDeleteEdgeStoreFiles } from '@/lib/edgestore-server';
 
 export async function GET(req: NextRequest) {
   try {
@@ -197,15 +197,7 @@ export async function DELETE(req: NextRequest) {
 
     // 3. WIPE files from EdgeStore Cloud
     console.log(`🛡️ SECURITY PURGE: Deleting ${fileUrls.length} files from EdgeStore for application`);
-    
-    await Promise.all(
-      fileUrls.map(url => {
-        return (backendClient.identityDocs as any).deleteFile({ url }).catch((err: any) => {
-          const cleanErr = err instanceof Error ? err.message.replace(/[\r\n]/g, ' ') : String(err);
-          console.error("Failed to delete file from EdgeStore", cleanErr);
-        });
-      })
-    );
+    await safeDeleteEdgeStoreFiles('identityDocs', fileUrls);
 
     // 4. Delete the database record
     await db.hostApplication.delete({

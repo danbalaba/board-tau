@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireLandlord } from "@/lib/landlord";
+import { getCurrentUser } from "@/services/user";
 import { cache } from "@/lib/redis";
-import { backendClient } from "@/lib/edgestore-server";
+import { safeDeleteEdgeStoreFiles } from "@/lib/edgestore-server";
 import { hasPermission } from "@/lib/rbac";
 
 // GET /api/landlord/rooms/[roomId] — fetch single room details
@@ -11,14 +11,15 @@ export async function GET(
   { params }: { params: Promise<{ roomId: string }> }
 ) {
   try {
-    const landlord = await requireLandlord();
-    const permitted = await hasPermission(landlord.id, "VIEW_ROOMS");
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    const permitted = await hasPermission(user.id, "VIEW_ROOMS");
     if (!permitted) return NextResponse.json({ success: false, message: "Forbidden: Missing VIEW_ROOMS" }, { status: 403 });
 
     const { roomId } = await params;
 
     const room = await db.room.findFirst({
-      where: { id: roomId, listing: { userId: landlord.id } },
+      where: { id: roomId, listing: { userId: user.id } },
       include: {
         listing: {
           select: {
@@ -73,8 +74,9 @@ export async function PATCH(
   { params }: { params: Promise<{ roomId: string }> }
 ) {
   try {
-    const landlord = await requireLandlord();
-    const permitted = await hasPermission(landlord.id, "UPDATE_ROOM");
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    const permitted = await hasPermission(user.id, "UPDATE_ROOM");
     if (!permitted) return NextResponse.json({ success: false, message: "Forbidden: Missing UPDATE_ROOM" }, { status: 403 });
 
     const { roomId } = await params;
@@ -82,7 +84,7 @@ export async function PATCH(
 
     // Verify ownership
     const existing = await db.room.findFirst({
-      where: { id: roomId, listing: { userId: landlord.id } },
+      where: { id: roomId, listing: { userId: user.id } },
     });
 
     if (!existing) {
@@ -184,14 +186,15 @@ export async function DELETE(
   { params }: { params: Promise<{ roomId: string }> }
 ) {
   try {
-    const landlord = await requireLandlord();
-    const permitted = await hasPermission(landlord.id, "UPDATE_ROOM");
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    const permitted = await hasPermission(user.id, "UPDATE_ROOM");
     if (!permitted) return NextResponse.json({ success: false, message: "Forbidden: Missing UPDATE_ROOM" }, { status: 403 });
 
     const { roomId } = await params;
 
     const existing = await db.room.findFirst({
-      where: { id: roomId, listing: { userId: landlord.id } },
+      where: { id: roomId, listing: { userId: user.id } },
       include: { images: true }
     });
 
@@ -202,54 +205,41 @@ export async function DELETE(
       );
     }
 
-    // 1. Wipe all images from EdgeStore
-    const imageUrls = existing.images.map((img: any) => img.url).filter(Boolean);
-    
-    if (imageUrls.length > 0) {
-      console.log(`🛡️ SECURITY PURGE: Wiping ${imageUrls.length} room images from EdgeStore`);
-      
-      const extractRealUrl = (url: string) => {
-        let targetUrl = url;
-        if (url.includes('/api/edgestore/proxy-file')) {
-          try {
-            const urlObj = url.startsWith('http') 
-              ? new URL(url) 
-              : new URL(url, process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
-            const extractedUrl = urlObj.searchParams.get('url');
-            if (extractedUrl) targetUrl = extractedUrl;
-          } catch (err) {
-            console.error("Failed to parse proxied URL during room purge:", url);
-          }
-        }
-        return targetUrl;
-      };
+    // Guard: Prevent deletion if there are active checked-in or reserved stays
+    const activeStay = await db.reservation.findFirst({
+      where: {
+        roomId,
+        status: { in: ["RESERVED", "CHECKED_IN"] }
+      }
+    });
 
-      await Promise.all(
-        imageUrls.map((url: any) => {
-          const targetUrl = extractRealUrl(url);
-          if (targetUrl.startsWith('http')) {
-            return (backendClient.publicFiles as any).deleteFile({ url: targetUrl }).catch((err: any) => {
-              console.error(`Failed to delete file from EdgeStore: ${targetUrl}`, err);
-            });
-          }
-          return Promise.resolve();
-        })
+    if (activeStay) {
+      return NextResponse.json(
+        { success: false, message: "Cannot delete a room with active or confirmed guest reservations. Please complete or cancel bookings first." },
+        { status: 400 }
       );
     }
 
-    // 2. Database deletion (images and amenities will cascade if schema is set, but better safe)
+    // 1. Wipe all images from EdgeStore safely
+    const imageUrls = existing.images.map((img: any) => img.url).filter(Boolean);
+    if (imageUrls.length > 0) {
+      await safeDeleteEdgeStoreFiles('publicFiles', imageUrls);
+    }
+
+    // 2. Database deletion (cascades sub-records in DB)
     await db.room.delete({ where: { id: roomId } });
 
     // Invalidate the cache for the parent listing so tenant-side updates immediately
     if (existing.listingId) {
       await cache.del(`listing:id:${existing.listingId}`);
+      await cache.delPattern("listings:*");
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: "Room deleted successfully." });
   } catch (error: any) {
     console.error("[ROOM_DELETE]", error);
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message: error.message || "Failed to delete room" },
       { status: 500 }
     );
   }
