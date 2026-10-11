@@ -307,10 +307,7 @@ export default function LandlordSidebar() {
   const activeTip = currentPool[tipIndex % currentPool.length];
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setMounted(true);
-    }, 1000); // 1s delay for skeleton visibility
-    return () => clearTimeout(timer);
+    setMounted(true);
   }, []);
 
   const isDark = theme === "dark";

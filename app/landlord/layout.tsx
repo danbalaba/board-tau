@@ -15,16 +15,21 @@ export const metadata = {
   description: 'Manage your properties, inquiries, and bookings',
 };
 
+import { cookies } from 'next/headers';
+
 export default async function LandlordLayout({
   children,
 }: {
   children: ReactNode;
 }) {
   const landlord = await requireLandlord();
+  const cookieStore = await cookies();
+  const sidebarCookie = cookieStore.get('sidebar_state');
+  const defaultOpen = sidebarCookie ? sidebarCookie.value === 'true' : true;
 
   return (
     <div className={`${inter.variable} ${inter.className} [--font-sans:var(--font-inter)] font-sans antialiased`}>
-      <LandlordLayoutClient user={landlord}>
+      <LandlordLayoutClient user={landlord} defaultOpen={defaultOpen}>
         {children}
       </LandlordLayoutClient>
     </div>

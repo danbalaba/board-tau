@@ -20,11 +20,13 @@ import { KerbyProvider } from '@/lib/context/KerbyContext';
 interface LandlordLayoutClientProps {
   children: React.ReactNode;
   user: any;
+  defaultOpen?: boolean;
 }
 
 export default function LandlordLayoutClient({
   children,
   user,
+  defaultOpen = true,
 }: LandlordLayoutClientProps) {
   const pathname = usePathname();
   const setUser = useLandlordProfileStore((state: any) => state.setUser);
@@ -46,7 +48,7 @@ export default function LandlordLayoutClient({
     <div className="h-screen overflow-hidden bg-background">
       <KerbyProvider>
         <LandlordKBar>
-          <SidebarProvider defaultOpen={true}>
+          <SidebarProvider defaultOpen={defaultOpen}>
             <LandlordSidebar />
             <SidebarInset className="flex flex-col h-screen overflow-hidden">
               <LandlordTopbar user={user} />
