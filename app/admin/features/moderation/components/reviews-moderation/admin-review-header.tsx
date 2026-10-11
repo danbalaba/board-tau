@@ -35,12 +35,7 @@ interface AdminReviewHeaderProps {
   isSuperAdmin?: boolean;
 }
 
-const DATE_RANGES = [
-  { value: '7d', label: 'Last 7 Days' },
-  { value: '30d', label: 'Last 30 Days' },
-  { value: '90d', label: 'Last 90 Days' },
-  { value: '1y', label: 'Past Year' },
-];
+import { AdminDateRangeDropdown } from '@/app/admin/components/ui/admin-date-range-dropdown';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All Statuses' },
@@ -70,7 +65,6 @@ export function AdminReviewHeader({
   onToggleArchived,
   isSuperAdmin = false,
 }: AdminReviewHeaderProps) {
-  const rangeLabel = DATE_RANGES.find(r => r.value === range)?.label ?? 'Last 30 Days';
 
   return (
     <motion.div
@@ -92,16 +86,16 @@ export function AdminReviewHeader({
               <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight flex items-center gap-3">
                 Reviews & Ratings
                 {pendingCount > 0 && (
-                  <span className="flex items-center gap-1.5 bg-amber-500/10 px-3 py-1.5 rounded-2xl border border-amber-500/10 text-amber-500 text-[10px] tracking-[0.2em] font-black italic shadow-sm">
-                    <Star size={12} className="fill-amber-500" />
-                    {pendingCount} PENDING
+                  <span className="flex items-center gap-1.5 bg-amber-500/10 px-3 py-1.5 rounded-2xl border border-amber-500/10 text-amber-500 text-xs font-semibold shadow-sm">
+                    <Star size={14} className="fill-amber-500" />
+                    {pendingCount} pending
                   </span>
                 )}
               </h1>
               <div className="flex items-center gap-2 mt-1">
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-[0.2em]">
-                  Review and moderate student feedback, ratings, and tenant reviews across BoardTAU
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                  Moderate student ratings, feedback, and property reviews
                 </p>
               </div>
             </div>
@@ -110,35 +104,9 @@ export function AdminReviewHeader({
           {/* Right Actions */}
           <div className="flex flex-wrap items-center gap-3 mt-4 md:mt-0 ml-auto">
             {/* Date Range */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="h-9 px-4 gap-2 rounded-xl border-amber-200/60 dark:border-amber-700/60 bg-amber-50/50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 shadow-sm text-[10px] font-black uppercase tracking-[0.2em] hover:bg-amber-100 dark:hover:bg-amber-800/40 hover:text-amber-900 dark:hover:text-amber-300">
-                  <Calendar size={14} className="text-amber-500" />
-                  {rangeLabel}
-                  <ChevronDown size={14} className="opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-100 dark:border-gray-800 rounded-2xl p-2 shadow-2xl">
-                {DATE_RANGES.map(item => {
-                  const isSelected = range === item.value;
-                  return (
-                    <DropdownMenuItem
-                      key={item.value}
-                      onClick={() => onRangeChange?.(item.value)}
-                      className={cn(
-                        'text-[10px] font-black py-3 px-3.5 uppercase tracking-widest cursor-pointer rounded-xl mb-1 flex items-center justify-between transition-all outline-none',
-                        isSelected
-                          ? 'bg-amber-500 text-white data-[highlighted]:bg-amber-500 data-[highlighted]:text-white focus:bg-amber-500 focus:text-white hover:bg-amber-500 hover:text-white shadow-md shadow-amber-500/20'
-                          : 'text-gray-600 dark:text-gray-300 data-[highlighted]:bg-amber-500/10 data-[highlighted]:text-amber-600 focus:bg-amber-500/10 focus:text-amber-600 hover:bg-amber-500/10 hover:text-amber-600'
-                      )}
-                    >
-                      <span>{item.label}</span>
-                      {isSelected && <Check size={14} className="text-white shrink-0 ml-2" />}
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {onRangeChange && (
+              <AdminDateRangeDropdown range={range} onRangeChange={onRangeChange} size="sm" />
+            )}
 
             {/* Refresh */}
             {handleRefresh && (

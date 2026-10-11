@@ -3,7 +3,7 @@ import { ListingsReviewDashboard } from '@/app/admin/features/moderation/compone
 
 export const metadata: Metadata = {
   title: 'Listings Review - BoardTAU',
-  description: 'Review and moderate landlord property submissions before releasing them to BoardTAU',
+  description: 'Review and verify student accommodation listings',
 };
 
 import { requireAdmin } from '@/lib/admin';

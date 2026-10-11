@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import { ReviewsModerationDashboard } from '@/app/admin/features/moderation/components/reviews-moderation';
 
 export const metadata: Metadata = {
-  title: 'Reputation & Feedback Hub - BoardTAU HQ',
-  description: 'Vetting and authorizing user reputation sentiment and platform feedback',
+  title: 'Reviews & Ratings - BoardTAU HQ',
+  description: 'Moderate student ratings, feedback, and property reviews',
 };
 
 import { requireAdmin } from '@/lib/admin';

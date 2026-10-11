@@ -42,16 +42,16 @@ export function AdminQueueHeader({
             <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight flex items-center gap-3">
               Moderation Inbox
               {totalPending > 0 && (
-                <span className="flex items-center gap-1.5 bg-indigo-500/10 px-3 py-1.5 rounded-2xl border border-indigo-500/10 text-indigo-500 text-[10px] tracking-[0.2em] font-black italic shadow-sm">
-                  <ShieldCheck size={12} />
-                  {totalPending} PENDING
+                <span className="flex items-center gap-1.5 bg-indigo-500/10 px-3 py-1.5 rounded-2xl border border-indigo-500/10 text-indigo-500 text-xs font-semibold shadow-sm">
+                  <ShieldCheck size={14} />
+                  {totalPending} pending
                 </span>
               )}
             </h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-[0.2em]">
-                Review and approve pending items
+              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shrink-0" />
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Review and verify pending moderation items
               </p>
             </div>
           </div>

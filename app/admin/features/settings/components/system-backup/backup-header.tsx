@@ -17,13 +17,16 @@ export function BackupHeader({ onRefresh }: BackupHeaderProps) {
           <h1 className="text-2xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white">
             System Backup
           </h1>
-          <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 px-3 py-1 rounded-full">
+          <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 border border-primary/20 px-3 py-1 rounded-full">
             <ShieldCheck className="h-3.5 w-3.5" /> 33 Collections Active
           </span>
         </div>
-        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-2">
-          Download an encrypted snapshot of your database architecture or restore from a backup.
-        </p>
+        <div className="flex items-center gap-2 mt-2">
+          <span className="w-2 h-2 rounded-full bg-primary animate-pulse shrink-0" />
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Manage automated snapshots, database exports, and recovery points
+          </p>
+        </div>
       </div>
 
       {onRefresh && (

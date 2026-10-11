@@ -237,7 +237,7 @@ html[data-theme] {
   /* #f8faf9 */
   --color-popover-foreground: 0.12 0 0;
   /* #111827 */
-  --color-primary: 0.47 0.35 148;
+  --color-primary: 0.53 0.082 175;
   /* #2f7d6d - BoardTAU Green */
   --color-primary-foreground: 0.98 0 0;
   --primary-foreground: #ffffff;
@@ -250,7 +250,7 @@ html[data-theme] {
   /* #f3f4f6 */
   --color-muted-foreground: 0.44 0 0;
   /* #6b7280 */
-  --color-accent: 0.47 0.35 148;
+  --color-accent: 0.53 0.082 175;
   /* #2f7d6d - BoardTAU Green */
   --color-accent-foreground: 0.98 0 0;
   /* #f8faf9 */
@@ -262,27 +262,27 @@ html[data-theme] {
   /* #e5e7eb */
   --color-input: 0.94 0 0;
   /* #f3f4f6 */
-  --color-ring: 0.47 0.35 148;
+  --color-ring: 0.53 0.082 175;
   /* #2f7d6d */
   --color-sidebar: 0.98 0 0;
   /* #f8faf9 */
   --color-sidebar-foreground: 0.12 0 0;
   /* #111827 */
-  --color-sidebar-primary: 0.47 0.35 148;
+  --color-sidebar-primary: 0.53 0.082 175;
   /* #2f7d6d - BoardTAU Green */
   --color-sidebar-primary-foreground: 0.98 0 0;
   /* #f8faf9 */
-  --color-sidebar-accent: 0.47 0.35 148;
+  --color-sidebar-accent: 0.53 0.082 175;
   /* #2f7d6d - BoardTAU Green */
   --color-sidebar-accent-foreground: 0.98 0 0;
   /* #f8faf9 */
   --color-sidebar-border: 0.92 0 0;
   /* #e5e7eb */
-  --color-sidebar-ring: 0.47 0.35 148;
+  --color-sidebar-ring: 0.53 0.082 175;
   /* #2f7d6d */
 
   /* Chart colors - with green accents */
-  --color-chart-1: 0.47 0.35 148;
+  --color-chart-1: 0.53 0.082 175;
   /* Green */
   --color-chart-2: 0.58 0.21 260.84;
   /* Blue */
@@ -314,7 +314,7 @@ html[data-theme].dark {
   /* #334155 - slate-700 */
   --color-popover-foreground: 0.98 0 0;
   /* #f8fafc */
-  --color-primary: 0.47 0.35 148;
+  --color-primary: 0.53 0.082 175;
   /* #2f7d6d - BoardTAU Green */
   --color-primary-foreground: 0.98 0 0;
   --primary-foreground: #ffffff;
@@ -327,7 +327,7 @@ html[data-theme].dark {
   /* #475569 - slate-600 */
   --color-muted-foreground: 0.72 0 0;
   /* #cbd5e1 */
-  --color-accent: 0.47 0.35 148;
+  --color-accent: 0.53 0.082 175;
   /* #2f7d6d - BoardTAU Green */
   --color-accent-foreground: 0.98 0 0;
   /* #f8fafc */
@@ -339,23 +339,23 @@ html[data-theme].dark {
   /* #475569 - slate-600 */
   --color-input: 0.32 0 0;
   /* #64748b - slate-500 */
-  --color-ring: 0.47 0.35 148;
+  --color-ring: 0.53 0.082 175;
   /* #2f7d6d */
   --color-sidebar: 0.20 0 0;
   /* #1e293b - slate-800 */
   --color-sidebar-foreground: 0.98 0 0;
   /* #f8fafc */
-  --color-sidebar-primary: 0.47 0.35 148;
+  --color-sidebar-primary: 0.53 0.082 175;
   /* #2f7d6d - BoardTAU Green */
   --color-sidebar-primary-foreground: 0.98 0 0;
   /* #f8fafc */
-  --color-sidebar-accent: 0.47 0.35 148;
+  --color-sidebar-accent: 0.53 0.082 175;
   /* #2f7d6d - BoardTAU Green */
   --color-sidebar-accent-foreground: 0.98 0 0;
   /* #f8fafc */
   --color-sidebar-border: 0.26 0 0;
   /* #475569 - slate-600 */
-  --color-sidebar-ring: 0.47 0.35 148;
+  --color-sidebar-ring: 0.53 0.082 175;
   /* #2f7d6d */
 
   /* Chart colors for dark mode */
@@ -403,8 +403,8 @@ html[data-scroll-locked] {
 button, 
 a, 
 .no-select {
-  user-select: none;
   -webkit-user-select: none;
+  user-select: none;
 }
 
 /* View Transition Reveal Effect - Premium circular ripple */
@@ -663,8 +663,8 @@ html[data-theme] body {
   border: 1px solid rgba(255, 255, 255, 0.4) !important;
   box-shadow: 0 8px 30px rgb(0,0,0,0.12) !important;
   background: rgba(255, 255, 255, 0.85) !important;
-  backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
   border-radius: 14px !important;
   overflow: hidden !important;
 }

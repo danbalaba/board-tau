@@ -3,6 +3,11 @@ import { requireAdmin } from '@/lib/admin';
 import { requirePagePermission } from '@/lib/rbac';
 import { ModerationQueueDashboard } from '@/app/admin/features/moderation/components/moderation-queue';
 
+export const metadata: Metadata = {
+  title: 'Moderation Queue - BoardTAU HQ',
+  description: 'Review and verify pending moderation items',
+};
+
 export default async function ModerationQueuePage() {
   const admin = await requireAdmin();
   await requirePagePermission(admin.id, "VIEW_MODERATION_QUEUE");

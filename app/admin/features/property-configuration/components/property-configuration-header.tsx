@@ -30,12 +30,7 @@ interface PropertyConfigurationHeaderProps {
   onExport: (format: "CSV" | "EXCEL" | "PDF") => void;
 }
 
-const DATE_RANGES = [
-  { value: "7d", label: "Last 7 Days" },
-  { value: "30d", label: "Last 30 Days" },
-  { value: "90d", label: "Last 90 Days" },
-  { value: "1y", label: "Past Year" },
-];
+import { AdminDateRangeDropdown } from "@/app/admin/components/ui/admin-date-range-dropdown";
 
 export const PropertyConfigurationHeader: React.FC<PropertyConfigurationHeaderProps> = ({
   range,
@@ -52,7 +47,6 @@ export const PropertyConfigurationHeader: React.FC<PropertyConfigurationHeaderPr
   }, []);
 
   const isAnyLoading = !mounted || isLoading || isFetching;
-  const currentRangeLabel = DATE_RANGES.find((r) => r.value === range)?.label ?? "Last 30 Days";
 
   return (
     <motion.div
@@ -83,10 +77,10 @@ export const PropertyConfigurationHeader: React.FC<PropertyConfigurationHeaderPr
                 <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight flex items-center gap-3">
                   Property Configuration
                 </h1>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  <p className="text-[10px] sm:text-[11px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-[0.18em]">
-                    Manage property categories, room setups, landmarks & rules
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse shrink-0" />
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Configure property types, room categories, and accommodation rules
                   </p>
                 </div>
               </div>
@@ -105,38 +99,7 @@ export const PropertyConfigurationHeader: React.FC<PropertyConfigurationHeaderPr
           ) : (
             <>
               {/* Date Filter */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="h-9 px-3.5 gap-2 rounded-xl border-primary/20 bg-primary/10 text-primary dark:text-primary-light shadow-sm text-[10px] font-black uppercase tracking-[0.18em] hover:bg-primary/20 hover:text-primary cursor-pointer"
-                  >
-                    <Calendar size={13} className="text-primary" />
-                    {currentRangeLabel}
-                    <ChevronDown size={13} className="opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-100 dark:border-gray-800 rounded-2xl p-2 shadow-2xl">
-                  {DATE_RANGES.map((r) => {
-                    const isSelected = range === r.value;
-                    return (
-                      <DropdownMenuItem
-                        key={r.value}
-                        onClick={() => setRange(r.value)}
-                        className={cn(
-                          'text-[10px] font-black py-2.5 px-3 uppercase tracking-widest cursor-pointer rounded-xl mb-1 flex items-center justify-between transition-all outline-none',
-                          isSelected
-                            ? 'bg-primary text-white data-[highlighted]:bg-primary data-[highlighted]:text-white focus:bg-primary focus:text-white hover:bg-primary hover:text-white shadow-md shadow-primary/20'
-                            : 'text-gray-600 dark:text-gray-300 data-[highlighted]:bg-primary/10 data-[highlighted]:text-primary focus:bg-primary/10 focus:text-primary hover:bg-primary/10 hover:text-primary'
-                        )}
-                      >
-                        <span>{r.label}</span>
-                        {isSelected && <Check size={14} className="text-white shrink-0 ml-2" />}
-                      </DropdownMenuItem>
-                    );
-                  })}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <AdminDateRangeDropdown range={range} onRangeChange={setRange} size="sm" />
 
               {/* Refresh Trigger */}
               <Button
