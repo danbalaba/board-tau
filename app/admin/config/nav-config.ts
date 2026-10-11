@@ -65,25 +65,12 @@ export const navItems: NavItem[] = [
   },
   {
     title: 'System Monitoring',
-    url: '/admin/monitoring',
+    url: '/admin/monitoring/audit-logs',
     icon: 'monitor',
     isActive: false,
     shortcut: ['s', 'm'],
     allowedRoles: ['SUPER_ADMIN'],
-    items: [
-      {
-        title: 'System Health',
-        url: '/admin/monitoring/health',
-        icon: 'heartbeat',
-        shortcut: ['s', 'h']
-      },
-      {
-        title: 'Audit Logs',
-        url: '/admin/monitoring/audit-logs',
-        icon: 'shieldAlert',
-        shortcut: ['a', 'l']
-      }
-    ]
+    items: []
   },
   {
     title: 'Platform Configuration',
