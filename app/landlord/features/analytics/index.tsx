@@ -1,112 +1,111 @@
 'use client';
 
 import React from 'react';
-import { useAnalyticsLogic, AnalyticsStats } from './hooks/use-analytics-logic';
+import { motion, Variants } from 'framer-motion';
+import { useAnalyticsLogic } from './hooks/use-analytics-logic';
 import { LandlordAnalyticsHeader } from './components/landlord-analytics-header';
 import { LandlordAnalyticsStatsGrid } from './components/landlord-analytics-stats-grid';
+import { LandlordAnalyticsRoomGrid } from './components/landlord-analytics-room-grid';
 import { LandlordAnalyticsChartsGrid } from './components/landlord-analytics-charts-grid';
 import { LandlordAnalyticsInsights } from './components/landlord-analytics-insights';
-import { motion, Variants } from 'framer-motion';
-
-interface ChartData {
-  dailyRevenue: Array<{ date: string; revenue: number; bookings: number }>;
-  monthlyRevenue: Array<{ date: string; [key: string]: any }>;
-  monthlyRevenueListings: Array<{ id: string; title: string }>;
-  monthlyRevenueMap: Record<string, string>;
-  growthTrend: Array<{ date: string; bookings: number; revenue: number }>;
-  propertyTypes: Array<{ type: string; count: number; revenue: number }>;
-  ratings: Array<{ rating: string; value: number; percentage: number }>;
-  propertyPerformance: Array<{ name: string; inquiries: number; bookings: number; revenue: number }>;
-}
-
-interface LandlordAnalyticsProps {
-  stats?: AnalyticsStats;
-  revenue?: any;
-  occupancy?: any;
-  chartData?: ChartData;
-  isLoading?: boolean;
-}
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 };
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
     y: 0,
     transition: {
-      duration: 0.5,
-      ease: "easeOut"
-    }
-  }
+      duration: 0.4,
+      ease: 'easeOut',
+    },
+  },
 };
 
-export default function LandlordAnalytics({ 
-  isLoading: externalIsLoading,
-  stats: externalStats,
-  chartData: externalChartData
-}: LandlordAnalyticsProps = {}) {
+export default function LandlordAnalytics() {
   const {
-    stats: internalStats,
-    occupancy,
-    chartData: internalChartData,
-    isLoading: internalIsLoading,
-    timePeriod,
-    setTimePeriod,
-    propertyPerformanceData,
-    handleGenerateReport
+    propertyList,
+    selectedPropertyId,
+    setSelectedPropertyId,
+    stats,
+    roomDetails,
+    propertyLeaderboard,
+    chartData,
+    scope,
+    isInitialLoading,
+    isLoading,
+    handleGenerateReport,
   } = useAnalyticsLogic();
 
-  const isLoading = externalIsLoading ?? internalIsLoading;
-  const stats = externalStats ?? internalStats;
-  const chartData = externalChartData ?? internalChartData;
-
   return (
-    <motion.div 
+    <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-10 pb-12"
+      className="space-y-6 sm:space-y-8 pb-16"
     >
+      {/* 1. Header with Universal Property Filter & Export Action */}
       <motion.div variants={itemVariants}>
-        <LandlordAnalyticsHeader 
-          timePeriod={timePeriod}
-          setTimePeriod={setTimePeriod}
+        <LandlordAnalyticsHeader
+          propertyList={propertyList}
+          selectedPropertyId={selectedPropertyId}
+          onSelectProperty={setSelectedPropertyId}
           handleGenerateReport={handleGenerateReport}
-          isLoading={isLoading}
+          propertyName={scope.propertyName}
+          isSingleProperty={scope.isSingleProperty}
+          isLoading={isInitialLoading}
         />
       </motion.div>
-<motion.div variants={itemVariants}>
-        <LandlordAnalyticsStatsGrid 
-          stats={stats || undefined}
-          occupancyRate={occupancy?.occupancyRate || 0}
+
+      {/* 2. Real Performance KPI Metrics */}
+      <motion.div variants={itemVariants}>
+        <LandlordAnalyticsStatsGrid
+          stats={stats}
+          propertyName={scope.propertyName}
           isLoading={isLoading}
         />
       </motion.div>
 
+      {/* 3. Room & Bedspace Health (rendered when single property selected) */}
+      {scope.isSingleProperty && roomDetails.length > 0 && (
+        <motion.div variants={itemVariants}>
+          <LandlordAnalyticsRoomGrid
+            rooms={roomDetails}
+            propertyName={scope.propertyName}
+            isLoading={isLoading}
+          />
+        </motion.div>
+      )}
+
+      {/* 4. Secondary & Multi-Property Visual Intelligence Charts */}
       <motion.div variants={itemVariants}>
-        <LandlordAnalyticsChartsGrid 
-          chartData={chartData || undefined} 
+        <LandlordAnalyticsChartsGrid
+          chartData={chartData}
+          scope={scope}
+          stats={stats}
+          roomDetails={roomDetails}
           isLoading={isLoading}
         />
       </motion.div>
 
+      {/* 5. Listing Performance Comparison Leaderboard */}
       <motion.div variants={itemVariants}>
-        <LandlordAnalyticsInsights 
-          propertyPerformanceData={propertyPerformanceData}
-          stats={stats || undefined}
-          occupancy={occupancy || undefined}
+        <LandlordAnalyticsInsights
+          propertyLeaderboard={propertyLeaderboard}
+          selectedPropertyId={selectedPropertyId}
+          onSelectProperty={setSelectedPropertyId}
           isLoading={isLoading}
         />
       </motion.div>
     </motion.div>
   );
-}
+}
