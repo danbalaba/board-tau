@@ -1,10 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 
-interface ModeratorOverview {
+export interface ModeratorOverview {
   pendingListings: number;
   pendingHosts: number;
   pendingReviews: number;
   activeListings: number;
+  totalApproved?: number;
+  totalRejected?: number;
+  resolutionRate?: number;
+  dailyActivity?: Array<{
+    day: string;
+    date: string;
+    approved: number;
+    rejected: number;
+    total: number;
+  }>;
   recentLogs: Array<{
     id: string;
     action: string;
@@ -14,6 +24,7 @@ interface ModeratorOverview {
     createdAt: string;
     adminName: string;
     adminEmail: string;
+    adminImage?: string | null;
   }>;
 }
 

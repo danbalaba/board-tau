@@ -3,7 +3,7 @@ import { UserDirectory } from '@/app/admin/features/user-management/components/u
 
 export const metadata: Metadata = {
   title: 'User Directory - BoardTAU Admin',
-  description: 'Manage user accounts, roles and system permissions',
+  description: 'Manage registered students, landlords, and administrative accounts',
 };
 
 import { requireAdmin } from '@/lib/admin';

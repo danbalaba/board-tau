@@ -1016,12 +1016,610 @@ export const clearLandlordCache = async (landlordId?: string) => {
       await Promise.all([
         cache.del(`landlord:dashboard:${landlordId}`),
         cache.del(`landlord:dashboard:overview:${landlordId}`),
+        cache.delPattern(`landlord:analytics:${landlordId}:*`),
       ]);
     } else {
       await cache.delPattern('landlord:dashboard:*');
+      await cache.delPattern('landlord:analytics:*');
     }
   } catch (err) {
     console.error('Error clearing landlord cache:', err);
   }
 };
+
+export interface LandlordPropertyOption {
+  id: string;
+  title: string;
+  imageSrc: string;
+  status: string;
+  propertyType: string;
+  totalRooms: number;
+  totalCapacity: number;
+}
+
+export const getLandlordPropertyList = async (): Promise<LandlordPropertyOption[]> => {
+  const landlord = await requireLandlord();
+
+  const listings = await db.listing.findMany({
+    where: {
+      userId: landlord.id,
+      isArchived: false,
+    },
+    select: {
+      id: true,
+      title: true,
+      imageSrc: true,
+      status: true,
+      propertyType: { select: { name: true } },
+      rooms: {
+        where: { isArchived: false },
+        select: { id: true, capacity: true },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return listings.map((l: any) => ({
+    id: l.id,
+    title: l.title,
+    imageSrc: l.imageSrc || '/images/placeholder.jpg',
+    status: l.status,
+    propertyType: l.propertyType?.name || 'Boarding House',
+    totalRooms: l.rooms?.length || 0,
+    totalCapacity: l.rooms?.reduce((acc: number, r: any) => acc + (r.capacity || 0), 0) || 0,
+  }));
+};
+
+export interface RoomOccupancyDetail {
+  id: string;
+  name: string;
+  price: number;
+  capacity: number;
+  occupiedSlots: number;
+  availableSlots: number;
+  occupancyRate: number;
+  status: string;
+  isFull: boolean;
+  hasExpiringLease: boolean;
+  reservationFee: number;
+}
+
+export interface PropertyLeaderboardItem {
+  id: string;
+  title: string;
+  imageSrc: string;
+  propertyType: string;
+  totalRooms: number;
+  totalCapacity: number;
+  occupiedSlots: number;
+  occupancyRate: number;
+  monthlyRevenue: number;
+  totalBookings: number;
+  inquiriesCount: number;
+  conversionRate: number;
+  averageRating: number;
+  totalReviews: number;
+  status: string;
+}
+
+export interface ComprehensiveAnalyticsResult {
+  scope: {
+    propertyId: string;
+    propertyName: string;
+    period: 'month' | 'quarter' | 'year';
+    isSingleProperty: boolean;
+  };
+  stats: {
+    totalRevenue: number;
+    confirmedBookings: number;
+    pendingInquiries: number;
+    totalInquiries: number;
+    inquiryConversionRate: number;
+    bookingSuccessRate: number;
+    totalBookingRequests: number;
+    averageRating: number;
+    totalReviews: number;
+    occupancyRate: number;
+    occupiedSlots: number;
+    totalCapacity: number;
+    vacantSlots: number;
+    expiringLeases: number;
+  };
+  roomDetails: RoomOccupancyDetail[];
+  propertyLeaderboard: PropertyLeaderboardItem[];
+  dailyRevenue: Array<{ date: string; revenue: number; bookings: number }>;
+  monthlyRevenueByProperty: {
+    monthlyData: Array<{ date: string; [key: string]: any }>;
+    listings: Array<{ id: string; title: string }>;
+    listingMap: Record<string, string>;
+  };
+  growthTrend: Array<{ date: string; bookings: number; revenue: number; inquiries: number }>;
+  ratingsDistribution: Array<{ rating: string; value: number; percentage: number }>;
+  propertyTypes: Array<{ type: string; count: number; revenue: number }>;
+}
+
+export const getLandlordComprehensiveAnalytics = async (
+  propertyId: string = 'all',
+  period: 'month' | 'quarter' | 'year' = 'month'
+): Promise<ComprehensiveAnalyticsResult> => {
+  const landlord = await requireLandlord();
+
+  const isSingleProperty = propertyId !== 'all' && Boolean(propertyId);
+  const now = new Date();
+
+  // Time window boundary
+  let days = 30;
+  if (period === 'quarter') days = 90;
+  if (period === 'year') days = 365;
+
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  // 1. Resolve Target Property (if single selected)
+  let targetProperty: any = null;
+  if (isSingleProperty) {
+    targetProperty = await db.listing.findFirst({
+      where: {
+        id: propertyId,
+        userId: landlord.id,
+        isArchived: false,
+      },
+      select: {
+        id: true,
+        title: true,
+        propertyType: { select: { name: true } },
+      },
+    });
+  }
+
+  const effectiveSingle = Boolean(targetProperty);
+  const propertyName = effectiveSingle ? targetProperty.title : 'All Properties Portfolio';
+  const effectivePropertyId = effectiveSingle ? targetProperty.id : 'all';
+
+  // Filters based on scope
+  const reservationScopeWhere: any = {
+    isArchived: false,
+    status: { in: ['RESERVED', 'CHECKED_IN', 'COMPLETED'] },
+    ...(effectiveSingle
+      ? { listingId: effectivePropertyId }
+      : { listing: { userId: landlord.id, isArchived: false } }),
+  };
+
+  const allReservationsScopeWhere: any = {
+    isArchived: false,
+    ...(effectiveSingle
+      ? { listingId: effectivePropertyId }
+      : { listing: { userId: landlord.id, isArchived: false } }),
+  };
+
+  const activeReservationsWhere: any = {
+    isArchived: false,
+    status: { in: ['RESERVED', 'CHECKED_IN'] },
+    startDate: { lte: now },
+    endDate: { gte: now },
+    ...(effectiveSingle
+      ? { listingId: effectivePropertyId }
+      : { listing: { userId: landlord.id, isArchived: false } }),
+  };
+
+  const thirtyDaysFromNow = new Date();
+  thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
+  const expiringLeasesWhere: any = {
+    isArchived: false,
+    status: { in: ['RESERVED', 'CHECKED_IN'] },
+    endDate: { gte: now, lte: thirtyDaysFromNow },
+    ...(effectiveSingle
+      ? { listingId: effectivePropertyId }
+      : { listing: { userId: landlord.id, isArchived: false } }),
+  };
+
+  const inquiryScopeWhere: any = {
+    isArchived: false,
+    ...(effectiveSingle
+      ? { listingId: effectivePropertyId }
+      : { listing: { userId: landlord.id, isArchived: false } }),
+  };
+
+  const reviewScopeWhere: any = {
+    status: 'approved',
+    ...(effectiveSingle
+      ? { listingId: effectivePropertyId }
+      : { listing: { userId: landlord.id, isArchived: false } }),
+  };
+
+  // 2. Parallel Data Aggregation
+  const [
+    revenueAgg,
+    bookingsCount,
+    totalReservationRequests,
+    pendingInquiriesCount,
+    totalInquiriesCount,
+    reviewAgg,
+    expiringLeasesCount,
+    roomsInScope,
+    activeReservations,
+    allLandlordListings,
+    allLandlordRooms,
+    allListingsActiveReservations,
+    allListingsReservationsAgg,
+    allListingsInquiriesAgg,
+    allListingsReviewsAgg,
+    dailyBookingsRaw,
+    growthInquiriesRaw,
+    growthBookingsRaw,
+    ratingsRaw,
+    propertyTypesList,
+  ] = await Promise.all([
+    // Revenue in period
+    db.reservation.aggregate({
+      where: {
+        ...reservationScopeWhere,
+        paymentStatus: 'PAID',
+        createdAt: { gte: startDate },
+      },
+      _sum: { totalPrice: true },
+    }),
+    // Bookings count in period
+    db.reservation.count({
+      where: {
+        ...reservationScopeWhere,
+        createdAt: { gte: startDate },
+      },
+    }),
+    // Total reservation requests in period (all statuses)
+    db.reservation.count({
+      where: {
+        ...allReservationsScopeWhere,
+        createdAt: { gte: startDate },
+      },
+    }),
+    // Pending Inquiries
+    db.inquiry.count({
+      where: {
+        ...inquiryScopeWhere,
+        status: 'PENDING',
+      },
+    }),
+    // Total Inquiries in period
+    db.inquiry.count({
+      where: {
+        ...inquiryScopeWhere,
+        createdAt: { gte: startDate },
+      },
+    }),
+    // Review stats
+    db.review.aggregate({
+      where: reviewScopeWhere,
+      _avg: { rating: true },
+      _count: { id: true },
+    }),
+    // Expiring leases
+    db.reservation.count({
+      where: expiringLeasesWhere,
+    }),
+    // Rooms in active scope
+    db.room.findMany({
+      where: {
+        isArchived: false,
+        ...(effectiveSingle
+          ? { listingId: effectivePropertyId }
+          : { listing: { userId: landlord.id, isArchived: false } }),
+      },
+      select: {
+        id: true,
+        listingId: true,
+        name: true,
+        price: true,
+        capacity: true,
+        status: true,
+        reservationFee: true,
+      },
+      orderBy: { name: 'asc' },
+    }),
+    // Active reservations in scope for occupancy
+    db.reservation.findMany({
+      where: activeReservationsWhere,
+      select: { roomId: true, endDate: true },
+    }),
+    // All Landlord listings (for leaderboard & multi-bar charts)
+    db.listing.findMany({
+      where: { userId: landlord.id, isArchived: false },
+      select: {
+        id: true,
+        title: true,
+        imageSrc: true,
+        status: true,
+        propertyType: { select: { name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+    // All Landlord rooms (for leaderboard occupancy)
+    db.room.findMany({
+      where: { listing: { userId: landlord.id, isArchived: false }, isArchived: false },
+      select: { id: true, listingId: true, capacity: true },
+    }),
+    // All active reservations for all landlord rooms
+    db.reservation.findMany({
+      where: {
+        listing: { userId: landlord.id, isArchived: false },
+        status: { in: ['RESERVED', 'CHECKED_IN'] },
+        isArchived: false,
+        startDate: { lte: now },
+        endDate: { gte: now },
+      },
+      select: { roomId: true, listingId: true },
+    }),
+    // All listings revenue & bookings group
+    db.reservation.groupBy({
+      by: ['listingId'],
+      where: {
+        listing: { userId: landlord.id, isArchived: false },
+        status: { in: ['RESERVED', 'CHECKED_IN', 'COMPLETED'] },
+        paymentStatus: 'PAID',
+        createdAt: { gte: startDate },
+      },
+      _sum: { totalPrice: true },
+      _count: { id: true },
+    }),
+    // All listings inquiries group
+    db.inquiry.groupBy({
+      by: ['listingId'],
+      where: {
+        listing: { userId: landlord.id, isArchived: false },
+        createdAt: { gte: startDate },
+      },
+      _count: { id: true },
+    }),
+    // All listings reviews group
+    db.review.groupBy({
+      by: ['listingId'],
+      where: {
+        listing: { userId: landlord.id, isArchived: false },
+        status: 'approved',
+      },
+      _avg: { rating: true },
+      _count: { id: true },
+    }),
+    // Daily revenue history for area chart
+    db.reservation.findMany({
+      where: {
+        ...reservationScopeWhere,
+        paymentStatus: 'PAID',
+        createdAt: { gte: startDate },
+      },
+      select: { createdAt: true, totalPrice: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+    // Inquiries for 6-month growth trend
+    db.inquiry.findMany({
+      where: {
+        ...inquiryScopeWhere,
+        createdAt: { gte: new Date(now.getFullYear(), now.getMonth() - 5, 1) },
+      },
+      select: { createdAt: true },
+    }),
+    // Bookings for 6-month growth trend
+    db.reservation.findMany({
+      where: {
+        ...reservationScopeWhere,
+        createdAt: { gte: new Date(now.getFullYear(), now.getMonth() - 5, 1) },
+      },
+      select: { createdAt: true, totalPrice: true },
+    }),
+    // Review ratings distribution
+    db.review.groupBy({
+      by: ['rating'],
+      where: reviewScopeWhere,
+      _count: { id: true },
+    }),
+    // Property type breakdown
+    getPropertyTypeBreakdown().catch(() => []),
+  ]);
+
+  // 3. Calculate Scope Occupancy
+  const activeRoomCounts: Record<string, number> = {};
+  const expiringByRoom: Record<string, boolean> = {};
+
+  activeReservations.forEach((r: any) => {
+    activeRoomCounts[r.roomId] = (activeRoomCounts[r.roomId] || 0) + 1;
+    if (r.endDate && new Date(r.endDate) <= thirtyDaysFromNow) {
+      expiringByRoom[r.roomId] = true;
+    }
+  });
+
+  let totalScopeCapacity = 0;
+  let occupiedScopeSlots = 0;
+
+  const roomDetails: RoomOccupancyDetail[] = roomsInScope.map((room: any) => {
+    const occ = Math.min(activeRoomCounts[room.id] || 0, room.capacity);
+    const avail = Math.max(0, room.capacity - occ);
+    const rate = room.capacity > 0 ? Math.round((occ / room.capacity) * 100) : 0;
+    
+    totalScopeCapacity += room.capacity;
+    occupiedScopeSlots += occ;
+
+    return {
+      id: room.id,
+      name: room.name,
+      price: room.price,
+      capacity: room.capacity,
+      occupiedSlots: occ,
+      availableSlots: avail,
+      occupancyRate: rate,
+      status: room.status,
+      isFull: occ >= room.capacity,
+      hasExpiringLease: Boolean(expiringByRoom[room.id]),
+      reservationFee: room.reservationFee || 0,
+    };
+  });
+
+  const scopeOccupancyRate = totalScopeCapacity > 0
+    ? Math.round((occupiedScopeSlots / totalScopeCapacity) * 100)
+    : 0;
+
+  // 4. Construct Property Comparison Leaderboard
+  const allListingsOccupancyMap: Record<string, { capacity: number; occupied: number }> = {};
+  allLandlordRooms.forEach((r: any) => {
+    if (!allListingsOccupancyMap[r.listingId]) {
+      allListingsOccupancyMap[r.listingId] = { capacity: 0, occupied: 0 };
+    }
+    allListingsOccupancyMap[r.listingId].capacity += r.capacity;
+  });
+
+  allListingsActiveReservations.forEach((r: any) => {
+    if (allListingsOccupancyMap[r.listingId]) {
+      allListingsOccupancyMap[r.listingId].occupied += 1;
+    }
+  });
+
+  const resRevMap = new Map<string, { revenue: number; count: number }>(
+    allListingsReservationsAgg.map((r: any) => [
+      r.listingId,
+      { revenue: r._sum.totalPrice || 0, count: r._count.id },
+    ])
+  );
+  const inqMap = new Map<string, number>(allListingsInquiriesAgg.map((i: any) => [i.listingId, i._count.id]));
+  const revMap = new Map<string, { rating: number; count: number }>(
+    allListingsReviewsAgg.map((r: any) => [
+      r.listingId,
+      { rating: r._avg.rating || 0, count: r._count.id },
+    ])
+  );
+
+  const propertyLeaderboard: PropertyLeaderboardItem[] = allLandlordListings.map((listing: any) => {
+    const occInfo = allListingsOccupancyMap[listing.id] || { capacity: 0, occupied: 0 };
+    const cappedOccupied = Math.min(occInfo.occupied, occInfo.capacity);
+    const occRate = occInfo.capacity > 0 ? Math.round((cappedOccupied / occInfo.capacity) * 100) : 0;
+
+    const resData = resRevMap.get(listing.id) || { revenue: 0, count: 0 };
+    const inqCount = inqMap.get(listing.id) || 0;
+    const reviewData = revMap.get(listing.id) || { rating: 0, count: 0 };
+
+    const convRate = inqCount > 0
+      ? Math.min(100, Math.round((resData.count / inqCount) * 100))
+      : (resData.count > 0 ? 100 : 0);
+
+    return {
+      id: listing.id,
+      title: listing.title,
+      imageSrc: listing.imageSrc || '/images/placeholder.jpg',
+      propertyType: listing.propertyType?.name || 'Boarding House',
+      totalRooms: allLandlordRooms.filter((r: any) => r.listingId === listing.id).length,
+      totalCapacity: occInfo.capacity,
+      occupiedSlots: cappedOccupied,
+      occupancyRate: occRate,
+      monthlyRevenue: resData.revenue,
+      totalBookings: resData.count,
+      inquiriesCount: inqCount,
+      conversionRate: convRate,
+      averageRating: Number(reviewData.rating.toFixed(1)) || 0,
+      totalReviews: reviewData.count,
+      status: listing.status,
+    };
+  }).sort((a, b) => b.monthlyRevenue - a.monthlyRevenue || b.occupancyRate - a.occupancyRate);
+
+  // 5. Build Daily Revenue Chart Data (last N days)
+  const dailyDataMap: Record<string, { date: string; revenue: number; bookings: number }> = {};
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    dailyDataMap[key] = { date: key, revenue: 0, bookings: 0 };
+  }
+
+  dailyBookingsRaw.forEach((b: any) => {
+    const key = b.createdAt.toISOString().split('T')[0];
+    if (dailyDataMap[key]) {
+      dailyDataMap[key].revenue += b.totalPrice || 0;
+      dailyDataMap[key].bookings += 1;
+    }
+  });
+
+  const dailyRevenue = Object.values(dailyDataMap).sort((a, b) => a.date.localeCompare(b.date));
+
+  // 6. Build 6-Month Inquiries vs Bookings Conversion Funnel
+  const growthMap: Record<string, { date: string; bookings: number; revenue: number; inquiries: number }> = {};
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    growthMap[key] = { date: key, bookings: 0, revenue: 0, inquiries: 0 };
+  }
+
+  growthInquiriesRaw.forEach((i: any) => {
+    const key = `${i.createdAt.getFullYear()}-${String(i.createdAt.getMonth() + 1).padStart(2, '0')}`;
+    if (growthMap[key]) growthMap[key].inquiries += 1;
+  });
+
+  growthBookingsRaw.forEach((b: any) => {
+    const key = `${b.createdAt.getFullYear()}-${String(b.createdAt.getMonth() + 1).padStart(2, '0')}`;
+    if (growthMap[key]) {
+      growthMap[key].bookings += 1;
+      growthMap[key].revenue += b.totalPrice || 0;
+    }
+  });
+
+  const growthTrend = Object.values(growthMap).sort((a, b) => a.date.localeCompare(b.date));
+
+  // 7. Monthly Revenue by Property (Multi-bar chart)
+  const monthlyRevenueByProperty = await getMonthlyRevenueByProperty(6).catch(() => ({
+    monthlyData: [],
+    listings: [],
+    listingMap: {},
+  }));
+
+  // 8. Rating Distribution Breakdown
+  const ratingCounts = new Map<number, number>(ratingsRaw.map((r: any) => [r.rating, r._count.id]));
+  const totalRevCount = ratingsRaw.reduce((sum: number, r: any) => sum + r._count.id, 0);
+  const ratingsDistribution = [5, 4, 3, 2, 1].map((stars) => {
+    const count = ratingCounts.get(stars) || 0;
+    return {
+      rating: `${stars} Star`,
+      value: count,
+      percentage: totalRevCount > 0 ? Math.round((count / totalRevCount) * 100) : 0,
+    };
+  });
+
+  const effectiveTotalRequests = Math.max(totalReservationRequests, bookingsCount);
+  const bookingSuccessRate = effectiveTotalRequests > 0
+    ? Math.min(100, Math.round((bookingsCount / effectiveTotalRequests) * 100))
+    : 0;
+
+  const conversionRate = totalInquiriesCount > 0
+    ? Math.min(100, Math.round((bookingsCount / totalInquiriesCount) * 100))
+    : 0;
+
+  return {
+    scope: {
+      propertyId: effectivePropertyId,
+      propertyName,
+      period,
+      isSingleProperty: effectiveSingle,
+    },
+    stats: {
+      totalRevenue: revenueAgg._sum.totalPrice || 0,
+      confirmedBookings: bookingsCount,
+      pendingInquiries: pendingInquiriesCount,
+      totalInquiries: totalInquiriesCount,
+      inquiryConversionRate: bookingSuccessRate,
+      bookingSuccessRate,
+      totalBookingRequests: effectiveTotalRequests,
+      averageRating: Number(reviewAgg._avg.rating?.toFixed(1)) || 0,
+      totalReviews: reviewAgg._count.id,
+      occupancyRate: scopeOccupancyRate,
+      occupiedSlots: occupiedScopeSlots,
+      totalCapacity: totalScopeCapacity,
+      vacantSlots: Math.max(0, totalScopeCapacity - occupiedScopeSlots),
+      expiringLeases: expiringLeasesCount,
+    },
+    roomDetails,
+    propertyLeaderboard,
+    dailyRevenue,
+    monthlyRevenueByProperty,
+    growthTrend,
+    ratingsDistribution,
+    propertyTypes: propertyTypesList,
+  };
+};
+
 

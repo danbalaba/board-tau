@@ -25,11 +25,12 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   // Require admin authentication
-  await requireAdmin();
+  const admin = await requireAdmin();
 
-  // Persisting the sidebar state in the cookie.
+  // Persisting the sidebar state in the cookie (defaults to expanded).
   const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get('sidebar_state')?.value === 'true';
+  const sidebarCookie = cookieStore.get('sidebar_state');
+  const defaultOpen = sidebarCookie ? sidebarCookie.value === 'true' : true;
   const activeTheme = cookieStore.get('active_theme')?.value;
 
   return (
@@ -39,7 +40,7 @@ export default async function DashboardLayout({
           <InfobarProvider>
             <AppSidebar />
             <SidebarInset>
-              <Header />
+              <Header adminUser={admin} />
               {/* page main content */}
               {children}
               {/* page main content ends */}

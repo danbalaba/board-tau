@@ -292,7 +292,10 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/landlord/rooms/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete room');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || 'Failed to delete room');
+      }
       return id;
     },
     onSuccess: () => {
@@ -300,8 +303,8 @@ export function useRoomLogic(initialRooms: Room[], initialNextCursor: string | n
       responsiveToast.success({ title: 'SUCCESS', description: 'Room deleted successfully.' });
       setDeleteModalOpen(false);
     },
-    onError: () => {
-      responsiveToast.error({ title: 'ERROR', description: 'An unexpected error occurred during deletion.' });
+    onError: (err: any) => {
+      responsiveToast.error({ title: 'ERROR', description: err?.message || 'An unexpected error occurred during deletion.' });
       setDeleteModalOpen(false);
     }
   });

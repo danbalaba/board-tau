@@ -11,7 +11,6 @@ import {
   LogOut, 
   ChevronRight, 
   ChevronDown, 
-  Sparkles, 
   ShieldCheck, 
   User 
 } from 'lucide-react';
@@ -75,7 +74,7 @@ export function LandlordTopbarUserMenu({ user, onOpenSettings, isLoading }: Land
             <div className='w-9 h-9 rounded-full flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-105 transition-transform duration-300 overflow-hidden ring-2 ring-primary/30 dark:ring-primary/50'>
               <Avatar src={avatarSrc} alt={user.name || "User"} />
             </div>
-            <span className='absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-gray-900 rounded-full animate-pulse' />
+            <span className='absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-gray-900 rounded-full' />
           </div>
           <div className='text-left hidden lg:block min-w-0'>
             <p className='text-xs font-black text-gray-900 dark:text-white tracking-tight leading-none mb-1 truncate max-w-[140px]'>
@@ -100,15 +99,11 @@ export function LandlordTopbarUserMenu({ user, onOpenSettings, isLoading }: Land
       >
         {/* User Profile Header Card */}
         <div className='p-4 rounded-[2rem] bg-gradient-to-br from-primary/10 via-primary/5 to-transparent dark:from-primary/20 dark:to-transparent border border-primary/20 shadow-xs mb-2 relative overflow-hidden'>
-          <div className="absolute top-0 right-0 p-3 opacity-10 pointer-events-none">
-            <Sparkles size={60} className="text-primary" />
-          </div>
-
           <div className='flex items-center gap-3.5 relative z-10'>
             <div className='relative shrink-0'>
-              <div className='w-13 h-13 rounded-2xl flex items-center justify-center p-0.5 bg-gradient-to-br from-primary via-emerald-500 to-teal-400 shadow-md shadow-primary/20'>
+              <div className='w-12 h-12 rounded-2xl flex items-center justify-center p-0.5 bg-gradient-to-br from-primary via-emerald-500 to-teal-400 shadow-md shadow-primary/20'>
                 <div className="w-full h-full bg-white dark:bg-gray-950 rounded-[14px] flex items-center justify-center overflow-hidden">
-                  <Avatar src={avatarSrc} alt={user.name || "User"} />
+                  <Avatar src={avatarSrc} alt={user.name || "User"} className="w-11 h-11" />
                 </div>
               </div>
               <span className='absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-gray-950 rounded-full shadow-sm' />

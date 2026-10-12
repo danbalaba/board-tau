@@ -230,24 +230,16 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     if (!selectedInquiry) return;
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/landlord/inquiries?id=${selectedInquiry.id}&purge=true`, { method: 'DELETE' });
+      const response = await fetch(`/api/landlord/inquiries?id=${selectedInquiry.id}`, { method: 'DELETE' });
       const data = await response.json();
       
       if (response.ok) {
         setListings(prev => prev.filter(i => i.id !== selectedInquiry.id));
         setDeleteModalOpen(false);
-        
-        if (selectedInquiry.isArchived) {
-          success({ 
-            title: 'INQUIRY DELETED', 
-            description: 'The record has been permanently removed.' 
-          });
-        } else {
-          success({ 
-            title: 'ARCHIVED', 
-            description: `Inquiry from ${selectedInquiry.user.name || selectedInquiry.user.email} moved to archive.` 
-          });
-        }
+        success({ 
+          title: 'ARCHIVED', 
+          description: `Inquiry from ${selectedInquiry.user.name || selectedInquiry.user.email} moved to archive.` 
+        });
       } else {
         toastError({ title: 'ERROR', description: data.error || 'Failed to process request.' });
       }
@@ -256,7 +248,7 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
     } finally {
       setIsDeleting(false);
     }
-  }, [selectedInquiry, router]);
+  }, [selectedInquiry, success, toastError]);
 
   const handleConfirmArchive = useCallback(async () => {
     if (!selectedInquiry) return;

@@ -1,6 +1,6 @@
 const withPWA = require("@ducanh2912/next-pwa").default({
   dest: "public",
-  register: true,
+  register: false,
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
   fallbacks: {
@@ -80,7 +80,7 @@ module.exports = withPWA(nextConfig);
 
 // Injected content via Sentry wizard below
 
-const { withSentryConfig } = require("@sentry/nextjs");
+const { withSentryConfig } = require("@sentry/nextjs/config");
 
 const sentryOptions = {
   // For all available options, see:

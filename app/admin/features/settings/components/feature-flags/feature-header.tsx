@@ -43,10 +43,10 @@ export function FeatureHeader({ onAdd, search, setSearch, isLoading }: FeatureHe
                 <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight flex items-center gap-3">
                   Platform Features
                 </h1>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  <p className="text-[10px] sm:text-[11px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-[0.18em]">
-                    Feature Toggles & Experimental Platform Capabilities
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse shrink-0" />
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Manage experimental rollouts and platform feature availability
                   </p>
                 </div>
               </div>

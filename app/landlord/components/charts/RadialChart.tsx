@@ -70,11 +70,11 @@ export function ChartRadialLabel({ data, listings }: ChartRadialLabelProps) {
 
   return (
     <Card className="bg-transparent border-none shadow-none">
-      <CardHeader className="flex flex-row items-center justify-between gap-4 px-0! pb-4 border-b border-gray-100 dark:border-gray-800">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 px-0! pb-4 border-b border-slate-100 dark:border-slate-800/80">
         <div className="flex flex-col gap-1">
-          <CardTitle className="text-base font-bold text-gray-900 dark:text-white tracking-tight">Public Sentiments</CardTitle>
-          <CardDescription className="text-xs font-medium text-gray-500">
-            A breakdown of your guest ratings
+          <CardTitle className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Tenant Ratings & Reviews</CardTitle>
+          <CardDescription className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            Rating breakdown across verified student reviews
           </CardDescription>
         </div>
         

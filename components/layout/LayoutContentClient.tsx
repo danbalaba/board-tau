@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/layout/Footer';
@@ -76,7 +76,9 @@ const LayoutContentClient: React.FC<LayoutContentClientProps> = ({ children, use
 
   return (
     <>
-      <AuthErrorHandler />
+      <Suspense fallback={null}>
+        <AuthErrorHandler />
+      </Suspense>
       <div className={isFooterPage ? "hidden md:block" : ""}>
         <Navbar user={user} />
       </div>

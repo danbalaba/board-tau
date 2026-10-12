@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { backendClient } from "@/lib/edgestore-server";
+import { safeDeleteEdgeStoreFiles } from "@/lib/edgestore-server";
 import { getCurrentUser } from "../user/user";
 import { 
   sendApplicationConfirmationEmail, 
@@ -93,27 +93,7 @@ export const createHostApplication = async (data: HostApplicationData) => {
 
       if (urlsToDelete.length > 0) {
         console.log(`🧹 EdgeStore Clean-up: Purging ${urlsToDelete.length} replaced old application files...`);
-        await Promise.all(
-          urlsToDelete.map(async (url) => {
-            let targetUrl = url;
-            if (url.includes('/api/edgestore/proxy-file')) {
-              try {
-                const urlObj = url.startsWith('http') 
-                  ? new URL(url) 
-                  : new URL(url, process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
-                const extractedUrl = urlObj.searchParams.get('url');
-                if (extractedUrl) targetUrl = extractedUrl;
-              } catch (err) {
-                console.error("Failed to parse proxied URL during purge:", url);
-              }
-            }
-            if (targetUrl && targetUrl.startsWith('http')) {
-              await (backendClient.identityDocs as any).deleteFile({ url: targetUrl }).catch(() => {
-                return (backendClient.publicFiles as any).deleteFile({ url: targetUrl }).catch(() => {});
-              });
-            }
-          })
-        );
+        await safeDeleteEdgeStoreFiles('identityDocs', urlsToDelete);
       }
 
       // Update existing application record with latest submission data

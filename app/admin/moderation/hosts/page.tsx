@@ -3,7 +3,7 @@ import { HostApplicationsDashboard } from '@/app/admin/features/moderation/compo
 
 export const metadata: Metadata = {
   title: 'Host Applications Review - BoardTAU HQ',
-  description: 'Review and verify landlord onboarding applications',
+  description: 'Review and verify host onboarding applications',
 };
 
 import { requireAdmin } from '@/lib/admin';

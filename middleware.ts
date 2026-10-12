@@ -161,15 +161,11 @@ export async function middleware(request: NextRequest) {
 
     // Role-based route protection
     const SUPER_ADMIN_ONLY_ROUTES = [
-      "/admin/finance",
       "/admin/billing",
       "/admin/settings",
       "/admin/monitoring",
       "/admin/analytics",
-      "/admin/properties",
       "/admin/overview",
-      "/admin/user-management/roles",
-      "/admin/user-management/analytics",
     ];
 
     const isSuperAdminRoute = SUPER_ADMIN_ONLY_ROUTES.some(route => pathname.startsWith(route));

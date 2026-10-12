@@ -104,20 +104,9 @@ describe('LandlordInquiryModals', () => {
     expect(screen.getByTestId('details-modal')).toBeInTheDocument();
   });
 
-  it('renders delete modal when deleteModalOpen is true', () => {
-    render(<LandlordInquiryModals {...defaultProps} deleteModalOpen={true} />);
-    expect(screen.getAllByText('Delete Permanently').length).toBeGreaterThan(0);
-  });
-
   it('renders reject modal when rejectModalOpen is true', () => {
     render(<LandlordInquiryModals {...defaultProps} rejectModalOpen={true} />);
     expect(screen.getByText('Decline Inquiry')).toBeInTheDocument();
-  });
-
-  it('calls handleConfirmDelete when delete is confirmed', () => {
-    render(<LandlordInquiryModals {...defaultProps} deleteModalOpen={true} />);
-    fireEvent.click(screen.getAllByText('Delete Permanently')[1]); // click the button
-    expect(defaultProps.handleConfirmDelete).toHaveBeenCalledTimes(1);
   });
 
   it('calls handleConfirmArchive from archive modal', () => {

@@ -24,3 +24,45 @@ export function formatBytes(
       : (sizes[i] ?? 'Bytes')
   }`;
 }
+
+export function getAdminGreetingName(name?: string | null, role?: string | null): string {
+  if (!name) {
+    if (role === 'SUPER_ADMIN') return 'Super Admin';
+    if (role === 'ADMIN') return 'System Admin';
+    return 'Admin';
+  }
+  const cleanName = name.trim();
+  // Strip "BoardTAU" prefix if present so it doesn't greet with platform brand name
+  if (cleanName.toLowerCase().startsWith('boardtau')) {
+    const withoutPrefix = cleanName.substring(8).trim();
+    if (withoutPrefix) return withoutPrefix; // e.g. "Super Admin" or "System Admin"
+    if (role === 'SUPER_ADMIN') return 'Super Admin';
+    if (role === 'ADMIN') return 'System Admin';
+    return 'Admin';
+  }
+  // If the user has a personal name (e.g. "Dan Richie Balaba"), use their first name ("Dan")
+  return cleanName.split(' ')[0];
+}
+
+export function getAdminDisplayName(name?: string | null, role?: string | null): string {
+  if (!name) {
+    if (role === 'SUPER_ADMIN') return 'Super Admin';
+    if (role === 'ADMIN') return 'System Admin';
+    return 'Admin User';
+  }
+  const cleanName = name.trim();
+  if (cleanName.toLowerCase().startsWith('boardtau')) {
+    const withoutPrefix = cleanName.substring(8).trim();
+    if (withoutPrefix) return withoutPrefix;
+    if (role === 'SUPER_ADMIN') return 'Super Admin';
+    if (role === 'ADMIN') return 'System Admin';
+    return 'Admin User';
+  }
+  return cleanName;
+}
+
+export function getAdminRoleBadge(role?: string | null): string {
+  if (role === 'SUPER_ADMIN') return 'Super Admin';
+  if (role === 'ADMIN') return 'System Admin';
+  return 'Admin Account';
+}

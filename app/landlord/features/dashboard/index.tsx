@@ -234,8 +234,8 @@ export default function LandlordDashboardFeature({ user, isLoading: externalLoad
       return {
         image: '/assets/mascot/kerby-halfbody-pointing.png',
         fallbackImage: '/assets/mascot/kerby-casual-pointing.png',
-        badge: 'Action Needed',
-        prompt: `You have ${pendingInquiries} pending tenant ${pendingInquiries === 1 ? 'inquiry' : 'inquiries'} awaiting response. Quick replies boost your booking rate!`,
+        badge: 'Needs Reply',
+        prompt: `You have ${pendingInquiries} new student ${pendingInquiries === 1 ? 'inquiry' : 'inquiries'} waiting for a reply. Answering fast helps you get more bookings!`,
         actionLabel: 'View Inquiries',
         actionUrl: '/landlord/inquiries',
       };
@@ -246,8 +246,8 @@ export default function LandlordDashboardFeature({ user, isLoading: externalLoad
       return {
         image: '/assets/mascot/kerby-halfbody-blueprint.png',
         fallbackImage: '/assets/mascot/kerby-landlord-blueprint.png',
-        badge: 'Expand Portfolio',
-        prompt: `Ready to welcome student boarders? List your first property today to start receiving verified student applications!`,
+        badge: 'Add Property',
+        prompt: `Ready to welcome student boarders? Add your first property today to start receiving student bookings!`,
         actionLabel: '+ Add Property',
         actionUrl: '/landlord/properties/create',
       };
@@ -259,7 +259,7 @@ export default function LandlordDashboardFeature({ user, isLoading: externalLoad
         image: '/assets/mascot/kerby-halfbody-rating.png',
         fallbackImage: '/assets/mascot/kerby-landlord-verified.png',
         badge: 'Top Rated',
-        prompt: `Outstanding job! Your properties maintain a high ${averageRating.toFixed(1)}★ rating across ${totalReviews} tenant reviews.`,
+        prompt: `Great job! Your listings have a high ${averageRating.toFixed(1)}★ rating from ${totalReviews} tenant reviews.`,
         actionLabel: 'View Reviews',
         actionUrl: '/landlord/reviews',
       };
@@ -270,8 +270,8 @@ export default function LandlordDashboardFeature({ user, isLoading: externalLoad
       return {
         image: '/assets/mascot/kerby-halfbody-revenue.png',
         fallbackImage: '/assets/mascot/kerby-halfbody-keys.png',
-        badge: 'Revenue Peak',
-        prompt: `Awesome job! You have ${activeBookings} active tenant ${activeBookings === 1 ? 'booking' : 'bookings'} generating rental revenue this month.`,
+        badge: 'Active Bookings',
+        prompt: `Great news! You have ${activeBookings} active ${activeBookings === 1 ? 'student booked' : 'students booked'} this month.`,
         actionLabel: 'View Bookings',
         actionUrl: '/landlord/bookings',
       };
@@ -283,7 +283,7 @@ export default function LandlordDashboardFeature({ user, isLoading: externalLoad
         image: '/assets/mascot/kerby-halfbody-sleeping.png',
         fallbackImage: '/assets/mascot/kerby-casual-sleeping.png',
         badge: 'Night Watch',
-        prompt: `Rest well! Kerby is keeping watch over your property listings overnight.`,
+        prompt: `Rest well! Kerby is keeping watch over your listings tonight.`,
         actionLabel: undefined,
         actionUrl: undefined,
       };
@@ -293,8 +293,8 @@ export default function LandlordDashboardFeature({ user, isLoading: externalLoad
     return {
       image: '/assets/mascot/kerby-halfbody-keys.png',
       fallbackImage: '/assets/mascot/kerby-landlord-checklist.png',
-      badge: 'All Systems Go',
-      prompt: `All ${totalProperties} property ${totalProperties === 1 ? 'listing is' : 'listings are'} live. Keep room availability & pricing updated for top search placement.`,
+      badge: 'All Good',
+      prompt: `All ${totalProperties} ${totalProperties === 1 ? 'property is' : 'properties are'} posted. Keep your room rates and open slots up to date!`,
       actionLabel: 'Manage Properties',
       actionUrl: '/landlord/properties',
     };

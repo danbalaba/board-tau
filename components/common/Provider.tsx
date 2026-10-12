@@ -10,10 +10,27 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { NotificationProvider } from "@/context/NotificationContext";
 
 if (typeof window !== "undefined") {
+  // Suppress unhandled EdgeStoreApiClientError rejections to prevent crashing the window on background init
+  window.addEventListener("unhandledrejection", (event) => {
+    const reason = event.reason;
+    const isEdgeStoreError =
+      reason?.name === "EdgeStoreApiClientError" ||
+      reason?.name === "EdgeStoreClientError" ||
+      (typeof reason?.message === "string" &&
+        (reason.message.includes("EdgeStoreApiClientError") ||
+          (reason.message.includes("Internal server error") && reason.stack?.includes("edgestore"))));
+
+    if (isEdgeStoreError) {
+      event.preventDefault();
+      console.warn("[EdgeStore] Suppressed unhandled background initialization error.");
+    }
+  });
+
   const filterPostHogAndScript = (...args: any[]) => {
     const str = args.map(String).join(" ");
     if (str.includes("Encountered a script tag while rendering React component")) return true;
     if (str.includes("[PostHog.js]")) return true;
+    if (str.includes("EdgeStoreApiClientError")) return true;
     return false;
   };
 

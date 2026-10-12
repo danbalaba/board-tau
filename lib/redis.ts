@@ -36,6 +36,17 @@ const dateReviver = (_key: string, value: any) => {
   return isDateString ? new Date(value) : value;
 };
 
+/**
+ * Sanitizes Upstash/Redis error messages.
+ * Upstash SDK attaches ", command was: [["set", ...]]" to error.message,
+ * which floods terminal logs with massive serialized data payloads when commands fail.
+ */
+const sanitizeErrorMessage = (error: unknown): string => {
+  const rawMsg = error instanceof Error ? error.message : String(error);
+  const [cleanMsg] = rawMsg.split(', command was:');
+  return cleanMsg.replace(/[\r\n]/g, ' ').trim();
+};
+
 // Cache operations helper
 export const cache = {
   /**
@@ -68,8 +79,7 @@ export const cache = {
 
       return typeof data === 'string' ? JSON.parse(data, dateReviver) : data;
     } catch (error) {
-      const cleanErr = error instanceof Error ? error.message.replace(/[\r\n]/g, ' ') : String(error);
-      console.error("Cache get error:", cleanErr);
+      console.error(`Cache get error for [${key}]:`, sanitizeErrorMessage(error));
       return null;
     }
   },
@@ -84,8 +94,7 @@ export const cache = {
       await redis.set(key, JSON.stringify(data), { ex: ttl });
       return true;
     } catch (error) {
-      const cleanErr = error instanceof Error ? error.message.replace(/[\r\n]/g, ' ') : String(error);
-      console.error("Cache set error:", cleanErr);
+      console.error(`Cache set error for [${key}]:`, sanitizeErrorMessage(error));
       return false;
     }
   },
@@ -98,8 +107,7 @@ export const cache = {
       await redis.del(key);
       return true;
     } catch (error) {
-      const cleanErr = error instanceof Error ? error.message.replace(/[\r\n]/g, ' ') : String(error);
-      console.error("Cache delete error:", cleanErr);
+      console.error(`Cache del error for [${key}]:`, sanitizeErrorMessage(error));
       return false;
     }
   },
@@ -116,8 +124,7 @@ export const cache = {
       }
       return true;
     } catch (error) {
-      const cleanErr = error instanceof Error ? error.message.replace(/[\r\n]/g, ' ') : String(error);
-      console.error("Cache delete pattern error:", cleanErr);
+      console.error(`Cache delPattern error for [${pattern}]:`, sanitizeErrorMessage(error));
       return false;
     }
   },
@@ -130,8 +137,7 @@ export const cache = {
       const result = await redis.exists(key);
       return result === 1;
     } catch (error) {
-      const cleanErr = error instanceof Error ? error.message.replace(/[\r\n]/g, ' ') : String(error);
-      console.error("Cache exists check error:", cleanErr);
+      console.error(`Cache exists error for [${key}]:`, sanitizeErrorMessage(error));
       return false;
     }
   },
@@ -144,7 +150,7 @@ export const cache = {
       await redis.flushdb();
       return true;
     } catch (error) {
-      console.error('Cache flush error:', error);
+      console.error('Cache flush error:', sanitizeErrorMessage(error));
       return false;
     }
   },

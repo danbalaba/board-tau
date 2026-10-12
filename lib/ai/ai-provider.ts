@@ -48,7 +48,7 @@ export async function generateAIResponse<T = any>(
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "openai/gpt-oss-20b",
+              model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
               response_format: { type: "json_object" },
               max_tokens: 2048,
               messages: [
@@ -83,7 +83,7 @@ export async function generateAIResponse<T = any>(
               }
             }
 
-            span.setAttribute("gen_ai.response.model", "groq/gpt-oss-20b");
+            span.setAttribute("gen_ai.response.model", process.env.GROQ_MODEL || "llama-3.3-70b-versatile");
             span.setAttribute("gen_ai.provider", "groq");
             if (json.usage) {
               span.setAttribute("gen_ai.usage.prompt_tokens", json.usage.prompt_tokens || 0);
@@ -102,11 +102,12 @@ export async function generateAIResponse<T = any>(
         }
       }
 
-      // Fallback to Gemini 3 Flash
+      // Fallback to Gemini 3 Flash Preview
       if (geminiApiKey) {
+        const modelName = process.env.GEMINI_MODEL || "gemini-3-flash-preview";
         try {
           const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview",
+            model: modelName,
             systemInstruction: options.systemInstruction,
             generationConfig: { responseMimeType: "application/json" }
           });
@@ -125,7 +126,7 @@ export async function generateAIResponse<T = any>(
               const jsonParsed = JSON.parse(rawText);
               parsedData = options.schema.parse(jsonParsed);
             } catch (err) {
-              console.warn("[AIProvider] Gemini output failed Zod validation", err);
+              console.warn(`[AIProvider] Gemini (${modelName}) output failed Zod validation`, err);
               parsedData = JSON.parse(rawText) as T;
             }
           } else {
@@ -136,13 +137,26 @@ export async function generateAIResponse<T = any>(
             }
           }
 
-          span.setAttribute("gen_ai.response.model", "gemini-3-flash-preview");
+          span.setAttribute("gen_ai.response.model", modelName);
           span.setAttribute("gen_ai.provider", "gemini");
 
           return { data: parsedData, rawText, provider: "gemini" };
-        } catch (geminiErr) {
-          console.error("[AIProvider] Gemini API call also failed", geminiErr);
-          Sentry.captureException(geminiErr, { tags: { feature: "ai_provider" } });
+        } catch (geminiErr: any) {
+          const isQuotaOrRateLimit =
+            geminiErr?.status === 429 ||
+            geminiErr?.message?.includes("429") ||
+            geminiErr?.message?.includes("quota") ||
+            geminiErr?.message?.includes("RESOURCE_EXHAUSTED");
+
+          console.warn(
+            `[AIProvider] Gemini (${modelName}) call failed (${isQuotaOrRateLimit ? "Quota/Rate Limit 429" : "Error"}):`,
+            geminiErr?.message || geminiErr
+          );
+
+          // Rate limit / quota exhausted is an expected capacity/billing event, not an unhandled software crash
+          if (!isQuotaOrRateLimit) {
+            Sentry.captureException(geminiErr, { tags: { feature: "ai_provider" } });
+          }
         }
       }
 

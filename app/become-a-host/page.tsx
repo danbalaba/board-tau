@@ -1,10 +1,10 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { getCurrentUser } from "@/services/user";
+import { getHostApplicationByUser } from "@/services/landlord/applications";
 import { redirect } from "next/navigation";
-import HostOnboardingContainer from "@/components/host-application/onboarding/HostOnboardingContainer";
-import Link from "next/link";
-import SafeImage from "@/components/common/SafeImage";
-import { ShieldCheck, ArrowRight, Home } from "lucide-react";
+import BecomeAHostClientWrapper from "@/components/host-application/BecomeAHostClientWrapper";
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: "Become a Host | BoardTAU",
@@ -18,33 +18,16 @@ export default async function BecomeAHostPage() {
     redirect("/?login=true&callbackUrl=/become-a-host");
   }
 
-  // Check if user is already a Landlord or Admin
-  if (currentUser.role === "LANDLORD" || currentUser.isVerifiedLandlord) {
-    return (
-      <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 max-w-md w-full text-center border border-gray-100 dark:border-slate-800 shadow-2xl space-y-6">
-          <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto text-emerald-500">
-            <ShieldCheck size={48} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
-              You are a Verified Host!
-            </h2>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2 leading-relaxed">
-              Your landlord account is active. Access your host dashboard to add and manage your property listings.
-            </p>
-          </div>
-          <Link
-            href="/landlord/dashboard"
-            className="inline-flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-widest shadow-xl shadow-emerald-600/30 transition-all"
-          >
-            <span>Go to Landlord Dashboard</span>
-            <ArrowRight size={16} />
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Fetch the user's existing application (1-to-1 relation)
+  const existingApplication = await getHostApplicationByUser();
 
-  return <HostOnboardingContainer user={currentUser as any} />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 dark:bg-[#0b0f17] flex items-center justify-center"><div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}>
+      <BecomeAHostClientWrapper
+        user={currentUser as any}
+        application={existingApplication}
+      />
+    </Suspense>
+  );
 }
+

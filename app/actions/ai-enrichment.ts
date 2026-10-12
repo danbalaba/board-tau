@@ -14,8 +14,9 @@ async function enrichSearchResultsWithAI(results: any[], searchParams: Record<st
   if (!results.length || !searchParams) return results;
 
   try {
+    const geminiModel = process.env.GEMINI_MODEL || "gemini-3-flash-preview";
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+    const model = genAI.getGenerativeModel({ model: geminiModel });
 
     const searchContext = JSON.stringify(searchParams);
     const listingsMin = results.map(r => ({ id: r.id, title: r.title, description: r.description }));
@@ -38,7 +39,7 @@ async function enrichSearchResultsWithAI(results: any[], searchParams: Record<st
       const user = await getCurrentUser();
       await captureAIGeneration({
         distinctId: user?.id ?? "anon:enrichment",
-        model: "gemini-3-flash-preview",
+        model: geminiModel,
         spanName: "ai_enrichment",
         input: [{ role: "user", content: prompt }],
         output: text,

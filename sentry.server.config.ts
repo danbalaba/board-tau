@@ -13,4 +13,24 @@ Sentry.init({
   tracesSampleRate: 0.1,
   enableLogs: true,
   sendDefaultPii: true,
+  ignoreErrors: [
+    "EdgeStoreApiClientError",
+    "EdgeStoreClientError",
+    /EdgeStoreApiClientError/i,
+    /edgestore/i,
+  ],
+  beforeSend(event, hint) {
+    const error = hint.originalException;
+    if (error && typeof error === "object" && "message" in error) {
+      const msg = String(error.message);
+      if (
+        msg.includes("EdgeStoreApiClientError") ||
+        msg.includes("EdgeStoreClientError") ||
+        (error as any)?.name === "EdgeStoreApiClientError"
+      ) {
+        return null;
+      }
+    }
+    return event;
+  },
 });

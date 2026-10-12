@@ -3,7 +3,7 @@ import { FeatureFlags } from '@/app/admin/features/settings/components/feature-f
 
 export const metadata: Metadata = {
   title: 'Feature Flags - BoardTAU Admin',
-  description: 'Manage platform feature flags and toggles',
+  description: 'Manage experimental rollouts and platform feature availability',
 };
 
 export default function FeatureFlagsPage() {

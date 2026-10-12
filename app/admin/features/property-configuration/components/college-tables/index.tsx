@@ -57,7 +57,7 @@ export const CollegeTable: React.FC<CollegeTableProps> = ({ data, isLoading, onR
         </div>
         <Modal>
           <Modal.Trigger name="add-college">
-            <Button className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl shadow-md font-semibold text-xs gap-2">
+            <Button className="h-10 px-4 gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 font-semibold text-xs tracking-normal transition-all cursor-pointer">
               <Plus size={16} /> Add Landmark
             </Button>
           </Modal.Trigger>

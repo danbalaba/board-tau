@@ -9,35 +9,55 @@ export const SYSTEM_KNOWLEDGE_BASE = {
   location: "Camiling, Tarlac, Philippines",
 
   inquiryAndBookingFlow: [
-    "Step 1: Search & Filter - Students search using the 4-Phase Guided Search Wizard or Interactive Campus Map.",
-    "Step 2: Room Selection - Choose a specific room (Solo Room or Bedspace) and specify target move-in dates.",
-    "Step 3: Identity Verification (KYC) - Attach a Government/Student ID and take a Biometric Selfie with liveness check.",
-    "Step 4: Landlord Review - The landlord receives the inquiry notification and reviews tenant details.",
-    "Step 5: Digital Lease Contract - Upon approval, both landlord and tenant review and digitally sign the official Lease Agreement.",
-    "Step 6: Payment & Reservation - Pay the reservation fee via GCash, Maya, Bank Transfer, or Cash to lock in the room."
+    "Step 1: Search & Filter — Search using the 10-Step Guided Search Wizard or Spotlight AI Search.",
+    "Step 2: Browse Listings & Rooms — Review property details, college walking distance, and compare room options under Available Rooms.",
+    "Step 3: Submit Inquiry with KYC — Click 'Inquire Now' on the room card and complete the 8-step verification wizard (Zero immediate charge).",
+    "Step 4: Landlord Review — Landlord reviews tenant identity, KYC credentials, and message note, then approves or declines.",
+    "Step 5: Reservation Approved (Payment Pending) — Once approved by the host, the inquiry transitions into an official Reservation marked 'Payment Pending'.",
+    "Step 6: Lease Review & Holding Deposit — In checkout, tenant clicks 'Read PDF' to review the contract & house rules, checks '[✓] I have read and agree to the Boarding House Lease Agreement & house rules', and slides to pay via GCash, Maya, or Card (Stripe) to secure 'Reserved' status.",
+    "Step 7: Move-In (Checked-In) — When the student arrives at the property, the landlord marks them as 'Checked-In' in the system, which automatically deducts room availability slots.",
+    "Step 8: Stay Concluded (Completed) — When the stay concludes, the reservation is marked as 'Completed', which automatically restores room availability slots.",
+    "Step 9: Review & Rating (Optional) — Tenant can leave an optional review, rating, and feedback for future TAU boarders."
+  ],
+
+  reservationStatuses: {
+    PENDING_PAYMENT: { label: "Payment Pending", description: "Inquiry approved by host; waiting for tenant holding fee" },
+    RESERVED: { label: "Reserved", description: "Holding fee paid and lease accepted; room slot secured" },
+    CHECKED_IN: { label: "Checked-In", description: "Tenant arrived at property; room slot deducted from availability" },
+    COMPLETED: { label: "Completed", description: "Stay concluded and tenant checked out; room slot restored" },
+    CANCELLED: { label: "Cancelled", description: "Reservation cancelled before check-in" },
+    REJECTED: { label: "Declined", description: "Inquiry declined by host" }
+  },
+
+  inquiryModalSteps: [
+    "Step 1: Select Payment Gateway (GCash, Maya, or Credit/Debit Card via Stripe - Zero immediate charge guarantee)",
+    "Step 2: Target Stay Dates (Move-in and Move-out dates)",
+    "Step 3: Message to Landlord (Personalized introductory note)",
+    "Step 4: Prepare Guidelines (Review accepted IDs and verification rules)",
+    "Step 5: Biometric Selfie (AI camera facial scan with active liveness check)",
+    "Step 6: ID Card Scan (Capture Student ID or Government ID)",
+    "Step 7: Email OTP Verification (6-digit security code sent to email)",
+    "Step 8: Review & Submit (Final application preview and submission for landlord review)"
   ],
 
   landlordVerificationFlow: [
-    "Step 1: Become a Host - Landlords register and complete the Host Application form.",
-    "Step 2: Document Submission - Upload Business Permit, Fire Safety Certificate, Government ID, and Establishment Front Photo.",
-    "Step 3: Super Admin Moderation - Super Admins inspect and verify landlord identity and property legitimacy.",
-    "Step 4: Listing Approval - Once approved, landlords gain access to the Landlord Dashboard to manage properties and inquiries."
+    "Step 1: Landlord Identity (Full name, mobile number, email, and property ownership role: Owner, Caretaker, Manager)",
+    "Step 2: Establishment Profile (Business name, property accommodation type, and years of hosting experience)",
+    "Step 3: Property Location & Evidence (Property address, campus map coordinates, and front facade photo of establishment)",
+    "Step 4: Legal Permits & Bills (Mayor's Business Permit OR Utility Bill, plus BFP Fire Safety Inspection Certificate)",
+    "Step 5: Host Guidelines (Review and agreement to BoardTAU Host Community Standards & Safety Guidelines)",
+    "Step 6: Biometric Selfie Liveness (AI camera facial scan with real-time active liveness challenge)",
+    "Step 7: Government ID Scan (Valid government-issued ID card capture and OCR verification)",
+    "Step 8: Review & Submit (Final profile review and submission for Super Admin moderation with real-time auto-saving)"
   ],
 
   paymentMethods: [
-    "GCash e-wallet",
-    "Maya e-wallet",
-    "Direct Bank Transfer",
-    "Over-the-counter Cash Payment"
+    "GCash Mobile Wallet (Instant e-wallet transfer)",
+    "Maya Wallet (Digital wallet app)",
+    "Credit / Debit Card via Stripe (Visa, Mastercard, JCB, AMEX)"
   ],
 
-  propertyTypes: [
-    "Apartment (Private unit with flat-rate pricing)",
-    "Boarding House (Shared or solo rooms for boarders)",
-    "Dormitory (Student dormitory with shared facilities)",
-    "Transient House (Short-term stays for guests)",
-    "Agri-Hostel (Hostel suites for visitors and university guests)"
-  ],
+  propertyTaxonomyNote: "All Property Types, Room Types, Bed Setups, Attributes (Amenities, Rules, Features), and Campus Colleges are dynamically defined and managed by Super Admins in the BoardTAU database.",
 
   tauLandmarks: [
     "TAU Main Campus Center",

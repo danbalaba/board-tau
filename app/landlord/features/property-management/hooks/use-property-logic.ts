@@ -160,7 +160,10 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/landlord/properties?id=${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || 'Failed to delete');
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -168,7 +171,7 @@ export function usePropertyLogic(initialProperties: Property[], initialNextCurso
       setDeleteModalOpen(false);
       responsiveToast.success({ title: 'SUCCESS', description: 'Property deleted successfully.' });
     },
-    onError: () => responsiveToast.error({ title: 'ERROR', description: 'Failed to delete property.' }),
+    onError: (err: any) => responsiveToast.error({ title: 'ERROR', description: err?.message || 'Failed to delete property.' }),
   });
 
   // Unique property types / categories extraction

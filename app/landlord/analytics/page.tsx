@@ -1,4 +1,3 @@
-import { getLandlordDashboardStats, getRevenueReport, getOccupancyReport, getDailyRevenueHistory, getMonthlyRevenueByProperty, getGrowthTrendData, getPropertyTypeBreakdown, getRatingDistribution, getAllPropertiesPerformance, getInquirySourceBreakdown } from '@/services/landlord/analytics';
 import LandlordAnalytics from '../features/analytics';
 import { requireLandlord } from '@/lib/landlord';
 

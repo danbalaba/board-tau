@@ -30,7 +30,7 @@ const defaultActivities: ActivityItem[] = [
     id: 1,
     type: 'INQUIRY',
     title: 'New Inquiry Received',
-    description: 'Tenant room application submitted',
+    description: 'A student sent an inquiry about a room',
     time: 'Just now',
     status: 'Pending',
     color: 'amber',
@@ -40,7 +40,7 @@ const defaultActivities: ActivityItem[] = [
     id: 2,
     type: 'BOOKING',
     title: 'Booking Confirmed',
-    description: 'Tenant room reservation approved',
+    description: 'A student room reservation was confirmed',
     time: 'Today',
     status: 'Confirmed',
     color: 'emerald',
@@ -100,7 +100,7 @@ function EmptyActivityState() {
         No Recent Activity Yet
       </h4>
       <p className="text-xs text-slate-500 dark:text-slate-400 max-w-[290px] leading-relaxed mb-4 font-medium">
-        When students send inquiries, book rooms, make payments, or leave reviews, your activity feed will update here in real-time.
+        When students send an inquiry, book a room, pay rent, or leave a review, you will see it here.
       </p>
       <Link
         href="/landlord/properties"

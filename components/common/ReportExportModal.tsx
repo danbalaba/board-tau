@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   ShieldCheck,
   Info,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-react';
 import { cn } from '@/utils/helper';
 import { ExportFormat, ExportScope } from '@/hooks/use-report-export';
@@ -165,17 +166,17 @@ const ReportExportModal: React.FC<ReportExportModalProps> = ({
               }}
               className="w-full max-h-[88vh] sm:max-h-[90vh] sm:max-w-3xl bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col pointer-events-auto border-t sm:border border-slate-100 dark:border-slate-800"
             >
-              {/* Single Sleek Top Drag Handle Bar (Draggable to slide down to close) */}
+              {/* Mobile Drag Handle Bar (Hidden on desktop) */}
               <div 
                 onClick={onClose}
-                className="w-full pt-3.5 pb-1 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing touch-none group select-none"
+                className="w-full pt-3.5 pb-1 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing touch-none group select-none sm:hidden"
                 title="Slide down to close"
               >
                 <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full group-hover:bg-slate-400 dark:group-hover:bg-slate-600 transition-colors" />
               </div>
 
               {/* Header */}
-              <div className="px-4 sm:px-6 pb-3 sm:pb-4 pt-1 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 shrink-0">
+              <div className="px-4 sm:px-6 pb-3.5 sm:pb-4 pt-1 sm:pt-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 shrink-0">
                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                   <div className="p-2 sm:p-2.5 bg-primary/10 text-primary rounded-xl sm:rounded-2xl shrink-0">
                     <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -183,7 +184,7 @@ const ReportExportModal: React.FC<ReportExportModalProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight truncate">
-                        Export {title} Report
+                        Generate {title} Report
                       </h2>
                       <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0">
                         Official Report
@@ -194,6 +195,17 @@ const ReportExportModal: React.FC<ReportExportModalProps> = ({
                     </p>
                   </div>
                 </div>
+
+                {/* Desktop Close 'X' Button */}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="hidden sm:flex items-center justify-center w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-all cursor-pointer shrink-0 ml-3 group"
+                  aria-label="Close"
+                  title="Close"
+                >
+                  <X className="w-4 h-4 transition-transform group-hover:scale-110" />
+                </button>
               </div>
 
               {/* Modal Body */}

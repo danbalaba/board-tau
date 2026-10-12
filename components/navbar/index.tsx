@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import NavbarClient from "./NavbarClient";
 import { User } from "next-auth";
 
@@ -7,7 +7,11 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ user }) => {
-  return <NavbarClient user={user} />;
+  return (
+    <Suspense fallback={null}>
+      <NavbarClient user={user} />
+    </Suspense>
+  );
 };
 
 export default Navbar;

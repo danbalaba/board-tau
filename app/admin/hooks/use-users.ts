@@ -21,7 +21,6 @@ export function useUserStats() {
       if (!data.success) throw new Error(data.message || 'Failed to fetch user stats');
       return data.data;
     },
-    refetchInterval: 60000,
     retry: 2,
   });
 }
@@ -96,7 +95,6 @@ export function useUsers(params?: UsersQueryParams) {
 
       return data;
     },
-    refetchInterval: 60000, // Refetch every minute
     retry: 3,
   });
 }

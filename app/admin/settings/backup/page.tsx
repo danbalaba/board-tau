@@ -3,7 +3,7 @@ import { SystemBackup } from '@/app/admin/features/settings/components/system-ba
 
 export const metadata: Metadata = {
   title: 'System Backup & Restore - BoardTAU Admin',
-  description: 'Manage platform backups and disaster recovery',
+  description: 'Manage automated snapshots, database exports, and recovery points',
 };
 
 export default function BackupRestorePage() {

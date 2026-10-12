@@ -1,8 +1,9 @@
 import { createEdgeStoreNextHandler } from "@edgestore/server/adapters/next/app";
 import { getToken } from "next-auth/jwt";
 import { edgeStoreRouter } from "@/lib/edgestore-router";
+import { NextRequest, NextResponse } from "next/server";
 
-const handler = createEdgeStoreNextHandler({
+const edgeStoreHandler = createEdgeStoreNextHandler({
   router: edgeStoreRouter,
   createContext: async ({ req }) => {
     const secret = process.env.NEXTAUTH_SECRET;
@@ -29,4 +30,26 @@ const handler = createEdgeStoreNextHandler({
   },
 });
 
-export { handler as GET, handler as POST };
+async function resilientHandler(req: NextRequest) {
+  try {
+    const response = await edgeStoreHandler(req);
+    // If /init failed with 500 (e.g. EdgeStore service downtime or transient cloud error),
+    // return an empty 200 response ({}) so the frontend @edgestore/react provider does not throw
+    // an unhandled promise rejection across the entire application.
+    const isInit = req.nextUrl?.pathname?.endsWith("/init") ?? false;
+    if (isInit && response.status >= 500) {
+      console.warn("[EdgeStore Route] Gracefully mitigating /init 500 error from upstream EdgeStore cloud.");
+      return NextResponse.json({}, { status: 200 });
+    }
+    return response;
+  } catch (error) {
+    console.error("[EdgeStore Route Exception]:", error);
+    const isInit = req.nextUrl?.pathname?.endsWith("/init") ?? false;
+    if (isInit) {
+      return NextResponse.json({}, { status: 200 });
+    }
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+export { resilientHandler as GET, resilientHandler as POST };

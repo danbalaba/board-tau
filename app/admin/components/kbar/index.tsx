@@ -17,11 +17,27 @@ import { IconSearch } from '@tabler/icons-react';
 
 import { Icons } from '../icons';
 
+const KEYWORD_MAP: Record<string, string> = {
+  'dashboard': 'overview analytics stats metrics home operations',
+  'user directory': 'user management users students landlords staff accounts profiles directory members',
+  'content moderation': 'moderation queue reported reports listings flags review issues',
+  'moderation queue': 'moderation queue reported reports listings flags review issues tickets queue',
+  'host applications review': 'host applications landlords verification approval hosts verify properties documents',
+  'listings review': 'listings review properties rooms boarding houses apartments dorms approve listings verify',
+  'reviews & ratings': 'reviews ratings feedback student reviews stars comments testimonials',
+  'system monitoring': 'system monitoring audit logs activity security events history records audit trail',
+  'audit logs': 'audit logs activity security events history monitoring records inspect audit trail',
+  'platform configuration': 'platform configuration property amenities settings features backup',
+  'property configuration': 'property configuration amenities room types rules housing settings property config room setup',
+  'feature flags': 'feature flags toggles beta experiments settings switches',
+  'system backup': 'system backup database snapshot restore export data backups save',
+};
+
 export default function KBar({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const filteredItems = useFilteredNavItems(navItems);
 
-  // These action are for the navigation
+  // These actions are for the navigation
   const actions = useMemo(() => {
     // Define navigateTo inside the useMemo callback to avoid dependency array issues
     const navigateTo = (url: string) => {
@@ -33,12 +49,14 @@ export default function KBar({ children }: { children: React.ReactNode }) {
       const parentId = `nav-parent-${index}-${navItem.title.toLowerCase()}`;
       const hasChildren = navItem.items && navItem.items.length > 0;
       const Icon = navItem.icon ? (Icons[navItem.icon] as any) : Icons.logo;
+      const titleLower = navItem.title.toLowerCase();
+      const keywords = `${titleLower} ${KEYWORD_MAP[titleLower] || ''}`.trim();
 
       // The primary action for this navigation item
       const topLevelAction = {
         id: parentId,
         name: navItem.title,
-        keywords: navItem.title.toLowerCase(),
+        keywords: keywords,
         section: 'Menu',
         subtitle: hasChildren ? `${navItem.items?.length} options` : `Go to ${navItem.title}`,
         icon: Icon ? <Icon className='h-4 w-4' /> : null,
@@ -52,10 +70,13 @@ export default function KBar({ children }: { children: React.ReactNode }) {
       // Map child items and link them to the parent ID
       const childActions = navItem.items!.map((childItem, childIndex) => {
         const ChildIcon = childItem.icon ? (Icons[childItem.icon] as any) : Icons.logo;
+        const childTitleLower = childItem.title.toLowerCase();
+        const childKeywords = `${childTitleLower} ${KEYWORD_MAP[childTitleLower] || ''} ${titleLower}`.trim();
+
         return {
-          id: `${parentId}-child-${childIndex}-${childItem.title.toLowerCase()}`,
+          id: `${parentId}-child-${childIndex}-${childTitleLower}`,
           name: childItem.title,
-          keywords: childItem.title.toLowerCase(),
+          keywords: childKeywords,
           parent: parentId,
           subtitle: `Go to ${childItem.title}`,
           icon: ChildIcon ? <ChildIcon className='h-4 w-4' /> : null,
@@ -107,7 +128,7 @@ function KBarComponent({ children }: { children: React.ReactNode }) {
               </div>
             </div>
             
-            <div className="max-h-[60vh] overflow-y-auto [&::-webkit-scrollbar]:hidden">
+            <div className="overflow-hidden">
               <RenderResults />
             </div>
 

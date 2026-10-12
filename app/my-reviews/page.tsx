@@ -1,8 +1,10 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { getMyReviews } from "@/services/reviews";
 import ReviewsClient from "@/components/reviews/ReviewsClient";
 import { getCurrentUser } from "@/services/user/user";
 import { redirect } from "next/navigation";
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: "My Reviews | BoardTAU",
@@ -28,7 +30,9 @@ const MyReviewsPage = async () => {
   const reviews = await getMyReviews();
 
   return (
-    <ReviewsClient initialReviews={reviews as any} />
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}>
+      <ReviewsClient initialReviews={reviews as any} />
+    </Suspense>
   );
 };
 

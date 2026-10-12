@@ -3,6 +3,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import Skeleton from '@/components/common/Skeleton';
+import { RoomOccupancyDetail } from '@/services/landlord/analytics';
 
 interface ChartData {
   dailyRevenue: Array<{ date: string; revenue: number; bookings: number }>;
@@ -12,70 +13,84 @@ interface ChartData {
   growthTrend: Array<{ date: string; bookings: number; revenue: number; inquiries?: number }>;
   propertyTypes: Array<{ type: string; count: number; revenue: number }>;
   ratings: Array<{ rating: string; value: number; percentage: number }>;
-  propertyPerformance: Array<{ name: string; inquiries: number; bookings: number; revenue: number }>;
-  inquirySources?: Array<{ date: string; direct: number; email: number; social: number }>;
+}
+
+interface AnalyticsScope {
+  propertyId: string;
+  propertyName: string;
+  period: 'month' | 'quarter' | 'year';
+  isSingleProperty: boolean;
 }
 
 interface LandlordAnalyticsChartsGridProps {
-  chartData?: ChartData;
+  chartData?: ChartData | null;
+  scope?: AnalyticsScope | null;
+  stats?: any | null;
+  roomDetails?: RoomOccupancyDetail[] | null;
   isLoading?: boolean;
 }
 
-const ChartAreaInteractive = dynamic(() => import('@/app/landlord/components/charts/AreaChart').then(mod => mod.ChartAreaInteractive), { ssr: false });
-const ChartBarInteractive = dynamic(() => import('@/app/landlord/components/charts/BarChart').then(mod => mod.ChartBarInteractive), { ssr: false });
-const ChartLineInteractive = dynamic(() => import('@/app/landlord/components/charts/LineChart').then(mod => mod.ChartLineInteractive), { ssr: false });
-const ChartPieLabel = dynamic(() => import('@/app/landlord/components/charts/PieChart').then(mod => mod.ChartPieLabel), { ssr: false });
-const ChartRadarDots = dynamic(() => import('@/app/landlord/components/charts/RadarChart').then(mod => mod.ChartRadarDots), { ssr: false });
-const ChartRadialLabel = dynamic(() => import('@/app/landlord/components/charts/RadialChart').then(mod => mod.ChartRadialLabel), { ssr: false });
-const ChartTooltipDefault = dynamic(() => import('@/app/landlord/components/charts/ToolTips').then(mod => mod.ChartTooltipDefault), { ssr: false });
+const AnalyticsAreaChart = dynamic(
+  () => import('./charts/analytics-area-chart').then((mod) => mod.AnalyticsAreaChart),
+  { ssr: false }
+);
+const AnalyticsBarChart = dynamic(
+  () => import('./charts/analytics-bar-chart').then((mod) => mod.AnalyticsBarChart),
+  { ssr: false }
+);
+const AnalyticsLineChart = dynamic(
+  () => import('./charts/analytics-line-chart').then((mod) => mod.AnalyticsLineChart),
+  { ssr: false }
+);
+const AnalyticsRadialChart = dynamic(
+  () => import('./charts/analytics-radial-chart').then((mod) => mod.AnalyticsRadialChart),
+  { ssr: false }
+);
+const AnalyticsPieChart = dynamic(
+  () => import('./charts/analytics-pie-chart').then((mod) => mod.AnalyticsPieChart),
+  { ssr: false }
+);
 
-export function LandlordAnalyticsChartsGrid({ chartData, isLoading }: LandlordAnalyticsChartsGridProps) {
-  if (isLoading) {
+export function LandlordAnalyticsChartsGrid({
+  chartData,
+  scope,
+  stats,
+  roomDetails,
+  isLoading,
+}: LandlordAnalyticsChartsGridProps) {
+  if (isLoading || !chartData) {
     return (
       <div className="space-y-6">
         {/* Main Chart Skeleton */}
-        <div className="bg-white dark:bg-gray-950 p-8 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-sm">
-          <div className="flex justify-between items-center mb-8">
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 sm:p-8 rounded-[26px] border border-slate-200/90 dark:border-slate-800 shadow-xs">
+          <div className="flex justify-between items-center mb-6">
             <div>
-              <Skeleton className="h-7 w-56 mb-2" variant="text" />
-              <Skeleton className="h-4 w-72 opacity-60" variant="text" />
+              <Skeleton className="h-6 w-48 mb-2" variant="text" />
+              <Skeleton className="h-4 w-64 opacity-60" variant="text" />
             </div>
-            <Skeleton className="h-10 w-36 rounded-xl" />
+            <Skeleton className="h-9 w-32 rounded-xl" />
           </div>
-          <div className="h-[300px] w-full flex items-end gap-2 px-2">
-            {[...Array(24)].map((_, i) => (
-              <Skeleton 
-                key={i} 
-                className="flex-1 rounded-t-lg" 
-                style={{ height: `${20 + Math.sin(i / 3) * 30 + 30}%` }} 
+          <div className="h-[280px] w-full flex items-end gap-2 px-2">
+            {[...Array(20)].map((_, i) => (
+              <Skeleton
+                key={i}
+                className="flex-1 rounded-t-lg"
+                style={{ height: `${20 + Math.sin(i / 2.5) * 35 + 30}%` }}
               />
             ))}
           </div>
         </div>
 
-        {/* Grid Skeletons */}
+        {/* Secondary Charts Skeletons */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className={`bg-white dark:bg-gray-950 p-6 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm ${i === 5 ? 'lg:col-span-2' : ''}`}>
-              <Skeleton className="h-6 w-44 mb-6" variant="text" />
-              <div className="h-[250px] w-full flex items-center justify-center">
-                 {/* Alternate between pie and bar skeletons */}
-                 {i === 1 || i === 3 ? (
-                    <div className="relative w-48 h-48 flex items-center justify-center">
-                       <Skeleton className="w-full h-full rounded-full" />
-                       <div className="absolute inset-4 bg-white dark:bg-gray-950 rounded-full" />
-                    </div>
-                 ) : (
-                    <div className="w-full h-full flex items-end gap-3 px-4">
-                      {[...Array(10)].map((_, j) => (
-                        <Skeleton 
-                          key={j} 
-                          className="flex-1 rounded-t-md" 
-                          style={{ height: `${30 + Math.random() * 50}%` }} 
-                        />
-                      ))}
-                    </div>
-                 )}
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 rounded-[26px] border border-slate-200/90 dark:border-slate-800 shadow-xs"
+            >
+              <Skeleton className="h-5 w-40 mb-5" variant="text" />
+              <div className="h-[220px] w-full flex items-center justify-center">
+                <Skeleton className="w-40 h-40 rounded-full" />
               </div>
             </div>
           ))}
@@ -83,38 +98,78 @@ export function LandlordAnalyticsChartsGrid({ chartData, isLoading }: LandlordAn
       </div>
     );
   }
+
+  const propertyName = scope?.propertyName || 'All Properties Portfolio';
+  const isSingleProperty = scope?.isSingleProperty ?? false;
+  const period = scope?.period || 'month';
+  const selectedPropertyId = scope?.propertyId || 'all';
+
   return (
     <div className="space-y-6">
-      {/* Primary Chart */}
-      <div className="bg-white dark:bg-gray-950 p-5 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
-        <ChartAreaInteractive data={chartData?.dailyRevenue} />
+      {/* 1. Primary Scope Chart: Revenue & Bookings History */}
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-5 sm:p-6 rounded-[26px] sm:rounded-[28px] border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md transition-all">
+        <AnalyticsAreaChart
+          data={chartData.dailyRevenue}
+          propertyName={propertyName}
+          isSingleProperty={isSingleProperty}
+          period={period}
+        />
       </div>
 
-      {/* Grid of Secondary Charts */}
+      {/* 2. Secondary Analytics Intelligence Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-950 p-5 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
-          <ChartLineInteractive data={chartData?.growthTrend?.map(g => ({ inquiries: g.inquiries ?? 0, ...g }))} />
+        {/* Multi-Property Revenue Contribution / Single Property Trajectory Bar Chart */}
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-5 sm:p-6 rounded-[26px] sm:rounded-[28px] border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md transition-all">
+          <AnalyticsBarChart
+            data={chartData.monthlyRevenue}
+            listings={chartData.monthlyRevenueListings}
+            listingMap={chartData.monthlyRevenueMap}
+            propertyName={propertyName}
+            isSingleProperty={isSingleProperty}
+            selectedPropertyId={selectedPropertyId}
+          />
         </div>
-        <div className="bg-white dark:bg-gray-950 p-5 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
-          <ChartPieLabel data={chartData?.propertyTypes} />
+
+        {/* Inquiries vs. Bookings Conversion Funnel */}
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-5 sm:p-6 rounded-[26px] sm:rounded-[28px] border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md transition-all">
+          <AnalyticsLineChart
+            data={chartData.growthTrend?.map((g) => ({
+              inquiries: g.inquiries ?? 0,
+              ...g,
+            }))}
+            propertyName={propertyName}
+            isSingleProperty={isSingleProperty}
+            totalBookingRequests={stats?.totalBookingRequests}
+          />
         </div>
-        <div className="bg-white dark:bg-gray-950 p-5 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
-          <ChartRadarDots listings={chartData?.monthlyRevenueListings} />
+
+        {/* Real Star Rating Sentiment Distribution */}
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-5 sm:p-6 rounded-[26px] sm:rounded-[28px] border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md transition-all">
+          <AnalyticsRadialChart
+            data={chartData.ratings}
+            propertyName={propertyName}
+            isSingleProperty={isSingleProperty}
+            averageRating={stats?.averageRating}
+            totalReviews={stats?.totalReviews}
+          />
         </div>
-        <div className="bg-white dark:bg-gray-950 p-5 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
-          <ChartRadialLabel data={chartData?.ratings} listings={chartData?.monthlyRevenueListings} />
-        </div>
-        <div className="bg-white dark:bg-gray-950 p-5 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
-          <ChartTooltipDefault data={chartData?.inquirySources} />
-        </div>
-        <div className="lg:col-span-2 bg-white dark:bg-gray-950 p-5 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
-          <ChartBarInteractive 
-            data={chartData?.monthlyRevenue} 
-            listings={chartData?.monthlyRevenueListings}
-            listingMap={chartData?.monthlyRevenueMap}
+
+        {/* Property Portfolio Category Breakdown / Bedspace Capacity Donut */}
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-5 sm:p-6 rounded-[26px] sm:rounded-[28px] border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md transition-all">
+          <AnalyticsPieChart
+            data={chartData.propertyTypes}
+            propertyName={propertyName}
+            isSingleProperty={isSingleProperty}
+            occupiedSlots={stats?.occupiedSlots}
+            vacantSlots={stats?.vacantSlots}
+            totalCapacity={stats?.totalCapacity}
+            occupancyRate={stats?.occupancyRate}
+            roomDetails={roomDetails || []}
           />
         </div>
       </div>
     </div>
   );
 }
+
+export default LandlordAnalyticsChartsGrid;

@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { ArrowLeft, Home, Compass } from "lucide-react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 
 import { ErrorPageMascotPanel } from "@/components/error/ErrorPageMascotPanel";
 
-export default function NotFound() {
+function NotFoundContent() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [countdown, setCountdown] = useState(15);
@@ -111,5 +111,19 @@ export default function NotFound() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function NotFound() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[80vh] w-full flex items-center justify-center p-6">
+          <div className="w-10 h-10 rounded-full border-4 border-[#2f7d6d]/20 border-t-[#2f7d6d] animate-spin" />
+        </div>
+      }
+    >
+      <NotFoundContent />
+    </Suspense>
   );
 }

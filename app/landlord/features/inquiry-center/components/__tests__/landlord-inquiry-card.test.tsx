@@ -88,7 +88,6 @@ describe('LandlordInquiryCard', () => {
   const mockHandleRespond = jest.fn();
   const mockOnArchive = jest.fn();
   const mockOnReject = jest.fn();
-  const mockOnDelete = jest.fn();
   const mockOnViewDetails = jest.fn();
 
   const defaultProps = {
@@ -98,7 +97,6 @@ describe('LandlordInquiryCard', () => {
     handleRespond: mockHandleRespond,
     onArchive: mockOnArchive,
     onReject: mockOnReject,
-    onDelete: mockOnDelete,
     onViewDetails: mockOnViewDetails,
   };
 
@@ -147,11 +145,11 @@ describe('LandlordInquiryCard', () => {
     expect(mockOnArchive).toHaveBeenCalledWith('inq-1');
   });
 
-  it('calls onDelete when delete button is clicked in list mode (for archived)', () => {
+  it('calls onArchive (restore) when restore button is clicked in list mode for archived inquiry', () => {
     const archivedInquiry = { ...mockInquiry, isArchived: true };
     render(<LandlordInquiryCard {...defaultProps} inquiry={archivedInquiry} viewMode="list" />);
-    const deleteBtn = screen.getByTitle('Delete Permanently');
-    fireEvent.click(deleteBtn);
-    expect(mockOnDelete).toHaveBeenCalledWith(archivedInquiry);
+    const restoreBtn = screen.getByTitle('Restore Inquiry');
+    fireEvent.click(restoreBtn);
+    expect(mockOnArchive).toHaveBeenCalledWith('inq-1');
   });
 });

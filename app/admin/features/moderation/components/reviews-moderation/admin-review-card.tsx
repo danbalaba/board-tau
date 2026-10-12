@@ -46,6 +46,15 @@ export function AdminReviewCard({
   const RawStatusIcon = rawConfig.icon;
   const archiveConfig = statusConfig.archived;
 
+  const rawImage = review.user?.image;
+  const isPlaceholder = typeof rawImage === 'string' && (
+    rawImage.includes('placeholder') ||
+    rawImage.includes('dark_placeholder') ||
+    rawImage.includes('white_placeholder')
+  );
+  const userImage = !isPlaceholder && rawImage ? rawImage : null;
+  const userInitial = (review.user?.name?.trim().charAt(0) || 'U').toUpperCase();
+
   if (viewMode === 'list') {
     return (
       <motion.div
@@ -56,12 +65,21 @@ export function AdminReviewCard({
       >
         <div className="absolute inset-0 bg-gradient-to-r from-amber-500/15 dark:from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 rounded-[2rem] transition-opacity duration-500 pointer-events-none" />
         
-        <div className="relative w-16 h-16 rounded-2xl overflow-hidden shrink-0 shadow-md">
-          {review.user?.image ? (
-            <SafeImage src={review.user.image} alt={review.user.name} className="w-full h-full object-cover" />
+        <div className="relative w-16 h-16 rounded-2xl overflow-hidden shrink-0 shadow-md border border-gray-100 dark:border-gray-800 bg-amber-500/10">
+          {userImage ? (
+            <SafeImage 
+              src={userImage} 
+              alt={review.user?.name || 'User'} 
+              className="w-full h-full object-cover"
+              fallbackComponent={
+                <div className="w-full h-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold text-xl select-none">
+                  {userInitial}
+                </div>
+              }
+            />
           ) : (
-            <div className="w-full h-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold text-xl">
-              {review.user?.name?.charAt(0) || 'U'}
+            <div className="w-full h-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold text-xl select-none">
+              {userInitial}
             </div>
           )}
         </div>
@@ -178,12 +196,21 @@ export function AdminReviewCard({
 
       {/* Avatar Overlap */}
       <div className="px-6 relative -mt-10 mb-2">
-        <div className="w-20 h-20 rounded-[1.5rem] overflow-hidden shadow-xl border-4 border-white dark:border-gray-900 bg-white">
-          {review.user?.image ? (
-            <SafeImage src={review.user.image} alt={review.user.name} className="w-full h-full object-cover" />
+        <div className="w-20 h-20 rounded-[1.5rem] overflow-hidden shadow-xl border-4 border-white dark:border-gray-900 bg-white dark:bg-gray-800 shrink-0">
+          {userImage ? (
+            <SafeImage 
+              src={userImage} 
+              alt={review.user?.name || 'User'} 
+              className="w-full h-full object-cover" 
+              fallbackComponent={
+                <div className="w-full h-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold text-3xl select-none">
+                  {userInitial}
+                </div>
+              }
+            />
           ) : (
-            <div className="w-full h-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold text-3xl">
-              {review.user?.name?.charAt(0) || 'U'}
+            <div className="w-full h-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold text-3xl select-none">
+              {userInitial}
             </div>
           )}
         </div>

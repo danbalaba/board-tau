@@ -52,6 +52,16 @@ export function useHostApplicationsLogic({ range }: { range?: string } = {}) {
   const [archiveModalOpen, setArchiveModalOpen] = useState(false);
   const [itemToArchive, setItemToArchive] = useState<any | null>(null);
 
+  const [loaderModal, setLoaderModal] = useState<{
+    isOpen: boolean;
+    actionType: 'approve' | 'reject';
+    applicantName: string;
+  }>({
+    isOpen: false,
+    actionType: 'approve',
+    applicantName: ''
+  });
+
   const applications = apiResponse?.data || [];
 
   // Auto-open modal if URL has ?id=XYZ or ?selectedId=XYZ
@@ -121,12 +131,22 @@ export function useHostApplicationsLogic({ range }: { range?: string } = {}) {
   };
 
   const handleDecision = (id: string, action: 'approve' | 'reject' | 'archive' | 'unarchive', reason?: string) => {
+    const targetApp = applications.find((a: any) => (a.id === id || a._id === id)) || selectedApplication || itemToArchive;
+    const applicantName = targetApp?.user?.name || targetApp?.contactInfo?.fullName || 'Landlord Applicant';
     const appTitle = itemToArchive?.id === id 
       ? (itemToArchive.businessInfo?.businessName || itemToArchive.user?.name) 
       : selectedApplication?.id === id 
         ? (selectedApplication.businessInfo?.businessName || selectedApplication.user?.name) 
-        : null;
+        : (targetApp?.businessInfo?.businessName || targetApp?.user?.name || applicantName);
     const nameStr = appTitle ? `"${appTitle}"` : 'Host Application';
+
+    if (action === 'approve' || action === 'reject') {
+      setLoaderModal({
+        isOpen: true,
+        actionType: action,
+        applicantName
+      });
+    }
 
     decide({ id, entityType: 'hostApplication', action, reason }, {
       onSuccess: () => {
@@ -147,14 +167,23 @@ export function useHostApplicationsLogic({ range }: { range?: string } = {}) {
             description: 'Host application rejected and feedback logged.'
           });
         }
-        setViewModalOpen(false);
+
+        if (action === 'archive' || action === 'unarchive') {
+          setViewModalOpen(false);
+        }
       },
       onError: (err: any) => {
+        setLoaderModal(prev => ({ ...prev, isOpen: false }));
         toast.error('Action Failed', {
           description: err.message || 'Database operation failed.'
         });
       }
     });
+  };
+
+  const handleLoaderComplete = () => {
+    setLoaderModal(prev => ({ ...prev, isOpen: false }));
+    setViewModalOpen(false);
   };
 
   const handleArchive = (application: any) => {
@@ -222,6 +251,8 @@ export function useHostApplicationsLogic({ range }: { range?: string } = {}) {
     handleDecision,
     handleArchive,
     handleConfirmArchive,
-    handleConfirmDelete
+    handleConfirmDelete,
+    loaderModal,
+    handleLoaderComplete
   };
 }

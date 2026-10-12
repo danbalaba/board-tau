@@ -194,10 +194,6 @@ export default function LandlordInquiryCenter({ inquiries }: LandlordInquiryCent
                           setSelectedInquiry(inquiry);
                           setArchiveModalOpen(true);
                         }}
-                        onDelete={(inq) => {
-                          setSelectedInquiry(inq);
-                          setDeleteModalOpen(true);
-                        }}
                         onReject={() => {
                           setSelectedInquiry(inquiry);
                           setRejectModalOpen(true);

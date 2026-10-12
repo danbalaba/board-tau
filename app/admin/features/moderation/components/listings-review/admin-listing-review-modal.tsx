@@ -205,6 +205,18 @@ const PROPERTY_IMAGE_CATEGORIES = [
   { id: 'Other', label: 'Other Shared Facilities', icon: Camera, description: 'Other shared facilities like parking, garden & laundry' },
 ];
 
+const checkIsPdf = (url: string): boolean => {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return lower.endsWith('.pdf') || lower.includes('.pdf?') || lower.includes('/pdf') || lower.startsWith('data:application/pdf');
+};
+
+const getDocumentViewUrl = (url?: string | null): string => {
+  if (!url || typeof url !== 'string') return '';
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+  return `/api/documents/view?url=${encodeURIComponent(url)}`;
+};
+
 export function AdminListingReviewModal({
   listing,
   isOpen,
@@ -916,12 +928,14 @@ export function AdminListingReviewModal({
 
   const roomsList = listing.rooms || [];
   const propertyPhotos = Array.isArray(listing.images) ? listing.images : [];
+  const landlordDocs = (listing.user as any)?.landlordVerificationDocs || (listing.landlord as any)?.landlordVerificationDocs || {};
+  const hostAppDocs = (listing.user as any)?.hostApplications?.[0] || (listing.user as any)?.hostApplication || (listing as any).hostApplication || {};
   const docUrls: Record<string, string> = {
-    governmentId: listing.businessInfo?.documents?.governmentId || listing.governmentIdUrl || listing.documents?.governmentId || '',
-    businessPermit: listing.businessInfo?.documents?.businessPermit || listing.businessPermitUrl || listing.documents?.businessPermit || '',
-    landTitle: listing.businessInfo?.documents?.landTitle || listing.landTitleUrl || listing.documents?.landTitle || '',
-    barangayClearance: listing.businessInfo?.documents?.barangayClearance || listing.barangayClearanceUrl || listing.documents?.barangayClearance || '',
-    fireSafetyCertificate: listing.businessInfo?.documents?.fireSafetyCertificate || listing.fireSafetyUrl || listing.documents?.fireSafetyCertificate || '',
+    governmentId: listing.businessInfo?.documents?.governmentId || listing.governmentIdUrl || listing.documents?.governmentId || landlordDocs.governmentId || hostAppDocs.idCardUrl || '',
+    businessPermit: listing.businessInfo?.documents?.businessPermit || listing.businessPermitUrl || listing.documents?.businessPermit || landlordDocs.businessPermit || hostAppDocs.businessPermitUrl || '',
+    landTitle: listing.businessInfo?.documents?.landTitle || listing.landTitleUrl || listing.documents?.landTitle || landlordDocs.landTitle || hostAppDocs.utilityBillUrl || '',
+    barangayClearance: listing.businessInfo?.documents?.barangayClearance || listing.barangayClearanceUrl || listing.documents?.barangayClearance || landlordDocs.barangayClearance || '',
+    fireSafetyCertificate: listing.businessInfo?.documents?.fireSafetyCertificate || listing.fireSafetyUrl || listing.documents?.fireSafetyCertificate || landlordDocs.fireSafetyCertificate || hostAppDocs.fireSafetyUrl || '',
   };
   const docCount = Object.values(docUrls).filter(Boolean).length;
 
@@ -1155,9 +1169,21 @@ export function AdminListingReviewModal({
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                               <div className="flex items-center gap-4">
                                 {listing.user?.image || listing.host?.image ? (
-                                  <SafeImage src={listing.user?.image || listing.host?.image} alt="" className="w-16 h-16 rounded-2xl object-cover border-2 border-primary/20 shadow-md" />
+                                  <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 relative border-2 border-primary/20 shadow-md">
+                                    <SafeImage 
+                                      src={listing.user?.image || listing.host?.image} 
+                                      alt="" 
+                                      containerClassName="w-full h-full"
+                                      className="w-full h-full object-cover"
+                                      fallbackComponent={
+                                        <div className="w-full h-full bg-primary/10 text-primary font-black text-xl flex items-center justify-center">
+                                          {(listing.user?.name || listing.host?.name || 'H').charAt(0)}
+                                        </div>
+                                      }
+                                    />
+                                  </div>
                                 ) : (
-                                  <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary font-black text-xl flex items-center justify-center border border-primary/20">
+                                  <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary font-black text-xl flex items-center justify-center border border-primary/20 shrink-0">
                                     {(listing.user?.name || listing.host?.name || 'H').charAt(0)}
                                   </div>
                                 )}
@@ -1941,35 +1967,77 @@ export function AdminListingReviewModal({
                             { key: 'fireSafetyCertificate', label: 'Fire Safety Inspection', desc: 'BFP safety inspection certificate' },
                           ].map(doc => {
                             const url = docUrls[doc.key];
+                            const isPdf = checkIsPdf(url);
 
                             return (
                               <div key={doc.key} className="p-5 rounded-3xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-3 flex flex-col justify-between">
                                 <div>
                                   <div className="flex items-center justify-between mb-1">
                                     <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider">{doc.label}</h5>
-                                    <span className={cn(
-                                      "text-[8px] font-black px-2 py-0.5 rounded-full uppercase border",
-                                      url ? "bg-primary/10 text-primary border-primary/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20"
-                                    )}>
-                                      {url ? 'Uploaded' : 'Missing'}
-                                    </span>
+                                    {isPdf ? (
+                                      <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20 flex items-center gap-1">
+                                        <FileText size={10} /> PDF
+                                      </span>
+                                    ) : (
+                                      <span className={cn(
+                                        "text-[8px] font-black px-2 py-0.5 rounded-full uppercase border",
+                                        url ? "bg-primary/10 text-primary border-primary/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                                      )}>
+                                        {url ? 'Uploaded' : 'Missing'}
+                                      </span>
+                                    )}
                                   </div>
                                   <p className="text-[10px] font-bold text-slate-400">{doc.desc}</p>
                                 </div>
 
                                 {url ? (
-                                  <div 
-                                    onClick={() => handleOpenPreview([url], 0, doc.label, true)}
-                                    className="relative h-36 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 cursor-pointer group shadow-sm bg-slate-100 dark:bg-slate-900"
-                                  >
-                                    <SafeImage src={url} alt={doc.label} loaderText="Loading Doc..." className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                                    <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 backdrop-blur-[1px]">
-                                      <Eye size={20} className="text-white" />
-                                      <span className="text-[9px] font-black text-white uppercase tracking-widest">Inspect Document</span>
+                                  <div className="space-y-2">
+                                    <div 
+                                      onClick={() => {
+                                        if (isPdf) {
+                                          window.open(getDocumentViewUrl(url), '_blank', 'noopener,noreferrer');
+                                        } else {
+                                          handleOpenPreview([url], 0, doc.label, true);
+                                        }
+                                      }}
+                                      className="relative h-36 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 cursor-pointer group shadow-sm bg-slate-100 dark:bg-slate-900"
+                                    >
+                                      <SafeImage src={url} alt={doc.label} loaderText="Loading Doc..." className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                      <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 backdrop-blur-[1px]">
+                                        {isPdf ? (
+                                          <>
+                                            <ExternalLink size={20} className="text-white" />
+                                            <span className="text-[9px] font-black text-white uppercase tracking-widest">Open PDF in Full Screen</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Eye size={20} className="text-white" />
+                                            <span className="text-[9px] font-black text-white uppercase tracking-widest">Inspect Document</span>
+                                          </>
+                                        )}
+                                      </div>
+                                      <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-primary/90 text-white text-[7px] font-black uppercase tracking-widest shadow-sm">
+                                        {isPdf ? "PDF Document" : "Encrypted File"}
+                                      </span>
                                     </div>
-                                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-primary/90 text-white text-[7px] font-black uppercase tracking-widest shadow-sm">
-                                      Encrypted File
-                                    </span>
+
+                                    {/* Quick Action Footer for PDF */}
+                                    {isPdf && (
+                                      <div className="pt-1">
+                                        <a
+                                          href={getDocumentViewUrl(url)}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="group w-full py-2 px-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-600 dark:bg-blue-500/15 dark:hover:bg-blue-600 text-blue-600 dark:text-blue-400 hover:text-white dark:hover:text-white border border-blue-500/20 hover:border-blue-600 dark:hover:border-blue-600 text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs hover:shadow-md hover:shadow-blue-600/25 active:scale-[0.99]"
+                                          title="Open PDF in new browser tab"
+                                        >
+                                          <FileText size={12} className="shrink-0 transition-colors text-inherit group-hover:text-white" />
+                                          <span className="transition-colors text-inherit group-hover:text-white">Open PDF Document</span>
+                                          <ExternalLink size={11} className="opacity-70 group-hover:opacity-100 transition-all text-inherit group-hover:text-white group-hover:translate-x-0.5" />
+                                        </a>
+                                      </div>
+                                    )}
                                   </div>
                                 ) : (
                                   <div className="h-36 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-center p-3">
@@ -2102,7 +2170,7 @@ export function AdminListingReviewModal({
           {/* Moderation Footer */}
           <div className="p-4 sm:p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 shrink-0 relative z-30 shadow-xl">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
                 {TAB_ORDER.indexOf(activeTab) > 0 && (
                   <Button
                     type="button"
@@ -2111,13 +2179,13 @@ export function AdminListingReviewModal({
                       const currIdx = TAB_ORDER.indexOf(activeTab);
                       if (currIdx > 0) setActiveTab(TAB_ORDER[currIdx - 1]);
                     }}
-                    className="group h-11 sm:h-12 px-5 text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all duration-200 rounded-2xl flex items-center gap-2 cursor-pointer shadow-xs"
+                    className="group h-11 sm:h-12 px-5 text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all duration-200 rounded-2xl flex items-center gap-2 cursor-pointer shadow-xs shrink-0"
                   >
                     <ChevronLeft size={16} className="transition-transform group-hover:-translate-x-1" />
                     <span>Back Section</span>
                   </Button>
                 )}
-                <div className="hidden md:flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-xs font-bold text-slate-600 dark:text-slate-300">
+                <div className="hidden md:flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-xs font-bold text-slate-600 dark:text-slate-300 shrink-0 whitespace-nowrap">
                   <Clock size={16} className={cn("shrink-0 transition-colors", isCurrentStepAllChecked ? "text-primary" : "text-amber-500 animate-pulse")} />
                   <span>
                     Section {TAB_ORDER.indexOf(activeTab) + 1} of 6 • {isCurrentStepAllChecked ? "Section audit verified! Ready for next step." : `Verify all audit items (${currentStepChecklistItems.filter(i => stepChecklistsState[`${activeTab}_${i.id}`]).length}/${currentStepChecklistItems.length}) to proceed`}
@@ -2126,12 +2194,12 @@ export function AdminListingReviewModal({
               </div>
 
               {isPending ? (
-                <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end shrink-0">
                   <Button 
                     type="button"
                     onClick={() => setShowRejectConfirm(true)}
                     disabled={isDeciding}
-                    className="group flex-1 sm:flex-none h-11 sm:h-12 px-5 text-xs font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200/80 dark:border-rose-500/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white hover:border-rose-500 active:scale-95 transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                    className="group flex-1 sm:flex-none h-11 sm:h-12 px-5 text-xs font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200/80 dark:border-rose-500/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white hover:border-rose-500 active:scale-95 transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 cursor-pointer shadow-xs shrink-0"
                   >
                     <X size={16} className="transition-transform group-hover:rotate-90 duration-300" />
                     <span>Reject Listing</span>
@@ -2153,7 +2221,7 @@ export function AdminListingReviewModal({
                       }}
                       disabled={isDeciding || !isCurrentStepAllChecked}
                       className={cn(
-                        "group flex-1 sm:flex-none h-11 sm:h-12 px-7 text-xs font-black uppercase tracking-wider rounded-2xl transition-all duration-200 flex items-center justify-center gap-2.5",
+                        "group flex-1 sm:flex-none h-11 sm:h-12 px-7 text-xs font-black uppercase tracking-wider rounded-2xl transition-all duration-200 flex items-center justify-center gap-2.5 shrink-0",
                         isCurrentStepAllChecked
                           ? "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 active:scale-95 cursor-pointer"
                           : "bg-slate-100 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 border border-slate-200/80 dark:border-slate-700/60 cursor-not-allowed shadow-none"
@@ -2171,7 +2239,7 @@ export function AdminListingReviewModal({
                       }}
                       disabled={isDeciding || !isCurrentStepAllChecked}
                       className={cn(
-                        "group flex-1 sm:flex-none h-11 sm:h-12 px-8 text-xs font-black uppercase tracking-wider rounded-2xl transition-all duration-200 flex items-center justify-center gap-2.5",
+                        "group flex-1 sm:flex-none h-11 sm:h-12 px-8 text-xs font-black uppercase tracking-wider rounded-2xl transition-all duration-200 flex items-center justify-center gap-2.5 shrink-0",
                         isCurrentStepAllChecked
                           ? "bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/30 active:scale-95 cursor-pointer"
                           : "bg-slate-100 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 border border-slate-200/80 dark:border-slate-700/60 cursor-not-allowed shadow-none"
@@ -2183,8 +2251,8 @@ export function AdminListingReviewModal({
                   )}
                 </div>
               ) : isArchived ? (
-                <div className="flex items-center justify-between gap-3 w-full">
-                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-black uppercase tracking-wider">
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end shrink-0">
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-black uppercase tracking-wider shrink-0">
                     <Archive size={15} /> Status: Archived
                   </div>
                   <div className="flex items-center gap-2.5">
@@ -2195,7 +2263,7 @@ export function AdminListingReviewModal({
                           onRestore?.(listing);
                           onClose();
                         }}
-                        className="bg-amber-500 hover:bg-amber-600 text-white rounded-2xl h-11 sm:h-12 px-6 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md shadow-amber-500/25 active:scale-95 transition-all duration-200 cursor-pointer"
+                        className="bg-amber-500 hover:bg-amber-600 text-white rounded-2xl h-11 sm:h-12 px-6 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md shadow-amber-500/25 active:scale-95 transition-all duration-200 cursor-pointer shrink-0"
                       >
                         <RotateCcw size={15} /> Restore Listing
                       </Button>
@@ -2204,16 +2272,16 @@ export function AdminListingReviewModal({
                       type="button"
                       onClick={onClose}
                       variant="outline"
-                      className="rounded-2xl h-11 sm:h-12 px-6 text-xs font-black uppercase tracking-wider border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all duration-200 cursor-pointer"
+                      className="rounded-2xl h-11 sm:h-12 px-6 text-xs font-black uppercase tracking-wider border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all duration-200 cursor-pointer shrink-0"
                     >
                       Close Inspection
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-between gap-3 w-full">
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end shrink-0">
                   <div className={cn(
-                    "flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider border",
+                    "flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider border shrink-0",
                     isApproved ? "bg-primary/10 text-primary border-primary/20" : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
                   )}>
                     {isApproved ? <CheckCircle2 size={15} /> : <ShieldAlert size={15} />}
@@ -2223,7 +2291,7 @@ export function AdminListingReviewModal({
                     type="button"
                     onClick={onClose}
                     variant="outline"
-                    className="rounded-2xl h-11 sm:h-12 px-6 text-xs font-black uppercase tracking-wider border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all duration-200 cursor-pointer"
+                    className="rounded-2xl h-11 sm:h-12 px-6 text-xs font-black uppercase tracking-wider border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all duration-200 cursor-pointer shrink-0"
                   >
                     Close Inspection
                   </Button>
@@ -2257,6 +2325,7 @@ export function AdminListingReviewModal({
         onNavigate={(index) => setPreviewState(prev => ({ ...prev, currentIndex: index }))}
         title={previewState.title}
         isDocument={previewState.isDocument}
+        showExternalLink={true}
       />
 
       {/* Shared Amenities, Rules & Features Full Breakdown Modal */}

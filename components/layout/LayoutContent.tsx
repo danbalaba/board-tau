@@ -9,22 +9,35 @@ interface LayoutContentProps {
 }
 
 const LayoutContent: React.FC<LayoutContentProps> = async ({ children }) => {
-  const session = await getServerSession(authOptions);
+  let session = null;
+  try {
+    session = await getServerSession(authOptions);
+  } catch (error: any) {
+    // Next.js uses DYNAMIC_SERVER_USAGE to signal dynamic bailout during static analysis; rethrow it so Next.js handles it cleanly.
+    if (error?.digest === 'DYNAMIC_SERVER_USAGE' || error?.message?.includes('DYNAMIC_SERVER_USAGE')) {
+      throw error;
+    }
+    console.error("LayoutContent getServerSession error:", error);
+  }
   
   // Real-time user data fetching from DB to ensure Navbar always has 
   // the latest image/role even if the session JWT is stale.
   let dbUser = null;
-  if (session?.user?.email) {
-    dbUser = await db.user.findUnique({
-      where: { email: session.user.email },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        role: true,
-      }
-    });
+  try {
+    if (session?.user?.email) {
+      dbUser = await db.user.findUnique({
+        where: { email: session.user.email },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+        }
+      });
+    }
+  } catch (error) {
+    console.error("LayoutContent dbUser lookup error:", error);
   }
 
   // Merge session data with real-time DB data as fallback

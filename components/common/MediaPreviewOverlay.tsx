@@ -45,12 +45,19 @@ const MediaPreviewOverlay: React.FC<MediaPreviewOverlayProps> = ({
   const safeIndex = Math.max(0, Math.min(currentIndex, safeImages.length - 1));
   const currentSrc = safeImages[safeIndex] || '';
   const isPdf = checkIsPdf(currentSrc);
+  const pdfViewerSrc = isPdf && (currentSrc?.startsWith('http://') || currentSrc?.startsWith('https://'))
+    ? `/api/documents/view?url=${encodeURIComponent(currentSrc)}`
+    : currentSrc;
 
   useEffect(() => {
     if (isOpen) {
-      setIsImageLoading(true);
+      if (isPdf) {
+        setIsImageLoading(false);
+      } else {
+        setIsImageLoading(true);
+      }
     }
-  }, [isOpen, safeIndex, currentSrc]);
+  }, [isOpen, safeIndex, currentSrc, isPdf]);
 
   useEffect(() => {
     if (isOpen) {
@@ -127,7 +134,7 @@ const MediaPreviewOverlay: React.FC<MediaPreviewOverlayProps> = ({
             <div className="flex items-center gap-3">
               {showExternalLink && currentSrc && (
                 <a
-                  href={currentSrc}
+                  href={pdfViewerSrc || currentSrc}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
@@ -177,16 +184,49 @@ const MediaPreviewOverlay: React.FC<MediaPreviewOverlayProps> = ({
                   )}
 
                   {isPdf ? (
-                    <div className="relative w-full h-[75vh] max-w-5xl rounded-2xl overflow-hidden border border-white/20 bg-slate-900 shadow-[0_0_90px_rgba(0,0,0,0.9)] flex flex-col">
-                      <iframe
-                        src={currentSrc}
-                        title={title || "PDF Document Viewer"}
-                        onLoad={() => setIsImageLoading(false)}
-                        className={cn(
-                          "w-full h-full border-none transition-opacity duration-300 bg-white",
-                          isImageLoading ? "opacity-0" : "opacity-100"
-                        )}
-                      />
+                    <div className="relative w-full max-w-xl rounded-3xl p-8 sm:p-12 bg-slate-900/90 backdrop-blur-2xl border border-white/15 shadow-[0_0_90px_rgba(0,0,0,0.9)] flex flex-col items-center justify-center text-center gap-6 my-auto select-none">
+                      <div className="relative">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center justify-center shadow-2xl">
+                          <FileText size={44} className="stroke-[2.2]" />
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center border-2 border-slate-900 shadow-md">
+                          <ShieldCheck size={16} />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 max-w-md">
+                        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20 inline-flex items-center gap-1.5">
+                          <Lock size={10} /> Verified PDF Document
+                        </span>
+                        <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-wider">
+                          {title || "Compliance Document"}
+                        </h3>
+                        <p className="text-xs font-semibold text-slate-300 leading-relaxed">
+                          For multi-page inspection, zooming, and printing, legal documents open in your browser's dedicated high-performance PDF reader.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-center gap-3 w-full pt-2">
+                        <a
+                          href={pdfViewerSrc || currentSrc}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2.5 shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
+                        >
+                          <ExternalLink size={15} />
+                          <span>Open PDF in Full Screen</span>
+                        </a>
+                        <a
+                          href={pdfViewerSrc || currentSrc}
+                          download
+                          onClick={(e) => e.stopPropagation()}
+                          className="px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-black text-xs uppercase tracking-wider transition-all border border-white/15 flex items-center gap-2 shadow-lg cursor-pointer hover:scale-105 active:scale-95"
+                        >
+                          <FileText size={14} />
+                          <span>Download File</span>
+                        </a>
+                      </div>
                     </div>
                   ) : (
                     <img

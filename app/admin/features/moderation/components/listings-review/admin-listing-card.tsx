@@ -35,6 +35,59 @@ const statusConfig: Record<string, { color: string; bg: string; icon: any }> = {
   archived: { color: 'text-white', bg: 'bg-slate-700/90 text-white border-slate-600/50 shadow-lg shadow-slate-700/20', icon: ArchiveRestore },
 };
 
+function OwnerAvatar({ user, size = 'md' }: { user?: any; size?: 'sm' | 'md' }) {
+  const [hasError, setHasError] = React.useState(false);
+  const name = user?.name || 'Landlord Host';
+  const initial = (name.trim().charAt(0) || 'H').toUpperCase();
+
+  const rawImage = user?.image;
+  const isPlaceholder = typeof rawImage === 'string' && (
+    rawImage.includes('placeholder') ||
+    rawImage.includes('dark_placeholder') ||
+    rawImage.includes('white_placeholder')
+  );
+
+  const imageUrl = !isPlaceholder && typeof rawImage === 'string' && rawImage.trim().length > 0 && !hasError
+    ? rawImage.trim()
+    : null;
+
+  const sizeClasses = size === 'sm'
+    ? 'w-6 h-6 rounded-full text-[10px]'
+    : 'w-9 h-9 rounded-xl text-xs';
+
+  if (!imageUrl) {
+    return (
+      <div 
+        className={cn(
+          "bg-primary/10 text-primary font-black flex items-center justify-center shrink-0 border border-primary/20 select-none",
+          sizeClasses
+        )}
+      >
+        {initial}
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("relative overflow-hidden shrink-0 border border-gray-200/50 dark:border-gray-800", sizeClasses)}>
+      <SafeImage
+        src={imageUrl}
+        alt={name}
+        containerClassName="w-full h-full"
+        className="w-full h-full object-cover"
+        showSpinner={false}
+        showSkeleton={false}
+        onError={() => setHasError(true)}
+        fallbackComponent={
+          <div className="w-full h-full bg-primary/10 text-primary font-black flex items-center justify-center select-none">
+            {initial}
+          </div>
+        }
+      />
+    </div>
+  );
+}
+
 export function AdminListingCard({
   listing,
   idx,
@@ -61,6 +114,13 @@ export function AdminListingCard({
     ? (rawImage.url || rawImage.src || '')
     : (typeof rawImage === 'string' ? rawImage : '');
 
+  const isImagePlaceholder = typeof imageUrl === 'string' && (
+    imageUrl.includes('placeholder') ||
+    imageUrl.includes('dark_placeholder') ||
+    imageUrl.includes('white_placeholder')
+  );
+  const validImageUrl = !isImagePlaceholder && imageUrl ? imageUrl : null;
+
   // Calculate uploaded legal docs
   const docUrls: Record<string, string> = {
     governmentId: listing.businessInfo?.documents?.governmentId || listing.governmentIdUrl || listing.documents?.governmentId || '',
@@ -86,15 +146,22 @@ export function AdminListingCard({
           <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
             {/* Thumbnail */}
             <div className="relative w-28 h-28 sm:w-52 sm:h-36 rounded-xl sm:rounded-2xl overflow-hidden shadow-sm flex-shrink-0 bg-gray-100 dark:bg-gray-800">
-              {imageUrl ? (
+              {validImageUrl ? (
                 <SafeImage
-                  src={imageUrl}
+                  src={validImageUrl}
                   alt={listing.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  fallbackComponent={
+                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 dark:text-gray-600 gap-1 bg-gray-50/50 dark:bg-gray-800/30">
+                      <IconBuildingCommunity size={32} strokeWidth={1.5} />
+                      <span className="text-[8px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">No Image</span>
+                    </div>
+                  }
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 dark:text-gray-600 gap-1 bg-gray-50/50 dark:bg-gray-800/30">
                   <IconBuildingCommunity size={32} strokeWidth={1.5} />
+                  <span className="text-[8px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">No Image</span>
                 </div>
               )}
 
@@ -153,22 +220,12 @@ export function AdminListingCard({
               </div>
 
               {/* Property Owner Info */}
-              <div className="flex items-center gap-2">
-                {listing.user?.image ? (
-                  <SafeImage
-                    src={listing.user.image}
-                    alt={listing.user.name}
-                    className="w-6 h-6 rounded-full object-cover shrink-0"
-                  />
-                ) : (
-                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary font-black text-[10px] flex items-center justify-center shrink-0">
-                    {(listing.user?.name || 'H').charAt(0)}
-                  </div>
-                )}
+              <div className="flex items-center gap-2 min-w-0">
+                <OwnerAvatar user={listing.user} size="sm" />
                 <span className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">
                   {listing.user?.name || 'Landlord Host'}
                 </span>
-                <span className="text-[9px] font-medium text-gray-400">
+                <span className="text-[9px] font-medium text-gray-400 shrink-0">
                   • Submitted {new Date(listing.createdAt).toLocaleDateString()}
                 </span>
               </div>
@@ -317,15 +374,22 @@ export function AdminListingCard({
     >
       {/* Top Image Section */}
       <div className="relative h-44 mb-6 w-full rounded-[1.5rem] overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 z-10">
-        {imageUrl ? (
+        {validImageUrl ? (
           <SafeImage
-            src={imageUrl}
+            src={validImageUrl}
             alt={listing.title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            fallbackComponent={
+              <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 dark:text-gray-600 gap-2 bg-gray-50/50 dark:bg-gray-800/30">
+                <IconBuildingCommunity size={40} strokeWidth={1.5} />
+                <span className="text-[9px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">No Listing Photos</span>
+              </div>
+            }
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300">
+          <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 dark:text-gray-600 gap-2 bg-gray-50/50 dark:bg-gray-800/30">
             <IconBuildingCommunity size={40} strokeWidth={1.5} />
+            <span className="text-[9px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">No Listing Photos</span>
           </div>
         )}
 
@@ -391,20 +455,10 @@ export function AdminListingCard({
         </h3>
 
         {/* Owner Info Box */}
-        <div className="flex items-center gap-3 mb-4 bg-gray-50 dark:bg-gray-800/50 p-2.5 rounded-2xl border border-gray-100/50 dark:border-gray-800 w-full">
-          {listing.user?.image ? (
-            <SafeImage
-              src={listing.user.image}
-              alt={listing.user.name}
-              className="w-9 h-9 rounded-xl object-cover"
-            />
-          ) : (
-            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary font-bold flex items-center justify-center shrink-0">
-              {(listing.user?.name || 'H').charAt(0)}
-            </div>
-          )}
+        <div className="flex items-center gap-3 mb-4 bg-gray-50 dark:bg-gray-800/50 p-2.5 rounded-2xl border border-gray-100/50 dark:border-gray-800 w-full min-w-0">
+          <OwnerAvatar user={listing.user} size="md" />
           <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5 leading-none">Property Owner</p>
+            <p className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5 leading-none truncate">Property Owner</p>
             <p className="text-xs font-black text-gray-900 dark:text-gray-100 truncate leading-none">{listing.user?.name || 'Landlord Host'}</p>
           </div>
         </div>

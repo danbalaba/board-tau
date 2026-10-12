@@ -2,6 +2,7 @@ import { PropertyConfigurationClient } from "@/app/admin/features/property-confi
 
 export const metadata = {
   title: "Property Configuration | Admin | BoardTAU",
+  description: "Configure property types, room categories, and accommodation rules",
 };
 
 export default function PropertyConfigurationPage() {
