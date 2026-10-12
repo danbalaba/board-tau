@@ -12,7 +12,11 @@ const LayoutContent: React.FC<LayoutContentProps> = async ({ children }) => {
   let session = null;
   try {
     session = await getServerSession(authOptions);
-  } catch (error) {
+  } catch (error: any) {
+    // Next.js uses DYNAMIC_SERVER_USAGE to signal dynamic bailout during static analysis; rethrow it so Next.js handles it cleanly.
+    if (error?.digest === 'DYNAMIC_SERVER_USAGE' || error?.message?.includes('DYNAMIC_SERVER_USAGE')) {
+      throw error;
+    }
     console.error("LayoutContent getServerSession error:", error);
   }
   
