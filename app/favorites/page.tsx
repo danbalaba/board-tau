@@ -1,5 +1,7 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { redirect } from "next/navigation";
+
+export const dynamic = 'force-dynamic';
 
 import EmptyState from "@/components/common/EmptyState";
 import Heading from "@/components/common/Heading";
@@ -26,7 +28,11 @@ const FavoritesPage = async () => {
 
   const favorites = await getFavoriteListings();
 
-  return <FavoritesClient initialFavorites={favorites} />;
+  return (
+    <Suspense fallback={<EmptyState title="Loading Favorites..." subtitle="Please wait while we retrieve your saved listings" />}>
+      <FavoritesClient initialFavorites={favorites} />
+    </Suspense>
+  );
 };
 
 export default FavoritesPage;

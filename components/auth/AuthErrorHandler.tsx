@@ -1,9 +1,9 @@
 "use client";
-import { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
-const AuthErrorHandler = () => {
+function AuthErrorHandlerInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -42,6 +42,14 @@ const AuthErrorHandler = () => {
   }, [searchParams, router]);
 
   return null;
+}
+
+const AuthErrorHandler = () => {
+  return (
+    <Suspense fallback={null}>
+      <AuthErrorHandlerInner />
+    </Suspense>
+  );
 };
 
 export default AuthErrorHandler;

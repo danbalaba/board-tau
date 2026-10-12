@@ -49,10 +49,10 @@ export function matchUserIntent(userMessage: string): IntentMatchResult {
         reply: `Here is the complete end-to-end booking and reservation journey on BoardTAU:\n\n` +
           `1. **Search & Filter**: Find your ideal accommodation using the 10-Step Guided Search Wizard or Spotlight AI Search.\n` +
           `2. **Compare Rooms**: View property details, campus proximity, and compare rooms under **Available Rooms**.\n` +
-          `3. **Submit Inquiry (with KYC)**: Click **Inquire Now** on your room card and complete the 8-step verification wizard.\n` +
+          `3. **Submit Inquiry (with KYC Verification)**: Click **Inquire Now** on your room card and complete the 8-step verification wizard.\n` +
           `4. **Landlord Review**: The host reviews your inquiry note and verified credentials, then approves or rejects.\n` +
           `5. **Reservation Pending Payment**: Once approved, your inquiry becomes an official Reservation marked **Payment Pending**.\n` +
-          `6. **Lease Agreement & Holding Deposit**: In checkout, click **Read PDF** to review the lease terms, check the agreement consent box, and **Slide to Pay** via GCash, Maya, or Card (Stripe).\n` +
+          `6. **Sign Lease Contract & Holding Deposit**: In checkout, click **Read PDF** to review the lease terms, check the agreement consent box, and **Slide to Pay** via GCash, Maya, or Card (Stripe).\n` +
           `7. **Check-In**: Upon arrival at the property, the landlord marks you as **Checked-In**, which automatically deducts room occupancy slots.\n` +
           `8. **Check-Out**: When your stay concludes, the reservation is marked **Completed**, and occupancy slots are restored.\n` +
           `9. **Review & Rating (Optional)**: Leave a review and rating for future TAU boarders.\n\n` +
@@ -188,7 +188,7 @@ export function matchUserIntent(userMessage: string): IntentMatchResult {
       isMatched: true,
       intentKey: "LEASE_CONTRACT",
       response: {
-        reply: `BoardTAU features a streamlined **Digital Lease Contract & Agreement Review**:\n\n` +
+        reply: `BoardTAU features a streamlined **Digital Lease Contracts & Agreement Review**:\n\n` +
           `• Once your inquiry is approved by the host, you can finalize your room reservation.\n` +
           `• In the checkout modal, click **Read PDF** to review the landlord's official lease terms, house rules, and move-out notice period.\n` +
           `• Check the digital consent box: **"I have read and agree to the Boarding House Lease Agreement & house rules"** (no drawing signature needed!).\n` +

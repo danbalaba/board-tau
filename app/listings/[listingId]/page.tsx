@@ -1,5 +1,8 @@
 import React from "react";
 import { Metadata } from "next";
+
+export const dynamic = 'force-dynamic';
+
 import EmptyState from "@/components/common/EmptyState";
 import ListingGallery from "@/components/listings/detail/ListingGallery";
 import ListingHeader from "@/components/listings/detail/ListingHeader";

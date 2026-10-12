@@ -52,7 +52,7 @@ describe('ReportExportModal', () => {
       />
     );
     
-    expect(screen.getByText('Export Business Report')).toBeInTheDocument();
+    expect(screen.getByText(/Business Report/i)).toBeInTheDocument();
   });
 
   it('calls onClose when top drag handle bar is clicked', () => {

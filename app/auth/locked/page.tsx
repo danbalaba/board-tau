@@ -1,16 +1,15 @@
 "use client";
 
-import React from "react";
+import React, { Suspense, useEffect } from "react";
 import { motion } from "framer-motion";
 import { IconLock, IconMail, IconArrowLeft } from "@tabler/icons-react";
 import Link from "next/link";
 import Button from "@/components/common/Button";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { pusherClient } from "@/lib/pusher-client";
 import toast from "react-hot-toast";
 
-const AccountLockedPage = () => {
+const AccountLockedContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const email = searchParams.get("email");
@@ -148,4 +147,16 @@ const AccountLockedPage = () => {
   );
 };
 
-export default AccountLockedPage;
+export default function AccountLockedPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center p-6">
+          <div className="w-10 h-10 rounded-full border-4 border-rose-500/20 border-t-rose-500 animate-spin" />
+        </div>
+      }
+    >
+      <AccountLockedContent />
+    </Suspense>
+  );
+}

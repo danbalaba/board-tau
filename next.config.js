@@ -80,7 +80,7 @@ module.exports = withPWA(nextConfig);
 
 // Injected content via Sentry wizard below
 
-const { withSentryConfig } = require("@sentry/nextjs");
+const { withSentryConfig } = require("@sentry/nextjs/config");
 
 const sentryOptions = {
   // For all available options, see:

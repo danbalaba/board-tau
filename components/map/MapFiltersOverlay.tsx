@@ -196,7 +196,7 @@ export default function MapFiltersOverlay({
                 ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25 ring-2 ring-blue-500/20' 
                 : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
             }`}
-            title={showDirections ? "Close Directions" : "Walking Directions"}
+            title="Directions"
           >
             <Navigation size={17} />
           </button>

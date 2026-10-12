@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconBan, IconAlertTriangle, IconHome, IconShieldOff } from "@tabler/icons-react";
@@ -9,7 +9,7 @@ import { pusherClient } from "@/lib/pusher-client";
 import toast from "react-hot-toast";
 import { verifyRestrictionToken } from "@/lib/security-tokens";
 
-export default function AccountBannedPage() {
+function AccountBannedContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -133,5 +133,19 @@ export default function AccountBannedPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AccountBannedPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[80vh] w-full flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950">
+          <div className="w-10 h-10 rounded-full border-4 border-rose-500/20 border-t-rose-500 animate-spin" />
+        </div>
+      }
+    >
+      <AccountBannedContent />
+    </Suspense>
   );
 }

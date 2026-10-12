@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconUserOff, IconGavel, IconArrowLeft, IconAlertTriangle, IconMail, IconHome } from "@tabler/icons-react";
@@ -9,7 +9,7 @@ import { pusherClient } from "@/lib/pusher-client";
 import toast from "react-hot-toast";
 import { verifyRestrictionToken } from "@/lib/security-tokens";
 
-export default function AccountSuspendedPage() {
+function AccountSuspendedContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -161,5 +161,19 @@ export default function AccountSuspendedPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AccountSuspendedPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[80vh] w-full flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950">
+          <div className="w-10 h-10 rounded-full border-4 border-amber-500/20 border-t-amber-500 animate-spin" />
+        </div>
+      }
+    >
+      <AccountSuspendedContent />
+    </Suspense>
   );
 }
