@@ -31,7 +31,11 @@ const itemVariants: Variants = {
   },
 };
 
-export default function LandlordAnalytics() {
+interface LandlordAnalyticsProps {
+  isLoading?: boolean;
+}
+
+export default function LandlordAnalytics({ isLoading: propLoading = false }: LandlordAnalyticsProps = {}) {
   const {
     propertyList,
     selectedPropertyId,
@@ -41,10 +45,13 @@ export default function LandlordAnalytics() {
     propertyLeaderboard,
     chartData,
     scope,
-    isInitialLoading,
-    isLoading,
+    isInitialLoading: hookInitialLoading,
+    isLoading: hookLoading,
     handleGenerateReport,
   } = useAnalyticsLogic();
+
+  const isLoading = propLoading || hookLoading;
+  const isInitialLoading = propLoading || hookInitialLoading;
 
   return (
     <motion.div
