@@ -18,6 +18,8 @@
     "redis:flush": "tsx --env-file=.env scripts/flush-redis.ts",
     "seed:test-user": "tsx prisma/seed-real-listing.ts",
     "seed:system-admin": "tsx scripts/seed-system-admin.ts",
+    "seed:test-applicant": "tsx --env-file=.env scripts/seed-test-host-applicant.ts",
+    "delete:test-applicant": "tsx --env-file=.env scripts/delete-test-host-applicant.ts",
     "reset-listings": "tsx --env-file=.env scripts/reset-listings.ts"
   },
   "overrides": {

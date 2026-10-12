@@ -7,6 +7,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { useEdgeStore } from '@/lib/edgestore';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 
 export interface RoomType {
   roomType: string;
@@ -28,6 +29,8 @@ import { clearLandlordTaxonomyCache } from '@/lib/landlordTaxonomyCache';
 
 export function usePropertyCreatorLogic(initialData: any) {
   const router = useRouter();
+  const { data: session } = useSession();
+  const currentLandlordId = (session?.user as any)?.id || initialData?.userId || "host";
   const propertyId = initialData?.id ? String(initialData.id) : '';
   const isSubmittedRef = useRef(false);
   const { edgestore } = useEdgeStore();
@@ -690,22 +693,6 @@ export function usePropertyCreatorLogic(initialData: any) {
       setSubmissionStage(3);
       setSubmissionProgress(50);
 
-      // 1. Upload Documents (Parallel)
-      const docUploadPromises = Object.entries(uploadedFiles).map(async ([type, file]) => {
-        if (!(file instanceof File)) return null;
-        const freshFile = new File([file], file.name, { type: file.type });
-        const res = await uploadWithRetry(() => edgestore.identityDocs.upload({ 
-          file: freshFile,
-          input: { landlordId: "PENDING", listingId: "PENDING" }
-        }));
-        return { type, url: res.url };
-      });
-      
-      const docResults = (await Promise.all(docUploadPromises)).filter(Boolean);
-      const docUrls: Record<string, string> = {};
-      docResults.forEach(r => { if(r) docUrls[r.type] = r.url; });
-      setSubmissionProgress(65);
-
       // Helper to convert Base64 Data URL to File object for EdgeStore upload
       const base64ToFile = (base64DataUrl: string, filename: string): File => {
         try {
@@ -723,6 +710,59 @@ export function usePropertyCreatorLogic(initialData: any) {
           return new File([], filename, { type: 'image/jpeg' });
         }
       };
+
+      // 1. Upload Documents (Parallel with in-memory & Base64 draft fallback)
+      const docUploadPromises: Promise<{ type: string; url: string } | null>[] = [];
+      const processedDocTypes = new Set<string>();
+
+      // A. Upload from in-memory File instances
+      for (const [type, file] of Object.entries(uploadedFiles)) {
+        if (file instanceof File) {
+          processedDocTypes.add(type);
+          docUploadPromises.push((async () => {
+            const freshFile = new File([file], file.name, { type: file.type });
+            const res = await uploadWithRetry(() => edgestore.identityDocs.upload({ 
+              file: freshFile,
+              input: { landlordId: currentLandlordId, listingId: propertyId || "new-listing" }
+            }));
+            return { type, url: res.url };
+          })());
+        }
+      }
+
+      // B. Fallback: If in-memory files are absent (e.g. step navigation, draft restore), recover from form values
+      const draftDocsSource = {
+        ...(initialData?.businessInfo?.documents || {}),
+        ...(initialData?.documents || {}),
+        ...(data?.businessInfo?.documents || {}),
+        ...(data?.documents || {}),
+      };
+
+      for (const [type, val] of Object.entries(draftDocsSource)) {
+        if (processedDocTypes.has(type) || type === 'customContract' || !val) continue;
+        if (typeof val === 'string') {
+          if (val.startsWith('data:')) {
+            processedDocTypes.add(type);
+            const ext = val.includes('image/png') ? 'png' : (val.includes('application/pdf') ? 'pdf' : 'jpg');
+            const file = base64ToFile(val, `${type}.${ext}`);
+            docUploadPromises.push((async () => {
+              const res = await uploadWithRetry(() => edgestore.identityDocs.upload({
+                file,
+                input: { landlordId: currentLandlordId, listingId: propertyId || "new-listing" }
+              }));
+              return { type, url: res.url };
+            })());
+          } else if (val.startsWith('http://') || val.startsWith('https://')) {
+            processedDocTypes.add(type);
+            docUploadPromises.push(Promise.resolve({ type, url: val }));
+          }
+        }
+      }
+      
+      const docResults = (await Promise.all(docUploadPromises)).filter(Boolean);
+      const docUrls: Record<string, string> = {};
+      docResults.forEach(r => { if(r) docUrls[r.type] = r.url; });
+      setSubmissionProgress(65);
 
       // 2. Upload Property Images with Categories (Parallel)
       const propertyImagePromises: Promise<{ url: string, category: string } | null>[] = [];
@@ -827,7 +867,8 @@ export function usePropertyCreatorLogic(initialData: any) {
         images: roomImageUrlsMap[i] || [] // Use uploaded room images
       }));
 
-      const finalCustomPdfUrl = docUrls.customContract || (docUrls as any)['propertyConfig.customPdfUrl'] || data.propertyConfig?.customPdfUrl || '';
+      const rawCustomPdfUrl = docUrls.customContract || (docUrls as any)['propertyConfig.customPdfUrl'] || data.propertyConfig?.customPdfUrl || '';
+      const finalCustomPdfUrl = typeof rawCustomPdfUrl === 'string' && !rawCustomPdfUrl.startsWith('blob:') ? rawCustomPdfUrl : '';
 
       // 4. Transform data for API - Flattens the structure to match the existing createProperty service
       const payload = {

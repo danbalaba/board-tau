@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Webcam from 'react-webcam';
 import { useResponsiveToast } from '@/components/common/ResponsiveToast';
 import { useEdgeStore } from '@/lib/edgestore';
+import { useSession } from 'next-auth/react';
 import { useKYC } from '@/hooks/useKYC';
 import { createHostApplication } from '@/services/landlord/applications';
 import { base64ToFile, formatTitleCase, sanitizeHostFormData, getMobileStepForDesktopStep, getDesktopStepForMobileStep } from './HostApplicationUtils';
@@ -52,8 +53,10 @@ const fileToDraftObject = (file: File | null): Promise<{ name: string; type: str
   });
 };
 
-export const useHostApplicationLogic = (onClose?: () => void) => {
+export const useHostApplicationLogic = (onClose?: () => void, initialApplication?: any) => {
   const router = useRouter();
+  const { data: session } = useSession();
+  const applicantId = (session?.user as any)?.id || 'host-applicant';
   
   let edgestore: any = null;
   try {
@@ -111,15 +114,15 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
   const webcamRef = useRef<Webcam>(null);
   const scaledCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const isFaceAlignedRef = useRef(false);
-  const [capturedSelfie, setCapturedSelfie] = useState<string | null>(null);
-  const [capturedID, setCapturedID] = useState<string | null>(null);
+  const [capturedSelfie, setCapturedSelfie] = useState<string | null>(initialApplication?.selfieUrl || null);
+  const [capturedID, setCapturedID] = useState<string | null>(initialApplication?.idCardUrl || null);
   const [livenessStatus, setLivenessStatus] = useState<'idle' | 'passed'>('idle');
   const [activeChallenges, setActiveChallenges] = useState<('blink' | 'smile' | 'turnLeft' | 'turnRight' | 'openMouth' | 'raiseEyebrows')[]>([]);
   const consecutiveFaceFailures = useRef(0);
   const [isFaceAligned, setIsFaceAligned] = useState(false);
   const [isIDAligned, setIsIDAligned] = useState(false);
   const [isPhoneDetected, setIsPhoneDetected] = useState(false);
-  const [hasReadGuidelines, setHasReadGuidelines] = useState(false);
+  const [hasReadGuidelines, setHasReadGuidelines] = useState(Boolean(initialApplication));
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [isFlashActive, setIsFlashActive] = useState(false);
   const [isSelfieProcessing, setIsSelfieProcessing] = useState(false);
@@ -131,7 +134,9 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
   const [permitFile, setPermitFile] = useState<File | null>(null);
   const [utilityBillFile, setUtilityBillFile] = useState<File | null>(null);
   const [fireSafetyFile, setFireSafetyFile] = useState<File | null>(null);
-  const [docChoice, setDocChoice] = useState<'permit' | 'utility'>('permit');
+  const [docChoice, setDocChoice] = useState<'permit' | 'utility'>(
+    initialApplication?.additionalDocsUrl && !initialApplication?.businessPermitUrl ? 'utility' : 'permit'
+  );
 
   // Submission Loader Modal Progress States
   const [submissionProgress, setSubmissionProgress] = useState(0);
@@ -149,10 +154,29 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
   const { register, handleSubmit, control, watch, formState: { errors }, setValue, trigger, getValues, setError, clearErrors, reset } = useForm<HostApplicationFormData>({
     mode: 'onChange',
     defaultValues: {
-      businessInfo: { businessName: '', businessType: '' as any, yearsExperience: '' },
-      contactInfo: { fullName: '', phoneNumber: '', email: '', ownershipRole: undefined as any },
-      propertyEvidence: { address: '', facadePhotoUrl: '', latlng: TAU_COORDINATES },
-      verification: { selfieUrl: '', idCardUrl: '', businessPermitUrl: '', fireSafetyUrl: '', utilityBillUrl: '' }
+      businessInfo: {
+        businessName: initialApplication?.businessInfo?.businessName || '',
+        businessType: initialApplication?.businessInfo?.businessType || ('' as any),
+        yearsExperience: initialApplication?.businessInfo?.yearsExperience || ''
+      },
+      contactInfo: {
+        fullName: initialApplication?.contactInfo?.fullName || '',
+        phoneNumber: initialApplication?.contactInfo?.phoneNumber || '',
+        email: initialApplication?.contactInfo?.email || '',
+        ownershipRole: initialApplication?.contactInfo?.ownershipRole || (undefined as any)
+      },
+      propertyEvidence: {
+        address: initialApplication?.propertyEvidence?.address || '',
+        facadePhotoUrl: initialApplication?.facadePhotoUrl || '',
+        latlng: initialApplication?.latlng || TAU_COORDINATES
+      },
+      verification: {
+        selfieUrl: initialApplication?.selfieUrl || '',
+        idCardUrl: initialApplication?.idCardUrl || '',
+        businessPermitUrl: initialApplication?.businessPermitUrl || '',
+        fireSafetyUrl: initialApplication?.fireSafetyUrl || '',
+        utilityBillUrl: initialApplication?.additionalDocsUrl || ''
+      }
     }
   });
 
@@ -768,19 +792,33 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
       toast.loading("Uploading secure verification documents...", { id: 'host-sub' });
 
       // Secure Private Uploads (IDs and Permits)
-      const selfieUrl = (await edgestore.identityDocs.upload({ 
-        file: base64ToFile(capturedSelfie!, "selfie.jpg"), 
-        input: { listingId: "PENDING", landlordId: "PENDING" } 
-      })).url;
+      let selfieUrl = initialApplication?.selfieUrl || "";
+      if (capturedSelfie) {
+        if (capturedSelfie.startsWith("data:")) {
+          selfieUrl = (await edgestore.identityDocs.upload({ 
+            file: base64ToFile(capturedSelfie, "selfie.jpg"), 
+            input: { listingId: "host-app", landlordId: applicantId } 
+          })).url;
+        } else {
+          selfieUrl = capturedSelfie;
+        }
+      }
       setSubmissionProgress(35);
       setSubmissionStage(2);
 
-      const idUrl = (await edgestore.identityDocs.upload({ 
-        file: base64ToFile(capturedID!, "id_card.jpg"), 
-        input: { listingId: "PENDING", landlordId: "PENDING" } 
-      })).url;
+      let idUrl = initialApplication?.idCardUrl || "";
+      if (capturedID) {
+        if (capturedID.startsWith("data:")) {
+          idUrl = (await edgestore.identityDocs.upload({ 
+            file: base64ToFile(capturedID, "id_card.jpg"), 
+            input: { listingId: "host-app", landlordId: applicantId } 
+          })).url;
+        } else {
+          idUrl = capturedID;
+        }
+      }
 
-      if (selfieUrl && idUrl) {
+      if (selfieUrl && idUrl && capturedSelfie?.startsWith("data:")) {
         try {
           toast.loading("Verifying identity documents with AWS Rekognition...", { id: 'host-sub' });
           const kycRes = await fetch('/api/kyc/verify', {
@@ -797,31 +835,37 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
         }
       }
       
-      let permitUrl = "";
+      let permitUrl = initialApplication?.businessPermitUrl || "";
       if (permitFile) {
         permitUrl = (await edgestore.identityDocs.upload({ 
           file: permitFile, 
-          input: { listingId: "PENDING", landlordId: "PENDING" } 
+          input: { listingId: "host-app", landlordId: applicantId } 
         })).url;
       }
       setSubmissionProgress(60);
       setSubmissionStage(3);
 
-      let utilityBillUrl = "";
+      let utilityBillUrl = initialApplication?.additionalDocsUrl || "";
       if (utilityBillFile) {
         utilityBillUrl = (await edgestore.identityDocs.upload({ 
           file: utilityBillFile, 
-          input: { listingId: "PENDING", landlordId: "PENDING" } 
+          input: { listingId: "host-app", landlordId: applicantId } 
         })).url;
       }
 
-      const fireUrl = (await edgestore.identityDocs.upload({ 
-        file: fireSafetyFile!, 
-        input: { listingId: "PENDING", landlordId: "PENDING" } 
-      })).url;
+      let fireUrl = initialApplication?.fireSafetyUrl || "";
+      if (fireSafetyFile) {
+        fireUrl = (await edgestore.identityDocs.upload({ 
+          file: fireSafetyFile, 
+          input: { listingId: "host-app", landlordId: applicantId } 
+        })).url;
+      }
       
       // Public Upload (Property Facade)
-      const facadeUrl = (await edgestore.publicFiles.upload({ file: facadeFile! })).url;
+      let facadeUrl = initialApplication?.facadePhotoUrl || "";
+      if (facadeFile) {
+        facadeUrl = (await edgestore.publicFiles.upload({ file: facadeFile })).url;
+      }
       setSubmissionProgress(85);
       setSubmissionStage(4);
 
@@ -833,7 +877,7 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
         businessPermitUrl: permitUrl || utilityBillUrl,
         fireSafetyUrl: fireUrl,
         facadePhotoUrl: facadeUrl,
-        latlng: (data as any).propertyEvidence?.latlng || [15.4822, 120.5963],
+        latlng: (data as any).propertyEvidence?.latlng || initialApplication?.latlng || [15.4822, 120.5963],
         additionalDocsUrl: utilityBillUrl || ""
       } as any);
 
@@ -844,7 +888,7 @@ export const useHostApplicationLogic = (onClose?: () => void) => {
       setTimeout(() => {
         setIsSubmitting(false);
         onClose?.();
-        router.push('/landlord/dashboard');
+        window.location.href = '/become-a-host?status=submitted';
       }, 1500);
     } catch (err: any) {
       console.error(err);

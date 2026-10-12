@@ -31,7 +31,8 @@ import {
   RotateCcw,
   MapPin,
   Info,
-  ListChecks
+  ListChecks,
+  ExternalLink
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,6 +42,18 @@ import SafeImage from '@/components/common/SafeImage';
 import { AdminApplicationRejectModal } from './admin-application-reject-modal';
 
 const Map = dynamic(() => import('@/components/common/Map'), { ssr: false });
+
+const checkIsPdf = (url?: string | null): boolean => {
+  if (!url || typeof url !== 'string') return false;
+  const lower = url.toLowerCase();
+  return lower.endsWith('.pdf') || lower.includes('.pdf?') || lower.includes('/pdf') || lower.startsWith('data:application/pdf');
+};
+
+const getDocumentViewUrl = (url?: string | null): string => {
+  if (!url || typeof url !== 'string') return '';
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+  return `/api/documents/view?url=${encodeURIComponent(url)}`;
+};
 
 interface AdminApplicationReviewModalProps {
   application: any | null;
@@ -186,6 +199,27 @@ export function AdminApplicationReviewModal({
     if (!application || String(application.status).toLowerCase() !== 'pending') return true;
     return currentStepChecklistItems.every(item => Boolean(stepChecklistsState[`${activeTab}_${item.id}`]));
   }, [application, activeTab, currentStepChecklistItems, stepChecklistsState]);
+
+  const isStepChecklistComplete = (tabKey: string) => {
+    const items = STEP_CHECKLISTS[tabKey]?.items || [];
+    return items.length > 0 && items.every(item => Boolean(stepChecklistsState[`${tabKey}_${item.id}`]));
+  };
+
+  const isAllChecklistsChecked = useMemo(() => {
+    if (!application || String(application.status).toLowerCase() !== 'pending') return true;
+    return TAB_ORDER.every(tabKey => isStepChecklistComplete(tabKey));
+  }, [application, stepChecklistsState]);
+
+  const canApprove = useMemo(() => {
+    if (isDeciding) return false;
+    if (isAllChecklistsChecked) return true;
+    const currentTabIdx = TAB_ORDER.indexOf(activeTab);
+    if (currentTabIdx === TAB_ORDER.length - 1 && isCurrentStepAllChecked) {
+      const prevStepsConfirmed = confirmedSteps.slice(0, TAB_ORDER.length - 1).every((conf, i) => conf || isStepChecklistComplete(TAB_ORDER[i]));
+      return prevStepsConfirmed;
+    }
+    return false;
+  }, [isDeciding, isAllChecklistsChecked, activeTab, isCurrentStepAllChecked, confirmedSteps, stepChecklistsState]);
 
   const failedChecklistNotes = useMemo(() => {
     const notes: string[] = [];
@@ -396,7 +430,7 @@ export function AdminApplicationReviewModal({
           {TAB_ORDER.map((tabKey, idx) => {
             const isActive = activeTab === tabKey;
             const isUnlocked = !isPending || idx <= maxUnlockedStepIdx;
-            const isConfirmed = confirmedSteps[idx];
+            const isConfirmed = confirmedSteps[idx] || (idx === currentTabIdx ? isCurrentStepAllChecked : isStepChecklistComplete(tabKey));
 
             const tabLabels: Record<string, { label: string; icon: any }> = {
               PERSONAL: { label: '1. Host Info', icon: User },
@@ -663,10 +697,25 @@ export function AdminApplicationReviewModal({
                     <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-3 shadow-sm flex flex-col">
                       <div className="flex items-center justify-between">
                         <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Government Issued ID</span>
-                        <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20">ID Document</span>
+                        {checkIsPdf(govIdUrl) ? (
+                          <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20 flex items-center gap-1">
+                            <FileText size={10} /> PDF Document
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20">
+                            {govIdUrl ? "ID Attached" : "Not Provided"}
+                          </span>
+                        )}
                       </div>
                       <div 
-                        onClick={() => govIdUrl && handleOpenPreview([govIdUrl], 0, 'Government Issued ID Card', true)}
+                        onClick={() => {
+                          if (!govIdUrl) return;
+                          if (checkIsPdf(govIdUrl)) {
+                            window.open(getDocumentViewUrl(govIdUrl), '_blank', 'noopener,noreferrer');
+                          } else {
+                            handleOpenPreview([govIdUrl], 0, 'Government Issued ID Card', true);
+                          }
+                        }}
                         className={cn(
                           "relative w-full h-64 sm:h-72 aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 group transition-all",
                           govIdUrl ? "cursor-pointer hover:border-blue-500/50" : "cursor-default"
@@ -681,8 +730,21 @@ export function AdminApplicationReviewModal({
                               containerClassName="w-full h-full relative"
                               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
                             />
-                            <div className="absolute inset-0 bg-slate-950/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider text-white z-20">
-                              <Eye size={16} /> Enlarge Document
+                            <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-3 text-white z-20">
+                              <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
+                                {checkIsPdf(govIdUrl) ? (
+                                  <>
+                                    <ExternalLink size={14} /> Open PDF in Full Screen
+                                  </>
+                                ) : (
+                                  <>
+                                    <Eye size={14} /> Enlarge Document
+                                  </>
+                                )}
+                              </div>
+                              <span className="text-[9px] font-semibold text-slate-300">
+                                {checkIsPdf(govIdUrl) ? "Click to open in native browser PDF reader" : "Click to view in fullscreen preview"}
+                              </span>
                             </div>
                           </>
                         ) : (
@@ -692,6 +754,24 @@ export function AdminApplicationReviewModal({
                           </div>
                         )}
                       </div>
+
+                      {/* Quick Action Footer for PDF */}
+                      {govIdUrl && checkIsPdf(govIdUrl) && (
+                        <div className="pt-1">
+                          <a
+                            href={getDocumentViewUrl(govIdUrl)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="group w-full py-2.5 px-3 rounded-xl bg-blue-500/10 hover:bg-blue-600 dark:bg-blue-500/15 dark:hover:bg-blue-600 text-blue-600 dark:text-blue-400 hover:text-white dark:hover:text-white border border-blue-500/20 hover:border-blue-600 dark:hover:border-blue-600 text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-md hover:shadow-blue-600/25 active:scale-[0.99]"
+                            title="Open PDF in new browser tab"
+                          >
+                            <FileText size={13} className="shrink-0 transition-colors text-inherit group-hover:text-white" />
+                            <span className="transition-colors text-inherit group-hover:text-white">Open PDF Document</span>
+                            <ExternalLink size={12} className="opacity-70 group-hover:opacity-100 transition-all text-inherit group-hover:text-white group-hover:translate-x-0.5" />
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -784,16 +864,29 @@ export function AdminApplicationReviewModal({
                               </div>
                               <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">Mayor's / Business Permit</span>
                             </div>
-                            <span className={cn(
-                              "text-[9px] font-bold px-2 py-0.5 rounded-full border",
-                              businessPermitUrl ? "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20" : "text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
-                            )}>
-                              {businessPermitUrl ? "Permit Attached" : "Not Provided"}
-                            </span>
+                            {checkIsPdf(businessPermitUrl) ? (
+                              <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20 flex items-center gap-1">
+                                <FileText size={10} /> PDF Document
+                              </span>
+                            ) : (
+                              <span className={cn(
+                                "text-[9px] font-bold px-2 py-0.5 rounded-full border",
+                                businessPermitUrl ? "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20" : "text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                              )}>
+                                {businessPermitUrl ? "Permit Attached" : "Not Provided"}
+                              </span>
+                            )}
                           </div>
 
                           <div 
-                            onClick={() => businessPermitUrl && handleOpenPreview([businessPermitUrl], 0, "Business / Mayor's Permit Document", true)}
+                            onClick={() => {
+                              if (!businessPermitUrl) return;
+                              if (checkIsPdf(businessPermitUrl)) {
+                                window.open(getDocumentViewUrl(businessPermitUrl), '_blank', 'noopener,noreferrer');
+                              } else {
+                                handleOpenPreview([businessPermitUrl], 0, "Business / Mayor's Permit Document", true);
+                              }
+                            }}
                             className={cn(
                               "relative w-full h-48 sm:h-52 aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 group transition-all",
                               businessPermitUrl ? "cursor-pointer hover:border-blue-500/50" : "cursor-default"
@@ -808,8 +901,21 @@ export function AdminApplicationReviewModal({
                                   containerClassName="w-full h-full relative"
                                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
                                 />
-                                <div className="absolute inset-0 bg-slate-950/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider text-white z-20">
-                                  <Eye size={16} /> Enlarge Document
+                                <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-3 text-white z-20">
+                                  <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
+                                    {checkIsPdf(businessPermitUrl) ? (
+                                      <>
+                                        <ExternalLink size={14} /> Open PDF in Full Screen
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Eye size={14} /> Enlarge Document
+                                      </>
+                                    )}
+                                  </div>
+                                  <span className="text-[9px] font-semibold text-slate-300">
+                                    {checkIsPdf(businessPermitUrl) ? "Click to open in native browser PDF reader" : "Click to view in fullscreen preview"}
+                                  </span>
                                 </div>
                               </>
                             ) : (
@@ -819,6 +925,24 @@ export function AdminApplicationReviewModal({
                               </div>
                             )}
                           </div>
+
+                          {/* Quick Action Footer for PDF */}
+                          {businessPermitUrl && checkIsPdf(businessPermitUrl) && (
+                            <div className="pt-1">
+                              <a
+                                href={getDocumentViewUrl(businessPermitUrl)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="group w-full py-2.5 px-3 rounded-xl bg-blue-500/10 hover:bg-blue-600 dark:bg-blue-500/15 dark:hover:bg-blue-600 text-blue-600 dark:text-blue-400 hover:text-white dark:hover:text-white border border-blue-500/20 hover:border-blue-600 dark:hover:border-blue-600 text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-md hover:shadow-blue-600/25 active:scale-[0.99]"
+                                title="Open PDF in new browser tab"
+                              >
+                                <FileText size={13} className="shrink-0 transition-colors text-inherit group-hover:text-white" />
+                                <span className="transition-colors text-inherit group-hover:text-white">Open PDF Document</span>
+                                <ExternalLink size={12} className="opacity-70 group-hover:opacity-100 transition-all text-inherit group-hover:text-white group-hover:translate-x-0.5" />
+                              </a>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -832,13 +956,26 @@ export function AdminApplicationReviewModal({
                               </div>
                               <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">TARELCO Electric / Utility Bill</span>
                             </div>
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20">
-                              Bill Attached
-                            </span>
+                            {checkIsPdf(additionalDocsUrl) ? (
+                              <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20 flex items-center gap-1">
+                                <FileText size={10} /> PDF Document
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20">
+                                Bill Attached
+                              </span>
+                            )}
                           </div>
 
                           <div 
-                            onClick={() => handleOpenPreview([additionalDocsUrl], 0, "TARELCO Electric / Utility Bill", true)}
+                            onClick={() => {
+                              if (!additionalDocsUrl) return;
+                              if (checkIsPdf(additionalDocsUrl)) {
+                                window.open(getDocumentViewUrl(additionalDocsUrl), '_blank', 'noopener,noreferrer');
+                              } else {
+                                handleOpenPreview([additionalDocsUrl], 0, "TARELCO Electric / Utility Bill", true);
+                              }
+                            }}
                             className="relative w-full h-48 sm:h-52 aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 group cursor-pointer hover:border-amber-500/50 transition-all"
                           >
                             <SafeImage 
@@ -848,10 +985,41 @@ export function AdminApplicationReviewModal({
                               containerClassName="w-full h-full relative"
                               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
                             />
-                            <div className="absolute inset-0 bg-slate-950/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider text-white z-20">
-                              <Eye size={16} /> Enlarge Document
+                            <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-3 text-white z-20">
+                              <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
+                                {checkIsPdf(additionalDocsUrl) ? (
+                                  <>
+                                    <ExternalLink size={14} /> Open PDF in Full Screen
+                                  </>
+                                ) : (
+                                  <>
+                                    <Eye size={14} /> Enlarge Document
+                                  </>
+                                )}
+                              </div>
+                              <span className="text-[9px] font-semibold text-slate-300">
+                                {checkIsPdf(additionalDocsUrl) ? "Click to open in native browser PDF reader" : "Click to view in fullscreen preview"}
+                              </span>
                             </div>
                           </div>
+
+                          {/* Quick Action Footer for PDF */}
+                          {checkIsPdf(additionalDocsUrl) && (
+                            <div className="pt-1">
+                              <a
+                                href={getDocumentViewUrl(additionalDocsUrl)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="group w-full py-2.5 px-3 rounded-xl bg-blue-500/10 hover:bg-blue-600 dark:bg-blue-500/15 dark:hover:bg-blue-600 text-blue-600 dark:text-blue-400 hover:text-white dark:hover:text-white border border-blue-500/20 hover:border-blue-600 dark:hover:border-blue-600 text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-md hover:shadow-blue-600/25 active:scale-[0.99]"
+                                title="Open PDF in new browser tab"
+                              >
+                                <FileText size={13} className="shrink-0 transition-colors text-inherit group-hover:text-white" />
+                                <span className="transition-colors text-inherit group-hover:text-white">Open PDF Document</span>
+                                <ExternalLink size={12} className="opacity-70 group-hover:opacity-100 transition-all text-inherit group-hover:text-white group-hover:translate-x-0.5" />
+                              </a>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -864,16 +1032,29 @@ export function AdminApplicationReviewModal({
                             </div>
                             <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">Fire Safety Certificate</span>
                           </div>
-                          <span className={cn(
-                            "text-[9px] font-bold px-2 py-0.5 rounded-full border",
-                            fireSafetyUrl ? "text-primary bg-primary/10 border-primary/20" : "text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
-                          )}>
-                            {fireSafetyUrl ? "Cert Attached" : "Not Provided"}
-                          </span>
+                          {checkIsPdf(fireSafetyUrl) ? (
+                            <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20 flex items-center gap-1">
+                              <FileText size={10} /> PDF Document
+                            </span>
+                          ) : (
+                            <span className={cn(
+                              "text-[9px] font-bold px-2 py-0.5 rounded-full border",
+                              fireSafetyUrl ? "text-primary bg-primary/10 border-primary/20" : "text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                            )}>
+                              {fireSafetyUrl ? "Cert Attached" : "Not Provided"}
+                            </span>
+                          )}
                         </div>
 
                         <div 
-                          onClick={() => fireSafetyUrl && handleOpenPreview([fireSafetyUrl], 0, "Fire Safety Inspection Certificate", true)}
+                          onClick={() => {
+                            if (!fireSafetyUrl) return;
+                            if (checkIsPdf(fireSafetyUrl)) {
+                              window.open(getDocumentViewUrl(fireSafetyUrl), '_blank', 'noopener,noreferrer');
+                            } else {
+                              handleOpenPreview([fireSafetyUrl], 0, "Fire Safety Inspection Certificate", true);
+                            }
+                          }}
                           className={cn(
                             "relative w-full h-48 sm:h-52 aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 group transition-all",
                             fireSafetyUrl ? "cursor-pointer hover:border-primary/50" : "cursor-default"
@@ -888,8 +1069,21 @@ export function AdminApplicationReviewModal({
                                 containerClassName="w-full h-full relative"
                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
                               />
-                              <div className="absolute inset-0 bg-slate-950/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider text-white z-20">
-                                <Eye size={16} /> Enlarge Document
+                              <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-3 text-white z-20">
+                                <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
+                                  {checkIsPdf(fireSafetyUrl) ? (
+                                    <>
+                                      <ExternalLink size={14} /> Open PDF in Full Screen
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Eye size={14} /> Enlarge Document
+                                    </>
+                                  )}
+                                </div>
+                                <span className="text-[9px] font-semibold text-slate-300">
+                                  {checkIsPdf(fireSafetyUrl) ? "Click to open in native browser PDF reader" : "Click to view in fullscreen preview"}
+                                </span>
                               </div>
                             </>
                           ) : (
@@ -899,6 +1093,24 @@ export function AdminApplicationReviewModal({
                             </div>
                           )}
                         </div>
+
+                        {/* Quick Action Footer for PDF */}
+                        {fireSafetyUrl && checkIsPdf(fireSafetyUrl) && (
+                          <div className="pt-1">
+                            <a
+                              href={getDocumentViewUrl(fireSafetyUrl)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="group w-full py-2.5 px-3 rounded-xl bg-blue-500/10 hover:bg-blue-600 dark:bg-blue-500/15 dark:hover:bg-blue-600 text-blue-600 dark:text-blue-400 hover:text-white dark:hover:text-white border border-blue-500/20 hover:border-blue-600 dark:hover:border-blue-600 text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-md hover:shadow-blue-600/25 active:scale-[0.99]"
+                              title="Open PDF in new browser tab"
+                            >
+                              <FileText size={13} className="shrink-0 transition-colors text-inherit group-hover:text-white" />
+                              <span className="transition-colors text-inherit group-hover:text-white">Open PDF Document</span>
+                              <ExternalLink size={12} className="opacity-70 group-hover:opacity-100 transition-all text-inherit group-hover:text-white group-hover:translate-x-0.5" />
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>
@@ -1026,41 +1238,44 @@ export function AdminApplicationReviewModal({
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             
             {/* Left side: Back Section & Audit Status Indicator */}
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              {currentTabIdx > 0 && isPending && (
+            <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
+              {currentTabIdx > 0 && (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => {
                     if (currentTabIdx > 0) setActiveTab(TAB_ORDER[currentTabIdx - 1]);
                   }}
-                  className="h-11 px-5 text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="group h-11 sm:h-12 px-5 text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all duration-200 rounded-2xl flex items-center gap-2 cursor-pointer shadow-xs shrink-0"
                 >
-                  <ChevronLeft size={16} /> Back Section
+                  <ChevronLeft size={16} className="transition-transform group-hover:-translate-x-1" />
+                  <span>Back Section</span>
                 </Button>
               )}
 
-              {isPending && (
-                <div className="hidden md:flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
-                  <Clock size={16} className={cn("shrink-0", isCurrentStepAllChecked ? "text-primary" : "text-amber-500 animate-pulse")} />
-                  <span>
-                    Section {currentTabIdx + 1} of 4 • {isCurrentStepAllChecked ? "Section audit verified! Click next." : `Verify all audit items (${currentStepChecklistItems.filter(i => stepChecklistsState[`${activeTab}_${i.id}`]).length}/${currentStepChecklistItems.length}) to proceed`}
-                  </span>
-                </div>
-              )}
+              <div className="hidden md:flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-xs font-bold text-slate-600 dark:text-slate-300 shrink-0 whitespace-nowrap">
+                <Clock size={16} className={cn("shrink-0 transition-colors", isCurrentStepAllChecked ? "text-primary" : "text-amber-500 animate-pulse")} />
+                <span>
+                  Section {currentTabIdx + 1} of 4 • {isPending ? (
+                    isCurrentStepAllChecked 
+                      ? (currentTabIdx === TAB_ORDER.length - 1 ? "Section audit verified! Ready to approve host." : "Section audit verified! Click next.") 
+                      : `Verify all audit items (${currentStepChecklistItems.filter(i => stepChecklistsState[`${activeTab}_${i.id}`]).length}/${currentStepChecklistItems.length}) to proceed`
+                  ) : "Section audit verified! Ready for next step."}
+                </span>
+              </div>
             </div>
 
             {/* Right side: Action Controls (Reject, Confirm & Next Section, Approve Host) */}
             {isPending ? (
-              <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-end shrink-0">
                 <Button 
                   type="button"
-                  variant="outline"
                   onClick={() => setShowRejectConfirm(true)}
                   disabled={isDeciding}
-                  className="flex-1 sm:flex-none h-11 px-5 text-xs font-black uppercase tracking-wider text-rose-500 border-rose-200 hover:bg-rose-50 dark:border-rose-900/40 dark:hover:bg-rose-900/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="group flex-1 sm:flex-none h-11 sm:h-12 px-5 text-xs font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200/80 dark:border-rose-500/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white hover:border-rose-500 active:scale-95 transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 cursor-pointer shadow-xs shrink-0"
                 >
-                  <X size={16} /> Reject Host
+                  <X size={16} className="transition-transform group-hover:rotate-90 duration-300" />
+                  <span>Reject Host</span>
                 </Button>
 
                 {currentTabIdx < TAB_ORDER.length - 1 ? (
@@ -1069,37 +1284,41 @@ export function AdminApplicationReviewModal({
                     onClick={handleConfirmCurrentStep}
                     disabled={isDeciding || !isCurrentStepAllChecked}
                     className={cn(
-                      "flex-1 sm:flex-none h-11 px-7 text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2",
+                      "group flex-1 sm:flex-none h-11 sm:h-12 px-7 text-xs font-black uppercase tracking-wider rounded-2xl transition-all duration-200 flex items-center justify-center gap-2.5 shrink-0",
                       isCurrentStepAllChecked
-                        ? "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 cursor-pointer"
-                        : "bg-slate-200 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 border border-slate-300/60 dark:border-slate-700/60 cursor-not-allowed shadow-none"
+                        ? "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 active:scale-95 cursor-pointer"
+                        : "bg-slate-100 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 border border-slate-200/80 dark:border-slate-700/60 cursor-not-allowed shadow-none"
                     )}
                   >
                     <span>Confirm & Next Section</span>
-                    <ChevronRight size={16} />
+                    <ChevronRight size={16} className={cn("transition-transform duration-200", isCurrentStepAllChecked && "group-hover:translate-x-1")} />
                   </Button>
                 ) : (
                   <Button 
                     type="button"
-                    onClick={() => onDecision(application.id, 'approve')}
-                    disabled={isDeciding || !confirmedSteps.every(Boolean)}
+                    onClick={() => {
+                      if (!canApprove) return;
+                      onDecision(application.id || application._id, 'approve');
+                    }}
+                    disabled={isDeciding || !canApprove}
                     className={cn(
-                      "flex-1 sm:flex-none h-11 px-8 text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2",
-                      confirmedSteps.every(Boolean)
-                        ? "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 cursor-pointer"
-                        : "bg-slate-200 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 border border-slate-300/60 dark:border-slate-700/60 cursor-not-allowed shadow-none"
+                      "group flex-1 sm:flex-none h-11 sm:h-12 px-8 text-xs font-black uppercase tracking-wider rounded-2xl transition-all duration-200 flex items-center justify-center gap-2.5 shrink-0",
+                      canApprove
+                        ? "bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/30 active:scale-95 cursor-pointer"
+                        : "bg-slate-100 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 border border-slate-200/80 dark:border-slate-700/60 cursor-not-allowed shadow-none"
                     )}
                   >
-                    <Check size={16} /> Approve Host
+                    <Check size={16} className={cn("transition-transform duration-200", canApprove && "group-hover:scale-110")} />
+                    <span>Approve Host</span>
                   </Button>
                 )}
               </div>
             ) : isArchived ? (
-              <div className="flex items-center justify-between gap-3 w-full">
-                <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-black uppercase tracking-wider">
-                  <Archive size={14} /> Status: Archived
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-end shrink-0">
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-black uppercase tracking-wider shrink-0">
+                  <Archive size={15} /> Status: Archived
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   {onRestore && (
                     <Button
                       type="button"
@@ -1107,35 +1326,35 @@ export function AdminApplicationReviewModal({
                         onRestore?.(application);
                         onClose();
                       }}
-                      className="bg-amber-500 hover:bg-amber-600 text-white rounded-2xl px-5 py-2.5 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
+                      className="bg-amber-500 hover:bg-amber-600 text-white rounded-2xl h-11 sm:h-12 px-6 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md shadow-amber-500/25 active:scale-95 transition-all duration-200 cursor-pointer shrink-0"
                     >
-                      <RotateCcw size={14} /> Restore Application
+                      <RotateCcw size={15} /> Restore Application
                     </Button>
                   )}
                   <Button
                     type="button"
                     onClick={onClose}
                     variant="outline"
-                    className="rounded-2xl px-5 py-2.5 text-xs font-black uppercase tracking-wider border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                    className="rounded-2xl h-11 sm:h-12 px-6 text-xs font-black uppercase tracking-wider border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all duration-200 cursor-pointer shrink-0"
                   >
                     Close Inspection
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between gap-3 w-full">
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-end shrink-0">
                 <div className={cn(
-                  "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider border",
+                  "flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider border shrink-0",
                   isApproved ? "bg-primary/10 text-primary border-primary/20" : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
                 )}>
-                  {isApproved ? <CheckCircle2 size={14} /> : <ShieldAlert size={14} />}
+                  {isApproved ? <CheckCircle2 size={15} /> : <ShieldAlert size={15} />}
                   <span>Status: {statusStr}</span>
                 </div>
                 <Button
                   type="button"
                   onClick={onClose}
                   variant="outline"
-                  className="rounded-2xl px-5 py-2.5 text-xs font-black uppercase tracking-wider border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                  className="rounded-2xl h-11 sm:h-12 px-6 text-xs font-black uppercase tracking-wider border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all duration-200 cursor-pointer shrink-0"
                 >
                   Close Inspection
                 </Button>
@@ -1151,7 +1370,7 @@ export function AdminApplicationReviewModal({
         onClose={() => setShowRejectConfirm(false)}
         onConfirm={(reason) => {
           setShowRejectConfirm(false);
-          onDecision(application.id, 'reject', reason);
+          onDecision(application.id || application._id, 'reject', reason);
         }}
         applicantName={application.user?.name || 'Applicant'}
         activeStep={activeTab}
@@ -1166,6 +1385,7 @@ export function AdminApplicationReviewModal({
         currentIndex={previewState.currentIndex}
         title={previewState.title}
         isDocument={previewState.isDocument}
+        showExternalLink={true}
       />
     </Modal>
   );

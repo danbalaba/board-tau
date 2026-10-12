@@ -6,14 +6,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Skeleton from './Skeleton';
 import { IconPhotoOff } from '@tabler/icons-react';
+import { FileText } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 interface SafeImageProps extends Omit<ImageProps, 'onLoadingComplete' | 'onError'> {
   fallbackSrc?: string;
+  fallbackComponent?: React.ReactNode;
   containerClassName?: string;
   showSkeleton?: boolean;
   showSpinner?: boolean;
   loaderText?: string;
+  onError?: (e?: any) => void;
 }
 
 // Global in-memory cache for loaded image URLs to prevent skeleton re-triggering across re-renders
@@ -23,7 +26,7 @@ const globalLoadedImages = new Set<string>();
  * SafeImage Component
  * 1. Shows a Shimmering Skeleton + Centered Loader Spinner while loading (unless showSkeleton=false)
  * 2. Gently fades in the image once ready
- * 3. Handles broken links by showing a fallback placeholder
+ * 3. Handles broken links by showing a fallback placeholder or custom fallbackComponent
  */
 const SafeImage = ({
   src,
@@ -34,9 +37,11 @@ const SafeImage = ({
   showSpinner = true,
   loaderText,
   fallbackSrc = '/images/dark_placeholder.png', // Default local fallback
+  fallbackComponent,
   fill = true, // We default to fill for modern responsive layouts
   priority = false,
   sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
+  onError: customOnError,
   ...props
 }: SafeImageProps) => {
   // Extract string URL if src happens to be passed as an object { url: string } or { src: string }
@@ -101,6 +106,37 @@ const SafeImage = ({
     ? (mounted && resolvedTheme === 'light' ? defaultLightFallback : defaultDarkFallback)
     : fallbackSrc;
 
+  const isPdf = typeof cleanSrc === 'string' && (
+    cleanSrc.toLowerCase().endsWith('.pdf') || 
+    cleanSrc.toLowerCase().includes('.pdf?') || 
+    cleanSrc.toLowerCase().includes('/pdf') || 
+    cleanSrc.startsWith('data:application/pdf')
+  );
+
+  if (isPdf) {
+    return (
+      <div className={cn("relative overflow-hidden flex flex-col items-center justify-center gap-1.5 p-3 bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/70 dark:border-blue-900/40 rounded-xl text-center select-none", containerClassName || "w-full h-full")}>
+        <div className="w-10 h-10 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-xs">
+          <FileText size={22} />
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 truncate max-w-full px-2">
+          {alt || "PDF Document"}
+        </span>
+        <span className="text-[8px] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-100/80 dark:bg-blue-900/40 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+          PDF File
+        </span>
+      </div>
+    );
+  }
+
+  if ((hasError || !cleanSrc) && fallbackComponent) {
+    return (
+      <div className={cn("relative overflow-hidden", containerClassName || "w-full h-full")}>
+        {fallbackComponent}
+      </div>
+    );
+  }
+
   const finalSrc = hasError || !cleanSrc ? resolvedFallbackSrc : cleanSrc;
 
   return (
@@ -146,9 +182,10 @@ const SafeImage = ({
           if (cleanSrc) globalLoadedImages.add(cleanSrc);
           setIsLoading(false);
         }}
-        onError={() => {
+        onError={(e) => {
           if (!hasError) setHasError(true);
           setIsLoading(false);
+          customOnError?.(e);
         }}
         sizes={fill ? sizes : undefined}
       />

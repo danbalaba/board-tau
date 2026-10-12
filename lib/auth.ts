@@ -312,7 +312,7 @@ export const authOptions: AuthOptions = {
         try {
           const dbUser = await db.user.findUnique({
             where: { id: token.id as string },
-            select: { securityVersion: true, role: true, isActive: true, isPermanentlyBanned: true }
+            select: { securityVersion: true, role: true, isVerifiedLandlord: true, isActive: true, isPermanentlyBanned: true }
           });
 
           if (!dbUser) return null as any;
@@ -330,9 +330,8 @@ export const authOptions: AuthOptions = {
             return { isInvalid: true } as any;
           }
 
-          if (!token.role) {
-            token.role = dbUser.role;
-          }
+          token.role = dbUser.role;
+          token.isVerifiedLandlord = dbUser.isVerifiedLandlord || false;
         } catch (error) {
           console.error("🔐 Error verifying securityVersion:", error);
         }

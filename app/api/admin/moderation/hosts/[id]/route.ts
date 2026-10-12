@@ -90,12 +90,75 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       include: { user: true },
     });
 
-    // If approved, update user role to HOST
+    // If approved, update user role to LANDLORD and mark as verified landlord
     if (status === 'approved') {
+      const bInfo = typeof updatedApplication.businessInfo === 'string'
+        ? (() => { try { return JSON.parse(updatedApplication.businessInfo); } catch { return {}; } })()
+        : (updatedApplication.businessInfo || {}) as any;
+      const cInfo = typeof updatedApplication.contactInfo === 'string'
+        ? (() => { try { return JSON.parse(updatedApplication.contactInfo); } catch { return {}; } })()
+        : (updatedApplication.contactInfo || {}) as any;
+
       await db.user.update({
         where: { id: updatedApplication.userId },
-        data: { role: 'LANDLORD' },
+        data: {
+          role: 'LANDLORD',
+          isVerifiedLandlord: true,
+          landlordApprovedAt: new Date(),
+          ...(bInfo?.businessName ? { businessName: bInfo.businessName } : {}),
+          ...(cInfo?.phoneNumber ? { phoneNumber: cInfo.phoneNumber } : {}),
+        },
       });
+
+      // Send email notification
+      try {
+        const { sendApplicationApprovalEmail } = await import('@/services/email/notifications');
+        if (updatedApplication.user) {
+          sendApplicationApprovalEmail(updatedApplication.user as any, updatedApplication as any);
+        }
+      } catch (err) {
+        console.warn('Could not send approval email notification:', err);
+      }
+
+      // Create in-app notification for the newly approved landlord
+      try {
+        await db.notification.create({
+          data: {
+            userId: updatedApplication.userId,
+            type: 'host_application',
+            title: 'Host Application Approved! 🎉',
+            description: 'Congratulations! Your landlord host application has been approved. You now have full access to the Landlord Dashboard and property management.',
+            link: '/landlord',
+          }
+        });
+      } catch (err) {
+        console.warn('Could not create in-app notification:', err);
+      }
+    } else if (status === 'rejected') {
+      // Send rejection email notification
+      try {
+        const { sendApplicationRejectionEmail } = await import('@/services/email/notifications');
+        if (updatedApplication.user) {
+          sendApplicationRejectionEmail(updatedApplication.user as any, updatedApplication as any, reason || 'Application requirements not met');
+        }
+      } catch (err) {
+        console.warn('Could not send rejection email notification:', err);
+      }
+
+      // Create in-app notification
+      try {
+        await db.notification.create({
+          data: {
+            userId: updatedApplication.userId,
+            type: 'host_application',
+            title: 'Host Application Update',
+            description: `Your host application was reviewed and could not be approved at this time: ${reason || 'Application requirements not met'}.`,
+            link: '/become-a-host',
+          }
+        });
+      } catch (err) {
+        console.warn('Could not create in-app notification:', err);
+      }
     }
 
     // Log the admin action

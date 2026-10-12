@@ -75,7 +75,14 @@ export function AdminApplicationCard({
   const businessPermitUrl = application.businessPermitUrl || application.documents?.businessPermitUrl;
   const fireSafetyUrl = application.fireSafetyUrl || application.documents?.fireSafetyUrl;
   const additionalDocsUrl = application.additionalDocsUrl || application.documents?.additionalDocsUrl;
-  const avatarUrl = application.user?.image || selfieUrl;
+  const rawAvatar = application.user?.image || selfieUrl;
+  const isAvatarPlaceholder = typeof rawAvatar === 'string' && (
+    rawAvatar.includes('placeholder') ||
+    rawAvatar.includes('dark_placeholder') ||
+    rawAvatar.includes('white_placeholder')
+  );
+  const avatarUrl = !isAvatarPlaceholder && rawAvatar ? rawAvatar : null;
+  const applicantInitial = (applicantName.trim().charAt(0) || 'H').toUpperCase();
   
   const hasSelfieAndID = Boolean(selfieUrl && idCardUrl);
   const hasBusinessPermit = Boolean(businessPermitUrl);
@@ -136,10 +143,15 @@ export function AdminApplicationCard({
                   src={avatarUrl}
                   alt={applicantName}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  fallbackComponent={
+                    <div className="w-full h-full flex items-center justify-center text-primary font-black text-2xl select-none">
+                      {applicantInitial}
+                    </div>
+                  }
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-primary font-black text-2xl">
-                  {applicantName.charAt(0)}
+                <div className="w-full h-full flex items-center justify-center text-primary font-black text-2xl select-none">
+                  {applicantInitial}
                 </div>
               )}
             </div>
@@ -364,10 +376,19 @@ export function AdminApplicationCard({
       <div className="px-6 relative -mt-10 mb-3">
         <div className="w-20 h-20 rounded-[1.5rem] overflow-hidden shadow-xl border-4 border-white dark:border-gray-900 bg-white dark:bg-gray-800 shrink-0">
           {avatarUrl ? (
-            <SafeImage src={avatarUrl} alt={applicantName} className="w-full h-full object-cover" />
+            <SafeImage 
+              src={avatarUrl} 
+              alt={applicantName} 
+              className="w-full h-full object-cover" 
+              fallbackComponent={
+                <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-black text-2xl select-none">
+                  {applicantInitial}
+                </div>
+              }
+            />
           ) : (
-            <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-black text-2xl">
-              {applicantName.charAt(0)}
+            <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-black text-2xl select-none">
+              {applicantInitial}
             </div>
           )}
         </div>

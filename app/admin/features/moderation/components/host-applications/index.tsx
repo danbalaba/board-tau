@@ -25,17 +25,6 @@ export function HostApplicationsDashboard() {
   const { data: session } = useSession();
   const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
 
-  // Moderation Loader & Standalone Reject Modal State
-  const [loaderModal, setLoaderModal] = useState<{
-    isOpen: boolean;
-    actionType: 'approve' | 'reject';
-    applicantName?: string;
-  }>({
-    isOpen: false,
-    actionType: 'approve',
-    applicantName: ''
-  });
-
   const [standaloneRejectModal, setStandaloneRejectModal] = useState<{
     isOpen: boolean;
     application: any | null;
@@ -82,25 +71,14 @@ export function HostApplicationsDashboard() {
     handleDecision,
     handleArchive,
     handleConfirmArchive,
-    handleConfirmDelete
+    handleConfirmDelete,
+    loaderModal,
+    handleLoaderComplete
   } = useHostApplicationsLogic({ range });
 
   if (error) {
     return <AdminDashboardError onRetry={handleRefresh} />;
   }
-
-  const handleWrappedDecision = (id: string, action: 'approve' | 'reject', reason?: string) => {
-    const targetApp = filteredApplications.find((a: any) => a.id === id) || selectedApplication;
-    const applicantName = targetApp?.user?.name || 'Landlord Applicant';
-
-    setLoaderModal({
-      isOpen: true,
-      actionType: action,
-      applicantName
-    });
-
-    handleDecision(id, action, reason);
-  };
 
   const handleExport = async (format: 'CSV' | 'EXCEL' | 'PDF') => {
     const rangeLabel = { '7d': 'Last 7 Days', '30d': 'Last 30 Days', '90d': 'Last 90 Days', '1y': 'Past Year' }[range] || range;
@@ -275,7 +253,7 @@ export function HostApplicationsDashboard() {
                         application={application}
                         idx={idx}
                         viewMode={viewMode}
-                        handleDecision={handleWrappedDecision}
+                        handleDecision={handleDecision}
                         onRejectModalOpen={(app) => {
                           setStandaloneRejectModal({ isOpen: true, application: app });
                         }}
@@ -307,7 +285,7 @@ export function HostApplicationsDashboard() {
         application={selectedApplication}
         isOpen={viewModalOpen}
         onClose={() => setViewModalOpen(false)}
-        onDecision={handleWrappedDecision}
+        onDecision={handleDecision}
         isDeciding={isDeciding}
         onRestore={handleArchive}
       />
@@ -318,7 +296,7 @@ export function HostApplicationsDashboard() {
         onClose={() => setStandaloneRejectModal({ isOpen: false, application: null })}
         onConfirm={(reason) => {
           if (standaloneRejectModal.application) {
-            handleWrappedDecision(standaloneRejectModal.application.id, 'reject', reason);
+            handleDecision(standaloneRejectModal.application.id, 'reject', reason);
           }
           setStandaloneRejectModal({ isOpen: false, application: null });
         }}
@@ -330,10 +308,7 @@ export function HostApplicationsDashboard() {
         isOpen={loaderModal.isOpen}
         actionType={loaderModal.actionType}
         applicantName={loaderModal.applicantName}
-        onComplete={() => {
-          setLoaderModal(prev => ({ ...prev, isOpen: false }));
-          setViewModalOpen(false);
-        }}
+        onComplete={handleLoaderComplete}
       />
 
       {/* Archive Confirmation Modal */}

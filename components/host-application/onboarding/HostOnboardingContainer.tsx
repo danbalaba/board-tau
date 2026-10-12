@@ -166,6 +166,8 @@ const IDStep = dynamic(() => import("@/components/host-application/steps/IDStep"
 interface HostOnboardingContainerProps {
   user?: User & { id: string; role?: string };
   onCloseModal?: () => void;
+  initialApplication?: any;
+  onCancelEdit?: () => void;
 }
 
 const FORM_STEPS = [
@@ -179,15 +181,22 @@ const FORM_STEPS = [
   { id: 8, title: "Review & Submit", icon: BadgeCheck },
 ];
 
-export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = ({ user, onCloseModal }) => {
-  const [isSleepingMobile, setIsSleepingMobile] = useState(true);
-  const [maxUnlockedStep, setMaxUnlockedStep] = useState(1);
+export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = ({ 
+  user, 
+  onCloseModal,
+  initialApplication,
+  onCancelEdit
+}) => {
+  const [isSleepingMobile, setIsSleepingMobile] = useState(!initialApplication);
+  const [maxUnlockedStep, setMaxUnlockedStep] = useState(initialApplication ? 8 : 1);
   const stepperRef = useRef<HTMLDivElement>(null);
-  const logic = useHostApplicationLogic();
+  const logic = useHostApplicationLogic(onCloseModal, initialApplication);
   const { mobileStep, setMobileStep } = logic;
   const [showDraftModal, setShowDraftModal] = useState(false);
-  const [showDesktopIntro, setShowDesktopIntro] = useState(true);
-  const [mobileDocChoice, setMobileDocChoice] = useState<'permit' | 'utility'>('permit');
+  const [showDesktopIntro, setShowDesktopIntro] = useState(!initialApplication);
+  const [mobileDocChoice, setMobileDocChoice] = useState<'permit' | 'utility'>(
+    initialApplication?.additionalDocsUrl && !initialApplication?.businessPermitUrl ? 'utility' : 'permit'
+  );
   const { isLockedOut, timerText } = useKYCLockout();
 
   useEffect(() => {
@@ -546,6 +555,32 @@ export const HostOnboardingContainer: React.FC<HostOnboardingContainerProps> = (
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f17] py-0 md:pt-4 md:pb-12 px-0 md:px-8 transition-colors">
+      {/* 🚀 EDITING PREVIOUS APPLICATION BANNER */}
+      {initialApplication && (
+        <div className="max-w-7xl mx-auto mb-4 px-4">
+          <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-4 text-xs font-bold text-amber-900 dark:text-amber-200">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <AlertCircle size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
+              <div className="min-w-0">
+                <span className="font-black uppercase tracking-wider block">Editing Submitted Application</span>
+                <span className="text-[11px] font-medium opacity-90 truncate block">
+                  {initialApplication.rejectedReason ? `Revision note: "${initialApplication.rejectedReason}"` : "Update your documents and resubmit for administrative review."}
+                </span>
+              </div>
+            </div>
+            {onCancelEdit && (
+              <button
+                type="button"
+                onClick={onCancelEdit}
+                className="px-3.5 py-1.5 rounded-xl bg-amber-200/60 dark:bg-amber-900/40 hover:bg-amber-300 dark:hover:bg-amber-800 text-amber-900 dark:text-amber-100 text-[10px] font-black uppercase tracking-wider transition-all shrink-0 cursor-pointer"
+              >
+                Back to Status Monitor
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 🚀 FULL SCREEN KERBY SUBMISSION LOADER MODAL */}
       <HostApplicationSubmissionLoaderModal
         isOpen={logic.isSubmitting}
