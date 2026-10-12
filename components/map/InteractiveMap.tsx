@@ -517,17 +517,18 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
             
             const distMeters = data.routes[0].distance;
             const distText = distMeters >= 1000 ? `${(distMeters / 1000).toFixed(1)} km` : `${Math.round(distMeters)} m`;
-            const walkMins = Math.ceil(data.routes[0].duration / 60);
+            // Calculate realistic human walking time at 80 meters/min (~4.8 km/h), exactly matching BoardTAU AI routes
+            const walkMins = Math.max(1, Math.round(distMeters / 80));
 
             const badgeIcon = L.divIcon({
               className: 'walking-badge',
               html: `
-                <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-3 py-2 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/50 dark:border-white/10 flex items-center gap-2 pointer-events-auto">
-                  <div class="bg-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-footprints"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4"/><path d="M4 13h4"/></svg>
+                <div class="bg-white dark:bg-slate-900 px-3.5 py-2 rounded-full shadow-2xl shadow-slate-950/20 dark:shadow-black/70 border border-slate-200 dark:border-slate-800 flex items-center gap-2.5 pointer-events-auto">
+                  <div class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-footprints"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4"/><path d="M4 13h4"/></svg>
                   </div>
                   <div class="flex flex-col">
-                    <span class="text-xs font-bold text-slate-800 dark:text-white leading-tight">${walkMins} min</span>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white leading-tight">${walkMins} min</span>
                     <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">${distText}</span>
                   </div>
                 </div>
@@ -566,21 +567,23 @@ export default function InteractiveMap({ onListingClick, onLandmarkClick, listin
             (listingLng + destLng) / 2
           ] as L.LatLngTuple;
 
-          const walkingMins = Math.max(1, Math.round((dist / 1000) * 12));
-          const distText = dist >= 1000 ? `${(dist / 1000).toFixed(1)} km` : `${Math.round(dist)} m`;
+          const roadFactor = dist < 1000 ? 1.15 : 1.35;
+          const roadMeters = dist * roadFactor;
+          const walkingMins = Math.max(1, Math.round(roadMeters / 80));
+          const distText = roadMeters >= 1000 ? `${(roadMeters / 1000).toFixed(1)} km` : `${Math.round(roadMeters)} m`;
 
           const badgeIcon = L.divIcon({
             className: 'walking-badge',
             html: `
-                <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-3 py-2 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/50 dark:border-white/10 flex items-center gap-2 pointer-events-auto">
-                  <div class="bg-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-footprints"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4"/><path d="M4 13h4"/></svg>
-                  </div>
-                  <div class="flex flex-col">
-                    <span class="text-xs font-bold text-slate-800 dark:text-white leading-tight">~${walkingMins} min</span>
-                    <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">${distText}</span>
-                  </div>
+              <div class="bg-white dark:bg-slate-900 px-3.5 py-2 rounded-full shadow-2xl shadow-slate-950/20 dark:shadow-black/70 border border-slate-200 dark:border-slate-800 flex items-center gap-2.5 pointer-events-auto">
+                <div class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-footprints"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4"/><path d="M4 13h4"/></svg>
                 </div>
+                <div class="flex flex-col">
+                  <span class="text-xs font-bold text-slate-900 dark:text-white leading-tight">~${walkingMins} min</span>
+                  <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">${distText}</span>
+                </div>
+              </div>
             `,
             iconSize: [110, 44],
             iconAnchor: [55, 22]

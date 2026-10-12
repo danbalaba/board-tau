@@ -162,11 +162,11 @@ export default function MapFiltersOverlay({
         transition={{ duration: 0.4 }}
         className="w-full max-w-md mx-auto pointer-events-auto relative"
       >
-        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-200/50 dark:border-gray-700/50 rounded-full flex items-center px-4 h-12 gap-3 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.16)]">
+        <div className="bg-white dark:bg-slate-900 shadow-xl shadow-slate-950/10 dark:shadow-black/50 border border-slate-200 dark:border-slate-800 rounded-full flex items-center px-4 h-12 gap-3 transition-all hover:border-slate-300 dark:hover:border-slate-700">
           {isAILoading ? (
-            <Loader2 className="text-primary animate-spin shrink-0" size={20} />
+            <Loader2 className="text-primary animate-spin shrink-0" size={19} />
           ) : (
-            <Search className="text-gray-400 shrink-0" size={20} />
+            <Search className="text-slate-400 shrink-0" size={19} />
           )}
           <form onSubmit={handleSearch} className="flex-1 relative">
             <input 
@@ -176,34 +176,35 @@ export default function MapFiltersOverlay({
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
               placeholder="Ask AI: 'Cheap boarding house near TAU with wifi'" 
-              className="bg-transparent border-none outline-none text-sm font-medium w-full text-gray-800 dark:text-gray-100 placeholder-gray-500 pr-6"
+              className="bg-transparent border-none outline-none text-sm font-medium w-full text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 pr-6"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1"
+                className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1"
               >
                 <X size={14} />
               </button>
             )}
           </form>
-          <div className="hidden md:block w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1 shrink-0"></div>
+          <div className="hidden md:block w-px h-5 bg-slate-200 dark:bg-slate-800 mx-1 shrink-0"></div>
           <button
             onClick={() => setShowDirections(!showDirections)}
-            className={`hidden md:block p-2 sm:p-2.5 rounded-xl transition-all shadow-sm shrink-0 border ${
+            className={`hidden md:flex items-center justify-center p-2 rounded-xl transition-all shrink-0 border ${
               showDirections 
-                ? 'bg-blue-500 border-blue-600 text-white shadow-blue-500/25' 
-                : 'bg-white/90 dark:bg-slate-800/90 border-gray-200 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-slate-700'
+                ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25 ring-2 ring-blue-500/20' 
+                : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
             }`}
-            title="Directions"
+            title={showDirections ? "Close Directions" : "Walking Directions"}
           >
-            <Navigation size={18} />
+            <Navigation size={17} />
           </button>
-          <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1 shrink-0"></div>
+          <div className="w-px h-5 bg-slate-200 dark:bg-slate-800 mx-1 shrink-0"></div>
           <button 
             onClick={() => setShowSearchModal(true)}
-            className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors text-gray-500 shrink-0"
+            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white shrink-0"
+            title="Filter settings"
           >
             <SlidersHorizontal size={18} />
           </button>
@@ -216,11 +217,11 @@ export default function MapFiltersOverlay({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden z-50"
+              className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-50 divide-y divide-slate-100 dark:divide-slate-800"
             >
               <div className="p-3">
                 <div className="flex justify-between items-center mb-2 px-2">
-                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Recent Searches
                   </span>
                   <button 
@@ -242,11 +243,11 @@ export default function MapFiltersOverlay({
                       setSearchQuery(q.query);
                       handleSearch({ preventDefault: () => {} } as any, q.query, q.params);
                     }}
-                    className="flex justify-between items-center px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl cursor-pointer transition-colors group"
+                    className="flex justify-between items-center px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer transition-colors group"
                   >
                     <div className="flex items-center gap-3 overflow-hidden">
-                      <History size={16} className="text-gray-400 shrink-0" />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">{q.query}</span>
+                      <History size={16} className="text-slate-400 shrink-0" />
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{q.query}</span>
                     </div>
                     <button
                       onMouseDown={(e) => e.preventDefault()}
@@ -254,7 +255,7 @@ export default function MapFiltersOverlay({
                         e.stopPropagation();
                         removeQuery(q.id);
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all shrink-0"
+                      className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all shrink-0"
                       title="Remove from history"
                     >
                       <X size={14} />
@@ -298,10 +299,10 @@ export default function MapFiltersOverlay({
           >
             <button
               onClick={() => setShowDirections(true)}
-              className="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(59,130,246,0.5)] transition-colors border-2 border-white/20"
+              className="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-2xl shadow-blue-600/40 transition-colors border-2 border-white dark:border-slate-800 active:scale-95"
               title="Get Directions"
             >
-              <Navigation size={24} className="ml-[-2px] mb-[2px]" />
+              <Navigation size={22} className="ml-[-2px] mb-[2px]" />
             </button>
           </motion.div>
         )}
@@ -323,38 +324,62 @@ export default function MapFiltersOverlay({
                 if (setShowDirections) setShowDirections(false);
               }
             }}
-            className="fixed bottom-0 left-0 right-0 z-[500] md:relative md:bottom-auto md:left-auto md:right-auto w-full md:max-w-md mx-auto pointer-events-auto bg-white/98 dark:bg-slate-900/98 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-xl border-t md:border border-blue-200 dark:border-blue-900/50 rounded-t-3xl md:rounded-2xl pt-5 pb-10 px-5 md:p-4 flex flex-col gap-3"
+            className="fixed bottom-0 left-0 right-0 z-[500] md:relative md:bottom-auto md:left-auto md:right-auto w-full md:max-w-md mx-auto pointer-events-auto bg-white dark:bg-slate-900 shadow-2xl shadow-slate-950/20 dark:shadow-black/70 border-t md:border border-slate-200 dark:border-slate-800 rounded-t-3xl md:rounded-2xl pt-5 pb-10 px-5 md:p-5 flex flex-col gap-3.5"
           >
             {/* Mobile Drag Handle Indicator */}
-            <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-1 md:hidden" />
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-bold text-sm text-gray-800 dark:text-white flex items-center gap-2">
-                <Navigation size={16} className="text-blue-500" />
-                Walking Directions
-              </h3>
-              <button onClick={() => setShowDirections(false)} className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Close</button>
+            <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-1 md:hidden" />
+            
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800/80">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                  <Navigation size={15} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">
+                    Walking Directions
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Select boarding house and college campus
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowDirections(false)} 
+                className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors"
+                title="Close directions"
+              >
+                <X size={14} />
+              </button>
             </div>
             
-            <div className="flex flex-col gap-2 relative">
-              <div className="absolute left-[15px] top-[18px] bottom-[18px] w-0.5 bg-gray-200 dark:bg-gray-700 z-0"></div>
+            <div className="flex flex-col gap-2.5 relative pt-0.5">
+              <div className="absolute left-[15px] top-[20px] bottom-[20px] w-0.5 bg-slate-200 dark:bg-slate-700 z-0"></div>
               
               {/* Step 1: Starting Point */}
               <div className="flex items-center gap-3 z-10">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-                  directionsPhase === "start" ? 'bg-blue-500 animate-pulse' : 'bg-blue-100 dark:bg-blue-900/50'
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                  directionsPhase === "start" 
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 ring-4 ring-blue-500/15' 
+                    : selectedListing
+                      ? 'bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700'
                 }`}>
-                  <MapPin size={14} className={directionsPhase === "start" ? 'text-white' : 'text-blue-600 dark:text-blue-400'} />
+                  <MapPin size={15} />
                 </div>
-                <div className={`flex-1 rounded-lg px-3 py-2 border transition-colors ${
+                <div className={`flex-1 rounded-xl px-3.5 py-2.5 border transition-all ${
                   directionsPhase === "start"
-                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
-                    : 'bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-gray-700'
+                    ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-500/80 dark:border-blue-500 shadow-sm ring-2 ring-blue-500/10'
+                    : selectedListing
+                      ? 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm'
+                      : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/80'
                 }`}>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Starting Point</p>
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate flex items-center gap-1.5">
+                  <p className="text-[11px] font-semibold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-0.5">
+                    Starting Point
+                  </p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate flex items-center gap-1.5">
                     {selectedListing 
                       ? selectedListing.title 
-                      : <span className="text-blue-500 dark:text-blue-400 italic flex items-center gap-1.5"><MousePointerClick size={16} /> Tap a boarding house on the map</span>
+                      : <span className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1.5 font-normal"><MousePointerClick size={15} /> Tap a boarding house on the map</span>
                     }
                   </p>
                 </div>
@@ -362,25 +387,33 @@ export default function MapFiltersOverlay({
               
               {/* Step 2: Destination */}
               <div className="flex items-center gap-3 z-10">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-                  directionsPhase === "destination" ? 'bg-primary animate-pulse' : 'bg-primary/10'
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                  directionsPhase === "destination" 
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/30 ring-4 ring-emerald-500/15' 
+                    : selectedLandmark
+                      ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700'
                 }`}>
-                  <MapIcon size={14} className={directionsPhase === "destination" ? 'text-white' : 'text-primary'} />
+                  <GraduationCap size={15} />
                 </div>
-                <div className={`flex-1 rounded-lg px-3 py-2 border transition-colors ${
+                <div className={`flex-1 rounded-xl px-3.5 py-2.5 border transition-all ${
                   directionsPhase === "destination"
-                    ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
-                    : 'bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-gray-700'
+                    ? 'bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-500/80 dark:border-emerald-500 shadow-sm ring-2 ring-emerald-500/10'
+                    : selectedLandmark
+                      ? 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm'
+                      : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/80'
                 }`}>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Destination</p>
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate flex items-center gap-1.5">
+                  <p className="text-[11px] font-semibold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-0.5">
+                    Destination
+                  </p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate flex items-center gap-1.5">
                     {directionsPhase === "destination"
-                      ? <span className="text-green-600 dark:text-green-400 italic flex items-center gap-1.5"><GraduationCap size={16} /> Tap a college on the map</span>
+                      ? <span className="text-emerald-600 dark:text-emerald-400 italic flex items-center gap-1.5 font-normal"><GraduationCap size={15} /> Tap a college on the map</span>
                       : (directionsPhase === null && selectedLandmark)
-                        ? <span className="text-gray-800 dark:text-gray-200 font-semibold">{selectedLandmark.name}</span>
+                        ? <span className="text-slate-900 dark:text-slate-100 font-semibold">{selectedLandmark.name}</span>
                         : (directionsPhase === null && selectedListing)
-                          ? <span className="text-gray-400 italic text-xs">Waiting for college selection...</span>
-                          : <span className="text-gray-400 italic text-xs">Select a starting point first</span>
+                          ? <span className="text-slate-400 dark:text-slate-500 italic text-xs font-normal">Waiting for college selection...</span>
+                          : <span className="text-slate-400 dark:text-slate-500 italic text-xs font-normal">Select a starting point first</span>
                     }
                   </p>
                 </div>
@@ -397,7 +430,7 @@ export default function MapFiltersOverlay({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/60 dark:bg-[#020817]/70 backdrop-blur-xl pointer-events-auto p-4"
+            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/95 dark:bg-slate-950/95 pointer-events-auto p-4"
           >
             {/* Top Progress Bar */}
             <div className="absolute top-0 left-0 right-0 h-1 z-[10000]">

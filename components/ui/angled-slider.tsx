@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
+import SafeImage from "@/components/common/SafeImage";
 
 const cn = (...classes: any[]) => classes.filter(Boolean).join(" ");
 
@@ -119,11 +120,13 @@ const AngledCard = ({
                         transition={{ duration: 0.8 }}
                         className="absolute inset-0"
                     >
-                        <Image
-                            src={item.urls && item.urls.length > 0 ? item.urls[currentIndex] : "/images/placeholder.jpg"}
+                        <SafeImage
+                            src={item.urls && item.urls.length > 0 ? item.urls[currentIndex] : ""}
                             alt={item.alt || item.title || "Slider Image"}
                             fill
                             className="object-cover transition-transform [transition-duration:5s] group-hover:scale-105"
+                            containerClassName="w-full h-full absolute inset-0"
+                            showSpinner={false}
                             draggable={false}
                         />
                     </motion.div>
@@ -272,11 +275,12 @@ export const AngledSlider = ({
                                     transition={{ duration: 0.2 }}
                                     className="absolute inset-0"
                                 >
-                                    <Image
-                                        src={selectedItem.urls && selectedItem.urls.length > 0 ? selectedItem.urls[modalIndex] : "/images/placeholder.jpg"}
+                                    <SafeImage
+                                        src={selectedItem.urls && selectedItem.urls.length > 0 ? selectedItem.urls[modalIndex] : ""}
                                         alt={selectedItem.title || "Preview"}
                                         fill
                                         className="object-cover"
+                                        containerClassName="w-full h-full absolute inset-0"
                                     />
                                 </motion.div>
                             </AnimatePresence>

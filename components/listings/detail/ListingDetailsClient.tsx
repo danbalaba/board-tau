@@ -557,28 +557,42 @@ const ListingDetailsClient: React.FC<ListingDetailsClientProps> = ({
   const galleryItems = useMemo(() => {
     if (!rooms || rooms.length === 0) return [];
     return rooms
-      .filter(room => room.images && room.images.length > 0)
       .slice(0, 5)
-      .map(room => ({
-        id: room.id,
-        urls: room.images.map((img: any) => img.url),
-        title: room.name,
-        subtitle: `${room.capacity} Bed${room.capacity > 1 ? 's' : ''} • ${(room as any).roomTypeDefinition?.name || room.roomType || 'Standard Room'}`
-      }));
-  }, [rooms]);
+      .map(room => {
+        const roomPhotos = room.images && room.images.length > 0
+          ? room.images.map((img: any) => (typeof img === 'string' ? img : img?.url)).filter(Boolean)
+          : [];
+        const fallbackUrls = images && images.length > 0
+          ? images.map((img: any) => (typeof img === 'string' ? img : img?.url)).filter(Boolean)
+          : [];
+        return {
+          id: room.id,
+          urls: roomPhotos.length > 0 ? roomPhotos : fallbackUrls,
+          title: room.name,
+          subtitle: `${room.capacity} Bed${room.capacity > 1 ? 's' : ''} • ${(room as any).roomTypeDefinition?.name || room.roomType || 'Standard Room'}`
+        };
+      });
+  }, [rooms, images]);
 
   const sliderItems = useMemo(() => {
     if (!rooms || rooms.length === 0) return [];
     return rooms
-      .filter(room => room.images && room.images.length > 0)
       .slice(0, 5)
-      .map(room => ({
-        id: room.id,
-        urls: room.images.map((img: any) => img.url),
-        title: room.name,
-        subtitle: `${room.capacity} Bed${room.capacity > 1 ? 's' : ''} • ${(room as any).roomTypeDefinition?.name || room.roomType || 'Standard Room'}`
-      }));
-  }, [rooms]);
+      .map(room => {
+        const roomPhotos = room.images && room.images.length > 0
+          ? room.images.map((img: any) => (typeof img === 'string' ? img : img?.url)).filter(Boolean)
+          : [];
+        const fallbackUrls = images && images.length > 0
+          ? images.map((img: any) => (typeof img === 'string' ? img : img?.url)).filter(Boolean)
+          : [];
+        return {
+          id: room.id,
+          urls: roomPhotos.length > 0 ? roomPhotos : fallbackUrls,
+          title: room.name,
+          subtitle: `${room.capacity} Bed${room.capacity > 1 ? 's' : ''} • ${(room as any).roomTypeDefinition?.name || room.roomType || 'Standard Room'}`
+        };
+      });
+  }, [rooms, images]);
 
   // Helper for explicit amenity icons
   const getAmenityIcon = (amenityName: string) => {

@@ -553,7 +553,7 @@ export const updateProperty = async (propertyId: string, data: any) => {
     const lowestRoomPrice = validRoomPrices.length > 0 ? Math.min(...validRoomPrices) : 0;
     const safePrice = lowestRoomPrice > 0 ? lowestRoomPrice : (Number(price) || Number(existing.price) || 0);
 
-    const safeRoomCount = Number(roomCount) || 1;
+    const safeRoomCount = safeRooms.length > 0 ? safeRooms.length : (Number(roomCount) || Number(existing.roomCount) || 1);
     const safeBathroomCount = Number(bathroomCount) || 1;
     const safeLat = latlng?.[1] ?? 14.5995;
     const safeLng = latlng?.[0] ?? 120.9842;

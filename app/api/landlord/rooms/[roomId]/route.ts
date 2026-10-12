@@ -229,8 +229,13 @@ export async function DELETE(
     // 2. Database deletion (cascades sub-records in DB)
     await db.room.delete({ where: { id: roomId } });
 
-    // Invalidate the cache for the parent listing so tenant-side updates immediately
+    // Decrement roomCount and invalidate the cache for the parent listing
     if (existing.listingId) {
+      await db.listing.update({
+        where: { id: existing.listingId },
+        data: { roomCount: { decrement: 1 } }
+      }).catch((err) => console.error("[ROOM_DELETE] Failed to decrement roomCount:", err));
+
       await cache.del(`listing:id:${existing.listingId}`);
       await cache.delPattern("listings:*");
     }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getLandlordRooms, createLandlordRoom } from "@/services/landlord/rooms";
+import { db } from "@/lib/db";
 import { cache } from "@/lib/redis";
 import { hasPermission } from "@/lib/rbac";
 import { getCurrentUser } from "@/services/user";
@@ -28,7 +29,7 @@ export async function GET(request: Request) {
       capacity, 
       status,
       isArchived, 
-      sortBy,
+      sortBy, 
       search 
     });
 
@@ -50,7 +51,13 @@ export async function POST(request: Request) {
     const room = await createLandlordRoom(body);
 
     if (room.listingId) {
+      await db.listing.update({
+        where: { id: room.listingId },
+        data: { roomCount: { increment: 1 } }
+      }).catch((err) => console.error("[ROOMS_POST] Failed to increment roomCount:", err));
+
       await cache.del(`listing:id:${room.listingId}`);
+      await cache.delPattern("listings:*");
     }
 
     return NextResponse.json({ success: true, room });
