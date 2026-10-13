@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 import { validateImageUpload } from "../HostApplicationUtils";
 import MediaPreviewOverlay from "@/components/common/MediaPreviewOverlay";
 import { cn } from "@/utils/helper";
+import { isPdfUrl } from "@/lib/utils";
 
 interface LegalDocumentsStepProps {
   permitFile: File | null;
@@ -21,8 +22,7 @@ interface LegalDocumentsStepProps {
 const checkIsPdf = (file: File | string | null): boolean => {
   if (!file) return false;
   if (typeof file === 'string') {
-    const lower = file.toLowerCase();
-    return lower.endsWith('.pdf') || lower.includes('.pdf?') || lower.includes('/pdf') || lower.startsWith('data:application/pdf');
+    return isPdfUrl(file);
   }
   if (file.type && file.type.toLowerCase().includes('pdf')) return true;
   if (file.name && file.name.toLowerCase().endsWith('.pdf')) return true;

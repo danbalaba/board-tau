@@ -37,17 +37,13 @@ import {
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
-import { cn, formatPropertyType, formatPhoneNumber } from '@/lib/utils';
+import { cn, formatPropertyType, formatPhoneNumber, isPdfUrl } from '@/lib/utils';
 import SafeImage from '@/components/common/SafeImage';
 import { AdminApplicationRejectModal } from './admin-application-reject-modal';
 
 const Map = dynamic(() => import('@/components/common/Map'), { ssr: false });
 
-const checkIsPdf = (url?: string | null): boolean => {
-  if (!url || typeof url !== 'string') return false;
-  const lower = url.toLowerCase();
-  return lower.endsWith('.pdf') || lower.includes('.pdf?') || lower.includes('/pdf') || lower.startsWith('data:application/pdf');
-};
+const checkIsPdf = (url?: string | null): boolean => isPdfUrl(url);
 
 const getDocumentViewUrl = (url?: string | null): string => {
   if (!url || typeof url !== 'string') return '';

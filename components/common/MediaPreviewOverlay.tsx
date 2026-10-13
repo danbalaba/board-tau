@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, ShieldCheck, Lock, Eye, ExternalLink, FileText } from 'lucide-react';
 import { cn } from '@/utils/helper';
 import SafeImage from '@/components/common/SafeImage';
+import { isPdfUrl } from '@/lib/utils';
 
 interface MediaPreviewOverlayProps {
   isOpen: boolean;
@@ -18,11 +19,7 @@ interface MediaPreviewOverlayProps {
   showExternalLink?: boolean;
 }
 
-const checkIsPdf = (url: string): boolean => {
-  if (!url) return false;
-  const lower = url.toLowerCase();
-  return lower.endsWith('.pdf') || lower.includes('.pdf?') || lower.includes('/pdf') || lower.startsWith('data:application/pdf');
-};
+const checkIsPdf = (url: string): boolean => isPdfUrl(url);
 
 const MediaPreviewOverlay: React.FC<MediaPreviewOverlayProps> = ({
   isOpen,

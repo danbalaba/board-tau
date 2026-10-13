@@ -73,7 +73,7 @@ import {
 import * as LucideIcons from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn, formatPropertyType } from '@/lib/utils';
+import { cn, formatPropertyType, isPdfUrl } from '@/lib/utils';
 import SafeImage from '@/components/common/SafeImage';
 import { AdminListingRejectModal } from './admin-listing-reject-modal';
 import { SharedAmenitiesModal } from '@/components/common/SharedAmenitiesModal';
@@ -205,11 +205,7 @@ const PROPERTY_IMAGE_CATEGORIES = [
   { id: 'Other', label: 'Other Shared Facilities', icon: Camera, description: 'Other shared facilities like parking, garden & laundry' },
 ];
 
-const checkIsPdf = (url: string): boolean => {
-  if (!url) return false;
-  const lower = url.toLowerCase();
-  return lower.endsWith('.pdf') || lower.includes('.pdf?') || lower.includes('/pdf') || lower.startsWith('data:application/pdf');
-};
+const checkIsPdf = (url: string): boolean => isPdfUrl(url);
 
 const getDocumentViewUrl = (url?: string | null): string => {
   if (!url || typeof url !== 'string') return '';

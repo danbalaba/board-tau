@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image, { ImageProps } from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { cn, isPdfUrl } from '@/lib/utils';
 import Skeleton from './Skeleton';
 import { IconPhotoOff } from '@tabler/icons-react';
 import { FileText } from 'lucide-react';
@@ -106,12 +106,7 @@ const SafeImage = ({
     ? (mounted && resolvedTheme === 'light' ? defaultLightFallback : defaultDarkFallback)
     : fallbackSrc;
 
-  const isPdf = typeof cleanSrc === 'string' && (
-    cleanSrc.toLowerCase().endsWith('.pdf') || 
-    cleanSrc.toLowerCase().includes('.pdf?') || 
-    cleanSrc.toLowerCase().includes('/pdf') || 
-    cleanSrc.startsWith('data:application/pdf')
-  );
+  const isPdf = isPdfUrl(cleanSrc);
 
   if (isPdf) {
     return (

@@ -145,3 +145,49 @@ export function formatCleanTitle(input?: string | null): string {
     .join(' ');
 }
 
+/**
+ * Accurately determines if a URL, data URI, or file path is a PDF document.
+ * Excludes image data URIs (e.g. data:image/jpeg;base64,...), blob image URLs,
+ * and standard image file extensions (.jpg, .png, etc.) to prevent false-positive
+ * PDF detection caused by random Base64 character collisions or image path names.
+ */
+export function isPdfUrl(url?: string | null): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+
+  const lower = trimmed.toLowerCase();
+
+  // 1. Explicit Image Data URLs or Blobs are never PDFs
+  if (lower.startsWith('data:image/') || lower.startsWith('blob:')) {
+    return false;
+  }
+
+  // 2. Explicit PDF Data URL
+  if (lower.startsWith('data:application/pdf')) {
+    return true;
+  }
+
+  // 3. URLs with explicit image extensions are never PDFs
+  if (/\.(jpe?g|png|webp|gif|svg|avif|bmp|ico)([?#].*)?$/i.test(lower)) {
+    return false;
+  }
+
+  // 4. Match .pdf at end of string or right before query parameters/hash fragment
+  if (/\.pdf([?#].*)?$/i.test(lower)) {
+    return true;
+  }
+
+  // 5. If wrapped inside /api/documents/view?url=..., extract the inner URL and check
+  if (lower.includes('/api/documents/view')) {
+    try {
+      const urlObj = lower.startsWith('http') ? new URL(trimmed) : new URL(trimmed, 'http://localhost');
+      const innerUrl = urlObj.searchParams.get('url');
+      if (innerUrl) {
+        return isPdfUrl(innerUrl);
+      }
+    } catch {}
+  }
+
+  return false;
+}
