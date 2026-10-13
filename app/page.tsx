@@ -15,7 +15,8 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import MapFloatingButton from "@/components/map/MapFloatingButton";
 
-export const dynamic = "force-dynamic";
+// Cache default feed for 60 seconds with ISR so CDN absorbs traffic instead of re-executing server function on every hit
+export const revalidate = 60;
 
 interface HomeProps {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;

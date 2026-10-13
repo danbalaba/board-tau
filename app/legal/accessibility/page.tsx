@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 86400;
 import React from 'react';
 import { Metadata } from 'next';
 import AccessibilitySupportContent from '@/components/informative/AccessibilitySupportContent';
@@ -8,7 +8,6 @@ export const metadata: Metadata = {
   description: 'BoardTAU commitment to accessibility for all users.',
 };
 
-export default async function AccessibilityPage() {
-  await new Promise(resolve => setTimeout(resolve, 400));
+export default function AccessibilityPage() {
   return <AccessibilitySupportContent />;
 }

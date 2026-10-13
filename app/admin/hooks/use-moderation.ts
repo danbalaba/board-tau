@@ -101,8 +101,9 @@ export function useModerationQueue(params?: ModerationQueryParams) {
       }
       return data;
     },
-    staleTime: 15000, // Keep data fresh for 15 seconds
-    refetchInterval: 30000, // Background sync every 30 seconds
+    staleTime: 60000,
+    refetchInterval: 180000, // Background sync every 3 minutes (saves serverless CPU)
+    refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });
 }

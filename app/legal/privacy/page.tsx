@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 86400;
 import React from 'react';
 import { Metadata } from 'next';
 import PrivacyPolicyContent from '@/components/informative/PrivacyPolicyContent';
@@ -8,7 +8,6 @@ export const metadata: Metadata = {
   description: 'How BoardTAU collects, uses, and protects your information.',
 };
 
-export default async function PrivacyPolicyPage() {
-  await new Promise(resolve => setTimeout(resolve, 400));
+export default function PrivacyPolicyPage() {
   return <PrivacyPolicyContent />;
 }

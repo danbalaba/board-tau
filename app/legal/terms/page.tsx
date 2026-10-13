@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 86400;
 import React from 'react';
 import { Metadata } from 'next';
 import TermsOfServiceContent from '@/components/informative/TermsOfServiceContent';
@@ -8,7 +8,6 @@ export const metadata: Metadata = {
   description: 'Terms and conditions for using the BoardTAU platform.',
 };
 
-export default async function TermsOfServicePage() {
-  await new Promise(resolve => setTimeout(resolve, 400));
+export default function TermsOfServicePage() {
   return <TermsOfServiceContent />;
 }

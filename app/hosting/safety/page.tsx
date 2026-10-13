@@ -1,7 +1,6 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 86400;
 import HostSafetyContent from '@/components/informative/HostSafetyContent';
 
-export default async function Page() {
-  await new Promise(resolve => setTimeout(resolve, 400));
+export default function Page() {
   return <HostSafetyContent />;
 }

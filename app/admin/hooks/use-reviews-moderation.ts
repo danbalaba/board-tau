@@ -66,7 +66,8 @@ export function useReviewsModeration(params?: ReviewsModerationQueryParams) {
 
       return data;
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 180000, // Background sync every 3 minutes (saves serverless CPU)
+    refetchOnWindowFocus: false,
     retry: 3,
   });
 }

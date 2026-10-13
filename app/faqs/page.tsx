@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 86400;
 import { Metadata } from 'next';
 import FaqsContent from '@/components/informative/FaqsContent';
 
@@ -60,8 +60,7 @@ const faqSchema = {
   ]
 };
 
-export default async function Page() {
-  await new Promise(resolve => setTimeout(resolve, 400));
+export default function Page() {
   return (
     <>
       <script

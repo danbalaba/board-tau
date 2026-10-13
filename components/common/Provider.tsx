@@ -106,7 +106,7 @@ const Providers = ({ children }: PropsWithChildren) => {
           disableTransitionOnChange
         >
           <QueryClientProvider client={queryClient}>
-            <SessionProvider>
+            <SessionProvider refetchOnWindowFocus={false} refetchWhenOffline={false}>
               <EdgeStoreWrapper>
                 <ResponsiveToastProvider>
                   <NotificationProvider>
