@@ -9,17 +9,17 @@ export async function POST(
     const currentUser = await getCurrentUser();
     
     if (!currentUser) {
-      return NextResponse.error();
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
-    const body = await request.json();
-    const { recentSearchQueries, recentListingIds } = body;
+    const body = await request.json().catch(() => ({}));
+    const { recentSearchQueries, recentListingIds } = body || {};
     
     // Cap to 20 items and filter unique
-    const uniqueQueries = Array.from(new Set(recentSearchQueries || [])).slice(0, 20);
-    const uniqueListingIds = Array.from(new Set(recentListingIds || [])).slice(0, 20);
+    const uniqueQueries = Array.from(new Set(Array.isArray(recentSearchQueries) ? recentSearchQueries : [])).slice(0, 20);
+    const uniqueListingIds = Array.from(new Set(Array.isArray(recentListingIds) ? recentListingIds : [])).slice(0, 20);
 
-    const user = await prisma.user.update({
+    await prisma.user.update({
       where: {
         id: currentUser.id
       },
@@ -32,6 +32,6 @@ export async function POST(
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("SYNC_RECENTS_ERROR", error);
-    return new NextResponse('Internal Error', { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
