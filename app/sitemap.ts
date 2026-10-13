@@ -7,25 +7,30 @@ export const revalidate = 86400; // Cache sitemap for 24 hours
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://board-tau-rho.vercel.app";
 
-  // Fetch active, approved listings from the database
-  const listings = await db.listing.findMany({
-    where: {
-      status: "ACTIVE",
-      isArchived: false,
-    },
-    select: {
-      id: true,
-      title: true,
-      updatedAt: true,
-    },
-  });
+  // Fetch active, approved listings from the database (with fallback for build-time safety)
+  let listingRoutes: any[] = [];
+  try {
+    const listings = await db.listing.findMany({
+      where: {
+        status: "ACTIVE",
+        isArchived: false,
+      },
+      select: {
+        id: true,
+        title: true,
+        updatedAt: true,
+      },
+    });
 
-  const listingRoutes = listings.map((listing) => ({
-    url: `${baseUrl}${getListingUrl(listing.id, listing.title)}`,
-    lastModified: listing.updatedAt.toISOString(),
-    changeFrequency: "weekly" as const,
-    priority: 0.9,
-  }));
+    listingRoutes = listings.map((listing) => ({
+      url: `${baseUrl}${getListingUrl(listing.id, listing.title)}`,
+      lastModified: listing.updatedAt.toISOString(),
+      changeFrequency: "weekly" as const,
+      priority: 0.9,
+    }));
+  } catch (dbError) {
+    console.warn("[Sitemap] MongoDB unreachable at build-time. Prerendering with static routes:", dbError);
+  }
 
   // Only include PUBLIC routes that search engines can actually see.
   // Private routes (favorites, profile, messages, inquiries) should NEVER be in the sitemap.
