@@ -126,13 +126,16 @@ export function useInquiryLogic(initialInquiries: { inquiries: Inquiry[]; nextCu
       });
     };
 
-    channel.bind("inquiry-updated", handleInquiryUpdated);
-    channel.bind("new-notification", () => {
+    const handleNewNotification = () => {
       queryClient.invalidateQueries({ queryKey: ["landlord-notifications"] });
-    });
+    };
+
+    channel.bind("inquiry-updated", handleInquiryUpdated);
+    channel.bind("new-notification", handleNewNotification);
 
     return () => {
       channel.unbind("inquiry-updated", handleInquiryUpdated);
+      channel.unbind("new-notification", handleNewNotification);
     };
   }, [userId, queryClient]);
 

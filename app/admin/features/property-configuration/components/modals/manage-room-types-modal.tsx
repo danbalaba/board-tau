@@ -12,6 +12,7 @@ import Input from "@/components/inputs/Input";
 import { Skeleton } from "@/app/admin/components/ui/skeleton";
 import axios from "axios";
 import { DeleteRoomTypeModal } from "./delete-room-type-modal";
+import { clearLandlordTaxonomyCache } from "@/lib/landlordTaxonomyCache";
 
 interface ManageRoomTypesModalProps {
   propertyType?: { id: string; name: string };
@@ -26,7 +27,10 @@ interface BedSetupOption {
 }
 
 const roomTypesCacheMap = new Map<string, { data: any[]; timestamp: number }>();
-export const invalidateRoomTypesCache = () => roomTypesCacheMap.clear();
+export const invalidateRoomTypesCache = () => {
+  roomTypesCacheMap.clear();
+  clearLandlordTaxonomyCache();
+};
 
 export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
   propertyType = { id: "1", name: "Boarding House" },
@@ -100,7 +104,7 @@ export const ManageRoomTypesModal: React.FC<ManageRoomTypesModalProps> = ({
 
     try {
       setIsFetchingList(true);
-      const res = await axios.get(`/api/admin/room-types?propertyTypeId=${propertyType.id}`);
+      const res = await axios.get(`/api/admin/room-types?propertyTypeId=${propertyType.id}&t=${Date.now()}`);
       const data = res.data?.data || [];
       setRoomTypes(data);
       roomTypesCacheMap.set(propertyType.id, { data, timestamp: Date.now() });

@@ -6,6 +6,7 @@ import { toast } from "@/app/admin/components/ui/sonner";
 import axios from "axios";
 import { Button } from "@/app/admin/components/ui/button";
 import { motion } from "framer-motion";
+import { clearLandlordTaxonomyCache } from "@/lib/landlordTaxonomyCache";
 
 interface DeleteRoomTypeModalProps {
   roomType: {
@@ -31,6 +32,7 @@ export function DeleteRoomTypeModal({
       
       if (res.data?.success) {
         toast.success(`Room type '${roomType.name}' deleted successfully.`);
+        clearLandlordTaxonomyCache();
         if (onSuccess) onSuccess(roomType.id);
         onCloseModal?.();
       } else {

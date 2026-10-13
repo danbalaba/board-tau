@@ -105,13 +105,16 @@ export function useReservationLogic(initialReservations: ReservationRequest[]) {
       });
     };
 
-    channel.bind("reservation-updated", handleReservationUpdated);
-    channel.bind("new-notification", () => {
+    const handleNewNotification = () => {
       queryClient.invalidateQueries({ queryKey: ["landlord-notifications"] });
-    });
+    };
+
+    channel.bind("reservation-updated", handleReservationUpdated);
+    channel.bind("new-notification", handleNewNotification);
 
     return () => {
       channel.unbind("reservation-updated", handleReservationUpdated);
+      channel.unbind("new-notification", handleNewNotification);
     };
   }, [userId, queryClient]);
 
