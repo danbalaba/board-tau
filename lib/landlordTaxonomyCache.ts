@@ -298,16 +298,25 @@ export function clearCollegesCache() {
 
 /**
  * 🚪 Fetches or retrieves cached room types for a specific property type.
+ * Ensures empty arrays [] are NOT treated as valid cached data, preventing cache poisoning.
  */
-export async function getCachedRoomTypes(propertyTypeId?: string) {
+export async function getCachedRoomTypes(propertyTypeId?: string, forceFresh = false) {
   const cacheKey = propertyTypeId || 'ALL';
-  if (taxonomyCache.roomTypesByPropertyTypeId[cacheKey]) {
-    return taxonomyCache.roomTypesByPropertyTypeId[cacheKey];
+  const cached = taxonomyCache.roomTypesByPropertyTypeId[cacheKey];
+
+  if (!forceFresh && cached && Array.isArray(cached) && cached.length > 0) {
+    return cached;
   }
+
   try {
-    const url = propertyTypeId ? `/api/room-types?propertyTypeId=${propertyTypeId}` : `/api/room-types`;
-    const res = await axios.get(url);
-    if (res.data?.data) {
+    const timestamp = Date.now();
+    const query = new URLSearchParams({ t: timestamp.toString() });
+    if (propertyTypeId && propertyTypeId !== 'ALL') {
+      query.set('propertyTypeId', propertyTypeId);
+    }
+
+    const res = await axios.get(`/api/room-types?${query.toString()}`);
+    if (res.data?.data && Array.isArray(res.data.data)) {
       const options = res.data.data
         .filter((rt: any) => rt.isActive !== false)
         .map((rt: any) => ({
@@ -320,19 +329,41 @@ export async function getCachedRoomTypes(propertyTypeId?: string) {
           isFlatRate: rt.isFlatRate,
           bedSetups: rt.bedSetups || []
         }));
-      taxonomyCache.roomTypesByPropertyTypeId[cacheKey] = options;
-      safeSetStorage(STORAGE_KEYS.ROOM_TYPES, taxonomyCache.roomTypesByPropertyTypeId);
+
+      // Only cache if we found actual room types (prevent poisoning cache with [])
+      if (options.length > 0) {
+        taxonomyCache.roomTypesByPropertyTypeId[cacheKey] = options;
+        safeSetStorage(STORAGE_KEYS.ROOM_TYPES, taxonomyCache.roomTypesByPropertyTypeId);
+      } else if (taxonomyCache.roomTypesByPropertyTypeId[cacheKey]) {
+        // If server returned 0 results now, clear stale memory cache for this key
+        delete taxonomyCache.roomTypesByPropertyTypeId[cacheKey];
+        safeSetStorage(STORAGE_KEYS.ROOM_TYPES, taxonomyCache.roomTypesByPropertyTypeId);
+      }
       return options;
     }
   } catch (err) {
     console.warn("[LandlordTaxonomyCache] Failed fetching room types", err);
   }
-  return [];
+  return (cached && cached.length > 0) ? cached : [];
 }
 
 export function getSyncRoomTypes(propertyTypeId?: string) {
   const cacheKey = propertyTypeId || 'ALL';
-  return taxonomyCache.roomTypesByPropertyTypeId[cacheKey] || null;
+  const cached = taxonomyCache.roomTypesByPropertyTypeId[cacheKey];
+  return (cached && Array.isArray(cached) && cached.length > 0) ? cached : null;
+}
+
+/**
+ * 🚪 Clears room types cache (optionally for a specific property type).
+ */
+export function clearRoomTypesCache(propertyTypeId?: string) {
+  if (propertyTypeId) {
+    delete taxonomyCache.roomTypesByPropertyTypeId[propertyTypeId];
+  } else {
+    taxonomyCache.roomTypesByPropertyTypeId = {};
+  }
+  safeSetStorage(STORAGE_KEYS.ROOM_TYPES, taxonomyCache.roomTypesByPropertyTypeId);
+  notifyTaxonomyUpdated({ roomTypesCleared: true, propertyTypeId });
 }
 
 /**
@@ -355,3 +386,4 @@ export function clearLandlordTaxonomyCache() {
 
   notifyTaxonomyUpdated({ cleared: true });
 }
+

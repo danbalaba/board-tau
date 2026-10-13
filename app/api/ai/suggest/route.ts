@@ -14,7 +14,7 @@ const aiSuggestSchema = z.array(
 
 const ratelimit = new Ratelimit({
   redis: redis,
-  limiter: Ratelimit.slidingWindow(10, "1 m"),
+  limiter: Ratelimit.slidingWindow(30, "1 m"),
   analytics: true,
 });
 

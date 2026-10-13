@@ -85,8 +85,10 @@ export async function fetchTaxonomyData(type: string, forceFresh = false): Promi
         JSON.stringify(prevEntry.attributes) !== JSON.stringify(freshAttrs) ||
         JSON.stringify(prevEntry.subGroups) !== JSON.stringify(freshSubGroups);
 
-      memoryCache[type] = entry;
-      safeSetStorage(STORAGE_PREFIX + type, entry);
+      if (freshAttrs.length > 0 || freshSubGroups.length > 0) {
+        memoryCache[type] = entry;
+        safeSetStorage(STORAGE_PREFIX + type, entry);
+      }
 
       if (hasChanged) {
         notifySearchTaxonomyUpdated({ type, entry });
@@ -107,7 +109,7 @@ export async function fetchTaxonomyData(type: string, forceFresh = false): Promi
     revalidate();
   }
 
-  if (syncData) {
+  if (syncData && (syncData.attributes.length > 0 || syncData.subGroups.length > 0)) {
     return syncData;
   }
 
@@ -119,11 +121,11 @@ export async function fetchTaxonomyData(type: string, forceFresh = false): Promi
  * ⚡ Synchronously gets cached user-side taxonomy data from memory or localStorage.
  */
 export function getTaxonomyDataSync(type: string): TaxonomyCacheEntry | null {
-  if (memoryCache[type]) {
+  if (memoryCache[type] && (memoryCache[type].attributes?.length > 0 || memoryCache[type].subGroups?.length > 0)) {
     return memoryCache[type];
   }
   const stored = safeGetStorage<TaxonomyCacheEntry>(STORAGE_PREFIX + type);
-  if (stored) {
+  if (stored && (stored.attributes?.length > 0 || stored.subGroups?.length > 0)) {
     memoryCache[type] = stored;
     return stored;
   }

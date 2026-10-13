@@ -15,7 +15,7 @@ const aiChatSchema = z.object({
 
 const ratelimit = new Ratelimit({
   redis: redis,
-  limiter: Ratelimit.slidingWindow(15, "1 m"),
+  limiter: Ratelimit.slidingWindow(60, "1 m"),
   analytics: true,
 });
 

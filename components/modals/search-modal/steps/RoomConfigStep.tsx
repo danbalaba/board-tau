@@ -58,10 +58,12 @@ export default function RoomConfigStep({
   const selectedPropType = propertyTypeSelected[0] || "Boarding House";
 
   const [dbRoomTypes, setDbRoomTypes] = useState<any[]>(() => {
-    return globalRoomTypesCache[selectedPropType] || [];
+    const cached = globalRoomTypesCache[selectedPropType];
+    return (cached && cached.length > 0) ? cached : [];
   });
   const [isFetchingDbRoomTypes, setIsFetchingDbRoomTypes] = useState<boolean>(() => {
-    return !globalRoomTypesCache[selectedPropType];
+    const cached = globalRoomTypesCache[selectedPropType];
+    return !cached || cached.length === 0;
   });
 
   useEffect(() => {
@@ -75,7 +77,8 @@ export default function RoomConfigStep({
 
     async function fetchRoomTypes() {
       try {
-        if (!globalRoomTypesCache[selectedPropType]) {
+        const cached = globalRoomTypesCache[selectedPropType];
+        if (!cached || cached.length === 0) {
           setIsFetchingDbRoomTypes(true);
         }
         const res = await axios.get(`/api/room-types?propertyType=${encodeURIComponent(selectedPropType)}&t=${Date.now()}`);
@@ -86,7 +89,11 @@ export default function RoomConfigStep({
             : Array.isArray(rawData?.data)
             ? rawData.data
             : [];
-          globalRoomTypesCache[selectedPropType] = list;
+          if (list.length > 0) {
+            globalRoomTypesCache[selectedPropType] = list;
+          } else {
+            delete globalRoomTypesCache[selectedPropType];
+          }
           setDbRoomTypes(list);
           const isZero = list.length === 0;
           if (onHasNoRoomTypesChange) onHasNoRoomTypesChange(isZero);

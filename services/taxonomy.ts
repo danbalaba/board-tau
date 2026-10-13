@@ -33,7 +33,9 @@ export async function getActiveAttributes() {
       };
     });
 
-    await cache.set(cacheKey, data, 86400); // Cache for 24 hours (invalidated on admin mutations)
+    if (data && data.length > 0) {
+      await cache.set(cacheKey, data, 86400); // Cache for 24 hours (invalidated on admin mutations)
+    }
     return data;
   } catch (error) {
     console.error("getActiveAttributes error:", error);
